@@ -495,6 +495,90 @@ public partial class WorkflowExecutorEndToEndTests
         ex.Message.ShouldContain("header");
     }
 
+    private const string ChannelMultiMessageSendDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "toggle",
+              "steps": [
+                {
+                  "stepId": "publish",
+                  "channelPath": "switch",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.command" }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_multi_message_send_selects_the_message_by_payload_schema()
+    {
+        // A channel whose send operation declares two messages: the step's payload is matched against each
+        // message's schema (AsyncAPI's own "valid against one and only one" rule) and the matching message's
+        // producer method is called — not the first message unconditionally.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "switch",
+            OperationAction.Send,
+            "onSwitch",
+            "Acme.Switches.SwitchProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages:
+            [
+                new AsyncApiChannelMessageDescriptor("turnOn", "Acme.Switches.TurnOn", null, null, "PublishTurnOnAsync"),
+                new AsyncApiChannelMessageDescriptor("turnOff", "Acme.Switches.TurnOff", null, null, "PublishTurnOffAsync"),
+            ]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelMultiMessageSendDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ToggleWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The send validates the payload against each message's schema and dispatches to the matching method.
+        source.ShouldContain("Acme.Switches.TurnOn.From(");
+        source.ShouldContain(".EvaluateSchema()");
+        source.ShouldContain(".PublishTurnOffAsync(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ToggleWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // A payload valid against the SECOND message selects PublishTurnOffAsync (proving it is not the first
+        // message unconditionally); a payload valid against the first selects PublishTurnOnAsync.
+        Acme.Switches.SwitchProducer.Published.Clear();
+        await RunToggleAsync(execute, """{"command":{"off":true}}""");
+        Acme.Switches.SwitchProducer.Published.ShouldBe(["off"]);
+
+        Acme.Switches.SwitchProducer.Published.Clear();
+        await RunToggleAsync(execute, """{"command":{"on":true}}""");
+        Acme.Switches.SwitchProducer.Published.ShouldBe(["on"]);
+    }
+
+    private static async Task RunToggleAsync(MethodInfo execute, string inputs)
+    {
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputs));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        await pending;
+    }
+
     private const string ChannelReceiveReplyDocument = """
         {
           "arazzo": "1.1.0",

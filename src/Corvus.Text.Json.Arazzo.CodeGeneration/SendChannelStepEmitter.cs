@@ -84,8 +84,10 @@ internal static class SendChannelStepEmitter
             throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no message.");
         }
 
-        // The message this step sends. A single-message operation binds it directly; multi-message
-        // selection by payload-schema validity is a later slice.
+        // A single-message operation binds its one message directly; a multi-message operation selects the
+        // message by payload-schema validity at send time (below). `selected` is the single-message binding
+        // (and the first message, used for the header-argument shape that a single-message send shares).
+        bool multiMessage = descriptor.Messages.Count > 1;
         AsyncApiChannelMessageDescriptor selected = descriptor.Messages[0];
 
         if (requestBody is not { } body)
@@ -147,6 +149,23 @@ internal static class SendChannelStepEmitter
             (string.Equals(argument.In, "header", StringComparison.Ordinal) ? headerArgs : addressArgs).Add(argument);
         }
 
+        // Message headers on a multi-message send (where the selected message — and thus its headers type —
+        // is only known at run time) are a later phase; combine them one at a time for now.
+        if (multiMessage)
+        {
+            bool anyHeaders = headerArgs.Count > 0;
+            foreach (AsyncApiChannelMessageDescriptor message in descriptor.Messages)
+            {
+                anyHeaders |= message.HeadersTypeName is not null;
+            }
+
+            if (anyHeaders)
+            {
+                throw new NotSupportedException(
+                    $"Channel step '{stepId}' targets a multi-message channel '{descriptor.ChannelAddress}' with message headers; multi-message send with headers is a later phase.");
+            }
+        }
+
         // A parameterised channel: the generated producer method takes a string argument per channel
         // parameter (in declaration order), resolved here from the step's non-header parameters.
         var channelArgs = new StringBuilder();
@@ -181,6 +200,12 @@ internal static class SendChannelStepEmitter
 
         if (!isRequestReply)
         {
+            if (multiMessage)
+            {
+                EmitMultiMessagePublish(descriptor, stepId, payloadLocal, camel, producerVariable, channelArgs.ToString(), captureCorrelation, cancellationTokenExpression, statements);
+                return statements.ToString();
+            }
+
             if (selected.ProducerMethodName is not { } publishMethod)
             {
                 throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
@@ -194,6 +219,12 @@ internal static class SendChannelStepEmitter
 
             EmitCorrelationCapture(captureCorrelation, selected, camel, payloadLocal, headersElementLocal, statements);
             return statements.ToString();
+        }
+
+        if (multiMessage)
+        {
+            throw new NotSupportedException(
+                $"Channel step '{stepId}' targets a multi-message request/reply channel '{descriptor.ChannelAddress}'; multi-message request/reply selection is a later phase.");
         }
 
         // ── request/reply: send and capture the reply as the step's outputs ──
@@ -348,6 +379,55 @@ internal static class SendChannelStepEmitter
 
         statements.AppendLine("    });");
         return $"{builderVariable}.RootElement";
+    }
+
+    // Emits a multi-message fire-and-forget send: the payload is validated against each message's schema in
+    // order (the same zero-allocation EvaluateSchema check the receive-side MatchMessage uses) and dispatched
+    // to the first (per AsyncAPI, the only) matching message's producer method. A payload matching no message
+    // is a runtime step failure. Message headers are not combined with multi-message selection yet (rejected
+    // up front), so no headers argument is emitted here.
+    private static void EmitMultiMessagePublish(
+        in AsyncApiChannelDescriptor descriptor,
+        string stepId,
+        string payloadLocal,
+        string camel,
+        string producerVariable,
+        string channelArgs,
+        bool captureCorrelation,
+        string cancellationTokenExpression,
+        StringBuilder statements)
+    {
+        for (int i = 0; i < descriptor.Messages.Count; i++)
+        {
+            AsyncApiChannelMessageDescriptor message = descriptor.Messages[i];
+            if (message.PayloadTypeName is not { } payloadType || message.ProducerMethodName is not { } publishMethod)
+            {
+                throw new NotSupportedException(
+                    $"Channel step '{stepId}' targets a multi-message channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' has no distinct payload type to select on.");
+            }
+
+            string candidate = $"{camel}Candidate{i.ToString(CultureInfo.InvariantCulture)}";
+            statements.Append(payloadType).Append(' ').Append(candidate).Append(" = ").Append(payloadType).Append(".From(").Append(payloadLocal).AppendLine(");");
+            statements.Append("if (").Append(candidate).AppendLine(".EvaluateSchema())");
+            statements.AppendLine("{");
+            statements.Append("    await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(candidate).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+
+            var capture = new StringBuilder();
+            EmitCorrelationCapture(captureCorrelation, message, camel, payloadLocal, null, capture);
+            WorkflowExecutorEmitter.AppendIndented(statements, capture.ToString(), 4);
+
+            statements.AppendLine("}");
+            statements.AppendLine("else");
+            statements.AppendLine("{");
+        }
+
+        statements.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
+            .Append(EmitText.Quote($"Step '{stepId}' payload matched none of the channel's messages.")).AppendLine(");");
+
+        for (int i = 0; i < descriptor.Messages.Count; i++)
+        {
+            statements.AppendLine("}");
+        }
     }
 
     // When the workflow correlates (some receive step declares a correlationId) and this send's message

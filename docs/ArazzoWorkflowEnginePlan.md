@@ -411,7 +411,10 @@ convention for each gap.
   a runtime step failure. This was chosen over an `x-message` selector, which
   would have introduced a second, drift-prone source of truth the spec designed
   out, diverged from the canonical mechanism, and discarded the "exactly one"
-  invariant the engine can otherwise enforce.
+  invariant the engine can otherwise enforce. Two combinations remain a later
+  phase and reject with a clear error for now: multi-message send *with* message
+  headers (the selected message, hence its headers type, is only known at run
+  time), and multi-message *request/reply* (where reply types diverge per message).
 - **Header-located correlation** falls out once send-side headers exist: relax the
   `$message.payload#/…`-only correlation guard, capture the token from the headers
   the send now sets, and match it on the receive side's `messageHeaders`. Closes
