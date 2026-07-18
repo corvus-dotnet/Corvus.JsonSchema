@@ -18,10 +18,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 
 /// <summary>
 /// Allocation profile of the access-grants overview projection (design §6.1): a resolved grantee is aggregated into the
-/// <c>AccessGrantsOverview</c> response body — the bindings whose claim it satisfies, the base workflows its identity
-/// administers, and the source credentials it may use — and materialised into the response workspace exactly as the
-/// handler does (the terminal <c>GetAccessGrantsResult.Ok</c> step — a single <c>CreateBuilder</c> materialisation — is
-/// modelled in every arm). The fair comparison is <see cref="Naive_ManagedProjection"/> (baseline) versus
+/// <c>AccessGrantsOverview</c> response body — the bindings whose claim it satisfies, the base workflows and environments
+/// its identity administers, the capabilities it resolves to, and the source credentials it may use — and materialised
+/// into the response workspace exactly as the handler does (the terminal <c>GetAccessGrantsResult.Ok</c> step — a single
+/// <c>CreateBuilder</c> materialisation — is modelled in every arm). The fair comparison is <see cref="Naive_ManagedProjection"/> (baseline) versus
 /// <see cref="BytesNative_Projection"/>: both emit the SAME overview shape from the SAME pre-seeded fixture, so the delta
 /// isolates the projection MECHANISM. <see cref="Handler_EndToEnd"/> is the informational full-request-path number.
 /// </summary>
@@ -81,6 +81,8 @@ public class AccessGrantsProjectionBenchmarks
     private ParsedJsonDocument<SecurityBindingDocument> bindingTemplate = null!;
     private SecurityBindingDocument[] naiveBindings = null!;
     private List<string> naiveAdministered = null!;
+    private List<string> naiveEnvironments = null!;
+    private List<(string Scope, bool Eligible)> naiveCapabilities = null!;
     private List<(string SourceName, string Environment)> naiveCredentials = null!;
     private GranteeView naiveGrantee;
 
@@ -139,6 +141,8 @@ public class AccessGrantsProjectionBenchmarks
         }
 
         this.naiveAdministered = ["orders-workflow", "fulfilment-workflow"];
+        this.naiveEnvironments = ["production", "staging"];
+        this.naiveCapabilities = [("runs:read", false), ("runs:write", true)];
         this.naiveCredentials = [("orders-api", "production")];
         this.naiveGrantee = new GranteeView("person", "u-1042", "observed", true, [("sub", "u-1042")]);
 
@@ -170,6 +174,23 @@ public class AccessGrantsProjectionBenchmarks
                     ab.AddItem(Models.AccessGrantsAdministeredWorkflow.Build((ref Models.AccessGrantsAdministeredWorkflow.Builder ib) => ib.Create(baseWorkflowId: id)));
                 }
             }),
+            administersEnvironments: Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Build((ref Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Builder ab) =>
+            {
+                foreach (string environment in this.naiveEnvironments)
+                {
+                    string e = environment;
+                    ab.AddItem(Models.AccessGrantsAdministeredEnvironment.Build((ref Models.AccessGrantsAdministeredEnvironment.Builder ib) => ib.Create(environment: e)));
+                }
+            }),
+            capabilities: Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Build((ref Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Builder ab) =>
+            {
+                foreach ((string scope, bool eligible) in this.naiveCapabilities)
+                {
+                    string s = scope;
+                    bool el = eligible;
+                    ab.AddItem(Models.AccessGrantsCapability.Build(eligible: el, scope: s, expiresAt: default));
+                }
+            }),
             bindings: Models.AccessGrantsOverview.SecurityBindingSummaryArray.Build((ref Models.AccessGrantsOverview.SecurityBindingSummaryArray.Builder ab) =>
             {
                 foreach (SecurityBindingDocument binding in this.naiveBindings)
@@ -199,11 +220,13 @@ public class AccessGrantsProjectionBenchmarks
     public int BytesNative_Projection()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        var context = new ProjectionContext(this.naiveAdministered, this.naiveBindings, this.naiveCredentials);
+        var context = new ProjectionContext(this.naiveAdministered, this.naiveEnvironments, this.naiveCapabilities, this.naiveBindings, this.naiveCredentials);
         Models.AccessGrantsOverview.Source<ProjectionContext> body = Models.AccessGrantsOverview.Build(
             in context,
             administers: Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Build(in context, BuildAdministeredWorkflows),
+            administersEnvironments: Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Build(in context, BuildAdministeredEnvironments),
             bindings: Models.AccessGrantsOverview.SecurityBindingSummaryArray.Build(in context, BuildAccessBindings),
+            capabilities: Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Build(in context, BuildCapabilities),
             credentialUsage: Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Build(in context, BuildCredentialUsages),
             grantee: (Models.ResolvedGrantee.Source)Models.ResolvedGrantee.From(this.granteeDocument.RootElement));
         return Models.AccessGrantsOverview.CreateBuilder(workspace, body, 30).RootElement.Bindings.GetArrayLength();
@@ -299,6 +322,27 @@ public class AccessGrantsProjectionBenchmarks
     private static void BuildAdministeredWorkflow(in string baseWorkflowId, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
         => b.Create(baseWorkflowId: baseWorkflowId);
 
+    private static void BuildAdministeredEnvironments(in ProjectionContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Builder array)
+    {
+        foreach (string environment in ctx.Environments)
+        {
+            array.AddItem(Models.AccessGrantsAdministeredEnvironment.Build(in environment, BuildAdministeredEnvironment));
+        }
+    }
+
+    private static void BuildAdministeredEnvironment(in string environment, ref Models.AccessGrantsAdministeredEnvironment.Builder b)
+        => b.Create(environment: environment);
+
+    // The resolved capability entries (scope + eligible-vs-active), built through the same named-arg factory the handler
+    // uses; the optional expiry is omitted (default), matching the fixture (no conferring binding expires).
+    private static void BuildCapabilities(in ProjectionContext ctx, ref Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Builder array)
+    {
+        foreach ((string scope, bool eligible) in ctx.Capabilities)
+        {
+            array.AddItem(Models.AccessGrantsCapability.Build(eligible: eligible, scope: scope, expiresAt: default));
+        }
+    }
+
     private static void BuildAccessBindings(in ProjectionContext ctx, ref Models.AccessGrantsOverview.SecurityBindingSummaryArray.Builder array)
     {
         foreach (SecurityBindingDocument binding in ctx.Bindings)
@@ -343,10 +387,16 @@ public class AccessGrantsProjectionBenchmarks
     // fixture the baseline projects from, so the delta is purely the projection mechanism.
     private readonly ref struct ProjectionContext(
         IReadOnlyList<string> administered,
+        IReadOnlyList<string> environments,
+        IReadOnlyList<(string Scope, bool Eligible)> capabilities,
         IReadOnlyList<SecurityBindingDocument> bindings,
         IReadOnlyList<(string SourceName, string Environment)> credentials)
     {
         public IReadOnlyList<string> Administered { get; } = administered;
+
+        public IReadOnlyList<string> Environments { get; } = environments;
+
+        public IReadOnlyList<(string Scope, bool Eligible)> Capabilities { get; } = capabilities;
 
         public IReadOnlyList<SecurityBindingDocument> Bindings { get; } = bindings;
 
