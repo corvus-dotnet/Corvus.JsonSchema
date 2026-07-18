@@ -223,6 +223,47 @@ describe('<arazzo-design-surface>', () => {
     const chip = el.shadowRoot.querySelector('.exit-chip');
     ok(chip, 'exit chip rendered');
     ok(chip.textContent.includes('order-with-compensation'));
+    // The target is a workflow in this document, so the chip is navigable — WF-badged and marked local.
+    ok(chip.classList.contains('local'), 'a same-document target is navigable');
+    ok(chip.querySelector('.kbadge-text')?.textContent === 'WF', 'carries the WF kind badge');
+  });
+
+  it('double-tapping a navigable exit chip emits workflow-open for the target', async () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[1].onSuccess = [{ name: 'handoff', type: 'goto', workflowId: 'order-with-compensation' }];
+    el = document.createElement('arazzo-design-surface');
+    el.style.cssText = 'display:block;width:900px;height:600px;';
+    mount(el);
+    el.graph = projectWorkflow(doc, 'place-order');
+    const svg = el.shadowRoot.querySelector('svg');
+    const chip = el.shadowRoot.querySelector('.exit-chip.local');
+    const done = nextEvent(el, 'workflow-open');
+    // Two click gestures on the chip within the double-tap window (synthetic events fire synchronously).
+    pointer('pointerdown', chip, { clientX: 10, clientY: 10 });
+    pointer('pointerup', svg, { clientX: 10, clientY: 10 });
+    pointer('pointerdown', chip, { clientX: 10, clientY: 10 });
+    pointer('pointerup', svg, { clientX: 10, clientY: 10 });
+    equal((await done).detail.workflowId, 'order-with-compensation');
+  });
+
+  it('an external cross-workflow goto is not navigable and emits nothing', async () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[1].onSuccess = [{ name: 'handoff', type: 'goto', workflowId: '$sourceDescriptions.other.remoteFlow' }];
+    el = document.createElement('arazzo-design-surface');
+    el.style.cssText = 'display:block;width:900px;height:600px;';
+    mount(el);
+    el.graph = projectWorkflow(doc, 'place-order');
+    const svg = el.shadowRoot.querySelector('svg');
+    const chip = el.shadowRoot.querySelector('.exit-chip');
+    ok(!chip.classList.contains('local'), 'an external target is not navigable');
+    let fired = false;
+    el.addEventListener('workflow-open', () => { fired = true; });
+    pointer('pointerdown', chip, { clientX: 10, clientY: 10 });
+    pointer('pointerup', svg, { clientX: 10, clientY: 10 });
+    pointer('pointerdown', chip, { clientX: 10, clientY: 10 });
+    pointer('pointerup', svg, { clientX: 10, clientY: 10 });
+    await Promise.resolve();
+    ok(!fired, 'double-tapping an external exit chip does not navigate');
   });
 
   it('accepts an operation drop and reports it with world coordinates', async () => {

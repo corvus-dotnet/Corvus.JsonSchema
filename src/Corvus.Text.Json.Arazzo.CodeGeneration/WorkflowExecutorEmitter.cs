@@ -1401,7 +1401,7 @@ internal enum StepActionKind
     /// <summary>End the workflow (jump to building the outputs).</summary>
     End,
 
-    /// <summary>Transfer control to another step (sub-workflow targets are a later phase).</summary>
+    /// <summary>Transfer control to another step, or — when the target is a <c>workflowId</c> — to another workflow's executor (its result becomes this workflow's result).</summary>
     Goto,
 
     /// <summary>Retry the current step (failure actions only), up to <c>retryLimit</c> times.</summary>

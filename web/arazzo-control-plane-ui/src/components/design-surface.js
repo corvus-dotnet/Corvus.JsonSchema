@@ -28,6 +28,7 @@
 //              that step to the FRONT of the steps array, because in Arazzo the entry point IS
 //              steps[0]; the projection then re-derives the start edge), edge-created
 //              {from, to, kind}, breakpoint-toggled {stepId, enabled}, node-activated {stepId},
+//              workflow-open {workflowId} (double-tapping a navigable cross-workflow goto exit chip),
 //              delete-requested {selection},
 //              edge-retargeted {id, actionName, from, kind, to} (the selected action edge's
 //              arrowhead dragged onto another node/the end terminal — the host rewrites the action),
@@ -286,6 +287,11 @@ class ArazzoDesignSurface extends ArazzoElement {
         .exit-chip rect { fill: var(--_surface); stroke: var(--_border); stroke-dasharray: 3 3; rx: 12; }
         .exit-chip text { font: 11px var(--_font); fill: var(--_muted); }
         .exit-chip { cursor: pointer; }
+        /* A local target is navigable: solid outline, readable label, and a WF kind badge. */
+        .exit-chip.local rect { stroke: var(--arazzo-kind-workflow, #0d8a8a); stroke-dasharray: none; }
+        .exit-chip.local text { fill: var(--_text); }
+        .exit-chip .kbadge { fill: var(--arazzo-kind-workflow, #0d8a8a); stroke: none; stroke-dasharray: none; rx: 3; }
+        .exit-chip .kbadge-text { font: 700 9px var(--_font); fill: #fff; }
 
         /* Workflow-defaults card (the inherited layer) */
         .defaults rect.card { fill: var(--_bg); stroke: var(--_border); stroke-dasharray: 5 3; rx: 10; }
@@ -397,9 +403,13 @@ class ArazzoDesignSurface extends ArazzoElement {
     }
 
     // Exit chips (edges targeting `workflow:<id>`) get synthetic positions next to their source.
+    // A chip whose goto targets another workflow in this document is navigable (double-tap switches
+    // to it); this._exitLocal records which, keyed by the same `workflow:<id>`.
     this._exitPositions = {};
+    this._exitLocal = new Set();
     for (const edge of g.edges) {
       if (!edge.to.startsWith('workflow:')) continue;
+      if (edge.localTarget) this._exitLocal.add(edge.to);
       const from = this._positions[edge.from];
       if (from && !this._exitPositions[edge.to]) {
         this._exitPositions[edge.to] = { x: from.x + NODE_WIDTH + 56, y: from.y + NODE_HEIGHT / 2 - 14 };
@@ -542,14 +552,23 @@ class ArazzoDesignSurface extends ArazzoElement {
   /** @private */
   _buildExitChip(id, pos) {
     const label = id.slice('workflow:'.length);
+    const local = this._exitLocal?.has(id);
     const el = document.createElementNS(SVG, 'g');
-    el.setAttribute('class', 'exit-chip');
+    // A local target is navigable: it carries the WF kind badge and a solid outline, and a title
+    // invites the double-tap that switches to it. An external target keeps the muted dashed look.
+    el.setAttribute('class', local ? 'exit-chip local' : 'exit-chip');
     el.setAttribute('data-id', id);
     el.setAttribute('transform', `translate(${pos.x} ${pos.y})`);
-    const w = Math.min(11 * label.length + 34, 220);
+    const text = truncate(label, 24);
+    const w = Math.min(11 * text.length + (local ? 52 : 34), 240);
+    const badge = local
+      ? `<rect class="kbadge" x="6" y="6" width="20" height="14"></rect><text class="kbadge-text" x="16" y="16" text-anchor="middle">WF</text>`
+      : '';
     el.innerHTML = `
+      <title>${local ? 'Go to workflow ' : 'Transfers to workflow '}${escapeHtml(label)}${local ? ' (double-click)' : ' (in another document)'}</title>
       <rect width="${w}" height="26"></rect>
-      <text x="10" y="17">⇥ ${escapeHtml(truncate(label, 24))}</text>
+      ${badge}
+      <text x="${local ? 32 : 10}" y="17">⇥ ${escapeHtml(text)}</text>
     `;
     return el;
   }
@@ -1033,6 +1052,7 @@ class ArazzoDesignSurface extends ArazzoElement {
       } else if (g.type === 'click') {
         this._select(g.hit.type === 'exit' ? { type: 'edge', id: g.hit.id } : { type: g.hit.type, id: g.hit.id });
         if (g.hit.type === 'node') this._tapNode(g.hit.id, e.timeStamp);
+        else if (g.hit.type === 'exit') this._tapExit(g.hit.id, e.timeStamp);
       } else if (g.type === 'draw') {
         this.$('.rubber').setAttribute('hidden', '');
         for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
@@ -1107,6 +1127,19 @@ class ArazzoDesignSurface extends ArazzoElement {
     if (this._lastTap && this._lastTap.id === id && at - this._lastTap.at < 450) {
       this._lastTap = null;
       this.emit('node-activated', { stepId: id });
+      return;
+    }
+
+    this._lastTap = { id, at };
+  }
+
+  /** @private Double-tapping a navigable cross-workflow exit chip emits workflow-open so the host
+   *  can switch to the target workflow. External (cross-document / absent) targets are not navigable. */
+  _tapExit(id, at) {
+    if (!this._exitLocal?.has(id)) { this._lastTap = null; return; }
+    if (this._lastTap && this._lastTap.id === id && at - this._lastTap.at < 450) {
+      this._lastTap = null;
+      this.emit('workflow-open', { workflowId: id.slice('workflow:'.length) });
       return;
     }
 

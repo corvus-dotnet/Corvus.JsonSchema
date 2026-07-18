@@ -23,8 +23,11 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <see cref="StepBodyEmitter.EmitCriteriaExpression"/>), so a control-flow step stays context-free when
 /// every criterion is statically resolvable. Action criteria are evaluated <em>inside</em> the step's
 /// <c>try</c> (while the response is alive); the chosen effect is captured in case-local flags and applied
-/// after the response is disposed. Sub-workflow <c>goto</c> (a <c>workflowId</c> target) and reusable
-/// <c>$ref</c> actions are later phases.
+/// after the response is disposed. A <c>goto</c> whose target is a <c>workflowId</c> transfers control to
+/// that workflow's executor and returns its result as this workflow's result (<see cref="BuildApply"/>);
+/// a cross-document target (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>) resolves to its
+/// per-source namespace. Reusable <c>$ref</c> actions are resolved against <c>components</c> before
+/// emission (<c>WorkflowExecutorEmitter.ReadActions</c>), so by here every action is inline.
 /// </remarks>
 internal static class ControlFlowEmitter
 {

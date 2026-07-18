@@ -36,6 +36,8 @@
  * @property {string} [actionName]       The action's name (goto edges).
  * @property {string} [criteriaSummary]  First criterion condition (+n more), for the edge label.
  * @property {boolean} [reusable]        True when the action came from a `$components` reference.
+ * @property {string} [targetWorkflowId] The target workflow id, for a cross-workflow goto (`to` = `workflow:<id>`).
+ * @property {boolean} [localTarget]     True when a cross-workflow goto targets another workflow in this document (so it is navigable in-place).
  */
 
 /**
@@ -94,6 +96,10 @@ export function projectWorkflow(doc, workflowId) {
   const problems = [];
   const steps = workflow.steps || [];
   const stepIds = new Set(steps.map((s) => s.stepId));
+  // The document's other workflows — a cross-workflow goto whose target is one of them is navigable
+  // in-place (the designer can switch to it); a target that is cross-document (source-qualified) or
+  // simply absent is an external exit the designer cannot follow.
+  const docWorkflowIds = new Set((doc?.workflows || []).map((w) => w.workflowId));
 
   // Start/end pseudo-nodes bracket the step nodes: start carries the workflow's typed inputs,
   // end carries its outputs. Projection-only — see START_ID/END_ID.
@@ -191,12 +197,16 @@ export function projectWorkflow(doc, workflowId) {
         }
         if (action.type !== 'goto') continue;
         if (action.workflowId) {
-          // A goto to another workflow: no in-graph target; surfaced as a problem-free badge case
-          // later — for now record an edge to a synthetic id the renderer shows as an exit chip.
+          // A goto to another workflow transfers control to that workflow's executor (its result
+          // becomes this workflow's result). It has no in-graph target, so it is surfaced as an exit
+          // chip: a navigable one (the designer can switch to it) when the target is another workflow
+          // in this document, an external one otherwise.
           edges.push({
             id: actionEdgeId(step.stepId, kind, { type: 'goto', name: action.name, target: action.workflowId }),
             from: step.stepId,
             to: `workflow:${action.workflowId}`,
+            targetWorkflowId: action.workflowId,
+            localTarget: docWorkflowIds.has(action.workflowId),
             kind,
             actionName: action.name,
             criteriaSummary: summarizeCriteria(action.criteria),

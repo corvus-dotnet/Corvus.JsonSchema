@@ -705,6 +705,17 @@
     opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation, undefined, e.detail.sourceName));
     surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position, e.detail.sourceName));
 
+    // Double-tapping a navigable cross-workflow goto's exit chip switches the canvas to that target
+    // workflow — the designer follows the same transfer the generated executor performs at runtime.
+    surface.addEventListener('workflow-open', (e) => {
+      const { workflowId } = e.detail;
+      if (!(doc.workflows ?? []).some((w) => w.workflowId === workflowId)) return;
+      select.value = workflowId;
+      project();
+      surface.fit();
+      logEvent('workflow-open', { workflowId });
+    });
+
     // Dragging from the start node's entry port onto a step makes it the workflow's FIRST step —
     // in Arazzo the entry point IS steps[0], so this is a reorder, not an action edge.
     surface.addEventListener('entry-changed', (e) => {

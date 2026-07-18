@@ -201,6 +201,20 @@ test('a cross-workflow goto becomes an exit edge to a workflow: target', () => {
   const exit = g.edges.find((e) => e.actionName === 'handoff');
   assert.equal(exit.to, 'workflow:order-with-compensation');
   assert.equal(exit.kind, 'success');
+  // The target is another workflow in this document, so the exit is navigable in-place.
+  assert.equal(exit.targetWorkflowId, 'order-with-compensation');
+  assert.equal(exit.localTarget, true);
   // An unconditional goto also elides the sequence fall-through.
   assert.ok(!g.edges.some((e) => e.kind === 'seq' && e.from === 'validate-order'));
+});
+
+test('a cross-workflow goto to a target outside the document is not navigable', () => {
+  const doc = structuredClone(designerFixture);
+  // A source-qualified (cross-document) target, and a plain id that is not a workflow here, are both external.
+  doc.workflows[0].steps[0].onSuccess = [{ name: 'handoff', type: 'goto', workflowId: '$sourceDescriptions.other.remoteFlow' }];
+  const g = projectWorkflow(doc, 'place-order');
+  const exit = g.edges.find((e) => e.actionName === 'handoff');
+  assert.equal(exit.to, 'workflow:$sourceDescriptions.other.remoteFlow');
+  assert.equal(exit.targetWorkflowId, '$sourceDescriptions.other.remoteFlow');
+  assert.equal(exit.localTarget, false);
 });
