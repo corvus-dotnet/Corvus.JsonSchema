@@ -128,6 +128,10 @@ public sealed class HostedWorkflowResumer
         ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
 
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash).Workflow;
+        // The detached signature is optional here (empty when the package is unsigned); the loader enforces it only when
+        // it was configured with a verifier — a signing-required runner rejects an unsigned or badly-signed package.
+        ReadOnlyMemory<byte> signature = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
+
+        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature).Workflow;
     }
 }

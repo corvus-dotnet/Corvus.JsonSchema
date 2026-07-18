@@ -94,6 +94,35 @@ public class CatalogPackageSigningTests
     }
 
     [TestMethod]
+    public async Task The_signature_is_addressable_by_document_name_for_the_runner_load_path()
+    {
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var store = new InMemoryWorkflowCatalogStore(executorProvider: new FakeExecutorProvider(), signer: new EcdsaExecutorPackageSigner(signingKey, "release-2026"));
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
+
+        // HostedWorkflowResumer fetches the detached signature exactly this way, alongside the assembly and manifest.
+        ReadOnlyMemory<byte>? sig = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, default);
+        ReadOnlyMemory<byte>? manifest = await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorManifestDocumentName, default);
+        sig.ShouldNotBeNull();
+        manifest.ShouldNotBeNull();
+
+        ExecutorPackageSignature signature = ExecutorPackageSignature.Parse(sig.Value);
+        TrustStore(("release-2026", signingKey)).Verify(manifest.Value, in signature).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task An_unsigned_version_has_no_signature_document()
+    {
+        var store = new InMemoryWorkflowCatalogStore(executorProvider: new FakeExecutorProvider());
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("flow", WorkflowPackage.Pack(Workflow("flow"), []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
+
+        // No signer configured → the runner's fetch returns null, and a loader without a verifier loads it unsigned.
+        (await store.GetDocumentAsync(version.Ref.BaseWorkflowId, version.Ref.VersionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task A_package_signed_by_an_untrusted_key_does_not_verify()
     {
         using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);

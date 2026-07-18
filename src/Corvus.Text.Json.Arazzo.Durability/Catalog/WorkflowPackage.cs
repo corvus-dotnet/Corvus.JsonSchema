@@ -717,7 +717,7 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
     /// <summary>Gets the detached executor-manifest signature (<see cref="WorkflowPackage.ExecutorManifestSignatureEntryName"/>), or <see langword="null"/> if the package is unsigned.</summary>
     public byte[]? ExecutorSignature { get; init; }
 
-    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, <see cref="WorkflowPackage.ExecutorDocumentName"/> for the executor assembly, <see cref="WorkflowPackage.ExecutorManifestDocumentName"/> for its manifest, else a source name.</summary>
+    /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, <see cref="WorkflowPackage.ExecutorDocumentName"/> for the executor assembly, <see cref="WorkflowPackage.ExecutorManifestDocumentName"/> for its manifest, <see cref="WorkflowPackage.ExecutorManifestSignatureDocumentName"/> for the detached signature, else a source name.</summary>
     /// <param name="documentName">The document name.</param>
     /// <returns>The document bytes, or <see langword="null"/> if not present.</returns>
     public byte[]? GetDocument(string documentName)
@@ -740,6 +740,11 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
         if (documentName == WorkflowPackage.ExecutorManifestDocumentName)
         {
             return this.ExecutorManifest;
+        }
+
+        if (documentName == WorkflowPackage.ExecutorManifestSignatureDocumentName)
+        {
+            return this.ExecutorSignature;
         }
 
         foreach (KeyValuePair<string, byte[]> source in this.Sources)
