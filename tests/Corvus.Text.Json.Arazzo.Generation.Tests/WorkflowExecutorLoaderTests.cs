@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
@@ -145,6 +146,111 @@ public class WorkflowExecutorLoaderTests
         // Reloading after unload works.
         LoadedWorkflow reloaded = loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash);
         reloaded.Workflow.Descriptor.WorkflowId.ShouldBe("adopt-v1");
+    }
+
+    [TestMethod]
+    public async Task Ecdsa_signer_and_trust_store_verifier_round_trip()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signer = new EcdsaExecutorPackageSigner(key, "k1");
+        byte[] payload = Encoding.UTF8.GetBytes("""{"formatVersion":1}""");
+
+        ExecutorPackageSignature signature = await signer.SignAsync(payload, default);
+        signature.Algorithm.ShouldBe(ExecutorSignatureAlgorithms.EcdsaP256Sha256);
+        signature.KeyId.ShouldBe("k1");
+
+        // Round-trip through the detached .sig JSON form, then verify with a trust store holding only the public key.
+        ExecutorPackageSignature parsed = ExecutorPackageSignature.Parse(signature.ToUtf8());
+        IExecutorPackageVerifier verifier = TrustStore(("k1", key));
+        verifier.Verify(payload, parsed).ShouldBeTrue();
+
+        // A different payload does not verify against the same signature.
+        verifier.Verify(Encoding.UTF8.GetBytes("""{"formatVersion":2}"""), parsed).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Verifies_a_signed_package_against_the_trust_store()
+    {
+        const string hash = "hash-signed";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signer = new EcdsaExecutorPackageSigner(signingKey, "release-2026");
+        byte[] signatureUtf8 = (await signer.SignAsync(artifact.Manifest, default)).ToUtf8();
+
+        // The runner trusts only the public key exported from the signing key — never the private key.
+        using var loader = new WorkflowExecutorLoader(verifier: TrustStore(("release-2026", signingKey)));
+
+        LoadedWorkflow loaded = loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash, signatureUtf8);
+        loaded.Manifest.WorkflowId.ShouldBe("adopt-v1");
+    }
+
+    [TestMethod]
+    public void Rejects_an_unsigned_package_when_signing_is_required()
+    {
+        const string hash = "hash-unsigned";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var loader = new WorkflowExecutorLoader(verifier: TrustStore(("release-2026", signingKey)));
+
+        WorkflowExecutorLoadException ex = Should.Throw<WorkflowExecutorLoadException>(
+            () => loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash));
+        ex.Message.ShouldContain("unsigned");
+        loader.TryGet("adopt", 1, out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Rejects_a_signature_from_an_untrusted_key()
+    {
+        const string hash = "hash-untrusted";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+
+        // A signature made by a key the runner does not trust (the untrusted-runner threat: even a valid signature
+        // from the wrong key is rejected).
+        using ECDsa rogueKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using ECDsa trustedKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signer = new EcdsaExecutorPackageSigner(rogueKey, "rogue");
+        byte[] signatureUtf8 = (await signer.SignAsync(artifact.Manifest, default)).ToUtf8();
+
+        using var loader = new WorkflowExecutorLoader(verifier: TrustStore(("release-2026", trustedKey)));
+
+        WorkflowExecutorLoadException ex = Should.Throw<WorkflowExecutorLoadException>(
+            () => loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash, signatureUtf8));
+        ex.Message.ShouldContain("did not verify");
+    }
+
+    [TestMethod]
+    public async Task Rejects_a_tampered_signature()
+    {
+        const string hash = "hash-tampered-sig";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+        using ECDsa signingKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signer = new EcdsaExecutorPackageSigner(signingKey, "release-2026");
+
+        ExecutorPackageSignature signature = await signer.SignAsync(artifact.Manifest, default);
+        byte[] tampered = signature.Value.ToArray();
+        tampered[^1] ^= 0xFF;
+        byte[] signatureUtf8 = new ExecutorPackageSignature(signature.Algorithm, signature.KeyId, tampered).ToUtf8();
+
+        using var loader = new WorkflowExecutorLoader(verifier: TrustStore(("release-2026", signingKey)));
+
+        Should.Throw<WorkflowExecutorLoadException>(
+            () => loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash, signatureUtf8));
+    }
+
+    // A trust store holding only the PUBLIC half of each signing key (exported without the private parameters), so the
+    // verifier proves out the custody split: a runner verifies with material it could never sign with.
+    private static IExecutorPackageVerifier TrustStore(params (string KeyId, ECDsa SigningKey)[] keys)
+    {
+        var trusted = new Dictionary<string, AsymmetricAlgorithm>(StringComparer.Ordinal);
+        foreach ((string keyId, ECDsa signingKey) in keys)
+        {
+            ECDsa publicOnly = ECDsa.Create();
+            publicOnly.ImportParameters(signingKey.ExportParameters(includePrivateParameters: false));
+            trusted[keyId] = publicOnly;
+        }
+
+        return new TrustStoreExecutorPackageVerifier(trusted);
     }
 
     private static WorkflowExecutorArtifact BuildArtifact(string packageHash)

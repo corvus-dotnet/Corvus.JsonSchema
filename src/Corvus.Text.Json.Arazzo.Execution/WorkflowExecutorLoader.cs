@@ -28,13 +28,16 @@ public sealed class WorkflowExecutorLoader : IDisposable
     private readonly Lock gate = new();
     private readonly Dictionary<(string BaseWorkflowId, int VersionNumber), LoadedWorkflow> loaded = new();
     private readonly string supportedTargetFramework;
+    private readonly IExecutorPackageVerifier? verifier;
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowExecutorLoader"/> class.</summary>
     /// <param name="supportedTargetFramework">The target framework this runner accepts; defaults to <see cref="SupportedTargetFramework"/>.</param>
-    public WorkflowExecutorLoader(string? supportedTargetFramework = null)
+    /// <param name="verifier">The package-signature verifier (§3.3): when supplied, every loaded package must carry a signature that verifies against the runner's trust store; when <see langword="null"/> (single-node / trusted deployments) only the hash-based integrity binding is checked.</param>
+    public WorkflowExecutorLoader(string? supportedTargetFramework = null, IExecutorPackageVerifier? verifier = null)
     {
         this.supportedTargetFramework = supportedTargetFramework ?? SupportedTargetFramework;
+        this.verifier = verifier;
     }
 
     /// <summary>
@@ -47,14 +50,16 @@ public sealed class WorkflowExecutorLoader : IDisposable
     /// <param name="assembly">The compiled executor assembly bytes (the package's <c>metadata/executor.dll</c>).</param>
     /// <param name="manifestUtf8">The executor manifest as UTF-8 JSON (the package's <c>metadata/executor-manifest.json</c>).</param>
     /// <param name="expectedPackageHash">The catalog version's content hash, which the manifest must bind to.</param>
+    /// <param name="signatureUtf8">The detached package signature as UTF-8 JSON (the package's <c>metadata/executor-manifest.sig</c>), or empty when the package is unsigned; required and verified when this loader was given a verifier.</param>
     /// <returns>The loaded, verified, cached workflow.</returns>
-    /// <exception cref="WorkflowExecutorLoadException">Integrity verification failed, the target framework is unsupported, or the entry type could not be activated.</exception>
+    /// <exception cref="WorkflowExecutorLoadException">Integrity or signature verification failed, the target framework is unsupported, or the entry type could not be activated.</exception>
     public LoadedWorkflow Load(
         string baseWorkflowId,
         int versionNumber,
         ReadOnlyMemory<byte> assembly,
         ReadOnlyMemory<byte> manifestUtf8,
-        string expectedPackageHash)
+        string expectedPackageHash,
+        ReadOnlyMemory<byte> signatureUtf8 = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(expectedPackageHash);
@@ -68,7 +73,7 @@ public sealed class WorkflowExecutorLoader : IDisposable
                 return existing;
             }
 
-            WorkflowExecutorManifest manifest = ParseAndVerify(assembly, manifestUtf8, expectedPackageHash, this.supportedTargetFramework);
+            WorkflowExecutorManifest manifest = ParseAndVerify(assembly, manifestUtf8, signatureUtf8, expectedPackageHash, this.supportedTargetFramework, this.verifier);
             LoadedWorkflow result = Activate(baseWorkflowId, versionNumber, assembly, manifest);
             this.loaded[key] = result;
             return result;
@@ -133,8 +138,10 @@ public sealed class WorkflowExecutorLoader : IDisposable
     private static WorkflowExecutorManifest ParseAndVerify(
         ReadOnlyMemory<byte> assembly,
         ReadOnlyMemory<byte> manifestUtf8,
+        ReadOnlyMemory<byte> signatureUtf8,
         string expectedPackageHash,
-        string supportedTargetFramework)
+        string supportedTargetFramework,
+        IExecutorPackageVerifier? verifier)
     {
         WorkflowExecutorManifest manifest;
         try
@@ -163,6 +170,35 @@ public sealed class WorkflowExecutorLoader : IDisposable
         {
             throw new WorkflowExecutorLoadException(
                 $"The executor targets '{manifest.TargetFramework}', which this runner ('{supportedTargetFramework}') cannot load.");
+        }
+
+        // Signature (§3.3): the integrity binding above proves the DLL matches the manifest and the manifest matches
+        // the version; the signature proves the manifest itself was produced by the control plane and not tampered
+        // with. Verifying it also transitively vouches for the assemblyDigest and packageHash it contains. A runner
+        // configured with a verifier rejects any unsigned or badly-signed package; an unconfigured runner (single-node
+        // / trusted) skips this and relies on integrity alone.
+        if (verifier is not null)
+        {
+            if (signatureUtf8.IsEmpty)
+            {
+                throw new WorkflowExecutorLoadException("The executor package is unsigned, but this runner requires a valid signature.");
+            }
+
+            ExecutorPackageSignature signature;
+            try
+            {
+                signature = ExecutorPackageSignature.Parse(signatureUtf8);
+            }
+            catch (FormatException ex)
+            {
+                throw new WorkflowExecutorLoadException($"The executor signature is malformed: {ex.Message}", ex);
+            }
+
+            if (!verifier.Verify(manifestUtf8, signature))
+            {
+                throw new WorkflowExecutorLoadException(
+                    $"The executor manifest's signature (key '{signature.KeyId}', {signature.Algorithm}) did not verify against a trusted key.");
+            }
         }
 
         return manifest;
