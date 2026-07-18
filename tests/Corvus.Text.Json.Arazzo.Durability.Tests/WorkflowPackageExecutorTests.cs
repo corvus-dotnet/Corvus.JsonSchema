@@ -70,6 +70,37 @@ public class WorkflowPackageExecutorTests
     }
 
     [TestMethod]
+    public void Pack_round_trips_the_detached_executor_signature()
+    {
+        byte[] signature = Encoding.UTF8.GetBytes("""{"algorithm":"ecdsa-p256-sha256","keyId":"release-2026","value":"AQIDBA=="}""");
+        byte[] package = WorkflowPackage.Pack(Workflow("flow"), [], executor: ExecutorBytes, executorManifest: ManifestBytes, executorSignature: signature);
+
+        WorkflowPackageContents contents = WorkflowPackage.Open(package);
+        contents.ExecutorSignature.ShouldBe(signature);
+
+        // The generic entry reader (the runner-load path) also finds it by name.
+        WorkflowPackage.TryReadEntry(package, "metadata/executor-manifest.sig"u8, out ReadOnlyMemory<byte> sig).ShouldBeTrue();
+        sig.ToArray().ShouldBe(signature);
+
+        // Absent when the package is unsigned.
+        WorkflowPackage.Open(WorkflowPackage.Pack(Workflow("flow"), [], executorManifest: ManifestBytes)).ExecutorSignature.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public void The_signature_is_metadata_and_does_not_change_the_content_hash()
+    {
+        byte[] sourceA = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"a","version":"1"}}""");
+        var sources = new[] { new KeyValuePair<string, byte[]>("a", sourceA) };
+        byte[] signature = Encoding.UTF8.GetBytes("""{"algorithm":"ecdsa-p256-sha256","keyId":"release-2026","value":"AQIDBA=="}""");
+
+        string unsigned = WorkflowPackage.ComputeContentHash(Workflow("flow"), sources);
+        WorkflowPackageContents contents = WorkflowPackage.Open(
+            WorkflowPackage.Pack(Workflow("flow"), sources, executor: ExecutorBytes, executorManifest: ManifestBytes, executorSignature: signature));
+
+        WorkflowPackage.ComputeContentHash(contents.Workflow, contents.Sources).ShouldBe(unsigned);
+    }
+
+    [TestMethod]
     public void GetDocument_routes_workflow_sources_and_unknown()
     {
         byte[] sourceA = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"a","version":"1"}}""");

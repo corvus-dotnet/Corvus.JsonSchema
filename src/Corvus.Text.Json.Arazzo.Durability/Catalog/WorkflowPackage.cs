@@ -82,6 +82,13 @@ public static class WorkflowPackage
     /// <summary>The entry name of the executor manifest (target framework, integrity binding, entry type).</summary>
     public const string ExecutorManifestEntryName = "metadata/executor-manifest.json";
 
+    /// <summary>The reserved document name addressing the package's detached executor-manifest signature.</summary>
+    public const string ExecutorManifestSignatureDocumentName = "$executorSignature";
+
+    /// <summary>The entry name of the detached executor-manifest signature (§3.3), signed by the control plane and
+    /// verified by a runner against a trusted public key; a metadata entry, so it does not change the content hash.</summary>
+    public const string ExecutorManifestSignatureEntryName = "metadata/executor-manifest.sig";
+
     /// <summary>The scenario-set entry (workflow-designer design §4.2): the working copy's scenarios, published verbatim.</summary>
     public const string ScenariosEntryName = "metadata/scenarios.json";
 
@@ -112,6 +119,8 @@ public static class WorkflowPackage
 
     private static ReadOnlySpan<byte> ExecutorManifestEntryNameUtf8 => "metadata/executor-manifest.json"u8;
 
+    private static ReadOnlySpan<byte> ExecutorManifestSignatureEntryNameUtf8 => "metadata/executor-manifest.sig"u8;
+
     private static readonly Comparison<KeyValuePair<string, byte[]>> BySourceKey = static (a, b) => string.CompareOrdinal(a.Key, b.Key);
 
     /// <summary>Packs an Arazzo workflow document and its referenced source documents into a deterministic package.</summary>
@@ -131,8 +140,9 @@ public static class WorkflowPackage
         ReadOnlyMemory<byte> executor = default,
         ReadOnlyMemory<byte> executorManifest = default,
         ReadOnlyMemory<byte> scenarios = default,
-        ReadOnlyMemory<byte> evidence = default)
-        => PackPooled(workflowUtf8, ToMemorySources(sources), schemas, executor, executorManifest, scenarios, evidence);
+        ReadOnlyMemory<byte> evidence = default,
+        ReadOnlyMemory<byte> executorSignature = default)
+        => PackPooled(workflowUtf8, ToMemorySources(sources), schemas, executor, executorManifest, scenarios, evidence, executorSignature);
 
     /// <summary>Assembles a package, taking the source documents as <see cref="ReadOnlyMemory{T}"/> (so a pooled reader
     /// can pack without materialising each source to its own array) — a distinct name from <c>Pack</c> so an empty
@@ -150,7 +160,8 @@ public static class WorkflowPackage
         ReadOnlyMemory<byte> executor = default,
         ReadOnlyMemory<byte> executorManifest = default,
         ReadOnlyMemory<byte> scenarios = default,
-        ReadOnlyMemory<byte> evidence = default)
+        ReadOnlyMemory<byte> evidence = default,
+        ReadOnlyMemory<byte> executorSignature = default)
     {
         ArgumentNullException.ThrowIfNull(sources);
 
@@ -211,6 +222,12 @@ public static class WorkflowPackage
                 entryCount++;
             }
 
+            if (!executorSignature.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + ExecutorManifestSignatureEntryNameUtf8.Length + executorSignature.Length);
+                entryCount++;
+            }
+
             if (!scenarios.IsEmpty)
             {
                 total = checked(total + EntryHeaderSize + ScenariosEntryNameUtf8.Length + scenarios.Length);
@@ -250,6 +267,11 @@ public static class WorkflowPackage
             if (!executorManifest.IsEmpty)
             {
                 pos = WriteEntry(span, pos, ExecutorManifestEntryNameUtf8, executorManifest.Span);
+            }
+
+            if (!executorSignature.IsEmpty)
+            {
+                pos = WriteEntry(span, pos, ExecutorManifestSignatureEntryNameUtf8, executorSignature.Span);
             }
 
             if (!scenarios.IsEmpty)
@@ -346,12 +368,14 @@ public static class WorkflowPackage
         byte[]? schemas = null;
         byte[]? executor = null;
         byte[]? executorManifest = null;
+        byte[]? executorSignature = null;
         var sources = new List<KeyValuePair<string, byte[]>>();
 
         while (reader.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
         {
             // u8 literals below mirror the WorkflowEntryName / SchemasEntryName / ExecutorEntryName /
-            // ExecutorManifestEntryName string constants (zero-alloc span matching) — keep them in sync.
+            // ExecutorManifestEntryName / ExecutorManifestSignatureEntryName string constants (zero-alloc span
+            // matching) — keep them in sync.
             ReadOnlySpan<byte> data = span.Slice(dataOffset, dataLength);
             if (name.SequenceEqual("workflow.json"u8))
             {
@@ -373,6 +397,10 @@ public static class WorkflowPackage
             {
                 executorManifest = data.ToArray();
             }
+            else if (name.SequenceEqual("metadata/executor-manifest.sig"u8))
+            {
+                executorSignature = data.ToArray();
+            }
 
             // Unknown entries are ignored (forward compatibility).
         }
@@ -388,6 +416,7 @@ public static class WorkflowPackage
             Schemas = schemas,
             Executor = executor,
             ExecutorManifest = executorManifest,
+            ExecutorSignature = executorSignature,
         };
     }
 
@@ -684,6 +713,9 @@ public readonly record struct WorkflowPackageContents(byte[] Workflow, IReadOnly
 
     /// <summary>Gets the executor manifest (<see cref="WorkflowPackage.ExecutorManifestEntryName"/>), or <see langword="null"/> if the package carries none.</summary>
     public byte[]? ExecutorManifest { get; init; }
+
+    /// <summary>Gets the detached executor-manifest signature (<see cref="WorkflowPackage.ExecutorManifestSignatureEntryName"/>), or <see langword="null"/> if the package is unsigned.</summary>
+    public byte[]? ExecutorSignature { get; init; }
 
     /// <summary>Gets a single document by name: <see cref="WorkflowPackage.WorkflowDocumentName"/> for the workflow, <see cref="WorkflowPackage.SchemasDocumentName"/> for the schema metadata, <see cref="WorkflowPackage.ExecutorDocumentName"/> for the executor assembly, <see cref="WorkflowPackage.ExecutorManifestDocumentName"/> for its manifest, else a source name.</summary>
     /// <param name="documentName">The document name.</param>
