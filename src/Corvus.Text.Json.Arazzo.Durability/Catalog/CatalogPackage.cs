@@ -5,6 +5,7 @@
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Execution;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -125,6 +126,36 @@ public static partial class CatalogPackage
         byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence);
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
+    }
+
+    /// <summary>
+    /// The signing counterpart of <see cref="Project"/>: projects a submitted package into the stored form and, when
+    /// an executor is compiled and a <paramref name="signer"/> is supplied, signs the executor manifest and carries the
+    /// detached signature (<see cref="WorkflowPackage.ExecutorManifestSignatureEntryName"/>) in the canonical package so
+    /// a runner can verify the executor's provenance before loading it. Signing is async because the private key lives in
+    /// a vault the control plane calls (design §3.3, §12); with no signer, or when no executor is produced, the result is
+    /// byte-identical to <see cref="Project"/> and no vault call is made.
+    /// </summary>
+    /// <param name="packageZip">The submitted package archive bytes.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number assigned by the store.</param>
+    /// <param name="metadataProvider">An optional schema-metadata provider (see <see cref="Project"/>).</param>
+    /// <param name="executorProvider">An optional executor provider (see <see cref="Project"/>); a signature is
+    /// produced only when this yields an executor to sign.</param>
+    /// <param name="signer">An optional executor-package signer; <see langword="null"/> to store the package unsigned.
+    /// The signer holds the control-plane private key, so it is supplied only on the add path, never to a runner.</param>
+    /// <param name="cancellationToken">A cancellation token, propagated to the signer's vault call.</param>
+    /// <returns>The projection, whose canonical package carries the detached executor signature when one was produced.</returns>
+    public static ValueTask<CatalogPackageProjection> ProjectAsync(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null, IExecutorPackageSigner? signer = null, CancellationToken cancellationToken = default)
+    {
+        // With no signer, or no executor provider to produce a manifest to sign, the projection is the synchronous one
+        // verbatim — skip the state machine and the vault round-trip entirely, keeping the common path allocation-identical.
+        if (signer is null || executorProvider is null)
+        {
+            return new ValueTask<CatalogPackageProjection>(Project(packageZip, baseWorkflowId, versionNumber, metadataProvider, executorProvider));
+        }
+
+        return ProjectSignedAsync(packageZip, baseWorkflowId, versionNumber, metadataProvider, executorProvider, signer, cancellationToken);
     }
 
     /// <summary>
@@ -298,6 +329,40 @@ public static partial class CatalogPackage
         }
 
         return sources;
+    }
+
+    // The signing projection: identical to Project up to building the executor, then awaits the control-plane signer over
+    // the executor manifest and carries the detached signature in the canonical package. Reached only when both a signer
+    // and an executor provider are supplied (ProjectAsync's fast path handles the rest synchronously). The pooled contents
+    // and the rewritten document are held across the await — both are heap objects (not ref structs), so PackPooled still
+    // reads their views after the vault round-trip returns.
+    private static async ValueTask<CatalogPackageProjection> ProjectSignedAsync(ReadOnlyMemory<byte> packageZip, string baseWorkflowId, int versionNumber, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider executorProvider, IExecutorPackageSigner signer, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        string workflowId = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{baseWorkflowId}-v{versionNumber}");
+
+        using PooledPackageContents contents = WorkflowPackage.OpenPooled(packageZip);
+        using ParsedJsonDocument<JsonElement> rewritten = RewriteWorkflowToDocument(contents.Workflow, workflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources);
+        ReadOnlyMemory<byte> rewrittenWorkflow = JsonMarshal.GetRawUtf8Value(rewritten.RootElement).Memory;
+        string hash = WorkflowPackage.ComputeContentHashPreSorted(rewritten.RootElement, contents.Sources);
+
+        // The executor path always materialises the sources (the providers take byte[]); the same owned copies feed both.
+        IReadOnlyList<KeyValuePair<string, byte[]>> providerSources = MaterializeSources(contents.Sources);
+        ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources) ?? default;
+        WorkflowExecutorArtifact? executor = executorProvider.BuildExecutor(rewrittenWorkflow, providerSources, hash);
+
+        // Sign the executor manifest verbatim (the exact bytes packed), so a runner verifies against the identical bytes it
+        // reads back. When no executor was produced there is nothing to sign, and the package is stored unsigned.
+        ReadOnlyMemory<byte> signature = default;
+        if (executor is { } artifact)
+        {
+            ExecutorPackageSignature signed = await signer.SignAsync(artifact.Manifest, cancellationToken).ConfigureAwait(false);
+            signature = signed.ToUtf8();
+        }
+
+        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence, signature);
+
+        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
     }
 
     // Copies pooled source views to owned arrays for the optional metadata/executor providers (which take byte[]); only

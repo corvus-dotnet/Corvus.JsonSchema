@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Corvus.Text.Json.Arazzo.Execution;
 using JsonMarshal = Corvus.Runtime.InteropServices.JsonMarshal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -21,7 +22,14 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
     private readonly Lock gate = new();
+
+    // Serializes signed adds so their version-number assignment (MaxVersion + 1) cannot race while the projection awaits
+    // the signing vault outside the short dictionary lock. Only taken on the signed path; the unsigned path stays fully
+    // synchronous under this.gate. A store either has a signer (every add async) or does not (every add sync), so the two
+    // paths never coexist within one store.
+    private readonly SemaphoreSlim addGate = new(1, 1);
 
     /// <summary>Initializes a new instance of the <see cref="InMemoryWorkflowCatalogStore"/> class.</summary>
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
@@ -29,11 +37,15 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     /// added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly into each
     /// added version; <see langword="null"/> to store packages without it.</param>
-    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null)
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time
+    /// (design §3.3, §12); <see langword="null"/> to store packages unsigned. Supplied only where the control-plane
+    /// private key is reachable, never to a runner.</param>
+    public InMemoryWorkflowCatalogStore(TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null, IExecutorPackageSigner? signer = null)
     {
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <inheritdoc/>
@@ -42,42 +54,81 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Project the package outside the lock — parsing/hashing is the expensive part.
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        lock (this.gate)
+
+        // Unsigned fast path: fully synchronous, projection and insert under the single lock (as before signing existed).
+        if (this.signer is null)
         {
-            int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
-
-            // Persist the version as its document BYTES (the durable form), then realize a pooled, disposable document
-            // over those owned bytes for the return — the MetadataDb is rented (returned on the caller's Dispose), not
-            // a standalone GC allocation. The stored byte[] outlives every returned document, so Parse may reference it.
-            byte[] versionDoc = CatalogVersion.CreateBytes(
-                baseWorkflowId: baseWorkflowId,
-                versionNumber: versionNumber,
-                workflowId: projection.WorkflowId,
-                title: projection.Title,
-                description: projection.Description,
-                status: CatalogStatus.Active,
-                tags: metadata.Tags,
-                owner: metadata.Owner,
-                sources: SourceSet.FromSources(projection.Sources),
-                hash: projection.Hash,
-                createdBy: metadata.CreatedBy,
-                createdAt: now,
-                runnable: projection.HasExecutor,
-                securityTags: metadata.SecurityTags);
-
-            // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather
-            // than copying — PackPooled returns an exact-sized array, so the ReadOnlyMemory wraps it whole.
-            byte[] packageBytes = MemoryMarshal.TryGetArray(projection.CanonicalPackage, out ArraySegment<byte> segment)
-                && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
-                ? array
-                : projection.CanonicalPackage.ToArray();
-
-            this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(versionDoc, packageBytes);
-            return ValueTask.FromResult(ParsedJsonDocument<CatalogVersion>.Parse(versionDoc));
+            lock (this.gate)
+            {
+                int versionNumber = this.MaxVersion(baseWorkflowId) + 1;
+                CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+                return ValueTask.FromResult(this.StoreProjection(baseWorkflowId, versionNumber, projection, metadata, now));
+            }
         }
+
+        return this.AddSignedAsync(baseWorkflowId, packageUtf8, metadata, now, cancellationToken);
+    }
+
+    // The signed add: the projection calls the control-plane signing vault, so it awaits and cannot run under the CLR
+    // dictionary lock. The addGate serializes signed adds (so MaxVersion + 1 cannot race across them); the dictionary
+    // itself is still touched only under this.gate (a short critical section shared with the read paths).
+    private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddSignedAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        await this.addGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            int versionNumber;
+            lock (this.gate)
+            {
+                versionNumber = this.MaxVersion(baseWorkflowId) + 1;
+            }
+
+            CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
+
+            lock (this.gate)
+            {
+                return this.StoreProjection(baseWorkflowId, versionNumber, projection, metadata, now);
+            }
+        }
+        finally
+        {
+            this.addGate.Release();
+        }
+    }
+
+    // Builds the version document from a projection, inserts the version + canonical package into the dictionary, and
+    // returns the parsed version document. The caller holds this.gate.
+    private ParsedJsonDocument<CatalogVersion> StoreProjection(string baseWorkflowId, int versionNumber, CatalogPackageProjection projection, CatalogMetadata metadata, DateTimeOffset now)
+    {
+        // Persist the version as its document BYTES (the durable form), then realize a pooled, disposable document
+        // over those owned bytes for the return — the MetadataDb is rented (returned on the caller's Dispose), not
+        // a standalone GC allocation. The stored byte[] outlives every returned document, so Parse may reference it.
+        byte[] versionDoc = CatalogVersion.CreateBytes(
+            baseWorkflowId: baseWorkflowId,
+            versionNumber: versionNumber,
+            workflowId: projection.WorkflowId,
+            title: projection.Title,
+            description: projection.Description,
+            status: CatalogStatus.Active,
+            tags: metadata.Tags,
+            owner: metadata.Owner,
+            sources: SourceSet.FromSources(projection.Sources),
+            hash: projection.Hash,
+            createdBy: metadata.CreatedBy,
+            createdAt: now,
+            runnable: projection.HasExecutor,
+            securityTags: metadata.SecurityTags);
+
+        // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather
+        // than copying — PackPooled returns an exact-sized array, so the ReadOnlyMemory wraps it whole.
+        byte[] packageBytes = MemoryMarshal.TryGetArray(projection.CanonicalPackage, out ArraySegment<byte> segment)
+            && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+            ? array
+            : projection.CanonicalPackage.ToArray();
+
+        this.versions[SortKey(baseWorkflowId, versionNumber)] = new Stored(versionDoc, packageBytes);
+        return ParsedJsonDocument<CatalogVersion>.Parse(versionDoc);
     }
 
     /// <inheritdoc/>
