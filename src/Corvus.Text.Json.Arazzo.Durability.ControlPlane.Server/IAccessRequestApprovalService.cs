@@ -52,6 +52,18 @@ public interface IAccessRequestApprovalService
     /// <returns>The granted (approved) request, or <see langword="null"/> if absent.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken);
 
+    /// <summary>Grants a pending request as <em>durable eligibility</em> (§16.5.3) under the platform ceiling
+    /// <em>without</em> a §15-administrator check — the system-credentialed grant path (design §16.5.1), the sibling of
+    /// <see cref="GrantRequestAsync"/> used by the bootstrapped approval workflow when the decision is 'eligible'. Writes
+    /// standing eligibility (the requester may self-elevate this access JIT thereafter) rather than a one-time grant;
+    /// reachable only with the narrow <c>accessRequests:grant</c> capability.</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="actor">The granting system principal's audit identity.</param>
+    /// <param name="reason">An optional grant note.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if absent.</returns>
+    ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken);
+
     /// <summary>Approves a pending request as durable eligibility (§16.5.3) rather than a live grant — the requester may
     /// thereafter self-elevate JIT without re-approval (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>

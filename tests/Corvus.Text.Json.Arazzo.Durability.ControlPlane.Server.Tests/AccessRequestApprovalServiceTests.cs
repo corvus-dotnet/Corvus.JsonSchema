@@ -179,6 +179,57 @@ public sealed class AccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task A_system_grant_as_eligible_writes_eligibility_without_an_administrator_check()
+    {
+        Harness h = await Harness.CreateAsync();
+
+        // Over-ask; no approver identity is supplied — the system grant-as-eligible path omits the §15-admin check
+        // (the decision is the workflow's) yet the ceiling and the eligibleOnly semantics still hold.
+        string id = await h.SubmitPendingAsync(["runs:write", "security:write", "runs:read"]);
+
+        using (ParsedJsonDocument<AccessRequest>? eligible = await h.Service.GrantRequestAsEligibleAsync(id, "approval-workflow", "eligible by workflow", default))
+        {
+            eligible.ShouldNotBeNull();
+            eligible!.RootElement.StatusValue.ShouldBe("Eligible");
+            eligible.RootElement.DecidedByOrNull.ShouldBe("approval-workflow");
+            eligible.RootElement.GrantedBindingIdOrNull.ShouldNotBeNull();
+        }
+
+        // Eligibility confers nothing active (the resolver ignores eligibleOnly bindings) — alice holds no live capability.
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_as_eligible_of_a_request_with_no_grantable_scope_is_rejected()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["security:write"]);
+
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.GrantRequestAsEligibleAsync(id, "approval-workflow", null, default));
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_as_eligible_of_a_non_pending_request_conflicts()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        using (await h.Service.GrantRequestAsEligibleAsync(id, "approval-workflow", null, default))
+        {
+        }
+
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.GrantRequestAsEligibleAsync(id, "approval-workflow", null, default));
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_as_eligible_of_an_absent_request_returns_null()
+    {
+        Harness h = await Harness.CreateAsync();
+        (await h.Service.GrantRequestAsEligibleAsync("does-not-exist", "approval-workflow", null, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task An_eligible_requester_self_elevates_without_an_approver()
     {
         // The deployment marks alice's principal claims-eligible; she is NOT an administrator, but the request is

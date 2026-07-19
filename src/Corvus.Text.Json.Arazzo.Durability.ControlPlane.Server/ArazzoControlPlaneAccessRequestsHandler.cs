@@ -299,6 +299,32 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GrantAccessRequestAsEligibleResult> HandleGrantAccessRequestAsEligibleAsync(GrantAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.RequestId;
+
+        // The sibling of HandleGrantAccessRequestAsync, writing standing eligibility (design §16.5.3): no own-request or
+        // §15-administrator check (the caller is the approval workflow's §13 system credential); the decision was made
+        // inside the workflow. The platform ceiling still applies (run access only, bound to the requester, workflow-scoped).
+        try
+        {
+            ParsedJsonDocument<AccessRequest>? result = await this.approval.GrantRequestAsEligibleAsync(id, this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);
+            if (result is null)
+            {
+                return GrantAccessRequestAsEligibleResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant-eligible", this.CallerActor(), TargetKind, id, "eligible");
+            workspace.TakeOwnership(result);
+            return GrantAccessRequestAsEligibleResult.Ok(ToView(result.RootElement), workspace);
+        }
+        catch (AccessRequestStateException ex)
+        {
+            return GrantAccessRequestAsEligibleResult.Conflict(Problem("invalid-state", "Cannot grant eligibility for the request", 409, ex.Message), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;

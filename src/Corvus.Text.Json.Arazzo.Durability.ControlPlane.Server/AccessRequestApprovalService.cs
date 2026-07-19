@@ -195,8 +195,46 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         AccessRequest request = fetched.RootElement;
         RequireStatus(request, AccessRequestStatus.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
+        return await this.GrantEligibilityAndDecideAsync(request, actor, reason, eligibilityWindow, cancellationToken).ConfigureAwait(false);
+    }
 
-        List<string> granted = this.CapScopes(request.RequestedScopesArray());
+    /// <summary>Grants a pending request as <em>durable eligibility</em> (§16.5.3) under the platform ceiling
+    /// <em>without</em> a §15-administrator check — the system-credentialed grant path (design §16.5.1), the sibling of
+    /// <see cref="GrantRequestAsync"/>. Where that enacts a one-time grant, this writes standing eligibility, used by the
+    /// bootstrapped approval workflow when the decision is 'eligible'. The ceiling is identical to
+    /// <see cref="ApproveAsEligibleAsync"/> (at most the requested scopes intersected with run access, bound to the
+    /// requester, reach fixed to the workflow); only the narrow <c>accessRequests:grant</c> capability reaches it.</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="actor">The granting system principal's audit identity.</param>
+    /// <param name="reason">An optional grant note.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if no request with that id exists.</returns>
+    /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(requestId);
+        ArgumentNullException.ThrowIfNull(actor);
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return null;
+        }
+
+        AccessRequest request = fetched.RootElement;
+        RequireStatus(request, AccessRequestStatus.Pending);
+
+        // No EnsureAdministratorAsync (see GrantRequestAsync): the decision is the workflow's; the ceiling still applies.
+        // Standing eligibility (no window) — each future activation is independently TTL-capped by the grant path.
+        return await this.GrantEligibilityAndDecideAsync(request, actor, reason, eligibilityWindow: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Writes the eligibility assignment (an eligibleOnly binding, capped to run access) and decides the request Eligible.
+    // The shared body of ApproveAsEligibleAsync (admin-checked) and GrantRequestAsEligibleAsync (system-credentialed).
+    // Race-safe: the binding is written first, then the decision claims the request under its etag; a lost decision or a
+    // vanished request compensates the just-written eligibility away.
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantEligibilityAndDecideAsync(AccessRequest request, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
+    {
+        List<string> granted = this.CapScopes(request);
         if (granted.Count == 0)
         {
             throw new AccessRequestStateException(request.IdValue, "None of the requested scopes is grantable (eligibility may cover only run access).");
