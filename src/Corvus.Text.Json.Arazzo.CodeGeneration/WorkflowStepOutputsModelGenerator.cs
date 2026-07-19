@@ -2,12 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
-using Corvus.Json;
-using Corvus.Json.CodeGeneration;
-using Corvus.Json.CodeGeneration.Draft202012;
-using Corvus.Text.Json.CodeGeneration;
-
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
@@ -22,15 +16,12 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// step's validation metadata — and produces a self-contained schema document (it carries the source and workflow
 /// reusable schema buckets so local <c>$ref</c>s resolve). This drives the Corvus JSON Schema code generator over
 /// that schema exactly as <see cref="WorkflowInputsModelGenerator"/> does for the workflow inputs. An output whose
-/// source cannot be resolved to a single schema (e.g. a pointer through a <c>oneOf</c>, or a <c>$steps</c> reference
-/// the resolver does not yet type) degrades to an open schema and hence a permissive <c>JsonAny</c> property — typed
-/// where determinable, permissive at genuine ambiguity, never loose.
+/// source cannot be resolved to a single schema (e.g. a pointer through a <c>oneOf</c>) degrades to an open schema
+/// and hence a permissive <c>JsonAny</c> property — typed where determinable, permissive at genuine ambiguity,
+/// never loose.
 /// </remarks>
 public static class WorkflowStepOutputsModelGenerator
 {
-    // An absolute URI so JsonReference treats the derived schema as an opaque registered document rather than a path.
-    private const string DocumentUri = "https://corvus.local/arazzo/step-outputs.json";
-
     /// <summary>
     /// Generates the outputs model for a single step.
     /// </summary>
@@ -66,56 +57,11 @@ public static class WorkflowStepOutputsModelGenerator
             return null;
         }
 
-        JsonDocument document = JsonDocument.Parse(schemaDocument);
-        var resolver = new PrepopulatedDocumentResolver();
-        try
-        {
-            // The derived schema is self-contained (its wrapper carries the source + workflow $defs/components/
-            // definitions), so only it needs registering — unlike the inputs schema, its $refs resolve internally.
-            resolver.AddDocument(DocumentUri, document);
+        DerivedSchemaModel? model = await DerivedSchemaModelGenerator
+            .GenerateAsync(schemaDocument, modelNamespace, cancellationToken)
+            .ConfigureAwait(false);
 
-            var vocabularyRegistry = new VocabularyRegistry();
-            VocabularyAnalyser.RegisterAnalyser(resolver, vocabularyRegistry);
-
-            var typeBuilder = new JsonSchemaTypeBuilder(resolver, vocabularyRegistry);
-            var reference = new JsonReference(DocumentUri, "#");
-
-            TypeDeclaration root = await typeBuilder
-                .AddTypeDeclarationsAsync(reference, VocabularyAnalyser.DefaultVocabulary, rebaseAsRoot: false)
-                .ConfigureAwait(false);
-
-            var options = new CSharpLanguageProvider.Options(modelNamespace);
-            CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
-            IReadOnlyCollection<GeneratedCodeFile> generated =
-                typeBuilder.GenerateCodeUsing(languageProvider, [root], cancellationToken);
-
-            TypeDeclaration reduced = root.ReducedTypeDeclaration().ReducedType;
-            if (!reduced.HasDotnetTypeName())
-            {
-                return null;
-            }
-
-            string typeName = reduced.FullyQualifiedDotnetTypeName();
-
-            var accessors = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (PropertyDeclaration property in reduced.PropertyDeclarations)
-            {
-                accessors[property.JsonPropertyName] = property.DotnetPropertyName();
-            }
-
-            var files = new List<GeneratedModelFile>(generated.Count);
-            foreach (GeneratedCodeFile file in generated)
-            {
-                files.Add(new GeneratedModelFile(file.FileName, file.FileContent));
-            }
-
-            return new WorkflowStepOutputsModel(typeName, accessors, files);
-        }
-        finally
-        {
-            resolver.Dispose();
-            document.Dispose();
-        }
+        return model is null ? null : new WorkflowStepOutputsModel(model.TypeName, model.Accessors, model.Files);
     }
 }
 
