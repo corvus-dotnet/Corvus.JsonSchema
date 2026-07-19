@@ -30,7 +30,10 @@
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="specs\**\*.json" />
+    <!-- The three system-workflow specs are embedded so SystemWorkflowInstaller can read and package them at deploy
+         time with no on-disk layout dependency. The explicit LogicalName keeps the resource name stable
+         (<rootnamespace>.specs.<file>) regardless of MSBuild's default path-to-identifier mangling. -->
+    <EmbeddedResource Include="specs\**\*.json" LogicalName="Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.specs.%(Filename)%(Extension)" />
     <AdditionalFiles Include="Schemas\access-approval-inputs.json" />
   </ItemGroup>
 </Project>
