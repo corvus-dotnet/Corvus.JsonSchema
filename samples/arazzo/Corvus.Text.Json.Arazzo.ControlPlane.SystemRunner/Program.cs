@@ -119,7 +119,11 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     builder.Services.AddSingleton(vaultClient);
     builder.Services.AddHostedService<VaultTokenLifecycleService>();
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
-    var providerFactory = new SourceCredentialProviderFactory(secretResolver);
+    // The 'controlplane' source uses OAuth2 client credentials (unlike the app runner's API-key sources), so the provider
+    // factory needs an HTTP client for the token-endpoint call — it fetches the accessRequests:grant token from Keycloak
+    // and applies it as the bearer on grantAccessRequest. allowInsecureOAuthTokenEndpoint is set because the demo's
+    // Keycloak is served over http; a production deployment uses an https token endpoint and drops the flag.
+    var providerFactory = new SourceCredentialProviderFactory(secretResolver, new HttpClient(), allowInsecureOAuthTokenEndpoint: true);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
     binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, messageTransport);
 }
