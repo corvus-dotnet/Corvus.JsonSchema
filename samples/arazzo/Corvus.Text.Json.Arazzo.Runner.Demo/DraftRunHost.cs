@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// runs claimable; THIS runner claims and executes them — the true two-plane split (design §18). It composes an
 /// <see cref="InProcessDraftRunner"/> pinned to the runner's environment over the shared durability stores.
 /// </summary>
-internal static class DraftRunHost
+public static class DraftRunHost
 {
     /// <summary>Builds a transport binder over a caller-supplied source-name → client map (no credentials) — the
     /// un-credentialed sibling of <c>SourceCredentialTransports.CreateBinder</c>, used on the standalone (no-Vault)
