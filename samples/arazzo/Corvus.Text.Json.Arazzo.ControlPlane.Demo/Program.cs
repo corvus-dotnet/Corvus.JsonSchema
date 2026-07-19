@@ -223,6 +223,23 @@ PostgresAvailabilityStore availabilityStore = await PostgresAvailabilityStore.Co
 PostgresAvailabilityRequestStore availabilityRequestStore = await PostgresAvailabilityRequestStore.ConnectAsync(dataSource);
 PostgresSourceStore sourceStore = await PostgresSourceStore.ConnectAsync(dataSource);
 PostgresEnvironmentAdministratorStore environmentAdministratorStore = await PostgresEnvironmentAdministratorStore.ConnectAsync(dataSource);
+
+// §16.5.1: install the bootstrapped access-approval system workflow through the HOST's catalog store — which, unlike the
+// deployment bootstrap's plain store, compiles and signs the executor at catalog-add time (executorProvider + signer,
+// wired at line ~131), so the catalogued version is runnable and its executor verifies against the system runner's trust
+// key. Idempotent; establishes the internal environment, the runner's OAuth2 credential, the catalogued+signed version,
+// and its availability. Enabled when systemWorkflows is present in the bootstrap options (secured AppHost deployment).
+if (enableSystemApprovalWorkflow)
+{
+    await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
+        catalogStore,
+        (Corvus.Text.Json.Arazzo.Durability.IWorkflowWaitIndex)stateStore,
+        administrators,
+        sourceCredentials,
+        availabilityStore,
+        environmentStore,
+        bootstrapOptions);
+}
 PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);
 
 var draftRunner = new InProcessDraftRunner(

@@ -71,7 +71,11 @@ string controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"
     ?? throw new InvalidOperationException("Runner:ControlPlane:BaseUrl (the control-plane API the approval workflow calls) is required — the AppHost injects it.");
 var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
 {
-    ["controlplane"] = new HttpClient { BaseAddress = new Uri(controlPlaneBaseUrl) },
+    // The control-plane API is mounted under /arazzo/v1; the OpenAPI source's paths are relative to that API root, and
+    // the HTTP transport preserves this base-path prefix when it composes each operation's request URI (it does not use
+    // HttpClient's RFC-3986 resolution, which would drop the prefix for a leading-'/' operation path). The bare base URL
+    // stays for the registrar below (which builds its own paths).
+    ["controlplane"] = new HttpClient { BaseAddress = new Uri(controlPlaneBaseUrl.TrimEnd('/') + "/arazzo/v1") },
 };
 
 // The message bus (NATS JetStream, design §8): the approval workflow's notifyApprovalRequired SEND step publishes to

@@ -43,29 +43,16 @@ public static class PostgresControlPlaneDeployment
 
         await ProvisionSchemaAsync(dataSource, cancellationToken).ConfigureAwait(false);
 
-        var bootstrap = new DefaultDeploymentBootstrap();
-
         // The security store's schema is created above, so the policy can now be seeded. Connect a transient handle
         // purely to seed it; the host connects its own handle for request-time reads (the two are independent).
-        await using (PostgresSecurityPolicyStore securityStore = await PostgresSecurityPolicyStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false))
-        {
-            await bootstrap.BootstrapSecurityAsync(securityStore, options, cancellationToken).ConfigureAwait(false);
-        }
+        await using PostgresSecurityPolicyStore securityStore = await PostgresSecurityPolicyStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await new DefaultDeploymentBootstrap().BootstrapSecurityAsync(securityStore, options, cancellationToken).ConfigureAwait(false);
 
-        // Install the bootstrapped access-approval system workflow (design §16.5.1) when the deployment opts in, so
-        // Arazzo governs its own access approvals. Connect transient store handles purely to install (the runtime host
-        // connects its own); DefaultDeploymentBootstrap composes them into the catalog the install needs.
-        if (options.SystemWorkflows.IsNotUndefined())
-        {
-            await using PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await using PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await using PostgresWorkflowAdministratorStore administratorStore = await PostgresWorkflowAdministratorStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await using PostgresSourceCredentialStore credentialStore = await PostgresSourceCredentialStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await using PostgresAvailabilityStore availabilityStore = await PostgresAvailabilityStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await using PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await bootstrap.BootstrapSystemWorkflowsAsync(
-                catalogStore, stateStore, administratorStore, credentialStore, availabilityStore, environmentStore, options, cancellationToken).ConfigureAwait(false);
-        }
+        // The system-workflow install (design §16.5.1, DeploymentBootstrapOptions.SystemWorkflows) is NOT run here: it
+        // catalogues a RUNNABLE workflow, which requires the catalog store to compile (and, where the deployment signs
+        // executors, sign) the executor at add time — i.e. an IWorkflowExecutorProvider + IExecutorPackageSigner. Those
+        // are wired into the control-plane HOST's catalog store, so the host drives the install
+        // (IDeploymentBootstrap.BootstrapSystemWorkflowsAsync) with that store once it is composed.
     }
 
     /// <summary>
