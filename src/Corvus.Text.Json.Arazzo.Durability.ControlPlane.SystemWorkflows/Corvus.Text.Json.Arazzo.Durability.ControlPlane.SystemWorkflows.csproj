@@ -25,6 +25,10 @@
     <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The access-decision resume handler logs each decision receipt and how many suspended runs it resumed, so the
+         system runner's operator sees the exchange; ILogger comes from the abstractions package (this is a plain library,
+         not a host, so it does not get it transitively from the ASP.NET Core framework reference). -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
