@@ -517,38 +517,6 @@ criteria half of this phase.
    schema-typed, unless we also resolve each output's schema. Start loose
    (JSON values), optionally tighten later by inferring output types from the
    operation response schema.
-
-   **Spike outcome (#872) — keep the deliberate looseness.** Feasibility is real:
-   the generator already carries the response type names + content schemas
-   (`ResolvedOperation` / `SourceOperationSurface`) and already emits typed
-   generated-property access where a value resolves to a named property (a
-   criterion on `$response.header.<name>` reads `response.PropertyName`, falling
-   back to `JsonElement` navigation otherwise — `SimpleCriterionInliner`). So the
-   pointer-resolvable subset of outputs *could* be typed. It is not worth it:
-   - **Partial coverage → an inconsistent surface.** Only response-body /
-     message-payload pointers into a resolvable leaf schema are typeable;
-     `$inputs.*`, interpolations, composite templates, and schema-less headers
-     stay `JsonElement`. A per-step outputs type mixing typed and `JsonElement`
-     fields is leaky.
-   - **A core-machinery change.** Outputs cross step boundaries as a uniform
-     `JsonElement` bag that downstream `$steps.X.outputs.Y` expressions navigate
-     by JSON Pointer (resolved at codegen) and that hoists/serialises byte-native.
-     Typing means generating a per-step outputs type and rewiring the whole
-     expression-resolution + checkpoint-serialisation path.
-   - **Pointer-into-schema navigation.** `$response.body#/items/0/nested/x` must
-     navigate the Pointer into the *schema* (through arrays / `oneOf` /
-     `additionalProperties` / `$ref`) to find the leaf's generated type; many
-     Pointers have no single generated leaf type.
-   - **Marginal benefit.** Values already flow byte-native and validated, and
-     downstream expressions already resolve correctly at codegen; the runtime data
-     flow does not change.
-
-   Recommendation: keep intermediate step outputs loose. The single high-value
-   slice — a typed *public workflow-output* result for a caller — should, if ever
-   wanted, be emitted as an **additive** typed accessor alongside the `JsonElement`
-   (the dynamic bag stays the source of truth), and only when every workflow output
-   resolves to a response-body / message-payload Pointer with a resolvable leaf
-   schema; otherwise omit the typed accessor. Do not type intermediate outputs.
 4. **`simple` criterion grammar** — Arazzo's "simple" condition is underspecified
    in edge cases; needs a small, well-tested expression parser with clear
    precedence/semantics. Pin behavior with conformance tests.
