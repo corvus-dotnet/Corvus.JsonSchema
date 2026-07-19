@@ -1,0 +1,34 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AccessApprovalInputs",
+    "description": "The inputs the control plane starts a run of the system access-approval workflow with (design section 16.5.1): a projection of the pending access request, keyed on the request id.",
+    "type": "object",
+    "required": [
+        "requestId"
+    ],
+    "properties": {
+        "requestId": {
+            "type": "string",
+            "description": "The access request awaiting a decision (the correlation key carried into the run)."
+        },
+        "baseWorkflowId": {
+            "type": "string",
+            "description": "The workflow the request targets."
+        },
+        "requestedScopes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "The scopes the request asked for."
+        },
+        "requester": {
+            "type": "string",
+            "description": "The requesting subject, for display."
+        },
+        "subject": {
+            "type": "string",
+            "description": "The requesting subject id."
+        }
+    }
+}

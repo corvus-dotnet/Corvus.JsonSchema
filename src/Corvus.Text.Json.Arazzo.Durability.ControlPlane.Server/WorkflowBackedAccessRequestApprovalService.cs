@@ -8,6 +8,7 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 using SwModels = Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models;
+using SwString = Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.JsonString;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -36,8 +37,6 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     private const string OutcomeEligible = "eligible";
     private const string OutcomeRejected = "rejected";
     private const string OutcomeWithdrawn = "withdrawn";
-    private const int InputsBufferSize = 512;
-    private static readonly JsonWriterOptions InputsWriterOptions = new() { Indented = false, SkipValidation = true };
 
     private readonly AccessRequestApprovalService inner;
     private readonly IAccessRequestStore requests;
@@ -183,7 +182,7 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     // run carries no requester security tags: it executes under the workflow's own §13 system credential.
     private async ValueTask StartApprovalRunAsync(AccessRequest request, CancellationToken cancellationToken)
     {
-        using ParsedJsonDocument<JsonElement> inputs = BuildRunInputs(request);
+        using ParsedJsonDocument<AccessApprovalInputs> inputs = BuildRunInputs(request);
         try
         {
             await this.management.StartAsync(this.approvalWorkflowId, inputs.RootElement, correlationId: null, tags: default, securityTags: default, environment: this.environment, cancellationToken).ConfigureAwait(false);
@@ -197,58 +196,27 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
         }
     }
 
-    // Builds the approval workflow's inputs ({requestId, baseWorkflowId, requestedScopes, requester, subject}) by copying
-    // the request's typed JSON values through a pooled writer: no per-field string is realised (the id/base id/subject
-    // are written straight from their JSON values) and the scopes array is copied whole, not materialised to a string[].
-    // The assembled bytes are owned (one copy) so they outlive the pooled buffer's return and the StartAsync await.
-    private static ParsedJsonDocument<JsonElement> BuildRunInputs(AccessRequest request)
-    {
-        byte[] inputs;
-        using (JsonWorkspace workspace = JsonWorkspace.Create())
-        {
-            Utf8JsonWriter writer = workspace.RentWriterAndBuffer(InputsWriterOptions, InputsBufferSize, out IByteBufferWriter buffer);
-            try
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName("requestId"u8);
-                request.Id.WriteTo(writer);
-                writer.WritePropertyName("baseWorkflowId"u8);
-                request.BaseWorkflowId.WriteTo(writer);
-                writer.WritePropertyName("requestedScopes"u8);
-                request.RequestedScopes.WriteTo(writer);
-                if (request.RequesterLabel.IsNotUndefined())
-                {
-                    writer.WritePropertyName("requester"u8);
-                    request.RequesterLabel.WriteTo(writer);
-                }
-
-                writer.WritePropertyName("subject"u8);
-                request.SubjectClaimValue.WriteTo(writer);
-                writer.WriteEndObject();
-                writer.Flush();
-                inputs = buffer.WrittenMemory.ToArray();
-            }
-            finally
-            {
-                workspace.ReturnWriterAndBuffer(writer, buffer);
-            }
-        }
-
-        return ParsedJsonDocument<JsonElement>.Parse(inputs);
-    }
+    // Builds the approval workflow's inputs ({requestId, baseWorkflowId, requestedScopes, requester, subject}) with the
+    // generated typed model: each field is a From-copy of the request's own JSON value (no per-field string realised, the
+    // scopes array copied whole), and Create(...) returns an owning ParsedJsonDocument that outlives the StartAsync await.
+    private static ParsedJsonDocument<AccessApprovalInputs> BuildRunInputs(AccessRequest request)
+        => AccessApprovalInputs.Create(
+            requestId: SwString.From(request.Id),
+            baseWorkflowId: SwString.From(request.BaseWorkflowId),
+            requestedScopes: AccessApprovalInputs.JsonStringArray.From(request.RequestedScopes),
+            requester: request.RequesterLabel.IsNotUndefined() ? SwString.From(request.RequesterLabel) : default,
+            subject: SwString.From(request.SubjectClaimValue));
 
     private async ValueTask PublishDecisionAsync(string requestId, string outcome, string decidedBy, string? reason, CancellationToken cancellationToken)
     {
-        // CreateUnrented: the workspace is disposed after the publish await, so it must not be a thread-affine rented one.
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        // Create(...) returns an owning ParsedJsonDocument, so there is no workspace to keep alive across the publish await.
         SwModels.JsonString.Source reasonSource = reason is { } r ? r : default(SwModels.JsonString.Source);
-        SwModels.AccessDecisionPayload payload = SwModels.AccessDecisionPayload.CreateBuilder(
-            workspace,
+        using ParsedJsonDocument<SwModels.AccessDecisionPayload> payload = SwModels.AccessDecisionPayload.Create(
             decidedBy: decidedBy,
             outcome: outcome,
             requestId: requestId,
-            reason: reasonSource).RootElement;
-        await this.decisions.PublishAccessDecisionAsync(payload, cancellationToken).ConfigureAwait(false);
+            reason: reasonSource);
+        await this.decisions.PublishAccessDecisionAsync(payload.RootElement, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask EnsureAdministratorAsync(string baseWorkflowId, SecurityTagSet approverIdentity, CancellationToken cancellationToken)

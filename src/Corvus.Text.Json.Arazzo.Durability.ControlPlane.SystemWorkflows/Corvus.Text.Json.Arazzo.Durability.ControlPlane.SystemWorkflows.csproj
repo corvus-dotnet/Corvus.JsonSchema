@@ -7,10 +7,11 @@
     <LangVersion>preview</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
-    <!-- The AsyncAPI-generated CTJ model code (Generated/Models) carries XML-doc param tags that do not match the
-         emitted signatures; Endjin TreatWarningsAsErrors would otherwise promote them. Same set as the other codegen
-         projects. -->
-    <NoWarn>$(NoWarn);CS1591;NU1504;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <!-- The AsyncAPI-generated CTJ model code (Generated/Models) and the [JsonSchemaTypeGenerator] source-generated
+         model (AccessApprovalInputs) carry XML-doc param tags and style shapes that do not match Endjin's analyzer
+         defaults; TreatWarningsAsErrors would otherwise promote them. Same set as the other codegen projects. -->
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS1572;CS1573;CS1574;CS1584;CS1658;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -20,6 +21,8 @@
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <!-- The [JsonSchemaTypeGenerator] source generator for the AccessApprovalInputs run-input model. -->
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
@@ -28,5 +31,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="specs\**\*.json" />
+    <AdditionalFiles Include="Schemas\access-approval-inputs.json" />
   </ItemGroup>
 </Project>
