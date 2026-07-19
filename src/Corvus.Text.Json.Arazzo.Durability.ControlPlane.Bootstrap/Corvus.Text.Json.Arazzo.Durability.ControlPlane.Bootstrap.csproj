@@ -23,6 +23,8 @@
     <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <!-- The system-workflow install step (BootstrapSystemWorkflowsAsync, design §16.5.1) drives SystemWorkflowInstaller. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

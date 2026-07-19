@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Linq;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -115,6 +117,85 @@ public sealed class DefaultDeploymentBootstrapTests
         {
             bindings.Count.ShouldBe(2);
             bindings.ShouldContain(b => b.ClaimValueOrNull == "arazzo-admins");
+        }
+    }
+
+    [TestMethod]
+    public async Task System_workflow_install_catalogues_makes_available_and_establishes_the_genesis_administrator()
+    {
+        const string optionsJson =
+            """{"genesisAdminGroup":"arazzo-admins","identityClaimType":"group","genesisAdditionalClauses":[{"dimension":"iss","value":"arazzo-keycloak"}],"systemWorkflows":{"tokenUrl":"https://keycloak/realms/arazzo/protocol/openid-connect/token","clientSecretRef":"vault://secret/arazzo/controlplane#client-secret"}}""";
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(optionsJson);
+
+        var catalogStore = new InMemoryWorkflowCatalogStore();
+        var stateStore = new InMemoryWorkflowStateStore();
+        var administrators = new InMemoryWorkflowAdministratorStore();
+        var credentials = new InMemorySourceCredentialStore();
+        var availability = new InMemoryAvailabilityStore();
+        var environments = new InMemoryEnvironmentStore();
+
+        await new DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
+            catalogStore, stateStore, administrators, credentials, availability, environments, optionsDoc.RootElement);
+
+        // Catalogued as access-approval v1, available in the system environment, credential + environment provisioned.
+        var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "test", credentials, administrators);
+        using (var version = await catalog.GetAsync("access-approval", 1, AccessContext.System, default))
+        {
+            version.ShouldNotBeNull();
+        }
+
+        using (var entry = await availability.GetAsync("access-approval", 1, "system", default))
+        {
+            entry.ShouldNotBeNull();
+        }
+
+        using (var credential = await credentials.GetAsync("controlplane", "system", AccessContext.System, default))
+        {
+            credential.ShouldNotBeNull();
+        }
+
+        using (var environment = await environments.GetAsync("system", AccessContext.System, default))
+        {
+            environment.ShouldNotBeNull();
+        }
+
+        // The §15 administrator record was established for the genesis administrator's INTERNAL identity (sys:group plus
+        // the issuer clause), so a genesis-admin caller — whom the live resolver resolves to the same tag-set — may
+        // approve the requests the workflow governs. This is the correctness pin for BuildGenesisAdministratorIdentity.
+        SecurityTagSet genesis = SecurityTagSet.FromTags(
+            [new SecurityTag("sys:group", "arazzo-admins"), new SecurityTag("sys:iss", "arazzo-keycloak")]);
+        using (var admins = await catalog.GetAdministratorsAsync("access-approval", default))
+        {
+            admins.ShouldNotBeNull();
+            admins!.RootElement.IsAdministeredBy(genesis).ShouldBeTrue();
+        }
+    }
+
+    [TestMethod]
+    public async Task System_workflow_install_is_a_noop_when_not_opted_in()
+    {
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(OptionsJson);
+
+        var catalogStore = new InMemoryWorkflowCatalogStore();
+        var stateStore = new InMemoryWorkflowStateStore();
+        var administrators = new InMemoryWorkflowAdministratorStore();
+        var credentials = new InMemorySourceCredentialStore();
+        var availability = new InMemoryAvailabilityStore();
+        var environments = new InMemoryEnvironmentStore();
+
+        await new DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
+            catalogStore, stateStore, administrators, credentials, availability, environments, optionsDoc.RootElement);
+
+        // Absent systemWorkflows option: nothing is installed.
+        var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "test", credentials, administrators);
+        using (var version = await catalog.GetAsync("access-approval", 1, AccessContext.System, default))
+        {
+            version.ShouldBeNull();
+        }
+
+        using (var credential = await credentials.GetAsync("controlplane", "system", AccessContext.System, default))
+        {
+            credential.ShouldBeNull();
         }
     }
 }

@@ -4,6 +4,9 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
@@ -72,6 +75,55 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask BootstrapSystemWorkflowsAsync(
+        IWorkflowCatalogStore catalogStore,
+        IWorkflowWaitIndex runs,
+        IWorkflowAdministratorStore administrators,
+        ISourceCredentialStore credentials,
+        IAvailabilityStore availability,
+        IEnvironmentStore environments,
+        DeploymentBootstrapOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(catalogStore);
+        ArgumentNullException.ThrowIfNull(runs);
+        ArgumentNullException.ThrowIfNull(administrators);
+        ArgumentNullException.ThrowIfNull(credentials);
+        ArgumentNullException.ThrowIfNull(availability);
+        ArgumentNullException.ThrowIfNull(environments);
+
+        // Not opted in: the deployment runs approvals through the built-in direct-to-administrator strategy.
+        if (!options.SystemWorkflows.IsNotUndefined())
+        {
+            return;
+        }
+
+        // var infers the generated nested option type without depending on its emitted name.
+        var config = options.SystemWorkflows;
+
+        // Compose the catalog the install needs: the credential store makes the catalog-time gate resolve the runner
+        // credential, and the administrator store records the §15 administrator (established when v1 is added), so the
+        // genesis administrator can later approve the requests the workflow governs.
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runs, "bootstrap", credentials, administrators);
+        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments);
+        await installer.InstallAsync(
+            new SystemWorkflowInstallOptions
+            {
+                // The genesis administrator administers the system workflow, so any genesis-admin caller may approve the
+                // access requests it governs (its resolved identity set-equals this stamped §15 administrator identity).
+                AdministratorIdentity = BuildGenesisAdministratorIdentity(options),
+                Owner = new CatalogOwner("Arazzo Control Plane", "control-plane@arazzo.system", "Platform", null),
+                CredentialTokenUrl = (string)config.TokenUrl,
+                CredentialClientId = config.ClientId.IsNotUndefined() ? (string)config.ClientId : "arazzo-access-approval",
+                CredentialClientSecretRef = (string)config.ClientSecretRef,
+                Environment = config.Environment.IsNotUndefined() ? (string)config.Environment : "system",
+                WorkflowTags = ["system", "approval"],
+                Actor = "bootstrap",
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Builds the ordered tag dimensions (§14.2) from configuration — a map of dimension name to its labels
     /// in ascending order. Surfaced read-only at <c>GET /security/orderings</c> and baked into the ordered rule
     /// templates. Used at composition time when constructing the row-security policy.</summary>
@@ -130,5 +182,28 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         }
 
         return clauses.Count > 0 ? clauses : null;
+    }
+
+    // The genesis administrator's internal identity: the tag-set the live claims resolver produces for a genesis-admin
+    // caller — <prefix>group=<genesisAdminGroup> plus each configured additional dimension clause that carries a value
+    // (e.g. <prefix>iss=<idp>). This is the same derivation as the genesis grant's subject, so a genesis-admin caller
+    // set-equals the system workflow's stamped §15 administrator and may approve the access requests it governs. A
+    // valueless clause (present-with-any-value in a selector) cannot form part of a concrete identity, so it is skipped.
+    private static SecurityTagSet BuildGenesisAdministratorIdentity(DeploymentBootstrapOptions options)
+    {
+        string prefix = options.InternalTagPrefix.IsNotUndefined() ? (string)options.InternalTagPrefix : SecurityShell.DefaultInternalPrefix;
+        var tags = new List<SecurityTag> { new(prefix + "group", (string)options.GenesisAdminGroup) };
+        if (options.GenesisAdditionalClauses.IsNotUndefined())
+        {
+            foreach (var clause in options.GenesisAdditionalClauses.EnumerateArray())
+            {
+                if (clause.Value.IsNotUndefined())
+                {
+                    tags.Add(new SecurityTag(prefix + (string)clause.DimensionValue, (string)clause.Value));
+                }
+            }
+        }
+
+        return SecurityTagSet.FromTags(tags);
     }
 }

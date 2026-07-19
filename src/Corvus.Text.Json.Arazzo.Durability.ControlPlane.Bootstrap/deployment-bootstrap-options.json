@@ -66,6 +66,36 @@
       "type": "boolean",
       "description": "When true, the deployment additionally runs its IExampleSeed (demo/fixture content: sample workflows, personas, credential references). Production deployments leave this false.",
       "default": false
+    },
+    "systemWorkflows": {
+      "type": "object",
+      "description": "When present, the deployment installs the bootstrapped access-approval system workflow (design §16.5.1) so Arazzo governs its own access approvals: the workflow package is catalogued and made available in an internal environment, and the system runner's OAuth2 client-credentials identity is provisioned. Absent means the deployment runs approvals through the built-in direct-to-administrator strategy instead. The workflow's §15 administrator is the genesis administrator, and the credential's usage is scoped to the workflow's own identity, so only its runs may present it.",
+      "required": ["tokenUrl", "clientSecretRef"],
+      "properties": {
+        "tokenUrl": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The OAuth2 token endpoint the system runner's client-credentials grant is fetched from (e.g. the IdP's .../protocol/openid-connect/token). The runner presents the issued token, carrying the accessRequests:grant scope, when calling grantAccessRequest."
+        },
+        "clientId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The OAuth2 client id the system runner presents — the IdP client whose issued token carries the accessRequests:grant scope.",
+          "default": "arazzo-access-approval"
+        },
+        "clientSecretRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The secret reference (scheme://locator[#field]) resolving the runner client's secret; a pointer into the external secret store, never the secret itself."
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The control-plane internal environment the approval workflow executes and is made available in (served by the system runner).",
+          "default": "system"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["genesisAdminGroup"]

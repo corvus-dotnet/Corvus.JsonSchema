@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
@@ -31,4 +33,39 @@ public interface IDeploymentBootstrap
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the security store is seeded.</returns>
     ValueTask BootstrapSecurityAsync(ISecurityPolicyStore securityStore, DeploymentBootstrapOptions options, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Installs the bootstrapped access-approval system workflow (design §16.5.1) when the deployment opts into it via
+    /// <see cref="DeploymentBootstrapOptions.SystemWorkflows"/>: catalogues the workflow package, makes it available in
+    /// the internal environment, and provisions the system runner's OAuth2 client-credentials identity — so Arazzo
+    /// governs its own access approvals. A no-op when the option is absent (the built-in direct-to-administrator
+    /// strategy is used). Idempotent — safe to run on every start.
+    /// </summary>
+    /// <remarks>
+    /// The raw stores are taken (rather than a pre-built catalog) so the exact wiring the install depends on — the
+    /// bootstrap actor, the credential store the catalog-time gate resolves through, and the administrator store that
+    /// records the §15 administrator — lives here once, not replicated (and potentially got subtly wrong) across every
+    /// deployment. The implementation composes them into the catalog it needs.
+    /// </remarks>
+    /// <param name="catalogStore">The catalog store the approval version is published to.</param>
+    /// <param name="runs">The wait index the catalog resolves suspended runs through.</param>
+    /// <param name="administrators">The administrator store the §15 administrator record is written to (so the genesis
+    /// administrator can later approve the requests the workflow governs).</param>
+    /// <param name="credentials">The credential store the runner's client-credentials identity is provisioned in (and the
+    /// store the catalog-time credential gate resolves through).</param>
+    /// <param name="availability">The availability store the version is made available in.</param>
+    /// <param name="environments">The environment store the internal environment is created in.</param>
+    /// <param name="options">The deployment configuration (its <see cref="DeploymentBootstrapOptions.SystemWorkflows"/>
+    /// carries the token endpoint, client id, and secret reference; the §15 administrator is the genesis administrator).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the workflow is catalogued and available, or immediately when not opted in.</returns>
+    ValueTask BootstrapSystemWorkflowsAsync(
+        IWorkflowCatalogStore catalogStore,
+        IWorkflowWaitIndex runs,
+        IWorkflowAdministratorStore administrators,
+        ISourceCredentialStore credentials,
+        IAvailabilityStore availability,
+        IEnvironmentStore environments,
+        DeploymentBootstrapOptions options,
+        CancellationToken cancellationToken = default);
 }
