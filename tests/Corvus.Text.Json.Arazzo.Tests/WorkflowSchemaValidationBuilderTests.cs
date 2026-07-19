@@ -128,6 +128,68 @@ public class WorkflowSchemaValidationBuilderTests
         schema.Validate("""{ "echoedId": 0 }""").ShouldBeFalse("echoedId inherits the inputs minimum");
     }
 
+    [TestMethod]
+    public void Types_a_step_output_that_references_a_prior_steps_output()
+    {
+        // getPet types petName ($response.body#/name → string, maxLength 40) and code ($statusCode → integer).
+        // A later step "confirm" re-exports them via $steps.getPet.outputs.*. Those outputs must inherit getPet's
+        // resolved schemas (seam A — $steps.<id>.outputs.<name> transitive resolution: re-derive the referenced
+        // step's operation context, resolve its output expression, apply any trailing pointer), not degrade to an
+        // open "accept anything". This exercises both a synthetic source ($statusCode) and a chain that re-enters
+        // the referenced step's response body ($response.body#/name).
+        const string TwoStep = """
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.json", "type": "openapi" } ],
+              "workflows": [
+                {
+                  "workflowId": "adopt-pet-v1",
+                  "inputs": {
+                    "type": "object",
+                    "properties": { "petId": { "type": "integer", "format": "int64", "minimum": 1 } },
+                    "required": [ "petId" ]
+                  },
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "outputs": {
+                        "petName": "$response.body#/name",
+                        "code": "$statusCode"
+                      }
+                    },
+                    {
+                      "stepId": "confirm",
+                      "operationId": "getPet",
+                      "outputs": {
+                        "confirmedName": "$steps.getPet.outputs.petName",
+                        "confirmedCode": "$steps.getPet.outputs.code"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+            """;
+
+        WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(
+            Encoding.UTF8.GetBytes(TwoStep),
+            [new KeyValuePair<string, byte[]>("petstore", Encoding.UTF8.GetBytes(Petstore))],
+            new WorkflowSchemaTarget(WorkflowSchemaTargetKind.StepOutputs, WorkflowId: "adopt-pet-v1", StepId: "confirm"),
+            out byte[] document).ShouldBeTrue();
+
+        JsonSchema schema = JsonSchema.FromText(Encoding.UTF8.GetString(document), "corvus:test/seam-a/confirm");
+
+        schema.Validate("""{ "confirmedName": "Rex", "confirmedCode": 200 }""").ShouldBeTrue();
+
+        // The synthetic-source chain: $steps.getPet.outputs.code → $statusCode → integer.
+        schema.Validate("""{ "confirmedCode": "not-an-int" }""").ShouldBeFalse("confirmedCode resolves through $steps to an integer");
+
+        // The re-entrant chain: $steps.getPet.outputs.petName → getPet's $response.body#/name → string(maxLength 40).
+        schema.Validate($$"""{ "confirmedName": "{{new string('x', 41)}}" }""").ShouldBeFalse("confirmedName inherits the response body maxLength of 40");
+    }
+
     private static JsonSchema Build(WorkflowSchemaTarget target)
     {
         WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(

@@ -57,6 +57,13 @@ public static class WorkflowSchemaMetadataGenerator
 
     private const int MaxDepth = 12;
 
+    // The schemas for the two intrinsic scalar output sources ($statusCode → integer; $url/$method/headers/
+    // literal → string), parsed once so a $steps reference to such an output can be resolved to a real schema
+    // element (rather than only written inline). The documents are process-lifetime singletons.
+    private static readonly ParsedJsonDocument<JsonElement> IntegerSchemaDocument = ParsedJsonDocument<JsonElement>.Parse("{\"type\":\"integer\"}");
+
+    private static readonly ParsedJsonDocument<JsonElement> StringSchemaDocument = ParsedJsonDocument<JsonElement>.Parse("{\"type\":\"string\"}");
+
     // Validation/annotation keywords copied verbatim so the UI can render a suitable, constrained control.
     private static readonly string[] ConstraintKeywords =
     [
@@ -274,7 +281,7 @@ public static class WorkflowSchemaMetadataGenerator
             {
                 writer.WritePropertyName(output.Name);
                 string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
-                WriteOutputValidationSchema(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema);
+                WriteOutputValidationSchema(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema, sources);
             }
         }
 
@@ -300,16 +307,54 @@ public static class WorkflowSchemaMetadataGenerator
         bool havePayload,
         JsonElement payloadSchema,
         bool haveRequestBody,
-        JsonElement requestBodySchema)
+        JsonElement requestBodySchema,
+        IReadOnlyDictionary<string, JsonElement> sources)
     {
+        var visited = new HashSet<(string StepId, string OutputName)>();
+        if (TryResolveOutputSchema(
+                expression, workflow, workflowRoot, opRoot,
+                haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema,
+                sources, visited, out JsonElement resolved, out _))
+        {
+            resolved.WriteTo(writer);
+            return;
+        }
+
+        // Dynamic / unresolvable ($workflows, or a pointer that does not resolve) outputs are unconstrained.
+        writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// Resolves a single output expression to its schema element (and the document root that element's
+    /// <c>$ref</c>s resolve within), following <c>$steps.&lt;id&gt;.outputs.&lt;name&gt;</c> references transitively
+    /// so a workflow/step output that reads a prior step's output is typed by that step's resolved schema (#872).
+    /// Returns <see langword="false"/> for a dynamic or unresolvable source, whereupon the caller emits an open schema.
+    /// </summary>
+    private static bool TryResolveOutputSchema(
+        string expression,
+        JsonElement workflow,
+        JsonElement workflowRoot,
+        JsonElement opRoot,
+        bool haveResponse,
+        JsonElement responseSchema,
+        bool havePayload,
+        JsonElement payloadSchema,
+        bool haveRequestBody,
+        JsonElement requestBodySchema,
+        IReadOnlyDictionary<string, JsonElement> sources,
+        HashSet<(string StepId, string OutputName)> visited,
+        out JsonElement resolved,
+        out JsonElement resolvedRoot)
+    {
+        resolved = default;
+        resolvedRoot = default;
         ArazzoExpr expr = ArazzoExpr.Parse(expression);
         switch (expr.Source)
         {
             case ArazzoExprSource.StatusCode:
-                writer.WriteStartObject();
-                writer.WriteString("type", "integer");
-                writer.WriteEndObject();
-                return;
+                resolved = IntegerSchemaDocument.RootElement;
+                return true;
 
             case ArazzoExprSource.Url:
             case ArazzoExprSource.Method:
@@ -319,53 +364,124 @@ public static class WorkflowSchemaMetadataGenerator
             case ArazzoExprSource.RequestQuery:
             case ArazzoExprSource.MessageHeader:
             case ArazzoExprSource.Literal:
-                writer.WriteStartObject();
-                writer.WriteString("type", "string");
-                writer.WriteEndObject();
-                return;
+                resolved = StringSchemaDocument.RootElement;
+                return true;
 
             case ArazzoExprSource.Inputs when expr.Name is { } inputName:
                 if (workflow.TryGetProperty("inputs", out JsonElement inputs)
                     && TryNavigateProperty(inputs, workflowRoot, inputName, out JsonElement inputSchema)
-                    && TryNavigatePointer(inputSchema, workflowRoot, expr.JsonPointer, out JsonElement resolvedInput))
+                    && TryNavigatePointer(inputSchema, workflowRoot, expr.JsonPointer, out resolved))
                 {
-                    resolvedInput.WriteTo(writer);
-                    return;
+                    resolvedRoot = workflowRoot;
+                    return true;
                 }
 
                 break;
 
             case ArazzoExprSource.ResponseBody when haveResponse:
-                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out JsonElement resolvedBody))
+                if (TryNavigatePointer(responseSchema, opRoot, expr.JsonPointer, out resolved))
                 {
-                    resolvedBody.WriteTo(writer);
-                    return;
+                    resolvedRoot = opRoot;
+                    return true;
                 }
 
                 break;
 
             case ArazzoExprSource.RequestBody when haveRequestBody:
-                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out JsonElement resolvedRequest))
+                if (TryNavigatePointer(requestBodySchema, opRoot, expr.JsonPointer, out resolved))
                 {
-                    resolvedRequest.WriteTo(writer);
-                    return;
+                    resolvedRoot = opRoot;
+                    return true;
                 }
 
                 break;
 
             case ArazzoExprSource.MessagePayload when havePayload:
-                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out JsonElement resolvedPayload))
+                if (TryNavigatePointer(payloadSchema, opRoot, expr.JsonPointer, out resolved))
                 {
-                    resolvedPayload.WriteTo(writer);
-                    return;
+                    resolvedRoot = opRoot;
+                    return true;
                 }
 
                 break;
+
+            case ArazzoExprSource.Steps when expr.ContainerId is { } refStepId && expr.Name is { } refOutputName:
+                return TryResolveStepOutputSchema(
+                    refStepId, refOutputName, expr.JsonPointer, workflow, workflowRoot, sources, visited, out resolved, out resolvedRoot);
         }
 
-        // Unresolvable / dynamic ($steps, $workflows) outputs are unconstrained — accept any value.
-        writer.WriteStartObject();
-        writer.WriteEndObject();
+        return false;
+    }
+
+    /// <summary>
+    /// Resolves <c>$steps.&lt;refStepId&gt;.outputs.&lt;refOutputName&gt;</c> to the referenced output's schema by
+    /// re-deriving that step's operation context and resolving its output expression (which may itself reference a
+    /// further step), guarding against cycles, then applying the referring expression's trailing JSON Pointer.
+    /// </summary>
+    private static bool TryResolveStepOutputSchema(
+        string refStepId,
+        string refOutputName,
+        string? trailingPointer,
+        JsonElement workflow,
+        JsonElement workflowRoot,
+        IReadOnlyDictionary<string, JsonElement> sources,
+        HashSet<(string StepId, string OutputName)> visited,
+        out JsonElement resolved,
+        out JsonElement resolvedRoot)
+    {
+        resolved = default;
+        resolvedRoot = default;
+
+        // A cycle in the $steps output graph (a references b references a): bail to an open schema.
+        if (!visited.Add((refStepId, refOutputName)))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!TryFindStep(workflow, refStepId, out JsonElement refStep)
+                || !refStep.TryGetProperty("outputs", out JsonElement refOutputs)
+                || refOutputs.ValueKind != JsonValueKind.Object
+                || !refOutputs.TryGetProperty(refOutputName, out JsonElement refOutputExpr)
+                || refOutputExpr.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            string refExpression = refOutputExpr.GetString() ?? string.Empty;
+
+            // Re-derive the referenced step's operation context — its own response/payload/request-body schemas.
+            bool resolvedOp = TryResolveStepOperation(refStep, sources, out StepOperation op);
+            JsonElement responseSchema = default, payloadSchema = default, requestBodySchema = default;
+            bool haveResponse = resolvedOp && !op.IsAsyncApi && TrySuccessResponseBody(op, out responseSchema);
+            bool havePayload = resolvedOp && op.IsAsyncApi && TryMessagePayload(op, out payloadSchema);
+            bool haveRequestBody = resolvedOp && !op.IsAsyncApi && TryRequestBody(op, out requestBodySchema);
+            JsonElement refOpRoot = resolvedOp ? op.Root : default;
+
+            if (!TryResolveOutputSchema(
+                    refExpression, workflow, workflowRoot, refOpRoot,
+                    haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema,
+                    sources, visited, out JsonElement referenced, out JsonElement referencedRoot))
+            {
+                return false;
+            }
+
+            // Apply the referring expression's trailing pointer (e.g. $steps.a.outputs.pet#/name) against the
+            // resolved schema, using the document root that schema's own $refs resolve within.
+            if (!TryNavigatePointer(referenced, referencedRoot, trailingPointer, out resolved))
+            {
+                resolved = default;
+                return false;
+            }
+
+            resolvedRoot = referencedRoot;
+            return true;
+        }
+        finally
+        {
+            visited.Remove((refStepId, refOutputName));
+        }
     }
 
     /// <summary>
