@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using VaultSharp;
 
-namespace Corvus.Text.Json.Arazzo.Runner.Demo;
+namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
 /// Keeps the runner's AppRole-issued Vault token valid for the whole life of the process (design §13.5.1). The runner

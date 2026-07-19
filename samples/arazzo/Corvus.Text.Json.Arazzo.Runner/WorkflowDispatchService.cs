@@ -6,7 +6,7 @@ using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
-namespace Corvus.Text.Json.Arazzo.Runner.Demo;
+namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
 /// The runner's dispatch + resume loop (design §7). It polls the store-as-queue for the versions it hosts:

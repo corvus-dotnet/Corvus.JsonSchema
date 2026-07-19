@@ -5,7 +5,7 @@
 using System.Net.Http.Headers;
 using Stj = System.Text.Json;
 
-namespace Corvus.Text.Json.Arazzo.Runner.Demo;
+namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
 /// Registers this runner with the control plane through its authenticated HTTP API (design §5.5/§16.4). The runner

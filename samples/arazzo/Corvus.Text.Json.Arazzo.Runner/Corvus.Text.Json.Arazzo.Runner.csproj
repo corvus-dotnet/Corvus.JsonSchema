@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+    <!-- The §18 draft-run host compiles a captured draft at runtime, so the reference assemblies must be preserved,
+         exactly as the concrete runner hosts that compose these building blocks require. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <!-- Reusable building blocks for an Arazzo execution-host ("runner") process (design §5): runner options, the
+       registration/heartbeat and dispatch background services, the control-plane machine-principal registrar, the Vault
+       token-lifecycle keeper, and the §18 draft-run host + un-credentialed transport binder. A concrete runner host
+       composes these into its own Program (the sample app runner and the control-plane system runner both do), so only
+       the composition root — sources, environment, consumers — differs between runners. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="VaultSharp" />
+  </ItemGroup>
+
+  <!-- These building blocks were authored in an Sdk.Web host where Hosting/Logging were implicit usings; as a plain
+       class library the SDK does not add them, so surface them globally to keep the moved sources unchanged. -->
+  <ItemGroup>
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+</Project>

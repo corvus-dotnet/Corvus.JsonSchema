@@ -18,7 +18,7 @@ using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
-using Corvus.Text.Json.Arazzo.Runner.Demo;
+using Corvus.Text.Json.Arazzo.Runner;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 using Corvus.Text.Json.AsyncApi.Nats;
 using Npgsql;

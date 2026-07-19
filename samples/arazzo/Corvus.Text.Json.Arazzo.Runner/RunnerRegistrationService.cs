@@ -9,7 +9,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
-namespace Corvus.Text.Json.Arazzo.Runner.Demo;
+namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
 /// Registers this runner on start-up and heartbeats while it is alive (design §5.4/§5.5). When a control-plane registrar is

@@ -14,13 +14,22 @@
   <ItemGroup>
     <!-- Aspire service defaults: OpenTelemetry, health checks, service discovery — traces/logs/metrics to the dashboard. -->
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
-    <!-- Reuse the runner infrastructure (RunnerOptions, RunnerRegistrationService, WorkflowDispatchService,
-         ControlPlaneRunnerRegistrar, VaultTokenLifecycleService, DraftRunHost.CreateBinder). A future cleanup extracts
-         these into a shared Corvus.Text.Json.Arazzo.Runner library; for now the dedicated system runner reuses the app
-         runner's public infra classes, so only the composition root (this project's Program) differs. -->
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Runner.Demo\Corvus.Text.Json.Arazzo.Runner.Demo.csproj" />
+    <!-- The reusable runner building blocks (RunnerOptions, RunnerRegistrationService, WorkflowDispatchService,
+         ControlPlaneRunnerRegistrar, VaultTokenLifecycleService, DraftRunHost.CreateBinder), shared with the app runner.
+         Only this project's composition root (its sources, environment, and access-decision consumer) differs. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Runner\Corvus.Text.Json.Arazzo.Runner.csproj" />
     <!-- The bootstrapped access-approval workflow's generated access-decision consumer + its resume handler. -->
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.csproj" />
+    <!-- The composition root directly opens the shared Postgres stores, resolves the OAuth2 credential as its own Vault
+         identity, loads the signed executor, and drives runs against the NATS bus (access.notify / access.decision). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Vault\Corvus.Text.Json.Arazzo.Durability.Vault.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Nats\Corvus.Text.Json.AsyncApi.Nats.csproj" />
   </ItemGroup>
 
 </Project>

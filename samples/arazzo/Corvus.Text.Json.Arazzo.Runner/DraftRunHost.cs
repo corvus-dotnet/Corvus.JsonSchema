@@ -7,7 +7,7 @@ using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
-namespace Corvus.Text.Json.Arazzo.Runner.Demo;
+namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
 /// The out-of-process §18 draft-run host. In the multi-process topology the control plane only MARKS $draft debug
@@ -37,7 +37,7 @@ public static class DraftRunHost
 /// <summary>Pumps the out-of-process <see cref="InProcessDraftRunner"/>: it claims the $draft debug runs the control
 /// plane marked and advances them (execute / step / resume), recording the trace — the execution the control plane
 /// deliberately never performs itself.</summary>
-internal sealed class DraftRunPumpService(InProcessDraftRunner runner, ILogger<DraftRunPumpService> logger) : BackgroundService
+public sealed class DraftRunPumpService(InProcessDraftRunner runner, ILogger<DraftRunPumpService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(200);
 
