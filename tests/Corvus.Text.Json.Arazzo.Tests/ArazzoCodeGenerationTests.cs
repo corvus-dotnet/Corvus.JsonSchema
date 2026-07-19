@@ -85,6 +85,77 @@ public class ArazzoCodeGenerationTests
     }
 
     [TestMethod]
+    public async Task Co_generates_a_typed_result_model_for_each_workflow_with_outputs()
+    {
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(Document), Binder(), new ArazzoGenerationOptions("Acme.Pets"));
+
+        // A workflow's declared outputs are co-generated as a typed result model beside the inputs model, in a
+        // per-workflow "Result" sub-namespace + folder so its generated types never collide with the inputs model's.
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/Result/", StringComparison.Ordinal));
+        files.ShouldContain(f => f.FileName.StartsWith("Models/FindPet/Result/", StringComparison.Ordinal));
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/Result/", StringComparison.Ordinal)
+            && f.Content.Contains("namespace Acme.Pets.Models.Adopt.Result", StringComparison.Ordinal));
+
+        // The executor keeps the untyped JsonElement result contract — the generic durable runtime stores and
+        // serialises a run's outputs uniformly. The typed result model is a JsonElement-backed view callers opt
+        // into, not the executor's return type, so the executor never references the result namespace.
+        GeneratedModelFile adopt = files.Single(f => f.FileName == "Workflows/AdoptWorkflow.cs");
+        adopt.Content.ShouldContain("Corvus.Text.Json.JsonElement");
+        adopt.Content.ShouldNotContain("Models.Adopt.Result");
+    }
+
+    [TestMethod]
+    public async Task Skips_the_result_model_when_a_workflow_transfers_to_another_workflow()
+    {
+        // "gateway" hands off to "handler" on success (a cross-workflow goto), so its runtime result is handler's
+        // differently-shaped outputs — a typed view of gateway's own declared outputs would misrepresent it, so no
+        // result model is co-generated for gateway. "handler" completes with its own outputs and does get one.
+        const string transfer = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+              "workflows": [
+                {
+                  "workflowId": "gateway",
+                  "inputs": { "type": "object", "properties": { "query": { "type": "string" } } },
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.query" } ],
+                      "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                      "onSuccess": [ { "name": "handoff", "type": "goto", "workflowId": "handler" } ]
+                    }
+                  ],
+                  "outputs": { "name": "$steps.getPet.outputs.petName" }
+                },
+                {
+                  "workflowId": "handler",
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "parameters": [ { "name": "petId", "in": "path", "value": "1" } ],
+                      "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                      "outputs": { "petName": "$response.body#/name" }
+                    }
+                  ],
+                  "outputs": { "name": "$steps.getPet.outputs.petName" }
+                }
+              ]
+            }
+            """;
+
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(transfer), Binder(), new ArazzoGenerationOptions("Acme.Pets"));
+
+        files.ShouldNotContain(f => f.FileName.StartsWith("Models/Gateway/Result/", StringComparison.Ordinal));
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Handler/Result/", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task Falls_back_to_JsonElement_when_a_workflow_has_no_inputs()
     {
         const string noInputs = """

@@ -113,6 +113,30 @@ public static class ArazzoCodeGeneration
                 }
             }
 
+            // The workflow's declared outputs — its result — typed into a per-workflow model (#872), co-generated
+            // beside the executor in its own "Result" sub-namespace + folder so its generated types never collide
+            // with the inputs model's in the same workflow folder. Callers read a run's JsonElement outputs through
+            // it (a JsonElement-backed typed view). The executor's own result stays the untyped JsonElement — that
+            // is the generic durable-runtime contract (outputs are stored and serialised uniformly), and a workflow
+            // that transfers control to another workflow returns that workflow's differently-shaped result — so the
+            // result model is skipped for such a transfer, where a typed view of this workflow's declared outputs
+            // would be misleading.
+            string resultNamespace = $"{modelNamespace}.Result";
+            WorkflowOutputsModel? outputsModel = workflow.Outputs.IsNotUndefined()
+                && !WorkflowExecutorEmitter.TransfersToAnotherWorkflow(workflow, components)
+                ? await WorkflowOutputsModelGenerator
+                    .GenerateAsync(arazzoDocumentUtf8, options.SchemaDocuments ?? [], workflowId, resultNamespace, cancellationToken)
+                    .ConfigureAwait(false)
+                : null;
+
+            if (outputsModel is not null)
+            {
+                foreach (GeneratedModelFile modelFile in outputsModel.Files)
+                {
+                    files.Add(new GeneratedModelFile($"{DefaultModelsNamespaceSuffix}/{workflowName}/Result/{modelFile.FileName}", modelFile.Content));
+                }
+            }
+
             string executorSource = WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,

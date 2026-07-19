@@ -817,6 +817,49 @@ public static class WorkflowExecutorEmitter
     }
 
     /// <summary>
+    /// Whether the workflow can transfer control to another workflow — an <c>onSuccess</c>/<c>onFailure</c> action
+    /// (step-level or workflow-level) that is a <c>goto</c> whose target is a <c>workflowId</c>. Such a transfer
+    /// runs the target workflow and returns <em>its</em> result as this workflow's result, so this workflow's actual
+    /// result is another workflow's differently-shaped outputs. No typed result model is co-generated for such a
+    /// workflow (#872): a typed view of its own declared outputs would misrepresent the runtime result.
+    /// </summary>
+    internal static bool TransfersToAnotherWorkflow(in ArazzoDocument.WorkflowObject workflow, in JsonElement components)
+    {
+        if (AnyWorkflowGoto(ReadActions(workflow.SuccessActions, components))
+            || AnyWorkflowGoto(ReadActions(workflow.FailureActions, components)))
+        {
+            return true;
+        }
+
+        if (workflow.Steps.IsNotUndefined())
+        {
+            foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
+            {
+                if (AnyWorkflowGoto(ReadActions(step.OnSuccess, components))
+                    || AnyWorkflowGoto(ReadActions(step.OnFailure, components)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
+        static bool AnyWorkflowGoto(List<StepActionInfo> actions)
+        {
+            foreach (StepActionInfo action in actions)
+            {
+                if (action.Kind == StepActionKind.Goto && action.TargetWorkflowId is not null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Orders steps so each step's same-workflow <c>dependsOn</c> dependencies precede it (a stable
     /// topological sort — Kahn's algorithm with document order as the tie-break). Cross-workflow or
     /// unknown dependency references are ignored (a sequential single-workflow executor cannot enforce

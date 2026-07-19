@@ -71,6 +71,13 @@ internal static class DerivedSchemaModelGenerator
                 accessors[property.JsonPropertyName] = property.DotnetPropertyName();
             }
 
+            // An outputs object with no declared members reduces to an empty object type with no accessors — there
+            // is nothing to read through it, so no model is generated (the caller keeps the untyped element).
+            if (accessors.Count == 0)
+            {
+                return null;
+            }
+
             var files = new List<GeneratedModelFile>(generated.Count);
             foreach (GeneratedCodeFile file in generated)
             {
