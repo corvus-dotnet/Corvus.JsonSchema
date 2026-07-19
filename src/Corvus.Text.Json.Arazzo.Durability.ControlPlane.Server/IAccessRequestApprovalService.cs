@@ -35,6 +35,23 @@ public interface IAccessRequestApprovalService
     /// <returns>The approved request, or <see langword="null"/> if absent.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken);
 
+    /// <summary>Grants a pending request under the platform ceiling <em>without</em> a §15-administrator check — the
+    /// system-credentialed grant path (design §16.5.1). Where <see cref="ApproveAsync"/> makes an administrator's
+    /// decision and writes the grant in one step, this <em>only</em> writes the grant: the approval decision has already
+    /// been made by the bootstrapped approval workflow (a human approver drives it via the injected decision message),
+    /// and the workflow's §13 system credential calls this to enact it. The ceiling is identical to
+    /// <see cref="ApproveAsync"/> and is the hard boundary — at most the requested scopes intersected with the run-access
+    /// allowlist, bound to the requester (never a third party), reach fixed to the target workflow, TTL capped at the
+    /// deployment maximum — so it can never widen to an arbitrary binding. Callers reach this only with the narrow
+    /// <c>accessRequests:grant</c> capability, which a deployment grants solely to the approval workflow's system
+    /// credential.</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="actor">The granting system principal's audit identity.</param>
+    /// <param name="reason">An optional grant note (typically the approver's decision note carried through the workflow).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The granted (approved) request, or <see langword="null"/> if absent.</returns>
+    ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken);
+
     /// <summary>Approves a pending request as durable eligibility (§16.5.3) rather than a live grant — the requester may
     /// thereafter self-elevate JIT without re-approval (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>

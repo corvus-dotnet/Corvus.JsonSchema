@@ -272,6 +272,33 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GrantAccessRequestResult> HandleGrantAccessRequestAsync(GrantAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.RequestId;
+
+        // No own-request or §15-administrator check: the caller is the approval workflow's §13 system credential (gated by
+        // the narrow accessRequests:grant capability), not the approver in person. The approval DECISION was made inside
+        // the workflow; this only enacts the ceiling-bounded grant it authorized (design §16.5.1). The platform ceiling in
+        // the approval service still applies unconditionally (run access only, bound to the requester, workflow-scoped).
+        try
+        {
+            ParsedJsonDocument<AccessRequest>? result = await this.approval.GrantRequestAsync(id, this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);
+            if (result is null)
+            {
+                return GrantAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant", this.CallerActor(), TargetKind, id, "granted");
+            workspace.TakeOwnership(result);
+            return GrantAccessRequestResult.Ok(ToView(result.RootElement), workspace);
+        }
+        catch (AccessRequestStateException ex)
+        {
+            return GrantAccessRequestResult.Conflict(Problem("invalid-state", "Cannot grant the request", 409, ex.Message), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;

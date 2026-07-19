@@ -4126,6 +4126,30 @@
         }
       }
     },
+    "/accessRequests/{requestId}/grant": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+      ],
+      "post": {
+        "operationId": "grantAccessRequest",
+        "security": [
+          { "oauth2": ["accessRequests:grant"] },
+          { "openIdConnect": ["accessRequests:grant"] }
+        ],
+        "tags": ["accessRequests"],
+        "summary": "Grant a pending access request (system-credentialed, no administrator check)",
+        "description": "Writes the capped, time-boxed entitlement a pending request's decision authorized, WITHOUT the §15-administrator check that approve applies — the system-credentialed grant path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this to write the grant the decision authorized. The platform ceiling is identical to approve and holds regardless of caller — at most the requested scopes intersected with run access, bound to the requester (never a third party), reach fixed to the target workflow, expiry capped at the deployment maximum — so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The granted (approved) request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/availabilityRequests": {
       "post": {
         "operationId": "submitAvailabilityRequest",
@@ -4491,7 +4515,8 @@
               "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).",
-              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it."
+              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it.",
+              "accessRequests:grant": "Grant a pending access request under the platform ceiling, without the §15-administrator check (design §16.5.1); the system-credentialed grant path, granted solely to the bootstrapped approval workflow's system credential."
             }
           },
           "clientCredentials": {
@@ -4517,7 +4542,8 @@
               "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).",
-              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it."
+              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it.",
+              "accessRequests:grant": "Grant a pending access request under the platform ceiling, without the §15-administrator check (design §16.5.1); the system-credentialed grant path, granted solely to the bootstrapped approval workflow's system credential."
             }
           }
         }

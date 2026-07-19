@@ -120,6 +120,65 @@ public sealed class AccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task A_system_grant_writes_the_ceiling_bounded_grant_without_an_administrator_check()
+    {
+        Harness h = await Harness.CreateAsync();
+
+        // Over-ask a mix of grantable + never-grantable scopes. The system-grant path takes NO approver identity — it
+        // omits the §15-admin check (design §16.5.1: the decision was made by the calling approval workflow, not verified
+        // here) — yet the platform ceiling still applies unconditionally.
+        string id = await h.SubmitPendingAsync(["runs:write", "security:write", "runs:read"], requestedDurationSeconds: 3600);
+
+        using (ParsedJsonDocument<AccessRequest>? granted = await h.Service.GrantRequestAsync(id, "approval-workflow", "approved by workflow", default))
+        {
+            granted.ShouldNotBeNull();
+            granted!.RootElement.StatusValue.ShouldBe("Approved");
+            granted.RootElement.DecidedByOrNull.ShouldBe("approval-workflow");
+            granted.RootElement.GrantedBindingIdOrNull.ShouldNotBeNull();
+            granted.RootElement.GrantedUntilValue.ShouldBe(Now.AddSeconds(3600));
+        }
+
+        // The ceiling held: run access only (security:write dropped), bound to the requester (alice), reach fixed to
+        // this workflow — identical to what an administrator's approval would have written.
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldBe(["runs:read", "runs:write"], ignoreOrder: true);
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("sys:workflow", "nightly-reconcile")])).ShouldBeTrue();
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("sys:workflow", "other-flow")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_of_a_request_with_no_grantable_scope_is_rejected()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["security:write"]);
+
+        // The ceiling is the hard boundary even on the un-admin-checked path: nothing grantable → refused.
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.GrantRequestAsync(id, "approval-workflow", null, default));
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_of_a_non_pending_request_conflicts()
+    {
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+
+        using (await h.Service.GrantRequestAsync(id, "approval-workflow", null, default))
+        {
+        }
+
+        // A second grant finds the request Approved, not Pending → refused (the handler maps this to 409).
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.GrantRequestAsync(id, "approval-workflow", null, default));
+    }
+
+    [TestMethod]
+    public async Task A_system_grant_of_an_absent_request_returns_null()
+    {
+        Harness h = await Harness.CreateAsync();
+        (await h.Service.GrantRequestAsync("does-not-exist", "approval-workflow", null, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task An_eligible_requester_self_elevates_without_an_approver()
     {
         // The deployment marks alice's principal claims-eligible; she is NOT an administrator, but the request is

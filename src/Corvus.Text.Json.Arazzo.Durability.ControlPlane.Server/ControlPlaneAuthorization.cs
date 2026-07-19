@@ -90,8 +90,17 @@ public static class ControlPlaneScopes
     /// authorize it (<see cref="EnvironmentsWrite"/>) before it is dispatchable.</summary>
     public const string RunnersRegister = "runners:register";
 
+    /// <summary>Grant a pending access request under the platform ceiling, <em>without</em> the §15-administrator check
+    /// (design §16.5.1). The system-credentialed grant path: the bootstrapped approval workflow presents this — held
+    /// only by its §13 system credential — to write the entitlement its (human-driven) decision authorized. Narrow by
+    /// construction: the ceiling holds regardless of caller (at most the requested scopes intersected with run access,
+    /// bound to the requester, reach fixed to the target workflow, TTL-capped), so this can never widen to an arbitrary
+    /// binding (that needs <see cref="SecurityWrite"/>) — the worst case if it ever leaked is an auto-grant of run access
+    /// to the requester of an existing pending request.</summary>
+    public const string AccessRequestsGrant = "accessRequests:grant";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsOutputsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite, RunnersRegister];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsOutputsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite, RunnersRegister, AccessRequestsGrant];
 }
 
 /// <summary>

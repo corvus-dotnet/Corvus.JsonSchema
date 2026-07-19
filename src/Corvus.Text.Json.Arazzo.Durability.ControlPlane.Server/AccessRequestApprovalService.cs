@@ -139,6 +139,37 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Grants a pending request under the platform ceiling <em>without</em> a §15-administrator check — the
+    /// system-credentialed grant path (design §16.5.1), used by the bootstrapped approval workflow to enact a decision it
+    /// has already made.</summary>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="actor">The granting system principal's audit identity.</param>
+    /// <param name="reason">An optional grant note.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The granted (approved) request, or <see langword="null"/> if no request with that id exists.</returns>
+    /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(requestId);
+        ArgumentNullException.ThrowIfNull(actor);
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return null;
+        }
+
+        AccessRequest request = fetched.RootElement;
+        RequireStatus(request, AccessRequestStatus.Pending);
+
+        // Deliberately no EnsureAdministratorAsync: under the workflow-backed strategy the approval DECISION is the
+        // workflow's (a human approver drives it via the injected decision message), so this system-credentialed call
+        // only enacts what the decision authorized. The platform ceiling in GrantAndDecideAsync (CapScopes → run access
+        // only; subject fixed to the requester; reach fixed to the workflow; TTL capped) applies unconditionally, so the
+        // worst case if the narrow accessRequests:grant capability ever leaked is an auto-grant of run access to the
+        // requester of an existing pending request — never an arbitrary binding.
+        return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Approves a pending request as <em>durable eligibility</em> (§16.5.3): writes an eligibility assignment
     /// (an <c>eligibleOnly</c> binding) rather than a live grant, so the requester may thereafter self-elevate this
     /// capability JIT without re-approval. The approver must be a §15 administrator of the target workflow.</summary>
