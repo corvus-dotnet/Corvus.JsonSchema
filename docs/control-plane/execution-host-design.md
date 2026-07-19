@@ -137,8 +137,7 @@ catalogs; the field is reserved but optional.)
   "signature": null,
   "entryType": "Corvus.Generated.<WorkflowId>.HostedWorkflow",
   "runtime": { "corvusTextJson": "<version>", "needsMessageTransport": true },
-  "sources": [ { "name": "onboarding", "kind": "openapi" }, { "name": "events", "kind": "asyncapi" } ],
-  "triggers": [ /* optional declared triggers — see §6.4 */ ]
+  "sources": [ { "name": "onboarding", "kind": "openapi" }, { "name": "events", "kind": "asyncapi" } ]
 }
 ```
 
@@ -494,9 +493,20 @@ Two options:
   `triggers[]`. Self-describing and portable, but couples deployment intent into the versioned artifact.
 
 **Decision (A, HTTP always-on):** **HTTP is always available** for any runnable version (no declaration);
-message/schedule triggers are **host-configured** initially, with an optional declared-trigger manifest
-(`x-arazzo-triggers` → manifest `triggers[]`) as a later convenience. The manifest already reserves the
-`triggers` array for that.
+message/schedule triggers are **host-configured**, keyed by `(base, version)`.
+
+**Option B (`x-arazzo-triggers`) is declined.** It has no consumer and earns its keep nowhere: HTTP
+initiation is the always-on `.../runs` endpoint (no declaration read); message/schedule *hosting* is the
+dispatcher-workflow pattern (§6 / #880) — a durable `receive` → cross-workflow `goto` → loop expressed in
+**standard Arazzo**, not a manifest field; and durable cron (#896) binds from **host config**
+(`ScheduleTriggerBinding`), not the package. Beyond having nothing that reads it, the extension is a
+proprietary `x-` addition that makes the Arazzo document non-portable (other tools ignore it), and it
+conflates a **deployment concern** (what initiates a workflow in a given environment) with the workflow's
+**definition** — the very separation host config preserves, letting one catalogued version bind to different
+triggers per environment. The in-band dispatcher-workflow pattern already expresses "declarative triggers"
+portably, so the extension would only duplicate it non-standardly. The `executor-manifest.json` `triggers[]`
+array is therefore **not emitted** (a workflow that wants declarative triggering models it as a dispatcher
+workflow instead).
 
 ## 7. Execution model and concurrency (in the runner)
 
@@ -650,17 +660,18 @@ hand-builds the binder + compiles in-process); this design productionises it beh
   lease-expired orphans) from a dispatch index — no separate queue. Correctness is lease+CAS; an optional
   doorbell may cut poll latency without becoming the source of truth.
 - **Trigger declaration — HTTP always-on (§6.5).** HTTP needs no declaration (available for every runnable
-  version); message/schedule triggers are **host-configured** initially, with `x-arazzo-triggers` in the
-  package as a later convenience.
+  version); message/schedule triggers are **host-configured**, keyed by `(base, version)`. The
+  `x-arazzo-triggers` package extension is **declined** (§6.5): no consumer, non-portable, and it conflates a
+  deployment concern with the workflow definition.
 - **First execution — async by default (§6.2).** A trigger creates a `Pending` run and returns `202` + run id;
   the run executes durably and is observed via the control plane. `?wait` offers a bounded synchronous result
   for short workflows / tests.
 - **Non-HTTP trigger inputs — in the runner's trigger binding (host config) (§6.3/§6.4).** The start channel +
-  payload→inputs mapping (message) and the schedule + input template (schedule) live in host config, moving
-  into the optional declared-trigger manifest later.
+  payload→inputs mapping (message) and the schedule + input template (schedule) live in host config. A workflow
+  that wants declarative triggering models it as a dispatcher workflow (§6 / #880), in standard Arazzo.
 
-All design decisions are resolved; remaining detail (transport-binding config schema, the declared-trigger
-manifest shape) is deferred to implementation phasing (§11).
+All design decisions are resolved. The transport-binding config schema is implemented (§13); the
+`x-arazzo-triggers` declared-trigger manifest shape is declined (§6.5).
 
 ## 13. Source credentials — storage, lifecycle, refresh
 
