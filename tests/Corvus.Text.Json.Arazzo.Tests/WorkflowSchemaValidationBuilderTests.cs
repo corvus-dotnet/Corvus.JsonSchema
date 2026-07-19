@@ -190,6 +190,59 @@ public class WorkflowSchemaValidationBuilderTests
         schema.Validate($$"""{ "confirmedName": "{{new string('x', 41)}}" }""").ShouldBeFalse("confirmedName inherits the response body maxLength of 40");
     }
 
+    [TestMethod]
+    public void Types_a_workflow_result_from_its_declared_outputs()
+    {
+        // A workflow's top-level outputs form its result type. Each output reads a step output
+        // ($steps.getPet.outputs.*, resolved transitively via seam A) or a workflow input ($inputs.petId). The
+        // built WorkflowOutputs schema must constrain the result object by those resolved schemas.
+        const string WithResult = """
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.json", "type": "openapi" } ],
+              "workflows": [
+                {
+                  "workflowId": "adopt-pet-v1",
+                  "inputs": {
+                    "type": "object",
+                    "properties": { "petId": { "type": "integer", "format": "int64", "minimum": 1 } },
+                    "required": [ "petId" ]
+                  },
+                  "steps": [
+                    {
+                      "stepId": "getPet",
+                      "operationId": "getPet",
+                      "outputs": {
+                        "petName": "$response.body#/name",
+                        "code": "$statusCode"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "finalName": "$steps.getPet.outputs.petName",
+                    "finalCode": "$steps.getPet.outputs.code",
+                    "echoedId": "$inputs.petId"
+                  }
+                }
+              ]
+            }
+            """;
+
+        WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(
+            Encoding.UTF8.GetBytes(WithResult),
+            [new KeyValuePair<string, byte[]>("petstore", Encoding.UTF8.GetBytes(Petstore))],
+            new WorkflowSchemaTarget(WorkflowSchemaTargetKind.WorkflowOutputs, WorkflowId: "adopt-pet-v1"),
+            out byte[] document).ShouldBeTrue();
+
+        JsonSchema schema = JsonSchema.FromText(Encoding.UTF8.GetString(document), "corvus:test/workflow-outputs/adopt-pet-v1");
+
+        schema.Validate("""{ "finalName": "Rex", "finalCode": 200, "echoedId": 5 }""").ShouldBeTrue();
+        schema.Validate("""{ "finalCode": "not-an-int" }""").ShouldBeFalse("finalCode resolves through $steps to an integer");
+        schema.Validate("""{ "echoedId": 0 }""").ShouldBeFalse("echoedId inherits the inputs minimum of 1");
+        schema.Validate($$"""{ "finalName": "{{new string('x', 41)}}" }""").ShouldBeFalse("finalName inherits the response body maxLength of 40");
+    }
+
     private static JsonSchema Build(WorkflowSchemaTarget target)
     {
         WorkflowSchemaMetadataGenerator.TryBuildValidationSchema(

@@ -184,6 +184,7 @@ public static class WorkflowSchemaMetadataGenerator
                 WorkflowSchemaTargetKind.RequestBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: true, status: null),
                 WorkflowSchemaTargetKind.ResponseBody => TryWriteBodyValidationSchema(writer, workflow, sourcesByName, target.StepId, request: false, status: target.Status),
                 WorkflowSchemaTargetKind.StepOutputs => TryWriteOutputsValidationSchema(writer, workflow, workflowRoot, sourcesByName, target.StepId),
+                WorkflowSchemaTargetKind.WorkflowOutputs => TryWriteWorkflowOutputsValidationSchema(writer, workflow, workflowRoot, sourcesByName),
                 _ => false,
             };
 
@@ -282,6 +283,53 @@ public static class WorkflowSchemaMetadataGenerator
                 writer.WritePropertyName(output.Name);
                 string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
                 WriteOutputValidationSchema(writer, expression, workflow, workflowRoot, opRoot, haveResponse, responseSchema, havePayload, payloadSchema, haveRequestBody, requestBodySchema, sources);
+            }
+        }
+
+        writer.WriteEndObject(); // properties
+        writer.WriteEndObject(); // target object
+        WriteMergedDefsEntries(writer, roots);
+        writer.WriteEndObject(); // $defs
+        WriteCarriedObject(writer, roots, "components");
+        WriteCarriedObject(writer, roots, "definitions");
+        writer.WriteEndObject(); // wrapper
+        return true;
+    }
+
+    private static bool TryWriteWorkflowOutputsValidationSchema(
+        Utf8JsonWriter writer,
+        JsonElement workflow,
+        JsonElement workflowRoot,
+        IReadOnlyDictionary<string, JsonElement> sources)
+    {
+        // The target is an object whose properties are the workflow's declared outputs, each carrying its resolved
+        // schema. A workflow output references a step output ($steps.<id>.outputs.<name>, resolved transitively via
+        // seam A, which re-derives each referenced step's operation context), a workflow input, or an intrinsic —
+        // there is no single operation context at the workflow level. Carry the workflow's reusable schema buckets
+        // and every source's so a resolved cross-step schema's $refs (into any source's components) still resolve.
+        var rootList = new List<JsonElement>(sources.Count + 1) { workflowRoot };
+        rootList.AddRange(sources.Values);
+        JsonElement[] roots = [.. rootList];
+
+        writer.WriteStartObject();
+        writer.WriteString("$ref", ValidationTargetRef);
+        writer.WritePropertyName("$defs");
+        writer.WriteStartObject();
+        writer.WritePropertyName(ValidationTargetName);
+        writer.WriteStartObject();
+        writer.WriteString("type", "object");
+        writer.WritePropertyName("properties");
+        writer.WriteStartObject();
+        if (workflow.TryGetProperty("outputs", out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var output in outputs.EnumerateObject())
+            {
+                writer.WritePropertyName(output.Name);
+                string expression = output.Value.ValueKind == JsonValueKind.String ? output.Value.GetString() ?? string.Empty : string.Empty;
+                WriteOutputValidationSchema(
+                    writer, expression, workflow, workflowRoot, opRoot: default,
+                    haveResponse: false, responseSchema: default, havePayload: false, payloadSchema: default,
+                    haveRequestBody: false, requestBodySchema: default, sources);
             }
         }
 
@@ -1637,6 +1685,11 @@ public enum WorkflowSchemaTargetKind
 
     /// <summary>An object whose properties are a step's declared outputs and their resolved schemas.</summary>
     StepOutputs,
+
+    /// <summary>An object whose properties are a workflow's declared outputs and their resolved schemas (the
+    /// workflow's result type). Each output references a step output ($steps.&lt;id&gt;.outputs.&lt;name&gt;,
+    /// resolved transitively), a workflow input, or an intrinsic.</summary>
+    WorkflowOutputs,
 }
 
 /// <summary>
