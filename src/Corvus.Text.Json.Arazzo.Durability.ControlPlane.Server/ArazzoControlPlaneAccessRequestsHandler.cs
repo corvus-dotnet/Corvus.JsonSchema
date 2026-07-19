@@ -487,10 +487,17 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     private static TimeSpan? EligibilityWindow(Models.AccessRequestEligibilityNote body)
         => body.IsNotUndefined() && body.EligibilityWindowSeconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)body.EligibilityWindowSeconds) : null;
 
-    // The audit actor recorded on a request (createdBy / decidedBy): the principal's configured subject claim — the
-    // same canonical identity the grant keys on — falling back to the authentication name, then "anonymous". (The
-    // unforgeable authorization identity is the sys: tag set from CallerIdentity; this is the human-facing audit name.)
-    private string ActorOf(ClaimsPrincipal? principal) => this.SubjectOf(principal) ?? principal?.Identity?.Name ?? "anonymous";
+    // The audit actor recorded on a request (createdBy / decidedBy / the grant's audit): the principal's configured
+    // subject claim — the same canonical identity the grant keys on. A machine principal (the approval workflow's system
+    // runner calling grantAccessRequest, design §16.4/§16.5.1) carries no human subject claim, so fall back to its client
+    // id (the authorized-party azp / client_id, e.g. arazzo-access-approval) before the authentication name and, last,
+    // "anonymous". (The unforgeable authorization identity is the sys: tag set from CallerIdentity; this is the audit name.)
+    private string ActorOf(ClaimsPrincipal? principal)
+        => this.SubjectOf(principal)
+        ?? principal?.FindFirst("azp")?.Value
+        ?? principal?.FindFirst("client_id")?.Value
+        ?? principal?.Identity?.Name
+        ?? "anonymous";
 
     // A single-document response wraps the stored element with no materialization: AccessRequestView is an exact,
     // congruent projection of the persisted AccessRequest (identical property names, types, and required set — see
