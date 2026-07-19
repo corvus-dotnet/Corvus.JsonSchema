@@ -46,7 +46,8 @@ public static class ArazzoGenerationDriver
         bool durable,
         CancellationToken cancellationToken,
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
-        Action<string>? progress = null)
+        Action<string>? progress = null,
+        IDictionary<string, string>? resolvedSourceDigests = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(arazzoFilePath);
 
@@ -54,8 +55,16 @@ public static class ArazzoGenerationDriver
         // file URI of its full path (so a registered in-memory copy under the same URI is preferred).
         return GenerateAsync(
             new Uri(Path.GetFullPath(arazzoFilePath)), rootNamespace, outputPath, clientName, durable,
-            cancellationToken, registeredDocuments, progress);
+            cancellationToken, registeredDocuments, progress, resolvedSourceDigests: resolvedSourceDigests);
     }
+
+    /// <summary>
+    /// Builds the same file-system + <c>http(s)</c> document loader the generation pipeline resolves sources through, with
+    /// no in-memory registered documents. The Arazzo lock file uses it to re-resolve each recorded source when deciding
+    /// whether a regeneration can be skipped (#871).
+    /// </summary>
+    /// <returns>A loader mapping an absolute URI to the document bytes, or <see langword="null"/> if it cannot be loaded.</returns>
+    public static Func<Uri, byte[]?> CreateFileSystemDocumentLoader() => BuildDocumentLoader(null);
 
     /// <summary>
     /// Generates an Arazzo document's workflows (and the OpenAPI clients/models its sources reference) where
@@ -76,6 +85,10 @@ public static class ArazzoGenerationDriver
     /// <param name="schemaDocuments">External JSON Schema documents (name → UTF-8) the root document's inputs
     /// schemas may reference by <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> (design §6, #94); they belong to the
     /// root package, so cross-document sub-workflow generation does not inherit them.</param>
+    /// <param name="resolvedSourceDigests">When supplied, every document the generation loads (the Arazzo document and
+    /// each of its OpenAPI/AsyncAPI/Arazzo sources) is recorded here as <c>absolute-uri → lowercase-hex SHA-256</c> of the
+    /// exact bytes loaded. The CLI writes these into the Arazzo lock file so a regeneration is reproducible and can be
+    /// skipped when no source has changed (#871).</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
         Uri arazzoRetrievalUri,
@@ -86,11 +99,29 @@ public static class ArazzoGenerationDriver
         CancellationToken cancellationToken,
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
         Action<string>? progress = null,
-        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null)
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null,
+        IDictionary<string, string>? resolvedSourceDigests = null)
     {
         ArgumentNullException.ThrowIfNull(arazzoRetrievalUri);
 
+        // Record the digest of every document the loader resolves (the single choke point every source flows through), so
+        // the lock file can pin each source and a regeneration can detect drift (#871). Absent the capture map, the raw
+        // loader is used unchanged (no per-load work).
         Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments);
+        if (resolvedSourceDigests is not null)
+        {
+            Func<Uri, byte[]?> inner = documentLoader;
+            documentLoader = uri =>
+            {
+                byte[]? bytes = inner(uri);
+                if (bytes is not null)
+                {
+                    resolvedSourceDigests[uri.AbsoluteUri] = ArazzoLockFile.ComputeDigest(bytes);
+                }
+
+                return bytes;
+            };
+        }
 
         byte[] arazzoBytes = documentLoader(arazzoRetrievalUri)
             ?? throw new FileNotFoundException($"The Arazzo document '{arazzoRetrievalUri}' could not be loaded.");

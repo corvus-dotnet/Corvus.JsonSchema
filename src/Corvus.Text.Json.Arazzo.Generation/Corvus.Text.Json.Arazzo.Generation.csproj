@@ -8,9 +8,12 @@
     <!-- The executor provider compiles generated code at runtime; the host must preserve its compilation
          context. Set here so a referencing build host inherits the requirement. -->
     <PreserveCompilationContext>true</PreserveCompilationContext>
-    <NoWarn>$(NoWarn);NU1504;CS1591;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
+    <!-- CS1572/CS1573/CS1574/CS1584/CS1658: the Corvus JSON-schema source generator (used here for ArazzoLockFileModel)
+         emits XML doc comments whose param tags do not always match; suppressed exactly as OpenApi.CodeGeneration does. -->
+    <NoWarn>$(NoWarn);NU1504;CS1591;CS1572;CS1573;CS1574;CS1584;CS1658;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
@@ -42,6 +45,12 @@
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
+    <!-- The Corvus.Text.Json JSON-schema source generator, used to generate the ArazzoLockFileModel type from
+         Schemas/corvusjson-arazzo-lock.json (the Arazzo lock-file, mirroring the OpenApi one). Analyzer-only. -->
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="Schemas\corvusjson-arazzo-lock.json" />
   </ItemGroup>
   <ItemGroup>
     <None Update="metaschema\**\*.json">

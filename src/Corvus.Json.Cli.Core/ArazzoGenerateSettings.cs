@@ -29,6 +29,10 @@ internal sealed class ArazzoGenerateSettings : ArazzoSettings
     [Description("Generate durable executors (checkpoint & resume capable) that return WorkflowRunResult<TOutputs>.")]
     [CommandOption("--durable")]
     public bool Durable { get; init; }
+
+    [Description("Force regeneration even if the lock file indicates the Arazzo document and its sources are unchanged.")]
+    [CommandOption("--force")]
+    public bool Force { get; init; }
 }
 
 #endif

@@ -1,0 +1,77 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ArazzoLockFile",
+    "description": "Records the parameters and resolved source descriptions used for an Arazzo workflow code-generation run, so subsequent runs can skip generation when nothing has changed (incremental) and a fetched-from-remote generation is reproducible.",
+    "type": "object",
+    "required": [
+        "arazzoFileHash",
+        "rootNamespace",
+        "durable",
+        "sources",
+        "generatedFiles",
+        "generatedAt",
+        "generatorVersion"
+    ],
+    "properties": {
+        "arazzoFileHash": {
+            "type": "string",
+            "description": "The SHA-256 hash of the RFC 8785 canonical form of the Arazzo document content."
+        },
+        "rootNamespace": {
+            "type": "string",
+            "description": "The root namespace for generated types."
+        },
+        "clientName": {
+            "type": "string",
+            "description": "The client name prefix, if specified."
+        },
+        "durable": {
+            "type": "boolean",
+            "description": "Whether durable (checkpoint & resume) executors were generated."
+        },
+        "sources": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/resolvedSource" },
+            "description": "The source descriptions the Arazzo document resolved, each pinned by the SHA-256 digest of the exact bytes loaded (local file or remote url). Regeneration compares each source's current digest against these to detect drift."
+        },
+        "generatedFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The list of generated file names, relative to the output directory."
+        },
+        "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The UTC timestamp of generation."
+        },
+        "generatorVersion": {
+            "type": "string",
+            "description": "The generator assembly version."
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "resolvedSource": {
+            "title": "ResolvedSource",
+            "type": "object",
+            "description": "A source description resolved during generation, pinned by the digest of its loaded bytes.",
+            "required": ["uri", "digest"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The sourceDescriptions[].name this document was referenced as (informational; the uri is the identity)."
+                },
+                "uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The absolute URI the source resolved as (a file:// path or an http(s) url)."
+                },
+                "digest": {
+                    "type": "string",
+                    "description": "The lowercase-hex SHA-256 of the exact bytes loaded for this source."
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
