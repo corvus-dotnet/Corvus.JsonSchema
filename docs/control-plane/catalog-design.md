@@ -231,7 +231,17 @@ a collectible `AssemblyLoadContext` per `(baseWorkflowId, versionNumber)`, **ver
 the assembly digest must match the manifest's `assemblyDigest` (`sha256:<hex>`) and the manifest's `packageHash`
 must match the catalog version's content hash. This binds the assembly to the exact version by content digest.
 
-**Still design-only.** A *cryptographic signature* over the assembly/package (the current binding is a SHA-256
-digest, not a signature); and a dedicated **hosting service** that loads a version's assembly and serves
-the workflow at a configured, secured endpoint (the loader primitive and the run-trigger exist; a standalone
-published-endpoint hosting service does not yet). These extend the existing shape rather than reshape it.
+**Resolved.** A *cryptographic signature* over the executor package is delivered (#879): the control plane
+signs and the runner verifies at load (custody split), over ECDSA with KMS / Key Vault / Vault Transit
+backends, alongside the SHA-256 content binding above.
+
+A dedicated **standalone published-endpoint hosting service** is **not required** (#878, declined). The control
+plane's `POST …/runs` endpoint already serves a catalogued version at a configured, secured HTTP endpoint
+(inputs validated against the baked schema, gated `runs:write`, version pinned in the path, a durable run
+created, optional `?wait` for a bounded synchronous result). The execution-host design calls that endpoint out
+as exactly the "publish the workflow at a configured, secured endpoint" goal (`execution-host-design.md` §6.2),
+and the runner already loads and executes the assembly (`WorkflowExecutorLoader` + `HostedWorkflowResumer`). The
+only thing a separate host would add is deployment topology (a dedicated URL and inbound auth per workflow,
+deployed independently of the control plane), not new capability. It is deferred until a concrete scenario needs
+that topology, at which point the leaner shape is an embeddable ASP.NET host extension reusing the loader and
+resumer, not a bespoke service that re-implements the control plane's HTTP-start, validation, and auth.
