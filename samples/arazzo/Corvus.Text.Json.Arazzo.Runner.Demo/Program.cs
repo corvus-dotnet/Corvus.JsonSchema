@@ -225,8 +225,39 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
     builder.Services.AddHostedService<DraftRunPumpService>();
 }
 
-// The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume).
-builder.Services.AddHostedService<RunnerRegistrationService>();
+// Authenticated registration (design §5.5/§16.4): when the control-plane API + this runner's machine-principal credentials
+// are configured (the real topology under the AppHost), the runner registers through the control plane's authenticated HTTP
+// endpoint as a Keycloak client-credentials client, so the control plane derives the trusted principal from the token and
+// binds the runner's authorization to it — instead of the runner self-asserting a Pending row into the shared store. Absent
+// any of these (a bare two-process run), the registrar stays null and registration falls back to the store-direct path.
+ControlPlaneRunnerRegistrar? runnerRegistrar = null;
+string? controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"];
+string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
+string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
+string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
+    && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
+{
+    string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
+    runnerRegistrar = new ControlPlaneRunnerRegistrar(
+        new HttpClient(),
+        controlPlaneBaseUrl,
+        runnerEnvironment,
+        ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
+        runnerClientId,
+        runnerClientSecret);
+}
+
+// The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume). The registration service is
+// constructed explicitly so the optional control-plane registrar (or null) flows in deterministically.
+builder.Services.AddHostedService(sp => new RunnerRegistrationService(
+    sp.GetRequiredService<IRunnerRegistry>(),
+    sp.GetRequiredService<IEnvironmentStore>(),
+    sp.GetRequiredService<IEnvironmentRunnerAuthorizationStore>(),
+    sp.GetRequiredService<SecuredWorkflowCatalog>(),
+    sp.GetRequiredService<RunnerOptions>(),
+    sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
+    runnerRegistrar));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 // A startup self-check (design §13.5): resolve the seeded credential references against Vault using only the

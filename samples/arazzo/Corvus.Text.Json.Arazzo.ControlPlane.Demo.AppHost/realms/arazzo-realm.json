@@ -81,6 +81,26 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "arazzo-runner",
+      "name": "Arazzo execution-host runner (machine principal, design §16.4)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-runner-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["runners:register"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "runners:register",
+      "description": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4).",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
     }
   ]
 }

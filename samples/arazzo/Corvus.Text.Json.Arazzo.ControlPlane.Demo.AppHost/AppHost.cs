@@ -407,6 +407,17 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
+    // Authenticated registration (design §5.5/§16.4): the runner registers through the control plane's authenticated HTTP
+    // endpoint as its own machine principal — the arazzo-runner Keycloak client (client-credentials) — rather than
+    // self-asserting a Pending row into the shared store. It needs the control-plane base URL, the Keycloak base URL (for the
+    // token endpoint), and its client-credentials (the client id is its azp -> the bound principal; the secret must equal the
+    // realm import's). The control plane derives the trusted principal from the presented token and binds the authorization.
+    .WithReference(keycloak)
+    .WaitFor(keycloak)
+    .WithEnvironment("Runner__ControlPlane__BaseUrl", controlplane.GetEndpoint("http"))
+    .WithEnvironment("Runner__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Runner__Keycloak__ClientId", "arazzo-runner")
+    .WithEnvironment("Runner__Keycloak__ClientSecret", "arazzo-runner-dev-secret")
     .WaitFor(onboarding)
     .WaitFor(ledger)
     .WaitFor(kyc)

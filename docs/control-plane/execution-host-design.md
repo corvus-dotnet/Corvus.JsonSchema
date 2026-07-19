@@ -330,11 +330,19 @@ and `environment` on the run:
 - `startCatalogWorkflowRun` request body gains a required `environment`, validated against availability (§7.8) +
   reach; surfaced on the run (the runs UI already wants this, §7.7).
 
-**Open / deferred.** The runner's own identity should be a machine principal (§16.4) so its authorization binds to
-a trusted identity rather than a self-asserted `runnerId`; pre-authorization (admin allow-lists a `runnerId`
-before it appears) vs. register-then-approve are both expressible on the same record; migration of any existing
-flat (environment-less) runner rows requires a backfill/abandon decision. These are implementation-phasing
-details (§11), not model decisions.
+**Resolved (§16.4 machine-principal registration).** The runner's own identity is now a machine principal: it
+registers through the control plane's authenticated `POST /environments/{name}/runners` endpoint as a machine
+principal (client-credentials, private-key-JWT, or mTLS), and the control plane derives the trusted principal from
+the presented token and binds the authorization to it, rather than to a self-asserted `runnerId`. A registration
+presenting a principal that differs from the one already bound to a `runnerId` is refused (`409`) — the
+anti-impersonation hardening. Both admission orders live on the same record: **pre-authorization** (an administrator
+allow-lists a `runnerId` before any runner registers, creating an `Authorized` row with no bound principal) and
+**register-then-approve** (the runner registers into `Pending`, then an administrator authorizes). A pre-authorized
+row is name-based trust by the administrator's deliberate choice, so it is never bound to a principal — its trust
+stays the administrator's allow-listing, gated by the runner still having to present a valid `runners:register`
+machine token to register at all. **Migration is abandon / fresh-deploys-only:** every runner authorization is
+`(environment, runnerId)`-keyed from introduction, so no flat environment-less rows exist to backfill; a deployment
+that predates the environment-keyed record redeploys its runners rather than migrating rows.
 
 ### 5.6 Execution backends and isolation models (DRAFT — for review)
 

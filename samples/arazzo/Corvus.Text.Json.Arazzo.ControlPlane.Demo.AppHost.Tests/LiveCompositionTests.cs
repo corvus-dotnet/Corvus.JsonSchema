@@ -67,6 +67,19 @@ public sealed class LiveCompositionTests
             .Any(r => r.GetProperty("environment").GetString() == "development")
             .ShouldBeTrue("the $draft runner serves the development environment");
 
+        // 1b. Authenticated registration (design §16.4): the runner registered through the control plane's authenticated
+        //     endpoint as its machine principal, so its authorization for the development environment binds to the
+        //     arazzo-runner client id (its azp), not the self-asserted runnerId. Only a real token, correctly scoped, gets a
+        //     runner this far — a store-direct self-assertion would carry no principal. (The demo's auto-authorization service
+        //     then moves it Pending -> Authorized; the bound principal carries through the decision.)
+        JsonElement developmentRunners = await PollAsync(
+            http, "/arazzo/v1/environments/development/runners?limit=50",
+            doc => doc.GetProperty("authorizations").EnumerateArray().Any(a => a.TryGetProperty("principal", out _)),
+            "the runner's authorization binds a machine principal");
+        developmentRunners.GetProperty("authorizations").EnumerateArray()
+            .Any(a => a.TryGetProperty("principal", out JsonElement p) && p.GetString() == "arazzo-runner")
+            .ShouldBeTrue("the bound machine principal is the arazzo-runner client (design §16.4)");
+
         // 2. A working copy from the seeded catalog: the same document the designer would open.
         using HttpResponseMessage created = await http.PostAsJsonAsync(
             "/arazzo/v1/workspace/workflows",
