@@ -1,0 +1,89 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Access Approval Notifications",
+    "version": "1.0.0",
+    "description": "The asynchronous exchange the system access-approval workflow uses (design section 16.5.1). The workflow PUBLISHES an approval-required notification to access.notify carrying the request id (which registers the correlation token), then SUSPENDS awaiting the approver's decision on access.decision, correlated by that request id. The approve/reject touchpoint PUBLISHES the decision. Approvals administrators may enrich the notify side (for example a Slack or email notification) without changing the decision correlation."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "accessNotify": {
+      "address": "access.notify",
+      "messages": { "accessNotification": { "$ref": "#/components/messages/accessNotification" } }
+    },
+    "accessDecisions": {
+      "address": "access.decision",
+      "messages": { "accessDecision": { "$ref": "#/components/messages/accessDecision" } }
+    }
+  },
+  "operations": {
+    "publishAccessNotification": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/accessNotify" },
+      "messages": [ { "$ref": "#/channels/accessNotify/messages/accessNotification" } ]
+    },
+    "receiveAccessNotification": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/accessNotify" },
+      "messages": [ { "$ref": "#/channels/accessNotify/messages/accessNotification" } ]
+    },
+    "publishAccessDecision": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/accessDecisions" },
+      "messages": [ { "$ref": "#/channels/accessDecisions/messages/accessDecision" } ]
+    },
+    "receiveAccessDecision": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/accessDecisions" },
+      "messages": [ { "$ref": "#/channels/accessDecisions/messages/accessDecision" } ]
+    }
+  },
+  "components": {
+    "correlationIds": {
+      "accessRequest": {
+        "description": "Correlates an approval-required notification with its decision by the access request id carried in the payload.",
+        "location": "$message.payload#/requestId"
+      }
+    },
+    "messages": {
+      "accessNotification": {
+        "name": "accessNotification",
+        "title": "Access approval notification",
+        "correlationId": { "$ref": "#/components/correlationIds/accessRequest" },
+        "payload": { "$ref": "#/components/schemas/accessNotificationPayload" }
+      },
+      "accessDecision": {
+        "name": "accessDecision",
+        "title": "Access approval decision",
+        "correlationId": { "$ref": "#/components/correlationIds/accessRequest" },
+        "payload": { "$ref": "#/components/schemas/accessDecisionPayload" }
+      }
+    },
+    "schemas": {
+      "accessNotificationPayload": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "description": "The access request id (the correlation token)." },
+          "kind": { "type": "string", "enum": [ "approval-required", "granted", "denied" ], "description": "Which point in the approval lifecycle this notification marks." },
+          "baseWorkflowId": { "type": "string", "description": "The workflow the request targets." },
+          "requestedScopes": { "type": "array", "items": { "type": "string" }, "description": "The scopes the request asked for." },
+          "requester": { "type": "string", "description": "The requesting subject (for display)." },
+          "subject": { "type": "string", "description": "The requesting subject id." },
+          "decidedBy": { "type": "string", "description": "The approver, on a granted or denied notification." },
+          "reason": { "type": "string", "description": "An optional decision note." }
+        },
+        "required": [ "requestId", "kind" ]
+      },
+      "accessDecisionPayload": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "description": "The access request the decision concerns (the correlation token)." },
+          "approved": { "type": "boolean", "description": "Whether the approver approved (true) or rejected (false) the request." },
+          "decidedBy": { "type": "string", "description": "The approver's audit identity." },
+          "reason": { "type": "string", "description": "An optional decision note." }
+        },
+        "required": [ "requestId", "approved", "decidedBy" ]
+      }
+    }
+  }
+}

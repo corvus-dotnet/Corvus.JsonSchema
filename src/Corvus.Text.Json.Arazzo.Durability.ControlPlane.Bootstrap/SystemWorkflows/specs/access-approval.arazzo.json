@@ -1,0 +1,129 @@
+{
+  "arazzo": "1.1.0",
+  "info": {
+    "title": "Access Approval",
+    "version": "1.0.0",
+    "description": "The system access-approval workflow (design section 16.5.1). It notifies the approver that an access request needs a decision, suspends durably awaiting that decision on the access.decision channel, and on approval writes the capped, time-boxed grant through the control plane's bounded grant operation. The notify steps are the editable part: approvals administrators may enrich them (for example a Slack or email notification) without changing the decision correlation or the grant. The two load-bearing steps are the awaitDecision receive (the human decision point) and the grantAccess operation (the platform-capped grant)."
+  },
+  "sourceDescriptions": [
+    { "name": "notifications", "url": "./access-approval.asyncapi.json", "type": "asyncapi" },
+    { "name": "controlplane", "url": "./access-approval.controlplane.openapi.json", "type": "openapi" }
+  ],
+  "workflows": [
+    {
+      "workflowId": "access-approval",
+      "summary": "Approve or reject an access request, then enact the decision.",
+      "description": "Notify, await the decision, and grant on approval. Started by the control plane when a request is submitted that needs a human decision; the request id is the correlation token.",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "description": "The access request awaiting a decision (the correlation token)." },
+          "baseWorkflowId": { "type": "string", "description": "The workflow the request targets." },
+          "requestedScopes": { "type": "array", "items": { "type": "string" }, "description": "The scopes the request asked for." },
+          "requester": { "type": "string", "description": "The requesting subject, for display." },
+          "subject": { "type": "string", "description": "The requesting subject id." }
+        },
+        "required": [ "requestId" ]
+      },
+      "steps": [
+        {
+          "stepId": "notifyApprovalRequired",
+          "description": "Announce that the request needs a decision. This send also registers the request-id correlation the awaitDecision step matches on. Approvals administrators may add further notify steps (Slack, email) around it.",
+          "channelPath": "access.notify",
+          "action": "send",
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": {
+              "requestId": "placeholder",
+              "kind": "approval-required",
+              "baseWorkflowId": "placeholder",
+              "requester": "placeholder"
+            },
+            "replacements": [
+              { "target": "/requestId", "value": "$inputs.requestId" },
+              { "target": "/baseWorkflowId", "value": "$inputs.baseWorkflowId" },
+              { "target": "/requester", "value": "$inputs.requester" }
+            ]
+          }
+        },
+        {
+          "stepId": "awaitDecision",
+          "description": "Suspend durably until the approver's decision arrives on access.decision, correlated by the request id. The approve/reject touchpoint publishes it.",
+          "channelPath": "access.decision",
+          "action": "receive",
+          "correlationId": "accessRequest",
+          "outputs": {
+            "approved": "$message.payload#/approved",
+            "decidedBy": "$message.payload#/decidedBy",
+            "reason": "$message.payload#/reason"
+          },
+          "onSuccess": [
+            {
+              "name": "onDenied",
+              "type": "goto",
+              "stepId": "notifyDenied",
+              "criteria": [ { "condition": "$steps.awaitDecision.outputs.approved == false" } ]
+            }
+          ]
+        },
+        {
+          "stepId": "grantAccess",
+          "description": "Write the capped, time-boxed grant the decision authorized, through the control plane's bounded grant operation, presenting the system credential.",
+          "operationId": "grantAccessRequest",
+          "parameters": [
+            { "name": "requestId", "in": "path", "value": "$inputs.requestId" }
+          ],
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": { "reason": "placeholder" },
+            "replacements": [
+              { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
+            ]
+          },
+          "outputs": {
+            "status": "$response.body#/status"
+          }
+        },
+        {
+          "stepId": "notifyGranted",
+          "description": "Announce that the request was granted. Editable by approvals administrators.",
+          "channelPath": "access.notify",
+          "action": "send",
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": {
+              "requestId": "placeholder",
+              "kind": "granted",
+              "decidedBy": "placeholder"
+            },
+            "replacements": [
+              { "target": "/requestId", "value": "$inputs.requestId" },
+              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
+            ]
+          },
+          "onSuccess": [
+            { "name": "done", "type": "end" }
+          ]
+        },
+        {
+          "stepId": "notifyDenied",
+          "description": "Announce that the request was rejected. Editable by approvals administrators. Reached only when the decision was a rejection.",
+          "channelPath": "access.notify",
+          "action": "send",
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": {
+              "requestId": "placeholder",
+              "kind": "denied",
+              "decidedBy": "placeholder"
+            },
+            "replacements": [
+              { "target": "/requestId", "value": "$inputs.requestId" },
+              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

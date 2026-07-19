@@ -1,0 +1,48 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Arazzo Control Plane (access grant subset)",
+    "version": "1.0.0",
+    "description": "The subset of the Arazzo control-plane API the system access-approval workflow calls: the bounded grant operation (design section 16.5.1). The workflow presents the section 13 system credential (source 'controlplane') whose token carries the accessRequests:grant scope. The base URL is supplied by the deployment at run time."
+  },
+  "paths": {
+    "/accessRequests/{requestId}/grant": {
+      "post": {
+        "operationId": "grantAccessRequest",
+        "summary": "Grant a pending access request (system-credentialed)",
+        "description": "Writes the capped, time-boxed entitlement the decision authorized. Gated by the narrow accessRequests:grant capability the system credential holds.",
+        "parameters": [
+          { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessDecisionNote" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The granted (approved) request.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessDecisionNote": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "description": "An optional grant note, typically the approver's decision note." }
+        }
+      },
+      "AccessRequestView": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "The access request id." },
+          "status": { "type": "string", "description": "The request status after the grant (Approved)." }
+        },
+        "required": [ "id", "status" ]
+      }
+    }
+  }
+}
