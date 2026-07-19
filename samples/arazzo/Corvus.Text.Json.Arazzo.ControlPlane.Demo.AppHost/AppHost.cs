@@ -97,6 +97,11 @@ if (!OperatingSystem.IsWindows())
 }
 string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 
+// The control-plane system runner is a SECOND runner process, so it needs its OWN response-wrapped SecretID: the
+// wrapping token is single-use (unwrapping consumes it), so two runners cannot share one. Both bind to the same
+// read-only AppRole (secret/arazzo/* covers secret/arazzo/controlplane, the credential the system runner resolves).
+string vaultSystemWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid-system.wrap");
+
 // Executor-package signing (#879). A SEPARATE HashiCorp Vault — the control-plane SIGNING vault — holds the private key
 // that signs each compiled executor's manifest at catalog-add. It is deliberately NOT the runner's credential vault
 // above: the custody split is the whole point (a runner that verifies with only the public key can never forge a
@@ -180,7 +185,10 @@ const string approleTrustScript =
     // gap until the runner reads it: the runner starts only after the control plane is healthy (Keycloak realm import,
     // ~5 min), so a short wrap-ttl would expire first. Idempotent on a retry (upsert role; the file is overwritten).
     "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid.wrap; " +
-    "chmod 644 /shared/secretid.wrap; ";
+    "chmod 644 /shared/secretid.wrap; " +
+    // A SECOND response-wrapped SecretID for the control-plane system runner (its wrapping token is its own — single-use).
+    "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid-system.wrap; " +
+    "chmod 644 /shared/secretid-system.wrap; ";
 
 // EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
 // credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
@@ -190,13 +198,22 @@ const string exampleSecretSeedScript =
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
     "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; ";
 
+// NOT example-only: the control plane's system approval workflow (design §16.5.1) is a product feature, so its runner's
+// OAuth2 client secret is seeded unconditionally at the Vault path the installed 'controlplane' credential references
+// (vault://secret/arazzo/controlplane#client-secret). It equals the realm's arazzo-access-approval client secret; the
+// system runner resolves it as its read-only Vault identity to fetch an accessRequests:grant token for grantAccessRequest.
+const string systemWorkflowSecretSeedScript =
+    "vault kv put secret/arazzo/controlplane client-secret=arazzo-access-approval-dev-secret; ";
+
 // Completion tail (infra): announce done, then linger briefly so the orchestrator observes the container reach
 // 'Running' before it exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the
 // container goes Running -> exit 0 -> Finished, and WithHiddenOnCompletion(0) below then hides it as a completed step.
 const string provisionCompletionScript = "echo provisioning-complete; sleep 15";
 
-// Assemble: real trust always; the demo secrets only for the example deployment.
+// Assemble: real trust always; the system-workflow secret always (product feature); the demo secrets only for the
+// example deployment.
 string provisionScript = approleTrustScript
+    + systemWorkflowSecretSeedScript
     + (seedExampleData ? exampleSecretSeedScript : string.Empty)
     + provisionCompletionScript;
 
@@ -433,6 +450,44 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
     // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
     // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
+    .WithHttpEndpoint()
+    .WithHttpHealthCheck("/health");
+
+// The control-plane SYSTEM RUNNER (design §16.5.1) — a dedicated execution host for the control plane's own internal
+// workflows, separate from the application runner above. It serves the internal "system" environment, claims the
+// bootstrapped access-approval runs the control plane starts, and hosts the access.decision consumer. It registers as
+// the arazzo-access-approval machine principal, and resolves the 'controlplane' OAuth2 credential (accessRequests:grant)
+// as its own read-only Vault identity to call grantAccessRequest on the control-plane API.
+builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("system-runner")
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
+    .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
+    .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
+    .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
+    // Its OWN wrapping token (single-use) — a second SecretID the provisioner wrapped for this second runner process.
+    .WithEnvironment("Runner__Vault__WrapTokenFile", vaultSystemWrapTokenPath)
+    .WithEnvironment("Runner__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)
+    .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
+    // The internal environment the bootstrapped approval workflow is made available in (design §16.5.1).
+    .WithEnvironment("Runner__Environment", "system")
+    // The message bus: the approval run's notify SEND publishes to access.notify; the decision consumer subscribes to
+    // access.decision (the approver's decision, published by the control plane).
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    // The control-plane API the approval workflow calls (grantAccessRequest), and the runner registers through.
+    .WithReference(controlplane)
+    .WaitFor(controlplane)
+    .WithReference(keycloak)
+    .WaitFor(keycloak)
+    .WithEnvironment("Runner__ControlPlane__BaseUrl", controlplane.GetEndpoint("http"))
+    .WithEnvironment("Runner__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+    // Authenticated registration + the OAuth2 credential identity: the arazzo-access-approval client (client-credentials),
+    // whose token carries both runners:register (to register) and accessRequests:grant (to call grantAccessRequest).
+    .WithEnvironment("Runner__Keycloak__ClientId", "arazzo-access-approval")
+    .WithEnvironment("Runner__Keycloak__ClientSecret", "arazzo-access-approval-dev-secret")
+    .WaitFor(nats)
+    // Gate on the provisioner finishing so the wrapping token + signing public key exist before the runner reads them.
+    .WaitForCompletion(vaultInit)
+    .WaitForCompletion(signingVaultInit)
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/health");
 

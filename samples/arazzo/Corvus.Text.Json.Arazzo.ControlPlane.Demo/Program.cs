@@ -66,6 +66,16 @@ string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => 
 // genesisAdditionalClauses pins the ISSUER too (§16.5.4 tag-set selector, S7): the genesis grant applies only to an
 // arazzo-admins group asserted by THIS deployment's Keycloak (sys:iss = DemoData.KeycloakIssuer, stamped by the resolver
 // below and the directory adapter), so a same-named group from another identity provider does not inherit admin.
+// §16.5.1 — the control plane governs its own access approvals via the bootstrapped access-approval workflow (installed
+// by the deployment bootstrap, executed by the system runner). Enabled when Keycloak is configured (the secured AppHost
+// deployment): the deployment installs the workflow + provisions the runner's OAuth2 credential at the Vault path the
+// AppHost seeds. Absent, the built-in direct-to-administrator approval strategy is used.
+string? systemApprovalKeycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
+bool enableSystemApprovalWorkflow = !string.IsNullOrWhiteSpace(systemApprovalKeycloakBaseUrl);
+string systemWorkflowsOptionJson = enableSystemApprovalWorkflow
+    ? $$""" ,"systemWorkflows": { "tokenUrl": "{{systemApprovalKeycloakBaseUrl!.TrimEnd('/')}}/realms/arazzo/protocol/openid-connect/token", "clientSecretRef": "vault://secret/arazzo/controlplane#client-secret" }"""
+    : string.Empty;
+
 using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
     ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
         System.Text.Encoding.UTF8.GetBytes($$"""
@@ -77,7 +87,7 @@ using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstr
           "internalTagPrefix": "sys:",
           "selfElevationGroups": ["arazzo-admins"],
           "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
-          "seedExampleData": {{(seedExampleData ? "true" : "false")}}
+          "seedExampleData": {{(seedExampleData ? "true" : "false")}}{{systemWorkflowsOptionJson}}
         }
         """));
 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
@@ -151,6 +161,22 @@ NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(n
     StreamName = "kyc-requests",
     StorageType = StorageType.File,
 });
+
+// §16.5.1: when the system approval workflow is enabled, an approver's decision is published on the access.decision
+// channel the system runner's consumer subscribes to (its own JetStream stream), so a governed approval advances the
+// suspended run rather than granting inline. Its own transport because each channel is a distinct JetStream stream.
+Corvus.Text.Json.AsyncApi.IMessageTransport? decisionTransport = null;
+if (enableSystemApprovalWorkflow)
+{
+    decisionTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+    {
+        Url = natsUrl,
+        Name = "controlplane-decisions-out",
+        UseJetStream = true,
+        StreamName = "access-decisions",
+        StorageType = StorageType.File,
+    });
+}
 WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport);
 var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
@@ -612,7 +638,18 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore,
     gitHubBroker: gitHubBroker,
-    workflowSimulator: workflowSimulator);
+    workflowSimulator: workflowSimulator,
+    // §16.5.1: route access-request approvals through the bootstrapped access-approval workflow when it is enabled —
+    // approve/reject/withdraw publish the decision on access.decision (the system runner resumes the run and grants),
+    // instead of the built-in direct-to-administrator grant.
+    workflowApproval: enableSystemApprovalWorkflow
+        ? new WorkflowApprovalOptions
+        {
+            DecisionTransport = decisionTransport!,
+            ApprovalWorkflowId = "access-approval-v1",
+            Environment = "system",
+        }
+        : null);
 
 // The source backends the workflows call — onboarding, ledger, and kyc — are all real external services (their own
 // processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP). This

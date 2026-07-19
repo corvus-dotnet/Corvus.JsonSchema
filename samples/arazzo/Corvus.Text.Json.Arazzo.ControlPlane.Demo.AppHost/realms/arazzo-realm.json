@@ -93,12 +93,30 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "defaultClientScopes": ["runners:register"]
+    },
+    {
+      "clientId": "arazzo-access-approval",
+      "name": "Arazzo control-plane system runner (machine principal, design §16.5.1)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-access-approval-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["runners:register", "accessRequests:grant"]
     }
   ],
   "clientScopes": [
     {
       "name": "runners:register",
       "description": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4).",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
+    },
+    {
+      "name": "accessRequests:grant",
+      "description": "Grant an access request as the control plane's own approval workflow (design §16.5.1). Held by the system runner's machine principal so its access-approval runs may call grantAccessRequest.",
       "protocol": "openid-connect",
       "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
     }
