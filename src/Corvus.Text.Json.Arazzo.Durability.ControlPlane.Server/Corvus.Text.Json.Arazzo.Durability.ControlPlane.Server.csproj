@@ -27,7 +27,9 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
-    <!-- The workflow-backed approval strategy (design §16.5.1) publishes the access.decision message via the generated producer. -->
+    <!-- The workflow-backed approval strategy (design §16.5.1) publishes the access.decision message via the generated
+         producer; the opt-in options name IMessageTransport directly, so the AsyncAPI abstraction is referenced explicitly. -->
+    <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows\Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Directories\Corvus.Text.Json.Arazzo.Directories.csproj" />
     <!-- The validate endpoint builds a target schema from the package and validates against it at runtime. -->

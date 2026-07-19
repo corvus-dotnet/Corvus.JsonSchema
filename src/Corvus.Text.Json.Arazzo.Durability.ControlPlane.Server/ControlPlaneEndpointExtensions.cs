@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -85,7 +86,8 @@ public static class ControlPlaneEndpointExtensions
         IWorkflowStateStore? workflowStateStore = null,
         IDraftRunStore? draftRunStore = null,
         InProcessDraftRunner? draftRunner = null,
-        IDraftRunTraceStore? draftRunTraceStore = null)
+        IDraftRunTraceStore? draftRunTraceStore = null,
+        WorkflowApprovalOptions? workflowApproval = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -167,7 +169,15 @@ public static class ControlPlaneEndpointExtensions
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
         // in-process when the deployment's policy is the persistent one).
         IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
-        var approvalService = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility);
+        var builtInApproval = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility);
+
+        // Design §16.5.1: when the deployment opts into the workflow-backed strategy, submitting a request starts the
+        // bootstrapped access-approval workflow and the approve/reject/withdraw touchpoints publish the decision onto the
+        // access.decision channel; otherwise the built-in routes decisions directly to §15 administrators. Either way the
+        // handler depends only on the IAccessRequestApprovalService seam.
+        IAccessRequestApprovalService approvalService = workflowApproval is null
+            ? builtInApproval
+            : new WorkflowBackedAccessRequestApprovalService(builtInApproval, requestStore, management, catalog, new PublishAccessDecisionProducer(workflowApproval.DecisionTransport), workflowApproval.ApprovalWorkflowId, workflowApproval.Environment, auditLogger);
         var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, auditLogger);
 
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
