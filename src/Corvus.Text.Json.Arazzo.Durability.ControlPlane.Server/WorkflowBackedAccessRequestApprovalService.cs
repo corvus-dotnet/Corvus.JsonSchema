@@ -45,6 +45,7 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     private readonly PublishAccessDecisionProducer decisions;
     private readonly string approvalWorkflowId;
     private readonly string environment;
+    private readonly SecurityTagSet runSecurityTags;
     private readonly ILogger? logger;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowBackedAccessRequestApprovalService"/> class.</summary>
@@ -80,6 +81,11 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
         this.decisions = decisions;
         this.approvalWorkflowId = approvalWorkflowId;
         this.environment = environment;
+
+        // The approval run carries the workflow's own identity (sys:workflow=<base id>), so the §13 usage gate at run time
+        // admits the runner's 'controlplane' OAuth2 credential (usage-scoped to that identity): a run may present the
+        // accessRequests:grant token only because it IS a run of the access-approval workflow, not any other workflow.
+        this.runSecurityTags = SecurityTagSet.FromTags([WorkflowIdentity.WorkflowTag(CatalogPackage.StripVersionSuffix(approvalWorkflowId))]);
         this.logger = logger;
     }
 
@@ -185,7 +191,7 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
         using ParsedJsonDocument<AccessApprovalInputs> inputs = BuildRunInputs(request);
         try
         {
-            await this.management.StartAsync(this.approvalWorkflowId, inputs.RootElement, correlationId: null, tags: default, securityTags: default, environment: this.environment, cancellationToken).ConfigureAwait(false);
+            await this.management.StartAsync(this.approvalWorkflowId, inputs.RootElement, correlationId: null, tags: default, securityTags: this.runSecurityTags, environment: this.environment, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

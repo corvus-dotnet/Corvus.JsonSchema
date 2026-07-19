@@ -45,6 +45,24 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task The_approval_run_carries_the_workflow_identity_for_credential_use()
+    {
+        Harness h = await Harness.CreateAsync();
+        await h.SubmitPendingAsync(["runs:write"]);
+
+        // The run must carry sys:workflow=<base id> so the §13 usage gate admits the runner's 'controlplane' OAuth2
+        // credential (usage-scoped to that identity) when the run calls grantAccessRequest. Without it the credential does
+        // not resolve, the grant call is unauthenticated, and the run faults (proven by the podman live-verify).
+        var tags = new List<SecurityTag>();
+        foreach (SecurityTag tag in h.Management.Starts[0].SecurityTags)
+        {
+            tags.Add(tag);
+        }
+
+        tags.ShouldContain(new SecurityTag(WorkflowIdentity.WorkflowTagKey, "access-approval"));
+    }
+
+    [TestMethod]
     public async Task A_self_elevated_submit_does_not_start_a_run()
     {
         // The requester is claims-eligible, so the built-in auto-approves without a human decision — no approval run.
@@ -141,11 +159,11 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
     // Records the approval runs the strategy starts; every other management operation is unused by the strategy.
     private sealed class RecordingManagement : ISecuredWorkflowManagement
     {
-        public List<(string WorkflowId, string Environment, string InputsJson)> Starts { get; } = [];
+        public List<(string WorkflowId, string Environment, string InputsJson, SecurityTagSet SecurityTags)> Starts { get; } = [];
 
         public ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
         {
-            this.Starts.Add((workflowId, environment, inputs.ToString() ?? string.Empty));
+            this.Starts.Add((workflowId, environment, inputs.ToString() ?? string.Empty, securityTags));
             return new ValueTask<WorkflowRunId>(new WorkflowRunId("run-" + this.Starts.Count));
         }
 

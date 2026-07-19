@@ -35,6 +35,16 @@ public static partial class CatalogPackage
         return VersionSuffix().IsMatch(workflowId);
     }
 
+    /// <summary>Strips a trailing <c>-vN</c> version suffix from a workflow id, yielding the base id (the id the catalogue
+    /// stamps <c>sys:workflow</c> with). Idempotent: an id already carrying no suffix is returned unchanged.</summary>
+    /// <param name="workflowId">The possibly-versioned workflow id (e.g. <c>access-approval-v1</c>).</param>
+    /// <returns>The base workflow id (e.g. <c>access-approval</c>).</returns>
+    public static string StripVersionSuffix(string workflowId)
+    {
+        ArgumentNullException.ThrowIfNull(workflowId);
+        return VersionSuffix().Replace(workflowId, string.Empty);
+    }
+
     /// <summary>
     /// Reads the base workflow id from a submitted package — the first workflow's <c>workflowId</c>. This is the
     /// id the submission must carry (without a <c>-vN</c> suffix).
