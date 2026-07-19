@@ -367,8 +367,19 @@ Key points:
   via JSON Pointer/JSONPath/XPath targets) → map onto the transport body overloads.
 - `operationPath` (JSON Pointer into a source doc) as an alternative to `operationId`.
 - Selector Objects (1.1) for outputs/parameters (jsonpath/xpath/jsonpointer).
-- Source fetching + caching (remote `url`), reusing the `OpenApiLockFile`
-  incremental-regen pattern; an Arazzo lock file.
+- Source fetching (remote `url`) — done (`ArazzoGenerationDriver.BuildDocumentLoader`
+  resolves `file` and `http(s)` sources) — and an **Arazzo lock file** (#871, done):
+  `ArazzoLockFile` / `corvusjson-arazzo.lock` records the Arazzo document's canonical
+  hash, the generation parameters, the generated files, and every resolved source
+  pinned by SHA-256, mirroring the `OpenApiLockFile` incremental-regen pattern. The
+  CLI skips generation when the lock is up to date (re-resolving each source and
+  comparing digests, so a changed remote source forces a regen) unless `--force`.
+  - **Remaining optional optimization (not built):** a persistent on-disk *byte
+    cache* of fetched source documents keyed by the lock's digests, plus an
+    `--offline` / `--locked` mode that regenerates from the cache with no network
+    access (the frozen-lockfile model). The lock's digest record is the
+    reproducibility anchor; this is a network/offline convenience on top of it, so
+    an incremental run need not re-download unchanged remote sources.
 
 ### Phase 5 — AsyncAPI steps
 - `channelPath` + `action` (send/receive), `correlationId`, `timeout`,
