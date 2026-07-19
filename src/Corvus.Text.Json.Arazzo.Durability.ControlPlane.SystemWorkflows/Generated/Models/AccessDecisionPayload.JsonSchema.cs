@@ -27,17 +27,17 @@ public readonly partial struct AccessDecisionPayload
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyApprovedPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("approved"u8, buffer, out written);
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyApprovedNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("approved"u8, buffer, out written);
-
-        private const int RequiredOffsetForApproved = 0;
-        private const uint RequiredBitForApproved = 0b00000000000000000000000000000001;
-
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyDecidedByPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("decidedBy"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyDecidedByNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("decidedBy"u8, buffer, out written);
 
         private const int RequiredOffsetForDecidedBy = 0;
-        private const uint RequiredBitForDecidedBy = 0b00000000000000000000000000000010;
+        private const uint RequiredBitForDecidedBy = 0b00000000000000000000000000000001;
+
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyOutcomePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("outcome"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyOutcomeNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("outcome"u8, buffer, out written);
+
+        private const int RequiredOffsetForOutcome = 0;
+        private const uint RequiredBitForOutcome = 0b00000000000000000000000000000010;
 
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRequestIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("requestId"u8, buffer, out written);
         private static readonly JsonSchemaMessageProvider<int> RequiredPropertyRequestIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("requestId"u8, buffer, out written);
@@ -46,38 +46,16 @@ public readonly partial struct AccessDecisionPayload
         private const uint RequiredBitForRequestId = 0b00000000000000000000000000000100;
 
         private const uint RequiredBitMask0 =
-            RequiredBitForApproved | RequiredBitForDecidedBy | RequiredBitForRequestId;
-        private static readonly JsonSchemaPathProvider ApprovedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/approved"u8, buffer, out written);
+            RequiredBitForDecidedBy | RequiredBitForOutcome | RequiredBitForRequestId;
         private static readonly JsonSchemaPathProvider DecidedBySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/decidedBy"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider OutcomeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/outcome"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ReasonSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/reason"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RequestIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requestId"u8, buffer, out written);
-
-        private static void MatchApproved(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.ApprovedUtf8,
-                    evaluationPath: ApprovedSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
-
-            if (!context.HasCollector && !context.IsMatch)
-            {
-                return;
-            }
-
-            requiredBitBuffer[RequiredOffsetForApproved] |= RequiredBitForApproved;
-        }
 
         private static void MatchDecidedBy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
+            JsonSchemaContext childContext =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -85,8 +63,8 @@ public readonly partial struct AccessDecisionPayload
                     JsonPropertyNames.DecidedByUtf8,
                     evaluationPath: DecidedBySchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -94,6 +72,28 @@ public readonly partial struct AccessDecisionPayload
             }
 
             requiredBitBuffer[RequiredOffsetForDecidedBy] |= RequiredBitForDecidedBy;
+        }
+
+        private static void MatchOutcome(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.OutcomeUtf8,
+                    evaluationPath: OutcomeSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForOutcome] |= RequiredBitForOutcome;
         }
 
         private static void MatchReason(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -136,8 +136,8 @@ public readonly partial struct AccessDecisionPayload
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.ApprovedUtf8, MatchApproved),
                 (static () => JsonPropertyNames.DecidedByUtf8, MatchDecidedBy),
+                (static () => JsonPropertyNames.OutcomeUtf8, MatchOutcome),
                 (static () => JsonPropertyNames.ReasonUtf8, MatchReason),
                 (static () => JsonPropertyNames.RequestIdUtf8, MatchRequestId),
             ]);
@@ -226,8 +226,8 @@ public readonly partial struct AccessDecisionPayload
                 {
                     if (context.HasCollector)
                     {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyApprovedPresent, "approved"u8, "required"u8);
-                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyDecidedByPresent, "decidedBy"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyDecidedByPresent, "decidedBy"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyOutcomePresent, "outcome"u8, "required"u8);
                         context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyRequestIdPresent, "requestId"u8, "required"u8);
                     }
                 }
@@ -238,22 +238,22 @@ public readonly partial struct AccessDecisionPayload
                 }
                 else
                 {
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForApproved] & RequiredBitForApproved) == 0)
-                    {
-                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyApprovedNotPresent, "approved"u8, "required"u8);
-                    }
-                    else
-                    {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyApprovedPresent, "approved"u8, "required"u8);
-                    }
-
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForDecidedBy] & RequiredBitForDecidedBy) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyDecidedByNotPresent, "decidedBy"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyDecidedByNotPresent, "decidedBy"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyDecidedByPresent, "decidedBy"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyDecidedByPresent, "decidedBy"u8, "required"u8);
+                    }
+
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForOutcome] & RequiredBitForOutcome) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyOutcomeNotPresent, "outcome"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyOutcomePresent, "outcome"u8, "required"u8);
                     }
 
                     if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForRequestId] & RequiredBitForRequestId) == 0)

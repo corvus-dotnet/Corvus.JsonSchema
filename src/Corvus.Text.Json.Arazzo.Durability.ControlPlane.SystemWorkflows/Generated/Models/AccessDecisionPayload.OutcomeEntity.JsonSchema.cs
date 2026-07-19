@@ -22,19 +22,19 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct AccessNotificationPayload
+public readonly partial struct AccessDecisionPayload
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Which point in the approval lifecycle this notification marks.
+    /// How the request was resolved: approved (a one-time capped grant), eligible (standing eligibility to self-elevate this access JIT), rejected (the approver declined), or withdrawn (the requester pulled it). Any resolution event resumes the suspended run.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct WhichPointInTheApprovalLifecycleThisNotificationMarks
-        : IJsonElement<WhichPointInTheApprovalLifecycleThisNotificationMarks>
+    public readonly partial struct OutcomeEntity
+        : IJsonElement<OutcomeEntity>
     {
         /// <summary>
         /// Provides accesors for enumerated values
@@ -44,43 +44,35 @@ public readonly partial struct AccessNotificationPayload
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum1 = "approval-required"u8.ToArray();
+            public static readonly byte[] Enum1 = "approved"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly WhichPointInTheApprovalLifecycleThisNotificationMarks EnumJson1 = ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>.StringConstant([.."\"approval-required\""u8]);
+            public static readonly OutcomeEntity EnumJson1 = ParsedJsonDocument<OutcomeEntity>.StringConstant([.."\"approved\""u8]);
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum2 = "granted"u8.ToArray();
+            public static readonly byte[] Enum2 = "eligible"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly WhichPointInTheApprovalLifecycleThisNotificationMarks EnumJson2 = ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>.StringConstant([.."\"granted\""u8]);
+            public static readonly OutcomeEntity EnumJson2 = ParsedJsonDocument<OutcomeEntity>.StringConstant([.."\"eligible\""u8]);
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum3 = "eligible"u8.ToArray();
+            public static readonly byte[] Enum3 = "rejected"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly WhichPointInTheApprovalLifecycleThisNotificationMarks EnumJson3 = ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>.StringConstant([.."\"eligible\""u8]);
+            public static readonly OutcomeEntity EnumJson3 = ParsedJsonDocument<OutcomeEntity>.StringConstant([.."\"rejected\""u8]);
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum4 = "denied"u8.ToArray();
+            public static readonly byte[] Enum4 = "withdrawn"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly WhichPointInTheApprovalLifecycleThisNotificationMarks EnumJson4 = ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>.StringConstant([.."\"denied\""u8]);
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly byte[] Enum5 = "withdrawn"u8.ToArray();
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly WhichPointInTheApprovalLifecycleThisNotificationMarks EnumJson5 = ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>.StringConstant([.."\"withdrawn\""u8]);
+            public static readonly OutcomeEntity EnumJson4 = ParsedJsonDocument<OutcomeEntity>.StringConstant([.."\"withdrawn\""u8]);
         }
 
         /// <summary>
@@ -89,59 +81,48 @@ public readonly partial struct AccessNotificationPayload
         public static class EnumValues
         {
             /// <summary>
-            /// Gets the string "approval-required"
-            /// as a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>.
+            /// Gets the string "approved"
+            /// as a <see cref="OutcomeEntity"/>.
             /// </summary>
-            public static WhichPointInTheApprovalLifecycleThisNotificationMarks ApprovalRequired { get; } = Constants.EnumJson1;
+            public static OutcomeEntity Approved { get; } = Constants.EnumJson1;
             /// <summary>
-            /// Gets the string "approval-required"
+            /// Gets the string "approved"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> ApprovalRequiredUtf8 => Constants.Enum1;
-
-            /// <summary>
-            /// Gets the string "granted"
-            /// as a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>.
-            /// </summary>
-            public static WhichPointInTheApprovalLifecycleThisNotificationMarks Granted { get; } = Constants.EnumJson2;
-            /// <summary>
-            /// Gets the string "granted"
-            /// as a UTF8 byte array.
-            /// </summary>
-            public static ReadOnlySpan<byte> GrantedUtf8 => Constants.Enum2;
+            public static ReadOnlySpan<byte> ApprovedUtf8 => Constants.Enum1;
 
             /// <summary>
             /// Gets the string "eligible"
-            /// as a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>.
+            /// as a <see cref="OutcomeEntity"/>.
             /// </summary>
-            public static WhichPointInTheApprovalLifecycleThisNotificationMarks Eligible { get; } = Constants.EnumJson3;
+            public static OutcomeEntity Eligible { get; } = Constants.EnumJson2;
             /// <summary>
             /// Gets the string "eligible"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> EligibleUtf8 => Constants.Enum3;
+            public static ReadOnlySpan<byte> EligibleUtf8 => Constants.Enum2;
 
             /// <summary>
-            /// Gets the string "denied"
-            /// as a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>.
+            /// Gets the string "rejected"
+            /// as a <see cref="OutcomeEntity"/>.
             /// </summary>
-            public static WhichPointInTheApprovalLifecycleThisNotificationMarks Denied { get; } = Constants.EnumJson4;
+            public static OutcomeEntity Rejected { get; } = Constants.EnumJson3;
             /// <summary>
-            /// Gets the string "denied"
+            /// Gets the string "rejected"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> DeniedUtf8 => Constants.Enum4;
+            public static ReadOnlySpan<byte> RejectedUtf8 => Constants.Enum3;
 
             /// <summary>
             /// Gets the string "withdrawn"
-            /// as a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>.
+            /// as a <see cref="OutcomeEntity"/>.
             /// </summary>
-            public static WhichPointInTheApprovalLifecycleThisNotificationMarks Withdrawn { get; } = Constants.EnumJson5;
+            public static OutcomeEntity Withdrawn { get; } = Constants.EnumJson4;
             /// <summary>
             /// Gets the string "withdrawn"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> WithdrawnUtf8 => Constants.Enum5;
+            public static ReadOnlySpan<byte> WithdrawnUtf8 => Constants.Enum4;
         }
 
         public static partial class JsonSchema
@@ -149,10 +130,9 @@ public readonly partial struct AccessNotificationPayload
             private static EnumStringSet BuildEnumStringSet()
             {
                 return new EnumStringSet([
-                    static () => "approval-required"u8,
-                    static () => "granted"u8,
+                    static () => "approved"u8,
                     static () => "eligible"u8,
-                    static () => "denied"u8,
+                    static () => "rejected"u8,
                     static () => "withdrawn"u8,
                 ]);
             }
@@ -162,17 +142,17 @@ public readonly partial struct AccessNotificationPayload
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/accessNotificationPayload/properties/kind"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/accessDecisionPayload/properties/outcome"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/accessNotificationPayload/properties/kind";
+            public const string SchemaLocation = "/components/schemas/accessDecisionPayload/properties/outcome";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/accessNotificationPayload/properties/kind"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/accessDecisionPayload/properties/outcome"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

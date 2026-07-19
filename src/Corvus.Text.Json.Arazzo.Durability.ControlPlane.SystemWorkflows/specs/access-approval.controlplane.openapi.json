@@ -25,6 +25,26 @@
           }
         }
       }
+    },
+    "/accessRequests/{requestId}/grantAsEligible": {
+      "post": {
+        "operationId": "grantAccessRequestAsEligible",
+        "summary": "Grant a pending access request as standing eligibility (system-credentialed)",
+        "description": "Writes the capped eligibility assignment the decision authorized (design section 16.5.3): the requester may thereafter self-elevate this access JIT without re-approval. Gated by the narrow accessRequests:grant capability the system credential holds.",
+        "parameters": [
+          { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessDecisionNote" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The request marked eligible.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } }
+          }
+        }
+      }
     }
   },
   "components": {

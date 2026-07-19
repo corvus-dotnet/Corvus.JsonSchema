@@ -64,7 +64,7 @@
         "type": "object",
         "properties": {
           "requestId": { "type": "string", "description": "The access request id (the correlation token)." },
-          "kind": { "type": "string", "enum": [ "approval-required", "granted", "denied" ], "description": "Which point in the approval lifecycle this notification marks." },
+          "kind": { "type": "string", "enum": [ "approval-required", "granted", "eligible", "denied", "withdrawn" ], "description": "Which point in the approval lifecycle this notification marks." },
           "baseWorkflowId": { "type": "string", "description": "The workflow the request targets." },
           "requestedScopes": { "type": "array", "items": { "type": "string" }, "description": "The scopes the request asked for." },
           "requester": { "type": "string", "description": "The requesting subject (for display)." },
@@ -78,11 +78,11 @@
         "type": "object",
         "properties": {
           "requestId": { "type": "string", "description": "The access request the decision concerns (the correlation token)." },
-          "approved": { "type": "boolean", "description": "Whether the approver approved (true) or rejected (false) the request." },
-          "decidedBy": { "type": "string", "description": "The approver's audit identity." },
+          "outcome": { "type": "string", "enum": [ "approved", "eligible", "rejected", "withdrawn" ], "description": "How the request was resolved: approved (a one-time capped grant), eligible (standing eligibility to self-elevate this access JIT), rejected (the approver declined), or withdrawn (the requester pulled it). Any resolution event resumes the suspended run." },
+          "decidedBy": { "type": "string", "description": "Who resolved the request: the approver for approved/eligible/rejected, the requester for withdrawn." },
           "reason": { "type": "string", "description": "An optional decision note." }
         },
-        "required": [ "requestId", "approved", "decidedBy" ]
+        "required": [ "requestId", "outcome", "decidedBy" ]
       }
     }
   }

@@ -22,18 +22,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct AccessNotificationPayload
+public readonly partial struct AccessDecisionPayload
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Which point in the approval lifecycle this notification marks.
+    /// How the request was resolved: approved (a one-time capped grant), eligible (standing eligibility to self-elevate this access JIT), rejected (the approver declined), or withdrawn (the requester pulled it). Any resolution event resumes the suspended run.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct WhichPointInTheApprovalLifecycleThisNotificationMarks
+    public readonly partial struct OutcomeEntity
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -141,7 +141,7 @@ public readonly partial struct AccessNotificationPayload
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(WhichPointInTheApprovalLifecycleThisNotificationMarks instance)
+            public static explicit operator Mutable(OutcomeEntity instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -156,9 +156,9 @@ public readonly partial struct AccessNotificationPayload
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="OutcomeEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator WhichPointInTheApprovalLifecycleThisNotificationMarks(Mutable instance)
+            public static implicit operator OutcomeEntity(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -191,7 +191,7 @@ public readonly partial struct AccessNotificationPayload
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new WhichPointInTheApprovalLifecycleThisNotificationMarks(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new OutcomeEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -341,7 +341,7 @@ public readonly partial struct AccessNotificationPayload
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"WhichPointInTheApprovalLifecycleThisNotificationMarks.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"OutcomeEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -356,11 +356,11 @@ public readonly partial struct AccessNotificationPayload
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="OutcomeEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="OutcomeEntity"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -369,10 +369,10 @@ public readonly partial struct AccessNotificationPayload
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly WhichPointInTheApprovalLifecycleThisNotificationMarks Clone()
+            public readonly OutcomeEntity Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<WhichPointInTheApprovalLifecycleThisNotificationMarks>(_idx);
+                return _parent.CloneElement<OutcomeEntity>(_idx);
             }
 
             /// <summary>
@@ -380,7 +380,7 @@ public readonly partial struct AccessNotificationPayload
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="WhichPointInTheApprovalLifecycleThisNotificationMarks"/> that lives for the lifetime of its
+            /// An immutable <see cref="OutcomeEntity"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -391,10 +391,10 @@ public readonly partial struct AccessNotificationPayload
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly WhichPointInTheApprovalLifecycleThisNotificationMarks Freeze()
+            public readonly OutcomeEntity Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<WhichPointInTheApprovalLifecycleThisNotificationMarks>(_idx);
+                return _parent.FreezeElement<OutcomeEntity>(_idx);
             }
 
             /// <summary>
@@ -403,19 +403,17 @@ public readonly partial struct AccessNotificationPayload
             /// <typeparam name="TContext">The immutable context to pass in to the match function.</typeparam>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
-            /// <param name="matchApprovalRequired">Match 1st item.</param>
-            /// <param name="matchGranted">Match 2nd item.</param>
-            /// <param name="matchEligible">Match 3rd item.</param>
-            /// <param name="matchDenied">Match 4th item.</param>
-            /// <param name="matchWithdrawn">Match 5th item.</param>
+            /// <param name="matchApproved">Match 1st item.</param>
+            /// <param name="matchEligible">Match 2nd item.</param>
+            /// <param name="matchRejected">Match 3rd item.</param>
+            /// <param name="matchWithdrawn">Match 4th item.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
                 in TContext context,
-                Func<TContext, TResult> matchApprovalRequired,
-                Func<TContext, TResult> matchGranted,
+                Func<TContext, TResult> matchApproved,
                 Func<TContext, TResult> matchEligible,
-                Func<TContext, TResult> matchDenied,
+                Func<TContext, TResult> matchRejected,
                 Func<TContext, TResult> matchWithdrawn,
                 Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -424,25 +422,20 @@ public readonly partial struct AccessNotificationPayload
             {
                 if (this.ValueEquals(Constants.Enum1))
                 {
-                    return matchApprovalRequired(context);
+                    return matchApproved(context);
                 }
 
                 if (this.ValueEquals(Constants.Enum2))
                 {
-                    return matchGranted(context);
+                    return matchEligible(context);
                 }
 
                 if (this.ValueEquals(Constants.Enum3))
                 {
-                    return matchEligible(context);
+                    return matchRejected(context);
                 }
 
                 if (this.ValueEquals(Constants.Enum4))
-                {
-                    return matchDenied(context);
-                }
-
-                if (this.ValueEquals(Constants.Enum5))
                 {
                     return matchWithdrawn(context);
                 }
@@ -454,42 +447,35 @@ public readonly partial struct AccessNotificationPayload
             /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
             /// </summary>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-            /// <param name="matchApprovalRequired">Match 1st item.</param>
-            /// <param name="matchGranted">Match 2nd item.</param>
-            /// <param name="matchEligible">Match 3rd item.</param>
-            /// <param name="matchDenied">Match 4th item.</param>
-            /// <param name="matchWithdrawn">Match 5th item.</param>
+            /// <param name="matchApproved">Match 1st item.</param>
+            /// <param name="matchEligible">Match 2nd item.</param>
+            /// <param name="matchRejected">Match 3rd item.</param>
+            /// <param name="matchWithdrawn">Match 4th item.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
-                Func<TResult> matchApprovalRequired,
-                Func<TResult> matchGranted,
+                Func<TResult> matchApproved,
                 Func<TResult> matchEligible,
-                Func<TResult> matchDenied,
+                Func<TResult> matchRejected,
                 Func<TResult> matchWithdrawn,
                 Func<TResult> defaultMatch)
             {
                 if (this.ValueEquals(Constants.Enum1))
                 {
-                    return matchApprovalRequired();
+                    return matchApproved();
                 }
 
                 if (this.ValueEquals(Constants.Enum2))
                 {
-                    return matchGranted();
+                    return matchEligible();
                 }
 
                 if (this.ValueEquals(Constants.Enum3))
                 {
-                    return matchEligible();
+                    return matchRejected();
                 }
 
                 if (this.ValueEquals(Constants.Enum4))
-                {
-                    return matchDenied();
-                }
-
-                if (this.ValueEquals(Constants.Enum5))
                 {
                     return matchWithdrawn();
                 }
@@ -544,7 +530,7 @@ public readonly partial struct AccessNotificationPayload
                 _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
             }
 
-            public static implicit operator Source(WhichPointInTheApprovalLifecycleThisNotificationMarks instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(OutcomeEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -720,7 +706,7 @@ public readonly partial struct AccessNotificationPayload
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<WhichPointInTheApprovalLifecycleThisNotificationMarks, Mutable>(this);
+            return workspace.CreateBuilder<OutcomeEntity, Mutable>(this);
         }
 
         /// <summary>
@@ -729,7 +715,7 @@ public readonly partial struct AccessNotificationPayload
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks> Create(
+        public static ParsedJsonDocument<OutcomeEntity> Create(
             scoped in Source value, int initialCapacity = 1)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -739,7 +725,7 @@ public readonly partial struct AccessNotificationPayload
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<WhichPointInTheApprovalLifecycleThisNotificationMarks>();
+                return documentBuilder.ToParsedJsonDocument<OutcomeEntity>();
             }
             finally
             {

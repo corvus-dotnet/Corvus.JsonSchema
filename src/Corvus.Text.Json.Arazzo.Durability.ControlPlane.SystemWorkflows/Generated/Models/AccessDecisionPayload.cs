@@ -154,21 +154,21 @@ public readonly partial struct AccessDecisionPayload
     }
 
     /// <summary>
-    /// Gets the <c>approved</c> property.
+    /// Gets the <c>decidedBy</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// Whether the approver approved (true) or rejected (false) the request.
+    /// Who resolved the request: the approver for approved/eligible/rejected, the requester for withdrawn.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean Approved
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString DecidedBy
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApprovedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString value))
             {
                 return value;
             }
@@ -178,21 +178,21 @@ public readonly partial struct AccessDecisionPayload
     }
 
     /// <summary>
-    /// Gets the <c>decidedBy</c> property.
+    /// Gets the <c>outcome</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The approver&#39;s audit identity.
+    /// How the request was resolved: approved (a one-time capped grant), eligible (standing eligibility to self-elevate this access JIT), rejected (the approver declined), or withdrawn (the requester pulled it). Any resolution event resumes the suspended run.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString DecidedBy
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity Outcome
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutcomeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity value))
             {
                 return value;
             }
@@ -690,14 +690,14 @@ public readonly partial struct AccessDecisionPayload
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Approved"/>.
-        /// </summary>
-        public const string Approved = "approved";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="DecidedBy"/>.
         /// </summary>
         public const string DecidedBy = "decidedBy";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Outcome"/>.
+        /// </summary>
+        public const string Outcome = "outcome";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
@@ -710,14 +710,14 @@ public readonly partial struct AccessDecisionPayload
         public const string RequestId = "requestId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Approved"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ApprovedUtf8 => "approved"u8;
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="DecidedBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DecidedByUtf8 => "decidedBy"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Outcome"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutcomeUtf8 => "outcome"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
@@ -736,14 +736,14 @@ public readonly partial struct AccessDecisionPayload
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Approved"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Approved => "approved"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="DecidedBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DecidedBy => "decidedBy"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Outcome"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Outcome => "outcome"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
@@ -763,14 +763,14 @@ public readonly partial struct AccessDecisionPayload
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Approved"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Approved => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x72, 0x6F, 0x76, 0x65, 0x64, 0x22];
-
-        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="DecidedBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DecidedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x64, 0x65, 0x64, 0x42, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Outcome"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Outcome => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x63, 0x6F, 0x6D, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Reason"/>.

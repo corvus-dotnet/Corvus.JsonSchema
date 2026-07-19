@@ -261,21 +261,21 @@ public readonly partial struct AccessDecisionPayload
         }
 
         /// <summary>
-        /// Gets the <c>approved</c> property.
+        /// Gets the <c>decidedBy</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// Whether the approver approved (true) or rejected (false) the request.
+        /// Who resolved the request: the approver for approved/eligible/rejected, the requester for withdrawn.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Mutable Approved
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Mutable DecidedBy
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApprovedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -285,21 +285,21 @@ public readonly partial struct AccessDecisionPayload
         }
 
         /// <summary>
-        /// Gets the <c>decidedBy</c> property.
+        /// Gets the <c>outcome</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The approver&#39;s audit identity.
+        /// How the request was resolved: approved (a one-time capped grant), eligible (standing eligibility to self-elevate this access JIT), rejected (the approver declined), or withdrawn (the requester pulled it). Any resolution event resumes the suspended run.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Mutable DecidedBy
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Mutable Outcome
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutcomeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Mutable value))
                 {
                     return value;
                 }
@@ -393,37 +393,6 @@ public readonly partial struct AccessDecisionPayload
         }
 
         /// <summary>
-        /// Set the <c>approved</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetApproved(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("approved");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApprovedUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Approved, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
         /// Set the <c>decidedBy</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
@@ -447,6 +416,37 @@ public readonly partial struct AccessDecisionPayload
             {
                 // We are going to insert the new value
                 value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecidedBy, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>outcome</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetOutcome(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("outcome");
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutcomeUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcome, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -860,8 +860,8 @@ public readonly partial struct AccessDecisionPayload
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source _createArg4;
 
@@ -878,7 +878,7 @@ public readonly partial struct AccessDecisionPayload
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1157,13 +1157,13 @@ public readonly partial struct AccessDecisionPayload
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source approved,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source outcome,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default)
         {
-            approved.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Approved, ref builder);
             decidedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecidedBy, ref builder);
+            outcome.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcome, ref builder);
             requestId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestId, ref builder);
             reason.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Reason, ref builder);
         }
@@ -1172,12 +1172,12 @@ public readonly partial struct AccessDecisionPayload
         /// Creates an instance of a <see cref="AccessDecisionPayload"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source approved,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source outcome,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default)
         {
-            Create(ref _builder, approved, decidedBy, requestId, reason);
+            Create(ref _builder, decidedBy, outcome, requestId, reason);
         }
 
         /// <summary>
@@ -1280,7 +1280,7 @@ public readonly partial struct AccessDecisionPayload
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1320,14 +1320,14 @@ public readonly partial struct AccessDecisionPayload
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="approved">The value of the <c>"approved"</c> property.</param>
     /// <param name="decidedBy">The value of the <c>"decidedBy"</c> property.</param>
+    /// <param name="outcome">The value of the <c>"outcome"</c> property.</param>
     /// <param name="requestId">The value of the <c>"requestId"</c> property.</param>
     /// <param name="reason">The value of the <c>"reason"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source approved, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source outcome, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default)
     {
-        return new Source(approved, decidedBy, requestId, reason);
+        return new Source(decidedBy, outcome, requestId, reason);
     }
 
     /// <summary>
@@ -1423,19 +1423,19 @@ public readonly partial struct AccessDecisionPayload
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="approved">The value of the property.</param>
     /// <param name="decidedBy">The value of the property.</param>
+    /// <param name="outcome">The value of the property.</param>
     /// <param name="requestId">The value of the property.</param>
     /// <param name="reason">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source approved, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(approved, decidedBy, requestId, reason);
+        ovb.Create(decidedBy, outcome, requestId, reason);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1536,13 +1536,13 @@ public readonly partial struct AccessDecisionPayload
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
-    /// <param name="approved">The value of the property.</param>
     /// <param name="decidedBy">The value of the property.</param>
+    /// <param name="outcome">The value of the property.</param>
     /// <param name="requestId">The value of the property.</param>
     /// <param name="reason">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AccessDecisionPayload> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonBoolean.Source approved, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<AccessDecisionPayload> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source decidedBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.AccessDecisionPayload.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source requestId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows.Models.JsonString.Source reason = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1550,7 +1550,7 @@ public readonly partial struct AccessDecisionPayload
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(approved, decidedBy, requestId, reason);
+            ovb.Create(decidedBy, outcome, requestId, reason);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
