@@ -162,10 +162,15 @@ public static class DemoData
             // Every minute (a fast cadence for the demo); the target's inputs are the reconciliation date. A fresh $schedule
             // run seeds its watermark to now and fires no back-dated occurrence, then suspends until the next minute — at
             // which the app runner resumes it and fires the target through the control plane.
+            const string scheduleId = "nightly-reconcile-cron";
             string date = time.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(
-                $$$"""{"scheduleId":"nightly-reconcile-cron","cron":"* * * * *","timeZone":"UTC","targetWorkflowId":"nightly-reconcile-v2","targetInputs":{"date":"{{{date}}}"}}"""));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, "schedule-nightly-reconcile", ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
+                $$$"""{"scheduleId":"{{{scheduleId}}}","cron":"* * * * *","timeZone":"UTC","targetWorkflowId":"nightly-reconcile-v2","targetInputs":{"date":"{{{date}}}"}}"""));
+
+            // The run id is derived from the scheduleId exactly as the /schedules API derives it (#896), so the seeded
+            // schedule is addressable — get / delete / run-now on 'nightly-reconcile-cron' — like any API-created one.
+            string runId = SecuredWorkflowManagement.IdempotentRunId(ScheduleHostedWorkflow.ScheduleWorkflowId, scheduleId).Value;
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
             await run.EnqueueAsync(default).ConfigureAwait(false);
             log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' (every minute -> nightly-reconcile-v2) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");
         }
