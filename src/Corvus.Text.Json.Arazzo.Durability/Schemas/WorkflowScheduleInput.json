@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkflowScheduleInput",
+  "description": "The inputs of a durable schedule run (#896). A schedule is a durable run of the built-in scheduler workflow that, on each occurrence of its cadence, starts a run of a target workflow; this is that scheduler run's inputs, persisted with the run and read on every resume.",
+  "type": "object",
+  "required": ["scheduleId", "cron", "targetWorkflowId"],
+  "properties": {
+    "scheduleId": {
+      "type": "string",
+      "description": "The schedule's stable identity, distinct from the run id. It is part of each fire's idempotency key so two schedules firing at the same instant do not collide."
+    },
+    "cron": {
+      "type": "string",
+      "description": "The cron expression driving occurrences: a 5-field standard expression, or a 6-field expression with a leading seconds field when includeSeconds is true."
+    },
+    "timeZone": {
+      "type": "string",
+      "default": "UTC",
+      "description": "The IANA time zone id the cadence is expressed in, so a calendar cadence stays correct across daylight-saving transitions. Defaults to UTC."
+    },
+    "includeSeconds": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the cron expression carries a leading seconds field."
+    },
+    "targetWorkflowId": {
+      "type": "string",
+      "description": "The versioned workflow id ({base}-v{n}) each occurrence starts a run of."
+    },
+    "targetInputs": {
+      "description": "The inputs each occurrence's target run starts with. Any JSON value, or absent to start the target with no inputs."
+    }
+  }
+}
