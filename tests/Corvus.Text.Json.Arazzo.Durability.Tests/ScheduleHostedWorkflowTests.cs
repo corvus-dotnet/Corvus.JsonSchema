@@ -129,6 +129,37 @@ public sealed class ScheduleHostedWorkflowTests
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Suspended);
     }
 
+    [TestMethod]
+    public async Task A_pending_schedule_run_is_claimed_by_the_dispatcher_and_suspends()
+    {
+        // The other half of the runner mechanism: registering a schedule is just starting a "$schedule" run, and the
+        // real dispatcher claims that Pending run (env-pinned, like any run) and runs it through the resumer, which
+        // suspends it on its first occurrence. With the worker-resume test above, this covers the full loop through
+        // the runner's own dispatch + resume machinery, so no per-schedule dispatch path is needed.
+        var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
+        var store = new InMemoryWorkflowStateStore(time);
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var scheduler = new ScheduleHostedWorkflow(Start(management), time);
+
+        WorkflowResumer resume = async (r, ct) =>
+        {
+            using JsonWorkspace ws = JsonWorkspace.CreateUnrented();
+            return await scheduler.RunAsync(NoTransports, null, ws, r.Inputs, r, ct);
+        };
+
+        using ParsedJsonDocument<JsonElement> inputs = Inputs("s1", "0 9 * * *", "adopt-v1");
+        WorkflowRunId scheduleRun = await management.StartIdempotentAsync(
+            ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "s1", "development", cancellationToken: default);
+
+        var dispatcher = new WorkflowDispatcher(store, "runner-1", time, runnerEnvironment: "development");
+        int dispatched = await dispatcher.DispatchClaimableAsync([ScheduleHostedWorkflow.ScheduleWorkflowId], resume, default);
+
+        dispatched.ShouldBe(1);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, scheduleRun, time, default);
+        reloaded.ShouldNotBeNull();
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Suspended);
+    }
+
     private static WorkflowStartHandler Start(SecuredWorkflowManagement management)
         => (request, cancellationToken) => management.StartIdempotentAsync(
             request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
