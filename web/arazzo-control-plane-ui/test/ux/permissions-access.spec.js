@@ -1,7 +1,7 @@
-// UX suite — the Permissions area (grants + rules, design §14.2/§16.5.4) and the Access area (the who-can-do-what
-// overview §6.1 + the §16.5 access-request inbox). Smoke already covers tab placement ("Grants and Rules live on the
-// Permissions tab; Access holds the request inbox") and the persona-gated promotion flow; this file goes deeper into
-// authoring, the correct-by-construction grantee flows, the resolved capability view, and the approver decisions.
+// UX suite — the Security area (Grants + Rules + Access overview subtabs, design §14.2/§16.5.4/§7.7) and the Workflow
+// access request inbox (§16.5). Smoke already covers tab placement ("Grants, Rules, and the Access overview live under
+// the Security tab; Workflow access holds the request inbox") and the persona-gated promotion flow; this file goes
+// deeper into authoring, the correct-by-construction grantee flows, the resolved capability view, and the approver decisions.
 //
 // Grounding (selectors read from source):
 //   src/components/scopes-panel.js   — <arazzo-rules-panel> (primary tag; arazzo-scopes-panel is the deprecated alias)
@@ -18,7 +18,7 @@
 // (bind-2/bind-4 wording, the platform tenant, req-2004) repoint at a fresh built-in-seed mock in-page (see
 // useBuiltinSeeds below).
 import { test, expect } from '@playwright/test';
-import { watchErrors, assertClean, openApp, openTab } from './ux-helpers.js';
+import { watchErrors, assertClean, openApp, openTab, selectSecurity } from './ux-helpers.js';
 
 /**
  * Point the named kit elements at a FRESH in-page mock running the mock-api.js BUILT-IN seeds — the seed set the
@@ -41,7 +41,8 @@ async function useBuiltinSeeds(page, selectors) {
 
 test('the Rules panel lists the seeded rules with expressions and a seed-derived footer count, and search narrows server-side', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Rules');
 
   const rules = page.locator('arazzo-rules-panel');
   const rows = rules.locator('tbody tr.srow');
@@ -61,7 +62,8 @@ test('the Rules panel lists the seeded rules with expressions and a seed-derived
 
 test('a rule is authored template-first: the ordered template is offered (orderings configured) and label-eq builds a simple-grammar expression with a suggested name', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Rules');
 
   const rules = page.locator('arazzo-rules-panel');
   // The orderings load with the first page; wait for the rows so the create pane opens with them present.
@@ -92,7 +94,8 @@ test('a rule is authored template-first: the ordered template is offered (orderi
 
 test('editing a rule opens it in the detail pane with the name immutable, and Save persists the new expression', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Rules');
 
   const rules = page.locator('arazzo-rules-panel');
   await rules.locator('tr[data-name="reach-payments"]').click();
@@ -109,7 +112,8 @@ test('editing a rule opens it in the detail pane with the name immutable, and Sa
 
 test('deleting a rule is confirm-gated: Cancel keeps it, confirming removes it from the list', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Rules');
 
   const rules = page.locator('arazzo-rules-panel');
   await rules.locator('tr[data-name="data-confidential"]').click();
@@ -132,7 +136,8 @@ test('deleting a rule is confirm-gated: Cancel keeps it, confirming removes it f
 
 test('the Grants panel lists the seeded bindings with per-verb reach summaries and a seed-derived footer count', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
 
   const grants = page.locator('arazzo-grants-panel');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
@@ -166,7 +171,8 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
 
 test('a grant is authored via the grantee picker with per-verb reach and identity clauses, and re-opening it pins the identity read-only', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
 
   const grants = page.locator('arazzo-grants-panel');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // first load settled
@@ -224,7 +230,8 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
 
 test('picking a person grantee steers to the access-request flow: the grant editor blocks a direct per-person grant', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
 
   const grants = page.locator('arazzo-grants-panel');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
@@ -249,7 +256,8 @@ test('picking a person grantee steers to the access-request flow: the grant edit
 
 test('deleting a grant is confirm-gated and removes the binding from the list', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
 
   const grants = page.locator('arazzo-grants-panel');
   await grants.locator('tr[data-id="bind-3"]').click();
@@ -267,7 +275,8 @@ test('deleting a grant is confirm-gated and removes the binding from the list', 
 
 test('the grantee picker merges directory and observed results with kind badges, and flags a partial identity through to the selection chip', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openApp(page);
+  await selectSecurity(page, 'Access overview');
 
   const picker = page.locator('arazzo-access-overview arazzo-grantee-picker');
   await picker.locator('input.q').click(); // focus pops the initial (empty-q) suggestions — no typing needed
@@ -304,7 +313,8 @@ test('the grantee picker merges directory and observed results with kind badges,
 
 test('the Access overview aggregates one grantee: reach grants with inline Revoke, administered workflows, and usable credentials', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openApp(page);
+  await selectSecurity(page, 'Access overview');
 
   const overview = page.locator('arazzo-access-overview');
   const input = overview.locator('arazzo-grantee-picker input.q');
@@ -347,7 +357,8 @@ test('the Access overview aggregates one grantee: reach grants with inline Revok
 
 test('the overview inline Revoke deletes the underlying binding: the overview refreshes and the Grants list agrees', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openApp(page);
+  await selectSecurity(page, 'Access overview');
 
   const overview = page.locator('arazzo-access-overview');
   const input = overview.locator('arazzo-grantee-picker input.q');
@@ -366,8 +377,8 @@ test('the overview inline Revoke deletes the underlying binding: the overview re
   await expect(overview.locator('button[data-revoke="bind-4"]')).toHaveCount(0);
   await expect(overview.locator('button[data-revoke="bind-5"]')).toHaveCount(1);
 
-  // The Permissions tab reflects the deletion (same backend; the tab refresh re-fetches).
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  // The Grants subtab reflects the deletion (same backend; the subtab refresh re-fetches).
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel tbody tr.grow-row').first()).toBeVisible();
   await expect(page.locator('arazzo-grants-panel tr[data-id="bind-4"]')).toHaveCount(0);
   assertClean(errors);
@@ -375,7 +386,8 @@ test('the overview inline Revoke deletes the underlying binding: the overview re
 
 test('a team grantee resolves through its team-keyed binding and administered workflow, with empty sections stated honestly', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openApp(page);
+  await selectSecurity(page, 'Access overview');
 
   const overview = page.locator('arazzo-access-overview');
   const input = overview.locator('arazzo-grantee-picker input.q');
@@ -403,7 +415,8 @@ test('a team grantee resolves through its team-keyed binding and administered wo
 
 test('under the built-in seeds the capability view resolves conferred vs eligible vs nothing: list wording, the eligible chip, and admin resolution', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
 
   // This pins the BUILT-IN fixture shapes (bind-2 confers scopes; bind-4 is an eligibleOnly PIM assignment;
@@ -418,7 +431,7 @@ test('under the built-in seeds the capability view resolves conferred vs eligibl
 
   // The overview resolves Ada's FULL membership-expanded identity: her own sub grant plus the two team=payments
   // bindings she inherits, and the eligibleOnly binding renders as a dashed ELIGIBLE chip — never an active scope.
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await selectSecurity(page, 'Access overview');
   const overview = page.locator('arazzo-access-overview');
   const input = overview.locator('arazzo-grantee-picker input.q');
   await input.click();
@@ -451,7 +464,7 @@ test('under the built-in seeds the capability view resolves conferred vs eligibl
 
 test('the submit flow requests scoped, time-boxed access: write forces read, and the new request lands Pending then withdraws', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openTab(page, 'Workflow access');
 
   const panel = page.locator('arazzo-access-requests');
   // No demo-seed request belongs to the administrator persona, so "My requests" opens empty with the call to action.
@@ -495,7 +508,7 @@ test('the submit flow requests scoped, time-boxed access: write forces read, and
 
 test('the approver inbox offers approve / make-eligible / deny on each pending request; approve and deny transition through to inbox zero and revoke', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openTab(page, 'Workflow access');
 
   // The demo example seed's inbox holds a single pending request; this walkthrough needs the built-in seeds'
   // TWO (req-2001 + req-2004) so approve and deny can each transition one on the way to inbox zero.
@@ -578,7 +591,7 @@ test('independent decision end to end: a request you raised is non-actionable in
 
 test('approve-as-eligible captures an eligibility window and lands the request in the Eligible state (PIM, not active)', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openTab(page, 'Workflow access');
 
   await useBuiltinSeeds(page, ['arazzo-access-requests']); // req-2004 is a built-in fixture
   const panel = page.locator('arazzo-access-requests');
@@ -599,21 +612,23 @@ test('approve-as-eligible captures an eligibility window and lands the request i
 
 // ---- Persona gating -----------------------------------------------------------------------------
 
-test('personas re-gate Permissions: the security admin authors, the operator gets a read-only pane, the team reader loses the tab', async ({ page }) => {
+test('personas re-gate the Security tab: the security admin authors, the operator gets a read-only pane, the team reader loses the tab', async ({ page }) => {
   const errors = watchErrors(page);
   await openApp(page);
 
-  // Administrator (security:write): both panels offer their New action.
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  // Administrator (security:write): both subtabs offer their New action.
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel button.new')).toBeVisible();
+  await selectSecurity(page, 'Rules');
   await expect(page.locator('arazzo-rules-panel button.new')).toBeVisible();
 
   // Operator holds security:read only: the tab remains, but authoring is gone — no New buttons, and an opened rule
   // is a read-only view (no Save/Delete; Cancel becomes Close; the expression is not editable).
   await page.locator('#persona').selectOption('operator');
-  await expect(page.locator('#tab-permissions')).toBeVisible();
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  await expect(page.locator('#tab-security')).toBeVisible();
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel button.new')).toBeHidden();
+  await selectSecurity(page, 'Rules');
   await expect(page.locator('arazzo-rules-panel button.new')).toBeHidden();
   const rules = page.locator('arazzo-rules-panel');
   await rules.locator('tr[data-name="shares-a-label"]').click();
@@ -623,15 +638,15 @@ test('personas re-gate Permissions: the security admin authors, the operator get
   await expect(rules.locator('.dfoot .cancel')).toHaveText('Close');
   await expect(rules.locator('textarea.f-expression')).toBeDisabled();
 
-  // The payments team reader lacks security:read entirely: nav honesty removes the Permissions tab (absent, not
+  // The payments team reader lacks security:read entirely: nav honesty removes the Security tab (absent, not
   // empty) and falls back to a surface the persona can read.
   await page.locator('#persona').selectOption('team-reader');
-  await expect(page.locator('#tab-permissions')).toBeHidden();
+  await expect(page.locator('#tab-security')).toBeHidden();
   await expect(page.locator('#view-runs')).toBeVisible();
 
   // Back to the administrator: authoring returns.
   await page.locator('#persona').selectOption('administrator');
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel button.new')).toBeVisible();
   assertClean(errors);
 });
@@ -640,7 +655,8 @@ test('personas re-gate Permissions: the security admin authors, the operator get
 
 test('the editor steers rule composition: an impossible pair is called out, a satisfiable pair NARROWS one grant, and a second grant for the same claim WIDENS', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
 
   const grants = page.locator('arazzo-grants-panel');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // demo seed settled

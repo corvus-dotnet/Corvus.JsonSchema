@@ -302,16 +302,22 @@ test('the Environments tab lists environments and opens one to administer it', a
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
-test('Grants and Rules live on the Permissions tab; Access holds the request inbox', async ({ page }) => {
+test('Grants, Rules, and the Access overview live under the Security tab; Workflow access holds the request inbox', async ({ page }) => {
   await page.goto('/demo/index.html');
 
-  // Permissions carries the reach vocabulary — grants + rules.
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  // Security groups the reach vocabulary (grants + rules) and the who-can-do-what overview under one area (§7.7), each
+  // reached by a secondary tab — there is no standalone Permissions tab.
+  await expect(page.getByRole('tab', { name: 'Permissions' })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Security' }).click();
+  await page.getByRole('tab', { name: 'Grants' }).click();
   await expect(page.locator('arazzo-grants-panel')).toBeVisible();
+  await page.getByRole('tab', { name: 'Rules' }).click();
   await expect(page.locator('arazzo-rules-panel')).toBeVisible();
+  await page.getByRole('tab', { name: 'Access overview' }).click();
+  await expect(page.locator('arazzo-access-overview')).toBeVisible();
 
-  // Access carries the request/approval inbox (and no longer the grants/rules panels).
-  await page.getByRole('tab', { name: 'Access' }).click();
+  // Workflow access carries the request/approval inbox (and no longer the grants/rules/overview panels).
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   await expect(page.locator('arazzo-access-requests')).toBeVisible();
   await expect(page.locator('arazzo-grants-panel')).toBeHidden();
 });

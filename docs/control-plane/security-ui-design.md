@@ -60,10 +60,12 @@ The rest of this doc is the original design narrative and lags the code in place
   the mock's 3 paged handlers, and the component reworked to three sections each driving `<arazzo-pager>` (Prev/Next).
   Also fold in the OpenAPI credential-usage description update (the identity-scoped narrowing) with that rework's regen.
   Then container-conformance, and the slice-7 slotting.
-- **Slice 7 — Access-area reorg — IN PROGRESS** (decision taken). Today an **Access** tab holds Requests and a
-  **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: fold
-  Overview | Bindings | Reach | Requests under a single Access sub-nav, move Bindings+Reach out of Permissions,
-  slot in Overview (needs slice 6), cross-link Administrators from Catalog, retire the Permissions tab.
+- **Slice 7 — Access-area reorg — DONE.** Grants (Bindings), Rules (Reach), and the server-aggregated Access
+  overview now live under one **Security** tab with a secondary tab bar; the standalone **Permissions** tab is
+  retired and per-workflow Administrators cross-link from the Catalog detail (§15). Shipped on both surfaces: the
+  .NET/wwwroot demo shell (3443072c3b, 9ecaedde7c) and the web-kit demo (#884). The request/approval inboxes stay
+  their own tabs (the .NET shell's Approvals/Requests split) rather than folding under Security. Tab placement is
+  codified in `smoke.spec.js`; the UX specs navigate via the Security subtabs.
 
 **Security-tags / management-tags thread** — settable + admin-editable-on-update `{key,value}` reach labels
 (catalog `securityTags`; environment/source/credential `managementTags`). **DONE end-to-end** for all four
@@ -146,10 +148,11 @@ identity) is the right primitive, not a raw tag editor (see memory: *security-ui
 
 ## 3. Current UI state + gaps (grounded)
 
-App shell today (`demo/index.html`): top-level tabs **Runs · Runners · Catalog · Sources · Environments ·
-Access · Permissions · Promotions · Runner auth** (see §0 for the live list). Rules + Bindings now live under
-**Permissions**; the Access tab holds Requests — the §7 item 7 reorg to fold them under one Access area is in progress.
-(The table below is the original "before" snapshot; §0 has the current per-surface status.)
+App shell today (`demo/index.html`): top-level tabs **Runs · Runners · Catalog · Connections · Environments ·
+Security · Workflow access · Promotions · Runner auth** (see §0 for the live list). Grants + Rules + the Access
+overview now live under the **Security** tab (secondary tab bar); **Workflow access** holds the request inbox — the
+§7 item 7 reorg (retire the Permissions tab) is DONE on both surfaces (#884). (The table below is the original
+"before" snapshot; §0 has the current per-surface status.)
 
 | Surface | Today | Verdict |
 |---------|-------|---------|
@@ -366,15 +369,15 @@ MemoryDiagnoser benchmark + container conformance gates. Web-only slices still g
    (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). The Web surface shipped too —
    `<arazzo-access-overview>` renders the grantee picker + reach grants with inline Revoke + administers +
    credential usage (see §0).
-7. **[IN PROGRESS] Access-area reorg.** Fold Overview/Bindings/Reach/Requests under the Access tab nav; cross-link
-   per-workflow Administrators from Catalog. *Started (decision taken): today an **Access** tab holds Requests and a
-   **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: one Access sub-nav
-   over Overview | Bindings | Reach | Requests, move Bindings+Reach out of Permissions, slot in Overview (needs
-   slice 6), cross-link Administrators, retire the Permissions tab.*
+7. **[DONE] Access-area reorg.** Grants (Bindings), Rules (Reach), and the Access overview are consolidated under a
+   single **Security** tab with a secondary tab bar, and the standalone **Permissions** tab is retired; per-workflow
+   Administrators cross-link from the Catalog detail. Shipped on both surfaces: the .NET/wwwroot demo shell
+   (3443072c3b, 9ecaedde7c) and the web-kit demo (#884). The request/approval inboxes stay their own tabs (the .NET
+   shell's Approvals/Requests split) rather than folding under Security. Tab placement is codified in `smoke.spec.js`.
 
 Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (grantee primitive, then credentials, then the grammar the rules
 need, then the two missing editors, then the server-aggregated overview, then the reorg). Each is
-independently demoable. **Status (2026-07-16): 1–6 DONE, 7 in progress — see §0.** The recommended
+independently demoable. **Status: 1–7 DONE — see §0.** The recommended
 order also predates a parallel thread — the **security-tags / management-tags** work (settable + editable reach
 labels on catalog/environment/source/credential) — which is now **done end-to-end** (API/store/mock/web/CLI),
 bar the parked registered-source UI edit panel (§0).

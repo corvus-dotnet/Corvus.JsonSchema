@@ -29,6 +29,13 @@ export async function openTab(page, name) {
   await page.getByRole('tab', { name }).click();
 }
 
+/** Select a subtab within the Security area (Grants / Rules / Access overview, design §7.7): clicks the primary
+ *  Security tab then the named subtab. Does not reload — call openApp(page) (or openTab) first for the initial nav. */
+export async function selectSecurity(page, subtab) {
+  await page.getByRole('tab', { name: 'Security' }).click();
+  await page.getByRole('tab', { name: subtab, exact: true }).click();
+}
+
 /** Open the designer on a seeded working copy (by its display name in the workspace table). */
 export async function openDesigner(page, workingCopyName = 'Order processing') {
   await page.goto('/demo/designer.html');

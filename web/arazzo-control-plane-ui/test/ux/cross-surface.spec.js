@@ -11,7 +11,7 @@
 //   availability-matrix.js, environments-panel.js, src/arazzo-control-plane.js (runs)
 //   demo/mock-api.js              — decideAccessRequest writes/removes the approval binding (§16.5)
 import { test, expect } from '@playwright/test';
-import { watchErrors, assertClean, openApp, openTab } from './ux-helpers.js';
+import { watchErrors, assertClean, openApp, openTab, selectSecurity } from './ux-helpers.js';
 
 // Open a catalog version's detail pane WITHOUT reloading the page (openTab navigates, which resets
 // the in-memory mock — mid-test tab switches must click the tab directly or the state under test is
@@ -34,11 +34,12 @@ async function openVersionDetail(page, baseWorkflowId) {
   return switchToVersionDetail(page, baseWorkflowId);
 }
 
-// ---- Permissions view: sibling panels share the rule vocabulary --------------------------------
+// ---- Security area: sibling panels share the rule vocabulary ------------------------------------
 
 test('a rule created in the Rules panel is immediately offered by the Grants editor rule typeahead', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Rules');
 
   // Author a new reach rule (label-eq template; the name is suggested from the fields).
   const rules = page.locator('arazzo-rules-panel');
@@ -51,8 +52,9 @@ test('a rule created in the Rules panel is immediately offered by the Grants edi
   await rules.locator('.dfoot .confirm').click();
   await expect(rules.locator('tr[data-name="rule-ops"]')).toBeVisible();
 
-  // The sibling Grants editor's typeahead is server-backed, so the new rule is offered without any
-  // refresh — the two panels share one rule vocabulary, not two cached copies.
+  // The sibling Grants editor's typeahead is server-backed, so the new rule is offered as soon as we switch to it —
+  // the two panels share one rule vocabulary, not two cached copies.
+  await selectSecurity(page, 'Grants');
   const grants = page.locator('arazzo-grants-panel');
   await grants.locator('button.new').click();
   await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
@@ -66,15 +68,16 @@ test('a rule created in the Rules panel is immediately offered by the Grants edi
   assertClean(errors);
 });
 
-// ---- Access ⇄ Permissions: the approval is what writes the grant --------------------------------
+// ---- Workflow access ⇄ Security: the approval is what writes the grant ---------------------------
 
 test('approving an access request writes the approval-service binding into the Grants panel; revoking the approval removes it', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Permissions');
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
 
   // Approve the seeded pending request (req-2001, Grace's on-call cover for payments-reconcile).
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   const panel = page.locator('arazzo-access-requests');
   await panel.locator('.tab-queue').click();
   await panel.locator('tr[data-id="req-2001"] .act[data-action="approve"]').click();
@@ -83,10 +86,10 @@ test('approving an access request writes the approval-service binding into the G
   await decide.locator('button.ok').click();
   await expect(panel.locator('tr[data-id="req-2001"]')).toHaveCount(0); // left the pending queue
 
-  // The approval WROTE the grant (§16.5.2): the Permissions tab now lists a seventh binding — keyed
+  // The approval WROTE the grant (§16.5.2): the Grants subtab now lists a seventh binding — keyed
   // on the request's subject claim, approval-service-authored, conferring the requested scopes for
   // the granted window. The tab activation re-fetches, so no manual refresh is involved.
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  await selectSecurity(page, 'Grants');
   const grants = page.locator('arazzo-grants-panel');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(8);
   await expect(grants.locator('arazzo-pager .count')).toContainText(/8\+? grants/);
@@ -95,12 +98,12 @@ test('approving an access request writes the approval-service binding into the G
   await expect(granted.locator('.gscopes')).toContainText('confers runs:read, runs:write until');
 
   // Revoking the approval deletes the binding it wrote — the grant disappears from the list again.
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   await panel.locator('select.status').selectOption('Approved');
   await panel.locator('tr[data-id="req-2001"] .act[data-action="revoke"]').click();
   await panel.locator('dialog.arazzo-confirm button.ok').click();
   await expect(panel.locator('tr[data-id="req-2001"]')).toHaveCount(0);
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  await selectSecurity(page, 'Grants');
   await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
   await expect(grants.locator('tbody tr.grow-row', { hasText: 'req-2001' })).toHaveCount(0);
   assertClean(errors);
@@ -113,7 +116,7 @@ test('the request loop crosses personas: the operator submits, the administrator
   // The operator (omar@ops) requests time-boxed access to nightly-reconcile — a workflow he does
   // NOT administer (its set seats alice@ops, the Payments team and Ada).
   await page.locator('#persona').selectOption('operator');
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   const panel = page.locator('arazzo-access-requests');
   await panel.locator('button.new').click();
   const dlg = page.locator('arazzo-access-request-dialog');
@@ -131,7 +134,7 @@ test('the request loop crosses personas: the operator submits, the administrator
   // The administrator persona (alice@ops administers nightly-reconcile) finds it in the approver
   // queue — the persona change re-fetched the same panel under the new caller.
   await page.locator('#persona').selectOption('administrator');
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   await panel.locator('.tab-queue').click();
   const queued = panel.locator('tbody tr[data-id]', { hasText: 'nightly-reconcile' });
   await expect(queued).toHaveCount(1);
@@ -142,7 +145,7 @@ test('the request loop crosses personas: the operator submits, the administrator
 
   // Back as the operator: My requests shows the decision — the loop closes for the requester.
   await page.locator('#persona').selectOption('operator');
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await page.getByRole('tab', { name: 'Workflow access' }).click();
   await panel.locator('.tab-mine').click();
   await expect(mine.locator('.badge')).toHaveText('Approved');
   assertClean(errors);
@@ -165,7 +168,7 @@ test('seating a team on a workflow admin set (Catalog) shows up in the team\'s A
 
   // The Access overview aggregates the same server state: Payments now administers all three —
   // the two seeded seats (nightly-reconcile, payments-reconcile) plus the one just added.
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await selectSecurity(page, 'Access overview');
   const overview = page.locator('arazzo-access-overview');
   const input = overview.locator('arazzo-grantee-picker input.q');
   await input.click();
@@ -221,11 +224,12 @@ test('making a version available from the matrix lists it under the environment\
   assertClean(errors);
 });
 
-// ---- Permissions ⇄ Access overview: tab activation refreshes a stale aggregation ----------------
+// ---- Security subtabs ⇄ Access overview: sub-tab activation refreshes a stale aggregation --------
 
-test('a grant deleted under Permissions is gone from an already-open Access overview when its tab is re-activated', async ({ page }) => {
+test('a grant deleted under the Grants subtab is gone from an already-open Access overview when its subtab is re-activated', async ({ page }) => {
   const errors = watchErrors(page);
-  await openTab(page, 'Access');
+  await openApp(page);
+  await selectSecurity(page, 'Access overview');
 
   // Leave the overview showing Growth's aggregation (two grants: bind-3 + the bind-6 eligibility).
   const overview = page.locator('arazzo-access-overview');
@@ -235,17 +239,17 @@ test('a grant deleted under Permissions is gone from an already-open Access over
   await overview.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'Growth' }).click();
   await expect(overview.locator('.grant')).toHaveCount(2);
 
-  // Delete Growth's standing read grant under the Permissions tab.
-  await page.getByRole('tab', { name: 'Permissions' }).click();
+  // Delete Growth's standing read grant under the sibling Grants subtab.
+  await selectSecurity(page, 'Grants');
   const grants = page.locator('arazzo-grants-panel');
   await grants.locator('tr[data-id="bind-3"]').click();
   await grants.locator('.dfoot .del').click();
   await grants.locator('dialog.arazzo-confirm button.ok').click();
   await expect(grants.locator('tr[data-id="bind-3"]')).toHaveCount(0);
 
-  // Returning to the Access tab re-runs the aggregation for the SAME selected grantee — the stale
+  // Re-activating the Access overview subtab re-runs the aggregation for the SAME selected grantee — the stale
   // two-grant overview would misreport access someone just revoked.
-  await page.getByRole('tab', { name: 'Access' }).click();
+  await selectSecurity(page, 'Access overview');
   await expect(overview.locator('.grant')).toHaveCount(1);
   await expect(overview.locator('.who .glabel')).toHaveText('Growth'); // the selection survived the refresh
   assertClean(errors);

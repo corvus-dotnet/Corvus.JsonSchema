@@ -20,6 +20,10 @@
     .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
     .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
+    /* Secondary tab bar inside a grouped view (e.g. Security → Grants / Rules / Access overview). */
+    .subtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .subtabs button { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--arazzo-border); background: var(--arazzo-surface); color: var(--arazzo-muted); padding: 5px 12px; border-radius: 6px; }
+    .subtabs button[aria-selected="true"] { color: var(--arazzo-text); border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 12%, transparent); font-weight: 600; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -57,8 +61,8 @@
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
       <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Connections</button>
       <button id="tab-environments" role="tab" aria-selected="false" aria-controls="view-environments">Environments</button>
+      <button id="tab-security" role="tab" aria-selected="false" aria-controls="view-security">Security</button>
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Workflow access</button>
-      <button id="tab-permissions" role="tab" aria-selected="false" aria-controls="view-permissions">Permissions</button>
       <button id="tab-promotions" role="tab" aria-selected="false" aria-controls="view-promotions">Promotions</button>
       <button id="tab-runner-auth" role="tab" aria-selected="false" aria-controls="view-runner-auth">Runner auth</button>
     </div>
@@ -83,15 +87,27 @@
       <arazzo-environments base-url="https://mock/arazzo/v1" scopes="environments:read environments:write availability:read"></arazzo-environments>
     </div>
 
-    <div id="view-access" role="tabpanel" hidden>
-      <arazzo-access-overview base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-access-overview>
-      <hr style="border:none;border-top:1px solid var(--arazzo-border, #e2e5ea);margin:24px 0;">
-      <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-access-requests>
+    <!-- Security groups the reach vocabulary (Grants + Rules, §14.2/§16.5.4) and the server-aggregated who-can-do-what
+         Access overview (§6.1) under one area with a secondary tab bar. Retired the standalone Permissions tab (§7.7). -->
+    <div id="view-security" role="tabpanel" hidden>
+      <div class="subtabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="sub-security-grants">Grants</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-security-rules">Rules</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-security-overview">Access overview</button>
+      </div>
+      <div id="sub-security-grants" class="subview">
+        <arazzo-grants-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
+      </div>
+      <div id="sub-security-rules" class="subview" hidden>
+        <arazzo-rules-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-rules-panel>
+      </div>
+      <div id="sub-security-overview" class="subview" hidden>
+        <arazzo-access-overview base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-access-overview>
+      </div>
     </div>
 
-    <div id="view-permissions" role="tabpanel" hidden>
-      <arazzo-grants-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
-      <arazzo-rules-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write" style="margin-top: 16px;"></arazzo-rules-panel>
+    <div id="view-access" role="tabpanel" hidden>
+      <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-access-requests>
     </div>
 
     <div id="view-promotions" role="tabpanel" hidden>
@@ -182,12 +198,12 @@
     const prefixed = (value, prefix) => value.split(/\s+/).filter((s) => s.startsWith(prefix)).join(' ');
     // The capability READ scope each tab requires to be shown at all. Reach (§14.2) narrows the domain-tagged ROWS a
     // caller sees (runs + catalog); whole SURFACES are gated by capability scope instead — so a payments read-only
-    // caller (no security:read) has no Permissions tab, not just an empty one. Tabs governed by administration
+    // caller (no security:read) has no Security tab, not just an empty one. Tabs governed by administration
     // membership rather than a capability scope (access / promotions / runner-auth) carry no entry here and are always
     // shown — their inbox is simply empty for a caller who administers nothing (non-disclosing, like an out-of-reach row).
     const TAB_READ_SCOPE = {
       runs: 'runs:read', runners: 'runs:read', catalog: 'catalog:read', credentials: 'credentials:read',
-      environments: 'environments:read', permissions: 'security:read',
+      environments: 'environments:read', security: 'security:read',
     };
     const applyPersona = (name) => {
       const scopes = DEMO_PERSONAS[name].scopes;
@@ -228,7 +244,7 @@
     overview.addEventListener('open-environment', (e) => { selectTab('environments'); environments.select(e.detail.environment); });
 
     // Tabs.
-    const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions', 'runner-auth'];
+    const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'security', 'access', 'promotions', 'runner-auth'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
@@ -241,6 +257,21 @@
       for (const el of views[name].querySelectorAll('*')) el.refresh?.();
     };
     for (const name of tabNames) tabs[name].addEventListener('click', () => selectTab(name));
+
+    // Secondary tab bars inside a grouped view (the Security area's Grants / Rules / Access overview). One helper drives
+    // any `.subtabs` bar: a subtab's aria-controls names the subview it toggles; selecting it shows that subview, hides
+    // its siblings, and refreshes its panels (so a change made elsewhere is reflected when the subtab is re-activated).
+    for (const tablist of document.querySelectorAll('.subtabs[role="tablist"]')) {
+      const buttons = [...tablist.querySelectorAll(':scope > [role="tab"]')];
+      const subviews = buttons.map((b) => document.getElementById(b.getAttribute('aria-controls')));
+      const selectSub = (active) => buttons.forEach((b, i) => {
+        b.setAttribute('aria-selected', String(b === active));
+        if (!subviews[i]) return;
+        subviews[i].hidden = b !== active;
+        if (b === active) for (const el of subviews[i].querySelectorAll('*')) el.refresh?.();
+      });
+      buttons.forEach((b) => b.addEventListener('click', () => selectSub(b)));
+    }
 
     // Apply the initial persona now that the tabs exist (applyPersona gates them by the caller's read scopes).
     applyPersona(personaSel.value);
