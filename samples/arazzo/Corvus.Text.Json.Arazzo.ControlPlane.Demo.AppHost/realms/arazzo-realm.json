@@ -12,7 +12,8 @@
     { "name": "observers" },
     { "name": "env-admins" },
     { "name": "reconcile-owners" },
-    { "name": "prod-ops" }
+    { "name": "prod-ops" },
+    { "name": "arazzo-schedulers" }
   ],
   "clients": [
     {
@@ -92,7 +93,22 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["runners:register", "runs:write"]
+      "defaultClientScopes": ["runners:register", "runs:write"],
+      "protocolMappers": [
+        {
+          "name": "scheduler-group",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "config": {
+            "claim.name": "groups",
+            "claim.value": "arazzo-schedulers",
+            "jsonType.label": "String",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
     },
     {
       "clientId": "arazzo-access-approval",

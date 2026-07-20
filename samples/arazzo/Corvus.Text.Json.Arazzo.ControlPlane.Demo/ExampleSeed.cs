@@ -180,6 +180,15 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                         DemoData.IssuerTag,
                         new SecurityTag("zone", "prod"),
                     ]),
+                // development carries zone=dev so a non-founder route to it exists (#896): a scheduling runner must SEE
+                // the environment it fires schedules into, and a governed run start reach-gates the environment read
+                // (§5.5). Additive — founders still see it via the group tag.
+                "development" => SecurityTagSet.FromTags(
+                    [
+                        new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins"),
+                        DemoData.IssuerTag,
+                        new SecurityTag("zone", "dev"),
+                    ]),
                 _ => adminGroup,
             };
             using ParsedJsonDocument<CpEnvironment.SecurityTagInfoArray> reachTags =
@@ -286,10 +295,19 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddRuleAsync("zone-access:prod", prodRule.RootElement, "demo", cancellationToken)).Dispose();
         }
 
+        // The dev-zone rule (#896): the rule-based door to development the zone=dev stamp above opens — the reach route
+        // for the scheduling runner to SEE the environment it fires schedules into.
+        using (ParsedJsonDocument<SecurityRuleDocument> devRule = SecurityRuleDocument.Draft(
+            "zone == 'dev'", "The development zone (sandbox)."))
+        {
+            (await context.SecurityPolicy.AddRuleAsync("zone-access:dev", devRule.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
         VerbGrant onboardReach = VerbGrant.Rules("workflow-access:onboard-customer");
         VerbGrant reconcileReach = VerbGrant.Rules("workflow-access:nightly-reconcile");
         VerbGrant preprodReach = VerbGrant.Rules("zone-access:preprod");
         VerbGrant prodReach = VerbGrant.Rules("zone-access:prod");
+        VerbGrant devReach = VerbGrant.Rules("zone-access:dev");
         (string Dimension, string? Value)[] issuerPin = [("iss", DemoData.KeycloakIssuer)];
 
         // observers: reach only (read, bounded to onboard-customer rows) — capability stays the membership baseline.
@@ -367,6 +385,30 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             additionalClauses: issuerPin))
         {
             (await context.SecurityPolicy.AddBindingAsync(paymentsOnboarding.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // arazzo-schedulers (#896): the scheduling runner's machine principal (the arazzo-runner client hardcodes this
+        // group). It holds READ reach over nightly-reconcile rows ONLY — enough to read the version and fire the schedule
+        // through the governed run endpoint, and nothing more (no write reach, no administration). Its runs:write
+        // capability rides its Keycloak client scope, not this grant. This is the reach a scheduling principal genuinely
+        // needs: to SEE what it schedules. Granting more would make the runner an operator over those rows.
+        using (ParsedJsonDocument<SecurityBindingDocument> schedulers = SecurityBindingDocument.Draft(
+            "group", "arazzo-schedulers", reconcileReach, VerbGrant.None, VerbGrant.None, order: 27,
+            description: "The scheduling runner reads nightly-reconcile rows to fire its schedule (read reach only).",
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(schedulers.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // A verb grant's rules are a conjunction, so the environment reach is its own binding (a second route, unioned):
+        // the workflow row through workflow-access, the development environment row through zone-access. A governed run
+        // start reach-gates BOTH the version and the environment (§5.5), so the scheduling runner needs both routes.
+        using (ParsedJsonDocument<SecurityBindingDocument> schedulerZone = SecurityBindingDocument.Draft(
+            "group", "arazzo-schedulers", devReach, VerbGrant.None, VerbGrant.None, order: 28,
+            description: "The scheduling runner sees the development environment it fires schedules into (read reach only).",
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(schedulerZone.RootElement, "demo", cancellationToken)).Dispose();
         }
 
         // The administration split: erin's group co-administers staging (arazzo-admins established it above); wanda's
