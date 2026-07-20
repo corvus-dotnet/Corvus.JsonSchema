@@ -70,7 +70,10 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)state
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
 // environment; the demo defaults to production. The runner is only dispatchable for runs targeting it.
 string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "production";
-var options = new RunnerOptions($"runner-{System.Environment.MachineName}-{System.Environment.ProcessId}", runnerEnvironment);
+var options = new RunnerOptions(
+    $"runner-{System.Environment.MachineName}-{System.Environment.ProcessId}",
+    runnerEnvironment,
+    ServesSchedules: builder.Configuration.GetValue("Runner:ServesSchedules", true));
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);
@@ -183,12 +186,44 @@ if (builder.Configuration["Runner:ExecutorTrust:PublicKeyFile"] is { Length: > 0
         new Dictionary<string, string>(StringComparer.Ordinal) { [trustKeyId] = await File.ReadAllTextAsync(trustKeyFile) });
 }
 
+// Machine-principal credentials for this runner's authenticated calls to the control plane — shared by authenticated
+// registration (below) and governed schedule firing (here). Read once; absent any of them (a bare two-process run),
+// both fall back: registration to the store-direct path, and schedule firing stays unwired.
+string? controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"];
+string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
+string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
+string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
+string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
+
+// Durable schedules (#896): a schedule is a durable run of the built-in scheduler workflow. When this runner serves
+// schedules and its machine-principal credentials are present, wire the scheduler into the resumer; on each due
+// occurrence it fires the target through the control plane's governed run endpoint (ControlPlaneRunStarter),
+// authenticated as the same machine principal the runner registers under and carrying an idempotency key — so a
+// scheduled start is governed exactly like an operator start and a re-fire after a recycle starts the target once.
+ScheduleHostedWorkflow? scheduleWorkflow = null;
+if (options.ServesSchedules
+    && !string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
+    && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
+{
+    var runStartAuthentication = new OAuth2ClientCredentialsAuthenticationProvider(
+        new HttpClient(),
+        new OAuth2ClientCredentialsOptions
+        {
+            TokenEndpoint = new Uri(ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm)),
+            ClientId = runnerClientId,
+            ClientSecret = runnerClientSecret,
+        });
+    var runStarter = new ControlPlaneRunStarter(new HttpClient(), runStartAuthentication, controlPlaneBaseUrl, runnerEnvironment);
+    scheduleWorkflow = new ScheduleHostedWorkflow(runStarter.AsStartHandler(), TimeProvider.System);
+}
+
 // Catalogued-run execution (design §5/§8, §11 Phase 2): the runner claims a Pending run and re-enters the version's
 // baked executor.dll through the real HostedWorkflowResumer — loading it into a collectible ALC on first use and
 // running it against the binder above. This is the same live-execution path the control-plane host runs in-process;
 // wiring it here is what makes the separate runner genuinely EXECUTE catalogued runs (it previously only leased them
-// and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer.
-WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder).AsResumer();
+// and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer, and the
+// scheduler (when wired) rides the same loops — a schedule run is dispatched, resumed on its due timer, and re-fired.
+WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow).AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
 // The consumer side of the async KYC verdict exchange (design §8): subscribe to kyc.verdict and, per verdict, resume
@@ -232,14 +267,9 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
 // binds the runner's authorization to it — instead of the runner self-asserting a Pending row into the shared store. Absent
 // any of these (a bare two-process run), the registrar stays null and registration falls back to the store-direct path.
 ControlPlaneRunnerRegistrar? runnerRegistrar = null;
-string? controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"];
-string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
-string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
-string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
 if (!string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
     && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
 {
-    string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
     runnerRegistrar = new ControlPlaneRunnerRegistrar(
         new HttpClient(),
         controlPlaneBaseUrl,

@@ -110,6 +110,15 @@ public sealed class WorkflowDispatchService(
         // The versions this runner hosts = every catalogued version (versioned id, e.g. "onboard-customer-v1").
         // Refreshed each cycle so a newly-published version is picked up without a restart.
         CatalogPage page = await catalog.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
+
+        // A durable schedule (#896) is a run of the built-in scheduler workflow, not a catalogued version, so its
+        // reserved id is claimable only on a runner that opts in (and has the scheduler wired into its resumer) — else a
+        // schedule run pinned to this environment would be claimed by a runner that cannot resume it and would fault it.
+        if (options.ServesSchedules)
+        {
+            return [.. page.Versions.Select(static v => (string)v.WorkflowId), ScheduleHostedWorkflow.ScheduleWorkflowId];
+        }
+
         return [.. page.Versions.Select(static v => (string)v.WorkflowId)];
     }
 }
