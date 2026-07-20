@@ -27,7 +27,9 @@ class ArazzoPurgeDialog extends ArazzoElement {
     if (!this._built) this.render();
     this.$('.error-banner').hidden = true;
     this.$('.result').hidden = true;
-    this.setOlderThanDaysAgo(30);
+    // Reopen with the window last reaped (recomputed from now, so it stays a rolling cutoff), defaulting to 30 days —
+    // routine reaping at a non-default window no longer re-picks the preset every time.
+    this.setOlderThanDaysAgo(this._lastDays ?? 30);
     this.$('#limit').value = '';
     this.$('dialog').showModal();
   }
@@ -37,6 +39,7 @@ class ArazzoPurgeDialog extends ArazzoElement {
   }
 
   setOlderThanDaysAgo(days) {
+    this._lastDays = days; // remembered across opens so the chosen window sticks (P2.6)
     const d = new Date(Date.now() - days * 86400000);
     // datetime-local wants local time without the timezone/seconds.
     const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);

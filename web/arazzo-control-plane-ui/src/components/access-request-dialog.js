@@ -93,8 +93,10 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
         .locked-wf { font-weight: 600; font-size: 14px; }
         .checks { display: grid; gap: 6px; }
         .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
-        .dur { display: flex; gap: 8px; align-items: end; }
+        .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
         .dur input { width: 90px; }
+        .dur-presets { display: flex; gap: 6px; }
+        .dur-presets button { font-size: 12px; padding: 3px 9px; }
         .error-banner { margin: 0 16px 12px; }
       </style>
       <dialog part="dialog">
@@ -113,6 +115,11 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
             </label>
             <div class="dur">
               <label>Duration (hours)<input class="dur-in" type="number" min="1" step="1" placeholder="default"></label>
+              <div class="dur-presets">
+                <button type="button" class="ghost dur-preset" data-hours="24">1 day</button>
+                <button type="button" class="ghost dur-preset" data-hours="168">1 week</button>
+                <button type="button" class="ghost dur-preset" data-hours="720">30 days</button>
+              </div>
               <span class="sub">Absent = the deployment maximum.</span>
             </div>
           </div>
@@ -128,6 +135,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
     this.$('.cancel').addEventListener('click', () => this.close());
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
     this.$('.ok').addEventListener('click', () => this.submit());
+    this.$$('.dur-preset').forEach((b) => b.addEventListener('click', () => { this.$('.dur-in').value = b.dataset.hours; }));
     this.$$('.scope-cb').forEach((cb) => cb.addEventListener('change', () => this.enforceScopeImplications()));
     this.enforceScopeImplications();
   }

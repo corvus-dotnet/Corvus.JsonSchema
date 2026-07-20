@@ -296,8 +296,10 @@ class ArazzoAccessRequests extends ArazzoElement {
         dialog textarea { resize: vertical; min-height: 56px; }
         .checks { display: grid; gap: 6px; }
         .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
-        .dur { display: flex; gap: 8px; align-items: end; }
+        .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
         .dur input { width: 90px; }
+        .dur-presets { display: flex; gap: 6px; }
+        .dur-presets button { font-size: 12px; padding: 3px 9px; }
       </style>
       <div part="panel">
         <div class="tabs" part="tabs" role="tablist">
@@ -547,7 +549,7 @@ class ArazzoAccessRequests extends ArazzoElement {
             <label>Note (optional)
               <textarea class="reason-in" placeholder="Recorded with the decision…"></textarea>
             </label>
-            ${eligible ? `<div class="dur"><label>Eligibility window (hours)<input class="win-in" type="number" min="1" step="1" placeholder="standing"></label><span class="sub">Absent = standing eligibility; each activation is independently capped.</span></div>` : ''}
+            ${eligible ? `<div class="dur"><label>Eligibility window (hours)<input class="win-in" type="number" min="1" step="1" placeholder="standing"></label><div class="dur-presets"><button type="button" class="ghost dur-preset" data-hours="24">1 day</button><button type="button" class="ghost dur-preset" data-hours="168">1 week</button><button type="button" class="ghost dur-preset" data-hours="720">30 days</button></div><span class="sub">Absent = standing eligibility; each activation is independently capped.</span></div>` : ''}
           </div>
           <div class="dfoot">
             <button class="cancel ghost" type="button">Cancel</button>
@@ -558,6 +560,7 @@ class ArazzoAccessRequests extends ArazzoElement {
       const finish = (value) => { dlg.close(); dlg.remove(); resolve(value); };
       dlg.querySelector('.cancel').addEventListener('click', () => finish(null));
       dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(null); });
+      dlg.querySelectorAll('.dur-preset').forEach((b) => b.addEventListener('click', () => { dlg.querySelector('.win-in').value = b.dataset.hours; }));
       dlg.querySelector('.ok').addEventListener('click', () => {
         const reason = dlg.querySelector('.reason-in').value.trim() || undefined;
         const note = {};

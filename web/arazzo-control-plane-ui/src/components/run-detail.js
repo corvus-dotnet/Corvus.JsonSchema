@@ -16,7 +16,12 @@ import './status-badge.js';
 import './resume-dialog.js';
 import './cancel-button.js';
 
+// Truly-terminal statuses, used to gate the Cancel action (a terminal run can't be cancelled). Faulted is NOT here:
+// it is "terminal-but-recoverable", so it stays cancellable (and resumable).
 const TERMINAL = new Set(['Completed', 'Cancelled']);
+// Statuses that never self-progress, so the detail stops polling them — TERMINAL plus Faulted, which waits for an
+// operator to resume it (that repaints explicitly), so polling it forever just burns requests.
+const NO_POLL = new Set(['Completed', 'Cancelled', 'Faulted']);
 
 class ArazzoRunDetail extends ArazzoElement {
   static get observedAttributes() {
@@ -84,7 +89,10 @@ class ArazzoRunDetail extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
-    this.renderBody();
+    // Only paint now if there is nothing to show yet (the skeleton). When a summary is already displayed, skip this
+    // intermediate render: re-rendering the same body just rebuilds the action buttons under the user's pointer,
+    // which — during the summary → authoritative-detail transition — can make a button unclickable under load.
+    if (!this._run) this.renderBody();
     try {
       const run = await client.getRun(runId);
       if (seq !== this._reqSeq) return;
@@ -109,7 +117,7 @@ class ArazzoRunDetail extends ArazzoElement {
     if (ms > 0) {
       this._pollTimer = setInterval(() => {
         if (this.hasOpenModal()) return;
-        if (!this._run || !TERMINAL.has(this._run.status)) this.load();
+        if (!this._run || !NO_POLL.has(this._run.status)) this.load();
       }, ms);
     }
   }
