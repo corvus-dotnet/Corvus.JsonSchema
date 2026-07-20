@@ -133,6 +133,11 @@ public sealed class RunnerRegistrationService(
             writer.WriteStartArray("transports");
             writer.WriteEndArray();
             WriteHostedVersions(writer, page);
+            if (options.ServesSchedules)
+            {
+                writer.WriteBoolean("servesSchedules", true);
+            }
+
             writer.WriteEndObject();
         }
 
@@ -173,6 +178,11 @@ public sealed class RunnerRegistrationService(
             writer.WriteStartArray("transports");
             writer.WriteEndArray();
             WriteHostedVersions(writer, page);
+            if (options.ServesSchedules)
+            {
+                writer.WriteBoolean("servesSchedules", true);
+            }
+
             writer.WriteEndObject();
         }
 

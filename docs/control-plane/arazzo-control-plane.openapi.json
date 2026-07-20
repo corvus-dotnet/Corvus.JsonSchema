@@ -5580,7 +5580,8 @@
           "maxConcurrency": { "type": "integer", "format": "int32", "description": "The maximum number of runs the runner will execute concurrently." },
           "transports": { "type": "array", "items": { "type": "string" }, "description": "The transport identifiers the runner supports." },
           "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." },
-          "hostsDraftRuns": { "type": "boolean", "description": "Whether this runner claims §18 draft runs pinned to its environment (the working-copy debug-run engine seam). Absent means false; meaningful only on runners serving development-class environments." }
+          "hostsDraftRuns": { "type": "boolean", "description": "Whether this runner claims §18 draft runs pinned to its environment (the working-copy debug-run engine seam). Absent means false; meaningful only on runners serving development-class environments." },
+          "servesSchedules": { "type": "boolean", "description": "Whether this runner claims durable schedule runs (#896) pinned to its environment — the built-in scheduler engine seam. A schedule is a durable run of the reserved scheduler workflow, so scheduling in an environment requires at least one runner here that advertises this. Absent means false; the control plane surfaces per-environment scheduling capability from it, and refuses to create a schedule in an environment no runner serves." }
         },
         "required": ["runnerId", "startedAt", "maxConcurrency", "transports", "hostedVersions"]
       },

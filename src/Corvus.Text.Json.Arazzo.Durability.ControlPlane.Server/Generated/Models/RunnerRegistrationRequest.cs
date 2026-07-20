@@ -273,6 +273,27 @@ public readonly partial struct RunnerRegistrationRequest
     }
 
     /// <summary>
+    /// Gets the (optional) <c>servesSchedules</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether this runner claims durable schedule runs (#896) pinned to its environment — the built-in scheduler engine seam. A schedule is a durable run of the reserved scheduler workflow, so scheduling in an environment requires at least one runner here that advertises this. Absent means false; the control plane surfaces per-environment scheduling capability from it, and refuses to create a schedule in an environment no runner serves.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean ServesSchedules
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ServesSchedulesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>startedAt</c> property.
     /// </summary>
     /// <remarks>
@@ -789,6 +810,11 @@ public readonly partial struct RunnerRegistrationRequest
         public const string RunnerId = "runnerId";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ServesSchedules"/>.
+        /// </summary>
+        public const string ServesSchedules = "servesSchedules";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="StartedAt"/>.
         /// </summary>
         public const string StartedAt = "startedAt";
@@ -822,6 +848,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the JSON property name for <see cref="RunnerId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunnerIdUtf8 => "runnerId"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ServesSchedules"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ServesSchedulesUtf8 => "servesSchedules"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="StartedAt"/>.
@@ -865,6 +896,11 @@ public readonly partial struct RunnerRegistrationRequest
         public static ReadOnlySpan<byte> RunnerId => "runnerId"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ServesSchedules"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ServesSchedules => "servesSchedules"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="StartedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> StartedAt => "startedAt"u8;
@@ -905,6 +941,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the pre-baked property name blob for <see cref="RunnerId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunnerId => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x6E, 0x65, 0x72, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ServesSchedules"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ServesSchedules => [0x15, 0x01, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x65, 0x73, 0x53, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6C, 0x65, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="StartedAt"/>.

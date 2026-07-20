@@ -639,6 +639,11 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                     WriteCopied(writer, "hostsDraftRuns"u8, (JsonElement)c.Body.HostsDraftRuns);
                 }
 
+                if (c.Body.ServesSchedules.IsNotUndefined())
+                {
+                    WriteCopied(writer, "servesSchedules"u8, (JsonElement)c.Body.ServesSchedules);
+                }
+
                 writer.WriteEndObject();
             }));
     }

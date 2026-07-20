@@ -200,6 +200,28 @@ public abstract class RunnerRegistryConformance
     }
 
     [TestMethod]
+    public async Task IsSchedulingHosted_is_true_only_for_a_scheduling_runner_serving_the_environment()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-dev", T0, T0, environment: "development", servesSchedules: true), default);
+        await registry.RegisterAsync(Reg("runner-prod", T0, T0, environment: "production"), default);
+
+        // #896: the schedule analogue of IsVersionHostedAsync — environment-scoped, because schedule dispatch is pinned.
+        (await registry.IsSchedulingHostedAsync("development", default)).ShouldBeTrue();
+        (await registry.IsSchedulingHostedAsync("production", default)).ShouldBeFalse();   // serving runner does not serve schedules
+        (await registry.IsSchedulingHostedAsync("staging", default)).ShouldBeFalse();      // no runner serves it
+
+        // The declaration round-trips through the persisted registration.
+        RunnerRegistration dev = (await registry.ListAsync(default)).Single(r => r.RunnerIdValue == "runner-dev");
+        dev.ServesSchedulesValue.ShouldBeTrue();
+        RunnerRegistration prod = (await registry.ListAsync(default)).Single(r => r.RunnerIdValue == "runner-prod");
+        prod.ServesSchedulesValue.ShouldBeFalse();
+
+        // The two capabilities are independent: serving schedules does not imply hosting drafts.
+        dev.HostsDraftRunsValue.ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task IsDraftRunsHosted_is_false_after_the_hosting_runner_is_pruned_or_re_registers_without_it()
     {
         IRunnerRegistry registry = await this.NewRegistryAsync();
@@ -327,7 +349,8 @@ public abstract class RunnerRegistryConformance
         string? address = null,
         string environment = "production",
         (string Key, string Value)[]? reachTags = null,
-        bool hostsDraftRuns = false)
+        bool hostsDraftRuns = false,
+        bool servesSchedules = false)
     {
         string[] runnerTransports = transports ?? ["http"];
         (string BaseId, int Version, string Hash, bool Loaded)[] hostedVersions = hosted ?? [];
@@ -385,6 +408,11 @@ public abstract class RunnerRegistryConformance
             if (hostsDraftRuns)
             {
                 writer.WriteBoolean("hostsDraftRuns", true);
+            }
+
+            if (servesSchedules)
+            {
+                writer.WriteBoolean("servesSchedules", true);
             }
 
             writer.WriteEndObject();

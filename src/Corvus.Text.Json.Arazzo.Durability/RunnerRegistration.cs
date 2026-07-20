@@ -29,6 +29,9 @@ public readonly partial struct RunnerRegistration
     /// <summary>Gets whether this runner claims §18 draft runs for its environment (absent means <see langword="false"/>).</summary>
     public bool HostsDraftRunsValue => ((JsonElement)this.HostsDraftRuns).ValueKind == JsonValueKind.True;
 
+    /// <summary>Gets whether this runner claims durable schedule runs (#896) for its environment (absent means <see langword="false"/>).</summary>
+    public bool ServesSchedulesValue => ((JsonElement)this.ServesSchedules).ValueKind == JsonValueKind.True;
+
     /// <summary>Determines whether this runner hosts the given catalog version with it loaded and ready to run.</summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>
     /// <param name="versionNumber">The version number.</param>

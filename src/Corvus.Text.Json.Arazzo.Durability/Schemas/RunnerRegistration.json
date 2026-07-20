@@ -50,6 +50,10 @@
     "hostsDraftRuns": {
       "type": "boolean",
       "description": "Whether this runner claims §18 draft runs (the reserved $draft workflow id) pinned to its environment — the working-copy debug-run engine seam (workflow-designer design §18). Absent means false; meaningful only on runners serving development-class environments."
+    },
+    "servesSchedules": {
+      "type": "boolean",
+      "description": "Whether this runner claims durable schedule runs (the reserved $schedule workflow id, #896) pinned to its environment — the built-in scheduler engine seam. Absent means false; the control plane surfaces per-environment scheduling capability from it and refuses to create a schedule in an environment no runner serves."
     }
   },
   "additionalProperties": false,

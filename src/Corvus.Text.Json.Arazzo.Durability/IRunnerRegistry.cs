@@ -153,6 +153,37 @@ public interface IRunnerRegistry
     }
 
     /// <summary>
+    /// Determines whether any registered runner serving <paramref name="environment"/> declares that it serves durable
+    /// schedule runs (<see cref="RunnerRegistration.ServesSchedulesValue"/>, #896) — the schedule analogue of
+    /// <see cref="IsDraftRunsHostedAsync"/>, and the predicate behind the control plane's fail-closed
+    /// <c>no-scheduler</c> gate on creating a schedule. Environment-scoped because schedule dispatch is
+    /// environment-pinned: a scheduling runner in another environment cannot claim the run.
+    /// </summary>
+    /// <param name="environment">The environment the schedule targets.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns><see langword="true"/> if a registered runner serving the environment serves schedules.</returns>
+    /// <remarks>
+    /// The default scans <see cref="ListAsync(CancellationToken)"/> — the documented full-read scan seam, bounded by the
+    /// number of registered runner processes. A backend may override it with a native indexed query if the registry grows
+    /// past that.
+    /// </remarks>
+    async ValueTask<bool> IsSchedulingHostedAsync(string environment, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+
+        IReadOnlyList<RunnerRegistration> runners = await this.ListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (RunnerRegistration runner in runners)
+        {
+            if (runner.ServesSchedulesValue && ((JsonElement)runner.Environment).EqualsString(environment))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Removes every runner whose last heartbeat is strictly older than <paramref name="deadBefore"/>.
     /// </summary>
     /// <param name="deadBefore">Runners last seen before this instant are considered dead and pruned.</param>
