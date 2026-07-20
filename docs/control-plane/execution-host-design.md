@@ -449,8 +449,10 @@ executes (§7):
 
 - **HTTP** is owned by the **control plane** (it already fronts catalog + runs): it validates inputs, checks the
   registry that a live runner hosts the version, and creates the `Pending` run.
-- **Message / schedule** are owned by **runners** (they hold the transports + scheduler): they create the
-  `Pending` run locally and typically claim it immediately.
+- **Message / schedule** are owned by **runners** (they host the trigger machinery): a message trigger is a
+  dispatcher workflow (§6.5 / #880) and a schedule is a durable scheduler run (§6.4 / #896). Rather than creating
+  the run locally, each fires the target through the **same governed control-plane start endpoint** HTTP uses, so
+  all three triggers converge on one admission-controlled, reach-checked start path.
 
 ### 6.2 HTTP trigger (ship first — recommended default)
 
@@ -476,11 +478,30 @@ inbound message → `CreateNew` with the message payload mapped to inputs → di
 workflows; needs the broker binding (§8) and idempotency keying (correlationId) to avoid duplicate runs. The
 **channel + payload→inputs mapping live in the runner's trigger binding (host config)** — decision §12.
 
-### 6.4 Schedule trigger (third)
+### 6.4 Schedule trigger (third) — durable cron (#896)
 
-Cron-like initiation (e.g. `nightly-reconcile`). The host's scheduler fires → `CreateNew` with templated inputs
-(e.g. `{ "date": "<today>" }`). Reuses the same start path. The **schedule + input template live in the
-runner's trigger binding (host config)** — decision §12.
+Cron-like initiation (e.g. `nightly-reconcile`). A **schedule is a durable _run_** of a built-in scheduler
+workflow (`ScheduleHostedWorkflow`, the reserved `$schedule` workflow id), pinned to an environment. Its inputs
+(`WorkflowScheduleInput`) carry the cadence: a cron expression, a time zone, the target versioned workflow id,
+and an input template. On each entry the run evaluates the cadence, fires every occurrence now due, advances and
+checkpoints a watermark, then suspends on a durable timer until the next occurrence. Because it is an ordinary
+durable run it rides the existing wait index, CAS/lease dispatch, and environment pinning, so a million schedules
+is a million suspended runs at the engine's existing scale, with no new per-backend store. A runner that was down
+while an occurrence came due fires it late on resume rather than missing it.
+
+Each occurrence fires the target through the **governed control-plane run endpoint**, not a direct local
+`CreateNew`. The runner authenticates as its machine principal and carries an `Idempotency-Key` (`scheduleId`
+plus occurrence), so a re-fire after a runner recycle starts the target at most once (`StartIdempotentAsync`
+derives a deterministic run id from `(workflowId, key)`). A scheduled start is therefore subject to the same
+admission control, environment pinning, availability (§7.8), reach (§14.2), and audit as an operator start. In
+particular the scheduling principal needs read reach to the target version AND to the environment it fires into
+(§5.5), exactly as a human trigger does, so a scheduling runner is granted that reach as a deliberate, bounded
+governance grant (read reach to what it schedules, plus its environment). It does not inherit blanket authority.
+
+A runner opts in to serving schedules with `servesSchedules`, advertised in its registration, so the control
+plane can report which environments have a scheduling-capable runner and refuse to create a schedule in one that
+none serves. The cadence lives in the schedule run's own inputs, so a schedule is **data**, created and managed
+through the API like any run, not a package field or an out-of-band host-config binding.
 
 ### 6.5 Where triggers are declared — decision
 
@@ -498,8 +519,8 @@ message/schedule triggers are **host-configured**, keyed by `(base, version)`.
 **Option B (`x-arazzo-triggers`) is declined.** It has no consumer and earns its keep nowhere: HTTP
 initiation is the always-on `.../runs` endpoint (no declaration read); message/schedule *hosting* is the
 dispatcher-workflow pattern (§6 / #880) — a durable `receive` → cross-workflow `goto` → loop expressed in
-**standard Arazzo**, not a manifest field; and durable cron (#896) binds from **host config**
-(`ScheduleTriggerBinding`), not the package. Beyond having nothing that reads it, the extension is a
+**standard Arazzo**, not a manifest field; and durable cron (#896) binds from the **schedule run's own inputs**
+(`WorkflowScheduleInput`, §6.4), not the package. Beyond having nothing that reads it, the extension is a
 proprietary `x-` addition that makes the Arazzo document non-portable (other tools ignore it), and it
 conflates a **deployment concern** (what initiates a workflow in a given environment) with the workflow's
 **definition** — the very separation host config preserves, letting one catalogued version bind to different
@@ -524,7 +545,9 @@ serves both dispatch and resume.
 - **The runner's dispatcher** mirrors `WorkflowWorker`: poll `QueryClaimableAsync` → take a **per-run lease**
   (CAS; skip if held and unexpired) → resolve `IHostedWorkflow` → build `IApiTransport`/`IMessageTransport`
   (§8) → `RunAsync(..., run)` → checkpoint/suspend/fault. For **runner-owned triggers** (message/schedule) the
-  same runner usually claims its own `Pending` run immediately (no poll latency).
+  runner hosts the trigger machinery (the dispatcher workflow, or the durable `$schedule` run) and fires the
+  target through the governed start endpoint, so the target run is then dispatched like any other (the doorbell
+  below can cut its poll latency).
 - **Optional doorbell.** To cut poll latency, a lightweight "work available for version V" notification (e.g.
   Postgres `LISTEN/NOTIFY`, or the message transport) can *wake* runners to query sooner. It is only a hint —
   the store stays authoritative, so a missed notification costs latency, never correctness.
