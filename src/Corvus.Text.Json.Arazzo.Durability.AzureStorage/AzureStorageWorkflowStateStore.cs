@@ -441,7 +441,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         else
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
             filter += TableClient.CreateQueryFilter($" and WorkflowId ne {DraftRuns.RunWorkflowId}");
+            filter += TableClient.CreateQueryFilter($" and WorkflowId ne {ScheduleHostedWorkflow.ScheduleWorkflowId}");
         }
 
         if (query.CorrelationId is { } cid)

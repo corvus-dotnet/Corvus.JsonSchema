@@ -438,7 +438,10 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-        if (query.WorkflowId is null && string.Equals(workflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+        // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+        if (query.WorkflowId is null
+            && (string.Equals(workflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal)
+                || string.Equals(workflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal)))
         {
             return false;
         }

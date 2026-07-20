@@ -257,11 +257,13 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor for paging, CountAsync scans with just
     // this. Both share the one predicate so the reach filter cannot drift between list and count.
     // §18: draft runs never surface on an unfiltered visibility query — a caller must name the reserved $draft
-    // workflow id explicitly (the debug-run surface does; the runs listing never does).
+    // workflow id explicitly (the debug-run surface does; the runs listing never does). #896: schedule runs (the
+    // reserved $schedule kind) are hidden the same way — internal scheduler machinery, not operator-facing runs.
     private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
         => !((query.Status is { } status && index.Status != status)
             || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
             || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            || (query.WorkflowId is null && string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
             || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
             || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
             || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)

@@ -461,7 +461,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft
         // workflow id explicitly (the debug-run surface does; the runs listing never does).
-        sql.Append(" AND (@workflow_id IS NOT NULL OR workflow_id <> @draft_id)");
+        sql.Append(" AND (@workflow_id IS NOT NULL OR (workflow_id <> @draft_id AND workflow_id <> @schedule_id))");
         sql.Append(" AND (@created_after IS NULL OR created_at >= @created_after)");
         sql.Append(" AND (@created_before IS NULL OR created_at < @created_before)");
         sql.Append(" AND (@updated_after IS NULL OR updated_at >= @updated_after)");
@@ -471,6 +471,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         command.Parameters.Add(NullableText("status", query.Status?.ToString()));
         command.Parameters.Add(NullableText("workflow_id", query.WorkflowId));
         command.Parameters.AddWithValue("draft_id", DraftRuns.RunWorkflowId);
+        command.Parameters.AddWithValue("schedule_id", ScheduleHostedWorkflow.ScheduleWorkflowId);
         command.Parameters.Add(NullableBigint("created_after", query.CreatedAfter?.ToUnixTimeMilliseconds()));
         command.Parameters.Add(NullableBigint("created_before", query.CreatedBefore?.ToUnixTimeMilliseconds()));
         command.Parameters.Add(NullableBigint("updated_after", query.UpdatedAfter?.ToUnixTimeMilliseconds()));

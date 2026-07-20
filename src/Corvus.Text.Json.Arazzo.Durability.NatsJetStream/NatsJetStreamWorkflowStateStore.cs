@@ -361,7 +361,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
 
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
             && (query.WorkflowId is not null || !string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            && (query.WorkflowId is not null || !string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
             && (query.CreatedAfter is not { } createdAfter || index.CreatedAt >= createdAfter)
             && (query.CreatedBefore is not { } createdBefore || index.CreatedAt < createdBefore)
             && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)

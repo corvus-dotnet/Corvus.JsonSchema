@@ -473,7 +473,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         else
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-            filter = b.And(filter, b.Ne("workflowId", DraftRuns.RunWorkflowId));
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+            filter = b.And(filter, b.Ne("workflowId", DraftRuns.RunWorkflowId), b.Ne("workflowId", ScheduleHostedWorkflow.ScheduleWorkflowId));
         }
 
         if (query.CreatedAfter is { } createdAfter)

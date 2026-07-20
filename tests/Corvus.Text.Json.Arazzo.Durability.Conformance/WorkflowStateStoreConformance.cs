@@ -355,6 +355,28 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_and_count_exclude_schedule_runs_unless_the_reserved_id_is_asked_for()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("schedule-1", Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // #896: a durable schedule is a run of the reserved $schedule kind — internal scheduler machinery, not an
+        // operator-facing run — so an unfiltered visibility query never surfaces it, in the listing or the count.
+        WorkflowRunPage unfiltered = await index.QueryAsync(new WorkflowQuery(Limit: 10), default);
+        unfiltered.Runs.Select(r => r.Id.Value).ShouldBe(["run-1"]);
+
+        (int count, _) = await index.CountAsync(new WorkflowQuery(Limit: 10), 100, default);
+        count.ShouldBe(1);
+
+        // An operator managing schedules can still name the reserved id explicitly to see them.
+        WorkflowRunPage schedules = await index.QueryAsync(new WorkflowQuery(WorkflowId: ScheduleHostedWorkflow.ScheduleWorkflowId), default);
+        schedules.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("schedule-1");
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

@@ -467,7 +467,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft
         // workflow id explicitly (the debug-run surface does; the runs listing never does).
-        sql.Append(" AND (@workflow_id IS NOT NULL OR workflow_id <> @draft_id)");
+        sql.Append(" AND (@workflow_id IS NOT NULL OR (workflow_id <> @draft_id AND workflow_id <> @schedule_id))");
         sql.Append(" AND (@created_after IS NULL OR created_at >= @created_after)");
         sql.Append(" AND (@created_before IS NULL OR created_at < @created_before)");
         sql.Append(" AND (@updated_after IS NULL OR updated_at >= @updated_after)");
@@ -477,6 +477,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
         command.Parameters.AddWithValue("@draft_id", DraftRuns.RunWorkflowId);
+        command.Parameters.AddWithValue("@schedule_id", ScheduleHostedWorkflow.ScheduleWorkflowId);
         command.Parameters.AddWithValue("@created_after", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@created_before", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@updated_after", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);

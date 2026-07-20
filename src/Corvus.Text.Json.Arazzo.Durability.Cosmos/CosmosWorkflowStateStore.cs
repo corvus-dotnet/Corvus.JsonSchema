@@ -506,8 +506,11 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         else
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
             conditions.Add("c.workflowId <> @draftId");
             parameters.Add(("@draftId", DraftRuns.RunWorkflowId));
+            conditions.Add("c.workflowId <> @scheduleId");
+            parameters.Add(("@scheduleId", ScheduleHostedWorkflow.ScheduleWorkflowId));
         }
 
         if (query.CreatedAfter is { } createdAfter)
