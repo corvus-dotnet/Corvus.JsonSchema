@@ -840,6 +840,45 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task CreateSchedule_without_targetInputs_starts_the_target_with_no_inputs()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
+
+        // No targetInputs: the target is started with no inputs (§ WorkflowScheduleInput). This exercises the generated
+        // Create's omit-the-optional path — an undefined JsonElement source is now omitted, not a hard assertion failure.
+        const string createBody = """{"scheduleId":"nightly","environment":"development","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        HttpResponseMessage created = await client.PostAsync("/schedules", new StringContent(createBody, Encoding.UTF8, "application/json"));
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("scheduleId").GetString().ShouldBe("nightly");
+            doc.RootElement.GetProperty("targetWorkflowId").GetString().ShouldBe("flow-v1");
+        }
+
+        // It reads back by its scheduleId, and run-now still fires the target even with no inputs.
+        (await client.GetAsync("/schedules/nightly")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty))).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_inherits_the_version_security_tags()
     {
         var clock = new MutableClock(T0);

@@ -1011,6 +1011,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                     break;
@@ -1078,6 +1082,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                     break;
@@ -1155,6 +1163,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
@@ -1567,6 +1579,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
@@ -1594,6 +1610,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                     break;
@@ -1631,6 +1651,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                     break;
