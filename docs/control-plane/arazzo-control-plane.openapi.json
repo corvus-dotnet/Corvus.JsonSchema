@@ -5737,7 +5737,8 @@
           "lastSeenAt": { "type": "string", "format": "date-time", "description": "The instant of the runner's most recent heartbeat." },
           "maxConcurrency": { "type": "integer", "format": "int32", "description": "The maximum number of runs the runner will execute concurrently." },
           "transports": { "type": "array", "items": { "type": "string" }, "description": "The transport identifiers the runner supports." },
-          "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." }
+          "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." },
+          "servesSchedules": { "type": "boolean", "description": "Whether this runner claims durable schedule runs (#896) pinned to its environment — the built-in scheduler engine seam. Scheduling in an environment requires at least one runner here that advertises this; the control plane surfaces per-environment scheduling capability from it. Absent means false." }
         },
         "required": ["runnerId", "environment", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"]
       },
