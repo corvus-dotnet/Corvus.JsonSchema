@@ -88,6 +88,19 @@ public interface ISecuredWorkflowManagement
     /// <returns>The journal body, or <see langword="null"/> when absent or outside reach.</returns>
     ValueTask<ReadOnlyMemory<byte>?> GetStepJournalAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Loads a run's full authoritative checkpoint state (its inputs and recorded step outputs, plus the indexed
+    /// projection), reach-gated exactly like <see cref="GetAsync"/>: a missing run and a run outside the caller's read
+    /// reach both read back as <see langword="null"/>. The caller owns the returned state and must dispose it (it holds
+    /// pooled buffers). This is the seam the schedules surface (#896) projects a schedule from its scheduler run.
+    /// </summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="context">The caller's resolved access context (§14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The disposable checkpoint state, or <see langword="null"/> when absent or outside reach.</returns>
+    ValueTask<WorkflowCheckpointState?> LoadStateAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
+        => throw new NotSupportedException("This management client does not support loading run state.");
+
     /// <summary>Resumes a faulted run, re-executing it from its last checkpoint per the chosen <see cref="ResumeMode"/>.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>

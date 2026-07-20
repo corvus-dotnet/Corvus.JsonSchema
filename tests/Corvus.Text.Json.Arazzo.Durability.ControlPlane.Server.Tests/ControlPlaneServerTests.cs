@@ -735,6 +735,111 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task Schedules_can_be_created_listed_read_run_now_and_deleted()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        // A runner in development that hosts flow-v1 AND advertises scheduling.
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
+
+        const string createBody = """{"scheduleId":"nightly","environment":"development","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *","targetInputs":{"petId":5}}""";
+
+        // Create → 201 with the projected schedule (its versioned target, cadence, and a computed next occurrence).
+        HttpResponseMessage created = await client.PostAsync("/schedules", new StringContent(createBody, Encoding.UTF8, "application/json"));
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("scheduleId").GetString().ShouldBe("nightly");
+            doc.RootElement.GetProperty("targetWorkflowId").GetString().ShouldBe("flow-v1");
+            doc.RootElement.GetProperty("cron").GetString().ShouldBe("0 9 * * *");
+            doc.RootElement.GetProperty("environment").GetString().ShouldBe("development");
+            doc.RootElement.TryGetProperty("nextOccurrence", out _).ShouldBeTrue();
+        }
+
+        // Re-creating the same scheduleId is idempotent (201, one schedule).
+        (await client.PostAsync("/schedules", new StringContent(createBody, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The schedules surface lists it; the ordinary runs listing does NOT (the $schedule kind is hidden).
+        using (Stj.JsonDocument list = await ReadJsonAsync(await client.GetAsync("/schedules")))
+        {
+            list.RootElement.GetProperty("schedules").EnumerateArray().Select(s => s.GetProperty("scheduleId").GetString()).ShouldBe(["nightly"]);
+        }
+
+        using (Stj.JsonDocument runs = await ReadJsonAsync(await client.GetAsync("/runs")))
+        {
+            runs.RootElement.GetProperty("runs").EnumerateArray().Any(r => r.GetProperty("workflowId").GetString() == "$schedule").ShouldBeFalse();
+        }
+
+        // Get returns it.
+        (await client.GetAsync("/schedules/nightly")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Run-now starts the target immediately (a flow-v1 run), without affecting the schedule.
+        HttpResponseMessage ranNow = await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
+        ranNow.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(ranNow))
+        {
+            doc.RootElement.GetProperty("workflowId").GetString().ShouldBe("flow-v1");
+        }
+
+        (await management.CountAsync(new WorkflowQuery(WorkflowId: "flow-v1"), AccessContext.System, 100, default)).Count.ShouldBe(1);
+
+        // Delete cancels the schedule; it then reads back as absent.
+        (await client.DeleteAsync("/schedules/nightly")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await client.GetAsync("/schedules/nightly")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task CreateSchedule_is_409_when_no_runner_serves_schedules_in_the_environment()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        // A runner that hosts the version but does NOT advertise scheduling — creating a schedule there is a 409 with
+        // actionable guidance (the point-1 diagnostic).
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: false), default);
+
+        HttpResponseMessage conflict = await client.PostAsync(
+            "/schedules",
+            new StringContent("""{"scheduleId":"nightly","environment":"development","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""", Encoding.UTF8, "application/json"));
+        conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(conflict))
+        {
+            doc.RootElement.GetProperty("detail").GetString()!.ShouldContain("servesSchedules");
+        }
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_inherits_the_version_security_tags()
     {
         var clock = new MutableClock(T0);
@@ -962,7 +1067,7 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
-    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production")
+    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production", bool servesSchedules = false)
     {
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
         using (var w = new Stj.Utf8JsonWriter(buffer))
@@ -984,6 +1089,11 @@ public sealed class ControlPlaneServerTests
             w.WriteBoolean("loaded", true);
             w.WriteEndObject();
             w.WriteEndArray();
+            if (servesSchedules)
+            {
+                w.WriteBoolean("servesSchedules", true);
+            }
+
             w.WriteEndObject();
         }
 

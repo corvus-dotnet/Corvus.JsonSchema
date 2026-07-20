@@ -239,6 +239,8 @@ public static class ControlPlaneEndpointExtensions
             gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
             workspaceStore: wcStore, sources: srcStore);
 
+        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, auditLogger: auditLogger);
+
         return endpoints.MapApiEndpoints(
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
@@ -252,6 +254,7 @@ public static class ControlPlaneEndpointExtensions
             sourcesHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,
+            schedulesHandler,
             administratorsHandler,
             accessRequestsHandler,
             availabilityRequestsHandler,

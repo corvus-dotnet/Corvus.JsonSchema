@@ -85,6 +85,21 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         return id;
     }
 
+    /// <summary>
+    /// Resolves the deterministic run id that <see cref="StartIdempotentAsync"/> would create for a
+    /// <paramref name="workflowId"/> and <paramref name="idempotencyKey"/>, so a caller that keys an idempotent start
+    /// (for example a schedule keyed by its <c>scheduleId</c>, #896) can address the created run later without a lookup.
+    /// </summary>
+    /// <param name="workflowId">The workflow id the run was started for.</param>
+    /// <param name="idempotencyKey">The idempotency key the run was started with.</param>
+    /// <returns>The deterministic run id.</returns>
+    public static WorkflowRunId IdempotentRunId(string workflowId, string idempotencyKey)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
+        return new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
+    }
+
     private static string DeterministicRunId(string workflowId, string idempotencyKey)
     {
         // Upper bound (GetMaxByteCount is a multiply, not a scan) to size the scratch — the exact filled length comes from
@@ -202,6 +217,30 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             writer.WriteEndArray();
             writer.WriteEndObject();
         });
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowCheckpointState?> LoadStateAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is not { } cp)
+        {
+            return null;
+        }
+
+        WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+
+        // A run outside the caller's read reach reads back as absent (non-disclosing, §14.2) — the same gate as
+        // GetAsync. Dispose the deserialized state before returning null so its pooled buffers are not leaked.
+        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
+        {
+            state.Dispose();
+            return null;
+        }
+
+        return state;
     }
 
     // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the

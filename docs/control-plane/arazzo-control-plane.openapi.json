@@ -3435,6 +3435,127 @@
         }
       }
     },
+    "/schedules": {
+      "get": {
+        "operationId": "listSchedules",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["schedules"],
+        "summary": "List schedules",
+        "description": "Returns a page of durable schedules (#896) the caller's reach admits (§14.2). A schedule is a durable run of the built-in scheduler workflow that fires a target version on a cron cadence; this projects each such run (its cadence, target, next occurrence, and last fire) without exposing it as a raw run. Optionally filtered to one `environment`. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
+        "parameters": [
+          { "name": "environment", "in": "query", "required": false, "description": "Restrict to schedules pinned to this deployment environment.", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schedules.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScheduleList" } } }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSchedule",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["schedules"],
+        "summary": "Create a schedule",
+        "description": "Creates a durable schedule (#896): a run of the built-in scheduler workflow, pinned to an environment, that fires the target version on the given cron cadence through the governed run endpoint. The `scheduleId` is the schedule's stable, globally-unique identity; re-creating the same `scheduleId` is idempotent and returns the existing schedule. Validates that the target version exists and is available in the environment (§7.8), that the caller has reach to it, and that at least one runner serving the environment advertises scheduling (`servesSchedules`); if none does, returns `409` with guidance to enable scheduling on a runner there. A scheduled start is reach- and audit-gated exactly as an operator start is. 404 if the target version does not exist or is outside the caller's reach; 409 if it is not available in the environment, not runnable, or no scheduling runner serves the environment; 422 if the target inputs fail the version's baked inputs schema.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScheduleCreate" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created (or already-existing) schedule.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Schedule" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": {
+            "description": "The target inputs failed validation against the version's baked inputs schema.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
+          }
+        }
+      }
+    },
+    "/schedules/{scheduleId}": {
+      "get": {
+        "operationId": "getSchedule",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["schedules"],
+        "summary": "Get a schedule",
+        "description": "Returns one schedule (its cadence, target, next occurrence, and last fire) if it is in the caller's reach.",
+        "parameters": [
+          { "$ref": "#/components/parameters/ScheduleIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schedule.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Schedule" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSchedule",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["schedules"],
+        "summary": "Delete a schedule",
+        "description": "Cancels the schedule, stopping further occurrences. The underlying scheduler run is cancelled; runs it already started are unaffected. The schedule must be in the caller's write reach (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/ScheduleIdPath" }
+        ],
+        "responses": {
+          "204": { "description": "The schedule was cancelled." },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/schedules/{scheduleId}/run-now": {
+      "post": {
+        "operationId": "runScheduleNow",
+        "security": [
+          { "oauth2": ["runs:write"] },
+          { "openIdConnect": ["runs:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["schedules"],
+        "summary": "Run a schedule's target now",
+        "description": "Starts the schedule's target version immediately with the schedule's input template, bypassing the cadence, through the same governed run endpoint an occurrence uses. Does not affect the schedule's cadence or watermark. Returns 202 with the started run id. 404 if the schedule does not exist or is outside the caller's reach; 409 if the target is not available in the environment, not runnable, or no runner serves it; 422 if the inputs fail validation.",
+        "parameters": [
+          { "$ref": "#/components/parameters/ScheduleIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "The target run was accepted and is pending execution.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkflowRunAccepted" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": {
+            "description": "The inputs failed validation against the version's baked inputs schema.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
+          }
+        }
+      }
+    },
     "/administrators/{baseWorkflowId}": {
       "get": {
         "operationId": "listAdministrators",
@@ -4598,6 +4719,13 @@
         "description": "The run id.",
         "schema": { "type": "string" }
       },
+      "ScheduleIdPath": {
+        "name": "scheduleId",
+        "in": "path",
+        "required": true,
+        "description": "The schedule's stable, globally-unique identity.",
+        "schema": { "type": "string" }
+      },
       "CredentialSourceNamePath": {
         "name": "sourceName",
         "in": "path",
@@ -5370,6 +5498,49 @@
           "status": { "type": "string", "description": "The run's initial status (always 'Pending')." }
         },
         "required": ["runId", "workflowId", "status"]
+      },
+      "ScheduleCreate": {
+        "type": "object",
+        "description": "A request to create a durable schedule (#896): the target version, the environment to fire it in, and the cron cadence.",
+        "properties": {
+          "scheduleId": { "type": "string", "description": "The schedule's stable, globally-unique identity. Re-creating the same id is idempotent." },
+          "environment": { "type": "string", "description": "The deployment environment the schedule and its fired runs are pinned to; a runner serving it must advertise scheduling." },
+          "targetBaseWorkflowId": { "type": "string", "description": "The base workflow id of the version to fire." },
+          "targetVersionNumber": { "type": "integer", "format": "int32", "description": "The version number of the workflow to fire." },
+          "cron": { "type": "string", "description": "The cron expression driving occurrences (5-field, or 6-field when includeSeconds is true)." },
+          "timeZone": { "type": "string", "default": "UTC", "description": "The IANA time zone id the cadence is expressed in." },
+          "includeSeconds": { "type": "boolean", "default": false, "description": "Whether the cron expression carries a leading seconds field." },
+          "targetInputs": { "type": "object", "description": "The inputs passed to each fired run of the target (validated against the version's baked inputs schema)." }
+        },
+        "required": ["scheduleId", "environment", "targetBaseWorkflowId", "targetVersionNumber", "cron"]
+      },
+      "Schedule": {
+        "type": "object",
+        "description": "A durable schedule (#896): the projection of a scheduler run showing its cadence, target, and firing state.",
+        "properties": {
+          "scheduleId": { "type": "string", "description": "The schedule's stable, globally-unique identity." },
+          "environment": { "type": "string", "description": "The deployment environment the schedule is pinned to." },
+          "targetBaseWorkflowId": { "type": "string", "description": "The base workflow id of the version fired." },
+          "targetVersionNumber": { "type": "integer", "format": "int32", "description": "The version number fired." },
+          "targetWorkflowId": { "type": "string", "description": "The versioned workflow id fired ('{base}-v{n}')." },
+          "cron": { "type": "string", "description": "The cron expression driving occurrences." },
+          "timeZone": { "type": "string", "description": "The IANA time zone id the cadence is expressed in." },
+          "includeSeconds": { "type": "boolean", "description": "Whether the cron expression carries a leading seconds field." },
+          "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
+          "nextOccurrence": { "type": "string", "format": "date-time", "description": "The next instant the schedule will fire, if any (absent for a bounded cron that has no further occurrences)." },
+          "lastFiredOccurrence": { "type": "string", "format": "date-time", "description": "The most recent occurrence fired (the watermark), if the schedule has fired at least once." },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the schedule was created." }
+        },
+        "required": ["scheduleId", "environment", "targetBaseWorkflowId", "targetVersionNumber", "targetWorkflowId", "cron", "timeZone", "includeSeconds", "status", "createdAt"]
+      },
+      "ScheduleList": {
+        "type": "object",
+        "description": "A page of schedules.",
+        "properties": {
+          "schedules": { "type": "array", "items": { "$ref": "#/components/schemas/Schedule" }, "description": "The schedules in this page." },
+          "nextPageToken": { "type": "string", "description": "An opaque continuation token for the next page, absent on the last page." }
+        },
+        "required": ["schedules"]
       },
       "PageLimit": {
         "type": "integer",
