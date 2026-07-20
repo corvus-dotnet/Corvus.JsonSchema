@@ -89,6 +89,46 @@ public sealed class ScheduleHostedWorkflowTests
         (await CountPending(management)).ShouldBe(1);
     }
 
+    [TestMethod]
+    public async Task A_schedule_run_resumed_by_the_worker_fires_the_target_and_re_suspends()
+    {
+        // End to end through the real store, wait index and worker: a schedule is an ordinary durable run, so the
+        // same machinery that resumes any due suspended run drives the schedule's occurrences.
+        var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
+        var store = new InMemoryWorkflowStateStore(time);
+        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var scheduler = new ScheduleHostedWorkflow(Start(management), time);
+
+        WorkflowResumer resume = async (r, ct) =>
+        {
+            using JsonWorkspace ws = JsonWorkspace.CreateUnrented();
+            return await scheduler.RunAsync(NoTransports, null, ws, r.Inputs, r, ct);
+        };
+
+        // Register the schedule as a durable "$schedule" run and run it fresh: nothing is due yet, so it suspends
+        // until the next 09:00. Its due timer + watermark are now durable in the store.
+        using ParsedJsonDocument<JsonElement> inputs = Inputs("s1", "0 9 * * *", "adopt-v1");
+        using (JsonWorkspace ws = JsonWorkspace.CreateUnrented())
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "sched-1", ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time))
+        {
+            (await scheduler.RunAsync(NoTransports, null, ws, run.Inputs, run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
+        }
+
+        (await CountPending(management)).ShouldBe(0);
+
+        // The 09:00 occurrence comes due. The worker's wait index surfaces the schedule run, leases it, and resumes
+        // it through the resumer, which fires the target run and re-suspends until tomorrow's 09:00.
+        time.Advance(TimeSpan.FromHours(1));
+        var worker = new WorkflowWorker(store, "runner-1", time);
+        (await worker.ResumeDueTimersAsync(resume, default)).ShouldBe(1);
+
+        (await CountPending(management)).ShouldBe(1);
+
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, "sched-1", time, default);
+        reloaded.ShouldNotBeNull();
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Suspended);
+    }
+
     private static WorkflowStartHandler Start(SecuredWorkflowManagement management)
         => (request, cancellationToken) => management.StartIdempotentAsync(
             request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);

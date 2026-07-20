@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Immutable;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.AsyncApi;
@@ -37,12 +38,16 @@ public sealed class HostedWorkflowResumer
     private readonly IWorkflowCatalogStore catalog;
     private readonly WorkflowExecutorLoader loader;
     private readonly WorkflowTransportBinder transportBinder;
+    private readonly ScheduleHostedWorkflow? scheduleWorkflow;
 
     /// <summary>Initializes a new instance of the <see cref="HostedWorkflowResumer"/> class.</summary>
     /// <param name="catalog">The catalog the executor assembly + manifest + content hash are fetched from.</param>
     /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
     /// <param name="transportBinder">Binds a workflow's descriptor to the transports a run executes through.</param>
-    public HostedWorkflowResumer(IWorkflowCatalogStore catalog, WorkflowExecutorLoader loader, WorkflowTransportBinder transportBinder)
+    /// <param name="scheduleWorkflow">The built-in scheduler workflow (#896) that <c>$schedule</c> runs are routed to,
+    /// or <see langword="null"/> on a host that does not serve schedules. A schedule is a durable run of it, not a
+    /// catalogued executor, so it is dispatched and resumed by the same worker but bypasses the catalog + loader.</param>
+    public HostedWorkflowResumer(IWorkflowCatalogStore catalog, WorkflowExecutorLoader loader, WorkflowTransportBinder transportBinder, ScheduleHostedWorkflow? scheduleWorkflow = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(loader);
@@ -50,6 +55,7 @@ public sealed class HostedWorkflowResumer
         this.catalog = catalog;
         this.loader = loader;
         this.transportBinder = transportBinder;
+        this.scheduleWorkflow = scheduleWorkflow;
     }
 
     /// <summary>Gets this resumer as the <see cref="WorkflowResumer"/> delegate the worker/management client consume.</summary>
@@ -66,6 +72,15 @@ public sealed class HostedWorkflowResumer
     public async ValueTask<WorkflowRunResultKind> ResumeAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+
+        // A schedule is a durable run of the built-in scheduler workflow (#896), not a catalogued executor: it needs
+        // no transports and is not a versioned id, so route it straight to the scheduler rather than parsing its id
+        // and loading an assembly. It is still dispatched and resumed by the same worker (its due timer + lease).
+        if (this.scheduleWorkflow is { } scheduler && string.Equals(run.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
+        {
+            using JsonWorkspace scheduleWorkspace = JsonWorkspace.CreateUnrented();
+            return await scheduler.RunAsync(ImmutableDictionary<string, IApiTransport>.Empty, null, scheduleWorkspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
+        }
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
         WorkflowTransports transports = this.transportBinder(hosted.Descriptor, run.SecurityTags);
