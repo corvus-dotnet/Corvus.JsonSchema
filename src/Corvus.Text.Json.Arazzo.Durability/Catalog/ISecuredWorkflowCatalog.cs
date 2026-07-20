@@ -142,6 +142,19 @@ public interface ISecuredWorkflowCatalog
     ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken);
 
     /// <summary>
+    /// One keyset page of the base workflow ids the given caller identity administers (design §6.1, #883) — the paged
+    /// form of <see cref="ListAdministeredWorkflowsAsync(SecurityTagSet, CancellationToken)"/> for the access-overview's
+    /// administered sub-resource. The store's reverse index is already keyset-paged by base workflow id; this reaches it
+    /// with the caller's subset digests. An empty page when the caller administers nothing (or no store is configured).
+    /// </summary>
+    /// <param name="callerIdentity">The caller's resolved <c>sys:</c> identity (its subset digests are the reverse-index keys).</param>
+    /// <param name="limit">The maximum ids in this page; a non-positive value uses the store's default page size.</param>
+    /// <param name="pageToken">The continuation token (its JSON value) from a previous page, or undefined for the first page.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One page of administered base workflow ids (a disposable the caller must dispose), ordered by base workflow id.</returns>
+    ValueTask<WorkflowAdministeredPage> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, int limit, JsonString pageToken, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Adds a resolved administrator identity to a base workflow id's administrator set (design §15), authorized by a
     /// current administrator. Idempotent: if its identity is already an administrator the set is unchanged. The first change
     /// materializes the explicit administrator record from the version-1-derived default.

@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// The bounded who-can-do-what summary for one grantee (design &#167;6.1): its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — the bindings that grant reach, the workflows it administers, and the credentials its runs may use — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -159,30 +159,6 @@ public readonly partial struct AccessGrantsOverview
     }
 
     /// <summary>
-    /// Gets the <c>administers</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray Administers
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministersUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the <c>administersEnvironments</c> property.
     /// </summary>
     /// <remarks>
@@ -190,7 +166,7 @@ public readonly partial struct AccessGrantsOverview
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The environments the grantee administers (membership, mirroring administers).
+    /// The environments the grantee administers (membership; a grantee administers a bounded handful, so this is not paged).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray AdministersEnvironments
@@ -207,30 +183,6 @@ public readonly partial struct AccessGrantsOverview
     }
 
     /// <summary>
-    /// Gets the <c>bindings</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The security bindings whose claim matches the grantee&#39;s identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray Bindings
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BindingsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the <c>capabilities</c> property.
     /// </summary>
     /// <remarks>
@@ -238,7 +190,7 @@ public readonly partial struct AccessGrantsOverview
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.
+    /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible. Rolled up over all of the grantee&#39;s matched bindings (not paged).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray Capabilities
@@ -246,30 +198,6 @@ public readonly partial struct AccessGrantsOverview
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CapabilitiesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>credentialUsage</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The source-credential bindings the grantee&#39;s runs may use (label-superset over the binding&#39;s usage grant).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray CredentialUsage
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialUsageUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray value))
             {
                 return value;
             }
@@ -746,19 +674,9 @@ public readonly partial struct AccessGrantsOverview
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Administers"/>.
-        /// </summary>
-        public const string Administers = "administers";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="AdministersEnvironments"/>.
         /// </summary>
         public const string AdministersEnvironments = "administersEnvironments";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Bindings"/>.
-        /// </summary>
-        public const string Bindings = "bindings";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Capabilities"/>.
@@ -766,19 +684,9 @@ public readonly partial struct AccessGrantsOverview
         public const string Capabilities = "capabilities";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CredentialUsage"/>.
-        /// </summary>
-        public const string CredentialUsage = "credentialUsage";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Grantee"/>.
         /// </summary>
         public const string Grantee = "grantee";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Administers"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> AdministersUtf8 => "administers"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AdministersEnvironments"/>.
@@ -786,19 +694,9 @@ public readonly partial struct AccessGrantsOverview
         public static ReadOnlySpan<byte> AdministersEnvironmentsUtf8 => "administersEnvironments"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Bindings"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> BindingsUtf8 => "bindings"u8;
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Capabilities"/>.
         /// </summary>
         public static ReadOnlySpan<byte> CapabilitiesUtf8 => "capabilities"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CredentialUsage"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CredentialUsageUtf8 => "credentialUsage"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Grantee"/>.
@@ -812,29 +710,14 @@ public readonly partial struct AccessGrantsOverview
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Administers"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Administers => "administers"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="AdministersEnvironments"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AdministersEnvironments => "administersEnvironments"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Bindings"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Bindings => "bindings"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Capabilities"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Capabilities => "capabilities"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CredentialUsage"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CredentialUsage => "credentialUsage"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Grantee"/>.
@@ -849,29 +732,14 @@ public readonly partial struct AccessGrantsOverview
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Administers"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Administers => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x6D, 0x69, 0x6E, 0x69, 0x73, 0x74, 0x65, 0x72, 0x73, 0x22];
-
-        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="AdministersEnvironments"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AdministersEnvironments => [0x95, 0x01, 0x00, 0x00, 0x22, 0x61, 0x64, 0x6D, 0x69, 0x6E, 0x69, 0x73, 0x74, 0x65, 0x72, 0x73, 0x45, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Bindings"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Bindings => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67, 0x73, 0x22];
-
-        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Capabilities"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Capabilities => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6C, 0x69, 0x74, 0x69, 0x65, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CredentialUsage"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CredentialUsage => [0x15, 0x01, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x55, 0x73, 0x61, 0x67, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Grantee"/>.

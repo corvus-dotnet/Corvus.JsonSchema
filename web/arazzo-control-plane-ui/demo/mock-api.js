@@ -1824,6 +1824,29 @@ export function createMockControlPlane(options = {}) {
     const catalogResponse = await handleCatalog(path, method, u.searchParams, body, isForm ? init.body : null);
     if (catalogResponse) return catalogResponse;
 
+    // /access/grants — the Access Overview (§6.1): the BOUNDED summary (grantee, capabilities, administered environments)
+    // plus the three keyset-paged sub-resources for the unbounded lists (reach grants, administered workflows, usable
+    // credentials). Prefix-tolerant like the /runs routes so a base path (e.g. /arazzo/v1) still matches. Placed BEFORE
+    // handleCredentials because that handler prefix-matches indexOf('/credentials') and would otherwise hijack
+    // /access/grants/credentials. The sub-paths are tested before the summary so /access/grants/reach does not fall
+    // through to the summary route.
+    if (/\/access\/grants\/reach\/?$/.test(path)) {
+      if (method === 'GET') return handleAccessGrantsReach(u.searchParams);
+      return problem(405, 'Method not allowed');
+    }
+    if (/\/access\/grants\/administered\/?$/.test(path)) {
+      if (method === 'GET') return handleAccessGrantsAdministered(u.searchParams);
+      return problem(405, 'Method not allowed');
+    }
+    if (/\/access\/grants\/credentials\/?$/.test(path)) {
+      if (method === 'GET') return handleAccessGrantsCredentials(u.searchParams);
+      return problem(405, 'Method not allowed');
+    }
+    if (/\/access\/grants\/?$/.test(path)) {
+      if (method === 'GET') return handleAccessGrants(u.searchParams);
+      return problem(405, 'Method not allowed');
+    }
+
     const credentialsResponse = handleCredentials(path, method, u.searchParams, body);
     if (credentialsResponse) return credentialsResponse;
 
@@ -1868,13 +1891,6 @@ export function createMockControlPlane(options = {}) {
 
     const runnersResponse = handleRunners(path, method, u.searchParams);
     if (runnersResponse) return runnersResponse;
-
-    // /access/grants — the Access Overview (§6.1): one resolved grantee's aggregated access (bindings, administered
-    // workflows, usable credentials). Prefix-tolerant like the /runs routes so a base path (e.g. /arazzo/v1) still matches.
-    if (/\/access\/grants\/?$/.test(path)) {
-      if (method === 'GET') return handleAccessGrants(u.searchParams);
-      return problem(405, 'Method not allowed');
-    }
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -2558,15 +2574,59 @@ export function createMockControlPlane(options = {}) {
   // token of the resolved-grantee JSON the identity picker hands back ({ kind, value, label, identity:[{dimension,value}],
   // source, complete }, identity in the resolved sys: form). The binding match strips the sys: prefix from each identity
   // dimension before comparing to a binding's operator-facing claimType (sys:sub → sub; a bare team/role is unchanged).
+  // Slice a computed list into one keyset page — a numeric offset token, the same contract the grantee typeahead uses.
+  // Returns { pageItems, nextPageToken } (the token absent when this is the last page, mirroring the server's omit).
+  function accessGrantsPage(items, params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 25, 100));
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = items.slice(offset, offset + limit);
+    const nextPageToken = offset + limit < items.length ? String(offset + limit) : null;
+    return { pageItems, nextPageToken };
+  }
+
+  // The summary route: the bounded who-can-do-what (grantee, capabilities, administered environments).
   function handleAccessGrants(params) {
+    const r = computeAccessGrants(params);
+    if (r.problem) return r.problem;
+    const { grantee, capabilities, administersEnvironments } = r.data;
+    return json({ grantee, capabilities, administersEnvironments });
+  }
+
+  // GET /access/grants/reach — one keyset page of the bindings that grant the grantee reach.
+  function handleAccessGrantsReach(params) {
+    const r = computeAccessGrants(params);
+    if (r.problem) return r.problem;
+    const { pageItems, nextPageToken } = accessGrantsPage(r.data.bindings, params);
+    return json({ bindings: pageItems, ...(nextPageToken ? { nextPageToken } : {}) });
+  }
+
+  // GET /access/grants/administered — one keyset page of the workflows the grantee administers.
+  function handleAccessGrantsAdministered(params) {
+    const r = computeAccessGrants(params);
+    if (r.problem) return r.problem;
+    const { pageItems, nextPageToken } = accessGrantsPage(r.data.administers, params);
+    return json({ administers: pageItems, ...(nextPageToken ? { nextPageToken } : {}) });
+  }
+
+  // GET /access/grants/credentials — one keyset page of the credentials the grantee's runs may use.
+  function handleAccessGrantsCredentials(params) {
+    const r = computeAccessGrants(params);
+    if (r.problem) return r.problem;
+    const { pageItems, nextPageToken } = accessGrantsPage(r.data.credentialUsage, params);
+    return json({ credentialUsage: pageItems, ...(nextPageToken ? { nextPageToken } : {}) });
+  }
+
+  // Decodes the grantee token and computes all five aggregations. Returns { problem } on a bad token, else { data: {...} }
+  // — the summary and the three paged routes each project the slice of `data` they serve.
+  function computeAccessGrants(params) {
     const raw = params.get('grantee');
-    if (!raw) return problem(400, 'Invalid grantee', 'A grantee token is required.');
+    if (!raw) return { problem: problem(400, 'Invalid grantee', 'A grantee token is required.') };
     let grantee;
     try {
       const std = raw.replace(/-/g, '+').replace(/_/g, '/');
       grantee = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(std), (c) => c.charCodeAt(0))));
     } catch {
-      return problem(400, 'Invalid grantee', 'The grantee token is not a valid base64url-encoded grantee.');
+      return { problem: problem(400, 'Invalid grantee', 'The grantee token is not a valid base64url-encoded grantee.') };
     }
     const idents = Array.isArray(grantee.identity) ? grantee.identity : [];
     const stripSys = (d) => (typeof d === 'string' && d.startsWith('sys:')) ? d.slice(4) : d;
@@ -2654,7 +2714,7 @@ export function createMockControlPlane(options = {}) {
       .sort((a, b) => (a.sourceName < b.sourceName ? -1 : a.sourceName > b.sourceName ? 1
         : a.environment < b.environment ? -1 : a.environment > b.environment ? 1 : 0));
 
-    return json({ grantee, bindings, capabilities, administers, administersEnvironments, credentialUsage });
+    return { data: { grantee, bindings, capabilities, administers, administersEnvironments, credentialUsage } };
   }
 
   // Keyset pagination over `name` plus a case-insensitive q over name/expression — the same contract the durable store

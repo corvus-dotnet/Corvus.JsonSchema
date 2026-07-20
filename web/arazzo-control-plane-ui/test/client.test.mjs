@@ -565,32 +565,46 @@ test('security-binding client methods validate their arguments before calling th
 });
 
 // ---- access overview (§6.1) ---------------------------------------------------------------------
+// The bounded summary (getAccessGrants) carries the grantee, capabilities, and administered environments; the unbounded
+// lists (reach bindings, administered workflows, usable credentials) are the keyset-paged sub-resources.
 
-test('getAccessGrants for Ada projects her binding, administered workflow, and usable credential', async () => {
+test('getAccessGrants summary projects Ada’s capabilities and administered environments', async () => {
   const c = makeClient();
   const grantee = { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true };
-  const { bindings, administers, credentialUsage } = await c.getAccessGrants(grantee);
+  const summary = await c.getAccessGrants(grantee);
+  assert.ok(Array.isArray(summary.capabilities), 'the summary carries the capability list');
+  assert.ok(Array.isArray(summary.administersEnvironments), 'the summary carries the administered environments');
+  assert.equal(summary.bindings, undefined, 'the unbounded reach list is NOT in the summary (it is the /reach sub-resource)');
+});
+
+test('getAccessGrantsReach/Administered/Credentials page Ada’s binding, workflow, and credential', async () => {
+  const c = makeClient();
+  const grantee = { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true };
+  const { bindings, nextPageToken } = await c.getAccessGrantsReach(grantee);
   assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her sub binding is projected');
+  assert.equal(nextPageToken, null, 'a small reach list fits on one page');
+  const { administers } = await c.getAccessGrantsAdministered(grantee);
   assert.ok(administers.some((a) => a.baseWorkflowId === 'nightly-reconcile'), 'the workflow she administers is projected');
+  const { credentialUsage } = await c.getAccessGrantsCredentials(grantee);
   // Only the credential scoped to her identity — shared bindings (usable by any run) are omitted (design §6.1).
   assert.deepEqual(credentialUsage, [{ sourceName: 'billing', environment: 'staging' }]);
 });
 
-test('getAccessGrants for the payments team projects the team binding', async () => {
+test('getAccessGrantsReach for the payments team projects the team binding', async () => {
   const c = makeClient();
   const grantee = { kind: 'team', value: 'payments', label: 'Payments', identity: [{ dimension: 'team', value: 'payments' }], source: 'directory', complete: true };
-  const { bindings } = await c.getAccessGrants(grantee);
+  const { bindings } = await c.getAccessGrantsReach(grantee);
   assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'the payments team binding (bind-1) is projected');
 });
 
-test('getAccessGrants surfaces a directory person’s grants inherited through group membership (§16.5.4)', async () => {
+test('getAccessGrantsReach surfaces a directory person’s grants inherited through group membership (§16.5.4)', async () => {
   const c = makeClient();
   // Ada resolved from the DIRECTORY carries her full membership-expanded identity (sys:team=payments), so "look yourself
   // up" surfaces the payments team's reach binding she INHERITS through that membership, alongside her own sub-keyed grant.
   const { grantees } = await c.searchGrantees({ q: 'ada', source: 'directory' });
   const ada = grantees.find((g) => g.value === 'u-1042');
   assert.ok(ada.identity.some((t) => t.dimension === 'sys:team' && t.value === 'payments'), 'the resolved person carries her team membership');
-  const { bindings } = await c.getAccessGrants(ada);
+  const { bindings } = await c.getAccessGrantsReach(ada);
   assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'she inherits the payments team binding via her membership');
   assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her own sub binding is also projected');
 });

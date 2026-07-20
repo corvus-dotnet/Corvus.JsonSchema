@@ -40,33 +40,37 @@ public sealed class ControlPlaneAccessGrantsApiTests
         """{"kind":"person","value":"u-1042","identity":[{"dimension":"sub","value":"u-1042"}],"source":"observed","complete":true}""";
 
     [TestMethod]
-    public async Task Get_access_grants_projects_matching_bindings_administered_workflows_and_usable_credentials()
+    public async Task Get_access_grants_summary_echoes_the_grantee_and_the_paged_sub_resources_project_bindings_workflows_and_credentials()
     {
         ArazzoControlPlaneSecurityHandler handler = await CreateSeededHandlerAsync();
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        var parameters = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) };
-        GetAccessGrantsResult result = await handler.HandleGetAccessGrantsAsync(parameters, workspace);
-        result.StatusCode.ShouldBe(200);
 
-        using Stj.JsonDocument doc = ReadResultBody(result);
+        // The summary echoes the grantee verbatim; the unbounded lists are the keyset-paged sub-resources below (they are
+        // NOT on the summary any more).
+        var summaryParams = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) };
+        GetAccessGrantsResult summary = await handler.HandleGetAccessGrantsAsync(summaryParams, workspace);
+        summary.StatusCode.ShouldBe(200);
+        using Stj.JsonDocument summaryDoc = ReadBody(summary.Body);
+        summaryDoc.RootElement.GetProperty("grantee").GetProperty("value").GetString().ShouldBe("u-1042");
+        summaryDoc.RootElement.TryGetProperty("bindings", out _).ShouldBeFalse("the reach list is the /reach sub-resource, not the summary");
 
-        // The grantee is echoed verbatim.
-        doc.RootElement.GetProperty("grantee").GetProperty("value").GetString().ShouldBe("u-1042");
-
-        // bindings: only the binding whose claim the grantee satisfies (sub=u-1042); the team=platform binding is dropped.
-        doc.RootElement.GetProperty("bindings").EnumerateArray()
+        // reach: only the binding whose claim the grantee satisfies (sub=u-1042); the team=platform binding is dropped.
+        using Stj.JsonDocument reach = await GetReachAsync(handler, GranteeJson, workspace);
+        reach.RootElement.GetProperty("bindings").EnumerateArray()
             .Select(b => b.GetProperty("claimType").GetString()).ShouldBe(["sub"]);
-        doc.RootElement.GetProperty("bindings").EnumerateArray()
+        reach.RootElement.GetProperty("bindings").EnumerateArray()
             .Select(b => b.GetProperty("claimValue").GetString()).ShouldBe(["u-1042"]);
 
-        // administers: the base workflow the grantee's identity administers (a reverse-index lookup keyed by its digest).
-        doc.RootElement.GetProperty("administers").EnumerateArray()
+        // administered: the base workflow the grantee's identity administers (a reverse-index lookup keyed by its digest).
+        using Stj.JsonDocument administered = await GetAdministeredAsync(handler, GranteeJson, workspace);
+        administered.RootElement.GetProperty("administers").EnumerateArray()
             .Select(a => a.GetProperty("baseWorkflowId").GetString()).ShouldBe(["orders-workflow"]);
 
-        // credentialUsage: the usable credential (the grantee carries its sys:sub usage tag); the sys:tenant credential
-        // the grantee cannot use is dropped.
-        Stj.JsonElement usage = doc.RootElement.GetProperty("credentialUsage");
+        // credentials: the usable credential (the grantee carries its sys:sub usage tag); the sys:tenant credential the
+        // grantee cannot use is dropped.
+        using Stj.JsonDocument credentials = await GetCredentialsAsync(handler, GranteeJson, workspace);
+        Stj.JsonElement usage = credentials.RootElement.GetProperty("credentialUsage");
         usage.GetArrayLength().ShouldBe(1);
         usage[0].GetProperty("sourceName").GetString().ShouldBe("orders-api");
         usage[0].GetProperty("environment").GetString().ShouldBe("production");
@@ -79,21 +83,21 @@ public sealed class ControlPlaneAccessGrantsApiTests
         ArazzoControlPlaneSecurityHandler handler = await CreateEnrichedHandlerAsync();
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        var parameters = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) };
-        GetAccessGrantsResult result = await handler.HandleGetAccessGrantsAsync(parameters, workspace);
-        result.StatusCode.ShouldBe(200);
 
-        using Stj.JsonDocument doc = ReadResultBody(result);
-
-        // The administered-workflow row carries its representative version's summary.
-        Stj.JsonElement workflow = doc.RootElement.GetProperty("administers").EnumerateArray().Single();
+        // The administered-workflow row (the /administered sub-resource) carries its representative version's summary.
+        using Stj.JsonDocument administered = await GetAdministeredAsync(handler, GranteeJson, workspace);
+        Stj.JsonElement workflow = administered.RootElement.GetProperty("administers").EnumerateArray().Single();
         workflow.GetProperty("baseWorkflowId").GetString().ShouldBe("orders-workflow");
         workflow.GetProperty("title").GetString().ShouldBe("Orders");
         workflow.GetProperty("latestVersion").GetInt32().ShouldBe(1);
         workflow.GetProperty("owner").GetString().ShouldBe("Ops");
         workflow.TryGetProperty("status", out _).ShouldBeTrue("the representative version's status is surfaced");
 
-        // The administered-environment row carries the environment summary + a bounded availability count (count-API).
+        // The administered-environment row (on the summary) carries the environment summary + a bounded availability count.
+        var summaryParams = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) };
+        GetAccessGrantsResult summary = await handler.HandleGetAccessGrantsAsync(summaryParams, workspace);
+        summary.StatusCode.ShouldBe(200);
+        using Stj.JsonDocument doc = ReadBody(summary.Body);
         Stj.JsonElement environment = doc.RootElement.GetProperty("administersEnvironments").EnumerateArray().Single();
         environment.GetProperty("environment").GetString().ShouldBe("production");
         environment.GetProperty("displayName").GetString().ShouldBe("Production");
@@ -155,10 +159,10 @@ public sealed class ControlPlaneAccessGrantsApiTests
         GetAccessGrantsResult result = await handler.HandleGetAccessGrantsAsync(parameters, workspace);
         result.StatusCode.ShouldBe(200);
 
-        using Stj.JsonDocument doc = ReadResultBody(result);
+        using Stj.JsonDocument doc = ReadBody(result.Body);
 
-        // capabilities: resolved exactly as the runtime resolver would — the genesis-like binding's scopes are active,
-        // the eligible-only binding's scope is eligible (with its expiry), and the expired binding confers nothing.
+        // capabilities (on the summary): resolved exactly as the runtime resolver would — the genesis-like binding's scopes
+        // are active, the eligible-only binding's scope is eligible (with its expiry), and the expired binding confers nothing.
         Stj.JsonElement capabilities = doc.RootElement.GetProperty("capabilities");
         capabilities.EnumerateArray().Select(c => c.GetProperty("scope").GetString())
             .ShouldBe(["runs:purge", "runs:read", "runs:write"]);
@@ -167,18 +171,21 @@ public sealed class ControlPlaneAccessGrantsApiTests
         capabilities[0].TryGetProperty("expiresAt", out _).ShouldBeTrue("the eligible grant is time-boxed");
         capabilities[1].TryGetProperty("expiresAt", out _).ShouldBeFalse("the genesis-like grant never expires");
 
-        // administersEnvironments: the environment reverse index keyed by the resolved identity (membership).
+        // administersEnvironments (on the summary): the environment reverse index keyed by the resolved identity (membership).
         doc.RootElement.GetProperty("administersEnvironments").EnumerateArray()
             .Select(e => e.GetProperty("environment").GetString()).ShouldBe(["production"]);
 
-        // credentialUsage: the production credential usage-scoped to the admin group.
-        Stj.JsonElement usage = doc.RootElement.GetProperty("credentialUsage");
+        // credentials (the /credentials sub-resource): the production credential usage-scoped to the admin group.
+        using Stj.JsonDocument credentials = await GetCredentialsAsync(handler, TeamGranteeJson, workspace);
+        Stj.JsonElement usage = credentials.RootElement.GetProperty("credentialUsage");
         usage.GetArrayLength().ShouldBe(1);
         usage[0].GetProperty("sourceName").GetString().ShouldBe("onboarding");
         usage[0].GetProperty("environment").GetString().ShouldBe("production");
 
-        // The binding summaries surface where the capabilities come from: scopes + eligibleOnly ride along.
-        Stj.JsonElement bindings = doc.RootElement.GetProperty("bindings");
+        // The reach binding summaries (the /reach sub-resource) surface where the capabilities come from: scopes +
+        // eligibleOnly ride along.
+        using Stj.JsonDocument reach = await GetReachAsync(handler, TeamGranteeJson, workspace);
+        Stj.JsonElement bindings = reach.RootElement.GetProperty("bindings");
         bindings.EnumerateArray().Count(b => b.TryGetProperty("scopes", out _)).ShouldBe(3);
         bindings.EnumerateArray().Count(b => b.TryGetProperty("eligibleOnly", out Stj.JsonElement e) && e.GetBoolean()).ShouldBe(1);
     }
@@ -242,19 +249,69 @@ public sealed class ControlPlaneAccessGrantsApiTests
     }
 
     [TestMethod]
-    public async Task A_malformed_or_empty_grantee_token_is_a_bad_request()
+    public async Task Reach_keyset_pages_the_matched_bindings()
+    {
+        // Three bindings the grantee matches; a limit of 2 yields a first page of 2 + a continuation token, then a last
+        // page of 1 with no token — the keyset contract the client walks.
+        var policyStore = new InMemorySecurityPolicyStore();
+        for (int order = 10; order < 13; order++)
+        {
+            using ParsedJsonDocument<SecurityBindingDocument> binding = SecurityBindingDocument.Draft(
+                "sub", "u-1042", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: order);
+            (await policyStore.AddBindingAsync(binding.RootElement, "ops", default)).Dispose();
+        }
+
+        var policy = new PersistentRowSecurityPolicy(policyStore);
+        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
+        var handler = new ArazzoControlPlaneSecurityHandler(policyStore, policy, access, catalog, new InMemorySourceCredentialStore());
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        var firstParams = new GetAccessGrantsReachParams
+        {
+            Grantee = EncodeGranteeToken(GranteeJson, workspace),
+            Limit = HeaderValueParser.ParseNumber<Models.PageLimit>("2", workspace),
+        };
+        GetAccessGrantsReachResult first = await handler.HandleGetAccessGrantsReachAsync(firstParams, workspace);
+        first.StatusCode.ShouldBe(200);
+        using Stj.JsonDocument firstDoc = ReadBody(first.Body);
+        firstDoc.RootElement.GetProperty("bindings").GetArrayLength().ShouldBe(2);
+        string token = firstDoc.RootElement.GetProperty("nextPageToken").GetString()!;
+        token.ShouldNotBeNullOrEmpty("more matched bindings remain, so a continuation token is emitted");
+
+        var secondParams = new GetAccessGrantsReachParams
+        {
+            Grantee = EncodeGranteeToken(GranteeJson, workspace),
+            Limit = HeaderValueParser.ParseNumber<Models.PageLimit>("2", workspace),
+            PageToken = HeaderValueParser.ParseString<Models.JsonString>(token, workspace),
+        };
+        GetAccessGrantsReachResult second = await handler.HandleGetAccessGrantsReachAsync(secondParams, workspace);
+        second.StatusCode.ShouldBe(200);
+        using Stj.JsonDocument secondDoc = ReadBody(second.Body);
+        secondDoc.RootElement.GetProperty("bindings").GetArrayLength().ShouldBe(1);
+        secondDoc.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse("the last page omits the continuation token");
+    }
+
+    [TestMethod]
+    public async Task A_malformed_or_empty_grantee_token_is_a_bad_request_on_every_endpoint()
     {
         ArazzoControlPlaneSecurityHandler handler = await CreateSeededHandlerAsync();
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        // An empty token → 400.
-        var empty = new GetAccessGrantsParams { Grantee = ParseRawGrantee(string.Empty, workspace) };
-        (await handler.HandleGetAccessGrantsAsync(empty, workspace)).StatusCode.ShouldBe(400);
+        // The summary and each paged sub-resource share the grantee-decode, so all four reject an empty or malformed token.
+        (await handler.HandleGetAccessGrantsAsync(new GetAccessGrantsParams { Grantee = ParseRawGrantee(string.Empty, workspace) }, workspace)).StatusCode.ShouldBe(400);
+        (await handler.HandleGetAccessGrantsAsync(new GetAccessGrantsParams { Grantee = ParseRawGrantee("not-a-valid-token!!", workspace) }, workspace)).StatusCode.ShouldBe(400);
 
-        // A token that is not valid base64url → 400.
-        var malformed = new GetAccessGrantsParams { Grantee = ParseRawGrantee("not-a-valid-token!!", workspace) };
-        (await handler.HandleGetAccessGrantsAsync(malformed, workspace)).StatusCode.ShouldBe(400);
+        (await handler.HandleGetAccessGrantsReachAsync(new GetAccessGrantsReachParams { Grantee = ParseRawGrantee(string.Empty, workspace) }, workspace)).StatusCode.ShouldBe(400);
+        (await handler.HandleGetAccessGrantsReachAsync(new GetAccessGrantsReachParams { Grantee = ParseRawGrantee("not-a-valid-token!!", workspace) }, workspace)).StatusCode.ShouldBe(400);
+
+        (await handler.HandleGetAccessGrantsAdministeredAsync(new GetAccessGrantsAdministeredParams { Grantee = ParseRawGrantee(string.Empty, workspace) }, workspace)).StatusCode.ShouldBe(400);
+        (await handler.HandleGetAccessGrantsAdministeredAsync(new GetAccessGrantsAdministeredParams { Grantee = ParseRawGrantee("not-a-valid-token!!", workspace) }, workspace)).StatusCode.ShouldBe(400);
+
+        (await handler.HandleGetAccessGrantsCredentialsAsync(new GetAccessGrantsCredentialsParams { Grantee = ParseRawGrantee(string.Empty, workspace) }, workspace)).StatusCode.ShouldBe(400);
+        (await handler.HandleGetAccessGrantsCredentialsAsync(new GetAccessGrantsCredentialsParams { Grantee = ParseRawGrantee("not-a-valid-token!!", workspace) }, workspace)).StatusCode.ShouldBe(400);
     }
 
     // Seeds the in-memory stores and constructs the handler through its internal constructor (the only ctor that binds the
@@ -327,7 +384,32 @@ public sealed class ControlPlaneAccessGrantsApiTests
         => HeaderValueParser.ParseString<Models.JsonString>(raw, workspace);
 
     // Reads a result's CTJ body as UTF-8 and re-parses it with System.Text.Json so the test asserts over the wire shape
-    // (mirrors ControlPlaneSecurityApiTests.ReadResultBody).
-    private static Stj.JsonDocument ReadResultBody(GetAccessGrantsResult result)
-        => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
+    // (mirrors ControlPlaneSecurityApiTests.ReadResultBody). Every result type exposes its body as a CTJ JsonElement.
+    private static Stj.JsonDocument ReadBody(Corvus.Text.Json.JsonElement body)
+        => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(body).Memory);
+
+    // The keyset-paged sub-resources: call the handler for the grantee (no limit/token → first page) and re-parse the body.
+    private static async Task<Stj.JsonDocument> GetReachAsync(ArazzoControlPlaneSecurityHandler handler, string granteeJson, JsonWorkspace workspace)
+    {
+        var parameters = new GetAccessGrantsReachParams { Grantee = EncodeGranteeToken(granteeJson, workspace) };
+        GetAccessGrantsReachResult result = await handler.HandleGetAccessGrantsReachAsync(parameters, workspace);
+        result.StatusCode.ShouldBe(200);
+        return ReadBody(result.Body);
+    }
+
+    private static async Task<Stj.JsonDocument> GetAdministeredAsync(ArazzoControlPlaneSecurityHandler handler, string granteeJson, JsonWorkspace workspace)
+    {
+        var parameters = new GetAccessGrantsAdministeredParams { Grantee = EncodeGranteeToken(granteeJson, workspace) };
+        GetAccessGrantsAdministeredResult result = await handler.HandleGetAccessGrantsAdministeredAsync(parameters, workspace);
+        result.StatusCode.ShouldBe(200);
+        return ReadBody(result.Body);
+    }
+
+    private static async Task<Stj.JsonDocument> GetCredentialsAsync(ArazzoControlPlaneSecurityHandler handler, string granteeJson, JsonWorkspace workspace)
+    {
+        var parameters = new GetAccessGrantsCredentialsParams { Grantee = EncodeGranteeToken(granteeJson, workspace) };
+        GetAccessGrantsCredentialsResult result = await handler.HandleGetAccessGrantsCredentialsAsync(parameters, workspace);
+        result.StatusCode.ShouldBe(200);
+        return ReadBody(result.Body);
+    }
 }

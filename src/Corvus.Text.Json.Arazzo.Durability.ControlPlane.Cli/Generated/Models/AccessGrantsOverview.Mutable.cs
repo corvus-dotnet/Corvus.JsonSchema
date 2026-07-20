@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// The bounded who-can-do-what summary for one grantee (design &#167;6.1): its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — the bindings that grant reach, the workflows it administers, and the credentials its runs may use — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -266,30 +266,6 @@ public readonly partial struct AccessGrantsOverview
         }
 
         /// <summary>
-        /// Gets the <c>administers</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Mutable Administers
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministersUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
         /// Gets the <c>administersEnvironments</c> property.
         /// </summary>
         /// <remarks>
@@ -297,7 +273,7 @@ public readonly partial struct AccessGrantsOverview
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The environments the grantee administers (membership, mirroring administers).
+        /// The environments the grantee administers (membership; a grantee administers a bounded handful, so this is not paged).
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Mutable AdministersEnvironments
@@ -314,30 +290,6 @@ public readonly partial struct AccessGrantsOverview
         }
 
         /// <summary>
-        /// Gets the <c>bindings</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The security bindings whose claim matches the grantee&#39;s identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Mutable Bindings
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BindingsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
         /// Gets the <c>capabilities</c> property.
         /// </summary>
         /// <remarks>
@@ -345,7 +297,7 @@ public readonly partial struct AccessGrantsOverview
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.
+        /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible. Rolled up over all of the grantee&#39;s matched bindings (not paged).
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Mutable Capabilities
@@ -353,30 +305,6 @@ public readonly partial struct AccessGrantsOverview
             get
             {
                 if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CapabilitiesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the <c>credentialUsage</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The source-credential bindings the grantee&#39;s runs may use (label-superset over the binding&#39;s usage grant).
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Mutable CredentialUsage
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialUsageUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Mutable value))
                 {
                     return value;
                 }
@@ -449,71 +377,6 @@ public readonly partial struct AccessGrantsOverview
         }
 
         /// <summary>
-        /// Set the <c>administers</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetAdministers(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("administers");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministersUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administers, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>administers</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetAdministers<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("administers");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministersUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administers, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
         /// Set the <c>administersEnvironments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
@@ -579,71 +442,6 @@ public readonly partial struct AccessGrantsOverview
         }
 
         /// <summary>
-        /// Set the <c>bindings</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetBindings(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("bindings");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BindingsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bindings, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>bindings</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetBindings<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("bindings");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BindingsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bindings, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
         /// Set the <c>capabilities</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
@@ -701,71 +499,6 @@ public readonly partial struct AccessGrantsOverview
             {
                 // We are going to insert the new value
                 value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Capabilities, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>credentialUsage</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetCredentialUsage(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("credentialUsage");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialUsageUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialUsage, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>credentialUsage</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetCredentialUsage<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("credentialUsage");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialUsageUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialUsage, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1168,12 +901,9 @@ public readonly partial struct AccessGrantsOverview
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source _createArg3;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1188,14 +918,11 @@ public readonly partial struct AccessGrantsOverview
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source arg6)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
-            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
@@ -1216,7 +943,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1241,7 +968,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1266,7 +993,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1291,7 +1018,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1316,7 +1043,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1344,12 +1071,9 @@ public readonly partial struct AccessGrantsOverview
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> _createArg3;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1362,15 +1086,12 @@ public readonly partial struct AccessGrantsOverview
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> arg6)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> arg3)
         {
             _context = context;
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
-            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
@@ -1389,7 +1110,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1414,7 +1135,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1439,7 +1160,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1464,7 +1185,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1489,7 +1210,7 @@ public readonly partial struct AccessGrantsOverview
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1523,18 +1244,12 @@ public readonly partial struct AccessGrantsOverview
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source administers,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source bindings,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source credentialUsage,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee)
         {
-            administers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administers, ref builder);
             administersEnvironments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdministersEnvironments, ref builder);
-            bindings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bindings, ref builder);
             capabilities.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Capabilities, ref builder);
-            credentialUsage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialUsage, ref builder);
             grantee.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grantee, ref builder);
         }
 
@@ -1542,14 +1257,11 @@ public readonly partial struct AccessGrantsOverview
         /// Creates an instance of a <see cref="AccessGrantsOverview"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source administers,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source bindings,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source credentialUsage,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee)
         {
-            Create(ref _builder, administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+            Create(ref _builder, administersEnvironments, capabilities, grantee);
         }
 
         /// <summary>
@@ -1558,21 +1270,15 @@ public readonly partial struct AccessGrantsOverview
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> administers,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> bindings,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> credentialUsage,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            administers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administers, ref builder);
             administersEnvironments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdministersEnvironments, ref builder);
-            bindings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bindings, ref builder);
             capabilities.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Capabilities, ref builder);
-            credentialUsage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialUsage, ref builder);
             grantee.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grantee, ref builder);
         }
 
@@ -1581,17 +1287,14 @@ public readonly partial struct AccessGrantsOverview
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> administers,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> bindings,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> credentialUsage,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+            Create(context, ref _builder, administersEnvironments, capabilities, grantee);
         }
 
         /// <summary>
@@ -1692,14 +1395,11 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="arg5">The value of the property.</param>
-        /// <param name="arg6">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source arg6, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
+            Create(ref o, arg1, arg2, arg3);
             o.EndObject();
         }
 
@@ -1711,17 +1411,14 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="arg5">The value of the property.</param>
-        /// <param name="arg6">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> arg6, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6);
+            Create(context, ref o, arg1, arg2, arg3);
             o.EndObject();
         }
     }
@@ -1758,16 +1455,13 @@ public readonly partial struct AccessGrantsOverview
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="administers">The value of the <c>"administers"</c> property.</param>
     /// <param name="administersEnvironments">The value of the <c>"administersEnvironments"</c> property.</param>
-    /// <param name="bindings">The value of the <c>"bindings"</c> property.</param>
     /// <param name="capabilities">The value of the <c>"capabilities"</c> property.</param>
-    /// <param name="credentialUsage">The value of the <c>"credentialUsage"</c> property.</param>
     /// <param name="grantee">The value of the <c>"grantee"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source administers, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source bindings, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source credentialUsage, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee)
     {
-        return new Source(administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+        return new Source(administersEnvironments, capabilities, grantee);
     }
 
     /// <summary>
@@ -1775,19 +1469,16 @@ public readonly partial struct AccessGrantsOverview
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
-    /// <param name="administers">The value of the <c>"administers"</c> property.</param>
     /// <param name="administersEnvironments">The value of the <c>"administersEnvironments"</c> property.</param>
-    /// <param name="bindings">The value of the <c>"bindings"</c> property.</param>
     /// <param name="capabilities">The value of the <c>"capabilities"</c> property.</param>
-    /// <param name="credentialUsage">The value of the <c>"credentialUsage"</c> property.</param>
     /// <param name="grantee">The value of the <c>"grantee"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> administers, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> bindings, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> credentialUsage, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+        return new Source<TContext>(context, administersEnvironments, capabilities, grantee);
     }
 
     /// <summary>
@@ -1883,21 +1574,18 @@ public readonly partial struct AccessGrantsOverview
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="administers">The value of the property.</param>
     /// <param name="administersEnvironments">The value of the property.</param>
-    /// <param name="bindings">The value of the property.</param>
     /// <param name="capabilities">The value of the property.</param>
-    /// <param name="credentialUsage">The value of the property.</param>
     /// <param name="grantee">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source administers, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source bindings, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source credentialUsage, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+        ovb.Create(administersEnvironments, capabilities, grantee);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1910,15 +1598,12 @@ public readonly partial struct AccessGrantsOverview
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
-    /// <param name="administers">The value of the property.</param>
     /// <param name="administersEnvironments">The value of the property.</param>
-    /// <param name="bindings">The value of the property.</param>
     /// <param name="capabilities">The value of the property.</param>
-    /// <param name="credentialUsage">The value of the property.</param>
     /// <param name="grantee">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> administers, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> bindings, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> credentialUsage, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1927,7 +1612,7 @@ public readonly partial struct AccessGrantsOverview
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+        ovb.Create(context, administersEnvironments, capabilities, grantee);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2028,15 +1713,12 @@ public readonly partial struct AccessGrantsOverview
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
-    /// <param name="administers">The value of the property.</param>
     /// <param name="administersEnvironments">The value of the property.</param>
-    /// <param name="bindings">The value of the property.</param>
     /// <param name="capabilities">The value of the property.</param>
-    /// <param name="credentialUsage">The value of the property.</param>
     /// <param name="grantee">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AccessGrantsOverview> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source administers, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source bindings, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source credentialUsage, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee, int initialCapacity = 30)
+    public static ParsedJsonDocument<AccessGrantsOverview> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source grantee, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -2044,7 +1726,7 @@ public readonly partial struct AccessGrantsOverview
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+            ovb.Create(administersEnvironments, capabilities, grantee);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2061,15 +1743,12 @@ public readonly partial struct AccessGrantsOverview
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The value of the property.</param>
-    /// <param name="administers">The value of the property.</param>
     /// <param name="administersEnvironments">The value of the property.</param>
-    /// <param name="bindings">The value of the property.</param>
     /// <param name="capabilities">The value of the property.</param>
-    /// <param name="credentialUsage">The value of the property.</param>
     /// <param name="grantee">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AccessGrantsOverview> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Source<TContext> administers, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.SecurityBindingSummaryArray.Source<TContext> bindings, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Source<TContext> credentialUsage, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee, int initialCapacity = 30)
+    public static ParsedJsonDocument<AccessGrantsOverview> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Source<TContext> administersEnvironments, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Source<TContext> capabilities, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedGrantee.Source<TContext> grantee, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2080,7 +1759,7 @@ public readonly partial struct AccessGrantsOverview
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, administers, administersEnvironments, bindings, capabilities, credentialUsage, grantee);
+            ovb.Create(context, administersEnvironments, capabilities, grantee);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

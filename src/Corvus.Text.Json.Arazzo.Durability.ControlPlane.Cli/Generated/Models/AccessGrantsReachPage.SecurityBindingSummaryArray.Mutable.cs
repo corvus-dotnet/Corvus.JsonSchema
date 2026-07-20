@@ -17,28 +17,23 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the security bindings whose claim matches the grantee&#39;s identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsReachPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The source-credential bindings the grantee&#39;s runs may use (label-superset over the binding&#39;s usage grant).
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AccessGrantsCredentialUsageArray
+    public readonly partial struct SecurityBindingSummaryArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -143,7 +138,7 @@ public readonly partial struct AccessGrantsOverview
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(AccessGrantsCredentialUsageArray instance)
+            public static explicit operator Mutable(SecurityBindingSummaryArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -158,9 +153,9 @@ public readonly partial struct AccessGrantsOverview
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="AccessGrantsCredentialUsageArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="SecurityBindingSummaryArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator AccessGrantsCredentialUsageArray(Mutable instance)
+            public static implicit operator SecurityBindingSummaryArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -184,12 +179,12 @@ public readonly partial struct AccessGrantsOverview
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Mutable>(_idx, index);
                 }
             }
 
@@ -207,17 +202,17 @@ public readonly partial struct AccessGrantsOverview
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new AccessGrantsCredentialUsageArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new SecurityBindingSummaryArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -316,7 +311,7 @@ public readonly partial struct AccessGrantsOverview
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"AccessGrantsCredentialUsageArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"SecurityBindingSummaryArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -339,7 +334,7 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +381,7 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +407,7 @@ public readonly partial struct AccessGrantsOverview
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -582,10 +577,10 @@ public readonly partial struct AccessGrantsOverview
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary>(this, in item))
                 {
                     return false;
                 }
@@ -619,10 +614,10 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -639,7 +634,7 @@ public readonly partial struct AccessGrantsOverview
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source newItem)
             {
                 CheckValidInstance();
 
@@ -648,11 +643,11 @@ public readonly partial struct AccessGrantsOverview
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -683,11 +678,11 @@ public readonly partial struct AccessGrantsOverview
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="AccessGrantsCredentialUsageArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="SecurityBindingSummaryArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="AccessGrantsCredentialUsageArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="SecurityBindingSummaryArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -696,10 +691,10 @@ public readonly partial struct AccessGrantsOverview
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly AccessGrantsCredentialUsageArray Clone()
+            public readonly SecurityBindingSummaryArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<AccessGrantsCredentialUsageArray>(_idx);
+                return _parent.CloneElement<SecurityBindingSummaryArray>(_idx);
             }
 
             /// <summary>
@@ -707,7 +702,7 @@ public readonly partial struct AccessGrantsOverview
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="AccessGrantsCredentialUsageArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="SecurityBindingSummaryArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -718,10 +713,10 @@ public readonly partial struct AccessGrantsOverview
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly AccessGrantsCredentialUsageArray Freeze()
+            public readonly SecurityBindingSummaryArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<AccessGrantsCredentialUsageArray>(_idx);
+                return _parent.FreezeElement<SecurityBindingSummaryArray>(_idx);
             }
         }
 
@@ -749,9 +744,9 @@ public readonly partial struct AccessGrantsOverview
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsReachPage.SecurityBindingSummaryArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(AccessGrantsCredentialUsageArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(SecurityBindingSummaryArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -870,7 +865,7 @@ public readonly partial struct AccessGrantsOverview
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsReachPage.SecurityBindingSummaryArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -984,7 +979,7 @@ public readonly partial struct AccessGrantsOverview
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -992,7 +987,7 @@ public readonly partial struct AccessGrantsOverview
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1167,7 +1162,7 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<AccessGrantsCredentialUsageArray, Mutable>(this);
+            return workspace.CreateBuilder<SecurityBindingSummaryArray, Mutable>(this);
         }
 
         /// <summary>
@@ -1176,7 +1171,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AccessGrantsCredentialUsageArray> Create(
+        public static ParsedJsonDocument<SecurityBindingSummaryArray> Create(
             scoped in Source value, int initialCapacity = 30)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1186,7 +1181,7 @@ public readonly partial struct AccessGrantsOverview
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AccessGrantsCredentialUsageArray>();
+                return documentBuilder.ToParsedJsonDocument<SecurityBindingSummaryArray>();
             }
             finally
             {
@@ -1200,7 +1195,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AccessGrantsCredentialUsageArray> Create(
+        public static ParsedJsonDocument<SecurityBindingSummaryArray> Create(
             int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1210,7 +1205,7 @@ public readonly partial struct AccessGrantsOverview
                 cvb.StartArray();
                 cvb.EndArray();
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AccessGrantsCredentialUsageArray>();
+                return documentBuilder.ToParsedJsonDocument<SecurityBindingSummaryArray>();
             }
             finally
             {
@@ -1225,7 +1220,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AccessGrantsCredentialUsageArray> Create(
+        public static ParsedJsonDocument<SecurityBindingSummaryArray> Create(
             scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1236,7 +1231,7 @@ public readonly partial struct AccessGrantsOverview
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AccessGrantsCredentialUsageArray>();
+                return documentBuilder.ToParsedJsonDocument<SecurityBindingSummaryArray>();
             }
             finally
             {
@@ -1253,7 +1248,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AccessGrantsCredentialUsageArray> Create<TContext>(
+        public static ParsedJsonDocument<SecurityBindingSummaryArray> Create<TContext>(
             scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1267,7 +1262,7 @@ public readonly partial struct AccessGrantsOverview
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AccessGrantsCredentialUsageArray>();
+                return documentBuilder.ToParsedJsonDocument<SecurityBindingSummaryArray>();
             }
             finally
             {

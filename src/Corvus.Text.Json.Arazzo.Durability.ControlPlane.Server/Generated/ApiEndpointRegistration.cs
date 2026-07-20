@@ -154,6 +154,336 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetAccessGrantsEndpoint);
 
+        IEndpointConventionBuilder __GetAccessGrantsReachEndpoint = app.MapGet("/access/grants/reach", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString GranteeValue = default;
+                if (context.Request.Query.TryGetValue("grantee", out var GranteeQueryVal) && GranteeQueryVal.Count > 0)
+                {
+                    string GranteeRaw = GranteeQueryVal[0]!;
+                    GranteeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(GranteeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
+                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
+                {
+                    string LimitRaw = LimitQueryVal[0]!;
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
+                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
+                {
+                    string PageTokenRaw = PageTokenQueryVal[0]!;
+                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
+                }
+
+                if (GranteeValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'grantee' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!GranteeValue.IsUndefined() && !GranteeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'grantee' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetAccessGrantsReachParams parameters = new()
+                {
+                    Grantee = GranteeValue,
+                    Limit = LimitValue,
+                    PageToken = PageTokenValue,
+                }
+                ;
+
+                GetAccessGrantsReachResult result = await securityHandler.HandleGetAccessGrantsReachAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getAccessGrantsReach",
+                methodName: "GetAccessGrantsReach",
+                httpMethod: "GET",
+                routeTemplate: "/access/grants/reach",
+                tags: new[] { "security" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetAccessGrantsReachEndpoint);
+
+        IEndpointConventionBuilder __GetAccessGrantsAdministeredEndpoint = app.MapGet("/access/grants/administered", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString GranteeValue = default;
+                if (context.Request.Query.TryGetValue("grantee", out var GranteeQueryVal) && GranteeQueryVal.Count > 0)
+                {
+                    string GranteeRaw = GranteeQueryVal[0]!;
+                    GranteeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(GranteeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
+                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
+                {
+                    string LimitRaw = LimitQueryVal[0]!;
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
+                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
+                {
+                    string PageTokenRaw = PageTokenQueryVal[0]!;
+                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
+                }
+
+                if (GranteeValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'grantee' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!GranteeValue.IsUndefined() && !GranteeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'grantee' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetAccessGrantsAdministeredParams parameters = new()
+                {
+                    Grantee = GranteeValue,
+                    Limit = LimitValue,
+                    PageToken = PageTokenValue,
+                }
+                ;
+
+                GetAccessGrantsAdministeredResult result = await securityHandler.HandleGetAccessGrantsAdministeredAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getAccessGrantsAdministered",
+                methodName: "GetAccessGrantsAdministered",
+                httpMethod: "GET",
+                routeTemplate: "/access/grants/administered",
+                tags: new[] { "security" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetAccessGrantsAdministeredEndpoint);
+
+        IEndpointConventionBuilder __GetAccessGrantsCredentialsEndpoint = app.MapGet("/access/grants/credentials", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString GranteeValue = default;
+                if (context.Request.Query.TryGetValue("grantee", out var GranteeQueryVal) && GranteeQueryVal.Count > 0)
+                {
+                    string GranteeRaw = GranteeQueryVal[0]!;
+                    GranteeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(GranteeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
+                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
+                {
+                    string LimitRaw = LimitQueryVal[0]!;
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
+                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
+                {
+                    string PageTokenRaw = PageTokenQueryVal[0]!;
+                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
+                }
+
+                if (GranteeValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'grantee' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!GranteeValue.IsUndefined() && !GranteeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'grantee' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetAccessGrantsCredentialsParams parameters = new()
+                {
+                    Grantee = GranteeValue,
+                    Limit = LimitValue,
+                    PageToken = PageTokenValue,
+                }
+                ;
+
+                GetAccessGrantsCredentialsResult result = await securityHandler.HandleGetAccessGrantsCredentialsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getAccessGrantsCredentials",
+                methodName: "GetAccessGrantsCredentials",
+                httpMethod: "GET",
+                routeTemplate: "/access/grants/credentials",
+                tags: new[] { "security" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetAccessGrantsCredentialsEndpoint);
+
         IEndpointConventionBuilder __ListSecurityOrderingsEndpoint = app.MapGet("/security/orderings", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -14495,6 +14825,36 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetAccessGrants</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GetAccessGrantsOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsReach</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsReachOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsReach</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsReachOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsAdministered</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsAdministeredOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsAdministered</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsAdministeredOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsCredentials</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsCredentialsOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsCredentials</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsCredentialsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListRuns</c> for the <c>Oauth2</c> scheme.

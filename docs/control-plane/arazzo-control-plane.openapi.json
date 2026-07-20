@@ -112,27 +112,106 @@
         "tags": [
           "security"
         ],
-        "summary": "Who-can-do-what overview for a grantee",
-        "description": "Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.",
+        "summary": "Who-can-do-what summary for a grantee",
+        "description": "The bounded summary for a single resolved grantee: its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — reach bindings, administered workflows, and credential usage — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.",
         "parameters": [
-          {
-            "name": "grantee",
-            "in": "query",
-            "required": true,
-            "description": "An opaque URL-safe token identifying the grantee: base64url of a resolved grantee's JSON (a ResolvedGrantee object from a GET /identity/grantees result), round-tripped verbatim by the client.",
-            "schema": {
-              "type": "string"
-            }
-          }
+          { "$ref": "#/components/parameters/GranteeQuery" }
         ],
         "responses": {
           "200": {
-            "description": "The grantee's aggregated access.",
+            "description": "The grantee's bounded access summary.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccessGrantsOverview"
                 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/access/grants/reach": {
+      "get": {
+        "operationId": "getAccessGrantsReach",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "A grantee's reach bindings (paged)",
+        "description": "A keyset page of the security bindings whose claim matches the grantee's identity, each with its per-verb read/write/purge reach — the grantee's reach, one page at a time. Delete a binding to revoke that access. Reach-scoped; wildcard ('*') bindings are omitted. See GET /access/grants for the grantee token and the bounded summary.",
+        "parameters": [
+          { "$ref": "#/components/parameters/GranteeQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the grantee's reach bindings.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessGrantsReachPage" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/access/grants/administered": {
+      "get": {
+        "operationId": "getAccessGrantsAdministered",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "The workflows a grantee administers (paged)",
+        "description": "A keyset page of the base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity), each enriched with its representative catalog version so the row reads without a detail fetch. Reach-scoped. See GET /access/grants for the grantee token and the bounded summary.",
+        "parameters": [
+          { "$ref": "#/components/parameters/GranteeQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the workflows the grantee administers.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessGrantsAdministeredPage" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/access/grants/credentials": {
+      "get": {
+        "operationId": "getAccessGrantsCredentials",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "The credentials a grantee's runs may use (paged)",
+        "description": "A keyset page of the source-credential bindings the grantee's runs may use — the credentials whose usage grant is scoped to the grantee's identity (a label-superset over the binding's usage grant; shared deployment-wide bindings are omitted, §6.1). Reach-scoped. See GET /access/grants for the grantee token and the bounded summary.",
+        "parameters": [
+          { "$ref": "#/components/parameters/GranteeQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the credentials the grantee's runs may use.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccessGrantsCredentialsPage" }
               }
             }
           },
@@ -4768,6 +4847,13 @@
         "description": "An opaque continuation token from a previous page's `nextPageToken`, for paging.",
         "schema": { "type": "string" }
       },
+      "GranteeQuery": {
+        "name": "grantee",
+        "in": "query",
+        "required": true,
+        "description": "An opaque URL-safe token identifying the grantee: base64url of a resolved grantee's JSON (a ResolvedGrantee object from a GET /identity/grantees result), round-tripped verbatim by the client.",
+        "schema": { "type": "string" }
+      },
       "CreatedAfterQuery": {
         "name": "createdAfter",
         "in": "query",
@@ -5106,53 +5192,86 @@
       },
       "AccessGrantsOverview": {
         "type": "object",
-        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.",
+        "description": "The bounded who-can-do-what summary for one grantee (design §6.1): its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — the bindings that grant reach, the workflows it administers, and the credentials its runs may use — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}.",
         "properties": {
           "grantee": {
             "$ref": "#/components/schemas/ResolvedGrantee"
           },
-          "bindings": {
-            "type": "array",
-            "description": "The security bindings whose claim matches the grantee's identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.",
-            "items": {
-              "$ref": "#/components/schemas/SecurityBindingSummary"
-            }
-          },
           "capabilities": {
             "type": "array",
-            "description": "The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.",
+            "description": "The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible. Rolled up over all of the grantee's matched bindings (not paged).",
             "items": {
               "$ref": "#/components/schemas/AccessGrantsCapability"
             }
           },
-          "administers": {
-            "type": "array",
-            "description": "The base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity).",
-            "items": {
-              "$ref": "#/components/schemas/AccessGrantsAdministeredWorkflow"
-            }
-          },
           "administersEnvironments": {
             "type": "array",
-            "description": "The environments the grantee administers (membership, mirroring administers).",
+            "description": "The environments the grantee administers (membership; a grantee administers a bounded handful, so this is not paged).",
             "items": {
               "$ref": "#/components/schemas/AccessGrantsAdministeredEnvironment"
-            }
-          },
-          "credentialUsage": {
-            "type": "array",
-            "description": "The source-credential bindings the grantee's runs may use (label-superset over the binding's usage grant).",
-            "items": {
-              "$ref": "#/components/schemas/AccessGrantsCredentialUsage"
             }
           }
         },
         "required": [
           "grantee",
-          "bindings",
           "capabilities",
-          "administers",
-          "administersEnvironments",
+          "administersEnvironments"
+        ]
+      },
+      "AccessGrantsReachPage": {
+        "type": "object",
+        "description": "One keyset page of the security bindings whose claim matches the grantee's identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.",
+        "properties": {
+          "bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingSummary"
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "The keyset cursor for the next page, absent on the last page."
+          }
+        },
+        "required": [
+          "bindings"
+        ]
+      },
+      "AccessGrantsAdministeredPage": {
+        "type": "object",
+        "description": "One keyset page of the base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity).",
+        "properties": {
+          "administers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsAdministeredWorkflow"
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "The keyset cursor for the next page, absent on the last page."
+          }
+        },
+        "required": [
+          "administers"
+        ]
+      },
+      "AccessGrantsCredentialsPage": {
+        "type": "object",
+        "description": "One keyset page of the source-credential bindings the grantee's runs may use — the credentials whose usage grant is scoped to the grantee's identity (a label-superset over the binding's usage grant; shared deployment-wide bindings are omitted).",
+        "properties": {
+          "credentialUsage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsCredentialUsage"
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "The keyset cursor for the next page, absent on the last page."
+          }
+        },
+        "required": [
           "credentialUsage"
         ]
       },

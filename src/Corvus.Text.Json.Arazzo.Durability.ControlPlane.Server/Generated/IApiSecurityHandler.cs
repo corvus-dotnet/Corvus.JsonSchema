@@ -21,13 +21,40 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiSecurityHandler
 {
     /// <summary>
-    /// Handles GET /access/grants — Who-can-do-what overview for a grantee
+    /// Handles GET /access/grants — Who-can-do-what summary for a grantee
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<GetAccessGrantsResult> HandleGetAccessGrantsAsync(GetAccessGrantsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /access/grants/reach — A grantee's reach bindings (paged)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetAccessGrantsReachResult> HandleGetAccessGrantsReachAsync(GetAccessGrantsReachParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /access/grants/administered — The workflows a grantee administers (paged)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetAccessGrantsAdministeredResult> HandleGetAccessGrantsAdministeredAsync(GetAccessGrantsAdministeredParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /access/grants/credentials — The credentials a grantee's runs may use (paged)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetAccessGrantsCredentialsResult> HandleGetAccessGrantsCredentialsAsync(GetAccessGrantsCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /security/orderings — List the configured ordered tag dimensions

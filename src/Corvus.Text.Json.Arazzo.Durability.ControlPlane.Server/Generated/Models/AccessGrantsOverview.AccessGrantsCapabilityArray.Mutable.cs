@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// The bounded who-can-do-what summary for one grantee (design &#167;6.1): its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — the bindings that grant reach, the workflows it administers, and the credentials its runs may use — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}.
 /// </para>
 /// </remarks>
 public readonly partial struct AccessGrantsOverview
@@ -34,7 +34,7 @@ public readonly partial struct AccessGrantsOverview
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.
+    /// The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible. Rolled up over all of the grantee&#39;s matched bindings (not paged).
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]

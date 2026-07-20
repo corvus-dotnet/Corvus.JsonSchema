@@ -21,6 +21,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// When the last conferring binding expires; absent when a conferring binding never expires.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct JsonDateTime
     : IJsonElement<JsonDateTime>

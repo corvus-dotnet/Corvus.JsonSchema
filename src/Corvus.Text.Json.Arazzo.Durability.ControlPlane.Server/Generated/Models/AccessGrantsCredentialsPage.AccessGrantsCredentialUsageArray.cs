@@ -24,28 +24,23 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the source-credential bindings the grantee&#39;s runs may use — the credentials whose usage grant is scoped to the grantee&#39;s identity (a label-superset over the binding&#39;s usage grant; shared deployment-wide bindings are omitted).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsCredentialsPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AccessGrantsAdministeredWorkflowArray
+    public readonly partial struct AccessGrantsCredentialUsageArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<AccessGrantsAdministeredWorkflowArray>,
+        : IJsonElement<AccessGrantsCredentialUsageArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<AccessGrantsAdministeredWorkflowArray>,
+        : IJsonElement<AccessGrantsCredentialUsageArray>,
           IFormattable
 #endif
     {
@@ -55,10 +50,10 @@ public readonly partial struct AccessGrantsOverview
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="AccessGrantsAdministeredWorkflowArray"/> struct.
+        /// Initializes a new instance of the <see cref="AccessGrantsCredentialUsageArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal AccessGrantsAdministeredWorkflowArray(IJsonDocument parent, int idx)
+        internal AccessGrantsCredentialUsageArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -68,7 +63,7 @@ public readonly partial struct AccessGrantsOverview
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static AccessGrantsAdministeredWorkflowArray DefaultInstance { get; }
+        public static AccessGrantsCredentialUsageArray DefaultInstance { get; }
 
         /// <summary>
         /// Gets the rank of the array.
@@ -82,12 +77,12 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow this[int index]
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(_idx, index);
             }
         }
 
@@ -105,10 +100,10 @@ public readonly partial struct AccessGrantsOverview
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow> EnumerateArray()
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -125,7 +120,7 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in AccessGrantsAdministeredWorkflowArray left, in AccessGrantsAdministeredWorkflowArray right)
+        public static bool operator ==(in AccessGrantsCredentialUsageArray left, in AccessGrantsCredentialUsageArray right)
         {
             return left.Equals(right);
         }
@@ -138,7 +133,7 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in AccessGrantsAdministeredWorkflowArray left, in AccessGrantsAdministeredWorkflowArray right)
+        public static bool operator !=(in AccessGrantsCredentialUsageArray left, in AccessGrantsCredentialUsageArray right)
         {
             return !left.Equals(right);
         }
@@ -151,7 +146,7 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in AccessGrantsAdministeredWorkflowArray left, in JsonElement right)
+        public static bool operator ==(in AccessGrantsCredentialUsageArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -164,7 +159,7 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in AccessGrantsAdministeredWorkflowArray left, in JsonElement right)
+        public static bool operator !=(in AccessGrantsCredentialUsageArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -175,7 +170,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(AccessGrantsAdministeredWorkflowArray instance)
+        public static implicit operator JsonElement(AccessGrantsCredentialUsageArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -186,9 +181,9 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AccessGrantsAdministeredWorkflowArray(JsonElement instance)
+        public static implicit operator AccessGrantsCredentialUsageArray(JsonElement instance)
         {
-            return AccessGrantsAdministeredWorkflowArray.From(instance);
+            return AccessGrantsCredentialUsageArray.From(instance);
         }
 
         /// <summary>
@@ -197,7 +192,7 @@ public readonly partial struct AccessGrantsOverview
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessGrantsAdministeredWorkflowArray From<T>(in T instance)
+        public static AccessGrantsCredentialUsageArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -222,10 +217,10 @@ public readonly partial struct AccessGrantsOverview
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessGrantsAdministeredWorkflowArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static AccessGrantsCredentialUsageArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessGrantsAdministeredWorkflowArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<AccessGrantsCredentialUsageArray>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
@@ -248,10 +243,10 @@ public readonly partial struct AccessGrantsOverview
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessGrantsAdministeredWorkflowArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static AccessGrantsCredentialUsageArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessGrantsAdministeredWorkflowArray>(json, options);
+            return JsonElementHelpers.ParseValue<AccessGrantsCredentialUsageArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -274,10 +269,10 @@ public readonly partial struct AccessGrantsOverview
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AccessGrantsAdministeredWorkflowArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static AccessGrantsCredentialUsageArray ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessGrantsAdministeredWorkflowArray>(json, options);
+            return JsonElementHelpers.ParseValue<AccessGrantsCredentialUsageArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -317,10 +312,10 @@ public readonly partial struct AccessGrantsOverview
         ///   A value could not be read from the reader.
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static AccessGrantsAdministeredWorkflowArray ParseValue(ref Utf8JsonReader reader)
+        public static AccessGrantsCredentialUsageArray ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AccessGrantsAdministeredWorkflowArray>(ref reader);
+            return JsonElementHelpers.ParseValue<AccessGrantsCredentialUsageArray>(ref reader);
             #pragma warning restore CS0618
         }
 
@@ -362,16 +357,16 @@ public readonly partial struct AccessGrantsOverview
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out AccessGrantsAdministeredWorkflowArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out AccessGrantsCredentialUsageArray? result)
         {
-            return JsonElementHelpers.TryParseValue<AccessGrantsAdministeredWorkflowArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<AccessGrantsCredentialUsageArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new AccessGrantsAdministeredWorkflowArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new AccessGrantsCredentialUsageArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -461,11 +456,11 @@ public readonly partial struct AccessGrantsOverview
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static AccessGrantsAdministeredWorkflowArray IJsonElement<AccessGrantsAdministeredWorkflowArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static AccessGrantsCredentialUsageArray IJsonElement<AccessGrantsCredentialUsageArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"AccessGrantsAdministeredWorkflowArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"AccessGrantsCredentialUsageArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -480,11 +475,11 @@ public readonly partial struct AccessGrantsOverview
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="AccessGrantsAdministeredWorkflowArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="AccessGrantsCredentialUsageArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="AccessGrantsAdministeredWorkflowArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="AccessGrantsCredentialUsageArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -493,10 +488,10 @@ public readonly partial struct AccessGrantsOverview
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public AccessGrantsAdministeredWorkflowArray Clone()
+        public AccessGrantsCredentialUsageArray Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<AccessGrantsAdministeredWorkflowArray>(_idx);
+            return _parent.CloneElement<AccessGrantsCredentialUsageArray>(_idx);
         }
 
         /// <summary>
@@ -504,7 +499,7 @@ public readonly partial struct AccessGrantsOverview
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="AccessGrantsAdministeredWorkflowArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="AccessGrantsCredentialUsageArray"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -518,12 +513,12 @@ public readonly partial struct AccessGrantsOverview
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public AccessGrantsAdministeredWorkflowArray Freeze()
+        public AccessGrantsCredentialUsageArray Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<AccessGrantsAdministeredWorkflowArray>(_idx);
+                return mutable.FreezeElement<AccessGrantsCredentialUsageArray>(_idx);
             }
 
             return this;

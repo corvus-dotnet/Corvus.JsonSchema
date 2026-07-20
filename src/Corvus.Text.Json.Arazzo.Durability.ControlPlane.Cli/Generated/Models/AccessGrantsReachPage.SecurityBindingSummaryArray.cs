@@ -17,26 +17,21 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the security bindings whose claim matches the grantee&#39;s identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsReachPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The security bindings whose claim matches the grantee&#39;s identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct SecurityBindingSummaryArray
 #if NET8_0_OR_GREATER
@@ -82,12 +77,12 @@ public readonly partial struct AccessGrantsOverview
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary this[int index]
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary>(_idx, index);
             }
         }
 
@@ -105,10 +100,10 @@ public readonly partial struct AccessGrantsOverview
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary> EnumerateArray()
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary>(_parent, _idx);
         }
 
         /// <inheritdoc/>

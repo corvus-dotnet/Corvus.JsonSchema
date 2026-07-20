@@ -402,6 +402,21 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         return administered;
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        // The paged twin of the drain above: hand the caller's subset digests to the already-keyset reverse index and
+        // return exactly one store page (its base ids are detached strings; the caller disposes the page). No store or an
+        // empty identity administers nothing, so a last (empty) page.
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
+        if (this.administrators is not { } store || digests.Count == 0)
+        {
+            return WorkflowAdministeredPage.Create([]);
+        }
+
+        return await store.ListAdministeredAsync(digests, limit, pageToken, cancellationToken).ConfigureAwait(false);
+    }
+
     // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes
     // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages. The
     // generated Create() escapes with the default encoder — byte-identical for our base64url tokens (pinned by

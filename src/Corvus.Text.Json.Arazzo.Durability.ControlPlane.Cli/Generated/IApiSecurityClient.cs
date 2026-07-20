@@ -108,6 +108,36 @@ public interface IApiSecurityClient : IAsyncDisposable
         public static readonly string[] GetAccessGrantsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsReach</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsReachOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsReach</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsReachOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsAdministered</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsAdministeredOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsAdministered</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsAdministeredOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsCredentials</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsCredentialsOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrantsCredentials</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsCredentialsOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListSecurityOrderingsOauth2Scopes = ["security:read"];
@@ -249,14 +279,50 @@ public interface IApiSecurityClient : IAsyncDisposable
     }
 
     /// <summary>
-    /// Who-can-do-what overview for a grantee
+    /// Who-can-do-what summary for a grantee
     /// </summary>
     /// <remarks>
-    /// Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.
+    /// The bounded summary for a single resolved grantee: its identity, the capability scopes its bindings confer, and the environments it administers. The unbounded lists — reach bindings, administered workflows, and credential usage — are the keyset-paged sub-resources GET /access/grants/{reach,administered,credentials}. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.
     /// </remarks>
     /// <param name="grantee">The grantee parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetAccessGrantsResponse> GetAccessGrantsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// A grantee's reach bindings (paged)
+    /// </summary>
+    /// <remarks>
+    /// A keyset page of the security bindings whose claim matches the grantee's identity, each with its per-verb read/write/purge reach — the grantee's reach, one page at a time. Delete a binding to revoke that access. Reach-scoped; wildcard ('*') bindings are omitted. See GET /access/grants for the grantee token and the bounded summary.
+    /// </remarks>
+    /// <param name="grantee">The grantee parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetAccessGrantsReachResponse> GetAccessGrantsReachAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// The workflows a grantee administers (paged)
+    /// </summary>
+    /// <remarks>
+    /// A keyset page of the base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity), each enriched with its representative catalog version so the row reads without a detail fetch. Reach-scoped. See GET /access/grants for the grantee token and the bounded summary.
+    /// </remarks>
+    /// <param name="grantee">The grantee parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetAccessGrantsAdministeredResponse> GetAccessGrantsAdministeredAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// The credentials a grantee's runs may use (paged)
+    /// </summary>
+    /// <remarks>
+    /// A keyset page of the source-credential bindings the grantee's runs may use — the credentials whose usage grant is scoped to the grantee's identity (a label-superset over the binding's usage grant; shared deployment-wide bindings are omitted, §6.1). Reach-scoped. See GET /access/grants for the grantee token and the bounded summary.
+    /// </remarks>
+    /// <param name="grantee">The grantee parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetAccessGrantsCredentialsResponse> GetAccessGrantsCredentialsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List the configured ordered tag dimensions

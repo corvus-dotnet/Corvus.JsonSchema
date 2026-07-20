@@ -24,19 +24,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsAdministeredPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct AccessGrantsAdministeredWorkflowArray
     {
@@ -749,7 +744,7 @@ public readonly partial struct AccessGrantsOverview
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredPage.AccessGrantsAdministeredWorkflowArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(AccessGrantsAdministeredWorkflowArray instance) => new(JsonElement.From(instance));
 
@@ -870,7 +865,7 @@ public readonly partial struct AccessGrantsOverview
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredPage.AccessGrantsAdministeredWorkflowArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {

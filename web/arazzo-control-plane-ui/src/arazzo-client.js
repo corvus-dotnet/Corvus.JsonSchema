@@ -1823,24 +1823,86 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `getAccessGrants` — the Access Overview (`GET /access/grants`): one resolved grantee's aggregated access across the
-   * deployment. `grantee` is the resolved-grantee object the identity picker hands back
-   * (`{ kind, value, label, identity: [{dimension,value}], source, complete }`, `identity` in the resolved `sys:` form);
-   * it is encoded as a URL-safe base64 token of its UTF-8 JSON in the `grantee` query parameter. Requires `security:read`.
+   * Encodes a resolved-grantee object as the URL-safe base64 token the access-grants endpoints take in their `grantee`
+   * query parameter (its UTF-8 JSON, base64url, unpadded). `grantee` is the object the identity picker hands back
+   * (`{ kind, value, label, identity: [{dimension,value}], source, complete }`, `identity` in the resolved `sys:` form).
+   * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
+   * @returns {string} The base64url grantee token.
+   */
+  _granteeToken(grantee) {
+    const json = JSON.stringify(grantee);
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  /**
+   * `getAccessGrants` — the Access Overview summary (`GET /access/grants`): one resolved grantee's bounded who-can-do-what
+   * across the deployment. The unbounded lists (the bindings that grant reach, the workflows it administers, the credentials
+   * its runs may use) are the keyset-paged sub-resources {@link getAccessGrantsReach}, {@link getAccessGrantsAdministered},
+   * and {@link getAccessGrantsCredentials}. Requires `security:read`.
    * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
    *   The resolved grantee to aggregate access for.
    * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ grantee: object, bindings: object[], administers: Array<{ baseWorkflowId: string }>, credentialUsage: Array<{ sourceName: string, environment: string }> }>}
-   *   An {@link AccessGrantsOverview}: the echoed `grantee`, the `bindings` it matches (each a {@link SecurityBindingSummary}),
-   *   the `administers` base workflows, and the `credentialUsage` (source, environment) pairs it may use.
+   * @returns {Promise<{ grantee: object, capabilities: Array<{ scope: string, eligible: boolean, expiresAt?: string }>, administersEnvironments: object[] }>}
+   *   An {@link AccessGrantsOverview}: the echoed `grantee`, the `capabilities` its bindings confer, and the
+   *   `administersEnvironments` it administers (each enriched with display name, draft-run policy, availability count).
    */
   async getAccessGrants(grantee, opts = {}) {
-    const json = JSON.stringify(grantee);
-    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
-    const token = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     const search = new URLSearchParams();
-    search.set('grantee', token);
+    search.set('grantee', this._granteeToken(grantee));
     return this._request('GET', `/access/grants${qs(search)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `getAccessGrantsReach` — one keyset page of the bindings that grant a grantee reach (`GET /access/grants/reach`).
+   * Requires `security:read`.
+   * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ bindings: object[], nextPageToken: (string|null) }>}
+   *   The `bindings` (each a {@link SecurityBindingSummary}) and the keyset `nextPageToken` (null on the last page).
+   */
+  async getAccessGrantsReach(grantee, query = {}) {
+    const search = new URLSearchParams();
+    search.set('grantee', this._granteeToken(grantee));
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/access/grants/reach${qs(search)}`, { signal: query.signal });
+    return { bindings: page.bindings ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `getAccessGrantsAdministered` — one keyset page of the workflows a grantee administers
+   * (`GET /access/grants/administered`), each row enriched with its representative version's display values. Requires
+   * `security:read`.
+   * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ administers: object[], nextPageToken: (string|null) }>}
+   *   The `administers` rows (`{ baseWorkflowId, title?, latestVersion?, status?, owner? }`) and the `nextPageToken`.
+   */
+  async getAccessGrantsAdministered(grantee, query = {}) {
+    const search = new URLSearchParams();
+    search.set('grantee', this._granteeToken(grantee));
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/access/grants/administered${qs(search)}`, { signal: query.signal });
+    return { administers: page.administers ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `getAccessGrantsCredentials` — one keyset page of the credentials a grantee's runs may use
+   * (`GET /access/grants/credentials`). Requires `security:read`.
+   * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ credentialUsage: object[], nextPageToken: (string|null) }>}
+   *   The `credentialUsage` (`{ sourceName, environment }`) pairs and the `nextPageToken`.
+   */
+  async getAccessGrantsCredentials(grantee, query = {}) {
+    const search = new URLSearchParams();
+    search.set('grantee', this._granteeToken(grantee));
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/access/grants/credentials${qs(search)}`, { signal: query.signal });
+    return { credentialUsage: page.credentialUsage ?? [], nextPageToken: page.nextPageToken ?? null };
   }
 
   // ---- security:write ---------------------------------------------------------------------------

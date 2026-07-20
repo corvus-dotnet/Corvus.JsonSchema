@@ -17,26 +17,21 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the source-credential bindings the grantee&#39;s runs may use — the credentials whose usage grant is scoped to the grantee&#39;s identity (a label-superset over the binding&#39;s usage grant; shared deployment-wide bindings are omitted).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsCredentialsPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The source-credential bindings the grantee&#39;s runs may use (label-superset over the binding&#39;s usage grant).
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct AccessGrantsCredentialUsageArray
     {
@@ -184,12 +179,12 @@ public readonly partial struct AccessGrantsOverview
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable>(_idx, index);
                 }
             }
 
@@ -207,10 +202,10 @@ public readonly partial struct AccessGrantsOverview
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -339,7 +334,7 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +381,7 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +407,7 @@ public readonly partial struct AccessGrantsOverview
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -582,10 +577,10 @@ public readonly partial struct AccessGrantsOverview
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(this, in item))
                 {
                     return false;
                 }
@@ -619,10 +614,10 @@ public readonly partial struct AccessGrantsOverview
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -639,7 +634,7 @@ public readonly partial struct AccessGrantsOverview
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source newItem)
             {
                 CheckValidInstance();
 
@@ -648,11 +643,11 @@ public readonly partial struct AccessGrantsOverview
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -749,7 +744,7 @@ public readonly partial struct AccessGrantsOverview
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialsPage.AccessGrantsCredentialUsageArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(AccessGrantsCredentialUsageArray instance) => new(JsonElement.From(instance));
 
@@ -870,7 +865,7 @@ public readonly partial struct AccessGrantsOverview
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialsPage.AccessGrantsCredentialUsageArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -984,7 +979,7 @@ public readonly partial struct AccessGrantsOverview
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -992,7 +987,7 @@ public readonly partial struct AccessGrantsOverview
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif

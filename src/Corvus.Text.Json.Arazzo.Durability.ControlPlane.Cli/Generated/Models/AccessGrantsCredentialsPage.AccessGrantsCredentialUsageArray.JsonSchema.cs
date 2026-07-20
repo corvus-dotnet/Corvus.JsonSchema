@@ -17,29 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
+/// One keyset page of the source-credential bindings the grantee&#39;s runs may use — the credentials whose usage grant is scoped to the grantee&#39;s identity (a label-superset over the binding&#39;s usage grant; shared deployment-wide bindings are omitted).
 /// </para>
 /// </remarks>
-public readonly partial struct AccessGrantsOverview
+public readonly partial struct AccessGrantsCredentialsPage
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AccessGrantsAdministeredWorkflowArray
-        : IJsonElement<AccessGrantsAdministeredWorkflowArray>
+    public readonly partial struct AccessGrantsCredentialUsageArray
+        : IJsonElement<AccessGrantsCredentialUsageArray>
     {
         public static partial class JsonSchema
         {
@@ -48,17 +43,17 @@ public readonly partial struct AccessGrantsOverview
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/AccessGrantsOverview/properties/administers"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/AccessGrantsCredentialsPage/properties/credentialUsage"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/AccessGrantsOverview/properties/administers";
+            public const string SchemaLocation = "/components/schemas/AccessGrantsCredentialsPage/properties/credentialUsage";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AccessGrantsOverview/properties/administers"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AccessGrantsCredentialsPage/properties/credentialUsage"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -96,14 +91,14 @@ public readonly partial struct AccessGrantsOverview
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsAdministeredWorkflow.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessGrantsCredentialUsage.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);
