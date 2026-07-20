@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the StartCatalogWorkflowRun operation.
 /// </summary>
-/// <remarks>Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.</remarks>
+/// <remarks>Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Supply an `Idempotency-Key` header to make the start idempotent: a repeated request carrying the same key returns the run the first created rather than starting a duplicate. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.</remarks>
 public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalogWorkflowRunRequest>
 {
 
@@ -35,6 +35,11 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     /// Gets the environment parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+
+    /// <summary>
+    /// Gets the Idempotency-Key parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdempotencyKey { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StartCatalogWorkflowRunRequest"/> struct.
@@ -116,6 +121,13 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     {
         callback("Accept"u8, "application/json, application/problem+json"u8, state);
 
+        ReadOnlySpan<byte> nameUtf8IdempotencyKey = "Idempotency-Key"u8;
+        if (this.IdempotencyKey.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString utf8IdempotencyKey = ((JsonElement)this.IdempotencyKey).GetUtf8String();
+            callback(nameUtf8IdempotencyKey, utf8IdempotencyKey.Span, state);
+        }
+
     }
 
     /// <inheritdoc/>
@@ -152,6 +164,15 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
                 ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
             }
 
+            if (this.IdempotencyKey.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorIdempotencyKey = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.IdempotencyKey.EvaluateSchema(collectorIdempotencyKey))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("Idempotency-Key", SchemaValidationDetail.FormatResults(collectorIdempotencyKey));
+                }
+            }
+
         }
         else
         {
@@ -168,6 +189,11 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
             if (!this.Environment.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("environment");
+            }
+
+            if (this.IdempotencyKey.IsNotUndefined() && !this.IdempotencyKey.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("Idempotency-Key");
             }
 
         }

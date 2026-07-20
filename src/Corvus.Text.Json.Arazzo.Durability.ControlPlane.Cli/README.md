@@ -39,12 +39,15 @@ The runs commands above sit at the top level; the other control-plane resources 
 | `credentials` | Manage source credential bindings — **references and non-secret metadata only, never secret material**. `list` is a status-first table (`--status`/`--source`); `update` is a merge (re-point a `--ref` to rotate; unspecified fields are preserved). |
 | `administrators` | Manage a workflow's administrator set (`list`/`add`/`remove`/`transfer`); administrators are named by the deployment-mapped grant `{dimension, value}`. |
 | `access-requests` | Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): `submit`/`list`/`get`/`approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke`. |
+| `schedules` | Manage durable schedules (#896) — a cadence that starts a target workflow on each occurrence: `list`/`get`/`create`/`run-now`/`delete`. Creating one needs a runner serving schedules in the target environment. Reuses the `runs:read`/`runs:write` scopes. |
 | `scenarios` | Run workflow scenario suites (workflow-designer design §4.5) — the CI story; see below. |
 
 ```bash
 arazzo-runs credentials list --status expiring --server https://host:8080
 arazzo-runs credentials update petstore production --ref value=keyvault://petstore-key#4 --server https://host:8080
 arazzo-runs administrators add billing tenant acme --server https://host:8080
+arazzo-runs schedules create nightly-reconcile development nightly-reconcile 2 --cron "0 3 * * *" --inputs '{"date":"2026-07-20"}' --server https://host:8080
+arazzo-runs schedules run-now nightly-reconcile --server https://host:8080
 ```
 
 ### Examples

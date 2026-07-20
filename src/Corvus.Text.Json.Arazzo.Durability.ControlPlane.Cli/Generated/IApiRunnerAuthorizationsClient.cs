@@ -62,7 +62,7 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["accessRequests:grant", "administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runners:register", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -108,6 +108,16 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         public static readonly string[] ListEnvironmentRunnerAuthorizationsOpenIdConnectScopes = ["environments:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>RegisterRunner</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] RegisterRunnerOauth2Scopes = ["runners:register"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RegisterRunner</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] RegisterRunnerOpenIdConnectScopes = ["runners:register"];
+
+        /// <summary>
         /// Gets the scopes required by <c>CountEnvironmentRunnerAuthorizations</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] CountEnvironmentRunnerAuthorizationsOauth2Scopes = ["environments:read"];
@@ -150,12 +160,12 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["environments:read", "environments:write"];
+        public static readonly string[] AllOauth2Scopes = ["environments:read", "environments:write", "runners:register"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["environments:read", "environments:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["environments:read", "environments:write", "runners:register"];
     }
 
     /// <summary>
@@ -170,6 +180,17 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListEnvironmentRunnerAuthorizationsResponse> ListEnvironmentRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Register a runner to serve an environment (authenticated machine principal)
+    /// </summary>
+    /// <remarks>
+    /// Registers the calling runner to serve this environment (design §5.5/§16.4). The runner authenticates as a machine principal (client-credentials, private-key-JWT, or mTLS) and presents its self-description; the control plane derives the trusted principal from the token and binds the runner's authorization to it, rather than to the self-asserted runnerId. The registration is recorded in the runner registry (with the runner's reach tags stamped from the environment's managementTags, never trusted from the runner) and the authorization enters Pending — the runner is dispatchable only once an administrator of the environment authorizes it (see authorizeRunner). Idempotent: a runner re-registering with its own principal keeps its existing authorization status. A registration presenting a principal that differs from the one already bound to this runnerId is refused (409). 404 if the environment does not exist.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RegisterRunnerResponse> RegisterRunnerAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Count the runners that serve an environment

@@ -111,6 +111,17 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiAvailabilityClient(transport));
     }
 
+    /// <summary>Builds the schedules API client (#896) (and the HTTP client / transport it owns) for this invocation.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and schedules API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiSchedulesClient Client)> CreateSchedulesClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiSchedulesClient(transport));
+    }
+
     /// <summary>Builds the workflow-administration API client (and the HTTP client / transport it owns) for this invocation.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The HTTP client, transport, and administrators API client. Dispose the HTTP client and transport.</returns>
@@ -748,6 +759,12 @@ internal static class Output
     public static int Unexpected(int statusCode)
     {
         Console.Error.WriteLine($"Unexpected response status {statusCode}.");
+        return 1;
+    }
+
+    public static int Validation(Models.ValidationResult validation)
+    {
+        Console.Error.WriteLine(validation.ToString());
         return 1;
     }
 }

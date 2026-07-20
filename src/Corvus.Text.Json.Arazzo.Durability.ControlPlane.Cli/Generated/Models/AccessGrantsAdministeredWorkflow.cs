@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A base workflow a grantee administers (a link target for the catalog).
+/// A base workflow a grantee administers (a link target for the catalog), enriched with a summary of its representative catalog version so the row reads without a detail fetch.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -174,6 +174,90 @@ public readonly partial struct AccessGrantsAdministeredWorkflow
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BaseWorkflowIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>latestVersion</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The representative catalog version number (the one the catalog surfaces for this workflow). Absent when no version is readable.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 LatestVersion
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LatestVersionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>owner</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The representative version&#39;s owner name, when a version is readable and an owner is set.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Owner
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>status</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The representative version&#39;s lifecycle status (e.g. &#39;Available&#39;, &#39;Obsolete&#39;), when a version is readable.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Status
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>title</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The representative version&#39;s title (display name), when set.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Title
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -631,9 +715,49 @@ public readonly partial struct AccessGrantsAdministeredWorkflow
         public const string BaseWorkflowId = "baseWorkflowId";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="LatestVersion"/>.
+        /// </summary>
+        public const string LatestVersion = "latestVersion";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Owner"/>.
+        /// </summary>
+        public const string Owner = "owner";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public const string Status = "status";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Title"/>.
+        /// </summary>
+        public const string Title = "title";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="BaseWorkflowId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> BaseWorkflowIdUtf8 => "baseWorkflowId"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="LatestVersion"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> LatestVersionUtf8 => "latestVersion"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Owner"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
     }
 
     /// <summary>
@@ -645,6 +769,26 @@ public readonly partial struct AccessGrantsAdministeredWorkflow
         /// Gets the escaped UTF-8 JSON property name for <see cref="BaseWorkflowId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> BaseWorkflowId => "baseWorkflowId"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="LatestVersion"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> LatestVersion => "latestVersion"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Owner"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Owner => "owner"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Status => "status"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Title => "title"u8;
     }
 
     /// <summary>
@@ -657,5 +801,25 @@ public readonly partial struct AccessGrantsAdministeredWorkflow
         /// Gets the pre-baked property name blob for <see cref="BaseWorkflowId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> BaseWorkflowId => [0x05, 0x01, 0x00, 0x00, 0x22, 0x62, 0x61, 0x73, 0x65, 0x57, 0x6F, 0x72, 0x6B, 0x66, 0x6C, 0x6F, 0x77, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="LatestVersion"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> LatestVersion => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Owner"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
     }
 }

@@ -163,6 +163,16 @@ public static class CliApp
                 availability.AddCommand<AvailabilityListVersionsCommand>("versions").WithDescription("List the workflow versions available in an environment (environment; --output json).");
             });
 
+            c.AddBranch<CommandSettings>("schedules", schedules =>
+            {
+                schedules.SetDescription("Manage durable schedules — a cadence that starts a target workflow on each occurrence (#896); reuses the runs:read / runs:write scopes. Creating one needs a runner serving schedules in the target environment.");
+                schedules.AddCommand<SchedulesListCommand>("list").WithDescription("List schedules the caller's reach admits (--environment <env>, --output json).");
+                schedules.AddCommand<SchedulesGetCommand>("get").WithDescription("Show one schedule by its id (scheduleId).");
+                schedules.AddCommand<SchedulesCreateCommand>("create").WithDescription("Create a schedule (scheduleId environment baseWorkflowId versionNumber --cron <expr> [--time-zone, --include-seconds, --inputs <json>]).");
+                schedules.AddCommand<SchedulesRunNowCommand>("run-now").WithDescription("Start the schedule's target immediately, without affecting the cadence (scheduleId).");
+                schedules.AddCommand<SchedulesDeleteCommand>("delete").WithDescription("Cancel a schedule; it then reads back as absent (scheduleId).");
+            });
+
             c.AddBranch<CommandSettings>("administrators", administrators =>
             {
                 administrators.SetDescription("Manage a workflow's administrator set — the identities entitled to publish versions and govern administration (administrators:read / administrators:write).");

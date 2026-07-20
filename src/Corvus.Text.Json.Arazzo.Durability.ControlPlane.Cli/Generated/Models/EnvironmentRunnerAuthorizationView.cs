@@ -297,6 +297,27 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     }
 
     /// <summary>
+    /// Gets the (optional) <c>principal</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The trusted machine principal that proved ownership of this runnerId by authenticating its registration (design &#167;16.4): the authorization binds to this verified identity rather than to a self-asserted runnerId. Absent on a row an administrator pre-authorized by runnerId before any runner has registered.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Principal
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PrincipalUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>reason</c> property.
     /// </summary>
     /// <remarks>
@@ -839,6 +860,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public const string Etag = "etag";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Principal"/>.
+        /// </summary>
+        public const string Principal = "principal";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
         /// </summary>
         public const string Reason = "reason";
@@ -882,6 +908,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Principal"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PrincipalUtf8 => "principal"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
@@ -935,6 +966,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public static ReadOnlySpan<byte> Etag => "etag"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Principal"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Principal => "principal"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Reason => "reason"u8;
@@ -985,6 +1021,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         /// Gets the pre-baked property name blob for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Principal"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Principal => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x69, 0x6E, 0x63, 0x69, 0x70, 0x61, 0x6C, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Reason"/>.

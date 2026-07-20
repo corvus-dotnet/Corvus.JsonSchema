@@ -21,6 +21,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The representative catalog version number (the one the catalog surfaces for this workflow). Absent when no version is readable.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct JsonInt32
 {

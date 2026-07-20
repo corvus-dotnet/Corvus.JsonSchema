@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// An environment a grantee administers (a link target for the environments panel).
+/// An environment a grantee administers (a link target for the environments panel), enriched with a summary of the environment so the row reads without a detail fetch.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -156,6 +156,72 @@ public readonly partial struct AccessGrantsAdministeredEnvironment
     {
         CheckValidInstance();
         return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>allowsDraftRuns</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether working-copy drafts may execute here as debug runs (workflow-designer design &#167;18). Absent means the environment could not be read (out of the reader&#39;s reach or since deleted); false means it does not allow draft runs.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean AllowsDraftRuns
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowsDraftRunsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>availability</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A bounded count of the workflow versions available in this environment (the count-API pattern; rendered e.g. &#39;12&#39; or &#39;100+&#39;). Absent when the availability store is not configured.
+    /// </para>
+    /// <para>
+    /// A bounded count of matching items for a list, returned by the &#39;/count&#39; endpoints — no rows are materialised (for work badges and list footers). When &#39;capped&#39; is true, &#39;count&#39; is the server&#39;s cap rather than the true total, so it should be rendered as e.g. &#39;100+&#39;.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CountResult Availability
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AvailabilityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CountResult value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>displayName</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The environment&#39;s human-facing display name, when set.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DisplayName
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisplayNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
     }
 
     /// <summary>
@@ -626,9 +692,39 @@ public readonly partial struct AccessGrantsAdministeredEnvironment
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public const string AllowsDraftRuns = "allowsDraftRuns";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Availability"/>.
+        /// </summary>
+        public const string Availability = "availability";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="DisplayName"/>.
+        /// </summary>
+        public const string DisplayName = "displayName";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Environment"/>.
         /// </summary>
         public const string Environment = "environment";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRunsUtf8 => "allowsDraftRuns"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Availability"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AvailabilityUtf8 => "availability"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="DisplayName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisplayNameUtf8 => "displayName"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Environment"/>.
@@ -642,6 +738,21 @@ public readonly partial struct AccessGrantsAdministeredEnvironment
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRuns => "allowsDraftRuns"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Availability"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Availability => "availability"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="DisplayName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisplayName => "displayName"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Environment => "environment"u8;
@@ -653,6 +764,21 @@ public readonly partial struct AccessGrantsAdministeredEnvironment
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRuns => [0x15, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Availability"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Availability => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x76, 0x61, 0x69, 0x6C, 0x61, 0x62, 0x69, 0x6C, 0x69, 0x74, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DisplayName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisplayName => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Environment"/>.
         /// </summary>

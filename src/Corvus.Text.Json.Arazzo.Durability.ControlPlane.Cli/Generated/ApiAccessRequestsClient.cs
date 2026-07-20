@@ -352,6 +352,92 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
         return SendAsyncCore<RevokeAccessRequestRequest, RevokeAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Grant a pending access request (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Writes the capped, time-boxed entitlement a pending request's decision authorized, WITHOUT the §15-administrator check that approve applies — the system-credentialed grant path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this to write the grant the decision authorized. The platform ceiling is identical to approve and holds regardless of caller — at most the requested scopes intersected with run access, bound to the requester (never a third party), reach fixed to the target workflow, expiry capped at the deployment maximum — so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GrantAccessRequestResponse> GrantAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
+        GrantAccessRequestRequest request = new(RequestIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<GrantAccessRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, GrantAccessRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<GrantAccessRequestRequest, GrantAccessRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Grant a pending access request as standing eligibility (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Writes the capped eligibility assignment a pending request's decision authorized (design §16.5.3), WITHOUT the §15-administrator check that approveAsEligible applies — the system-credentialed grant path (design §16.5.1). The sibling of grantAccessRequest: where that writes a one-time active grant, this writes standing eligibility, so the requester may thereafter self-elevate this access JIT without re-approval. It exists for the bootstrapped approval workflow: when a human approver's decision is 'eligible', the workflow's §13 system credential calls this. The platform ceiling is identical to approveAsEligible and holds regardless of caller — at most the requested scopes intersected with run access, bound to the requester, reach fixed to the target workflow — so this can never widen to an arbitrary binding. Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GrantAccessRequestAsEligibleResponse> GrantAccessRequestAsEligibleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
+        GrantAccessRequestAsEligibleRequest request = new(RequestIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<GrantAccessRequestAsEligibleRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote, GrantAccessRequestAsEligibleResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<GrantAccessRequestAsEligibleRequest, GrantAccessRequestAsEligibleResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

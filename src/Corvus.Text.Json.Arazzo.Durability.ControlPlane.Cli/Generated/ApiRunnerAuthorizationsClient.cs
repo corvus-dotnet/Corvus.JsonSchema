@@ -59,6 +59,40 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
     }
 
     /// <summary>
+    /// Register a runner to serve an environment (authenticated machine principal)
+    /// </summary>
+    /// <remarks>
+    /// Registers the calling runner to serve this environment (design §5.5/§16.4). The runner authenticates as a machine principal (client-credentials, private-key-JWT, or mTLS) and presents its self-description; the control plane derives the trusted principal from the token and binds the runner's authorization to it, rather than to the self-asserted runnerId. The registration is recorded in the runner registry (with the runner's reach tags stamped from the environment's managementTags, never trusted from the runner) and the authorization enters Pending — the runner is dispatchable only once an administrator of the environment authorizes it (see authorizeRunner). Idempotent: a runner re-registering with its own principal keeps its existing authorization status. A registration presenting a principal that differs from the one already bound to this runnerId is refused (409). 404 if the environment does not exist.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RegisterRunnerResponse> RegisterRunnerAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        RegisterRunnerRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<RegisterRunnerRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest, RegisterRunnerResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Count the runners that serve an environment
     /// </summary>
     /// <remarks>

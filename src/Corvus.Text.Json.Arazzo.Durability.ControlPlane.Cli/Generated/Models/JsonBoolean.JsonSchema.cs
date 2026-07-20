@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// True for a binding that records eligibility only (a PIM assignment the principal may self-elevate to): it confers nothing active.
+/// Whether working-copy drafts may execute here as debug runs (workflow-designer design &#167;18). Absent means the environment could not be read (out of the reader&#39;s reach or since deleted); false means it does not allow draft runs.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
