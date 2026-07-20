@@ -361,7 +361,10 @@ test('the environment registry is genuinely reach-scoped per identity: the admin
   // staging through the seeded zone-access:preprod rule — administration alone never confers reach,
   // and their environment lists must show EXACTLY the one row the rule admits.
   for (const [user, expected] of [
-    ['admin', ['development', 'production', 'staging']],
+    // admin has full reach, so it sees every registered environment — including `system`, the control plane's own
+    // governance environment (the Arazzo-governing-Arazzo system workflows run there). erin/wanda reach only the
+    // preprod zone, so the reach-scoping property is that they see EXACTLY staging.
+    ['admin', ['development', 'production', 'staging', 'system']],
     ['erin', ['staging']],
     ['wanda', ['staging']],
   ]) {
