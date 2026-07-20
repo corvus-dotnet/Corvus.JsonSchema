@@ -234,6 +234,88 @@ export class ArazzoControlPlaneClient {
     return this._request('PURGE', `/runs${qs(search)}`, { signal: request.signal });
   }
 
+  // ---- schedules (durable cron, #896) -----------------------------------------------------------
+
+  /**
+   * `listSchedules` — one page of durable schedules (#896): each `{ scheduleId, environment,
+   * targetBaseWorkflowId, targetVersionNumber, targetWorkflowId, cron, timeZone, includeSeconds, status,
+   * createdAt, nextOccurrence?, lastFiredOccurrence? }`, ordered by the underlying run id and reach-scoped;
+   * optionally filtered by `environment`. A schedule is a durable run of the reserved scheduler workflow, so
+   * this surface (and only it) enumerates them.
+   * @param {{ environment?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ schedules: object[], nextPageToken: (string|null) }>}
+   */
+  async listSchedules(query = {}) {
+    const search = new URLSearchParams();
+    if (query.environment) search.set('environment', query.environment);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/schedules${qs(search)}`, { signal: query.signal });
+    return { schedules: page.schedules ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `listSchedules`, as an async iterator walking every page via the keyset `nextPageToken`.
+   * @param {{ environment?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ schedules: object[], nextPageToken: (string|null) }>}
+   */
+  async *listSchedulesPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listSchedules({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `getSchedule` — one schedule by its id. Throws {@link ProblemError} `404` if unknown or outside reach.
+   * @param {string} scheduleId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A schedule.
+   */
+  getSchedule(scheduleId, opts = {}) {
+    if (!scheduleId) throw new TypeError('getSchedule requires a scheduleId.');
+    return this._request('GET', `/schedules/${encodeURIComponent(scheduleId)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `createSchedule` — create (idempotently, by `scheduleId`) a durable schedule. The body is
+   * `{ scheduleId, environment, targetBaseWorkflowId, targetVersionNumber, cron, timeZone?, includeSeconds?, targetInputs? }`.
+   * Throws {@link ProblemError}: `404` target unknown / outside reach; `409` not available in the environment,
+   * not runnable, or no runner there serves schedules (the problem `detail` says how to enable it); `422` inputs
+   * fail the version's baked inputs schema.
+   * @param {object} schedule
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The created (or existing) schedule.
+   */
+  createSchedule(schedule, opts = {}) {
+    if (!schedule || !schedule.scheduleId) throw new TypeError('createSchedule requires a scheduleId.');
+    return this._request('POST', '/schedules', { body: schedule, signal: opts.signal });
+  }
+
+  /**
+   * `runScheduleNow` — start the schedule's target immediately, without affecting the cadence.
+   * @param {string} scheduleId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The accepted run `{ runId, status, workflowId }`. Throws `404`/`409`/`422`.
+   */
+  runScheduleNow(scheduleId, opts = {}) {
+    if (!scheduleId) throw new TypeError('runScheduleNow requires a scheduleId.');
+    return this._request('POST', `/schedules/${encodeURIComponent(scheduleId)}/run-now`, { signal: opts.signal });
+  }
+
+  /**
+   * `deleteSchedule` — cancel a schedule; it then reads back as absent.
+   * @param {string} scheduleId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `404`.
+   */
+  async deleteSchedule(scheduleId, opts = {}) {
+    if (!scheduleId) throw new TypeError('deleteSchedule requires a scheduleId.');
+    await this._request('DELETE', `/schedules/${encodeURIComponent(scheduleId)}`, { signal: opts.signal });
+  }
+
   // ---- runners:read (the execution-host registry, §5.4) -----------------------------------------
 
   /**

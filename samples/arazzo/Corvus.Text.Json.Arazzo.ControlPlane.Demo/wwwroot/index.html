@@ -68,6 +68,7 @@
       <button role="tab" aria-selected="false" aria-controls="view-sources">Sources</button>
       <button role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
       <button role="tab" aria-selected="false" aria-controls="view-runners">Runners</button>
+      <button role="tab" aria-selected="false" aria-controls="view-schedules">Schedules</button>
       <button role="tab" aria-selected="false" aria-controls="view-security">Security</button>
       <button role="tab" aria-selected="false" aria-controls="view-approvals">Approvals <span class="tab-badge" data-badge="approvals" hidden></span></button>
       <button role="tab" aria-selected="false" aria-controls="view-requests">Requests</button>
@@ -95,6 +96,10 @@
 
     <div id="view-runners" role="tabpanel" hidden>
       <arazzo-runners base-url="/arazzo/v1" theme="auto" poll="8000"></arazzo-runners>
+    </div>
+
+    <div id="view-schedules" role="tabpanel" hidden>
+      <arazzo-schedules base-url="/arazzo/v1" theme="auto" poll="8000"></arazzo-schedules>
     </div>
 
     <div id="view-security" role="tabpanel" hidden>
@@ -156,6 +161,7 @@
     import '/ui/src/components/sources-panel.js';
     import '/ui/src/components/credentials.js';
     import '/ui/src/components/runners-panel.js';
+    import '/ui/src/components/schedules-panel.js';
     import '/ui/src/components/runner-authorizations-panel.js';
     import '/ui/src/components/grants-panel.js';
     import '/ui/src/components/scopes-panel.js';
@@ -185,7 +191,7 @@
     const sharedClient = new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', fetch: authFetch });
     const FETCH_PANELS = [
       'arazzo-control-plane', 'arazzo-catalog', 'arazzo-environments', 'arazzo-sources', 'arazzo-credentials',
-      'arazzo-runners', 'arazzo-runner-authorizations', 'arazzo-access-requests', 'arazzo-availability-requests',
+      'arazzo-runners', 'arazzo-schedules', 'arazzo-runner-authorizations', 'arazzo-access-requests', 'arazzo-availability-requests',
     ];
     const CLIENT_PANELS = ['arazzo-grants-panel', 'arazzo-rules-panel', 'arazzo-access-overview'];
     FETCH_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.fetch = authFetch; }));

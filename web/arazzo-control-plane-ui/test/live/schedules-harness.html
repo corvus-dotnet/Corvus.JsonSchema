@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- A test-only harness: mounts the schedules + runners panels against the REAL control-plane API using the dev
+     X-Api-Key (demo-admin-key), bypassing the BFF/Keycloak cookie flow. Used by the X-Api-Key live check when the
+     browser OIDC path is unavailable. Not part of the shipped demo. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Schedules harness</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 0; padding: 12px; display: grid; gap: 16px; grid-template-columns: 1fr 1fr; height: 100vh; box-sizing: border-box; }
+    .col { min-height: 0; display: flex; flex-direction: column; }
+    h2 { margin: 0 0 8px; font-size: 13px; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="col"><h2>arazzo-schedules</h2><span id="slot-arazzo-schedules"></span></div>
+  <div class="col"><h2>arazzo-runners</h2><span id="slot-arazzo-runners"></span></div>
+  <script type="module">
+    import '/ui/src/components/schedules-panel.js';
+    import '/ui/src/components/runners-panel.js';
+    // Inject the dev API key instead of the BFF cookie/CSRF flow.
+    const apiFetch = (input, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      headers.set('X-Api-Key', 'demo-admin-key');
+      return fetch(input, { ...init, headers });
+    };
+    // Build each panel with its fetch + base-url set BEFORE it connects, so its first (and only) load carries the key.
+    for (const tag of ['arazzo-schedules', 'arazzo-runners']) {
+      const el = document.createElement(tag);
+      el.fetch = apiFetch;
+      el.setAttribute('base-url', '/arazzo/v1');
+      document.getElementById('slot-' + tag).appendChild(el);
+    }
+  </script>
+</body>
+</html>

@@ -11,7 +11,9 @@
 // A READ-ONLY observability surface: the execution hosts that have registered and heartbeat. Runners self-register and
 // refresh their `lastSeenAt` out of band (§5.4) — the control plane only observes them — so there are no mutating
 // controls here. Each runner shows its liveness (Online / Stale, derived from the most recent heartbeat against
-// `stale-after`), uptime, advertised concurrency, transports, and the workflow versions it hosts (loaded / loading).
+// `stale-after`), uptime, advertised concurrency, transports, whether it serves durable schedules (#896; a `schedules`
+// chip — enabled by the runner's own config, so this is how an operator sees which environments are schedulable), and
+// the workflow versions it hosts (loaded / loading).
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
@@ -191,6 +193,7 @@ class ArazzoRunners extends ArazzoElement {
         .rauth { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
         .rauth.authorized { color: var(--arazzo-status-completed, #1a7f37); }
         .rauth.pending, .rauth.revoked { color: var(--arazzo-status-suspended, #b45309); }
+        .scap { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
         .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
         .health.online { color: #1a7f37; }
@@ -288,6 +291,7 @@ class ArazzoRunners extends ArazzoElement {
           <span class="rid">${escapeHtml(r.runnerId)}</span>
           ${r.environment ? `<span class="renv" title="Serves the ${escapeHtml(r.environment)} environment">${escapeHtml(r.environment)}</span>` : ''}
           ${this.authChip(r)}
+          ${r.servesSchedules ? `<span class="scap" title="Claims durable schedule runs (#896) for its environment — scheduling is enabled here. Set by the runner's own configuration (servesSchedules), not the control plane.">schedules</span>` : ''}
           ${r.address ? `<span class="raddr">${escapeHtml(r.address)}</span>` : ''}
           <span class="rgrow"></span>
           <span class="health ${stale ? 'stale' : 'online'}" title="Last heartbeat ${escapeHtml(absoluteTime(r.lastSeenAt))}"><span class="dot"></span>${stale ? 'Stale' : 'Online'}</span>

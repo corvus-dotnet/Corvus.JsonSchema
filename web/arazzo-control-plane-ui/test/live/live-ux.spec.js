@@ -9,12 +9,12 @@
 import { test, expect } from '@playwright/test';
 import { LIVE_USERS, signIn, watchLiveErrors, assertLiveClean, liveTab, openLiveTab, openLiveSubTab, uniq } from './live-helpers.js';
 
-test('sign-in lands on a real shell: Keycloak round trip, nine tabs, and a runs list the real runner produced', async ({ page }) => {
+test('sign-in lands on a real shell: Keycloak round trip, ten tabs, and a runs list the real runner produced', async ({ page }) => {
   await signIn(page, LIVE_USERS.admin);
   const errors = watchLiveErrors(page); // pre-login 401 bounce is expected; from here the console must stay clean
 
   // The full surface renders (Approvals may carry a live badge — prefix match).
-  for (const name of ['Runs', 'Catalog', 'Environments', 'Sources', 'Credentials', 'Runners', 'Security', 'Approvals', 'Requests']) {
+  for (const name of ['Runs', 'Catalog', 'Environments', 'Sources', 'Credentials', 'Runners', 'Schedules', 'Security', 'Approvals', 'Requests']) {
     await expect(liveTab(page, name)).toBeVisible();
   }
 
