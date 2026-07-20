@@ -147,6 +147,32 @@ public static class DemoData
         // A real nightly reconciliation executed against the live ledger service — loads the account book, matches
         // entries, flags the seeded discrepancies, posts corrections, and publishes the report, completing end to end.
         await RunLiveReconcileAsync(runStore, resumer, time, "run-rec-live01", "reclive01", log).ConfigureAwait(false);
+
+        // #896: a durable schedule — the canonical §6.4 nightly-reconcile cron — seeded as a Pending $schedule run.
+        // Unlike the runs above (executed here in-process), this is left Pending so the app runner (which serves
+        // schedules) claims it, evaluates the cadence, and fires nightly-reconcile-v2 through the GOVERNED run endpoint
+        // on each due occurrence: cron-driven initiation, live.
+        await SeedNightlyReconcileScheduleAsync(runStore, time, log).ConfigureAwait(false);
+    }
+
+    private static async ValueTask SeedNightlyReconcileScheduleAsync(IWorkflowStateStore runStore, TimeProvider time, Action<string>? log)
+    {
+        try
+        {
+            // Every minute (a fast cadence for the demo); the target's inputs are the reconciliation date. A fresh $schedule
+            // run seeds its watermark to now and fires no back-dated occurrence, then suspends until the next minute — at
+            // which the app runner resumes it and fires the target through the control plane.
+            string date = time.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(
+                $$$"""{"scheduleId":"nightly-reconcile-cron","cron":"* * * * *","timeZone":"UTC","targetWorkflowId":"nightly-reconcile-v2","targetInputs":{"date":"{{{date}}}"}}"""));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, "schedule-nightly-reconcile", ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
+            await run.EnqueueAsync(default).ConfigureAwait(false);
+            log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' (every minute -> nightly-reconcile-v2) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");
+        }
+        catch (Exception ex)
+        {
+            log?.Invoke($"Seeding the nightly-reconcile schedule failed: {ex}");
+        }
     }
 
     private static async ValueTask RunLiveTimerResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)

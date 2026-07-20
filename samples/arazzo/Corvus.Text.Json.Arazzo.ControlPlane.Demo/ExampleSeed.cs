@@ -230,6 +230,11 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // can start it there and the availability panel is not empty out of the box.
         (await context.Availability.MakeAvailableAsync("onboard-customer", 1, "production", "demo", cancellationToken)).Entry.Dispose();
 
+        // The active nightly-reconcile version is "Available in" development so the durable schedule (#896) can fire it
+        // there through the governed run endpoint — a governed scheduled start is gated by §7.8 availability exactly as
+        // an operator start is.
+        (await context.Availability.MakeAvailableAsync("nightly-reconcile", 2, "development", "demo", cancellationToken)).Entry.Dispose();
+
         // Security personas (§14.2/§15/§16.5): three archetypes beyond the genesis admin, so the governance surfaces
         // show reach-scoping, the administration split, and the PIM lifecycle out of the box. The realm import defines
         // the matching Keycloak groups + users (oscar/observers, erin/env-admins, wanda/reconcile-owners); everyone

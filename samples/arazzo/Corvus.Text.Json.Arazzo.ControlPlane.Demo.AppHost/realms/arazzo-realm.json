@@ -92,7 +92,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["runners:register"]
+      "defaultClientScopes": ["runners:register", "runs:write"]
     },
     {
       "clientId": "arazzo-access-approval",
@@ -117,6 +117,12 @@
     {
       "name": "accessRequests:grant",
       "description": "Grant an access request as the control plane's own approval workflow (design §16.5.1). Held by the system runner's machine principal so its access-approval runs may call grantAccessRequest.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
+    },
+    {
+      "name": "runs:write",
+      "description": "Start runs of catalogued workflow versions (design §5.5). Held by the runner's machine principal so its durable scheduler (#896) may fire scheduled targets through the governed run endpoint.",
       "protocol": "openid-connect",
       "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
     }
