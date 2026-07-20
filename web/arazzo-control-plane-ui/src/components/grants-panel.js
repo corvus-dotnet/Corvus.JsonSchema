@@ -708,12 +708,24 @@ class ArazzoGrantsPanel extends ArazzoElement {
         if (this._squelchFocusPop) return; // the post-selection refocus (addRule) keeps the dropdown closed
         this.hideRuleDropdowns(); this._activeRuleVerb = verb; this.loadScopeOptions(input.value.trim());
       });
-      input.addEventListener('keydown', (e) => {
+      input.addEventListener('keydown', async (e) => {
         // Escape dismisses the dropdown and STAYS dismissed: hideRuleDropdowns clears the active
         // verb, so an in-flight search that resolves later has nowhere to render (renderRuleDropdown
         // no-ops without one). preventDefault keeps the typed filter text (search inputs clear on
         // Escape); a fresh keystroke or refocus re-opens the suggestions.
-        if (e.key === 'Escape') { e.preventDefault(); this.hideRuleDropdowns(); }
+        if (e.key === 'Escape') { e.preventDefault(); this.hideRuleDropdowns(); return; }
+        // Enter commits the typed text. Confirm it against the server first (the loaded page may lag the debounce, so
+        // a valid rule can be absent from _scopes), then add it — or leave it in place with the dropdown's "No
+        // matching rules" showing, rather than silently discarding it (P1.3).
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const name = input.value.trim();
+          if (!name) return;
+          this._activeRuleVerb = verb;
+          if (!this._scopes.some((s) => s.name === name)) await this.loadScopeOptions(name);
+          if (this._scopes.some((s) => s.name === name)) this.addRule(verb, name);
+          else this.renderRuleDropdown();
+        }
       });
       input.addEventListener('input', () => {
         this._activeRuleVerb = verb;
@@ -721,9 +733,10 @@ class ArazzoGrantsPanel extends ArazzoElement {
         this._scopeTimer = setTimeout(() => this.loadScopeOptions(input.value.trim()), SEARCH_DEBOUNCE_MS);
       });
       input.addEventListener('change', () => {
+        // Blur/commit: add an exact match. A non-match is NOT cleared here — Enter reports it (above) and the dropdown
+        // keeps showing why; silently blanking the field is what P1.3 called out.
         const name = input.value.trim();
         if (name && this._scopes.some((s) => s.name === name)) this.addRule(verb, name);
-        else input.value = '';
       });
     });
     pane.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {
