@@ -171,6 +171,9 @@ class ArazzoRunDetail extends ArazzoElement {
         .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
         .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
+        /* The buttons are a display:contents wrapper so resume/delete become direct flex children of .actions,
+           laid out with the persistent <arazzo-cancel-button> (which is never re-parented — see renderActions). */
+        .action-buttons { display: contents; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .pad { padding: 14px; }
@@ -183,9 +186,12 @@ class ArazzoRunDetail extends ArazzoElement {
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
         <div class="body"></div>
+        <div class="actions" part="actions" hidden>
+          <arazzo-cancel-button hidden></arazzo-cancel-button>
+          <span class="action-buttons"></span>
+        </div>
       </div>
       <arazzo-resume-dialog></arazzo-resume-dialog>
-      <arazzo-cancel-button hidden></arazzo-cancel-button>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
 
@@ -210,6 +216,9 @@ class ArazzoRunDetail extends ArazzoElement {
     const wf = this.$('header .wf');
     const body = this.$('.body');
     if (!body) return;
+    // The actions bar is persistent (its <arazzo-cancel-button> holds a confirm dialog, so it must never be torn out
+    // of the DOM by a body rebuild). Hide it by default; the success path's renderActions un-hides and updates it.
+    this.$('.actions').hidden = true;
 
     if (this._error) {
       badge.removeAttribute('status');
@@ -247,7 +256,6 @@ class ArazzoRunDetail extends ArazzoElement {
       <div class="block progress" part="progress" hidden><h4>Progress</h4><div class="prog-body"></div></div>
       ${this.renderWait(run)}
       ${this.renderFault(run)}
-      <div class="actions" part="actions"></div>
     `;
     this.$('.copy')?.addEventListener('click', async (e) => {
       const button = e.currentTarget;
@@ -363,7 +371,10 @@ class ArazzoRunDetail extends ArazzoElement {
   }
 
   renderActions(run) {
-    const host = this.$('.actions');
+    // Update the persistent actions bar IN PLACE. Only the resume/delete buttons are rebuilt (in .action-buttons);
+    // the <arazzo-cancel-button> stays put across renders — never re-parented — so its confirm dialog and its DOM
+    // position remain stable while the body around it is rebuilt.
+    const host = this.$('.action-buttons');
     const showForbidden = this.hasAttribute('show-forbidden');
     const canWrite = this.hasScope('runs:write');
     const canPurge = this.hasScope('runs:purge');
@@ -375,7 +386,7 @@ class ArazzoRunDetail extends ArazzoElement {
       buttons.push(`<button class="resume primary" type="button" ${canWrite ? '' : 'disabled title="Requires runs:write"'}>Resume…</button>`);
     }
 
-    // Cancel — non-terminal runs, runs:write. Delegated to the embedded <arazzo-cancel-button>.
+    // Cancel — non-terminal runs, runs:write. Delegated to the embedded <arazzo-cancel-button> (first in the bar).
     const showCancel = !isTerminal && (canWrite || showForbidden);
 
     // Delete — any status, runs:purge, behind a confirm.
@@ -390,7 +401,6 @@ class ArazzoRunDetail extends ArazzoElement {
       this._cancelButton.setAttribute('runid', run.id);
       if (canWrite) this._cancelButton.removeAttribute('disabled'); else this._cancelButton.setAttribute('disabled', '');
       this._cancelButton.hidden = false;
-      host.prepend(this._cancelButton);
     } else {
       this._cancelButton.hidden = true;
     }
@@ -400,6 +410,9 @@ class ArazzoRunDetail extends ArazzoElement {
       this._resumeDialog.open(run);
     });
     host.querySelector('.delete')?.addEventListener('click', () => this.confirmDelete(run));
+
+    // Show the bar only when it has something in it.
+    this.$('.actions').hidden = !(showCancel || buttons.length > 0);
   }
 
   async confirmDelete(run) {
