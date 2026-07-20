@@ -29,6 +29,7 @@
       "redirectUris": ["http://localhost:*", "https://localhost:*"],
       "webOrigins": ["+"],
       "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "+" },
+      "defaultClientScopes": ["profile"],
       "protocolMappers": [
         {
           "name": "groups",
@@ -56,6 +57,7 @@
         "oauth2.device.authorization.grant.enabled": "true",
         "pkce.code.challenge.method": "S256"
       },
+      "defaultClientScopes": ["profile"],
       "redirectUris": ["http://localhost:*", "http://127.0.0.1:*"],
       "protocolMappers": [
         {
@@ -124,6 +126,37 @@
     }
   ],
   "clientScopes": [
+    {
+      "name": "profile",
+      "description": "OpenID Connect profile scope (preferred_username + name). Defined here because listing custom clientScopes on import suppresses Keycloak's built-in scopes, so the standard-flow clients would otherwise lack it.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" },
+      "protocolMappers": [
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "full name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-full-name-mapper",
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
     {
       "name": "runners:register",
       "description": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4).",
