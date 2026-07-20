@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the StartCatalogWorkflowRun operation (POST /catalog/{baseWorkflowId}/versions/{versionNumber}/runs).
 /// </summary>
-/// <remarks>Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.</remarks>
+/// <remarks>Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Supply an `Idempotency-Key` header to make the start idempotent: a repeated request carrying the same key returns the run the first created rather than starting a duplicate. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.</remarks>
 public readonly struct StartCatalogWorkflowRunParams
 {
 
@@ -35,6 +35,11 @@ public readonly struct StartCatalogWorkflowRunParams
     /// Gets the 'environment' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment { get; init; }
+
+    /// <summary>
+    /// Gets the 'Idempotency-Key' header parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdempotencyKey { get; init; }
 
     /// <summary>
     /// Gets the request body.

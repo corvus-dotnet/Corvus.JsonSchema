@@ -3965,6 +3965,12 @@ public static class ApiEndpointRegistration
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
                     EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
                 }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdempotencyKeyValue = default;
+                if (context.Request.Headers.TryGetValue("Idempotency-Key", out var IdempotencyKeyHeaderVal) && IdempotencyKeyHeaderVal.Count > 0)
+                {
+                    string IdempotencyKeyRaw = IdempotencyKeyHeaderVal[0]!;
+                    IdempotencyKeyValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdempotencyKeyRaw, workspace);
+                }
 
                 if (BaseWorkflowIdValue.IsUndefined())
                 {
@@ -4014,6 +4020,14 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (!IdempotencyKeyValue.IsUndefined() && !IdempotencyKeyValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'Idempotency-Key' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 try
                 {
@@ -4041,6 +4055,7 @@ public static class ApiEndpointRegistration
                     BaseWorkflowId = BaseWorkflowIdValue,
                     VersionNumber = VersionNumberValue,
                     Environment = EnvironmentValue,
+                    IdempotencyKey = IdempotencyKeyValue,
                     Body = bodyDoc!.RootElement,
                 }
                 ;

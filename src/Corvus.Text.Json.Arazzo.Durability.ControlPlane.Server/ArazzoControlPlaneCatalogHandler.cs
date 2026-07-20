@@ -571,7 +571,23 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
         // security tags (KVP labels) so row authorization (§14.2) sees the same labels the workflow carries.
-        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
+        //
+        // An Idempotency-Key header makes the start idempotent (§5.5): the run id is derived deterministically from
+        // (workflowId, key), so a redelivered fire — a durable schedule re-firing an occurrence after a runner recycle,
+        // or a client retry — creates the run at most once. A blank key is treated as omitted (an ordinary one-shot
+        // start). The deep idempotent path hashes the key over pooled UTF-8 scratch (StartIdempotentAsync); the one key
+        // string realised here is the value the generated header binder already round-tripped (parsed string ->
+        // JsonString), alongside the workflowId string the handler already resolves — not an added allocation on a hot
+        // firing loop (that loop lives on the runner side, which fires through a pooled HttpClient).
+        WorkflowRunId runId;
+        if (parameters.IdempotencyKey.IsNotUndefined() && (string)parameters.IdempotencyKey is { Length: > 0 } idempotencyKey)
+        {
+            runId = await this.management.StartIdempotentAsync(workflowId, inputs, idempotencyKey, environment, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
+        }
 
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(

@@ -798,11 +798,12 @@
         ],
         "tags": ["catalog"],
         "summary": "Start a run of a workflow version",
-        "description": "Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.",
+        "description": "Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Supply an `Idempotency-Key` header to make the start idempotent: a repeated request carrying the same key returns the run the first created rather than starting a duplicate. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
-          { "name": "environment", "in": "query", "required": true, "description": "The deployment environment to pin the run to (design §5.5). The version must be available in this environment (§7.8) and the environment must be within the caller's reach; the run uses this environment's credential set and is dispatched only to runners serving it.", "schema": { "type": "string" } }
+          { "name": "environment", "in": "query", "required": true, "description": "The deployment environment to pin the run to (design §5.5). The version must be available in this environment (§7.8) and the environment must be within the caller's reach; the run uses this environment's credential set and is dispatched only to runners serving it.", "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/IdempotencyKeyHeader" }
         ],
         "requestBody": {
           "required": true,
@@ -4583,6 +4584,13 @@
       }
     },
     "parameters": {
+      "IdempotencyKeyHeader": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "An optional client-supplied idempotency key that makes starting a run idempotent (design §5.5): a repeated request carrying the same key returns the run the first request created rather than starting a duplicate, so a retried or redelivered fire (for example a durable schedule re-firing an occurrence after a runner recycle) starts the target at most once. Omit it for an ordinary one-shot start.",
+        "schema": { "type": "string" }
+      },
       "RunIdPath": {
         "name": "runId",
         "in": "path",

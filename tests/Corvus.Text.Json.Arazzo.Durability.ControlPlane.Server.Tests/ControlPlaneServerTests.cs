@@ -667,6 +667,74 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_is_idempotent_under_an_Idempotency_Key_header()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        // Two starts carrying the same Idempotency-Key collapse to one run (§5.5): the second returns the run id the
+        // first created, so a redelivered fire — a durable schedule re-firing an occurrence after a runner recycle —
+        // starts the target at most once.
+        string first = await StartWithKeyAsync(client, "sched-a:2026-07-20T09:00:00.0000000Z");
+        string second = await StartWithKeyAsync(client, "sched-a:2026-07-20T09:00:00.0000000Z");
+        second.ShouldBe(first);
+
+        // A different key is a different run.
+        string other = await StartWithKeyAsync(client, "sched-a:2026-07-20T10:00:00.0000000Z");
+        other.ShouldNotBe(first);
+
+        // Without a key each start is a fresh run (the default one-shot behaviour is unchanged); a blank key is
+        // treated as omitted, not as an idempotency identity.
+        string bare1 = await StartWithKeyAsync(client, null);
+        string bare2 = await StartWithKeyAsync(client, null);
+        bare1.ShouldNotBe(bare2);
+        string blank = await StartWithKeyAsync(client, string.Empty);
+        blank.ShouldNotBe(bare1);
+        blank.ShouldNotBe(bare2);
+
+        // Six starts were issued but only five distinct runs persisted — the same-key second start created no
+        // second run (the two same-key POSTs collapsed to one).
+        (int count, _) = await management.CountAsync(new WorkflowQuery(WorkflowId: "flow-v1"), AccessContext.System, 100, default);
+        count.ShouldBe(5);
+        var distinct = new[] { first, other, bare1, bare2, blank };
+        distinct.Distinct().Count().ShouldBe(5);
+
+        await app.StopAsync();
+
+        static async Task<string> StartWithKeyAsync(HttpClient client, string? idempotencyKey)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/catalog/flow/versions/1/runs?environment=production")
+            {
+                Content = new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"),
+            };
+            if (idempotencyKey is not null)
+            {
+                request.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
+            }
+
+            HttpResponseMessage response = await client.SendAsync(request);
+            response.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            return doc.RootElement.GetProperty("runId").GetString()!;
+        }
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_inherits_the_version_security_tags()
     {
         var clock = new MutableClock(T0);
