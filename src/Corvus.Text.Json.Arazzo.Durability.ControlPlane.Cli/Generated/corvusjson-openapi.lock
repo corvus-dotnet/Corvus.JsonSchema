@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-20T22:41:57.1933331\u002B00:00",
+  "generatedAt": "2026-07-21T18:08:18.8227847\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -1279,6 +1279,9 @@
     "Models/WorkflowRunStepRecord.cs",
     "Models/WorkflowRunStepRecord.Mutable.cs",
     "Models/WorkflowRunStepRecord.JsonSchema.cs",
+    "Models/WorkflowRunStepRecord.StatusEntity.cs",
+    "Models/WorkflowRunStepRecord.StatusEntity.Mutable.cs",
+    "Models/WorkflowRunStepRecord.StatusEntity.JsonSchema.cs",
     "Models/WorkflowRunSteps.cs",
     "Models/WorkflowRunSteps.Mutable.cs",
     "Models/WorkflowRunSteps.JsonSchema.cs",
@@ -1437,6 +1440,6 @@
   "generatorVersion": "1.0.0\u002B412e0e74343fcecad7f97dfaa5a5aa68b7fc6411",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "75387ec2fa247af60d53f7aff9c987fdbe0a45026112eb1e48d3fca4c92d7538",
+  "specFileHash": "36968a6416dd261136b92fc6d866a0a2268ccab84aef23b6a33763d38fc14fff",
   "specVersion": "3.2"
 }

@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: the steps that recorded outputs, in recording order. Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or timing (the checkpoint does not attest those).
+/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).
 /// </para>
 /// </remarks>
 public readonly partial struct WorkflowRunSteps
@@ -34,7 +34,7 @@ public readonly partial struct WorkflowRunSteps
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The recorded steps, in the order the checkpoint recorded them.
+    /// The recorded steps, in the order the run executed them.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]

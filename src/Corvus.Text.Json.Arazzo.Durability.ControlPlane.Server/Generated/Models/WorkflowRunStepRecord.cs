@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// One recorded step: its id and the outputs value the checkpoint stored for it. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), the sensitive content is redacted: `redacted` is true and the withheld content is absent or blanked rather than disclosed.
+/// One recorded step in a run&#39;s journal: its id, its outcome, the attempt it settled on, the time window it executed in, and the outputs value the checkpoint stored for it (ADR 0050). Status and timing are attested for runs journaled under ADR 0050; a step from a checkpoint that predates the journal reports only its id and outputs, and nothing is invented. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), only the outputs are redacted: `redacted` is true and the outputs are withheld, while the non-sensitive id, status, attempt, and timing are preserved.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -159,11 +159,53 @@ public readonly partial struct WorkflowRunStepRecord
     }
 
     /// <summary>
+    /// Gets the (optional) <c>attempt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The attempt the step settled on (consistent with a fault&#39;s attempt number). Absent for a pre-journal step.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger Attempt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AttemptUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>endedAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the step&#39;s execution ended. Absent for a pre-journal step.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime EndedAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>outputs</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The step&#39;s recorded outputs value, verbatim from the checkpoint. Absent (or with sensitive fields blanked) when `redacted` is true.
+    /// The step&#39;s recorded outputs value, verbatim from the checkpoint. Absent when the step recorded none, or withheld when `redacted` is true.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.JsonElement Outputs
@@ -184,7 +226,7 @@ public readonly partial struct WorkflowRunStepRecord
     /// </summary>
     /// <remarks>
     /// <para>
-    /// True when some or all of this step&#39;s outputs were withheld from the caller because they are classified sensitive and the caller lacks the stronger grant (write reach on the run). The step is still attested to have recorded outputs; only the payload is withheld (non-disclosing).
+    /// True when this step&#39;s outputs were withheld from the caller because they are classified sensitive and the caller lacks the stronger grant (write reach on the run). Only the outputs payload is withheld; the step&#39;s id, status, attempt, and timing are still disclosed (non-disclosing of the payload only).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean Redacted
@@ -192,6 +234,48 @@ public readonly partial struct WorkflowRunStepRecord
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RedactedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>startedAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the step&#39;s (final) execution began. Absent for a pre-journal step.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime StartedAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StartedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>status</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The step&#39;s recorded outcome (ADR 0050). Absent for a step from a checkpoint that predates the journal.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStepRecord.StatusEntity Status
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStepRecord.StatusEntity value))
             {
                 return value;
             }
@@ -665,6 +749,16 @@ public readonly partial struct WorkflowRunStepRecord
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="Attempt"/>.
+        /// </summary>
+        public const string Attempt = "attempt";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="EndedAt"/>.
+        /// </summary>
+        public const string EndedAt = "endedAt";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Outputs"/>.
         /// </summary>
         public const string Outputs = "outputs";
@@ -675,9 +769,29 @@ public readonly partial struct WorkflowRunStepRecord
         public const string Redacted = "redacted";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="StartedAt"/>.
+        /// </summary>
+        public const string StartedAt = "startedAt";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public const string Status = "status";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="StepId"/>.
         /// </summary>
         public const string StepId = "stepId";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Attempt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AttemptUtf8 => "attempt"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="EndedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EndedAtUtf8 => "endedAt"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Outputs"/>.
@@ -688,6 +802,16 @@ public readonly partial struct WorkflowRunStepRecord
         /// Gets the JSON property name for <see cref="Redacted"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RedactedUtf8 => "redacted"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="StartedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartedAtUtf8 => "startedAt"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="StepId"/>.
@@ -701,6 +825,16 @@ public readonly partial struct WorkflowRunStepRecord
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Attempt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Attempt => "attempt"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="EndedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EndedAt => "endedAt"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Outputs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Outputs => "outputs"u8;
@@ -709,6 +843,16 @@ public readonly partial struct WorkflowRunStepRecord
         /// Gets the escaped UTF-8 JSON property name for <see cref="Redacted"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Redacted => "redacted"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="StartedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartedAt => "startedAt"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Status => "status"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="StepId"/>.
@@ -723,6 +867,16 @@ public readonly partial struct WorkflowRunStepRecord
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Attempt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Attempt => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x74, 0x74, 0x65, 0x6D, 0x70, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EndedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EndedAt => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x65, 0x64, 0x41, 0x74, 0x22];
+
+        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Outputs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Outputs => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x22];
@@ -731,6 +885,16 @@ public readonly partial struct WorkflowRunStepRecord
         /// Gets the pre-baked property name blob for <see cref="Redacted"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Redacted => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x64, 0x61, 0x63, 0x74, 0x65, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="StartedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Status"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="StepId"/>.

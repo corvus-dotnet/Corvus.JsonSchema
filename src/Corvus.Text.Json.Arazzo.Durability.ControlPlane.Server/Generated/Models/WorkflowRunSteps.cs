@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: the steps that recorded outputs, in recording order. Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or timing (the checkpoint does not attest those).
+/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -187,7 +187,7 @@ public readonly partial struct WorkflowRunSteps
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The recorded steps, in the order the checkpoint recorded them.
+    /// The recorded steps, in the order the run executed them.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSteps.WorkflowRunStepRecordArray Steps
@@ -195,6 +195,27 @@ public readonly partial struct WorkflowRunSteps
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSteps.WorkflowRunStepRecordArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>truncated</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// True when the journal was capped and its oldest entries were dropped (a long-running or looping run, ADR 0050); the retained steps are the most recent.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean Truncated
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TruncatedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -657,6 +678,11 @@ public readonly partial struct WorkflowRunSteps
         public const string Steps = "steps";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Truncated"/>.
+        /// </summary>
+        public const string Truncated = "truncated";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="RunId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunIdUtf8 => "runId"u8;
@@ -665,6 +691,11 @@ public readonly partial struct WorkflowRunSteps
         /// Gets the JSON property name for <see cref="Steps"/>.
         /// </summary>
         public static ReadOnlySpan<byte> StepsUtf8 => "steps"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Truncated"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TruncatedUtf8 => "truncated"u8;
     }
 
     /// <summary>
@@ -681,6 +712,11 @@ public readonly partial struct WorkflowRunSteps
         /// Gets the escaped UTF-8 JSON property name for <see cref="Steps"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Steps => "steps"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Truncated"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Truncated => "truncated"u8;
     }
 
     /// <summary>
@@ -698,5 +734,10 @@ public readonly partial struct WorkflowRunSteps
         /// Gets the pre-baked property name blob for <see cref="Steps"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Steps => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x65, 0x70, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Truncated"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Truncated => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x72, 0x75, 0x6E, 0x63, 0x61, 0x74, 0x65, 0x64, 0x22];
     }
 }

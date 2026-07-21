@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: the steps that recorded outputs, in recording order. Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or timing (the checkpoint does not attest those).
+/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -48,6 +48,7 @@ public readonly partial struct WorkflowRunSteps
             RequiredBitForRunId | RequiredBitForSteps;
         private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StepsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/steps"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider TruncatedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/truncated"u8, buffer, out written);
 
         private static void MatchRunId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -93,11 +94,27 @@ public readonly partial struct WorkflowRunSteps
             requiredBitBuffer[RequiredOffsetForSteps] |= RequiredBitForSteps;
         }
 
+        private static void MatchTruncated(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext2 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.TruncatedUtf8,
+                    evaluationPath: TruncatedSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+        }
+
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.RunIdUtf8, MatchRunId),
                 (static () => JsonPropertyNames.StepsUtf8, MatchSteps),
+                (static () => JsonPropertyNames.TruncatedUtf8, MatchTruncated),
             ]);
         }
 

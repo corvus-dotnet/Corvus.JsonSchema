@@ -17,48 +17,116 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).
+/// One recorded step in a run&#39;s journal: its id, its outcome, the attempt it settled on, the time window it executed in, and the outputs value the checkpoint stored for it (ADR 0050). Status and timing are attested for runs journaled under ADR 0050; a step from a checkpoint that predates the journal reports only its id and outputs, and nothing is invented. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), only the outputs are redacted: `redacted` is true and the outputs are withheld, while the non-sensitive id, status, attempt, and timing are preserved.
 /// </para>
 /// </remarks>
-public readonly partial struct WorkflowRunSteps
+public readonly partial struct WorkflowRunStepRecord
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The recorded steps, in the order the run executed them.
+    /// The step&#39;s recorded outcome (ADR 0050). Absent for a step from a checkpoint that predates the journal.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct WorkflowRunStepRecordArray
-        : IJsonElement<WorkflowRunStepRecordArray>
+    public readonly partial struct StatusEntity
+        : IJsonElement<StatusEntity>
     {
+        /// <summary>
+        /// Provides accesors for enumerated values
+        /// </summary>
+        private static class Constants
+        {
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum1 = "Succeeded"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly StatusEntity EnumJson1 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Succeeded\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum2 = "Faulted"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly StatusEntity EnumJson2 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Faulted\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum3 = "Skipped"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Skipped\""u8]);
+        }
+
+        /// <summary>
+        /// Provides named constants for enum values.
+        /// </summary>
+        public static class EnumValues
+        {
+            /// <summary>
+            /// Gets the string "Succeeded"
+            /// as a <see cref="StatusEntity"/>.
+            /// </summary>
+            public static StatusEntity Succeeded { get; } = Constants.EnumJson1;
+            /// <summary>
+            /// Gets the string "Succeeded"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> SucceededUtf8 => Constants.Enum1;
+
+            /// <summary>
+            /// Gets the string "Faulted"
+            /// as a <see cref="StatusEntity"/>.
+            /// </summary>
+            public static StatusEntity Faulted { get; } = Constants.EnumJson2;
+            /// <summary>
+            /// Gets the string "Faulted"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> FaultedUtf8 => Constants.Enum2;
+
+            /// <summary>
+            /// Gets the string "Skipped"
+            /// as a <see cref="StatusEntity"/>.
+            /// </summary>
+            public static StatusEntity Skipped { get; } = Constants.EnumJson3;
+            /// <summary>
+            /// Gets the string "Skipped"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> SkippedUtf8 => Constants.Enum3;
+        }
+
         public static partial class JsonSchema
         {
-            private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items/$ref"u8, buffer, out written);
-
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/WorkflowRunSteps/properties/steps"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/WorkflowRunStepRecord/properties/status"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/WorkflowRunSteps/properties/steps";
+            public const string SchemaLocation = "/components/schemas/WorkflowRunStepRecord/properties/status";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/WorkflowRunSteps/properties/steps"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/WorkflowRunStepRecord/properties/status"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -79,48 +147,45 @@ public readonly partial struct WorkflowRunSteps
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
+                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
                 {
                     if (!context.HasCollector)
                     {
                         return;
                     }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
                 }
                 else
                 {
-                    int arrayValidation_itemCount = 0;
+                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                    var arrayValidation_enumerator = new ArrayEnumerator(parentDocument, parentIndex);
-                    while (arrayValidation_enumerator.MoveNext())
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("Succeeded"u8))
                     {
-                        int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
-
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStepRecord.JsonSchema.PushChildContext(
-                            parentDocument,
-                            arrayValidation_currentIndex,
-                            ref context,
-                            itemIndex: arrayValidation_itemCount,
-                            evaluationPath: ItemsSchemaEvaluationPath);
-
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStepRecord.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
-                        if (!childContext.IsMatch)
-                        {
-                            context.CommitChildContext(false, ref childContext);
-
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            context.CommitChildContext(true, ref childContext);
-                            context.AddLocalEvaluatedItem(arrayValidation_itemCount);
-                        }
-
-                        arrayValidation_itemCount++;
+                        goto enumShortCircuitSuccess;
                     }
+
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("Faulted"u8))
+                    {
+                        goto enumShortCircuitSuccess;
+                    }
+
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("Skipped"u8))
+                    {
+                        goto enumShortCircuitSuccess;
+                    }
+
+                    context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
+
+                    if (!context.HasCollector)
+                    {
+                        return;
+                    }
+
+                    goto enumAfterFailure;
+
+enumShortCircuitSuccess:
+                    context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
+
+enumAfterFailure:;
                 }
             }
 

@@ -24,28 +24,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).
+/// One recorded step in a run&#39;s journal: its id, its outcome, the attempt it settled on, the time window it executed in, and the outputs value the checkpoint stored for it (ADR 0050). Status and timing are attested for runs journaled under ADR 0050; a step from a checkpoint that predates the journal reports only its id and outputs, and nothing is invented. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), only the outputs are redacted: `redacted` is true and the outputs are withheld, while the non-sensitive id, status, attempt, and timing are preserved.
 /// </para>
 /// </remarks>
-public readonly partial struct WorkflowRunSteps
+public readonly partial struct WorkflowRunStepRecord
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The recorded steps, in the order the run executed them.
+    /// The step&#39;s recorded outcome (ADR 0050). Absent for a step from a checkpoint that predates the journal.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct WorkflowRunStepRecordArray
+    public readonly partial struct StatusEntity
 #if NET8_0_OR_GREATER
-        : IJsonElement<WorkflowRunStepRecordArray>,
+        : IJsonElement<StatusEntity>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<WorkflowRunStepRecordArray>,
+        : IJsonElement<StatusEntity>,
           IFormattable
 #endif
     {
@@ -55,10 +55,10 @@ public readonly partial struct WorkflowRunSteps
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="WorkflowRunStepRecordArray"/> struct.
+        /// Initializes a new instance of the <see cref="StatusEntity"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal WorkflowRunStepRecordArray(IJsonDocument parent, int idx)
+        internal StatusEntity(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -68,54 +68,28 @@ public readonly partial struct WorkflowRunSteps
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static WorkflowRunStepRecordArray DefaultInstance { get; }
+        public static StatusEntity DefaultInstance { get; }
 
-        /// <summary>
-        /// Gets the rank of the array.
-        /// </summary>
-        public static int Rank => 1;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
 
-        /// <summary>
-        /// Gets the item at the given index.
-        /// </summary>
-        /// <param name="index">The index at which to retrieve the item.</param>
-        /// <returns>The item at the given index.</returns>
-        /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStepRecord this[int index]
-        {
-            get
-            {
-                CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStepRecord>(_idx, index);
-            }
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
 
-        /// <summary>
-        /// Gets the array length.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public int GetArrayLength()
-        {
-            CheckValidInstance();
-            return _parent.GetArrayLength(_idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
 
-        /// <summary>
-        /// Enumerates the array.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStepRecord> EnumerateArray()
-        {
-            CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStepRecord>(_parent, _idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator string(StatusEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
         /// <summary>
         /// Operator ==.
@@ -125,7 +99,7 @@ public readonly partial struct WorkflowRunSteps
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in WorkflowRunStepRecordArray left, in WorkflowRunStepRecordArray right)
+        public static bool operator ==(in StatusEntity left, in StatusEntity right)
         {
             return left.Equals(right);
         }
@@ -138,7 +112,7 @@ public readonly partial struct WorkflowRunSteps
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in WorkflowRunStepRecordArray left, in WorkflowRunStepRecordArray right)
+        public static bool operator !=(in StatusEntity left, in StatusEntity right)
         {
             return !left.Equals(right);
         }
@@ -151,7 +125,7 @@ public readonly partial struct WorkflowRunSteps
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in WorkflowRunStepRecordArray left, in JsonElement right)
+        public static bool operator ==(in StatusEntity left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -164,7 +138,7 @@ public readonly partial struct WorkflowRunSteps
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in WorkflowRunStepRecordArray left, in JsonElement right)
+        public static bool operator !=(in StatusEntity left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -175,7 +149,7 @@ public readonly partial struct WorkflowRunSteps
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(WorkflowRunStepRecordArray instance)
+        public static implicit operator JsonElement(StatusEntity instance)
         {
             return JsonElement.From(instance);
         }
@@ -186,9 +160,9 @@ public readonly partial struct WorkflowRunSteps
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator WorkflowRunStepRecordArray(JsonElement instance)
+        public static implicit operator StatusEntity(JsonElement instance)
         {
-            return WorkflowRunStepRecordArray.From(instance);
+            return StatusEntity.From(instance);
         }
 
         /// <summary>
@@ -197,7 +171,7 @@ public readonly partial struct WorkflowRunSteps
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static WorkflowRunStepRecordArray From<T>(in T instance)
+        public static StatusEntity From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -222,10 +196,10 @@ public readonly partial struct WorkflowRunSteps
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static WorkflowRunStepRecordArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static StatusEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<WorkflowRunStepRecordArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<StatusEntity>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
@@ -248,10 +222,10 @@ public readonly partial struct WorkflowRunSteps
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static WorkflowRunStepRecordArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static StatusEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<WorkflowRunStepRecordArray>(json, options);
+            return JsonElementHelpers.ParseValue<StatusEntity>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -274,10 +248,10 @@ public readonly partial struct WorkflowRunSteps
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static WorkflowRunStepRecordArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static StatusEntity ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<WorkflowRunStepRecordArray>(json, options);
+            return JsonElementHelpers.ParseValue<StatusEntity>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -317,10 +291,10 @@ public readonly partial struct WorkflowRunSteps
         ///   A value could not be read from the reader.
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static WorkflowRunStepRecordArray ParseValue(ref Utf8JsonReader reader)
+        public static StatusEntity ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<WorkflowRunStepRecordArray>(ref reader);
+            return JsonElementHelpers.ParseValue<StatusEntity>(ref reader);
             #pragma warning restore CS0618
         }
 
@@ -362,16 +336,16 @@ public readonly partial struct WorkflowRunSteps
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out WorkflowRunStepRecordArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out StatusEntity? result)
         {
-            return JsonElementHelpers.TryParseValue<WorkflowRunStepRecordArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<StatusEntity>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new WorkflowRunStepRecordArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new StatusEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -384,6 +358,57 @@ public readonly partial struct WorkflowRunSteps
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Compare with a UTF-8 string.
+        /// </summary>
+        /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+        }
+
+        /// <summary>
+        /// Compare with a string.
+        /// </summary>
+        /// <param ref="utf8Text">The text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(ReadOnlySpan<char> text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, text, isPropertyName: false);
+        }
+
+        /// <summary>
+        /// Compare with a string.
+        /// </summary>
+        /// <param ref="utf8Text">The text to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(string text)
+        {
+            CheckValidInstance();
+
+            if (TokenType != JsonTokenType.String)
+            {
+                return false;
+            }
+
+            return _parent.TextEquals(_idx, text, isPropertyName: false);
         }
 
         /// <inheritdoc/>
@@ -461,11 +486,11 @@ public readonly partial struct WorkflowRunSteps
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static WorkflowRunStepRecordArray IJsonElement<WorkflowRunStepRecordArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static StatusEntity IJsonElement<StatusEntity>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"WorkflowRunStepRecordArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"StatusEntity: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -480,11 +505,11 @@ public readonly partial struct WorkflowRunSteps
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="WorkflowRunStepRecordArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="StatusEntity"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="WorkflowRunStepRecordArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="StatusEntity"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -493,10 +518,10 @@ public readonly partial struct WorkflowRunSteps
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public WorkflowRunStepRecordArray Clone()
+        public StatusEntity Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<WorkflowRunStepRecordArray>(_idx);
+            return _parent.CloneElement<StatusEntity>(_idx);
         }
 
         /// <summary>
@@ -504,7 +529,7 @@ public readonly partial struct WorkflowRunSteps
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="WorkflowRunStepRecordArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="StatusEntity"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -518,15 +543,87 @@ public readonly partial struct WorkflowRunSteps
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public WorkflowRunStepRecordArray Freeze()
+        public StatusEntity Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<WorkflowRunStepRecordArray>(_idx);
+                return mutable.FreezeElement<StatusEntity>(_idx);
             }
 
             return this;
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TContext">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchSucceeded">Match 1st item.</param>
+        /// <param name="matchFaulted">Match 2nd item.</param>
+        /// <param name="matchSkipped">Match 3rd item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TContext, TResult>(
+            in TContext context,
+            Func<TContext, TResult> matchSucceeded,
+            Func<TContext, TResult> matchFaulted,
+            Func<TContext, TResult> matchSkipped,
+            Func<TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                return matchSucceeded(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                return matchFaulted(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchSkipped(context);
+            }
+
+            return defaultMatch(context);
+        }
+
+        /// <summary>
+        /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+        /// <param name="matchSucceeded">Match 1st item.</param>
+        /// <param name="matchFaulted">Match 2nd item.</param>
+        /// <param name="matchSkipped">Match 3rd item.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TResult Match<TResult>(
+            Func<TResult> matchSucceeded,
+            Func<TResult> matchFaulted,
+            Func<TResult> matchSkipped,
+            Func<TResult> defaultMatch)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                return matchSucceeded();
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                return matchFaulted();
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchSkipped();
+            }
+
+            return defaultMatch();
         }
     }
 }
