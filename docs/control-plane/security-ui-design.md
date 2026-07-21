@@ -418,9 +418,9 @@ bar the parked registered-source UI edit panel (§0).
 
 ## 9. References
 
-- Design: `execution-host-design.md` §13 (credentials), §14 (authorization / row security / shell), §15
-  (administration), §16.1 (two planes), §16.5 (entitlement lifecycle), §16.5.4 (grantee resolution),
-  §16.5.5 (ambient dimensions).
+- Design: `source-credentials-design.md` §13 (credentials), and `identity-and-authorization-design.md` §14
+  (authorization / row security / shell), §15 (administration), §16.1 (two planes), §16.5 (entitlement
+  lifecycle), §16.5.4 (grantee resolution), §16.5.5 (ambient dimensions).
 - Shipped: `arazzo-admin-resolved-identity` (the pattern to mirror), `security-ui-correct-by-construction`
   (intent → resolved identity, never raw tuples).
 - API: `/security/rules`, `/security/bindings`, `/credentials`, `/administrators`, `/identity/grantees`,

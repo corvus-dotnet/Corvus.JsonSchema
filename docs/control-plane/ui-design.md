@@ -515,7 +515,7 @@ directory/IdP search** (LDAP/SCIM/OIDC/Entra/SAML), a **store-indexed typeahead 
 seen**, or a **validated well-known subject id**; it would drive three choices — **View** (`catalog:read`, reach-scoped),
 **Operate** (`runs:read`/`runs:write`, reach-scoped, via the §16.5 request path), and **Administer** (§15 governance).
 
-> **Status — what is built vs. design-intent** (consistent with `execution-host-design.md` §16.5.4). Built **on the
+> **Status — what is built vs. design-intent** (consistent with `identity-and-authorization-design.md` §16.5.4). Built **on the
 > server**: the whole identity layer — `IPrincipalDirectory` with six adapters (LDAP, Keycloak, SCIM 2.0, Entra ID, Okta,
 > Google Workspace), the `GET /identity/{whoami,capabilities,grantees}` endpoints (reach-filtered, `complete`-reported,
 > with `observed` and `directory` sources), the `SupportedGranteeKinds` / `ResolveGranteeIdentity` grantee seam, and
