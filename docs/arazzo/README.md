@@ -54,7 +54,7 @@ does not, and links them for the rest.
 | [`platform-conventions.md`](guides/platform-conventions.md) | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. **(done)** |
 | [`client-and-cli.md`](guides/client-and-cli.md) | Generating a typed client and using the `arazzo-runs` CLI. The surface itself is the [REST API reference](reference/control-plane-rest-api.md). **(done)** |
 | [`deployment-bootstrap.md`](guides/deployment-bootstrap.md) | The production bootstrap library versus demo seeding. **(done)** |
-| [`observability.md`](guides/observability.md) | Spans, metrics, and the governance-audit primitive. **(done)** |
+| [`observability.md`](guides/observability.md) | Engine, transport, and control-plane telemetry, transport resilience policies, and the governance-audit primitive. **(done)** |
 
 ## Reference
 
