@@ -226,6 +226,16 @@ Under the hood, the Validator uses the same code generation engine as the source
 
 This means the Validator produces the exact same validation logic as build-time source generation — the only difference is that compilation happens at runtime.
 
+### Hosting requirement: preserve the compilation context
+
+Because compilation happens at runtime, the Roslyn compiler reads the host application's reference assemblies and preprocessor symbols from its `.deps.json`. Any application or test project that hosts the Validator must set `PreserveCompilationContext` in its project file. Without it, the first validation throws, reporting that the generated validator does not implement its expected interface, because the runtime compilation ran against an incomplete reference set.
+
+```xml
+<PropertyGroup>
+  <PreserveCompilationContext>true</PreserveCompilationContext>
+</PropertyGroup>
+```
+
 ## Supported JSON Schema Drafts
 
 | Draft | `$schema` URI |

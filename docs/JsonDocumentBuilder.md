@@ -390,6 +390,8 @@ In many applications, you receive JSON from an API, file, or database, modify it
 
 If you know you'll be modifying the JSON, parse directly into a mutable builder. This is the fastest approach — a single pass over the input, no intermediate document, and no per-value copies. The raw UTF-8 bytes become the builder's backing store, and mutations append on top.
 
+For a read-modify-write over a persisted document, prefer this parse-and-patch approach to rebuilding the document by re-passing every field to a `Create()` factory. Parse-and-patch is faster (unchanged fields carry through as raw bytes rather than being realised as managed values), and it is safer: a rebuild silently drops any field you forget to re-pass, whereas patching touches only the fields you name and carries the rest through unchanged.
+
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
