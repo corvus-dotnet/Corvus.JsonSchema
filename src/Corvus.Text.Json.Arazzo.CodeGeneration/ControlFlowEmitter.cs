@@ -121,6 +121,15 @@ internal static class ControlFlowEmitter
         for (int i = 0; i < steps.Count; i++)
         {
             loop.Append("        case ").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine(":");
+
+            // ADR 0050: capture the step's start instant at case entry (durable only), so the per-step journal entry
+            // AppendApply records carries its execution window. Re-captured on resume (the case re-enters at the
+            // cursor), so it measures the resumed segment.
+            if (options.Durable)
+            {
+                loop.Append("            DateTimeOffset ").Append(StepStartLocal(steps[i].StepId)).AppendLine(" = (timeProvider ?? TimeProvider.System).GetUtcNow();");
+            }
+
             if (steps[i].SubWorkflowId is not null)
             {
                 EmitSubWorkflowCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection);
@@ -314,18 +323,19 @@ internal static class ControlFlowEmitter
         string checkpoint = BuildCheckpoint(step, durable);
         string staging = BuildStaging(step, durable);
         string indexLiteral = index.ToString(CultureInfo.InvariantCulture);
+        string attempt = NeedsRetryCounter(step) ? RetryCounter(step.StepId) : "1";
         string failMessage = EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.");
         string throwStatement = $"throw new WorkflowStepFailedException({EmitText.Quote(step.StepId)}, {failMessage});";
 
         // ── fail ──
         if (durable)
         {
-            string attempt = NeedsRetryCounter(step) ? RetryCounter(step.StepId) : "1";
             c.Append("    if (").Append(camel).AppendLine("Fail)");
             c.AppendLine("    {");
             c.AppendLine("        if (run is not null)");
             c.AppendLine("        {");
             WorkflowExecutorEmitter.AppendIndented(c, staging, 12);
+            c.Append("            ").AppendLine(RecordStepCall(step, "Faulted", attempt, conditional: false));
             c.Append("            WorkflowFault ").Append(camel).Append("Fault = await run.FaultAsync(")
                 .Append(EmitText.Quote(step.StepId)).Append(", ").Append(attempt).Append(", ").Append(failMessage)
                 .AppendLine(", cancellationToken).ConfigureAwait(false);");
@@ -341,7 +351,18 @@ internal static class ControlFlowEmitter
         }
 
         // ── end ──
-        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+        if (durable)
+        {
+            c.Append("    if (").Append(camel).AppendLine("End)");
+            c.AppendLine("    {");
+            c.Append("        ").AppendLine(RecordStepCall(step, "Succeeded", attempt, conditional: true));
+            c.AppendLine("        goto __workflowOutputs;");
+            c.AppendLine("    }");
+        }
+        else
+        {
+            c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+        }
 
         // ── retry ──
         c.Append("    if (").Append(camel).AppendLine("Retry)");
@@ -380,6 +401,11 @@ internal static class ControlFlowEmitter
 
         // ── next ──
         c.Append("    __state = ").Append(camel).AppendLine("Next;");
+        if (durable)
+        {
+            c.Append("    ").AppendLine(RecordStepCall(step, "Succeeded", attempt, conditional: true));
+        }
+
         WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 4);
         c.AppendLine("    continue;");
     }
@@ -1133,6 +1159,15 @@ internal static class ControlFlowEmitter
     }
 
     private static string RetryCounter(string stepId) => $"{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId))}RetryCount";
+
+    // ADR 0050: the per-step start-instant local captured at case entry, used as the journal entry's startedAt.
+    private static string StepStartLocal(string stepId) => $"__{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId))}Started";
+
+    // ADR 0050: emits the run's per-step journal record for a step's terminal outcome. Payload-free (stepId, status,
+    // attempt, and the start/end window). `conditional` uses `run?.` where the run may be null (the durable executor's
+    // null-run fallback); the fault path is already inside `if (run is not null)` and passes false.
+    private static string RecordStepCall(in ControlFlowStep step, string status, string attempt, bool conditional) =>
+        $"{(conditional ? "run?" : "run")}.RecordStep({EmitText.Quote(step.StepId)}, WorkflowStepStatus.{status}, {attempt}, {StepStartLocal(step.StepId)}, (timeProvider ?? TimeProvider.System).GetUtcNow());";
 
     private static string RetryCounterFromCamel(string camel) => $"{camel}RetryCount";
 }

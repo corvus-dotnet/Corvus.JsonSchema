@@ -300,6 +300,40 @@ public partial class WorkflowExecutorEndToEndTests
         recorded.Sum("corvus.arazzo.gotos").ShouldBeGreaterThanOrEqualTo(1);
     }
 
+    [TestMethod]
+    public async Task Durable_executor_records_a_per_step_journal()
+    {
+        // ADR 0050: a durable run journals each step it executes with its outcome, attempt, and timing, persisted
+        // in the checkpoint. Here the step faults once (500) then succeeds on the retry (200).
+        string source = EmitGetPetExecutor(RetryDocument, "JournalRetryWorkflow", durable: true);
+        Assembly assembly = CompileInMemory(source);
+        var execute = assembly.GetType("GeneratedWorkflows.JournalRetryWorkflow")!.GetMethod("ExecuteAsync")!
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, TimeProvider?, ValueTask<WorkflowRunResult<JsonElement>>>>();
+
+        var transport = new MockApiTransport();
+        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
+        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        var store = new Durability.InMemoryWorkflowStateStore();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        JsonElement inputs = inputsDocument.RootElement;
+        using var run = Durability.WorkflowRun.CreateNew(store, "journal-1", "retryAdopt", inputs, "development");
+
+        WorkflowRunResult<JsonElement> result = await execute(transport, workspace, inputs, run, default, null);
+        result.IsFaulted.ShouldBeFalse();
+
+        // The completed run's checkpoint carries the journal.
+        Durability.WorkflowCheckpoint? checkpoint = await store.LoadAsync("journal-1", default);
+        checkpoint.ShouldNotBeNull();
+        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
+
+        state.StepJournal.ShouldNotBeEmpty();
+        state.StepJournal.ShouldAllBe(e => e.Status == WorkflowStepStatus.Succeeded);
+        state.StepJournal.ShouldAllBe(e => e.EndedAt >= e.StartedAt);
+        state.StepJournal.ShouldContain(e => e.Attempt >= 1);
+    }
+
     /// <summary>A <see cref="TimeProvider"/> that fires every timer immediately and records how many it
     /// created — so a <c>Task.Delay</c> routed through it completes at once and the test can assert it was used.</summary>
     private sealed class ImmediateRecordingTimeProvider : TimeProvider
