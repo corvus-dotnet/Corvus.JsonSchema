@@ -58,6 +58,18 @@ The seam and its shape are settled, and the first out-of-process backend is chos
 - **Signing shifts from verify-at-load to attest-at-deploy** ([executor signing](../guides/execution-host.md)):
   the source executor's signature is verified before AOT compilation, and the deploy pipeline attests the native
   artifact. The in-process backend keeps verify-at-load, since it loads IL dynamically.
+- **The AOT artifact is produced out-of-process, on publish, not in the running host.** Native AOT is an
+  ahead-of-time whole-app compile with a native link, so there is no runtime compiler to invoke in-process (unlike
+  today's Roslyn-to-IL path). A workflow AOT builder service captures the generator's C# source, assembles a
+  host-app project (the cloud entry point plus that one executor plus the runtime references), and compiles it. For
+  serverless the builder wraps the vendor tooling (`dotnet lambda` for Lambda, the Azure Functions isolated-worker
+  AOT publish) inside a build container; the later micro-guest backend may drive `dotnet publish` directly. The AOT
+  unit is the whole host-app, one native binary per version and architecture, which is what per-(environment,
+  version) baking means.
+- **Publishing to a serverless environment is asynchronous.** The AOT build takes minutes, so a publish queues a
+  build job and the version moves through queued, building, then ready or failed, with progress observable through
+  the control plane. A version becomes dispatchable on that environment only once its build and deploy complete,
+  which the advertise-and-match step already gates on.
 
 ## Consequences
 
