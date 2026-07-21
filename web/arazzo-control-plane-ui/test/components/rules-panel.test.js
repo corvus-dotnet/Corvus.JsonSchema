@@ -1,12 +1,12 @@
-// Tier 3 — <arazzo-scopes-panel> mounted in a real browser against the in-memory mock.
+// Tier 3 — <arazzo-rules-panel> mounted in a real browser against the in-memory mock.
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
-import '../../src/components/scopes-panel.js';
+import '../../src/components/rules-panel.js';
 import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
 function panelWithMock(attrs = {}, mockOptions = {}) {
   const mock = createMockControlPlane({ latencyMs: 0, ...mockOptions });
-  const el = document.createElement('arazzo-scopes-panel');
+  const el = document.createElement('arazzo-rules-panel');
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
   return el;
@@ -19,7 +19,7 @@ const preview = (el) => $(el, '.preview-expr').textContent;
 // The editor is a RHS detail pane (master-detail), not a modal — "open" means the pane holds an authoring form.
 const editorOpen = (el) => !!$(el, '.detail-pane .content');
 
-describe('<arazzo-scopes-panel>', () => {
+describe('<arazzo-rules-panel>', () => {
   let el;
   afterEach(() => el?.remove());
 
@@ -80,10 +80,10 @@ describe('<arazzo-scopes-panel>', () => {
     equal(preview(el), "domain == 'marketing'", 'template wrote the expression');
     equal($(el, '.f-name').value, 'rule-marketing', 'name auto-suggested');
 
-    const changed = nextEvent(el, 'scopes-changed');
+    const changed = nextEvent(el, 'rules-changed');
     $(el, '.confirm').click();
     const e = await changed;
-    ok(e.detail.scopes.some((s) => s.name === 'rule-marketing' && s.expression === "domain == 'marketing'"), 'rule created');
+    ok(e.detail.rules.some((s) => s.name === 'rule-marketing' && s.expression === "domain == 'marketing'"), 'rule created');
     ok(!editorOpen(el), 'the pane clears after create');
   });
 
@@ -160,34 +160,34 @@ describe('<arazzo-scopes-panel>', () => {
     ok(editorOpen(el), 'selecting a row opens its record in the pane');
     equal($(el, '.f-name').readOnly, true, 'name is the key on edit');
     setField(el, '.f-expression', "domain == 'billing'");
-    const changed = nextEvent(el, 'scopes-changed');
+    const changed = nextEvent(el, 'rules-changed');
     $(el, '.confirm').click();
     const e = await changed;
-    equal(e.detail.scopes.find((s) => s.name === 'reach-payments').expression, "domain == 'billing'", 'expression updated');
+    equal(e.detail.rules.find((s) => s.name === 'reach-payments').expression, "domain == 'billing'", 'expression updated');
   });
 
-  it('deletes a scope from the detail pane and emits scopes-changed', async () => {
+  it('deletes a scope from the detail pane and emits rules-changed', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.srow[data-name="reach-payments"]').click();
-    const changed = nextEvent(el, 'scopes-changed');
+    const changed = nextEvent(el, 'rules-changed');
     $(el, '.del').click();
     const okBtn = await waitFor(() => $(el, 'dialog.arazzo-confirm .ok'));
     okBtn.click();
     const e = await changed;
-    ok(!e.detail.scopes.some((s) => s.name === 'reach-payments'), 'scope removed');
+    ok(!e.detail.rules.some((s) => s.name === 'reach-payments'), 'scope removed');
   });
 
-  it('deletes a scope (via the client + reload) and emits scopes-changed', async () => {
+  it('deletes a scope (via the client + reload) and emits rules-changed', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
-    const changed = nextEvent(el, 'scopes-changed');
+    const changed = nextEvent(el, 'rules-changed');
     await el.client.deleteSecurityRule('reach-payments');
     await el.reloadAndEmit();
     const e = await changed;
-    ok(!e.detail.scopes.some((s) => s.name === 'reach-payments'), 'scope removed');
+    ok(!e.detail.rules.some((s) => s.name === 'reach-payments'), 'scope removed');
   });
 
   it('hides the mutating controls without security:write (read-only detail pane)', async () => {

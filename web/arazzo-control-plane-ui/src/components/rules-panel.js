@@ -1,13 +1,12 @@
 // <arazzo-rules-panel> — manage reusable reach RULES (design §14.2): named row-filter expressions a grant binds per
-// verb. "Rule" is the user-facing term (it matches the API's security rule). Registered as `arazzo-rules-panel`
-// (primary); `arazzo-scopes-panel` is kept as a deprecated alias so kit consumers don't break. A rule is reach (which
-// rows), never capability (which operations) — that lives in the token (§14.1).
+// verb. "Rule" is the user-facing term (it matches the API's security rule). A rule is reach (which rows), never
+// capability (which operations) — that lives in the token (§14.1).
 //
 //   <arazzo-rules-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-rules-panel>
 //
 // Attributes : base-url, scopes (gates the mutating controls)
 // Properties : .client
-// Events     : scopes-changed {scopes}, loaded {count}, error {problem}
+// Events     : rules-changed {rules}, loaded {count}, error {problem}
 // Parts      : panel, list, row, detail
 //
 // A master-detail over the rule list (the same shape as the Grants / Catalog / Connections surfaces): a selectable list on
@@ -27,7 +26,7 @@ const usageChip = (used, capped) => {
 import './pager.js';
 
 // How long to wait after the last keystroke before issuing a server-side search (so typing doesn't fire a request per
-// character). The list is paged + searched on the server, so search scales to any number of scopes.
+// character). The list is paged + searched on the server, so search scales to any number of rules.
 const SEARCH_DEBOUNCE_MS = 250;
 
 // The template-first goals. `build` writes the expression; `suggest` proposes a name from the fields.
@@ -54,14 +53,14 @@ const lit = (v) => `'${String(v ?? '').replace(/'/g, "''")}'`;
 const values = (f) => (f.valuesText || '').split(',').map((v) => v.trim()).filter(Boolean);
 const slug = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-class ArazzoScopesPanel extends ArazzoElement {
+class ArazzoRulesPanel extends ArazzoElement {
   static get observedAttributes() {
     return ['base-url', 'scopes', 'page-size'];
   }
 
   constructor() {
     super();
-    /** @private */ this._scopes = [];
+    /** @private */ this._rules = [];
     /** @private */ this._orderings = [];
     /** @private */ this._orderingsLoaded = false;
     /** @private */ this._loading = false;
@@ -74,7 +73,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
     /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
-    /** @private */ this._selectedName = null;   // the selected scope name (null when creating / nothing selected)
+    /** @private */ this._selectedName = null;   // the selected rule name (null when creating / nothing selected)
   }
 
   connectedCallback() {
@@ -112,7 +111,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     const client = this.client;
     if (!client) {
       this._error = { title: 'Not configured', detail: 'Set a base-url or .client.' };
-      this._scopes = [];
+      this._rules = [];
       this.renderBody();
       return;
     }
@@ -133,14 +132,14 @@ class ArazzoScopesPanel extends ArazzoElement {
         client.countSecurityRules({ q: q || undefined }).catch(() => null),
       ]);
       if (seq !== this._reqSeq) return;
-      this._scopes = page.rules;
+      this._rules = page.rules;
       this._nextPageToken = page.nextPageToken;
       this._total = total ? total.count : null;
       this._totalCapped = total ? total.capped : false;
       if (orderingsResult) { this._orderings = orderingsResult.orderings ?? []; this._orderingsLoaded = true; }
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: this._scopes.length, hasMore: !!this._nextPageToken });
+      this.emit('loaded', { count: this._rules.length, hasMore: !!this._nextPageToken });
       // Usage is what makes deletion a decision instead of a gamble: count which grants reference
       // each rule (bounded drain, best-effort) and re-render the rows with their usage chips.
       this.refreshRuleUsage(seq);
@@ -176,7 +175,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     return this._orderings.find((o) => o.dimension === dimension)?.labels ?? [];
   }
 
-  /** Open a blank detail pane to author a new scope. */
+  /** Open a blank detail pane to author a new rule. */
   openCreate() {
     this._selectedName = null;
     this._form = { mode: 'create', editName: null, template: 'label-eq', name: '', nameEdited: false, formError: null, fields: {} };
@@ -185,14 +184,14 @@ class ArazzoScopesPanel extends ArazzoElement {
     this.renderDetail();
   }
 
-  /** Select a scope row: open it in the detail pane for editing (the name is the immutable key). */
+  /** Select a rule row: open it in the detail pane for editing (the name is the immutable key). */
   select(name) {
-    const scope = this._scopes.find((s) => s.name === name);
-    if (!scope) return;
+    const rule = this._rules.find((s) => s.name === name);
+    if (!rule) return;
     this._selectedName = name;
     this._form = {
-      mode: 'edit', editName: scope.name, template: 'advanced', name: scope.name, nameEdited: true, formError: null,
-      fields: { expression: scope.expression, description: scope.description || '' },
+      mode: 'edit', editName: rule.name, template: 'advanced', name: rule.name, nameEdited: true, formError: null,
+      fields: { expression: rule.expression, description: rule.description || '' },
     };
     this.renderBody();
     this.renderDetail();
@@ -276,7 +275,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     return this._ruleUsage ? (this._ruleUsage.get(name) || []) : null;
   }
 
-  async deleteScope(name) {
+  async deleteRule(name) {
     const used = this.usageOf(name);
     const inUse = Array.isArray(used) && used.length > 0;
     const naming = inUse
@@ -302,11 +301,11 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    // Reload from page 1 under the current search term (a mutation may have added/removed a matching scope).
+    // Reload from page 1 under the current search term (a mutation may have added/removed a matching rule).
     this._history = [];
     this._currentToken = undefined;
     await this.load();
-    this.emit('scopes-changed', { scopes: this._scopes });
+    this.emit('rules-changed', { rules: this._rules });
   }
 
   // ---- rendering --------------------------------------------------------------------------------
@@ -409,12 +408,12 @@ class ArazzoScopesPanel extends ArazzoElement {
       ? `<div class="error-banner"><span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span></div>`
       : '';
 
-    if (this._loading && this._scopes.length === 0) {
+    if (this._loading && this._rules.length === 0) {
       list.innerHTML = `<tr><td colspan="2"><div class="skl"></div><div class="skl"></div></td></tr>`;
-    } else if (this._scopes.length === 0) {
+    } else if (this._rules.length === 0) {
       list.innerHTML = `<tr><td colspan="2"><div class="empty">${this._query.trim() ? `No rules match “${escapeHtml(this._query.trim())}”.` : 'No rules defined.'}</div></td></tr>`;
     } else {
-      list.innerHTML = this._scopes.map((s) => `
+      list.innerHTML = this._rules.map((s) => `
         <tr class="srow selectable" part="row" data-name="${escapeHtml(s.name)}" aria-selected="${String(s.name === this._selectedName)}">
           <td part="cell"><span class="sname">${escapeHtml(s.name)}</span>${usageChip(this.usageOf(s.name), this._ruleUsageCapped)}${s.description ? `<div class="sdesc">${escapeHtml(s.description)}</div>` : ''}</td>
           <td part="cell"><code class="sexpr">${escapeHtml(s.expression)}</code></td>
@@ -426,7 +425,7 @@ class ArazzoScopesPanel extends ArazzoElement {
       hasPrev: this._history.length > 0,
       hasNext: !!this._nextPageToken,
       loading: this._loading,
-      info: this._loading ? 'Loading…' : `${this._total ?? this._scopes.length}${this._totalCapped ? '+' : ''} rule${(this._total ?? this._scopes.length) === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+      info: this._loading ? 'Loading…' : `${this._total ?? this._rules.length}${this._totalCapped ? '+' : ''} rule${(this._total ?? this._rules.length) === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
     });
   }
 
@@ -533,7 +532,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     pane.querySelector('.close').addEventListener('click', () => this.clearDetail());
     pane.querySelector('.cancel').addEventListener('click', () => this.clearDetail());
     pane.querySelector('.confirm').addEventListener('click', () => this.submitForm());
-    pane.querySelector('.del')?.addEventListener('click', () => this.deleteScope(f.editName));
+    pane.querySelector('.del')?.addEventListener('click', () => this.deleteRule(f.editName));
 
     // Scope honesty: a caller without security:write views the rule read-only — inputs disabled, no Save/Delete.
     if (!this.canWrite) {
@@ -545,8 +544,5 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 }
 
-define('arazzo-rules-panel', ArazzoScopesPanel);
-// Deprecated alias — the panel manages security *rules*; kit consumers may still use the old tag (normalization A). A
-// trivial subclass is required because one constructor cannot be registered under two tag names.
-define('arazzo-scopes-panel', class ArazzoScopesPanelAlias extends ArazzoScopesPanel {});
-export { ArazzoScopesPanel };
+define('arazzo-rules-panel', ArazzoRulesPanel);
+export { ArazzoRulesPanel };

@@ -4,7 +4,7 @@
 // deeper into authoring, the correct-by-construction grantee flows, the resolved capability view, and the approver decisions.
 //
 // Grounding (selectors read from source):
-//   src/components/scopes-panel.js   — <arazzo-rules-panel> (primary tag; arazzo-scopes-panel is the deprecated alias)
+//   src/components/rules-panel.js    — <arazzo-rules-panel>
 //   src/components/grants-panel.js   — <arazzo-grants-panel> master-detail, verb rows, additional clauses
 //   src/components/grantee-picker.js — merged directory+observed search, partial-identity flag, kind badges
 //   src/components/access-overview-panel.js, access-requests-panel.js, access-request-dialog.js

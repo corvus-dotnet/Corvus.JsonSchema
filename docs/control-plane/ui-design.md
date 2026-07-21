@@ -544,8 +544,8 @@ mutations on `security:write`.
 Manages the named **rules** (row-filter expressions — the API calls them security *rules*). A searchable, keyset-paged
 list; authoring is **template-first in a modal editor** (pick a goal — label match, set membership, caller-claim, ABAC
 superset/intersect, ordered classification, or raw advanced — and the template writes the expression with a live preview;
-`listSecurityOrderings` supplies the classification labels). Emits `scopes-changed` (event name kept for compatibility),
-`loaded`, `error`. Registered as `arazzo-rules-panel`, with `arazzo-scopes-panel` kept as a deprecated alias.
+`listSecurityOrderings` supplies the classification labels). Emits `rules-changed`,
+`loaded`, `error`. Registered as `arazzo-rules-panel`.
 
 #### `<arazzo-grants-panel>`
 Manages the **grant bindings** — a principal claim → per-verb (read/write/purge) reach, each verb `unrestricted` or a set

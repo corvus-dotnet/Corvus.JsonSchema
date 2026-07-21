@@ -325,11 +325,10 @@ Author access grants: a claim mapped to per-verb reach
 
 ### `<arazzo-rules-panel>`
 
-Manage reusable reach rules (named row-filter expressions). Source: `scopes-panel.js`. Primary tag is
-`arazzo-rules-panel`; `arazzo-scopes-panel` is a kept-for-compatibility alias (see [Deprecations](#deprecations)).
+Manage reusable reach rules (named row-filter expressions). Source: `rules-panel.js`.
 
 - **Attributes:** `base-url`, `scopes`
-- **Events:** `scopes-changed`, `loaded`, `error`
+- **Events:** `rules-changed`, `loaded`, `error`
 - **Hosts:** `arazzo-pager`
 
 ### `<arazzo-administrators-panel>`
@@ -586,9 +585,3 @@ objects.
   the surface's selection drives the step, workflow, and document inspectors, whose changes update the document
   model and the text editor; the scenario panel hands a run trace to the debug tray; the git dialog opens a
   compare and drives the GitHub connect.
-
-## Deprecations
-
-- **`arazzo-scopes-panel` is an alias of `arazzo-rules-panel`** (`scopes-panel.js`). `arazzo-rules-panel` is
-  the primary registration; `arazzo-scopes-panel` is a kept-for-compatibility alias subclass. "Rule" is the
-  user-facing term; the `scopes-changed` event and the `scopes` file name persist only for back-compatibility.

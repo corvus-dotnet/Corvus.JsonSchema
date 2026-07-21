@@ -45,8 +45,8 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   operations and gates on `environments:write`) for the source-credential (§13) and administration (§15/§7.7)
   surfaces; `<arazzo-access-requests>` + `<arazzo-access-request-dialog>` (request run access, withdraw your own
   pending requests, and — for workflows you administer — approve / make-eligible / deny / revoke) for the
-  access-request + approval (§16.5) surface; `<arazzo-scopes-panel>` and `<arazzo-grants-panel>` (the reusable reach
-  vocabulary — named scopes/row-filter expressions and the claim→per-verb reach grant bindings, §14.2) for the
+  access-request + approval (§16.5) surface; `<arazzo-rules-panel>` and `<arazzo-grants-panel>` (the reusable reach
+  vocabulary — named rules/row-filter expressions and the claim→per-verb reach grant bindings, §14.2) for the
   **Permissions** surface; `<arazzo-availability-requests>` + `<arazzo-availability-request-dialog>` (request a
   workflow version be made available — "promoted" — in an environment, and, for environments you administer, the
   approver inbox: approve / deny / withdraw, §7.8) and `<arazzo-availability-matrix>` (the version × environment
@@ -133,7 +133,7 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id` **or** `environment` (the subject), `scopes` | `administrators-changed`, `error` |
 | `<arazzo-access-requests>` | `base-url`, `view` (`mine`\|`queue`), `base-workflow-id`, `theme` (`.fetch`, `.authProvider`) | `access-request-submitted`, `access-request-decided`, `loaded`, `error` |
 | `<arazzo-access-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, lockWorkflow? })`) | `access-request-submitted`, `error` |
-| `<arazzo-scopes-panel>` | `base-url`, `scopes` | `scopes-changed`, `loaded`, `error` |
+| `<arazzo-rules-panel>` | `base-url`, `scopes` | `rules-changed`, `loaded`, `error` |
 | `<arazzo-grants-panel>` | `base-url`, `scopes` | `grants-changed`, `loaded`, `error` |
 | `<arazzo-availability-requests>` | `base-url`, `view` (`mine`\|`queue`), `environment`, `theme` (`.fetch`, `.authProvider`) | `availability-request-submitted`, `availability-request-decided`, `loaded`, `error` |
 | `<arazzo-availability-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, versionNumber?, environment?, lockWorkflow? })`) | `availability-request-submitted`, `error` |

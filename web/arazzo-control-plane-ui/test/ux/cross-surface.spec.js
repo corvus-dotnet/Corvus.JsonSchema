@@ -6,7 +6,7 @@
 //
 // Grounding (selectors read from source):
 //   demo/index.html               — tab wiring, persona wiring, per-view composition
-//   src/components/grants-panel.js, scopes-panel.js (rules), access-overview-panel.js,
+//   src/components/grants-panel.js, rules-panel.js, access-overview-panel.js,
 //   access-requests-panel.js, access-request-dialog.js, catalog-detail.js, administrators-panel.js,
 //   availability-matrix.js, environments-panel.js, src/arazzo-control-plane.js (runs)
 //   demo/mock-api.js              — decideAccessRequest writes/removes the approval binding (§16.5)
