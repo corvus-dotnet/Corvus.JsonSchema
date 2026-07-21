@@ -6,229 +6,577 @@ how the components interact. For how to adopt, theme, and compose the kit, see t
 [`../adr/`](../adr/README.md).
 
 Every element is a custom element registered through `define('arazzo-...', ...)` and extends `ArazzoElement`
-(`src/components/base.js`). The shared conventions below apply to all of them.
+(`src/components/base.js`). Each entry below lists the facets that apply to it. An omitted facet does not apply.
 
-## Shared conventions (`base.js`)
+## At a glance
 
-- **`ArazzoElement`** (extends `HTMLElement`): an open shadow root; `$` and `$$` query helpers; `emit(type,
-  detail)` for a bubbling, composed `CustomEvent`; and client injection, where `get client()` lazily builds an
-  `ArazzoControlPlaneClient` from the `base-url` attribute, or you set `.client` directly (setting it
-  re-renders).
-- **`define(tag, ctor)`** registers an element (idempotent).
-- **CSS tokens.** `SHARED_CSS`, `PAGER_CSS`, `PICKER_CSS`, and `GRANTEE_CHIP_CSS` are bundles a component
-  includes in its shadow `<style>`; components read `--arazzo-*` tokens from a themed ancestor rather than
-  setting their own, so a host themes the whole kit at once.
-- **Helpers.** `confirmDialog(host, {...})` (themed, focus-trapped, promise-based; the native `confirm` is not
-  used), `granteeChip`, `statusColor`, `escapeHtml`, `relativeTime` / `countdown` / `absoluteTime`.
-- **Injection model.** Every panel exposes `.client` (or `base-url`); Layer 2 screens additionally expose
-  `.authProvider` (a function returning the `Authorization` header) and `.fetch` (an interceptor). Setting any
-  rebuilds the client and re-applies it to children.
+| Area | Components |
+|------|-----------|
+| [Runs](#runs) | `control-plane`, `runs-table`, `run-detail`, `cancel-button`, `resume-dialog`, `purge-dialog`, `workflow-step-picker`, `schedules` |
+| [Runners](#runners) | `runners`, `runner-authorizations` |
+| [Catalog](#catalog) | `catalog`, `catalog-table`, `catalog-detail`, `catalog-add-dialog`, `availability-matrix`, `availability-request-dialog`, `availability-requests`, `workflow-compare` |
+| [Environments and sources](#environments-and-sources) | `environments`, `environment-input`, `environment-picker`, `sources`, `source-operations`, `source-acquisition-dialog` |
+| [Credentials](#credentials) | `credentials`, `credentials-table`, `credential-detail`, `credential-dialog` |
+| [Security and access](#security-and-access) | `access-overview`, `access-requests`, `access-request-dialog`, `grants-panel`, `rules-panel`, `administrators-panel`, `grantee-picker`, `admin-grant-input`, `auth-status` |
+| [Designer](#designer) | `design-surface`, `text-editor`, `workflow-inspector`, `step-inspector`, `document-inspector`, `criteria-editor`, `action-editor`, `outputs-editor`, `payload-editor`, `expression-input`, `schema-editor`, `value-editor`, `scenario-panel`, `scenario-editor`, `debug-tray`, `operation-browser`, `workspace-table`, `git-dialog`, `git-tree`, `github-connect` |
+| [Shared primitives](#shared-primitives) | `pager`, `status-badge`, `splitbar`, `input-dialog`, `json-view`, `tag-editor`, and the picker family |
+
+## Shared conventions
+
+Every element extends `ArazzoElement` (`src/components/base.js`) and follows these conventions, so they are
+not repeated per entry.
+
+- **Client injection.** Set `.client` (a `ArazzoControlPlaneClient`), or a `base-url` attribute the element
+  builds one from. Setting `.client` re-renders. A Layer 2 screen additionally exposes `.authProvider` (a
+  function returning the `Authorization` header) and `.fetch`, shared with its children.
+- **Events.** `emit(type, detail)` dispatches a bubbling, composed `CustomEvent`, so a host hears it across
+  shadow roots.
 - **Scope gating.** A `scopes` attribute (space-separated) shows, hides, or disables mutating controls. An
   absent attribute defers to the server.
+- **Theming.** Components read `--arazzo-*` tokens from a themed ancestor (via `SHARED_CSS`, `PAGER_CSS`,
+  `PICKER_CSS`), so a host themes the whole kit at once.
+- **Dialogs.** `confirmDialog(host, {...})` shows a themed, focus-trapped confirmation inside the host's shadow
+  root. The native `prompt` / `confirm` / `alert` are not used.
+
+---
 
 ## Runs
 
-- **`<arazzo-control-plane>`** (`arazzo-control-plane.js`). Layer 2 run-management screen (filters plus
-  master/detail). Attributes `base-url`, `scopes` (gates `runs:purge`), `theme`, `poll`. Properties `.client`,
-  `.authProvider`, `.fetch`; methods `reload()` / `refresh()`. Re-emits `run-selected`, `run-changed`,
-  `run-deleted`, `purge-completed`, `error`. Hosts `arazzo-runs-table`, `arazzo-run-detail`,
-  `arazzo-purge-dialog`, `arazzo-workflow-id-input`.
-- **`<arazzo-runs-table>`** (`runs-table.js`). Filterable, keyset-paged run list. Attributes `base-url`,
-  `status`, `workflow-id`, `page-size`, `poll`, `selectable`. Emits `run-selected {run}`, `loaded`, `error`.
-  Hosts `arazzo-pager`, `arazzo-status-badge`.
-- **`<arazzo-run-detail>`** (`run-detail.js`). Full record plus scope-gated remediation for one run.
-  Attributes `base-url`, `runid`, `poll`, `scopes`. Emits `run-changed`, `run-deleted`, `error`, `close`. Hosts
-  `arazzo-cancel-button`, `arazzo-resume-dialog`, `arazzo-status-badge`.
-- **`<arazzo-cancel-button>`** (`cancel-button.js`). One-click cancel of a non-terminal run. Attributes
-  `base-url`, `runid`, `label`, `no-confirm`. Emits `run-cancelled`, `error`.
-- **`<arazzo-resume-dialog>`** (`resume-dialog.js`). Modal for the four resume modes (retry, rewind, skip,
-  state-patch, [ADR 0022](../adr/0022-resume-mode-taxonomy.md)). Methods `open(run)`, `close()`. Emits
-  `resume-submitted`, `error`. Hosts `arazzo-workflow-step-picker`, `arazzo-value-editor`.
-- **`<arazzo-purge-dialog>`** (`purge-dialog.js`). Bulk reap of completed/cancelled runs (destructive,
-  `runs:purge`). Methods `open()`, `close()`. Emits `purge-completed`.
-- **`<arazzo-workflow-step-picker>`** (`workflow-step-picker.js`). Choose a run's target step by name for
-  rewind/skip. Attributes `workflow-id`, `cursor`, `direction`. Emits `change {index, stepId}`.
-- **`<arazzo-schedules>`** (`schedules-panel.js`). Durable-schedule management (list, run-now, delete).
-  Attributes `base-url`, `poll`, `page-size`. Emits `loaded`, `error`. Hosts `arazzo-pager`.
+### `<arazzo-control-plane>`
+
+Layer 2 run-management screen: filters plus master/detail. Source: `arazzo-control-plane.js`.
+
+- **Attributes:** `base-url`, `scopes` (gates `runs:purge`), `theme`, `poll`
+- **Properties:** `.client`, `.authProvider`, `.fetch`; methods `reload()`, `refresh()`
+- **Events:** re-emits `run-selected`, `run-changed`, `run-deleted`, `purge-completed`, `error`
+- **Hosts:** `arazzo-runs-table`, `arazzo-run-detail`, `arazzo-purge-dialog`, `arazzo-workflow-id-input`
+
+### `<arazzo-runs-table>`
+
+Filterable, keyset-paged run list. Source: `runs-table.js`.
+
+- **Attributes:** `base-url`, `status`, `workflow-id`, `page-size`, `poll`, `selectable`
+- **Events:** `run-selected {run}`, `loaded`, `error`
+- **Hosts:** `arazzo-pager`, `arazzo-status-badge`
+
+### `<arazzo-run-detail>`
+
+Full record plus scope-gated remediation for one run. Source: `run-detail.js`.
+
+- **Attributes:** `base-url`, `runid`, `poll`, `scopes`
+- **Events:** `run-changed`, `run-deleted`, `error`, `close`
+- **Hosts:** `arazzo-cancel-button`, `arazzo-resume-dialog`, `arazzo-status-badge`
+
+### `<arazzo-cancel-button>`
+
+One-click cancel of a non-terminal run. Source: `cancel-button.js`.
+
+- **Attributes:** `base-url`, `runid`, `label`, `no-confirm`
+- **Events:** `run-cancelled`, `error`
+
+### `<arazzo-resume-dialog>`
+
+Modal for the four resume modes (retry, rewind, skip, state-patch,
+[ADR 0022](../adr/0022-resume-mode-taxonomy.md)). Source: `resume-dialog.js`.
+
+- **Methods:** `open(run)`, `close()`
+- **Events:** `resume-submitted`, `error`
+- **Hosts:** `arazzo-workflow-step-picker`, `arazzo-value-editor`
+
+### `<arazzo-purge-dialog>`
+
+Bulk reap of completed and cancelled runs (destructive, `runs:purge`). Source: `purge-dialog.js`.
+
+- **Methods:** `open()`, `close()`
+- **Events:** `purge-completed`
+
+### `<arazzo-workflow-step-picker>`
+
+Choose a run's target step by name for rewind or skip. Source: `workflow-step-picker.js`.
+
+- **Attributes:** `workflow-id`, `cursor`, `direction`
+- **Events:** `change {index, stepId}`
+
+### `<arazzo-schedules>`
+
+Durable-schedule management: list, run-now, delete. Source: `schedules-panel.js`.
+
+- **Attributes:** `base-url`, `poll`, `page-size`
+- **Events:** `loaded`, `error`
+- **Hosts:** `arazzo-pager`
+
+---
 
 ## Runners
 
-- **`<arazzo-runners>`** (`runners-panel.js`). Read-only runner registry and health (online vs stale by
-  heartbeat). Attributes `base-url`, `stale-after`, `poll`. Emits `loaded`, `error`. Hosts `arazzo-pager`.
-- **`<arazzo-runner-authorizations>`** (`runner-authorizations-panel.js`). The approver inbox for authorizing
-  or revoking which runners may serve an environment ([ADR 0027](../adr/0027-runner-environment-binding.md)).
-  Attributes `base-url`, `environment`. Emits `runner-authorization-decided`, `error`, `loaded`. Hosts
-  `arazzo-environment-picker`, `arazzo-pager`.
+### `<arazzo-runners>`
+
+Read-only runner registry and health (online versus stale by heartbeat). Source: `runners-panel.js`.
+
+- **Attributes:** `base-url`, `stale-after`, `poll`
+- **Events:** `loaded`, `error`
+- **Hosts:** `arazzo-pager`
+
+### `<arazzo-runner-authorizations>`
+
+The approver inbox for authorizing or revoking which runners may serve an environment
+([ADR 0027](../adr/0027-runner-environment-binding.md)). Source: `runner-authorizations-panel.js`.
+
+- **Attributes:** `base-url`, `environment`
+- **Events:** `runner-authorization-decided`, `error`, `loaded`
+- **Hosts:** `arazzo-environment-picker`, `arazzo-pager`
+
+---
 
 ## Catalog
 
-- **`<arazzo-catalog>`** (`arazzo-catalog.js`). Layer 2 catalog browse/govern screen. Attributes `base-url`,
-  `scopes`, `theme`. Methods `openWorkflow(baseId)` (the deep-link entry), `reload()`. Re-emits
-  `version-selected`, `version-changed`, `version-deleted`, `workflow-added`, `error`. Hosts
-  `arazzo-catalog-table`, `arazzo-catalog-detail`, `arazzo-catalog-add-dialog`, `arazzo-splitbar`.
-- **`<arazzo-catalog-table>`** (`catalog-table.js`). Catalog list, one row per base workflow. Attributes
-  `base-url`, `q`, `status`, `owner`, `tags`, `page-size`, `selectable`. Emits `version-selected`, `loaded`,
-  `error`. Hosts `arazzo-pager`.
-- **`<arazzo-catalog-detail>`** (`catalog-detail.js`). Full record plus governance for one version. Attributes
-  `base-url`, `base-workflow-id`, `version-number`, `scopes`. Emits `version-changed`, `version-deleted`,
-  `access-requested`, `promotion-requested`, `close`, `error`. The richest host: nests
-  `arazzo-administrators-panel`, `arazzo-availability-matrix`, `arazzo-availability-request-dialog`,
+### `<arazzo-catalog>`
+
+Layer 2 catalog browse and govern screen. Source: `arazzo-catalog.js`.
+
+- **Attributes:** `base-url`, `scopes`, `theme`
+- **Properties:** methods `openWorkflow(baseId)` (the deep-link entry), `reload()`
+- **Events:** re-emits `version-selected`, `version-changed`, `version-deleted`, `workflow-added`, `error`
+- **Hosts:** `arazzo-catalog-table`, `arazzo-catalog-detail`, `arazzo-catalog-add-dialog`, `arazzo-splitbar`
+
+### `<arazzo-catalog-table>`
+
+Catalog list, one row per base workflow. Source: `catalog-table.js`.
+
+- **Attributes:** `base-url`, `q`, `status`, `owner`, `tags`, `page-size`, `selectable`
+- **Events:** `version-selected`, `loaded`, `error`
+- **Hosts:** `arazzo-pager`
+
+### `<arazzo-catalog-detail>`
+
+Full record plus governance for one version. The richest host in the kit. Source: `catalog-detail.js`.
+
+- **Attributes:** `base-url`, `base-workflow-id`, `version-number`, `scopes`
+- **Events:** `version-changed`, `version-deleted`, `access-requested`, `promotion-requested`, `close`, `error`
+- **Hosts:** `arazzo-administrators-panel`, `arazzo-availability-matrix`, `arazzo-availability-request-dialog`,
   `arazzo-access-request-dialog` (locked to the workflow), `arazzo-workflow-compare`, `arazzo-tag-editor`,
-  `arazzo-credential-dialog`.
-- **`<arazzo-catalog-add-dialog>`** (`catalog-add-dialog.js`). Guided wizard to add a workflow and its sources.
-  Methods `open()`, `close()`. Emits `workflow-added`. Hosts `arazzo-grantee-picker`, `arazzo-credential-dialog`.
-- **`<arazzo-availability-matrix>`** (`availability-matrix.js`). The version-by-environment promotion grid
-  (§7.8). Attributes `base-url`, `base-workflow-id`, `selected-version`, `scopes`. Emits `availability-changed`,
-  `promotion-requested`, `loaded`, `error`. Hosts `arazzo-availability-request-dialog`.
-- **`<arazzo-availability-request-dialog>`** (`availability-request-dialog.js`). "Request promotion" form.
-  Methods `open({...})`, `close()`. Emits `availability-request-submitted`. Hosts `arazzo-workflow-picker`.
-- **`<arazzo-availability-requests>`** (`availability-requests-panel.js`). Promotion request and approval
-  surface (My requests, Approver inbox). Attributes `base-url`, `view`, `environment`. Emits
-  `availability-request-submitted`, `availability-request-decided`, `error`, `loaded`. Hosts the dialog and
-  `arazzo-pager`.
-- **`<arazzo-workflow-compare>`** (`workflow-compare.js`). Side-by-side / overlay / text diff of two versions.
-  Properties `.left`, `.right`, `.diff`. Hosts two read-only `arazzo-design-surface` instances.
+  `arazzo-credential-dialog`
+
+### `<arazzo-catalog-add-dialog>`
+
+Guided wizard to add a workflow and its sources. Source: `catalog-add-dialog.js`.
+
+- **Methods:** `open()`, `close()`
+- **Events:** `workflow-added`
+- **Hosts:** `arazzo-grantee-picker`, `arazzo-credential-dialog`
+
+### `<arazzo-availability-matrix>`
+
+The version-by-environment promotion grid (§7.8). Source: `availability-matrix.js`.
+
+- **Attributes:** `base-url`, `base-workflow-id`, `selected-version`, `scopes`
+- **Events:** `availability-changed`, `promotion-requested`, `loaded`, `error`
+- **Hosts:** `arazzo-availability-request-dialog`
+
+### `<arazzo-availability-request-dialog>`
+
+"Request promotion" form. Source: `availability-request-dialog.js`.
+
+- **Methods:** `open({...})`, `close()`
+- **Events:** `availability-request-submitted`
+- **Hosts:** `arazzo-workflow-picker`
+
+### `<arazzo-availability-requests>`
+
+Promotion request and approval surface (My requests, Approver inbox). Source: `availability-requests-panel.js`.
+
+- **Attributes:** `base-url`, `view`, `environment`
+- **Events:** `availability-request-submitted`, `availability-request-decided`, `error`, `loaded`
+- **Hosts:** `arazzo-availability-request-dialog`, `arazzo-pager`
+
+### `<arazzo-workflow-compare>`
+
+Side-by-side, overlay, or text diff of two versions. Source: `workflow-compare.js`.
+
+- **Properties:** `.left`, `.right`, `.diff`
+- **Hosts:** two read-only `arazzo-design-surface` instances
+
+---
 
 ## Environments and sources
 
-- **`<arazzo-environments>`** (`environments-panel.js`). Master-detail over the environment registry (§7.7).
-  Attributes `base-url`, `scopes`. Emits `environment-selected/created/changed/deleted`, `loaded`, `error`.
-  Hosts `arazzo-administrators-panel`, `arazzo-tag-editor`, `arazzo-splitbar`, `arazzo-pager`.
-- **`<arazzo-environment-input>`** (`environment-input.js`). Text input with a filtered environment dropdown,
-  accepts a free-typed value. Attributes `placeholder`, `value`, `base-url`. Retargets `input` / `change`.
-- **`<arazzo-environment-picker>`** (`environment-picker.js`). Type-to-search picker resolving to a real
-  environment. Attributes `placeholder`, `value`, `base-url`. Emits `environment-picked`.
-- **`<arazzo-sources>`** (`sources-panel.js`). Master-detail over the source registry (§7.6). Attributes
-  `base-url`, `scopes`. Emits `source-selected/created/changed/deleted`, `credential-saved`, `loaded`, `error`.
-  Hosts `arazzo-source-operations`, `arazzo-json-view`, `arazzo-credential-dialog`, `arazzo-tag-editor`,
-  `arazzo-splitbar`, `arazzo-pager`.
-- **`<arazzo-source-operations>`** (`source-operations.js`). Read-only filterable operations/messages view over
-  a source. Property `.source`. Emits `loaded`, `error`.
-- **`<arazzo-source-acquisition-dialog>`** (`source-acquisition-dialog.js`). Attach a source to a designer
-  working copy (pick registered, fetch a URL, upload JSON). Methods `open({...})`, `close()`. Emits
-  `source-attached`. Hosts `arazzo-catalog-table`, `arazzo-github-connect`, `arazzo-text-editor`.
+### `<arazzo-environments>`
+
+Master-detail over the environment registry (§7.7). Source: `environments-panel.js`.
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** `environment-selected/created/changed/deleted`, `loaded`, `error`
+- **Hosts:** `arazzo-administrators-panel`, `arazzo-tag-editor`, `arazzo-splitbar`, `arazzo-pager`
+
+### `<arazzo-environment-input>`
+
+Text input with a filtered environment dropdown; accepts a free-typed value. Source: `environment-input.js`.
+
+- **Attributes:** `placeholder`, `value`, `base-url`
+- **Events:** retargeted `input` / `change`
+
+### `<arazzo-environment-picker>`
+
+Type-to-search picker resolving to a real environment. Source: `environment-picker.js`.
+
+- **Attributes:** `placeholder`, `value`, `base-url`
+- **Events:** `environment-picked`
+
+### `<arazzo-sources>`
+
+Master-detail over the source registry (§7.6). Source: `sources-panel.js`.
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** `source-selected/created/changed/deleted`, `credential-saved`, `loaded`, `error`
+- **Hosts:** `arazzo-source-operations`, `arazzo-json-view`, `arazzo-credential-dialog`, `arazzo-tag-editor`,
+  `arazzo-splitbar`, `arazzo-pager`
+
+### `<arazzo-source-operations>`
+
+Read-only filterable operations and messages view over a source. Source: `source-operations.js`.
+
+- **Properties:** `.source`
+- **Events:** `loaded`, `error`
+
+### `<arazzo-source-acquisition-dialog>`
+
+Attach a source to a designer working copy (pick registered, fetch a URL, upload JSON).
+Source: `source-acquisition-dialog.js`.
+
+- **Methods:** `open({...})`, `close()`
+- **Events:** `source-attached`
+- **Hosts:** `arazzo-catalog-table`, `arazzo-github-connect`, `arazzo-text-editor`
+
+---
 
 ## Credentials
 
-- **`<arazzo-credentials>`** (`credentials.js`). Credential-rotation worklist as master-detail. Attributes
-  `base-url`, `scopes`. Re-emits `credential-selected/saved/deleted`, `error`. Hosts `arazzo-credentials-table`,
-  `arazzo-credential-detail`, `arazzo-credential-dialog`, `arazzo-splitbar`.
-- **`<arazzo-credentials-table>`** (`credentials-table.js`). Status-first rotation worklist (valid, expiring,
-  expired). Attributes `base-url`, `status`, `source`, `page-size`, `selectable`. Emits `credential-selected`,
-  `loaded`, `error`. Hosts `arazzo-environment-picker`, `arazzo-pager`.
-- **`<arazzo-credential-detail>`** (`credential-detail.js`). Full record plus scope-gated actions
-  (edit/duplicate/revoke) for one binding; references and metadata only, never secrets. Attributes `base-url`,
-  `scopes`. Emits `credential-edit`, `credential-duplicate`, `credential-deleted`, `close`, `error`.
-- **`<arazzo-credential-dialog>`** (`credential-dialog.js`). Create/edit/rotate a source credential binding
-  (references and non-secret metadata; refuses secret material). Methods `open(binding?)`, `close()`. Emits
-  `credential-saved`. Hosts `arazzo-environment-input`, `arazzo-grantee-picker`, `arazzo-tag-editor`.
+### `<arazzo-credentials>`
+
+Credential-rotation worklist as master-detail. Source: `credentials.js`.
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** re-emits `credential-selected/saved/deleted`, `error`
+- **Hosts:** `arazzo-credentials-table`, `arazzo-credential-detail`, `arazzo-credential-dialog`, `arazzo-splitbar`
+
+### `<arazzo-credentials-table>`
+
+Status-first rotation worklist (valid, expiring, expired). Source: `credentials-table.js`.
+
+- **Attributes:** `base-url`, `status`, `source`, `page-size`, `selectable`
+- **Events:** `credential-selected`, `loaded`, `error`
+- **Hosts:** `arazzo-environment-picker`, `arazzo-pager`
+
+### `<arazzo-credential-detail>`
+
+Full record plus scope-gated actions for one binding; references and metadata only, never secrets.
+Source: `credential-detail.js`.
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** `credential-edit`, `credential-duplicate`, `credential-deleted`, `close`, `error`
+
+### `<arazzo-credential-dialog>`
+
+Create, edit, or rotate a source credential binding (references and non-secret metadata; refuses secret
+material). Source: `credential-dialog.js`.
+
+- **Methods:** `open(binding?)`, `close()`
+- **Events:** `credential-saved`
+- **Hosts:** `arazzo-environment-input`, `arazzo-grantee-picker`, `arazzo-tag-editor`
+
+---
 
 ## Security and access
 
-- **`<arazzo-access-overview>`** (`access-overview-panel.js`). The who-can-do-what overview for one grantee
-  (reach grants, capabilities, administered workflows and environments, credential usage,
-  [ADR 0015](../adr/0015-access-overview-server-aggregated.md)). Attributes `base-url`, `scopes` (gates
-  Revoke). Emits `grantee-selected`, `revoked`, `open-workflow`, `open-environment`, `open-credential`,
-  `error`. Hosts `arazzo-grantee-picker` and three `arazzo-pager`s (reach, administered, credentials).
-- **`<arazzo-access-requests>`** (`access-requests-panel.js`). Access-request and approval surface (My
-  requests, Approver queue, §16.5). Attributes `base-url`, `view`, `base-workflow-id`. Emits
-  `access-request-submitted`, `access-request-decided`, `error`, `loaded`. Hosts `arazzo-access-request-dialog`,
-  `arazzo-workflow-id-input`, `arazzo-pager`.
-- **`<arazzo-access-request-dialog>`** (`access-request-dialog.js`). "Request access" form. Methods `open({...})`,
-  `close()`. Emits `access-request-submitted`. Hosts `arazzo-workflow-picker`.
-- **`<arazzo-grants-panel>`** (`grants-panel.js`). Author access grants: a claim mapped to per-verb reach
-  ([ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)). Attributes `base-url`, `scopes`. Emits
-  `grants-changed`, `loaded`, `error`. Hosts `arazzo-grantee-picker`, `arazzo-pager`.
-- **`<arazzo-rules-panel>`** (`scopes-panel.js`). Manage reusable reach rules (named row-filter expressions).
-  Attributes `base-url`, `scopes`. Emits `scopes-changed`, `loaded`, `error`. Hosts `arazzo-pager`. Primary
-  tag is `arazzo-rules-panel`; `arazzo-scopes-panel` is a kept-for-compatibility alias (see Deprecations).
-- **`<arazzo-administrators-panel>`** (`administrators-panel.js`). Manage the administrator set of a workflow
-  (§15) or an environment (§7.7). Attributes `base-url`, `base-workflow-id` XOR `environment`, `scopes`. Emits
-  `administrators-changed`, `error`, `loaded`. Hosts `arazzo-grantee-picker`.
-- **`<arazzo-grantee-picker>`** (`grantee-picker.js`). Resolve a real grantee to its exact identity
-  ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)). Attributes `placeholder`, `kind`, `kinds`,
-  `source`, `base-url`. Emits `grantee-selected`, `grantee-cleared`, `error`. Falls back to hosting
-  `arazzo-admin-grant-input`.
-- **`<arazzo-admin-grant-input>`** (`admin-grant-input.js`). Interim `{dimension, value}` admin-identity input,
-  superseded by `arazzo-grantee-picker` (see Deprecations).
-- **`<arazzo-auth-status>`** (`auth-status.js`). Optional BFF sign-in / sign-out chrome; self-discovers via
-  `/me`, invisible when auth is disabled ([ADR 0042](../adr/0042-auth-agnostic-host-owns-session.md)).
+### `<arazzo-access-overview>`
+
+The who-can-do-what overview for one grantee: reach grants, capabilities, administered workflows and
+environments, credential usage ([ADR 0015](../adr/0015-access-overview-server-aggregated.md)).
+Source: `access-overview-panel.js`.
+
+- **Attributes:** `base-url`, `scopes` (gates Revoke)
+- **Events:** `grantee-selected`, `revoked`, `open-workflow`, `open-environment`, `open-credential`, `error`
+- **Hosts:** `arazzo-grantee-picker`, three `arazzo-pager`s (reach, administered, credentials)
+
+### `<arazzo-access-requests>`
+
+Access-request and approval surface (My requests, Approver queue, §16.5). Source: `access-requests-panel.js`.
+
+- **Attributes:** `base-url`, `view`, `base-workflow-id`
+- **Events:** `access-request-submitted`, `access-request-decided`, `error`, `loaded`
+- **Hosts:** `arazzo-access-request-dialog`, `arazzo-workflow-id-input`, `arazzo-pager`
+
+### `<arazzo-access-request-dialog>`
+
+"Request access" form. Source: `access-request-dialog.js`.
+
+- **Methods:** `open({...})`, `close()`
+- **Events:** `access-request-submitted`
+- **Hosts:** `arazzo-workflow-picker`
+
+### `<arazzo-grants-panel>`
+
+Author access grants: a claim mapped to per-verb reach
+([ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)). Source: `grants-panel.js`.
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** `grants-changed`, `loaded`, `error`
+- **Hosts:** `arazzo-grantee-picker`, `arazzo-pager`
+
+### `<arazzo-rules-panel>`
+
+Manage reusable reach rules (named row-filter expressions). Source: `scopes-panel.js`. Primary tag is
+`arazzo-rules-panel`; `arazzo-scopes-panel` is a kept-for-compatibility alias (see [Deprecations](#deprecations)).
+
+- **Attributes:** `base-url`, `scopes`
+- **Events:** `scopes-changed`, `loaded`, `error`
+- **Hosts:** `arazzo-pager`
+
+### `<arazzo-administrators-panel>`
+
+Manage the administrator set of a workflow (§15) or an environment (§7.7). Source: `administrators-panel.js`.
+
+- **Attributes:** `base-url`, `base-workflow-id` XOR `environment`, `scopes`
+- **Events:** `administrators-changed`, `error`, `loaded`
+- **Hosts:** `arazzo-grantee-picker`
+
+### `<arazzo-grantee-picker>`
+
+Resolve a real grantee to its exact identity ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)).
+Source: `grantee-picker.js`.
+
+- **Attributes:** `placeholder`, `kind`, `kinds`, `source`, `base-url`
+- **Events:** `grantee-selected`, `grantee-cleared`, `error`
+- **Hosts:** falls back to `arazzo-admin-grant-input`
+
+### `<arazzo-admin-grant-input>`
+
+Interim `{dimension, value}` admin-identity input, superseded by `arazzo-grantee-picker`
+(see [Deprecations](#deprecations)). Source: `admin-grant-input.js`.
+
+### `<arazzo-auth-status>`
+
+Optional BFF sign-in and sign-out chrome; self-discovers via `/me`, invisible when auth is disabled
+([ADR 0042](../adr/0042-auth-agnostic-host-owns-session.md)). Source: `auth-status.js`.
+
+---
 
 ## Designer
 
 The designer is composed by the host (`demo/designer.html`); there is no single designer shell element.
 
-- **`<arazzo-design-surface>`** (`design-surface.js`). Editable, debuggable SVG diagram of a projected workflow
-  graph ([ADR 0043](../adr/0043-first-party-svg-design-surface.md)). Properties `.graph`, `.layoutEngine`,
-  `.debugState`, `.diffState`, `.selection`. Emits `selection-changed`, `node-activated`, `edge-created`,
-  `edge-retargeted`, `operation-dropped`, `delete-requested`, `breakpoint-toggled`, `workflow-open`, and more.
-- **`<arazzo-text-editor>`** (`text-editor.js`). Full-document CodeMirror text view over the document model.
-  Property `.value`. Emits `text-changed`.
-- **`<arazzo-workflow-inspector>`** (`workflow-inspector.js`). Workflow-level editor (summary, typed inputs,
-  default actions, outputs). Property `.value`. Emits `workflow-changed`. Hosts `arazzo-schema-editor`,
-  `arazzo-outputs-editor`, `arazzo-action-editor`.
-- **`<arazzo-step-inspector>`** (`step-inspector.js`). Editor for one step (binding, parameters, request body,
-  criteria, actions, outputs). Property `.value`. Emits `step-changed`. Hosts `arazzo-criteria-editor`,
-  `arazzo-payload-editor`, `arazzo-outputs-editor`, `arazzo-expression-input`, `arazzo-action-editor`.
-- **`<arazzo-document-inspector>`** (`document-inspector.js`). Document-level editor (info, source
-  descriptions, the reusable components library). Property `.value`. Emits `document-changed`. Hosts
-  `arazzo-schema-editor`, `arazzo-action-editor`.
-- **`<arazzo-criteria-editor>`** (`criteria-editor.js`). Ordered list of Arazzo criterion rows. Property
-  `.value`. Emits `criteria-changed`. Hosts `arazzo-expression-input`.
-- **`<arazzo-action-editor>`** (`action-editor.js`). One success/failure action (end, goto, retry). Property
-  `.value`. Emits `action-changed`. Hosts `arazzo-criteria-editor`.
-- **`<arazzo-outputs-editor>`** (`outputs-editor.js`). A name to runtime-expression map editor. Property
-  `.value`. Emits `outputs-changed`. Hosts `arazzo-expression-input`.
-- **`<arazzo-payload-editor>`** (`payload-editor.js`). Schema-driven request-body / message-payload editor.
-  Properties `.schema`, `.value`. Emits `payload-changed`. Hosts `arazzo-expression-input`.
-- **`<arazzo-expression-input>`** (`expression-input.js`). One-line runtime-expression editor with
-  highlighting and schema completions (CodeMirror). Attributes `value`, `placeholder`, `readonly`. Emits
-  `value-changed`, `commit`, `validated`. The shared editing control for criteria, parameters, and outputs.
-- **`<arazzo-schema-editor>`** (`schema-editor.js`). Typed JSON Schema authoring form for inputs and library
-  components. Property `.value`. Emits `schema-changed`, `library-create`, `library-open`. Hosts
-  `arazzo-value-editor`.
-- **`<arazzo-value-editor>`** (`value-editor.js`). Typed form that builds a JSON value from a type descriptor.
-  Properties `.descriptor`, `.value`. Used by the resume dialog (state-patch), schema editor, and debug tray.
-- **`<arazzo-scenario-panel>`** (`scenario-panel.js`). A working copy's scenario suite (list, run, verdicts).
-  Properties `.client`, `.workingCopyId`. Emits `run-trace`, `scenarios-changed`, `error`. Hosts
-  `arazzo-scenario-editor`.
-- **`<arazzo-scenario-editor>`** (`scenario-editor.js`). Typed scenario form (inputs, mocks, expectations).
-  Property `.scenario`. Emits `scenario-changed`, `cancel`. Hosts `arazzo-value-editor`.
-- **`<arazzo-debug-tray>`** (`debug-tray.js`). Debug session tray: trace viewer, paused-context explorer,
-  time-travel scrubber ([ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md)). Properties
-  `.trace`, `.cursor`. Emits `cursor-changed`, `step-requested`, `output-override`, `trigger-injected`. Hosts
-  a read-only `arazzo-design-surface`, `arazzo-json-view`, `arazzo-value-editor`.
-- **`<arazzo-operation-browser>`** (`operation-browser.js`). Designer left rail: attached sources and a
-  searchable operation surface; click, keyboard, or drag to add a step. Emits `operation-selected`,
-  `add-source-requested`, `source-detached`.
-- **`<arazzo-workspace-table>`** (`workspace-table.js`). Lists the designer's working copies, keyset-paged.
-  Attributes `base-url`, `page-size`, `selectable`, `can-write`. Emits `working-copy-selected/created/deleted`,
-  `loaded`, `error`.
-- **`<arazzo-git-dialog>`** (`git-dialog.js`). Bind a working copy to a branch and round-trip (pull, commit,
-  draft PR) as the user's GitHub identity (§4.7). Methods `open({...})`, `close()`. Emits `binding-saved`,
-  `pulled`, `committed`, `error`. Hosts `arazzo-git-tree`, `arazzo-github-connect`, `arazzo-workflow-compare`.
-- **`<arazzo-git-tree>`** (`git-tree.js`). Reusable lazy tree browser. Property `.loader`. Emits `picked`.
-- **`<arazzo-github-connect>`** (`github-connect.js`). Brokered GitHub session control (popup OAuth, polls to
-  connected). Emits `github-connected`, `github-disconnected`, `error`.
+### `<arazzo-design-surface>`
+
+Editable, debuggable SVG diagram of a projected workflow graph
+([ADR 0043](../adr/0043-first-party-svg-design-surface.md)). Source: `design-surface.js`.
+
+- **Properties:** `.graph`, `.layoutEngine`, `.debugState`, `.diffState`, `.selection`
+- **Events:** `selection-changed`, `node-activated`, `edge-created`, `edge-retargeted`, `operation-dropped`,
+  `delete-requested`, `breakpoint-toggled`, `workflow-open`, and more
+
+### `<arazzo-text-editor>`
+
+Full-document CodeMirror text view over the document model. Source: `text-editor.js`.
+
+- **Properties:** `.value`
+- **Events:** `text-changed`
+
+### `<arazzo-workflow-inspector>`
+
+Workflow-level editor (summary, typed inputs, default actions, outputs). Source: `workflow-inspector.js`.
+
+- **Properties:** `.value`
+- **Events:** `workflow-changed`
+- **Hosts:** `arazzo-schema-editor`, `arazzo-outputs-editor`, `arazzo-action-editor`
+
+### `<arazzo-step-inspector>`
+
+Editor for one step (binding, parameters, request body, criteria, actions, outputs).
+Source: `step-inspector.js`.
+
+- **Properties:** `.value`
+- **Events:** `step-changed`
+- **Hosts:** `arazzo-criteria-editor`, `arazzo-payload-editor`, `arazzo-outputs-editor`,
+  `arazzo-expression-input`, `arazzo-action-editor`
+
+### `<arazzo-document-inspector>`
+
+Document-level editor (info, source descriptions, the reusable components library).
+Source: `document-inspector.js`.
+
+- **Properties:** `.value`
+- **Events:** `document-changed`
+- **Hosts:** `arazzo-schema-editor`, `arazzo-action-editor`
+
+### `<arazzo-criteria-editor>`
+
+Ordered list of Arazzo criterion rows. Source: `criteria-editor.js`.
+
+- **Properties:** `.value`
+- **Events:** `criteria-changed`
+- **Hosts:** `arazzo-expression-input`
+
+### `<arazzo-action-editor>`
+
+One success or failure action (end, goto, retry). Source: `action-editor.js`.
+
+- **Properties:** `.value`
+- **Events:** `action-changed`
+- **Hosts:** `arazzo-criteria-editor`
+
+### `<arazzo-outputs-editor>`
+
+A name to runtime-expression map editor. Source: `outputs-editor.js`.
+
+- **Properties:** `.value`
+- **Events:** `outputs-changed`
+- **Hosts:** `arazzo-expression-input`
+
+### `<arazzo-payload-editor>`
+
+Schema-driven request-body and message-payload editor. Source: `payload-editor.js`.
+
+- **Properties:** `.schema`, `.value`
+- **Events:** `payload-changed`
+- **Hosts:** `arazzo-expression-input`
+
+### `<arazzo-expression-input>`
+
+One-line runtime-expression editor with highlighting and schema completions (CodeMirror). The shared editing
+control for criteria, parameters, and outputs. Source: `expression-input.js`.
+
+- **Attributes:** `value`, `placeholder`, `readonly`
+- **Events:** `value-changed`, `commit`, `validated`
+
+### `<arazzo-schema-editor>`
+
+Typed JSON Schema authoring form for inputs and library components. Source: `schema-editor.js`.
+
+- **Properties:** `.value`
+- **Events:** `schema-changed`, `library-create`, `library-open`
+- **Hosts:** `arazzo-value-editor`
+
+### `<arazzo-value-editor>`
+
+Typed form that builds a JSON value from a type descriptor. Source: `value-editor.js`. Used by the resume
+dialog (state-patch), the schema editor, and the debug tray.
+
+- **Properties:** `.descriptor`, `.value`
+
+### `<arazzo-scenario-panel>`
+
+A working copy's scenario suite (list, run, verdicts). Source: `scenario-panel.js`.
+
+- **Properties:** `.client`, `.workingCopyId`
+- **Events:** `run-trace`, `scenarios-changed`, `error`
+- **Hosts:** `arazzo-scenario-editor`
+
+### `<arazzo-scenario-editor>`
+
+Typed scenario form (inputs, mocks, expectations). Source: `scenario-editor.js`.
+
+- **Properties:** `.scenario`
+- **Events:** `scenario-changed`, `cancel`
+- **Hosts:** `arazzo-value-editor`
+
+### `<arazzo-debug-tray>`
+
+Debug session tray: trace viewer, paused-context explorer, time-travel scrubber
+([ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md)). Source: `debug-tray.js`.
+
+- **Properties:** `.trace`, `.cursor`
+- **Events:** `cursor-changed`, `step-requested`, `output-override`, `trigger-injected`
+- **Hosts:** a read-only `arazzo-design-surface`, `arazzo-json-view`, `arazzo-value-editor`
+
+### `<arazzo-operation-browser>`
+
+Designer left rail: attached sources and a searchable operation surface; click, keyboard, or drag to add a
+step. Source: `operation-browser.js`.
+
+- **Events:** `operation-selected`, `add-source-requested`, `source-detached`
+
+### `<arazzo-workspace-table>`
+
+Lists the designer's working copies, keyset-paged. Source: `workspace-table.js`.
+
+- **Attributes:** `base-url`, `page-size`, `selectable`, `can-write`
+- **Events:** `working-copy-selected/created/deleted`, `loaded`, `error`
+
+### `<arazzo-git-dialog>`
+
+Bind a working copy to a branch and round-trip (pull, commit, draft PR) as the user's GitHub identity (§4.7).
+Source: `git-dialog.js`.
+
+- **Methods:** `open({...})`, `close()`
+- **Events:** `binding-saved`, `pulled`, `committed`, `error`
+- **Hosts:** `arazzo-git-tree`, `arazzo-github-connect`, `arazzo-workflow-compare`
+
+### `<arazzo-git-tree>`
+
+Reusable lazy tree browser. Source: `git-tree.js`.
+
+- **Properties:** `.loader`
+- **Events:** `picked`
+
+### `<arazzo-github-connect>`
+
+Brokered GitHub session control (popup OAuth, polls to connected). Source: `github-connect.js`.
+
+- **Events:** `github-connected`, `github-disconnected`, `error`
+
+---
 
 ## Shared primitives
 
-- **`<arazzo-pager>`** (`pager.js`). The universal list footer: Prev / Next over a keyset cursor plus an info
-  area ([ADR 0035](../adr/0035-keyset-pagination-everywhere.md)). Renders into light DOM on purpose, so its
-  buttons stay queryable from a host's shadow root and inherit the theme. Emits `prev`, `next`; method
-  `update({hasPrev, hasNext, loading, info})`. Used by nearly every list.
-- **`<arazzo-status-badge>`** (`status-badge.js`). Presentational status pill, coloured by the canonical
-  `statusColor` map. Reflects a `status` attribute.
-- **`<arazzo-splitbar>`** (`splitbar.js`). Draggable resize bar driving one CSS custom property. Attributes
-  `orientation`, `target`, `prop`, `min`, `max`, `storage-key`. Emits `split-changed`.
-- **`<arazzo-input-dialog>`** (`input-dialog.js`). The kit's standard ask: `ask({title, fields, confirmLabel,
-  danger})` returns a Promise. The native `prompt` / `confirm` / `alert` are not used.
-- **`<arazzo-json-view>`** (`json-view.js`). Read-only syntax-highlighted JSON. Property `.value`.
-- **`<arazzo-tag-editor>`** (`tag-editor.js`). Reusable key/value tag editor for the §14.2 security and
-  management tags. Property `.tags`. Emits `tags-changed`.
-- **The picker family** (share `PICKER_CSS`, retarget `input` / `change`, resolve to real server objects):
-  `arazzo-workflow-picker`, `arazzo-workflow-id-input`, `arazzo-environment-picker`, `arazzo-environment-input`,
-  `arazzo-grantee-picker`.
+### `<arazzo-pager>`
+
+The universal list footer: Prev / Next over a keyset cursor plus an info area
+([ADR 0035](../adr/0035-keyset-pagination-everywhere.md)). Renders into light DOM on purpose, so its buttons
+stay queryable from a host's shadow root and inherit the theme. Used by nearly every list.
+Source: `pager.js`.
+
+- **Events:** `prev`, `next`
+- **Methods:** `update({hasPrev, hasNext, loading, info})`
+
+### `<arazzo-status-badge>`
+
+Presentational status pill, coloured by the canonical `statusColor` map. Source: `status-badge.js`.
+
+- **Attributes:** `status`
+
+### `<arazzo-splitbar>`
+
+Draggable resize bar driving one CSS custom property. Source: `splitbar.js`.
+
+- **Attributes:** `orientation`, `target`, `prop`, `min`, `max`, `storage-key`
+- **Events:** `split-changed`
+
+### `<arazzo-input-dialog>`
+
+The kit's standard ask; the native `prompt` / `confirm` / `alert` are not used. Source: `input-dialog.js`.
+
+- **Methods:** `ask({title, fields, confirmLabel, danger})` returns a Promise
+
+### `<arazzo-json-view>`
+
+Read-only syntax-highlighted JSON. Source: `json-view.js`.
+
+- **Properties:** `.value`
+
+### `<arazzo-tag-editor>`
+
+Reusable key/value tag editor for the §14.2 security and management tags. Source: `tag-editor.js`.
+
+- **Properties:** `.tags`
+- **Events:** `tags-changed`
+
+### The picker family
+
+`arazzo-workflow-picker`, `arazzo-workflow-id-input`, `arazzo-environment-picker`, `arazzo-environment-input`,
+and `arazzo-grantee-picker` share `PICKER_CSS`, retarget `input` / `change`, and resolve to real server
+objects.
+
+---
 
 ## Interaction map
 
