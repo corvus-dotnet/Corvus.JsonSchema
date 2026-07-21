@@ -97,6 +97,12 @@ The template to follow for a full, fork-bearing ADR is
 |-----|-------|--------|
 | [0046](0046-deployment-bootstrap-example-seed-split.md) | The deployment bootstrap and the example seed are two seams | Accepted |
 
+### Source credentials
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0048](0048-source-credentials-are-references.md) | Source credentials are references, resolved runner-side | Accepted |
+
 ### Web kit and designer
 
 | ADR | Title | Status |
@@ -108,3 +114,4 @@ The template to follow for a full, fork-bearing ADR is
 | [0044](0044-collaboration-ready-document-model.md) | A collaboration-ready document model: identity-addressed operations with inverses | Accepted |
 | [0045](0045-debug-runs-never-credentials-in-browser.md) | Remote dev-environment debug runs, never credentials in the browser | Accepted |
 | [0047](0047-web-kit-permission-gating-server-authoritative.md) | Web-kit permission gating is server-authoritative | Accepted |
+| [0049](0049-codemirror-vendored-single-bundle.md) | CodeMirror 6, vendored as a single bundle | Accepted |
