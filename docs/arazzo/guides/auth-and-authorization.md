@@ -111,10 +111,10 @@ they are.
 flowchart LR
     tok[Token identity] --> dir[Directory membership expansion]
     dir --> canon["Canonical sys: identity<br/>(rich, membership-expanded)"]
-    canon --> match["Membership match<br/>(named set ⊆ identity)"]
+    canon --> match["Membership match<br/>(named set is a subset of the identity)"]
     canon --> digest[SecurityIdentityDigest]
     digest --> rev["Reverse admin index<br/>(subset-digest lookup)"]
-    match --> reach[Reach: does a binding apply]
+    match --> reach["Reach: does a binding apply"]
     match --> selfelev[Self-elevation guard]
     rev --> inbox["Approver inbox:<br/>what do I administer"]
 ```
@@ -144,13 +144,10 @@ widens), and the shell conjoins around the whole result.
 
 ```mermaid
 flowchart TD
-    shell["Deployment shell<br/>(mandated wrapper rules)"] -->|AND| union
-    subgraph union["OR across matched bindings"]
-        direction LR
-        b1["binding A read:<br/>rule1 AND rule2"]
-        b2["binding B read:<br/>rule3"]
-    end
-    union --> filter["Effective read filter<br/>= shell AND (rule1 AND rule2 OR rule3)"]
+    b1["binding A read verb:<br/>rule1 AND rule2"] --> union{{"OR across<br/>matched bindings"}}
+    b2["binding B read verb:<br/>rule3"] --> union
+    shell["Deployment shell:<br/>mandated wrapper rules"] --> filter["Effective read filter =<br/>shell AND (rule1 AND rule2 OR rule3)"]
+    union --> filter
     filter --> pred["Pushed to the store<br/>as an indexed predicate"]
 ```
 
@@ -190,7 +187,7 @@ maximum TTL. Security, purge, administration, and escalation are out of reach of
 ```mermaid
 stateDiagram-v2
     [*] --> Submitted: requester submits
-    Submitted --> Eligible: eligible (claims ∪ stored eligibility)
+    Submitted --> Eligible: eligible via claims or stored eligibility
     Submitted --> Pending: not eligible
     Pending --> Approved: approver grants (live binding)
     Pending --> Eligible: approver grants as eligible
