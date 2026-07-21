@@ -27,7 +27,7 @@ does not, and links them for the rest.
 | [`catalog.md`](guides/catalog.md) | The immutable, content-hashed versioned package catalog: data model, operations, store, publishing, and promotion across environments. **(done)** |
 | [`execution-host.md`](guides/execution-host.md) | The build side, the runner (load, isolation, registration), triggers, and the execution model. **(done)** |
 | [`running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
-| `durability-and-state-stores.md` | The checkpoint model, resume, writing an `IWorkflowStateStore` backend. *(planned)* |
+| [`durability-and-state-stores.md`](guides/durability-and-state-stores.md) | The checkpoint model, resume, and writing an `IWorkflowStateStore` backend. **(done)** |
 
 ### Access, identity, and credentials
 
@@ -51,9 +51,9 @@ does not, and links them for the rest.
 | Guide | Covers |
 |-------|--------|
 | [`platform-conventions.md`](guides/platform-conventions.md) | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. **(done)** |
-| `control-plane-rest-api.md` | Client and CLI generation from the contract. The surface itself is the [REST API reference](reference/control-plane-rest-api.md). *(planned)* |
-| `deployment-bootstrap.md` | The production bootstrap library versus demo seeding. *(planned)* |
-| `observability.md` | Spans, metrics, and the governance-audit primitive. *(planned)* |
+| [`client-and-cli.md`](guides/client-and-cli.md) | Generating a typed client and using the `arazzo-runs` CLI. The surface itself is the [REST API reference](reference/control-plane-rest-api.md). **(done)** |
+| [`deployment-bootstrap.md`](guides/deployment-bootstrap.md) | The production bootstrap library versus demo seeding. **(done)** |
+| [`observability.md`](guides/observability.md) | Spans, metrics, and the governance-audit primitive. **(done)** |
 
 ## Reference
 
