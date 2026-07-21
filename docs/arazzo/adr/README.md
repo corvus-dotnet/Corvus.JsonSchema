@@ -71,4 +71,14 @@ The template to follow for a full, fork-bearing ADR is
 | [0028](0028-pluggable-execution-backends.md) | Pluggable execution backends and isolation models | Proposed |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
-Later domains (the catalog, the web kit, platform conventions) extend the numbering as their slices land.
+### Catalog
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0030](0030-immutable-content-hashed-versioned-packages.md) | Immutable, content-hashed, versioned packages | Accepted |
+| [0031](0031-content-hash-over-rfc8785-canonical.md) | The content hash is over the RFC 8785 canonical form of the logical content | Accepted |
+| [0032](0032-awp-deterministic-tlv-container.md) | The `.awp` container is a deterministic TLV framing, not a ZIP | Accepted |
+| [0033](0033-compile-at-catalog-add.md) | Compile at catalog-add; the package is a complete code-generation input | Accepted |
+| [0034](0034-standalone-hosting-not-required.md) | A standalone published-endpoint hosting service is not required | Accepted |
+
+Later domains (the web kit, platform conventions) extend the numbering as their slices land.
