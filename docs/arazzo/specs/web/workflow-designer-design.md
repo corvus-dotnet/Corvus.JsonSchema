@@ -6,7 +6,7 @@ browses their operation surface to create steps, edits success/failure handling 
 proper editor support, manages inputs/outputs through the schema-driven typed forms, exercises the
 workflow interactively against a mock transport and virtual clock, captures that behaviour as
 scenarios, and publishes to the catalog with the evidence of successful validation. Terms are as
-defined in [`UBIQUITOUSLANGUAGE.md`](./UBIQUITOUSLANGUAGE.md).
+defined in [`UBIQUITOUSLANGUAGE.md`](../../reference/UBIQUITOUSLANGUAGE.md).
 
 Status: **delivered** (2026-07-16, PR #842). §14 sequences the slices and carries per-slice
 status; all slices are built. The only parked item is slice 8's GitHub Action wrapper, blocked

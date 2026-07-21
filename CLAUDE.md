@@ -17,15 +17,14 @@ pointer; the linked files are the source of truth.
 ## Active campaign — control-plane allocation work (issue #803)
 
 If you are working on the bytes-to-bytes allocation campaign (control-plane API → durable store
-allocation reduction), the **binding** protocol is
-[`docs/control-plane/allocation-protocol.md`](docs/control-plane/allocation-protocol.md), with the
-row-by-row plan in [`docs/control-plane/allocation-matrix.md`](docs/control-plane/allocation-matrix.md).
-Read both before touching campaign code. Hard rules (full detail in the protocol):
+allocation reduction), the durable principle is
+[ADR 0037, bytes-native seams](docs/arazzo/adr/0037-bytes-native-seams.md) (the campaign's binding
+protocol and row-by-row matrix have been folded into it). Hard rules:
 
 - **Clean slate** — prior commits/summaries/memory are *current code shape only*, never proof of
   completion. A row is done **only** when a measured before→after appears in the matrix's Part D.
-- **Derive, don't anchor** — build each change from `.github/skills/` + `execution-host-design.md`
-  (§13/§13.4.1/§14.2); the existing code is the corpus being replaced.
+- **Derive, don't anchor** — build each change from `.github/skills/` + the relevant spec under
+  `docs/arazzo/specs/` (credentials §13/§13.4.1, access §14.2); the existing code is the corpus being replaced.
 - **Per-row gates, in order** — ground → run baseline benchmark (paste the number) → post ownership
   ledger → **STOP for go-ahead** → change → re-run benchmark (paste before→after) → update the
   matrix → commit only when asked. One row at a time; no batching; stop and ask when unsure.

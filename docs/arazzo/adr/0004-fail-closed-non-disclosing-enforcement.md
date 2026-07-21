@@ -28,7 +28,7 @@ a caller something about another tenant.
 - **Wildcard cannot grant unrestricted reach.** The secure default `allowWildcardUnrestrictedReach = false`
   (execution-host §17.5 / finding F7) demotes a wildcard binding's `unrestricted` verb to no-reach, so a
   `claimType = "*"` binding cannot silently hand every principal every row and dissolve tenant isolation.
-- **Reach denial is non-disclosing.** The design (`docs/control-plane/access-model.md`) fixes an out-of-reach
+- **Reach denial is non-disclosing.** The design (`docs/arazzo/specs/access/access-model.md`) fixes an out-of-reach
   row as a `404`, indistinguishable from a row that does not exist, while a capability failure stays a
   disclosing `403`.
 

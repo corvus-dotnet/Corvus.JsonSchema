@@ -1,8 +1,8 @@
 # Arazzo workflow execution host — design
 
-> Status: **design / proposal**. Extends the "Future phase" of [`catalog-design.md`](./catalog-design.md)
+> Status: **design / proposal**. Extends the "Future phase" of [`catalog-design.md`](../catalog/catalog-design.md)
 > (compile-to-assembly + dynamic-load hosting) and the durability execution model of
-> [`../ArazzoWorkflowEnginePlan.md`](../ArazzoWorkflowEnginePlan.md) §9 (checkpoint/resume, Tier 1/Tier 2).
+> [`../ArazzoWorkflowEnginePlan.md`](../../../ArazzoWorkflowEnginePlan.md) §9 (checkpoint/resume, Tier 1/Tier 2).
 > It answers: how a catalogued workflow becomes a **compiled assembly stored with the catalog**, and how a
 > hosting service **loads and runs** it — i.e. what "make it available to run" means.
 
@@ -104,7 +104,7 @@ the **stable Corvus runtime assemblies** the host already references — no per-
 
 Compilation reuses the validator's `DynamicCompiler` Roslyn path (which is why a *build-side* host needs
 `<PreserveCompilationContext>true</PreserveCompilationContext>`; see
-[`validator-preservecompilationcontext`](../../samples/Corvus.Text.Json.Arazzo.ControlPlane.Demo/docs/live-execution.md)).
+[`validator-preservecompilationcontext`](../../../../samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo/docs/live-execution.md)).
 
 ### 3.3 Packaging, hash, and signing
 
@@ -236,7 +236,7 @@ everything else flows through the shared store.
 
 The §5.4 registry above is environment-agnostic and unscoped: a flat global list of processes with no notion of
 *which environment* a runner serves or *whose* it is. That is the gap the runner-to-environment binding closes
-([ADR 0027](../arazzo/adr/0027-runner-environment-binding.md)): a runner executes in and for an environment and
+([ADR 0027](../../adr/0027-runner-environment-binding.md)): a runner executes in and for an environment and
 must have that environment's credential set. It is
 also an inconsistency: environments are first-class, governed, **reach-scoped** resources
 (`Environment.managementTags`, e.g. `tenant=acme`, §14.2); availability is per `(workflow, version, environment)`
@@ -702,7 +702,7 @@ All design decisions are resolved. The transport-binding config schema is implem
 
 This design was split so each subsystem stands on its own. The sections beyond the execution host now live in:
 
-- [Source credentials: storage, lifecycle, and refresh](source-credentials-design.md) (the former §13).
-- [Access, identity, and entitlement design detail](identity-and-authorization-design.md) (the former §14 to
+- [Source credentials: storage, lifecycle, and refresh](../credentials/source-credentials-design.md) (the former §13).
+- [Access, identity, and entitlement design detail](../access/identity-and-authorization-design.md) (the former §14 to
   §17: authorization and row security, administration, the identity and entitlement lifecycle, and the
   security-review remediation).

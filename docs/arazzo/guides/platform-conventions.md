@@ -58,7 +58,7 @@ attached. Add a governed action by calling the primitive, not by inventing a new
 
 ## API-first
 
-The control plane is API-first: the OpenAPI document (`docs/control-plane/arazzo-control-plane.openapi.json`)
+The control plane is API-first: the OpenAPI document (`docs/arazzo/reference/arazzo-control-plane.openapi.json`)
 is the single source of truth, and the server stubs, client, and CLI are generated from it
 ([ADR 0039](../adr/0039-api-first-openapi-source-of-truth.md)).
 

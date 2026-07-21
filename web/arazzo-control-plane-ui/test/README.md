@@ -14,5 +14,5 @@ Three tiers, fastest first. Run from the project root.
 - `npm run test:all` — everything.
 
 Tiers 1–2 import the deliverable from `../src/` and the mock from `../demo/`; tier 2 reads
-`docs/control-plane/arazzo-control-plane.openapi.json`. CI runs all tiers via
+`docs/arazzo/reference/arazzo-control-plane.openapi.json`. CI runs all tiers via
 [`.github/workflows/ui.yml`](../../../.github/workflows/ui.yml).

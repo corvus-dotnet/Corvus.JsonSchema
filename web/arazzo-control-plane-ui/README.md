@@ -1,9 +1,9 @@
 # @corvus-dotnet/arazzo-control-plane-ui
 
 A zero-build, framework-agnostic kit of composable **web components** over the
-[Arazzo Control Plane REST API](../../docs/control-plane/README.md). Drop the pieces you need into any web app
+[Arazzo Control Plane REST API](../../docs/arazzo/reference/control-plane-rest-api.md). Drop the pieces you need into any web app
 — React, Vue, Svelte, Angular, or plain HTML — with no toolchain. See
-[`ui-design.md`](../../docs/control-plane/ui-design.md) for the full design.
+[`ui-design.md`](../../docs/arazzo/specs/web/ui-design.md) for the full design.
 
 ## Install
 

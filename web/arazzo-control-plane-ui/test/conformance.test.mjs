@@ -1,5 +1,5 @@
 // Tier 2 — contract conformance. Drives every client method through a capturing fetch and asserts the
-// emitted request (method, path, query params, body) matches docs/control-plane/arazzo-control-plane.openapi.json,
+// emitted request (method, path, query params, body) matches docs/arazzo/reference/arazzo-control-plane.openapi.json,
 // so the JS client cannot drift from the contract the generated .NET server/client are built against.
 //   node --test test/conformance.test.mjs
 
@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
 
 const BASE_PATH = '/arazzo/v1';
-const doc = JSON.parse(readFileSync(new URL('../../../docs/control-plane/arazzo-control-plane.openapi.json', import.meta.url)));
+const doc = JSON.parse(readFileSync(new URL('../../../docs/arazzo/reference/arazzo-control-plane.openapi.json', import.meta.url)));
 
 /** Resolve a local $ref ("#/a/b/c") within the document. */
 function deref(node) {

@@ -1,4 +1,4 @@
-// Captioned UX walkthrough clips for docs/control-plane/ux-review.md §8 — driven against the in-browser demo mock.
+// Captioned UX walkthrough clips driven against the in-browser demo mock.
 // Each test is ONE user goal, shown end to end at a deliberate pace.
 //
 // Timing model (the point of step()): the caption appears, leads the UI change by only a few hundred ms, THEN the

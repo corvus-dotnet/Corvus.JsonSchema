@@ -13,7 +13,7 @@ everything else is generated from, so the contract and the code cannot disagree.
 
 ### Grounded architectural facts
 
-- **The OpenAPI document is the source of truth.** `docs/control-plane/arazzo-control-plane.openapi.json` is
+- **The OpenAPI document is the source of truth.** `docs/arazzo/reference/arazzo-control-plane.openapi.json` is
   the contract. The server stubs, the client, and the CLI client are generated from it.
 - **Generation is a build step with dedicated commands.** `openapi-server` (`OpenApiServerCommand`) generates
   the server stubs and `openapi-client` (`OpenApiGenerateCommand`) generates the client, registered in the

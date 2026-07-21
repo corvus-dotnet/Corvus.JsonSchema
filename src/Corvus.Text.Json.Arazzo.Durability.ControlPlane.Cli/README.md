@@ -2,7 +2,7 @@
 
 `arazzo-runs` is a command-line client for the Arazzo durability **control plane** (plan §11). It is generated
 from the same OpenAPI 3.2 contract as the server
-([`docs/control-plane/arazzo-control-plane.openapi.json`](../../docs/control-plane/arazzo-control-plane.openapi.json))
+([`docs/arazzo/reference/arazzo-control-plane.openapi.json`](../../docs/arazzo/reference/arazzo-control-plane.openapi.json))
 using this repo's `openapi-client` generator (output under `Generated/`), and drives it over HTTP via
 `HttpClientTransport`. Built on [Spectre.Console.Cli](https://spectreconsole.net/cli/); results print as JSON
 (pipe to `jq`), and errors print the RFC 9457 problem to stderr with a non-zero exit code.
@@ -117,7 +117,7 @@ stale) → unauthenticated.
 
 ```bash
 dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
-  openapi-client docs/control-plane/arazzo-control-plane.openapi.json \
+  openapi-client docs/arazzo/reference/arazzo-control-plane.openapi.json \
   --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client \
   --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Generated
 ```

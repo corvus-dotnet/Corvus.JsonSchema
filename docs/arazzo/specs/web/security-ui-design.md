@@ -84,7 +84,7 @@ Permissions · Promotions · Runner auth. (The §3 snapshot below predates sever
 
 > For the conceptual model on its own — capability (scopes) vs reach (grants + rules), why a grant's
 > verbs are `read`/`write`/`purge` and not scopes, and how the two planes compose — see
-> [`access-model.md`](./access-model.md).
+> [`access-model.md`](../access/access-model.md).
 
 The model is clean; the UI today is not. Each access decision has three axes:
 

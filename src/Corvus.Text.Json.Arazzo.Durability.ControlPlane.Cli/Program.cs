@@ -5,7 +5,7 @@
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 
 // arazzo-runs — a CLI over the Arazzo durability control plane, generated from
-// docs/control-plane/arazzo-control-plane.openapi.json (openapi-client) and driven over HTTP.
+// docs/arazzo/reference/arazzo-control-plane.openapi.json (openapi-client) and driven over HTTP.
 if (!Console.IsOutputRedirected)
 {
     Banner.Write();

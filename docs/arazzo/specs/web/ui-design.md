@@ -1,7 +1,7 @@
 # Arazzo Control Plane — Web UI Kit (design)
 
 A **reusable, zero-build kit of composable web components** over the [Arazzo Control Plane REST
-API](./README.md). It is the UI half of the control-plane quick-start: anyone can `<script>`-import the
+API](../../reference/control-plane-rest-api.md). It is the UI half of the control-plane quick-start: anyone can `<script>`-import the
 pieces they want — just the API client, a single widget, or the whole panel — into a React, Vue, Svelte,
 Angular, or plain-HTML application, with no toolchain.
 
@@ -29,7 +29,7 @@ reference assembly that proves the pieces compose; it doubles as the sample's ru
 ## The contract it targets
 
 The kit tracks the control-plane OpenAPI document across its operator surfaces and capability-scope tiers
-(from [`README.md`](./README.md)). **Runs**, the **workflow catalog**, **source credentials**, **workflow
+(from [`README.md`](../../reference/control-plane-rest-api.md)). **Runs**, the **workflow catalog**, **source credentials**, **workflow
 administration**, the **§16.5 access-request** surface, the **reach vocabulary** (§14.2 scopes + grant bindings),
 the **sources registry** (§7.6), **governed environments** (§7.7), and **availability/promotion** (§7.8) all ship
 today.

@@ -1,13 +1,13 @@
 // Arazzo Control Plane — Layer 0 API client (no DOM).
 //
 // A dependency-free ES module wrapping the six control-plane operations described by
-// docs/control-plane/arazzo-control-plane.openapi.json. Usable in the browser, Node, tests, or a CLI.
+// docs/arazzo/reference/arazzo-control-plane.openapi.json. Usable in the browser, Node, tests, or a CLI.
 //
 //   import { ArazzoControlPlaneClient, ProblemError } from './arazzo-client.js';
 //   const client = new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', getAuthHeader: () => `Bearer ${token}` });
 //   const { runs, nextPageToken } = await client.listRuns({ status: 'Faulted' });
 //
-// See docs/control-plane/ui-design.md (Layer 0) for the contract.
+// See docs/arazzo/specs/web/ui-design.md (Layer 0) for the contract.
 
 /**
  * The valid {@link WorkflowRunStatus} values, in lifecycle-ish order.

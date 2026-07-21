@@ -7,12 +7,12 @@ on:
     branches: [main]
     paths:
       - 'web/arazzo-control-plane-ui/**'
-      - 'docs/control-plane/arazzo-control-plane.openapi.json'
+      - 'docs/arazzo/reference/arazzo-control-plane.openapi.json'
       - '.github/workflows/ui.yml'
   pull_request:
     paths:
       - 'web/arazzo-control-plane-ui/**'
-      - 'docs/control-plane/arazzo-control-plane.openapi.json'
+      - 'docs/arazzo/reference/arazzo-control-plane.openapi.json'
       - '.github/workflows/ui.yml'
   workflow_dispatch:
 

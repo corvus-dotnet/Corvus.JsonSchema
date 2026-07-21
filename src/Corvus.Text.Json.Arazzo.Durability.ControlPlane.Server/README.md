@@ -1,6 +1,6 @@
 # Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server
 
-An ASP.NET Core server for the [Arazzo control-plane REST API](../../docs/control-plane/README.md), generated
+An ASP.NET Core server for the [Arazzo control-plane REST API](../../docs/arazzo/reference/control-plane-rest-api.md), generated
 from its OpenAPI 3.2 description and wired to `ISecuredWorkflowManagement`.
 
 The generated endpoints (under `Generated/`, produced by `corvusjson openapi-server`) handle routing, parameter
@@ -106,7 +106,7 @@ would be ignored, throws `ArgumentException`), so an insecure-by-omission combin
 
 ```bash
 dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
-  openapi-server docs/control-plane/arazzo-control-plane.openapi.json \
+  openapi-server docs/arazzo/reference/arazzo-control-plane.openapi.json \
   --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server \
   --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Generated
 ```

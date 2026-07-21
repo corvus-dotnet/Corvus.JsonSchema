@@ -3,7 +3,7 @@
 This spec is the detailed design behind the control-plane access model: control-plane authorization and
 tag-based row security (§14), workflow administration (§15), the identity, login, and entitlement lifecycle
 (§16), and the security-review remediation (§17). It is the exhaustive counterpart to the conceptual
-[access-model.md](access-model.md) summary and the access-model [ADRs](../arazzo/adr/README.md) (0001 to 0016).
+[access-model.md](access-model.md) summary and the access-model [ADRs](../../adr/README.md) (0001 to 0016).
 It was split out of the execution-host design so the access-and-identity subsystem stands on its own.
 
 The section numbering is retained from the original execution-host design (this spec begins at §14), so existing
@@ -34,7 +34,7 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
   may synthesize claims from the request itself — a vanity host, a route prefix, an API-gateway header — through an
   `IClaimsTransformation` / middleware, so a `sys:` dimension such as `sys:tenant` need **not** come from the token.
   This is sound for the *runtime caller*, but membership matching
-  ([ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md)) imposes a consistency
+  ([ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md)) imposes a consistency
   requirement at *grant-authoring* time that is easy to miss: a grant's named dimension only matches a caller
   whose stamped identity will contain it, so an ambient dimension has to be authored with the same value it is
   later stamped with. The full treatment — the seam, the trap, and how it is
@@ -193,7 +193,7 @@ and freely editable. The authority is the **administrator**, and it is a *securi
 - **Publishing a further version requires being an administrator.** `SecuredWorkflowCatalog.AddAsync` refuses
   (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
   administrator set, so `sys:workflow` cannot be squatted. Membership is the subset test of
-  [ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md): a stored administrator identity
+  [ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md): a stored administrator identity
   administers a submitter whose stamped identity contains it (`WorkflowIdentity.SameAdministrator`, founder ⊆
   candidate). This supersedes the earlier set-equality rule. The catalog Add path carries the stamped identity,
   not an `AccessContext`.
@@ -233,7 +233,7 @@ record** materialized at creation (§15.2) and the authoritative source thereaft
 The forward record answers *"who administers base id X?"*. The **approver inbox** (§16.5) needs the reverse: *"which
 workflows does this caller administer?"* — so an approver sees every pending access request they can act on, without
 having to name a workflow first. Administration membership is the subset test of
-[ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md) (`WorkflowAdministrators.IsAdministeredBy`
+[ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md) (`WorkflowAdministrators.IsAdministeredBy`
 → `WorkflowIdentity.SameAdministrator`, founder ⊆ candidate). The stored side stays keyed on the founder's canonical
 digest (`SecurityIdentityDigest`), so the reverse lookup is still indexed and never a scan; only the read side fans out,
 looking up every non-empty subset-digest of the caller's identity (`SecurityIdentityDigest.SubsetDigests`):
@@ -620,7 +620,7 @@ eligible-for-All`) remains step 6.
 > **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
 > **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped
 > `sys:` identity **contains** the target's named identity. See
-> [ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md) for the decision and the
+> [ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md) for the decision and the
 > authorization-versus-identity-operation classification (the identity operations, add-idempotency, digest removal,
 > and the collision probe, stay exact by design). The paragraph below is retained as the original resolved-grantee
 > rationale; read "set-equality" as "subset" for the authorization surfaces.

@@ -1,4 +1,4 @@
-// Screen-capture config for the UX walkthrough clips (docs/control-plane/ux-review.md §8). Drives the in-browser
+// Screen-capture config for the UX walkthrough clips. Drives the in-browser
 // demo (mock API, no server) and records a video per clip; a caption banner is injected per step by record.spec.js.
 // Run: npx playwright test --config test/record.config.mjs ; clips land under recordings-raw/<title>/video.webm.
 import { defineConfig, devices } from '@playwright/test';

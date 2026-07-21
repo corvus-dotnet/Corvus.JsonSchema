@@ -5,7 +5,7 @@
 // Multi-tenant correctness: tenant is the AMBIENT isolation boundary the deployment stamps (§14) — a user only ever
 // sees their *current* tenant, so the product never surfaces a "tenant" constraint. Authorization inside a tenant is
 // expressed in domains, teams, roles and classifications. (Switching tenants, for an identity in more than one, would be
-// a separate console-level tenant switcher — see docs/control-plane/ux-review.md §7.) This example reflects that:
+// a separate console-level tenant switcher.) This example reflects that:
 // nothing here is keyed by tenant.
 import { seedRuns, adminGrant } from './mock-api.js';
 

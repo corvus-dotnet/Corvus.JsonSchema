@@ -15,7 +15,7 @@ using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 
 // A container-backed *latency* harness for the control-plane throughput campaign (see
-// docs/control-plane/throughput-campaign.md) — NOT a MemoryDiagnoser / allocation benchmark. It spins up a real
+// docs/arazzo/adr/0029-native-heartbeat-partial-update.md) — NOT a MemoryDiagnoser / allocation benchmark. It spins up a real
 // backend in a container (via the pre-tunneled podman socket: DOCKER_HOST=unix:///tmp/podman-arazzo.sock,
 // TESTCONTAINERS_RYUK_DISABLED=true) and times a high-frequency read-modify-write store op end-to-end, reporting
 // round-trips, payload bytes, and mean/p50/p99 latency so a native-partial-update change can be measured

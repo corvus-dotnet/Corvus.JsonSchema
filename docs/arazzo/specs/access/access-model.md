@@ -268,4 +268,4 @@ implementation changes only this handler, and hardens it in three ways.
 
 Reach (grant bindings and rules) is authored in the security UI. Grant bindings bind a claim to per-verb reach; rules
 are the reusable WHERE vocabulary a grant binding points at. See the grants and rules panels, and the access
-overview, in [`security-ui-design.md`](./security-ui-design.md).
+overview, in [`security-ui-design.md`](../web/security-ui-design.md).
