@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// runner, as the runner's identity — no secret ever reaches the control plane, the designer, or the capture.
 /// The resumer owns its executor loader; dispose it to unload the compiled drafts.
 /// </remarks>
-public sealed class DraftWorkflowResumer : IDisposable
+public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
 {
     private readonly IDraftRunStore drafts;
     private readonly IWorkflowExecutorProvider provider;
@@ -58,9 +58,12 @@ public sealed class DraftWorkflowResumer : IDisposable
         this.maxCachedExecutors = maxCachedExecutors;
     }
 
+    /// <inheritdoc/>
+    public RunIsolationModel IsolationModel => RunIsolationModel.InProcess;
+
     /// <summary>Gets this resumer as the <see cref="WorkflowResumer"/> delegate the dispatcher, worker, and management client consume.</summary>
     /// <returns>The resumer delegate.</returns>
-    public WorkflowResumer AsResumer() => this.ResumeAsync;
+    public WorkflowResumer AsResumer() => this.AdvanceAsync;
 
     /// <summary>
     /// Resolves a draft run's captured draft, compiles it (cache-hit for a repeat), binds its transports, and
@@ -69,7 +72,7 @@ public sealed class DraftWorkflowResumer : IDisposable
     /// <param name="run">The run to start (fresh) or resume (restored checkpoint).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The run outcome.</returns>
-    public async ValueTask<WorkflowRunResultKind> ResumeAsync(WorkflowRun run, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunResultKind> AdvanceAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
 
@@ -106,6 +109,12 @@ public sealed class DraftWorkflowResumer : IDisposable
             }
         }
     }
+
+    /// <inheritdoc/>
+    /// <remarks>A no-op. A draft run compiles on demand from its content-hash capture (keyed by run id, not a
+    /// catalogued version), so there is nothing to pre-warm here; the hosted backend behind the inner resumer
+    /// warms catalogued versions.</remarks>
+    public ValueTask PrepareAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => ValueTask.CompletedTask;
 
     /// <inheritdoc/>
     public void Dispose() => this.loader.Dispose();

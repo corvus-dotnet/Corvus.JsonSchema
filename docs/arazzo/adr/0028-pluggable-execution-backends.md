@@ -18,12 +18,14 @@ an isolation model plugs into.
 
 - **The in-process collectible-ALC backend ships.** A run executes in-process through
   `WorkflowExecutorLoader` and a collectible `AssemblyLoadContext` ([ADR 0024](0024-collectible-assembly-per-version.md)).
-- **The pluggable-backend seam is a design draft.** Execution-host §5.6 ("Execution backends and isolation
-  models") is marked DRAFT: it specifies a seam that dispatches a run to a pluggable execution backend with a
-  chosen isolation model, in-process today, and equally a per-run micro-guest, a serverless function, or a
-  container, with resume using the same seam. The out-of-process backends are not built.
-- **The tracking issue is deferred.** The alternative execution backends are the subject of an open,
-  deferred issue (#876), so this ADR records the intended direction rather than a shipped seam.
+  It now implements the seam below (`HostedWorkflowResumer` is `IRunExecutionBackend`).
+- **The pluggable-backend seam now exists.** `IRunExecutionBackend` (advance a run, pre-warm a version, and
+  advertise an isolation model) is the seam execution-host §5.6 specifies. `AdvanceAsync` is delegate-shaped, so a
+  backend slots in behind the existing `WorkflowResumer` the dispatcher, worker, and management client consume,
+  without touching dispatch, leases, timers, or message delivery. The in-process backend implements it; the
+  out-of-process backends are not yet built.
+- **The tracking issue is in progress.** The alternative execution backends are the subject of #876. The seam has
+  landed (behind the in-process backend), and the out-of-process backends follow.
 
 ## Decision (proposed)
 
@@ -32,8 +34,30 @@ applies a chosen isolation model, and a resume goes through the same seam. The i
 context backend is the shipping default. Out-of-process backends (per-run micro-guest, serverless, container)
 are a declared future the seam is shaped to admit, not yet implemented.
 
-This ADR is **Proposed**. The in-process backend is the current reality; the pluggable seam and out-of-process
-backends are a design direction pending the deferred work.
+This ADR is **Proposed**. The seam and the in-process backend are now the current reality; the out-of-process
+backends are the pending work. It moves to Accepted once at least one out-of-process backend lands.
+
+### Decided direction (2026-07-21)
+
+The seam and its shape are settled, and the first out-of-process backend is chosen:
+
+- **Isolation is a coarse, comparable axis:** `RunIsolationModel` is `InProcess` or `Isolated`, not one value per
+  runtime. A serverless function, a container, or a micro-guest all provide `Isolated`, differing in weight, not in
+  the guarantee. The backend (the mechanism) is a separate axis a runner advertises.
+- **Serverless is the first out-of-process backend** (AWS Lambda and Azure Functions), ahead of container-per-run
+  and micro-guest. A run is a durable checkpoint in the shared store, so an invocation carries only the run id and
+  environment; the function is a thin runner-runtime host that advances the run against the store.
+- **Per-(environment, version), executor baked in.** A serverless function serves one known version, so publishing
+  a version to a serverless environment deploys or updates its function with the content-hashed executor packaged
+  in. Warmth is deterministic: the executor is loaded at init, kept warm by the platform (Lambda SnapStart or Azure
+  Functions always-ready instances).
+- **AOT-native.** Because the executor is a build-time input, the host and that one executor are compiled to a
+  single Native AOT binary per version. This removes the executor fetch, verify, and load cost rather than warming
+  around it, and Native AOT cannot load runtime IL anyway, so baking is what makes it possible. AOT-cleanliness of
+  the executor, runtime, and transports is work to be done, verified by an early spike.
+- **Signing shifts from verify-at-load to attest-at-deploy** ([executor signing](../guides/execution-host.md)):
+  the source executor's signature is verified before AOT compilation, and the deploy pipeline attests the native
+  artifact. The in-process backend keeps verify-at-load, since it loads IL dynamically.
 
 ## Consequences
 

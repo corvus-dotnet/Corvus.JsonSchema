@@ -315,7 +315,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
             WorkflowRunResultKind kind;
             try
             {
-                kind = await this.resumer.ResumeAsync(run, cancellationToken).ConfigureAwait(false);
+                kind = await this.resumer.AdvanceAsync(run, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

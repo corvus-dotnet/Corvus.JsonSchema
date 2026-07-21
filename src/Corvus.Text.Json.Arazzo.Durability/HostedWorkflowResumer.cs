@@ -29,11 +29,12 @@ public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor de
 /// <summary>
 /// Resolves a run's <see cref="WorkflowRun.WorkflowId"/> to a loaded <see cref="IHostedWorkflow"/> — fetching
 /// the version's compiled executor + manifest from the catalog and loading it through a
-/// <see cref="WorkflowExecutorLoader"/> on first use (cached thereafter) — then runs it. Its
-/// <see cref="ResumeAsync"/> is the <see cref="WorkflowResumer"/> the durable worker and management client
-/// already expect, so dispatch, resume, retry, rewind, skip, and cancel all drive real loaded assemblies.
+/// <see cref="WorkflowExecutorLoader"/> on first use (cached thereafter) — then runs it. This is the in-process,
+/// collectible-load-context <see cref="IRunExecutionBackend"/> (ADR 0028): its <see cref="AdvanceAsync"/> is the
+/// <see cref="WorkflowResumer"/> the durable worker and management client already expect, so dispatch, resume,
+/// retry, rewind, skip, and cancel all drive real loaded assemblies.
 /// </summary>
-public sealed class HostedWorkflowResumer
+public sealed class HostedWorkflowResumer : IRunExecutionBackend
 {
     private readonly IWorkflowCatalogStore catalog;
     private readonly WorkflowExecutorLoader loader;
@@ -58,9 +59,12 @@ public sealed class HostedWorkflowResumer
         this.scheduleWorkflow = scheduleWorkflow;
     }
 
+    /// <inheritdoc/>
+    public RunIsolationModel IsolationModel => RunIsolationModel.InProcess;
+
     /// <summary>Gets this resumer as the <see cref="WorkflowResumer"/> delegate the worker/management client consume.</summary>
     /// <returns>The resumer delegate.</returns>
-    public WorkflowResumer AsResumer() => this.ResumeAsync;
+    public WorkflowResumer AsResumer() => this.AdvanceAsync;
 
     /// <summary>
     /// Resolves the run's workflow to a loaded <see cref="IHostedWorkflow"/>, binds its transports, and starts
@@ -69,7 +73,7 @@ public sealed class HostedWorkflowResumer
     /// <param name="run">The run to start (fresh) or resume (restored checkpoint).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The run outcome.</returns>
-    public async ValueTask<WorkflowRunResultKind> ResumeAsync(WorkflowRun run, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunResultKind> AdvanceAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
 
@@ -109,6 +113,16 @@ public sealed class HostedWorkflowResumer
                 await apiTransport.DisposeAsync().ConfigureAwait(false);
             }
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask PrepareAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+
+        // Warm the loader cache — fetch, verify, and load the version's executor — so a later AdvanceAsync of it
+        // skips that cost. ResolveAsync returns the cached workflow when it is already loaded, so a repeat is cheap.
+        _ = await this.ResolveAsync($"{baseWorkflowId}-v{versionNumber}", cancellationToken).ConfigureAwait(false);
     }
 
     private static (string BaseWorkflowId, int VersionNumber) ParseVersionedId(string workflowId)

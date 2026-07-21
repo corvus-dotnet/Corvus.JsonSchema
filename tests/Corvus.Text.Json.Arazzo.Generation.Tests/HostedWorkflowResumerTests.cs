@@ -95,6 +95,26 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
+    public async Task PrepareAsync_warms_the_loader_cache_without_running_the_run()
+    {
+        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        ((bool)versionDoc.RootElement.Runnable).ShouldBeTrue();
+
+        using var loader = new WorkflowExecutorLoader();
+        IRunExecutionBackend backend = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+
+        // The in-process backend advertises its isolation model, and pre-warming loads + caches the executor with no
+        // run executed — so a later AdvanceAsync of the version skips the fetch + verify + load.
+        backend.IsolationModel.ShouldBe(RunIsolationModel.InProcess);
+        loader.TryGet("adopt", 1, out _).ShouldBeFalse();
+
+        await backend.PrepareAsync("adopt", 1, default);
+
+        loader.TryGet("adopt", 1, out _).ShouldBeTrue();
+    }
+
+    [TestMethod]
     public async Task An_expired_source_credential_faults_the_run_as_credentials_expired()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
@@ -139,7 +159,7 @@ public class HostedWorkflowResumerTests
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
 
-        await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.ResumeAsync(run, default));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.AdvanceAsync(run, default));
     }
 
     // A workflow whose step projects a NESTED (object + array) response-body value as its output — unlike the
