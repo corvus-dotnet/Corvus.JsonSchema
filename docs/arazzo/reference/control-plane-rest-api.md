@@ -1,113 +1,108 @@
-# Arazzo Control Plane — REST API
+# Arazzo control-plane REST API
 
-[`arazzo-control-plane.openapi.json`](arazzo-control-plane.openapi.json) is an **OpenAPI 3.2** description of a
-REST surface over the Arazzo durability control plane (`ISecuredWorkflowManagement`, plan §11). It is the
-contract a CLI (`arazzo-runs`) and other clients are generated against; a server implementation maps each
-operation onto the corresponding management-client / catalog-store method over a chosen durability store.
+[`arazzo-control-plane.openapi.json`](arazzo-control-plane.openapi.json) is an **OpenAPI 3.2** description of the
+Arazzo durability control-plane REST surface, and it is the **source of truth**: the CLI and every client are
+generated from it, and the server's handlers are generated from it too
+([ADR 0039](../adr/0039-api-first-openapi-source-of-truth.md)). This page is the map, the operation groups, the
+scope model, authentication, and the resume-mode union. For the exhaustive per-operation detail (paths, request
+and response schemas, status codes), the contract and the generated `IApi*Handler` interfaces are authoritative,
+so this page does not restate them and cannot drift from them.
 
-## Operations
+## Operation groups
 
-The contract covers **eight operation groups** (52 operations). This document details the **runs** group;
-the rest are summarised below and fully described by their tags in the OpenAPI document and by the generated
-server handlers (`src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Generated/IApi*Handler.cs`).
+The surface is about 150 operations across **17 tag groups**. Most groups follow the same shape, a keyset-paged
+`list` ([ADR 0035](../adr/0035-keyset-pagination-everywhere.md)) with a bounded `count`
+([ADR 0036](../adr/0036-bounded-count-contract.md)), a `get`, and `create` / `update` / `delete`, so the table
+below gives each group's job rather than its operations. Read the contract for the current operation set.
 
-### Runs
+| Group (tag) | What it covers |
+|-------------|----------------|
+| `runs` | Workflow runs: list, get, run steps, `resume` (the mode union below), `cancel`, single delete, and a bulk `PURGE`. |
+| `catalog` | Publish and read versioned, runnable workflow definitions: add, list, get, update, and delete versions; download the package and its addressable documents (workflow, sources, schemas, executor assembly and manifest); validate inputs; start a run. See [`catalog-design.md`](../specs/catalog/catalog-design.md). |
+| `runners` | Read the registered runners that host and execute catalog versions. |
+| `runnerAuthorizations` | Authorize which runners may serve a deployment environment: register, authorize, revoke, quarantine. See [ADR 0027](../adr/0027-runner-environment-binding.md). |
+| `schedules` | Durable schedules that trigger a workflow run on a cadence: list, create, get, delete, run-now. |
+| `security` | Author the row-security policy, rules and claim-to-rule bindings, and read the access-grant overview. See [`identity-and-authorization-design.md`](../specs/access/identity-and-authorization-design.md). |
+| `credentials` | Manage source credential bindings: references and non-secret metadata only, never secret material. See [`source-credentials-design.md`](../specs/credentials/source-credentials-design.md). |
+| `administrators` | Manage who may publish and administer a base workflow: add, remove, transfer. |
+| `environments` | Manage governed, reach-scoped deployment environments and their administrators. |
+| `sources` | Manage first-class, reach-scoped source registrations, and read their operations. |
+| `workspace` | Designer working copies: mutable Arazzo documents saved without minting a version, their scenarios, `publishWorkingCopy`, `simulateWorkingCopy`, and source binding. See [`workflow-designer-design.md`](../specs/web/workflow-designer-design.md). |
+| `debugRuns` | Debug a working copy: start, step and resume, inspect, inject a message to a suspended wait, cancel and delete. See [ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md). |
+| `github` | Brokered GitHub integration: the control plane holds the Git session, so pull and commit a working copy, list and create branches, browse a repo. |
+| `availability` | Make a workflow version available in a deployment environment ("promotion"), directly where the caller administers the environment. |
+| `availabilityRequests` | Request and approve making a version available in an environment (promotion requests). |
+| `accessRequests` | Request and approve elevated, time-bound access to a workflow ([ADR 0010](../adr/0010-access-requests-ceiling-bounded.md)). |
+| `identity` | Resolve real grantees (person, team, role, workflow) to their exact deployment-stamped identity, and read whoami and capabilities. See [ADR 0008](../adr/0008-resolved-grantee-resolution.md). |
 
-| HTTP | operationId | `ISecuredWorkflowManagement` | Notes |
-|------|-------------|-----------------------------|-------|
-| `GET /runs` | `listRuns` | `ListAsync` | Visibility query (`status`, `workflowId`, `limit`, `pageToken`) over the wait/visibility index. Keyset pagination: a non-empty `nextPageToken` (and a `next` link) is returned when more pages remain. |
-| `GET /runs/{runId}` | `getRun` | `GetAsync` | Status, cursor, wait/fault detail, etag. `404` if unknown. |
-| `DELETE /runs/{runId}` | `deleteRun` | `DeleteAsync` | Permanently delete one run by id (any status). `204` on success, `404` if unknown, `409` if held. Destructive — `runs:purge` scope. |
-| `POST /runs/{runId}/resume` | `resumeRun` | `ResumeAsync` | Resume a faulted run. The request body is a `oneOf` union on `mode`: `RetryFaultedStep`, `Rewind` (`targetCursor`), `Skip` (`targetCursor?`, `skipOutputs?`), `StatePatch` (`patch`). `409` if not faulted / held / changed concurrently / patch failed. |
-| `POST /runs/{runId}/cancel` | `cancelRun` | `CancelAsync` | Mark a non-terminal run `Cancelled`. `409` if already terminal / held. |
-| `PURGE /runs` | `purgeRuns` | `PurgeAsync` | Reap completed/cancelled runs older than `olderThan` (in bulk). |
+## The scope model
 
-Successful `resume`/`cancel` return the run's new `WorkflowRunDetail`. Errors use `application/problem+json`
-(RFC 9457).
+The control plane is privileged, so its operations are **capability-scoped**
+([ADR 0001](../adr/0001-two-plane-access-model.md): capability is which operations, reach is which rows). A scope
+is `resource:verb`, and each is both an authorization-policy name the endpoint demands and a scope value the
+principal must carry. The set is defined by `ControlPlaneScopes` in
+`src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/ControlPlaneAuthorization.cs`, which is the source of
+truth; the resource families are:
 
-### Other operation groups
+- **`runs`**: `read`, `outputs:read` (the step-output disclosure tier, [ADR 0013](../adr/0013-step-output-disclosure-tier.md)), `write`, `purge`.
+- **`catalog`**: `read`, `write`, `purge`.
+- **`security`**, **`credentials`**, **`administrators`**, **`environments`**, **`sources`**, **`workspace`**, **`availability`**: `read` and `write`.
+- **`runners:register`** (a runner registering itself) and **`accessRequests:grant`** (an approver granting a request).
 
-| Group | Tag | Operations | What it covers |
-|-------|-----|-----------|----------------|
-| **Runners** | `runners` | `listRunners` | The execution hosts (runners) registered to claim and run work. |
-| **Catalog** | `catalog` | `searchCatalog`, `addCatalogVersion`, `listCatalogVersions`, `getCatalogVersion`, `updateCatalogVersion`, `deleteCatalogVersion`, `purgeCatalog` (`PURGE /catalog`), `getCatalogPackage`, `getCatalogWorkflow`, `getCatalogWorkflowSchemas`, `getCatalogSource`, `getCatalogExecutor`, `getCatalogExecutorManifest`, `validateCatalogValue`, `startCatalogWorkflowRun` | The immutable, content-hashed versioned workflow-package store (see [`catalog-design.md`](../specs/catalog/catalog-design.md)): upload/search/inspect versions, download the package and its addressable documents (workflow, sources, schemas, executor assembly + manifest), validate inputs, and trigger a run of a runnable version. |
-| **Workspace** | `workspace` | `listWorkspaceWorkflows`, `createWorkspaceWorkflow`, `getWorkspaceWorkflow`, `updateWorkspaceWorkflow`, `deleteWorkspaceWorkflow`, `validateWorkspaceWorkflow`, `listScenarios`, `putScenario`, `deleteScenario`, `runScenario`, `runAllScenarios`, `publishWorkingCopy`, `getWorkingCopySchemas`, `simulateWorkingCopy`, `listWorkingCopySources`, `getWorkingCopySource`, `attachWorkingCopySource`, `detachWorkingCopySource`, `listWorkingCopySourceOperations` | The workflow-designer working copies (see [`workflow-designer-design.md`](../specs/web/workflow-designer-design.md)): mutable documents under edit with their scenarios, durably saveable without minting a catalog version; `publishWorkingCopy` mints a catalog version, `simulateWorkingCopy` drives an in-designer simulation, and the source operations bind the working copy to OpenAPI descriptions. |
-| **Debug runs** | `debugRuns` | `startDebugRun`, `getDebugRun`, `resumeDebugRun`, `cancelDebugRun`, `injectDebugRunMessage`, `deleteDebugRun` | The §18 interactive debug runs launched from a working copy: durable, forward-only run/pause/step against a scenario's mock transport (or a live dev environment), with breakpoints, resume/step, trigger injection (`injectDebugRunMessage` delivers a message straight to a suspended message-wait), and cancel/delete. |
-| **Security** | `security` | `listSecurityRules`, `createSecurityRule`, `getSecurityRule`, `updateSecurityRule`, `deleteSecurityRule`, `listSecurityBindings`, `createSecurityBinding`, `getSecurityBinding`, `updateSecurityBinding`, `deleteSecurityBinding` | The row-security policy: rules and claim→rule bindings. |
-| **Credentials** | `credentials` | `listCredentials`, `createCredential`, `getCredential`, `updateCredential`, `deleteCredential` | Source credential bindings (references + metadata only — never secret material). |
-| **Administrators** | `administrators` | `listAdministrators`, `transferAdministration`, `addAdministrator`, `removeAdministrator` | A workflow's administrator set (add / remove / transfer). |
-| **Access requests** | `accessRequests` | `listAccessRequests`, `submitAccessRequest`, `getAccessRequest`, `approveAccessRequest`, `approveAccessRequestAsEligible`, `denyAccessRequest`, `withdrawAccessRequest`, `revokeAccessRequest` | Self-service access requests + approval workflow. |
-| **Identity** | `identity` | `getWhoami`, `getIdentityCapabilities`, `searchGrantees` | The caller's identity, capabilities, and grantee lookup. |
+Only the `runs` and `catalog` families have a `:purge` verb, because only they have a destructive bulk reap. The
+`identity` operations and the self-service half of `accessRequests` are not scope-gated, they require an
+authenticated principal with eligibility enforced per operation. Enforcement is fail-closed and non-disclosing
+([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)); the wiring is in the
+[authentication and authorization guide](../guides/auth-and-authorization.md).
 
-### Resume modes
+## Resume modes
 
-`resumeRun`'s body is a discriminated union (`ResumeRequest`, a JSON Schema 2020-12 `oneOf` whose `mode`
-`const` selects the variant); the generated server `Match`es it onto the engine's `ResumeOptions`:
+`resumeRun`'s body is a discriminated union (`ResumeRequest`, a JSON Schema 2020-12 `oneOf` whose `mode` `const`
+selects the variant); the generated server `Match`es it onto the engine's `ResumeOptions`
+([ADR 0022](../adr/0022-resume-mode-taxonomy.md)):
 
-- **`RetryFaultedStep`** — re-run the faulted step (the common case).
-- **`Rewind`** — reset the cursor to `targetCursor` and re-run forward, overwriting the re-executed steps' outputs.
-- **`Skip`** — advance past the faulted step (to `targetCursor`, default faulted + 1), optionally recording `skipOutputs` for it.
-- **`StatePatch`** — apply an RFC 6902 JSON Patch (`patch`) to the run context `{ "inputs": …, "stepOutputs": { … } }`, then retry.
+- **`RetryFaultedStep`**: re-run the faulted step (the common case).
+- **`Rewind`**: reset the cursor to `targetCursor` and re-run forward, overwriting the re-executed steps' outputs.
+- **`Skip`**: advance past the faulted step (to `targetCursor`, default faulted + 1), optionally recording `skipOutputs`.
+- **`StatePatch`**: apply an RFC 6902 JSON Patch (`patch`) to the run context `{ "inputs": …, "stepOutputs": { … } }`, then retry.
 
-### Observability
+There is deliberately no `Cancel` resume mode; cancellation is the separate `cancelRun` operation.
 
-The control plane and run lifecycle are observable through the `Corvus.Arazzo` OpenTelemetry sources (no
-separate history/trace resource): management actions emit audit spans (`workflow.resume` / `cancel` / `delete`
-/ `purge`, tagged with actor, run/workflow id, resume mode and outcome) and counters
-(`corvus.arazzo.workflows.{resumed,cancelled,suspended,purged,deleted}`); each checkpoint emits a
-`workflow.checkpoint` span and a `corvus.arazzo.checkpoint.duration` measurement.
+## Authentication
 
-## Security model
+A request is satisfied by any one scheme:
 
-The control plane is privileged, and its operations fall into capability tiers, so authorization is **scoped**.
-The full scope set (12 scopes) is defined in
-`src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/ControlPlaneAuthorization.cs`
-(`ControlPlaneScopes`); each is both an authorization-policy name the endpoint demands and a scope value the
-principal must carry:
+- **OAuth2** (`oauth2`): bearer access tokens, authorization-code (PKCE or device-code) for interactive
+  operators, client-credentials for services and the CLI.
+- **OpenID Connect** (`openIdConnect`): the same tokens and scopes via IdP discovery.
+- **Mutual TLS** (`mtls`): client certificates for zero-trust callers. Mutual TLS carries no scopes, so the host
+  maps the certificate identity to a tier out of band.
 
-| Scope | Grants | Example operations |
-|-------|--------|--------------------|
-| `runs:read` | Run/runner visibility | `listRuns`, `getRun`, `listRunners` |
-| `runs:write` | Run remediation / trigger | `resumeRun`, `cancelRun`, `startCatalogWorkflowRun` |
-| `runs:purge` | Destructive (permanent delete) | `purgeRuns`, `deleteRun` |
-| `catalog:read` | Catalog visibility + downloads | `searchCatalog`, `getCatalogVersion`, `getCatalogPackage`, `getCatalogExecutor` |
-| `catalog:write` | Add / update catalog versions | `addCatalogVersion`, `updateCatalogVersion` |
-| `catalog:purge` | Destructive catalog removal | `deleteCatalogVersion`, `purgeCatalog` |
-| `security:read` | Read the row-security policy | `listSecurityRules`, `listSecurityBindings` |
-| `security:write` | Author the row-security policy | `createSecurityRule`, `createSecurityBinding`, `deleteSecurityRule` |
-| `credentials:read` | Read credential bindings (no secrets) | `listCredentials`, `getCredential` |
-| `credentials:write` | Manage credential bindings (no secrets) | `createCredential`, `updateCredential`, `deleteCredential` |
-| `administrators:read` | Read a workflow's administrator set | `listAdministrators`, `searchGrantees` |
-| `administrators:write` | Manage administrators (add/remove/transfer) | `addAdministrator`, `removeAdministrator`, `transferAdministration` |
+The authorization server, discovery, and issuer are **deployment-chosen** (the URLs in the document are
+placeholders). Transport is **HTTPS**; the `http` server variant is for local development only. The
+authenticated principal is what the control plane records in each governed action's audit
+([ADR 0038](../adr/0038-payload-safe-governance-audit.md)).
 
-Only the `runs` and `catalog` tiers have a `:purge` variant; `security`, `credentials`, and `administrators`
-are read/write only. The `accessRequests` and `identity` operations are not scope-gated (they require an
-authenticated principal, with eligibility enforced per operation). Each operation declares one scope shared
-across its authentication schemes; mTLS-only operations require an authenticated principal but carry no scope.
+## Observability
 
-Authentication is one of (any satisfies a request):
-
-- **OAuth2** (`oauth2`) — bearer access tokens; authorization-code (PKCE/device-code) for interactive operators,
-  client-credentials for services and the CLI. Scopes as above.
-- **OpenID Connect** (`openIdConnect`) — the same tokens/scopes via IdP discovery.
-- **Mutual TLS** (`mtls`) — client certificates for zero-trust callers. Mutual TLS carries no scopes, so the
-  host maps the certificate identity to a tier out of band.
-
-The authorization server / discovery / issuer is **deployment-chosen** (the URLs in the document are
-placeholders). Transport is **HTTPS** (the `http` server variant is for local development only). The
-authenticated principal is what the control plane records in a run's audit history for each action.
+The control plane and run lifecycle are observable through the `Corvus.Arazzo` OpenTelemetry sources, not a
+separate history resource: governed actions emit a payload-safe audit span and log plus a governance-decision
+counter ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)), and each checkpoint emits a
+`workflow.checkpoint` span and a duration measurement.
 
 ## OpenAPI 3.2 features used
 
 - `openapi: 3.2.0` with a top-level `$self` document identity.
-- `additionalOperations` to express the non-standard **`PURGE`** method on the `/runs` collection (the bulk reap).
+- `additionalOperations` to express the non-standard **`PURGE`** method on the `/runs` and `/catalog`
+  collections (the bulk reaps).
 - `info.summary` and per-tag `summary`.
-- JSON Schema 2020-12 throughout (nullable via `type: [..., "null"]`, `anyOf` with `{"type":"null"}` for nullable `$ref`s).
+- JSON Schema 2020-12 throughout (nullable via `type: [..., "null"]`, and `anyOf` with `{"type":"null"}` for a
+  nullable `$ref`).
 
-## Validation
+## Generating a client
 
-The document is validated by generating a client from it with this repo's OpenAPI generator — which is also how
-it becomes the CLI's basis:
+The contract is validated the same way it becomes the CLI's basis, by generating a client from it with this
+repo's OpenAPI generator:
 
 ```bash
 dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
@@ -116,17 +111,5 @@ dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
   --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Generated
 ```
 
-This emits an `IApiRunsClient`/`ApiRunsClient` with
-`listRuns`/`getRun`/`deleteRun`/`resumeRun`/`cancelRun`/`purgeRuns` methods and strongly-typed models
-(`WorkflowRunDetail`, `WorkflowRunPage`, `WorkflowFault`, …).
-
-## Scope
-
-This page details the **runs** group of the implemented control-plane surface: visibility (list/get, paged),
-the full set of resume modes (`RetryFaultedStep`/`Rewind`/`Skip`/`StatePatch`), cancel, single-run delete, and
-bulk purge, with audit observability via OpenTelemetry. The wider contract also covers the **runners**,
-**catalog**, **security**, **credentials**, **administrators**, **access-request**, and **identity** groups
-(see the operation-groups table above and [`catalog-design.md`](../specs/catalog/catalog-design.md)). The run history/trace is
-delivered through the `Corvus.Arazzo` telemetry sources rather than a dedicated REST resource. Reserved for
-later iterations (see plan §11): a run history/trace *resource* (should one be wanted beyond telemetry), and the
-hosting service that runs this contract in production.
+The web kit's `conformance.test.mjs` also checks its Layer 0 client's emitted requests against this contract, so
+a drift between the client and the contract fails the test.
