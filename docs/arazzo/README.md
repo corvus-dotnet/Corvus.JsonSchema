@@ -11,8 +11,8 @@ of document, each with a distinct job.
   host, row security, or the web kit work and how to work with them). A guide shows working code and links the
   ADRs that explain the decisions behind it.
 - **`reference/`** holds stable reference material: the ubiquitous-language glossary, the control-plane REST API
-  reference and the OpenAPI contract that is its source of truth, and the use-case catalog of the jobs each
-  persona brings to each surface.
+  reference and the OpenAPI contract that is its source of truth, the use-case catalog of the jobs each persona
+  brings to each surface, and the observability-coverage catalog of the telemetry each action emits.
 
 When an ADR, a guide, and the reference would say the same thing, the ADR owns the decision, the guide owns the
 walkthrough, and the reference owns the exhaustive contract. A guide carries only what an ADR or the reference
@@ -63,6 +63,7 @@ does not, and links them for the rest.
 | [`reference/control-plane-rest-api.md`](reference/control-plane-rest-api.md) | The REST surface: operation groups, the scope model, authentication, resume modes. |
 | [`reference/arazzo-control-plane.openapi.json`](reference/arazzo-control-plane.openapi.json) | The OpenAPI 3.2 contract, the source of truth clients and the CLI are generated from. |
 | [`reference/control-plane-use-cases.md`](reference/control-plane-use-cases.md) | The use-case catalog: the jobs each persona brings to each surface, with stable ids. |
+| [`reference/control-plane-observability-coverage.md`](reference/control-plane-observability-coverage.md) | The observability coverage catalog: the span, metric, and audit log each governed action emits, per surface. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
 
 ## Architecture Decision Records

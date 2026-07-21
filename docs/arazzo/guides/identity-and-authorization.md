@@ -761,3 +761,33 @@ insecure-by-omission default ([ADR 0016](../adr/0016-control-plane-security-mode
 endpoint is HTTPS-only unless opted in, the file resolver is confinement-rooted, and a wildcard `Unrestricted`
 grant is demoted; and the fail-closed, non-disclosing idioms hold across every store and backend
 ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)).
+
+## 18. Every identity-matching surface (audit map)
+
+The control plane matches identities in several places. This map lists every one, so a new surface can be
+classified against the same rule rather than inventing its own predicate. **Membership** means the caller's
+canonical `sys:` identity contains the named identity (a subset test). **Set-equality** means an exact,
+order-independent match. **Per-tag** means the identity contains one named `dimension=value`. The role is
+**authorization** (may this caller do X), an **identity operation** (act on the entry whose identity is exactly
+X), a **uniqueness** probe, or **reporting**. Authorization surfaces match by membership, and the rest match
+exactly ([ADR 0003](../adr/0003-membership-matching-over-canonical-identity.md)).
+
+| Surface | Predicate | Role |
+|---------|-----------|------|
+| Reach binding selection (`PersistentRowSecurityPolicy.Matches`) | tag-set (primary and additional clauses) subset over the stamped `sys:` identity | authorization |
+| Reach rule evaluation (`ResolveReach`, `CollectClaims`) | rule over raw claims plus ambient (ambient authoritative) | authorization |
+| Workflow admin, forward (`WorkflowAdministrators.IsAdministeredBy`) | subset | authorization |
+| Workflow admin, reverse index (`ListAdministeredAsync`) | subset-digest union | authorization support |
+| Workflow admin, mutation gate (`SecuredWorkflowCatalog.IsAdministeredByMember`) | subset | authorization |
+| Environment admin, forward (`EnvironmentAdministrators.IsAdministeredBy`) | subset | authorization |
+| Environment admin, reverse index (`SecuredEnvironmentAdministration`) | subset-digest union | authorization support |
+| Environment admin, mutation gate (`SecuredEnvironmentAdministration.IsAdministeredByMember`) | subset | authorization |
+| Credential usage (`SourceCredentialBinding.IsUsableBy`) | per-tag (`usageTags ⊆ runTags`) | authorization |
+| Self-elevation guard (`CallerMatches`) | per-tag over the stamped identity | authorization |
+| Identity collision probe (`FindIdentityConflictAsync`) | exact digest | uniqueness |
+| Access-grants overview (`BindingAppliesToGrantee`) | per-tag, subset-digest, or per-tag | reporting |
+| Reach binding grain (`SecurityBindingDocument`) | primary `claimType`/`claimValue` clause plus optional `additionalClauses[]` (tag-set) | shape |
+
+**The rule for a new surface.** Classify it before wiring. An authorization check (may this caller do X) matches
+by membership. An identity operation (act on the entry whose identity is exactly X) matches by set-equality. A
+uniqueness probe matches by exact digest. Add the surface to this table so the map stays complete.

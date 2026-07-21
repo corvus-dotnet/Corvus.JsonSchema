@@ -20,8 +20,10 @@ Every instrument is zero-cost when no listener is attached, so a deployment that
 ## Metrics
 
 The run lifecycle emits counters (`corvus.arazzo.workflows.{started, completed, faulted, resumed, cancelled,
-suspended, purged, deleted}`, `corvus.arazzo.steps.{executed, retries}`, and `corvus.arazzo.gotos`) and a
-histogram for checkpoint persistence (`corvus.arazzo.checkpoint.duration`, in seconds). Governance emits
+suspended, purged, deleted}` and `corvus.arazzo.steps.executed`) and a histogram for checkpoint persistence
+(`corvus.arazzo.checkpoint.duration`, in seconds). Four further instruments (`corvus.arazzo.steps.retries`,
+`corvus.arazzo.gotos`, `corvus.arazzo.workflow.duration`, `corvus.arazzo.step.duration`) are declared on the
+meter but not yet emitted by the current executor. Governance emits
 `corvus.arazzo.credentials.rotated` and `corvus.arazzo.governance.decisions`, the governance-decision rate
 dimensioned by action and outcome, so approval, denial, revocation, and refusal rates are queryable per action.
 
@@ -46,5 +48,7 @@ The audited actor is the authenticated principal.
 
 ## See also
 
+- The [observability coverage reference](../reference/control-plane-observability-coverage.md) for the per-action
+  span, metric, and audit-log inventory across every surface, and the actions not yet instrumented.
 - [ADR 0038](../adr/0038-payload-safe-governance-audit.md) for the payload-safe audit decision, and
   [ADR 0013](../adr/0013-step-output-disclosure-tier.md) for the disclosure-tier audit.
