@@ -1,0 +1,3 @@
+source: Arazzo.md
+navTitle: "Arazzo Workflows"
+description: "Compile OAI Arazzo workflow documents into strongly-typed .NET executors and run them over your OpenAPI and AsyncAPI sources. Covers authoring, ahead-of-time generation, durable checkpoint-and-resume execution, and the governed control plane that catalogs, runs, and promotes workflow versions across environments."

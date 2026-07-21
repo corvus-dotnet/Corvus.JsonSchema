@@ -599,6 +599,11 @@ main-docs:
       - {index: 6, language: csharp, lines: [151, 159], category: compilable, verified: false}
       - {index: 7, language: csharp, lines: [163, 167], category: fragment, verified: false}
       - {index: 8, language: csharp, lines: [173, 187], category: compilable, verified: false}
+  - path: "docs/Arazzo.md"
+    blocks:
+      - {index: 0, language: json, lines: [31, 54]}
+      - {index: 1, language: , lines: [60, 62]}
+      - {index: 2, language: csharp, lines: [69, 77], category: compilable, verified: false}
   - path: "docs/ArazzoWorkflowEnginePlan.md"
     blocks:
       - {index: 0, language: csharp, lines: [259, 291], category: compilable, verified: false}

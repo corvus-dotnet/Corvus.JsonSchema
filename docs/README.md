@@ -30,6 +30,7 @@ The markdown files in this directory are the source content for the website. The
 | [JMESPath.md](./JMESPath.md) | Docs — JMESPath |
 | [JsonPath.md](./JsonPath.md) | Docs — JSONPath |
 | [Toon.md](./Toon.md) | Docs — TOON Converter |
+| [Arazzo.md](./Arazzo.md) | Docs — Arazzo Workflows |
 | [MigratingFromV4ToV5.md](./MigratingFromV4ToV5.md) | Docs — Migrating from V4 |
 | [UsingCopilotForMigration.md](./UsingCopilotForMigration.md) | Docs — Copilot Migration |
 | [MigrationAnalyzers.md](./MigrationAnalyzers.md) | Docs — Migration Analyzers |
