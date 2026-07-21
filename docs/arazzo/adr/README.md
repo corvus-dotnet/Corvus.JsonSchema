@@ -91,6 +91,12 @@ The template to follow for a full, fork-bearing ADR is
 | [0038](0038-payload-safe-governance-audit.md) | A payload-safe governance-audit primitive | Accepted |
 | [0039](0039-api-first-openapi-source-of-truth.md) | API-first: the OpenAPI surface is the source of truth | Accepted |
 
+### Deployment and bootstrap
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0046](0046-deployment-bootstrap-example-seed-split.md) | The deployment bootstrap and the example seed are two seams | Accepted |
+
 ### Web kit and designer
 
 | ADR | Title | Status |
