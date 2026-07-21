@@ -107,3 +107,4 @@ The template to follow for a full, fork-bearing ADR is
 | [0043](0043-first-party-svg-design-surface.md) | A first-party SVG design surface, not a graph library | Accepted |
 | [0044](0044-collaboration-ready-document-model.md) | A collaboration-ready document model: identity-addressed operations with inverses | Accepted |
 | [0045](0045-debug-runs-never-credentials-in-browser.md) | Remote dev-environment debug runs, never credentials in the browser | Accepted |
+| [0047](0047-web-kit-permission-gating-server-authoritative.md) | Web-kit permission gating is server-authoritative | Accepted |

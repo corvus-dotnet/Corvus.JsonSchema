@@ -38,6 +38,31 @@ not repeated per entry.
 - **Dialogs.** `confirmDialog(host, {...})` shows a themed, focus-trapped confirmation inside the host's shadow
   root. The native `prompt` / `confirm` / `alert` are not used.
 
+## Design conventions
+
+Beyond the shared mechanics above, the components hold to these cross-cutting UX principles. A new component
+follows them so the kit stays coherent.
+
+- **Operator-facing copy carries nothing the operator cannot act on.** Product copy names things in the
+  operator's terms and never leaks an internal token: no spec-section references, no ETags, cursors, raw
+  identity tuples, or actor ids in a label, and the same holds for seeded descriptions.
+- **Identity always renders as a resolved label.** A person, team, role, or workflow shows through one shared
+  grantee chip as its resolved label ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)); a raw `sys:`
+  tuple, an issuer pin, or an actor string never reaches a list row or an audit line, and a system actor
+  renders as a glyph rather than a raw service id.
+- **Friction is proportional to severity.** A system-critical or genesis object (the baseline `*` binding, the
+  founder binding, a load-bearing rule) carries a distinct badge, a typed-challenge confirmation to delete or
+  degrade, and referential-integrity signalling ("in use by N grants", the strand warning), so no principal can
+  casually lock the deployment out.
+- **Permission gating is server-authoritative.** A component gates a privileged control from a `scopes`
+  attribute whose absence defers to the server, never a hard-coded partial list
+  ([ADR 0047](../adr/0047-web-kit-permission-gating-server-authoritative.md)). The server's fail-closed
+  enforcement is the real control; the UI gating is a courtesy.
+- **Actions live next to their data, and surfaces link to their counterparts.** A control sits on the record it
+  acts on, and across a surface boundary a record links to its counterpart surface (a source to its
+  credentials, a runner to its authorization, a run to its diagnosis) rather than making the operator navigate
+  from scratch.
+
 ---
 
 ## Runs
