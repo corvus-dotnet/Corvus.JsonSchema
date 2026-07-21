@@ -136,6 +136,8 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
         throw new InvalidOperationException($"The workflow id '{workflowId}' is not a versioned id of the form '{{base}}-v{{n}}'.");
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "This is the in-process backend: it loads the version's IL executor by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a separate IRunExecutionBackend that bakes the executor at build time (ADR 0028).")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "This is the in-process backend: it loads the version's IL executor by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a separate IRunExecutionBackend that bakes the executor at build time (ADR 0028).")]
     private async ValueTask<IHostedWorkflow> ResolveAsync(string workflowId, CancellationToken cancellationToken)
     {
         (string baseWorkflowId, int versionNumber) = ParseVersionedId(workflowId);

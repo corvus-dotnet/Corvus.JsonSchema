@@ -119,6 +119,8 @@ public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
     /// <inheritdoc/>
     public void Dispose() => this.loader.Dispose();
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The draft runner loads a per-capture compiled executor by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends do not use this resumer (ADR 0028).")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The draft runner loads a per-capture compiled executor by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends do not use this resumer (ADR 0028).")]
     private async ValueTask<IHostedWorkflow> ResolveAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
         // The capture record carries the content hash, so a cache hit needs no package read.
