@@ -1,7 +1,7 @@
 # Arazzo runner — execution-host demo
 
 The **execution-host ("runner")** — the second process in the real Arazzo topology
-([execution-host-design.md §2](../../../docs/arazzo/specs/execution/execution-host-design.md)). The control plane creates
+([execution-host-design.md §2](../../../docs/arazzo/guides/execution-host.md)). The control plane creates
 runs and owns the catalog; the runner *executes* them. The two never call each other on the hot path — they
 cooperate through the **shared durability store**.
 
@@ -19,7 +19,7 @@ health probe (`/health`, `/alive`) — used by the AppHost's health check and co
   suspended runs whose durable timer is due. Each is leased (CAS), so exactly one runner advances a run.
 - **Resolves source credentials, read-only** (`VaultCredentialSelfCheckService`, §13/§13.5). The runner is the
   §13 secret *consumer*: it holds **only a read-only, path-scoped Vault token** (minted by the AppHost's separate
-  provisioner — see [the design](../../../docs/arazzo/specs/credentials/source-credentials-design.md) §13.5). On startup it
+  provisioner — see [the design](../../../docs/arazzo/guides/source-credentials.md) §13.5). On startup it
   resolves every seeded credential reference against Vault to prove the wiring, then **asserts a write is refused
   (403)** — demonstrating the separation-of-duties boundary is real. It never writes secrets and never holds a
   write-capable token. (In production this resolution happens at transport-bind time during live execution, not

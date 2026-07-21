@@ -4,36 +4,36 @@ The operator-facing surface for the whole access model: administrators, credenti
 and claim-to-rule bindings, access requests, and a who-can-do-what overview, unified around one mental model
 and one identity primitive.
 
-This spec owns the **UX design**: the jobs it serves, the information architecture, and the safety rules for
-authoring a binding. The access model itself is [`access-model.md`](../access/access-model.md) and its ADRs; the
-enforcement detail is [`identity-and-authorization-design.md`](../access/identity-and-authorization-design.md);
+This guide owns the **UX design**: the jobs it serves, the information architecture, and the safety rules for
+authoring a binding. The access model itself is [`access-model.md`](access-model.md) and its ADRs; the
+enforcement detail is [`identity-and-authorization-design.md`](identity-and-authorization.md);
 the concrete components (attributes, events, composition) are the
-[UX component catalog](../../guides/ux-component-catalog.md).
+[UX component catalog](ux-component-catalog.md).
 
 ## The reframe: every access decision is WHO can do WHAT, WHERE
 
-The model is clean (capability versus reach, [ADR 0001](../../adr/0001-two-plane-access-model.md); a grant's
-verbs are reach, not scopes, [ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)). The challenge is a
+The model is clean (capability versus reach, [ADR 0001](../adr/0001-two-plane-access-model.md); a grant's
+verbs are reach, not scopes, [ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)). The challenge is a
 UI that makes it answerable. Every decision has three axes:
 
 | Axis | Meaning | Mechanism |
 |------|---------|-----------|
 | **WHO** | the principal | a resolved `sys:` identity (administration, credential usage), or a principal claim (a binding's `claimType`/`claimValue`) |
 | **WHAT** | the capability | a scope (`catalog:read`, `runs:write`), or, for reach, a per-verb grant (read / write / purge) |
-| **WHERE** | which rows | reach: a security rule over security tags, inside the deployment's mandated tenant shell ([ADR 0006](../../adr/0006-deployment-access-control-shell.md)) |
+| **WHERE** | which rows | reach: a security rule over security tags, inside the deployment's mandated tenant shell ([ADR 0006](../adr/0006-deployment-access-control-shell.md)) |
 
 Two sub-mechanisms name WHO, and reconciling them is the point:
 
 - **Identity grants** (administration, credential usage) name a principal by their unforgeable `sys:` identity.
   That is exactly what the resolved-grantee picker produces, so the operator names a real person, team, role, or
-  workflow and the server resolves it ([ADR 0008](../../adr/0008-resolved-grantee-resolution.md)).
+  workflow and the server resolves it ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)).
 - **Claim-to-rule bindings** name a principal by an inbound claim and grant per-verb reach
-  ([ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)).
+  ([ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)).
 
 The overhaul makes WHO one correct-by-construction act (the grantee picker, never a raw `sys:` tag editor, a
-convention in the [UX catalog's design conventions](../../guides/ux-component-catalog.md#design-conventions)),
+convention in the [UX catalog's design conventions](ux-component-catalog.md#design-conventions)),
 makes WHERE visible and goal-oriented, and gives one who-can-do-what overview, aggregated server-side
-([ADR 0015](../../adr/0015-access-overview-server-aggregated.md)).
+([ADR 0015](../adr/0015-access-overview-server-aggregated.md)).
 
 ## End-user goals
 
@@ -56,8 +56,8 @@ error-prone) a few clicks, without making the operator learn the rule grammar fo
 credential usage, and the well-known binding kinds), and one shared grantee chip renders a resolved grantee
 consistently: the kind icon and label foremost, the resolved identity secondary, and the opaque digest behind a
 copy affordance, never the headline. This is the resolved-grantee model
-([ADR 0008](../../adr/0008-resolved-grantee-resolution.md)) and the identity-renders-as-a-resolved-label
-convention ([UX catalog](../../guides/ux-component-catalog.md#design-conventions)).
+([ADR 0008](../adr/0008-resolved-grantee-resolution.md)) and the identity-renders-as-a-resolved-label
+convention ([UX catalog](ux-component-catalog.md#design-conventions)).
 
 **Goal templates hide the grammar.** Rules are authored from templates for the common cases ("rows in a
 domain", "rows matching the caller's tenant", "rows sharing any label with the caller"), with a single Advanced
@@ -84,17 +84,17 @@ detail, an environment's on the Environment detail (the same `arazzo-administrat
 
 For the panels themselves (`arazzo-access-overview`, `arazzo-grants-panel`, `arazzo-rules-panel`,
 `arazzo-administrators-panel`, `arazzo-access-requests`, `arazzo-grantee-picker`) and their attributes, events,
-and composition, see the [UX component catalog](../../guides/ux-component-catalog.md#security-and-access).
+and composition, see the [UX component catalog](ux-component-catalog.md#security-and-access).
 
 ## Authoring a binding: direct versus request-gated
 
 This is the safety-critical rule of the Grants surface. The decision (split by binding type, with a
-server-side self-elevation guard) is [ADR 0014](../../adr/0014-direct-grant-versus-request-only.md): a standing
+server-side self-elevation guard) is [ADR 0014](../adr/0014-direct-grant-versus-request-only.md): a standing
 group or policy binding (a group or role claim, typically read reach) is authored **directly** by an
 administrator, while per-person elevation (write or purge reach scoped to a `sub`) stays **request then approve**
 only. The rationale is separation of duties, the audit chain, and no ambient privilege.
 
-The residual detail this spec owns is the **picker-to-claim mapping under multiple semi-trusted identity
+The residual detail this guide owns is the **picker-to-claim mapping under multiple semi-trusted identity
 providers**, which is why the split above is not just policy but a correctness requirement:
 
 - An identity grant binds on the post-shell `sys:` identity the picker resolves, which includes `sys:iss`, the
@@ -116,12 +116,12 @@ still open.
 
 ## References
 
-- The access model: [`access-model.md`](../access/access-model.md) and ADRs
-  [0001](../../adr/0001-two-plane-access-model.md), [0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md),
-  [0006](../../adr/0006-deployment-access-control-shell.md), [0008](../../adr/0008-resolved-grantee-resolution.md),
-  [0014](../../adr/0014-direct-grant-versus-request-only.md),
-  [0015](../../adr/0015-access-overview-server-aggregated.md).
+- The access model: [`access-model.md`](access-model.md) and ADRs
+  [0001](../adr/0001-two-plane-access-model.md), [0002](../adr/0002-grant-verbs-are-reach-not-scopes.md),
+  [0006](../adr/0006-deployment-access-control-shell.md), [0008](../adr/0008-resolved-grantee-resolution.md),
+  [0014](../adr/0014-direct-grant-versus-request-only.md),
+  [0015](../adr/0015-access-overview-server-aggregated.md).
 - The enforcement detail (row security, administration, the entitlement lifecycle):
-  [`identity-and-authorization-design.md`](../access/identity-and-authorization-design.md).
-- The credential-usage grant: [`source-credentials-design.md`](../credentials/source-credentials-design.md).
-- The components: [UX component catalog](../../guides/ux-component-catalog.md).
+  [`identity-and-authorization-design.md`](identity-and-authorization.md).
+- The credential-usage grant: [`source-credentials-design.md`](source-credentials.md).
+- The components: [UX component catalog](ux-component-catalog.md).

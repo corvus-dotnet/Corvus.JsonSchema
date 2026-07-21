@@ -7,7 +7,7 @@
 //   const client = new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', getAuthHeader: () => `Bearer ${token}` });
 //   const { runs, nextPageToken } = await client.listRuns({ status: 'Faulted' });
 //
-// See docs/arazzo/specs/web/ui-design.md (Layer 0) for the contract.
+// See docs/arazzo/guides/web-ui-design.md (Layer 0) for the contract.
 
 /**
  * The valid {@link WorkflowRunStatus} values, in lifecycle-ish order.

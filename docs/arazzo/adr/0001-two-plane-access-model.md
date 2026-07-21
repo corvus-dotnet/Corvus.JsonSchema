@@ -20,7 +20,7 @@ Folding both into one model forces a bad trade. A pure capability model (token s
 scale and puts row-level policy in the identity provider. A pure row model cannot cheaply express "this
 surface does not exist for you at all", and it leaks the existence of operations a caller may not invoke.
 
-The design (`docs/arazzo/specs/access/access-model.md`) frames the split as "who can do WHAT, WHERE", and the code
+The design (`docs/arazzo/guides/access-model.md`) frames the split as "who can do WHAT, WHERE", and the code
 implements the two planes as separate mechanisms.
 
 ### Grounded architectural facts

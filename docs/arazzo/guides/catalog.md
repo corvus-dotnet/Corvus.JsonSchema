@@ -4,18 +4,18 @@ A governance and usability service in the control plane: an immutable, content-h
 **workflow packages** (an Arazzo workflow plus the OpenAPI and AsyncAPI documents it references), with search, a
 governance owner, referential integrity against runs, and an obsolete-then-purge lifecycle.
 
-The decisions behind it are the catalog ADRs, [0030](../../adr/0030-immutable-content-hashed-versioned-packages.md)
-(immutable content-hashed packages), [0031](../../adr/0031-content-hash-over-rfc8785-canonical.md) (the content
-hash), [0032](../../adr/0032-awp-deterministic-tlv-container.md) (the `.awp` container),
-[0033](../../adr/0033-compile-at-catalog-add.md) (compile at add), and
-[0034](../../adr/0034-standalone-hosting-not-required.md) (no standalone hosting service); promotion across
-environments is the [catalog and promotion guide](../../guides/catalog-and-promotion.md). This spec is the data
+The decisions behind it are the catalog ADRs, [0030](../adr/0030-immutable-content-hashed-versioned-packages.md)
+(immutable content-hashed packages), [0031](../adr/0031-content-hash-over-rfc8785-canonical.md) (the content
+hash), [0032](../adr/0032-awp-deterministic-tlv-container.md) (the `.awp` container),
+[0033](../adr/0033-compile-at-catalog-add.md) (compile at add), and
+[0034](../adr/0034-standalone-hosting-not-required.md) (no standalone hosting service); promotion across
+environments is the [catalog and promotion guide](catalog-and-promotion.md). This guide is the data
 model, the operation surface, and the store, the exhaustive detail those do not carry.
 
 ## Data model
 
 A catalog **version** is the unit; versions of one logical workflow share a `baseWorkflowId`. Immutability and
-content-addressing are [ADR 0030](../../adr/0030-immutable-content-hashed-versioned-packages.md).
+content-addressing are [ADR 0030](../adr/0030-immutable-content-hashed-versioned-packages.md).
 
 **Immutable** (fixed when the version is added; these define the content hash):
 
@@ -24,7 +24,7 @@ content-addressing are [ADR 0030](../../adr/0030-immutable-content-hashed-versio
 | `baseWorkflowId` | the submitted workflow id (must have no `-vN` suffix) |
 | `versionNumber` | assigned by the store, (current max for the base id) + 1 |
 | `workflowId` | `{baseWorkflowId}-v{versionNumber}`, the stored id runs execute under |
-| `hash` | SHA-256 over the RFC 8785 canonical form of the logical `{ workflow, sources }` content ([ADR 0031](../../adr/0031-content-hash-over-rfc8785-canonical.md)) |
+| `hash` | SHA-256 over the RFC 8785 canonical form of the logical `{ workflow, sources }` content ([ADR 0031](../adr/0031-content-hash-over-rfc8785-canonical.md)) |
 | `title`, `description` | from the workflow's `info.title` / `info.description` (fallback `info.summary`) |
 | `sources` | the list of `{ name, type }` from the workflow's `sourceDescriptions`, so a client knows which documents are addressable |
 | `createdBy`, `createdAt` | the authenticated actor and time of the add |
@@ -37,7 +37,7 @@ content-addressing are [ADR 0030](../../adr/0030-immutable-content-hashed-versio
 | `tags` | free-form string set, AND-matched for filtering |
 | `status` | `Active` or `Obsolete` |
 | `securityTags` | the version's reach labels (§14.2 security campaign) |
-| `outputsSensitivity` | the step-output disclosure classification ([ADR 0013](../../adr/0013-step-output-disclosure-tier.md)) |
+| `outputsSensitivity` | the step-output disclosure classification ([ADR 0013](../adr/0013-step-output-disclosure-tier.md)) |
 | `obsoletedBy`, `obsoletedAt` | the actor and time the version was marked `Obsolete` (null while Active) |
 
 Audit is fields-on-the-record (`createdBy` / `lastUpdatedBy` / `obsoletedBy` plus timestamps) for governance
@@ -47,7 +47,7 @@ visibility; the forensic trail is OpenTelemetry, not a separate audit-log entity
 ### Package format
 
 A package (`.awp`) is a self-contained, length-prefixed **binary TLV container**, moved as a file and stored
-verbatim, not a ZIP ([ADR 0032](../../adr/0032-awp-deterministic-tlv-container.md)). It is implemented by
+verbatim, not a ZIP ([ADR 0032](../adr/0032-awp-deterministic-tlv-container.md)). It is implemented by
 `WorkflowPackage` (`PackPooled` / `Open`) in `Corvus.Text.Json.Arazzo.Durability`. The framing (all multi-byte
 integers little-endian):
 
@@ -67,14 +67,14 @@ entries:
 | `metadata/schemas.json` | precomputed schema metadata |
 | `metadata/executor.dll` | the compiled workflow executor assembly (binary) |
 | `metadata/executor-manifest.json` | the executor manifest (target framework, integrity binding, entry type) |
-| `metadata/executor-manifest.sig` | the optional detached executor-manifest signature ([ADR 0025](../../adr/0025-integrity-binding-optional-signature.md)) |
+| `metadata/executor-manifest.sig` | the optional detached executor-manifest signature ([ADR 0025](../adr/0025-integrity-binding-optional-signature.md)) |
 | `metadata/scenarios.json` | the version's scenarios |
 | `metadata/evidence.json` | the promotion-readiness evidence document |
 
 The `encoding` byte is `0` (stored) today; non-zero is reserved for a future per-entry compression without a
 format break. The content hash is over the logical `{ workflow, sources }` only, independent of the container
 framing, so it is stable across repacks, property ordering, and whitespace
-([ADR 0031](../../adr/0031-content-hash-over-rfc8785-canonical.md)). `WorkflowPackage`, the CLI's `pack` /
+([ADR 0031](../adr/0031-content-hash-over-rfc8785-canonical.md)). `WorkflowPackage`, the CLI's `pack` /
 `unpack` / `verify`, and the zero-dependency browser builder (`web/arazzo-control-plane-ui/src/workflow-package.js`)
 produce and consume it.
 
@@ -89,14 +89,14 @@ before hashing and storing, so the persisted package and any run created from it
 
 Metadata is JSON; the package is uploaded as a file (multipart) and its documents are downloaded by addressable
 endpoint. The surface is 18 operations, all under the `catalog` tag except the run trigger. The contract
-([`../../reference/control-plane-rest-api.md`](../../reference/control-plane-rest-api.md)) is authoritative for
+([`../../reference/control-plane-rest-api.md`](../reference/control-plane-rest-api.md)) is authoritative for
 the request and response schemas.
 
 | HTTP | Path | operationId | Scope | Purpose |
 |------|------|-------------|-------|---------|
 | `POST` | `/catalog` | `addCatalogVersion` | `catalog:write` | Upload a new version (`multipart/form-data`: a `package` file part plus `owner` and `tags`). |
 | `GET` | `/catalog` | `searchCatalog` | `catalog:read` | Search (filters `q`, `baseWorkflowId`, `workflowIdPrefix`, `tag` repeatable AND, `status`, `owner`, `distinctWorkflows`; keyset paged). |
-| `GET` | `/catalog/count` | `countCatalog` | `catalog:read` | The bounded count for a search ([ADR 0036](../../adr/0036-bounded-count-contract.md)). |
+| `GET` | `/catalog/count` | `countCatalog` | `catalog:read` | The bounded count for a search ([ADR 0036](../adr/0036-bounded-count-contract.md)). |
 | `GET` | `/catalog/{baseWorkflowId}` | `listCatalogVersions` | `catalog:read` | List the versions of a base id. |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{n}` | `getCatalogVersion` | `catalog:read` | A version's metadata (no documents embedded). |
 | `GET` | `.../package` | `getCatalogPackage` | `catalog:read` | Download the whole `.awp` (streamed `application/octet-stream`). |
@@ -133,7 +133,7 @@ query. `DELETE` and `PURGE` consult the run store: a version with a referencing 
 `IWorkflowCatalogStore` in `Corvus.Text.Json.Arazzo.Durability` is implemented inside each existing backend
 project (in-memory reference plus Sqlite, Postgres, SQL Server, MySQL, Mongo, Cosmos, Redis, NATS, Azure
 Storage), with a shared `WorkflowCatalogStoreConformance` suite. It returns pooled documents (bytes-native,
-[ADR 0037](../../adr/0037-bytes-native-seams.md)) rather than bare values:
+[ADR 0037](../adr/0037-bytes-native-seams.md)) rather than bare values:
 
 ```csharp
 public interface IWorkflowCatalogStore
@@ -168,17 +168,17 @@ composes the `.../sources/{name}` URL. This reuses the `links` mechanism the `/r
 
 The package is a complete, self-contained input to code generation, so on add the store hands it to an
 `IWorkflowExecutorProvider` that runs the generators and compiles the result in memory, writing the executor
-assembly and manifest into the package ([ADR 0033](../../adr/0033-compile-at-catalog-add.md); a package that
+assembly and manifest into the package ([ADR 0033](../adr/0033-compile-at-catalog-add.md); a package that
 cannot compile is still catalogued, just not runnable). A runnable version exposes a `runnable` flag, its
 assembly and manifest are downloadable, and a run is triggered from it (`startCatalogWorkflowRun`).
 
 `WorkflowExecutorLoader` (`Corvus.Text.Json.Arazzo.Execution`) loads the assembly into a collectible
 `AssemblyLoadContext` per version and verifies integrity before use: the assembly digest must match the
 manifest's `assemblyDigest` (`sha256:<hex>`) and the manifest's `packageHash` must match the version's content
-hash ([ADR 0025](../../adr/0025-integrity-binding-optional-signature.md)), which binds the assembly to the exact
+hash ([ADR 0025](../adr/0025-integrity-binding-optional-signature.md)), which binds the assembly to the exact
 version. An optional detached ECDSA signature (custody split, control plane signs and the runner verifies) rides
 alongside the content binding. A dedicated standalone hosting service is deliberately not required
-([ADR 0034](../../adr/0034-standalone-hosting-not-required.md)); the control plane's run trigger and the runner
+([ADR 0034](../adr/0034-standalone-hosting-not-required.md)); the control plane's run trigger and the runner
 already serve and execute a catalogued version.
 
 ## UI
@@ -186,4 +186,4 @@ already serve and execute a catalogued version.
 A catalog view in the web kit: a searchable, filterable version list; a version detail showing the package,
 hash, owner, and governance attribution; and write actions (add, edit metadata, obsolete, delete) gated by the
 `catalog:*` scopes. See the catalog components in the
-[UX component catalog](../../guides/ux-component-catalog.md#catalog).
+[UX component catalog](ux-component-catalog.md#catalog).

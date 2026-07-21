@@ -2,17 +2,17 @@
 
 How a source's credentials are stored, resolved, and rotated. The governing decision, that the store holds a
 **reference** and the runner resolves the secret at bind time, is
-[ADR 0048](../../adr/0048-source-credentials-are-references.md); the bytes-native store discipline is
-[ADR 0037](../../adr/0037-bytes-native-seams.md); the management and usage tags build on the two-plane access
-model ([ADR 0001](../../adr/0001-two-plane-access-model.md), [0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)).
-This spec is the exhaustive credentials detail those do not carry.
+[ADR 0048](../adr/0048-source-credentials-are-references.md); the bytes-native store discipline is
+[ADR 0037](../adr/0037-bytes-native-seams.md); the management and usage tags build on the two-plane access
+model ([ADR 0001](../adr/0001-two-plane-access-model.md), [0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)).
+This guide is the exhaustive credentials detail those do not carry.
 
 A source needs credentials (a bearer token, OAuth client-credentials, an API key, basic auth, a client
 certificate) to call its operations. The run requester never supplies them, a run carries only inputs;
 credentials are operator-managed state bound to a version's sources and resolved per run, so rotation is
 transparent (the next run or resume picks up the current secret without changing the workflow or the request).
 Secret material lives in a dedicated secret store, never in the Arazzo store, a checkpoint, an index, a log, or
-telemetry ([ADR 0048](../../adr/0048-source-credentials-are-references.md)).
+telemetry ([ADR 0048](../adr/0048-source-credentials-are-references.md)).
 
 ## The credential store and binding
 
@@ -60,7 +60,7 @@ reference-rotation is the only path today.
 A binding carries two independent tag sets, matching the two-plane model:
 
 - **`managementTags`** are reach labels: who may administer the binding, filtered like every other reach-scoped
-  resource ([ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)).
+  resource ([ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)).
 - **`usageTags`** are a run entitlement: which runs may **use** the credential. A run may use a binding only if
   its identity carries all the usage tags (`IsUsableBy` / `ResolveForUsageAsync`, a label-superset, fail-closed).
   The `usageGrantee` an operator names is resolved bytes-to-bytes to the unforgeable internal tags; summaries
@@ -125,7 +125,7 @@ Enabling source credentials must add no measurable per-request cost once warm, o
 - **Bounded exposure.** Cached material is memory-only, TTL-bounded, and scrubbed on eviction where the type
   allows; where possible only the derived provider or header value is retained, not the raw secret.
 
-The store read and write are bytes-native ([ADR 0037](../../adr/0037-bytes-native-seams.md)): the driver's
+The store read and write are bytes-native ([ADR 0037](../adr/0037-bytes-native-seams.md)): the driver's
 `byte[]` is the read leaf, parsed once through the pooled zero-copy `PersistedJson.ToPooledDocument`, the reach
 and usage filter is applied in memory over the small candidate set through deferred holders
 (`ManagementTagsValue`, `IsUsableBy`), and a write serialises through the shared pooled scratch, a `byte[]` only
@@ -141,7 +141,7 @@ and every backend's read and write path is proven by the shared `SourceCredentia
 
 Putting a secret into the store is a separate security concern from reading it, and the two must be distinct
 least-privilege identities. This is the governing rule for the subsystem
-([ADR 0048](../../adr/0048-source-credentials-are-references.md)):
+([ADR 0048](../adr/0048-source-credentials-are-references.md)):
 
 - **The runner is a read-only consumer**, granted read on its own scoped paths and nothing else.
 - **Provisioning is a distinct, write-capable identity owned by automation** (a CI/CD pipeline or an IaC step

@@ -18,16 +18,16 @@ below gives each group's job rather than its operations. Read the contract for t
 | Group (tag) | What it covers |
 |-------------|----------------|
 | `runs` | Workflow runs: list, get, run steps, `resume` (the mode union below), `cancel`, single delete, and a bulk `PURGE`. |
-| `catalog` | Publish and read versioned, runnable workflow definitions: add, list, get, update, and delete versions; download the package and its addressable documents (workflow, sources, schemas, executor assembly and manifest); validate inputs; start a run. See [`catalog-design.md`](../specs/catalog/catalog-design.md). |
+| `catalog` | Publish and read versioned, runnable workflow definitions: add, list, get, update, and delete versions; download the package and its addressable documents (workflow, sources, schemas, executor assembly and manifest); validate inputs; start a run. See [the catalog guide](../guides/catalog.md). |
 | `runners` | Read the registered runners that host and execute catalog versions. |
 | `runnerAuthorizations` | Authorize which runners may serve a deployment environment: register, authorize, revoke, quarantine. See [ADR 0027](../adr/0027-runner-environment-binding.md). |
 | `schedules` | Durable schedules that trigger a workflow run on a cadence: list, create, get, delete, run-now. |
-| `security` | Author the row-security policy, rules and claim-to-rule bindings, and read the access-grant overview. See [`identity-and-authorization-design.md`](../specs/access/identity-and-authorization-design.md). |
-| `credentials` | Manage source credential bindings: references and non-secret metadata only, never secret material. See [`source-credentials-design.md`](../specs/credentials/source-credentials-design.md). |
+| `security` | Author the row-security policy, rules and claim-to-rule bindings, and read the access-grant overview. See [the identity and authorization guide](../guides/identity-and-authorization.md). |
+| `credentials` | Manage source credential bindings: references and non-secret metadata only, never secret material. See [the source-credentials guide](../guides/source-credentials.md). |
 | `administrators` | Manage who may publish and administer a base workflow: add, remove, transfer. |
 | `environments` | Manage governed, reach-scoped deployment environments and their administrators. |
 | `sources` | Manage first-class, reach-scoped source registrations, and read their operations. |
-| `workspace` | Designer working copies: mutable Arazzo documents saved without minting a version, their scenarios, `publishWorkingCopy`, `simulateWorkingCopy`, and source binding. See [`workflow-designer-design.md`](../specs/web/workflow-designer-design.md). |
+| `workspace` | Designer working copies: mutable Arazzo documents saved without minting a version, their scenarios, `publishWorkingCopy`, `simulateWorkingCopy`, and source binding. See [the workflow-designer guide](../guides/workflow-designer.md). |
 | `debugRuns` | Debug a working copy: start, step and resume, inspect, inject a message to a suspended wait, cancel and delete. See [ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md). |
 | `github` | Brokered GitHub integration: the control plane holds the Git session, so pull and commit a working copy, list and create branches, browse a repo. |
 | `availability` | Make a workflow version available in a deployment environment ("promotion"), directly where the caller administers the environment. |

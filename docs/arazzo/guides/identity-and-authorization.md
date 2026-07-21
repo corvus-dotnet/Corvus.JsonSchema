@@ -1,12 +1,12 @@
 # Arazzo access, identity, and entitlement: design detail
 
-This spec is the detailed design behind the control-plane access model: control-plane authorization and
+This guide is the detailed design behind the control-plane access model: control-plane authorization and
 tag-based row security (§14), workflow administration (§15), the identity, login, and entitlement lifecycle
 (§16), and the security-review remediation (§17). It is the exhaustive counterpart to the conceptual
-[access-model.md](access-model.md) summary and the access-model [ADRs](../../adr/README.md) (0001 to 0016).
+[access-model.md](access-model.md) summary and the access-model [ADRs](../adr/README.md) (0001 to 0016).
 It was split out of the execution-host design so the access-and-identity subsystem stands on its own.
 
-The section numbering is retained from the original execution-host design (this spec begins at §14), so existing
+The section numbering is retained from the original execution-host design (this guide begins at §14), so existing
 cross-references to these sections stay valid.
 
 ## 14. Authorization — control plane and tag-based row security
@@ -34,7 +34,7 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
   may synthesize claims from the request itself — a vanity host, a route prefix, an API-gateway header — through an
   `IClaimsTransformation` / middleware, so a `sys:` dimension such as `sys:tenant` need **not** come from the token.
   This is sound for the *runtime caller*, but membership matching
-  ([ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md)) imposes a consistency
+  ([ADR 0003](../adr/0003-membership-matching-over-canonical-identity.md)) imposes a consistency
   requirement at *grant-authoring* time that is easy to miss: a grant's named dimension only matches a caller
   whose stamped identity will contain it, so an ambient dimension has to be authored with the same value it is
   later stamped with. The full treatment — the seam, the trap, and how it is
@@ -193,7 +193,7 @@ and freely editable. The authority is the **administrator**, and it is a *securi
 - **Publishing a further version requires being an administrator.** `SecuredWorkflowCatalog.AddAsync` refuses
   (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
   administrator set, so `sys:workflow` cannot be squatted. Membership is the subset test of
-  [ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md): a stored administrator identity
+  [ADR 0003](../adr/0003-membership-matching-over-canonical-identity.md): a stored administrator identity
   administers a submitter whose stamped identity contains it (`WorkflowIdentity.SameAdministrator`, founder ⊆
   candidate). This supersedes the earlier set-equality rule. The catalog Add path carries the stamped identity,
   not an `AccessContext`.
@@ -233,7 +233,7 @@ record** materialized at creation (§15.2) and the authoritative source thereaft
 The forward record answers *"who administers base id X?"*. The **approver inbox** (§16.5) needs the reverse: *"which
 workflows does this caller administer?"* — so an approver sees every pending access request they can act on, without
 having to name a workflow first. Administration membership is the subset test of
-[ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md) (`WorkflowAdministrators.IsAdministeredBy`
+[ADR 0003](../adr/0003-membership-matching-over-canonical-identity.md) (`WorkflowAdministrators.IsAdministeredBy`
 → `WorkflowIdentity.SameAdministrator`, founder ⊆ candidate). The stored side stays keyed on the founder's canonical
 digest (`SecurityIdentityDigest`), so the reverse lookup is still indexed and never a scan; only the read side fans out,
 looking up every non-empty subset-digest of the caller's identity (`SecurityIdentityDigest.SubsetDigests`):
@@ -620,7 +620,7 @@ eligible-for-All`) remains step 6.
 > **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
 > **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped
 > `sys:` identity **contains** the target's named identity. See
-> [ADR 0003](../../adr/0003-membership-matching-over-canonical-identity.md) for the decision and the
+> [ADR 0003](../adr/0003-membership-matching-over-canonical-identity.md) for the decision and the
 > authorization-versus-identity-operation classification (the identity operations, add-idempotency, digest removal,
 > and the collision probe, stay exact by design). The paragraph below is retained as the original resolved-grantee
 > rationale; read "set-equality" as "subset" for the authorization surfaces.
@@ -820,139 +820,16 @@ that *are* stamped; a reach rule over an unstamped dimension is outside that gua
   Three guardrails are mandatory: requester-needs-no-access, platform-capped grant authority, and edit-as-system-
   admin-only (separation of duties).
 
-## 17. Security-review remediation (design)
+## 17. Security-review remediation (shipped)
 
-> Status: **design, agreed June 2026** — the plan from the adversarial security review (§13–§16.5.4). The review's
-> verdict was *iterate, not redesign*: the core (forgery prevention, exact-equality §15 membership, fail-closed
-> §16.5 grant caps, the §13 secret boundary, non-disclosure) is sound and conformance-locked. The findings cluster
-> at two roots — **capability ≠ reach** (a capability honoured without a matching reach leaks) and
-> **secure-by-construction but not secure-by-default**. Findings referenced as F1–F10; implementation follows this.
-
-### 17.1 Reach-scope the identity store (F1) — restore the one consistent idiom
-
-The observed-identity store is the **only** list surface that omits `AccessContext`; catalog/runs/credentials all
-reach-filter. That inconsistency *is* the cross-tenant disclosure (F1): a holder of `administrators:read` (an admin
-of *any one* workflow) can enumerate every observed identity across all tenants (empty prefix = list-all). Fix:
-
-- **`IObservedIdentityStore.SearchAsync` gains an `AccessContext context`** (first parameter, as every other store).
-  A candidate is admitted iff `context.Admits(AccessVerb.Read, candidate.IdentityTags)` — the caller discovers an
-  identity **only when their read-reach already admits its domain tags**. `tenant=acme`'s admin discovers acme's
-  people/teams/roles/workflows; `globex`'s are invisible (non-disclosing). The predicate is **pushed down to the
-  backend**, not applied after a global fetch.
-- **Why this predicate is right.** An identity carries its own `sys:` tags (a person `{sys:tenant=acme, sys:sub=
-  alice}`); a read-reach rule (`sys:tenant == 'acme'`) admits any tag-set containing `sys:tenant=acme`. So the picker
-  still finds *people in the caller's own domain* (the real grantee use case) while a workflow-only admin discovers
-  only what they can already see. Reach scopes discovery to exactly the caller's existing visibility — no new
-  disclosure axis is invented. `/identity/grantees` stays gated by `administrators:read` **and** is now reach-filtered;
-  `whoami`/`capabilities` are unchanged.
-
-### 17.2 Honest `complete` (F3)
-
-`complete` must mean "the principal's *whole* stamped identity, so an exact-equality grant will match." The handler
-hardcodes `true`, over-asserting for the single-tag mapping the admin-add hook records. Design: **the recording path
-stamps completeness; the handler reports it.** `ObservedIdentity` gains a `complete` flag — `true` for a full
-resolution (a directory adapter, or a principal's own `GetInternalTags`), `false` for the policy's best-effort
-single-tag `ResolveGranteeIdentity` default (a `{sub, alice}` grant that is *not* alice's full `{tenant, sub}`
-identity). The policy decides whole-grain vs partial per `{kind, identity}`. The UI surfaces `complete: false` as
-"may be partial — confirm before granting," restoring the one warning against an inert/over-broad rule.
-
-### 17.3 Finish the view surface — `catalog:read` as a grantable, reach-scoped entitlement (F4)
-
-Decision: **finish it** (not cut). Make the promised "view" grant real:
-
-- **Allowlist:** `AccessRequestApprovalService.GrantableScopes` → `[runs:read, runs:write, catalog:read]`. The
-  fail-closed intersection and the never-list are unchanged.
-- **Reach mapping:** `WriteBindingAsync` maps `catalog:read` → **read-reach** over the workflow rule
-  (`sys:workflow == '<id>'`) — the same rule as `runs:read`, distinguished by the granted **scope** at the authz
-  layer. A `catalog:read` grant = scope `catalog:read` + read-reach → the grantee `GET`s that one workflow's catalog
-  entry without joining the domain or administering it; a bare `catalog:read` grant is no longer inert.
-- **Surfaces:** the access-request dialog gains a **"View (catalog:read)"** option; the resolved grantee picker's
-  three surfaces (view / operate / administer) become fully real.
-
-### 17.4 Secure-by-default (F2) — a closed default and an explicit mode — **IMPLEMENTED**
-
-The old `MapArazzoControlPlane` defaulted to unauthenticated + `AccessContext.System` (`= (null,null,null)` = omnipotent),
-and `requireAuthorization`/`rowSecurity` were *independently* optional (so a deployment could get auth **without** reach).
-Fix the defaults, not just the docs:
-
-- **No all-null default context.** `AccessContext` is a sealed **class** with a mandatory 3-arg constructor — there is
-  no `default`/parameterless instance that is silently omnipotent (a forgotten context is `null`, which fails closed).
-  `AccessContext.System` stays the **explicit, named** value for the genuine trusted-system path (it is a credential,
-  not the absence of one).
-- **An explicit, required `ControlPlaneSecurityMode`** (no default) replaces the two independently-defaulting flags, so a
-  deployment must *name* its posture and can never get an open plane, or scopes without reach, by omission:
-  - **`Open`** — unauthenticated + System reach (today's dev behaviour, but only as a *named, deliberate* choice, logged
-    loudly at startup); a row-security policy must **not** be supplied (it would be ignored).
-  - **`Scoped`** — auth + scope gating + a **required** `ControlPlaneRowSecurityPolicy` (the production posture; you
-    cannot get scopes-without-reach by omission, the F2 footgun).
-  - **`ScopesOnly`** — auth + scope gating + System reach, only as an *explicit* single-tenant choice; a policy must
-    **not** be supplied.
-  - **`RowSecurityOnly`** — auth + per-row reach with **no** scope gating; a policy is **required**.
-
-  The mapping **validates the mode/policy pairing at startup** (`ArgumentException` on a required policy omitted, or a
-  policy supplied where it would be ignored), so an insecure-by-omission combination cannot be constructed. Verified by
-  `ControlPlaneAuthorizationTests.The_security_mode_forbids_insecure_by_omission_combinations`; all callers migrated.
-
-### 17.5 Hardening (F5/F6/F7) — **IMPLEMENTED**
-
-- **OAuth2 token endpoint (F5):** `SourceCredentialProviderFactory` rejects a non-`https` `tokenUrl` (a cleartext
-  client-secret POST) with an `InvalidOperationException` *before* the secret is resolved. A deployment opts into an
-  `http` endpoint for local development with `allowInsecureOAuthTokenEndpoint: true`.
-- **`FileSecretResolver` (F6):** an optional confinement root. When configured, every locator is resolved *relative to
-  the root* and the canonicalised path must stay within it — an absolute locator or a `..` traversal that would escape
-  is rejected before any I/O. With no root the locator is the exact path (the trusted-operator k8s-projection case,
-  unchanged). Threaded through `SecretResolverBuilder.AddFile(secretRoot)`.
-- **Wildcard binding (F7):** a `claimType == "*"` binding matches every authenticated principal, so an `Unrestricted`
-  grant on it would make everyone an operator and collapse tenant isolation. At snapshot-compile the policy **demotes**
-  a wildcard `Unrestricted` verb grant to no reach (a wildcard binding's *rule-bounded* grants are still honoured);
-  `allowWildcardUnrestrictedReach: true` on `PersistentRowSecurityPolicy` opts a genuinely single-tenant deployment back
-  in. Verified by `PersistentRowSecurityPolicyTests`; the demotion is done once per generation, off the hot path.
-
-### 17.6 API behavioural mismatches + consistent idioms — **IMPLEMENTED**
-
-The OpenAPI document is the generated server's source of truth; it must declare exactly what handlers return, and
-handlers must map errors consistently. Re-grounding the review's list against the *current* document found several
-items already correct from later work; the remaining deltas were applied and **both the server and the CLI client were
-regenerated** from the corrected document.
-
-- **Status-code truth (audited).** The consistent rule is **invalid input → 400, optimistic/state conflict → 409,
-  non-disclosable → 403/404**. `approveAccessRequest`/`approveAccessRequestAsEligible` already declare *both* `400`
-  (scopes not grantable) and `409` (not pending), and the handler matches. `startCatalogWorkflowRun` already declares
-  the `409` its handler returns for both "not runnable (no executor)" and "no hosting runner" — its description now
-  names both causes. `resumeRun` declared no `202` yet its description claimed the code "MAY return 202"; the code never
-  emits it, so the misleading sentence was removed (200/403/404/409 is the true set). `cancelRun.reason` gained
-  `minLength: 1` so an empty audit reason is rejected at validation (the declared `400`) rather than silently accepted —
-  the generator now emits a constrained `ReasonEntity`.
-- **Tag + scheme hygiene.** The `catalog` and `runners` tags used by operations are now declared at the top level, and
-  `security:read`/`security:write` were added to both OAuth2 flows' `scopes` blocks (they were referenced by the
-  security operations but absent from the scheme).
-- **Consistent idioms throughout (the standing rule).** One error→status mapping across all handlers; **keyset
-  pagination** (opaque backend-scoped token) on every list surface; **`AccessContext` threaded through every store
-  read** (17.1 closes the last gap); reads non-disclosing (404 out-of-reach, 403 readable-not-writable); CTJ generated
-  types end to end (no hand-rolled records, no STJ); pooled documents the caller owns. The remediation makes the
-  identity layer conform to the idioms the rest of the surface already follows.
-
-### 17.7 Sequencing — **COMPLETE**
-
-The planned order was (1) **17.4 secure-by-default** + **17.6 API truth**; (2) **17.1 reach-scoped identity store** (the
-interface change that **gates the §16.5.4 backend fan-out** — done *before* the fan-out); (3) **17.2 `complete`** +
-**17.3 the view surface**; (4) **17.5 hardening**. All are now implemented and re-validated against the conformance
-suite, the HTTP API tests, and the `MemoryDiagnoser` floors, with a warning-free `slnx` build throughout.
-
-The per-backend **`IObservedIdentityStore` fan-out** across the nine durability backends is now **DONE** (it was gated on
-the reach-aware `SearchAsync` interface from 17.1): Sqlite, Postgres, MySQL, SQL Server, Cosmos, MongoDB, Redis, Azure
-Storage, and NATS JetStream each implement the store and pass the shared conformance suite on real infrastructure. The
-backends follow the catalog store's optimised reach idiom: the four relational backends + Cosmos **push the reach
-predicate server-side** (a denormalised child `ObservedIdentitySecurityTags` table via the shared `SqlSecurityRuleEmitter`,
-or an embedded `securityTags` array via `CosmosSecurityRuleEmitter`), with the SQL key columns declared with a binary/
-ordinal collation (`COLLATE "C"` / `utf8mb4_bin` / `Latin1_General_BIN2`) so the keyset is byte-ordinal; MongoDB, Redis,
-Azure Storage, and NATS apply reach in memory over their native ordering (matching their own catalog stores). The
-sighting upsert and search share one `ObservedIdentitySerialization` merge across every backend (including the in-memory
-reference).
-
-The `IPrincipalDirectory` seam ships with **six concrete adapters** — **LDAP/AD**
-(`Corvus.Text.Json.Arazzo.Directories.Ldap`) and **Keycloak** (`Corvus.Text.Json.Arazzo.Directories.Keycloak`),
-conformance-verified against real containers, plus **SCIM 2.0** (`…Directories.Scim`), **Microsoft Entra ID / Graph**
-(`…Directories.EntraId`), **Okta** (`…Directories.Okta`), and **Google Workspace** (`…Directories.Google`), each
-conformance-verified against a mock provider via the shared `StubHttpMessageHandler`. The family is complete; the five
-HTTP adapters share the bytes-to-bytes identity path and the attribute-projection seam.
+An adversarial security review (of §13 to §16.5.4) returned a verdict of iterate, not redesign: the core
+(forgery prevention, membership administration, fail-closed grant caps, the secret boundary, and non-disclosure)
+was sound, and its findings clustered at two roots, "a capability honoured without a matching reach leaks" and
+"secure by construction but not secure by default." All of the fixes have shipped and are the current behaviour
+recorded above and in the ADRs: the identity store is reach-scoped and `AccessContext` is threaded through every
+store read; `complete` is honest ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)); the `catalog:read`
+view grant is real; the security posture is an explicit, required `ControlPlaneSecurityMode` with no
+insecure-by-omission default ([ADR 0016](../adr/0016-control-plane-security-mode.md)); the OAuth token
+endpoint is HTTPS-only unless opted in, the file resolver is confinement-rooted, and a wildcard `Unrestricted`
+grant is demoted; and the fail-closed, non-disclosing idioms hold across every store and backend
+([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)).

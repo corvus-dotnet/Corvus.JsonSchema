@@ -1,63 +1,64 @@
 # Arazzo engine and control plane documentation
 
-This tree documents the Corvus Arazzo workflow engine and its control plane. It is organised into
-four kinds of document, each with a distinct job.
+This tree documents the Corvus Arazzo workflow engine and its control plane. It is organised into three kinds
+of document, each with a distinct job.
 
-- **`adr/`** holds Architecture Decision Records. An ADR captures one decision, why it was taken, the
-  options weighed, and the consequences. ADRs are the *why*. They are append-only history. A superseded
-  decision is marked superseded and points to the ADR that replaces it, rather than being edited away.
-- **`guides/`** holds implementation guides. A guide is the *how*. It is task-oriented ("author, generate,
-  and run a workflow", "wire authentication and authorization", "deploy a durability backend") and shows
-  working, compiled code. Each guide links to the ADRs that explain the decisions behind it.
-- **`specs/`** holds the living design specifications, grouped by domain (`access/`, `execution/`,
-  `catalog/`, `credentials/`, `web/`). A spec is the exhaustive detail of a subsystem's behaviour, the
-  source a guide distils and an ADR records a decision from. It carries only what an ADR or a guide does
-  not, and references them for the rest.
-- **`reference/`** holds stable reference material: the ubiquitous-language glossary, the control-plane REST
-  API reference, and the OpenAPI contract that is its source of truth.
+- **`adr/`** holds Architecture Decision Records. An ADR captures one decision, why it was taken, the options
+  weighed, and the consequences. ADRs are the *why*. They are append-only history. A superseded decision is
+  marked superseded and points to the ADR that replaces it, rather than being edited away.
+- **`guides/`** holds implementation guides. A guide is the *how*: both task walkthroughs (author, generate, and
+  run a workflow; wire authentication; deploy a backend) and subsystem guides (how the catalog, the execution
+  host, row security, or the web kit work and how to work with them). A guide shows working code and links the
+  ADRs that explain the decisions behind it.
+- **`reference/`** holds stable reference material: the ubiquitous-language glossary, the control-plane REST API
+  reference, and the OpenAPI contract that is its source of truth.
 
-Design specifications (the detailed, living descriptions of a subsystem) remain the source for a
-subsystem's full behaviour. A guide distils a spec for a reader with a task. An ADR records a decision the
-spec embodies. The three do not duplicate each other. When they would, the ADR owns the decision, the
-guide owns the walkthrough, and the spec owns the exhaustive detail.
+When an ADR, a guide, and the reference would say the same thing, the ADR owns the decision, the guide owns the
+walkthrough, and the reference owns the exhaustive contract. A guide carries only what an ADR or the reference
+does not, and links them for the rest.
 
-## Map
+## Guides
 
-### Guides
+### Authoring and running
 
 | Guide | Covers |
 |-------|--------|
-| [`guides/auth-and-authorization.md`](guides/auth-and-authorization.md) | The two-plane access model, wiring authentication, authoring reach, the entitlement lifecycle. **(done)** |
-| [`guides/authoring-generating-running.md`](guides/authoring-generating-running.md) | Authoring an Arazzo document, generating an executor, running it. **(done, absorbs the former docs/Arazzo.md scope)** |
-| `guides/durability-and-state-stores.md` | The checkpoint model, resume, writing an `IWorkflowStateStore` backend. *(planned)* |
-| [`guides/running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
-| `guides/control-plane-rest-api.md` | Client and CLI generation from the contract. The surface itself is the [REST API reference](reference/control-plane-rest-api.md). *(planned)* |
-| `guides/source-credentials.md` | `secretRef` storage, `ISecretResolver`, separation of duties. *(planned)* |
-| [`guides/catalog-and-promotion.md`](guides/catalog-and-promotion.md) | Packaging, publishing, promotion across environments, readiness. **(done)** |
-| [`guides/web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit. **(done)** |
-| [`guides/ux-component-catalog.md`](guides/ux-component-catalog.md) | Every `arazzo-*` component: purpose, attributes, events, composition. **(done)** |
-| `guides/workflow-designer.md` | Scenarios, debug runs, the CI scenario runner. *(planned)* |
-| `guides/deployment-bootstrap.md` | The production bootstrap library versus demo seeding. *(planned)* |
-| `guides/observability.md` | Spans, metrics, and the governance-audit primitive. *(planned)* |
-| [`guides/platform-conventions.md`](guides/platform-conventions.md) | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. **(done)** |
+| [`authoring-generating-running.md`](guides/authoring-generating-running.md) | Authoring an Arazzo document, generating an executor, running it. **(done)** |
+| [`catalog.md`](guides/catalog.md) | The immutable, content-hashed versioned package catalog: the data model, the operation surface, the store. **(done)** |
+| [`catalog-and-promotion.md`](guides/catalog-and-promotion.md) | Packaging, publishing, promotion across environments, readiness. **(done)** |
+| [`execution-host.md`](guides/execution-host.md) | The build side, the runner (load, isolation, registration), triggers, and the execution model. **(done)** |
+| [`running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
+| `durability-and-state-stores.md` | The checkpoint model, resume, writing an `IWorkflowStateStore` backend. *(planned)* |
 
-### Specs
+### Access, identity, and credentials
 
-The exhaustive per-subsystem detail, grouped by domain. Each spec is being verified against the code and
-slimmed to what the ADRs and guides do not already carry.
+| Guide | Covers |
+|-------|--------|
+| [`access-model.md`](guides/access-model.md) | The capability-versus-reach access model, and the authentication and machine-identity reference. **(done)** |
+| [`auth-and-authorization.md`](guides/auth-and-authorization.md) | Wiring authentication, authoring reach, the entitlement lifecycle. **(done)** |
+| [`identity-and-authorization.md`](guides/identity-and-authorization.md) | Authorization and row security, administration, and the identity and entitlement lifecycle, in depth. **(done)** |
+| [`security-ui.md`](guides/security-ui.md) | The security and access UI: jobs, information architecture, safe binding authoring. **(done)** |
+| [`source-credentials.md`](guides/source-credentials.md) | `secretRef` storage, the resolver, the rotation lifecycle, separation of duties. **(done)** |
 
-| Spec | Covers |
-|------|--------|
-| [`specs/access/access-model.md`](specs/access/access-model.md) | The capability-versus-reach access model (summary). |
-| [`specs/access/identity-and-authorization-design.md`](specs/access/identity-and-authorization-design.md) | Authorization, administration, and the identity and entitlement lifecycle. |
-| [`specs/execution/execution-host-design.md`](specs/execution/execution-host-design.md) | The build side, the runner, triggers, and the execution model. |
-| [`specs/catalog/catalog-design.md`](specs/catalog/catalog-design.md) | The immutable, content-hashed versioned package catalog. |
-| [`specs/credentials/source-credentials-design.md`](specs/credentials/source-credentials-design.md) | `secretRef` storage, the resolver, and the rotation lifecycle. |
-| [`specs/web/ui-design.md`](specs/web/ui-design.md) | The control-plane web UI design. |
-| [`specs/web/security-ui-design.md`](specs/web/security-ui-design.md) | The security and access UI surfaces. |
-| [`specs/web/workflow-designer-design.md`](specs/web/workflow-designer-design.md) | The workflow designer: scenarios, debug runs, git integration. |
+### Web kit and designer
 
-### Reference
+| Guide | Covers |
+|-------|--------|
+| [`web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit. **(done)** |
+| [`web-ui-design.md`](guides/web-ui-design.md) | The control-plane web UI design: the governance-hub IA and the residual component rationale. **(done)** |
+| [`ux-component-catalog.md`](guides/ux-component-catalog.md) | Every `arazzo-*` component: purpose, attributes, events, composition. **(done)** |
+| [`workflow-designer.md`](guides/workflow-designer.md) | The designer: authoring on the surface, scenarios, debug runs, diff, git, the CI scenario runner. **(done)** |
+
+### Cross-cutting
+
+| Guide | Covers |
+|-------|--------|
+| [`platform-conventions.md`](guides/platform-conventions.md) | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. **(done)** |
+| `control-plane-rest-api.md` | Client and CLI generation from the contract. The surface itself is the [REST API reference](reference/control-plane-rest-api.md). *(planned)* |
+| `deployment-bootstrap.md` | The production bootstrap library versus demo seeding. *(planned)* |
+| `observability.md` | Spans, metrics, and the governance-audit primitive. *(planned)* |
+
+## Reference
 
 | Reference | Covers |
 |-----------|--------|
@@ -65,14 +66,13 @@ slimmed to what the ADRs and guides do not already carry.
 | [`reference/arazzo-control-plane.openapi.json`](reference/arazzo-control-plane.openapi.json) | The OpenAPI 3.2 contract, the source of truth clients and the CLI are generated from. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
 
-### Architecture Decision Records
+## Architecture Decision Records
 
-See [`adr/README.md`](adr/README.md) for the full index. The authz decisions are the first set to land.
+See [`adr/README.md`](adr/README.md) for the full index (49 ADRs across the access model, the engine and
+durability, the runner, the catalog, source credentials, platform conventions, and the web kit and designer).
 
 ## Status
 
-This tree was populated by a documentation-normalization campaign. The campaign swept the existing design
-docs, extracted each decision into an ADR, distilled each subsystem into a guide, and removed the
-duplication that had spread a single topic (the access model, for one) across several documents. The 47
-ADRs and the guides are complete. The design specs have been gathered under `specs/`, and are being
-verified against the code and slimmed to the residual detail the ADRs and guides do not carry.
+This tree was populated by a documentation-normalization campaign: it extracted each decision into an ADR,
+distilled each subsystem into a guide, moved the API contract and glossary into the reference, verified every
+claim against the code, and removed the duplication that had spread a single topic across several documents.

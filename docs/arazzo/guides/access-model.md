@@ -1,17 +1,17 @@
 # The control-plane access model: capability versus reach
 
 Every access decision in the control plane is **WHO can do WHAT, WHERE**. Two independent systems answer the
-WHAT (capability) and the WHERE (reach), and both must pass. This spec is the overview and the operational
+WHAT (capability) and the WHERE (reach), and both must pass. This guide is the overview and the operational
 detail the ADRs and guides do not carry. The decisions are the access-model ADRs
-([0001](../../adr/0001-two-plane-access-model.md) through
-[0016](../../adr/0016-control-plane-security-mode.md)); the wiring walkthrough is the
-[authentication and authorization guide](../../guides/auth-and-authorization.md); the exhaustive enforcement
-detail is [`identity-and-authorization-design.md`](identity-and-authorization-design.md).
+([0001](../adr/0001-two-plane-access-model.md) through
+[0016](../adr/0016-control-plane-security-mode.md)); the wiring walkthrough is the
+[authentication and authorization guide](auth-and-authorization.md); the exhaustive enforcement
+detail is [`identity-and-authorization-design.md`](identity-and-authorization.md).
 
 ## Two planes
 
 Capability and reach are two separate permission systems, and both must pass
-([ADR 0001](../../adr/0001-two-plane-access-model.md)).
+([ADR 0001](../adr/0001-two-plane-access-model.md)).
 
 | | Capability (scopes) | Reach (grant bindings and rules) |
 |---|---|---|
@@ -19,7 +19,7 @@ Capability and reach are two separate permission systems, and both must pass
 | Examples | `catalog:read`, `runs:write`, `security:write`. | Rows where `domain == payments`. |
 | Granularity | Per resource type and operation. | Per row, matched on security tags (`domain`, `tenant`), across resource types. |
 | Where it comes from | The caller's role, as token scopes. Issued by the IdP, configured by the deployment. Not authored in this UI. | Grants and rules, authored in the security UI. |
-| Denied result | `403 Forbidden`. The operation exists but you may not call it (disclosing). | The row is absent (`404`). Non-disclosing: an out-of-reach row is indistinguishable from one that does not exist ([ADR 0004](../../adr/0004-fail-closed-non-disclosing-enforcement.md)). |
+| Denied result | `403 Forbidden`. The operation exists but you may not call it (disclosing). | The row is absent (`404`). Non-disclosing: an out-of-reach row is indistinguishable from one that does not exist ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)). |
 
 Capability is coarse and standing (it follows your job function); reach is finer and shifts with team membership
 and per-request elevation. Keeping them separate is what lets two people who both hold `catalog:write` have
@@ -29,7 +29,7 @@ completely different row reach.
 
 A grant binding (the API calls it a **security binding**) is a **claim to reach** mapping: a caller carrying
 claim `team = payments` gets, per verb, this much reach over the rows
-([ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)).
+([ADR 0002](../adr/0002-grant-verbs-are-reach-not-scopes.md)).
 
 ```mermaid
 flowchart LR
@@ -40,7 +40,7 @@ flowchart LR
 
 - **WHO.** A claim (`claimType` / `claimValue`, for example `team = payments`), a group or role resolved through
   the grantee picker or a raw claim. A *person* is not granted here; per-person elevation goes through the
-  access-request flow instead ([ADR 0014](../../adr/0014-direct-grant-versus-request-only.md)).
+  access-request flow instead ([ADR 0014](../adr/0014-direct-grant-versus-request-only.md)).
 - **WHERE.** For each of `read`, `write`, and `purge`, a reach of an **empty grant** (shown as *Denied* in the
   UI, the code value `VerbGrantInfo.None`), **Unrestricted**, or scoped to one or more named **rules**. A rule is
   a reusable row-filter expression such as `domain == payments`.
@@ -77,7 +77,7 @@ A worked example, a payments-team operator:
 
 A run's recorded step **outputs** (its step journal, `GET /runs/{runId}/steps`) can carry the sensitive data the
 workflow processed. Reading them is gated above reading a run's metadata
-([ADR 0013](../../adr/0013-step-output-disclosure-tier.md)):
+([ADR 0013](../adr/0013-step-output-disclosure-tier.md)):
 
 - **Baseline.** The journal demands the `runs:outputs:read` scope **in addition to** `runs:read` (ANDed). A
   reach-scoped observer who may see a run keeps its metadata but is refused the payloads (`403`), fail-closed for
@@ -90,7 +90,7 @@ workflow processed. Reading them is gated above reading a run's metadata
 Because the journal is a sensitive read, every read is **audited**: a `workflow.journal.read` span on the
 `Corvus.Arazzo` activity source plus an audit-grade log naming who read which run's journal and the tier reached,
 `full`, `redacted`, or `refused` (a refused probe is audited too). The signal is best-effort observability, zero
-cost when no listener is attached ([ADR 0038](../../adr/0038-payload-safe-governance-audit.md)).
+cost when no listener is attached ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)).
 
 ## Where scopes come from
 
@@ -111,12 +111,12 @@ way, and this is where the per-provider variation lives:
 
 **Not from the directory adapters.** The per-provider directory adapters (`IPrincipalDirectory`: LDAP, Keycloak,
 EntraID, Okta, Google, SCIM) do not carry scopes. They resolve a grantee to its exact `sys:` identity, with
-`sys:iss` for issuer-uniqueness ([ADR 0008](../../adr/0008-resolved-grantee-resolution.md)), which feeds the
+`sys:iss` for issuer-uniqueness ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)), which feeds the
 *reach* plane. They answer "who is this", never "what may they do"; assuming scopes flow through them is a common
 mix-up.
 
 **The two planes and the security posture.** `ControlPlaneSecurityMode` is one required, defaultless choice of
-the four meaningful postures ([ADR 0016](../../adr/0016-control-plane-security-mode.md)); it is not two
+the four meaningful postures ([ADR 0016](../adr/0016-control-plane-security-mode.md)); it is not two
 independent on/off flags (a reach-without-authentication posture is deliberately not offered):
 
 | Mode | Capability (scopes) | Reach (row-security) |
@@ -151,7 +151,7 @@ required scope, shared across all schemes. The dividing line is whether the cred
 **Inbound authentication is not the source credentials.** The `apiKey`, `oauth2ClientCredentials`, `basic`,
 `bearer`, and `mtls` kinds in the credential dialog are a different thing that shares the vocabulary: they are
 how a workflow **run** authenticates outbound to the services it calls
-([`source-credentials-design.md`](../credentials/source-credentials-design.md)), not how a caller authenticates
+([`source-credentials-design.md`](source-credentials.md)), not how a caller authenticates
 inbound to the control plane.
 
 | | Inbound (caller to control plane) | Outbound (run to its sources) |
@@ -169,7 +169,7 @@ TLS handshake rather than per run, so it is forced Shared and cannot be usage-sc
 Authentication is ordinary ASP.NET Core in the host's `Program.cs`; the deployment brings the scheme(s) and the
 control plane consumes the principal. The demo host
 (`samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo`) is the worked example, and the
-[authentication and authorization guide](../../guides/auth-and-authorization.md) is the walkthrough. The shape:
+[authentication and authorization guide](auth-and-authorization.md) is the walkthrough. The shape:
 `AddAuthentication` with one scheme per credential type behind a forwarding policy scheme; an optional
 `IClaimsTransformation` mapping an IdP's roles or groups into the `scope` claim and the `sys:` identity;
 `AddArazzoControlPlaneAuthorization(scopeClaimType)` (one policy per scope); and
@@ -177,7 +177,7 @@ control plane consumes the principal. The demo host
 
 The control plane also installs `ControlPlaneEntitlementClaimsTransformer`, which unions a principal's stored
 entitlement scopes (a capability grant an access-request approval wrote) into the `scope` claim at
-authentication time ([ADR 0005](../../adr/0005-entitlement-scopes-union-into-claims.md)), so an approval takes
+authentication time ([ADR 0005](../adr/0005-entitlement-scopes-union-into-claims.md)), so an approval takes
 effect without the identity provider ever being mutated.
 
 ### Storing an API key (or any non-token credential) in production
@@ -204,5 +204,5 @@ only that handler and hardens it:
 
 Reach (grant bindings and rules) is authored in the security UI: grant bindings bind a claim to per-verb reach,
 and rules are the reusable WHERE vocabulary a grant binding points at. See the
-[security UI design](../web/security-ui-design.md) and the
-[UX component catalog](../../guides/ux-component-catalog.md#security-and-access).
+[security UI design](security-ui.md) and the
+[UX component catalog](ux-component-catalog.md#security-and-access).
