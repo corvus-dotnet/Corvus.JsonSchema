@@ -1,247 +1,189 @@
-# Arazzo Workflow Catalog — design
+# Arazzo workflow catalog: design
 
-A governance + usability service in the control plane: an immutable, content-hashed, versioned store of
-**workflow document packages** (an Arazzo workflow plus the OpenAPI/AsyncAPI source documents it references),
-with title/description/tag search, an explicit governance owner, referential integrity against workflow
-runs, and obsolete→purge lifecycle. It extends the existing control-plane API and the durability backends.
+A governance and usability service in the control plane: an immutable, content-hashed, versioned store of
+**workflow packages** (an Arazzo workflow plus the OpenAPI and AsyncAPI documents it references), with search, a
+governance owner, referential integrity against runs, and an obsolete-then-purge lifecycle.
 
-## Goals
-
-- **Self-contained, immutable packages.** Each catalog version bundles the Arazzo workflow + every referenced
-  OpenAPI/AsyncAPI document, hashed so it is verifiable and content-addressed. Being self-contained, a package
-  is a complete input to **code generation**: it can later be handed to a service that runs this repo's code
-  generators over its contents to produce the workflow's executor code/assembly (see Future phase).
-- **Versioning by base id.** Versions are grouped under a *base workflow id*; the stored workflow id carries
-  the version (`nightly-reconcile` → `nightly-reconcile-v4`). Submissions must not already carry a `-vN`
-  suffix (collision defence); the store rewrites the workflow's id to the versioned form.
-- **Governance.** A first-class `owner` (with contact details), and durable `createdBy` / `lastUpdatedBy`
-  attribution on every record — so the catalog integrates with governance tooling and answers "who owns / who
-  changed this".
-- **Discoverability.** `title` + `description` (from the Arazzo `info`) and free-form `tags` are searchable.
-- **Safe lifecycle.** A version cannot be deleted while runs reference it; versions can be marked obsolete and
-  obsolete versions with no runs can be purged in bulk.
+The decisions behind it are the catalog ADRs, [0030](../../adr/0030-immutable-content-hashed-versioned-packages.md)
+(immutable content-hashed packages), [0031](../../adr/0031-content-hash-over-rfc8785-canonical.md) (the content
+hash), [0032](../../adr/0032-awp-deterministic-tlv-container.md) (the `.awp` container),
+[0033](../../adr/0033-compile-at-catalog-add.md) (compile at add), and
+[0034](../../adr/0034-standalone-hosting-not-required.md) (no standalone hosting service); promotion across
+environments is the [catalog and promotion guide](../../guides/catalog-and-promotion.md). This spec is the data
+model, the operation surface, and the store, the exhaustive detail those do not carry.
 
 ## Data model
 
-A catalog **version** is the unit. Versions of one logical workflow share a `baseWorkflowId`.
+A catalog **version** is the unit; versions of one logical workflow share a `baseWorkflowId`. Immutability and
+content-addressing are [ADR 0030](../../adr/0030-immutable-content-hashed-versioned-packages.md).
 
-**Immutable** (fixed when the version is added; define the content hash):
+**Immutable** (fixed when the version is added; these define the content hash):
 
 | Field | Source |
 |-------|--------|
 | `baseWorkflowId` | the submitted workflow id (must have no `-vN` suffix) |
-| `versionNumber` | assigned by the store = (current max for the base id) + 1 |
-| `workflowId` | `{baseWorkflowId}-v{versionNumber}` — the stored/rewritten id runs execute under |
-| `package` | the `{ workflow, sources: { <name>: <doc> } }` envelope (Arazzo + OpenAPI/AsyncAPI), stored so each document is individually retrievable; transferred as a file, never embedded in metadata JSON |
-| `hash` | SHA-256 over the RFC 8785 (`JsonCanonicalizer`) canonical form of `package` |
-| `title`, `description` | extracted from the workflow's `info.title` / `info.description` (fallback `info.summary`) |
-| `sources` | the list of `{ name, type }` (from the workflow's `sourceDescriptions`) — surfaced in metadata so a client knows which documents are addressable |
-| `createdBy`, `createdAt` | the authenticated actor + time of the add |
+| `versionNumber` | assigned by the store, (current max for the base id) + 1 |
+| `workflowId` | `{baseWorkflowId}-v{versionNumber}`, the stored id runs execute under |
+| `hash` | SHA-256 over the RFC 8785 canonical form of the logical `{ workflow, sources }` content ([ADR 0031](../../adr/0031-content-hash-over-rfc8785-canonical.md)) |
+| `title`, `description` | from the workflow's `info.title` / `info.description` (fallback `info.summary`) |
+| `sources` | the list of `{ name, type }` from the workflow's `sourceDescriptions`, so a client knows which documents are addressable |
+| `createdBy`, `createdAt` | the authenticated actor and time of the add |
 
-**Mutable governance metadata** (updatable; every change stamps `lastUpdatedBy` + `lastUpdatedAt`):
+**Mutable governance metadata** (every change stamps `lastUpdatedBy` and `lastUpdatedAt`):
 
 | Field | Notes |
 |-------|-------|
-| `owner` | `{ name, email, team?, url? }` — the accountable owner, for governance integration |
-| `tags` | free-form string set, for display + filtering (AND-matched, as runs are) |
-| `status` | `Active` \| `Obsolete` |
-| `lastUpdatedBy`, `lastUpdatedAt` | the actor + time of the last metadata change |
-| `obsoletedBy`, `obsoletedAt` | the actor + time the version was marked `Obsolete` (a distinct governance event; null while Active) |
+| `owner` | `{ name, email, team?, url? }`, the accountable owner |
+| `tags` | free-form string set, AND-matched for filtering |
+| `status` | `Active` or `Obsolete` |
+| `securityTags` | the version's reach labels (§14.2 security campaign) |
+| `outputsSensitivity` | the step-output disclosure classification ([ADR 0013](../../adr/0013-step-output-disclosure-tier.md)) |
+| `obsoletedBy`, `obsoletedAt` | the actor and time the version was marked `Obsolete` (null while Active) |
 
-Audit is **fields-on-the-record** (`createdBy`, `lastUpdatedBy`, `obsoletedBy` + timestamps) for governance
-visibility; the forensic trail is OpenTelemetry (no separate durable audit-log entity).
-
-The package itself (workflow + sources + hash + title/description) never changes; a "new version of a workflow"
-is a new version record. Only governance metadata is mutable.
+Audit is fields-on-the-record (`createdBy` / `lastUpdatedBy` / `obsoletedBy` plus timestamps) for governance
+visibility; the forensic trail is OpenTelemetry, not a separate audit-log entity. The package never changes; a
+"new version" is a new version record, and only governance metadata is mutable.
 
 ### Package format
 
-A package (`.awp`) is a **self-contained, length-prefixed binary container** — an opaque artifact moved as a
-file (multipart upload / streamed download) and stored verbatim. It is **not** a ZIP: it is a tiny TLV framing
-that reads and writes with spans and a single buffer (no per-entry object graph, no compression streams),
-implemented by `WorkflowPackage` (the pack/unpack runtime tools in `Corvus.Text.Json.Arazzo.Durability`).
+A package (`.awp`) is a self-contained, length-prefixed **binary TLV container**, moved as a file and stored
+verbatim, not a ZIP ([ADR 0032](../../adr/0032-awp-deterministic-tlv-container.md)). It is implemented by
+`WorkflowPackage` (`PackPooled` / `Open`) in `Corvus.Text.Json.Arazzo.Durability`. The framing (all multi-byte
+integers little-endian):
 
-Container layout (all multi-byte integers little-endian):
+| Part | Layout |
+|------|--------|
+| header | magic `AWP` (3 bytes), `formatVersion` (1 byte), `entryCount` (uint32) |
+| entry | `nameLen` (uint16), name (UTF-8), `encoding` (1 byte, 0 = stored), `dataLen` (uint32), data |
 
-```
-header   magic "AWP" (3 bytes) + formatVersion (1 byte) + entryCount (uint32)
-entry    nameLen (uint16) + name (UTF-8) + encoding (1 byte; 0 = stored) + dataLen (uint32) + data
-         entries are written sorted by name
-```
+Entries are written in a deterministic **fixed bucket order** (the workflow document first, then the source
+documents sorted by name, then the metadata entries), so identical content yields identical bytes. The logical
+entries:
 
-Logical entries by name (JSON except the binary executor assembly):
+| Entry | Contents |
+|-------|----------|
+| `workflow.json` | the Arazzo workflow document |
+| `sources/<name>.json` | each referenced source document (name = a `sourceDescriptions[].name`) |
+| `metadata/schemas.json` | precomputed schema metadata |
+| `metadata/executor.dll` | the compiled workflow executor assembly (binary) |
+| `metadata/executor-manifest.json` | the executor manifest (target framework, integrity binding, entry type) |
+| `metadata/executor-manifest.sig` | the optional detached executor-manifest signature ([ADR 0025](../../adr/0025-integrity-binding-optional-signature.md)) |
+| `metadata/scenarios.json` | the version's scenarios |
+| `metadata/evidence.json` | the promotion-readiness evidence document |
 
-```
-workflow.json     the Arazzo workflow document
-sources/<name>.json   each referenced source document (name = the workflow's sourceDescriptions[].name)
-metadata/schemas.json          optional precomputed schema metadata
-metadata/executor.dll          optional compiled workflow executor assembly (binary)
-metadata/executor-manifest.json   optional executor manifest (target framework, integrity binding, entry type)
-```
-
-The `encoding` byte is `0` (stored/uncompressed) today; non-zero values are reserved for a future per-entry
-compression (e.g. the span-struct `BrotliEncoder`/`BrotliDecoder`) added as a server-side optimisation without a
-format break. The container is written **deterministically** (entries in name order) so identical content yields
-identical bytes. The **content hash** (`hash`) is SHA-256 over the RFC 8785 canonical form of the *logical*
-`{ workflow, sources }` content — independent of the container framing — so it is stable across repacks,
-property ordering, and insignificant whitespace. On add, the store validates that every non-arazzo
-`sourceDescriptions` entry has a matching source document in the package. `WorkflowPackage.Pack` / `Open` (and
-the CLI's `pack` / `unpack` / `verify`, and the zero-dependency browser builder
-`web/arazzo-control-plane-ui/src/workflow-package.js`) are the tools for producing and consuming it; the future
-code-generation service consumes the same container.
+The `encoding` byte is `0` (stored) today; non-zero is reserved for a future per-entry compression without a
+format break. The content hash is over the logical `{ workflow, sources }` only, independent of the container
+framing, so it is stable across repacks, property ordering, and whitespace
+([ADR 0031](../../adr/0031-content-hash-over-rfc8785-canonical.md)). `WorkflowPackage`, the CLI's `pack` /
+`unpack` / `verify`, and the zero-dependency browser builder (`web/arazzo-control-plane-ui/src/workflow-package.js`)
+produce and consume it.
 
 ### Workflow-id rewrite
 
-On add, the store:
-1. Reads the submitted workflow id; rejects (`400`) if it matches `-v\d+$`.
-2. Computes `versionNumber` and the versioned id.
-3. Rewrites the workflow document's `workflowId` (the package's root workflow) to the versioned id before
-   hashing/storing, so the persisted package and any run created from it agree on the id.
+On add, the store reads the submitted workflow id and rejects (`400`) an id already matching `-v\d+$`, computes
+`versionNumber` and the versioned id, and rewrites the workflow document's `workflowId` to the versioned form
+before hashing and storing, so the persisted package and any run created from it agree on the id
+(`CatalogPackage.Project`).
 
-## API (added to `arazzo-control-plane.openapi.json`)
+## API
 
-Metadata is JSON; the **package is uploaded as a file** (multipart) and the package + its documents are
-downloaded by addressable endpoint — see *Package transfer* below. JSON responses surface the governance/audit metadata only (`owner`,
-`tags`, `status`, `createdBy`/`createdAt`, `lastUpdatedBy`/`lastUpdatedAt`, `obsoletedBy`/`obsoletedAt`,
-`hash`, and the list of contained `sources`); the documents themselves are fetched from the addressable
-retrieval endpoints.
+Metadata is JSON; the package is uploaded as a file (multipart) and its documents are downloaded by addressable
+endpoint. The surface is 18 operations, all under the `catalog` tag except the run trigger. The contract
+([`../../reference/control-plane-rest-api.md`](../../reference/control-plane-rest-api.md)) is authoritative for
+the request and response schemas.
 
-| HTTP | Path | Scope | Purpose |
-|------|------|-------|---------|
-| `POST` | `/catalog` | `catalog:write` | **Upload** a new version as `multipart/form-data` — a `package` file part (the `{workflow,sources}` envelope) plus `owner` + `tags` parts. Returns the version metadata (versionNumber, workflowId, hash, …). |
-| `GET` | `/catalog` | `catalog:read` | Search versions — filters: `q` (title/description), `baseWorkflowId`, `tag` (repeatable, AND), `status`, `owner`; keyset paged. Returns version summaries (metadata). |
-| `GET` | `/catalog/{baseWorkflowId}` | `catalog:read` | List the versions of a base id. |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:read` | Get a version's **metadata** (no documents embedded). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/package` | `catalog:read` | **Download** the whole package (`application/octet-stream`, streamed — the opaque binary `.awp`). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow` | `catalog:read` | Get just the Arazzo workflow document (`application/json`) — the common UI case. |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}` | `catalog:read` | Get one referenced source document (OpenAPI/AsyncAPI) by its `sourceDescriptions` name (`application/json`). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` | `catalog:read` | Get the precomputed schema-metadata document (`application/json`). |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executor` | `catalog:read` | **Download** the compiled executor assembly (`application/octet-stream`, streamed) — present only on a runnable version. |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest` | `catalog:read` | Get the executor manifest (`application/json`: target framework, assembly digest, package-hash binding, entry type). |
-| `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/validate` | `catalog:read` | Validate a value against one of the version's baked schemas. |
-| `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/runs` | `runs:write` | Trigger a run of a **runnable** version: validates inputs, creates a Pending run. `409` if not runnable, `422` if inputs invalid. |
-| `PATCH` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:write` | Update governance metadata (`owner`, `tags`, `status`). Stamps `lastUpdatedBy`; status→Obsolete stamps `obsoletedBy`. |
-| `DELETE` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:purge` | Delete one version. `409` if any run references its `workflowId`. |
-| `PURGE` | `/catalog` | `catalog:purge` | Bulk-reap **obsolete** versions that have no referencing runs. |
+| HTTP | Path | operationId | Scope | Purpose |
+|------|------|-------------|-------|---------|
+| `POST` | `/catalog` | `addCatalogVersion` | `catalog:write` | Upload a new version (`multipart/form-data`: a `package` file part plus `owner` and `tags`). |
+| `GET` | `/catalog` | `searchCatalog` | `catalog:read` | Search (filters `q`, `baseWorkflowId`, `workflowIdPrefix`, `tag` repeatable AND, `status`, `owner`, `distinctWorkflows`; keyset paged). |
+| `GET` | `/catalog/count` | `countCatalog` | `catalog:read` | The bounded count for a search ([ADR 0036](../../adr/0036-bounded-count-contract.md)). |
+| `GET` | `/catalog/{baseWorkflowId}` | `listCatalogVersions` | `catalog:read` | List the versions of a base id. |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{n}` | `getCatalogVersion` | `catalog:read` | A version's metadata (no documents embedded). |
+| `GET` | `.../package` | `getCatalogPackage` | `catalog:read` | Download the whole `.awp` (streamed `application/octet-stream`). |
+| `GET` | `.../workflow` | `getCatalogWorkflow` | `catalog:read` | Just the Arazzo document (`application/json`). |
+| `GET` | `.../sources/{name}` | `getCatalogSource` | `catalog:read` | One referenced source document by `sourceDescriptions` name. |
+| `GET` | `.../schemas` | `getCatalogWorkflowSchemas` | `catalog:read` | The precomputed schema metadata. |
+| `GET` | `.../executor` | `getCatalogExecutor` | `catalog:read` | The compiled executor assembly (present only on a runnable version). |
+| `GET` | `.../executorManifest` | `getCatalogExecutorManifest` | `catalog:read` | The executor manifest. |
+| `GET` | `.../evidence` | `getCatalogEvidence` | `catalog:read` | The promotion-readiness evidence document. |
+| `POST` | `.../validate` | `validateCatalogValue` | `catalog:read` | Validate a value against one of the version's baked schemas. |
+| `POST` | `.../simulate` | `simulateCatalogVersion` | `catalog:read` | Simulate the version against a scenario. |
+| `POST` | `.../runs` | `startCatalogWorkflowRun` | `runs:write` | Trigger a run of a runnable version (validates inputs, `202 Accepted`; `409` if not runnable, `422` if inputs invalid). |
+| `PATCH` | `/catalog/{baseWorkflowId}/versions/{n}` | `updateCatalogVersion` | `catalog:write` | Update governance metadata (`owner`, `tags`, `status`, `securityTags`, `outputsSensitivity`). |
+| `DELETE` | `/catalog/{baseWorkflowId}/versions/{n}` | `deleteCatalogVersion` | `catalog:purge` | Delete one version (`409` if any run references its `workflowId`). |
+| `PURGE` | `/catalog` | `purgeCatalog` | `catalog:purge` | Bulk-reap obsolete versions with no referencing runs. |
 
-Scopes mirror the runs tiers (`catalog:read` / `catalog:write` / `catalog:purge`). Errors are RFC 9457
-`problem+json`.
+### Package transfer
 
-### Package transfer (upload / download)
-
-The package is **uploaded as a file** (multipart), keeping the large envelope out of a JSON request body — the
-repo's OpenAPI generator supports this (a `format: binary` multipart part is bound as the upload's file part).
-
-- **Upload** — `POST /catalog` is `multipart/form-data` with parts: `package` (`format: binary`, the envelope
-  file), `owner` (`CatalogOwner` JSON), `tags` (string array). The server reads the `package` part,
-  canonicalises + hashes it, projects title/description/sources, rewrites the workflow id, and stores it.
-  Responds `201` with the version metadata.
-- **Whole-package download** — `…/package` returns the package archive as `application/octet-stream`, streamed
-  (the package is the opaque, self-contained, hash-verifiable binary `.awp` — for backup/export or the future
-  code-generation service). The server generator now has a raw byte-stream response path, so the archive is
-  streamed verbatim rather than re-serialised through a JSON writer; the JS client reads it as a `Blob`
-  (`getCatalogPackage(...)`, `arazzo-client.js`). The compiled-assembly download (`…/executor`) uses the same
-  raw-stream path; the executor manifest (`…/executorManifest`) is JSON.
-- **Addressable documents** — the package is stored so its constituents are individually retrievable: `…/workflow`
-  returns the Arazzo document and `…/sources/{sourceName}` returns one OpenAPI/AsyncAPI document, both as
-  `application/json` — so the UI can fetch just the workflow definition (the common case) or a single source
-  without downloading the whole package. The version metadata lists the available `sources` (name + type) so a
-  client knows what is addressable.
+The package is uploaded as a file (a `format: binary` multipart part), keeping the large envelope out of a JSON
+body. The whole-package and executor downloads use the generator's raw byte-stream response path (streamed
+verbatim, not re-serialised through a JSON writer); the JS client reads them as a `Blob`
+(`getCatalogPackage`, `arazzo-client.js`). The package is stored so its constituents are individually
+retrievable, so a UI can fetch just the workflow (`.../workflow`) or one source (`.../sources/{name}`) without
+downloading the whole package.
 
 ### Referential integrity
 
-A run references a version by its exact `WorkflowId` (`nightly-reconcile-v4`) — already an indexed exact-match
-query (`WorkflowQuery(WorkflowId: …)`). `DELETE` and `PURGE` consult the run store: a version with ≥1
-referencing run cannot be deleted; `PURGE` only reaps `Obsolete` versions whose `workflowId` matches no run.
+A run references a version by its exact `WorkflowId` (`nightly-reconcile-v4`), already an indexed exact-match
+query. `DELETE` and `PURGE` consult the run store: a version with a referencing run cannot be deleted, and
+`PURGE` only reaps `Obsolete` versions whose `workflowId` matches no run.
 
 ## Store
 
-A new `IWorkflowCatalogStore` in `Corvus.Text.Json.Arazzo.Durability`, implemented **inside the existing
-backend projects** (no new projects): in-memory (reference) + Sqlite/Postgres/SqlServer/MySql/Mongo/Cosmos/
-Redis/NATS/AzureStorage. A shared `WorkflowCatalogStoreConformance` suite runs against every backend.
+`IWorkflowCatalogStore` in `Corvus.Text.Json.Arazzo.Durability` is implemented inside each existing backend
+project (in-memory reference plus Sqlite, Postgres, SQL Server, MySQL, Mongo, Cosmos, Redis, NATS, Azure
+Storage), with a shared `WorkflowCatalogStoreConformance` suite. It returns pooled documents (bytes-native,
+[ADR 0037](../../adr/0037-bytes-native-seams.md)) rather than bare values:
 
 ```csharp
 public interface IWorkflowCatalogStore
 {
-    // Add a version: the store assigns versionNumber, rewrites the workflow id, hashes the canonical package,
-    // persists it (so its documents stay individually retrievable), and returns the version metadata.
-    ValueTask<CatalogVersion> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken ct);
-    ValueTask<CatalogVersion?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken ct);            // metadata only
-    ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken ct); // whole canonical envelope
-    // An individually-addressable document: name "$workflow" for the Arazzo doc, or a sourceDescriptions name.
-    ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken ct);
-    ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken ct);                                    // summaries (no documents)
-    ValueTask<CatalogVersion?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken ct);
-    ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken ct);                    // caller checks refs first
-    ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken ct);                            // for purge ref-check
-    ValueTask DeleteManyAsync(IReadOnlyList<CatalogVersionRef> versions, CancellationToken ct);
+    ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+    ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+    ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken cancellationToken);
+    ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken);
+    ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken);
+    ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+    ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken);
+    ValueTask DeleteManyAsync(IReadOnlyList<CatalogVersionRef> versions, CancellationToken cancellationToken);
 }
 ```
 
-The index projection (`CatalogVersionIndexEntry`) carries the searchable/governance fields (baseWorkflowId,
-versionNumber, workflowId, title, description, tags, status, owner, sources, createdBy/at, lastUpdatedBy/at,
-hash) so `QueryAsync` answers search without loading documents — the same authoritative-store-with-index
-pattern the run store uses. Title/description search is `contains` (per backend, like the run workflowId
-filter); tags are contains-ALL. `GetDocumentAsync` slices the stored canonical envelope to return one document.
+The persisted, searchable entity is the generated `CatalogVersion` model (there is no separate index-entry
+type): `QueryAsync` projects and filters over it (title and description search is `contains`, tags are
+contains-all) without loading documents, the same authoritative-store-with-index pattern the run store uses.
+The handler does not call the store directly; it goes through `SecuredWorkflowCatalog` (`ISecuredWorkflowCatalog`),
+the wrapper that applies the administrator and reach enforcement before the store.
 
-### Response links (HATEOAS)
+### Response links
 
-The version-metadata responses (`POST /catalog`, `GET …/versions/{n}`) carry OpenAPI `links` so a client can
-navigate to the documents without constructing URLs: a `package` link (whole-package download) and a
-`workflow` link (the Arazzo document), with parameters resolved from the response body
-(`$response.body#/baseWorkflowId`, `$response.body#/versionNumber`). Per-source links can't be a single static
-link (the source name is dynamic), so the metadata lists `sources` (name + type) and the UI composes the
-`…/sources/{name}` URL. This reuses the same `links` mechanism the `/runs` responses already use.
+The version-metadata responses carry OpenAPI `links` (a `package` link and a `workflow` link, parameters
+resolved from `$response.body#/baseWorkflowId` and `#/versionNumber`) so a client navigates without constructing
+URLs. Per-source links cannot be static (the source name is dynamic), so the metadata lists `sources` and the UI
+composes the `.../sources/{name}` URL. This reuses the `links` mechanism the `/runs` responses use.
 
-The management client gains catalog methods (coordinating the catalog store + the run store for referential
-integrity), and the OpenTelemetry audit spans gain catalog actions (`catalog.add` / `catalog.update` /
-`catalog.delete` / `catalog.purge`, tagged with actor, base id, version, outcome) — telemetry is the forensic
-trail; the durable record carries `createdBy`/`lastUpdatedBy` for governance visibility.
+## Code generation and execution
+
+The package is a complete, self-contained input to code generation, so on add the store hands it to an
+`IWorkflowExecutorProvider` that runs the generators and compiles the result in memory, writing the executor
+assembly and manifest into the package ([ADR 0033](../../adr/0033-compile-at-catalog-add.md); a package that
+cannot compile is still catalogued, just not runnable). A runnable version exposes a `runnable` flag, its
+assembly and manifest are downloadable, and a run is triggered from it (`startCatalogWorkflowRun`).
+
+`WorkflowExecutorLoader` (`Corvus.Text.Json.Arazzo.Execution`) loads the assembly into a collectible
+`AssemblyLoadContext` per version and verifies integrity before use: the assembly digest must match the
+manifest's `assemblyDigest` (`sha256:<hex>`) and the manifest's `packageHash` must match the version's content
+hash ([ADR 0025](../../adr/0025-integrity-binding-optional-signature.md)), which binds the assembly to the exact
+version. An optional detached ECDSA signature (custody split, control plane signs and the runner verifies) rides
+alongside the content binding. A dedicated standalone hosting service is deliberately not required
+([ADR 0034](../../adr/0034-standalone-hosting-not-required.md)); the control plane's run trigger and the runner
+already serve and execute a catalogued version.
 
 ## UI
 
-A catalog view in the kit (follow-on to the runs UI): a searchable, tag/owner/status-filterable list of
-versions, a version detail showing the package + hash + owner + governance attribution, and write actions
-(add, edit metadata, obsolete, delete) gated by the `catalog:*` scopes — reusing the kit's components,
-theming, and auth model.
-
-## Code generation & execution (largely built)
-
-The package is deliberately a **complete, self-contained input to code generation**: it bundles the Arazzo
-workflow plus every referenced OpenAPI/AsyncAPI document, so it carries everything this repo's code generators
-need with no external resolution. Most of what was originally noted as a future phase is now implemented; the
-remaining items are called out below.
-
-**Code-generation + compile (built).** On add, the store hands the package to an
-`IWorkflowExecutorProvider` (default `WorkflowExecutorProvider` in `Corvus.Text.Json.Arazzo.Generation`) that
-runs **our code generators** (the OpenAPI/AsyncAPI clients + executor emitter) over the package contents and
-**compiles** the result in memory — entirely from the package, against the exact, content-hashed documents the
-version captured. The compiled **executor assembly** plus an **executor manifest** are written into the package
-(`metadata/executor.dll`, `metadata/executor-manifest.json`; see *Package format*). A package that cannot be
-generated or compiled is still catalogued — just not runnable (`CatalogPackage.Project` /
-`InMemoryWorkflowCatalogStore`).
-
-**Runnable versions + execution (built).** A version exposes a `runnable` flag (set when an executor was
-produced; `CatalogVersion`/`CatalogVersionSummary`). The compiled assembly and its manifest are downloadable
-(`GET …/executor` as `application/octet-stream`, `GET …/executorManifest` as `application/json`), and a run can
-be triggered directly from a version: `POST …/runs` (`startCatalogWorkflowRun`) validates the inputs, creates a
-Pending run a hosting runner claims and executes, and returns `409` when the version is **not runnable** (carries
-no executor). `WorkflowExecutorLoader` (`Corvus.Text.Json.Arazzo.Execution`) dynamically loads the assembly into
-a collectible `AssemblyLoadContext` per `(baseWorkflowId, versionNumber)`, **verifying integrity** before use:
-the assembly digest must match the manifest's `assemblyDigest` (`sha256:<hex>`) and the manifest's `packageHash`
-must match the catalog version's content hash. This binds the assembly to the exact version by content digest.
-
-**Resolved.** A *cryptographic signature* over the executor package is delivered (#879): the control plane
-signs and the runner verifies at load (custody split), over ECDSA with KMS / Key Vault / Vault Transit
-backends, alongside the SHA-256 content binding above.
-
-A dedicated **standalone published-endpoint hosting service** is **not required** (#878, declined). The control
-plane's `POST …/runs` endpoint already serves a catalogued version at a configured, secured HTTP endpoint
-(inputs validated against the baked schema, gated `runs:write`, version pinned in the path, a durable run
-created, optional `?wait` for a bounded synchronous result). The execution-host design calls that endpoint out
-as exactly the "publish the workflow at a configured, secured endpoint" goal (`execution-host-design.md` §6.2),
-and the runner already loads and executes the assembly (`WorkflowExecutorLoader` + `HostedWorkflowResumer`). The
-only thing a separate host would add is deployment topology (a dedicated URL and inbound auth per workflow,
-deployed independently of the control plane), not new capability. It is deferred until a concrete scenario needs
-that topology, at which point the leaner shape is an embeddable ASP.NET host extension reusing the loader and
-resumer, not a bespoke service that re-implements the control plane's HTTP-start, validation, and auth.
+A catalog view in the web kit: a searchable, filterable version list; a version detail showing the package,
+hash, owner, and governance attribution; and write actions (add, edit metadata, obsolete, delete) gated by the
+`catalog:*` scopes. See the catalog components in the
+[UX component catalog](../../guides/ux-component-catalog.md#catalog).
