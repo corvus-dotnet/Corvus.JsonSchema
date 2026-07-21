@@ -177,7 +177,7 @@ sequenceDiagram
     alt suspends (timer or message)
         E->>R: SuspendForTimerAsync / SuspendForMessageAsync
         R->>S: persist wait
-        Note over S: woken later; re-enter at Cursor
+        Note over S: woken later, re-enter at Cursor
     else completes
         E->>R: CompleteAsync(outputs)
     else faults
