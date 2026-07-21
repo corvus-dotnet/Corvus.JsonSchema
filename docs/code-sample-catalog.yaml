@@ -797,6 +797,13 @@ main-docs:
       - {index: 5, language: powershell, lines: [130, 132]}
       - {index: 6, language: powershell, lines: [148, 153]}
       - {index: 7, language: powershell, lines: [200, 206]}
+  - path: "docs/ConsumingGeneratedTypes.md"
+    blocks:
+      - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [33, 35], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [51, 56], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [69, 72], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [94, 101], category: compilable, verified: false}
   - path: "docs/CrossPlatformDynamicCompilation.md"
     blocks:
       - {index: 0, language: , lines: [56, 59]}

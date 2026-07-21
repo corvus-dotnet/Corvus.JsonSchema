@@ -21,6 +21,7 @@ The markdown files in this directory are the source content for the website. The
 | [JsonDocumentBuilder.md](./JsonDocumentBuilder.md) | Docs — Building & Mutating JSON |
 | [SourceGenerator.md](./SourceGenerator.md) | Docs — Source Generator |
 | [CodeGenerator.md](./CodeGenerator.md) | Docs — CLI Code Generation |
+| [ConsumingGeneratedTypes.md](./ConsumingGeneratedTypes.md) | Docs — Consuming Generated Types |
 | [Validator.md](./Validator.md) | Docs — Dynamic Schema Validation |
 | [SchemaEvaluator.md](./SchemaEvaluator.md) | Docs — Standalone Schema Evaluator |
 | [JsonPatch.md](./JsonPatch.md) | Docs — JSON Patch, Merge Patch & Diff |

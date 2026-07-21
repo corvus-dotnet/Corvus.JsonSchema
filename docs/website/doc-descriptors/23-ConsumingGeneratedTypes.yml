@@ -1,0 +1,3 @@
+source: ConsumingGeneratedTypes.md
+navTitle: "Consuming Generated Types"
+description: "Read and build Corvus's generated strongly-typed models in your own code, allocation-free and without composing or parsing JSON strings. Covers Undefined-not-null optional properties, typed accessors and unions, the From and Build factories, the JsonElement.Source ref-safety trap, and cross-assembly type identity."
