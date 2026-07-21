@@ -69,7 +69,7 @@ does not, and links them for the rest.
 
 ## Architecture Decision Records
 
-See [`adr/README.md`](adr/README.md) for the full index (49 ADRs across the access model, the engine and
+See [`adr/README.md`](adr/README.md) for the full index (50 ADRs across the access model, the engine and
 durability, the runner, the catalog, source credentials, platform conventions, and the web kit and designer).
 
 ## Status

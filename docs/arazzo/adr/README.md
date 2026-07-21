@@ -58,6 +58,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0020](0020-durability-is-opt-in-codegen.md) | Durability is opt-in code generation | Accepted |
 | [0021](0021-state-store-abstraction.md) | The state-store abstraction: core store plus optional wait index | Accepted |
 | [0022](0022-resume-mode-taxonomy.md) | The resume-mode taxonomy | Accepted |
+| [0050](0050-durable-per-step-run-journal.md) | A durable per-step run journal | Accepted |
 
 ### Runner and execution host
 
