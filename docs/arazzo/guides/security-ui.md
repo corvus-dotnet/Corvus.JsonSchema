@@ -5,7 +5,7 @@ and claim-to-rule bindings, access requests, and a who-can-do-what overview, uni
 and one identity primitive.
 
 This guide owns the **UX design**: the jobs it serves, the information architecture, and the safety rules for
-authoring a binding. The access model itself is [`access-model.md`](access-model.md) and its ADRs; the
+authoring a binding. The access model itself is [`auth-and-authorization.md`](auth-and-authorization.md) and its ADRs; the
 enforcement detail is [`identity-and-authorization-design.md`](identity-and-authorization.md);
 the concrete components (attributes, events, composition) are the
 [UX component catalog](ux-component-catalog.md).
@@ -116,7 +116,7 @@ still open.
 
 ## References
 
-- The access model: [`access-model.md`](access-model.md) and ADRs
+- The access model: [`auth-and-authorization.md`](auth-and-authorization.md) and ADRs
   [0001](../adr/0001-two-plane-access-model.md), [0002](../adr/0002-grant-verbs-are-reach-not-scopes.md),
   [0006](../adr/0006-deployment-access-control-shell.md), [0008](../adr/0008-resolved-grantee-resolution.md),
   [0014](../adr/0014-direct-grant-versus-request-only.md),

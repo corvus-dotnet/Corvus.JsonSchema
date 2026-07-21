@@ -1,6 +1,6 @@
 # Access, identity, and entitlement
 
-This guide is the in-depth companion to the [access model](access-model.md) and the access-model ADRs
+This guide is the in-depth companion to the [access model](auth-and-authorization.md) and the access-model ADRs
 ([0001](../adr/0001-two-plane-access-model.md) to [0016](../adr/0016-control-plane-security-mode.md)): how
 control-plane authorization and tag-based row security work (§14), how workflow administration works (§15), and
 how identity, login, and the entitlement lifecycle work (§16). The decisions live in the ADRs; this guide is the

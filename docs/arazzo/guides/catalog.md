@@ -1,4 +1,4 @@
-# Arazzo workflow catalog: design
+# The workflow catalog: packaging, publishing, and promotion
 
 A governance and usability service in the control plane: an immutable, content-hashed, versioned store of
 **workflow packages** (an Arazzo workflow plus the OpenAPI and AsyncAPI documents it references), with search, a
@@ -8,9 +8,9 @@ The decisions behind it are the catalog ADRs, [0030](../adr/0030-immutable-conte
 (immutable content-hashed packages), [0031](../adr/0031-content-hash-over-rfc8785-canonical.md) (the content
 hash), [0032](../adr/0032-awp-deterministic-tlv-container.md) (the `.awp` container),
 [0033](../adr/0033-compile-at-catalog-add.md) (compile at add), and
-[0034](../adr/0034-standalone-hosting-not-required.md) (no standalone hosting service); promotion across
-environments is the [catalog and promotion guide](catalog-and-promotion.md). This guide is the data
-model, the operation surface, and the store, the exhaustive detail those do not carry.
+[0034](../adr/0034-standalone-hosting-not-required.md) (no standalone hosting service). This guide covers the
+data model, the operation surface, the store, publishing, and promotion across environments, the exhaustive
+detail those ADRs do not carry.
 
 ## Data model
 
@@ -181,9 +181,54 @@ alongside the content binding. A dedicated standalone hosting service is deliber
 ([ADR 0034](../adr/0034-standalone-hosting-not-required.md)); the control plane's run trigger and the runner
 already serve and execute a catalogued version.
 
+## Publishing and running a version
+
+Adding a package mints a version: the store assigns the next version number for the base id, rewrites the
+workflow id, generates and compiles the executor, bakes the assembly and manifest into the package, hashes the
+canonical content, and persists it ([ADR 0033](../adr/0033-compile-at-catalog-add.md)). Because the executor is
+compiled at add, a version is runnable the moment it is published, and a runner needs only to load the baked
+assembly rather than compile one. Publishing a further version requires being one of the workflow's
+administrators ([ADR 0007](../adr/0007-administrator-resolved-identity-digest-keyed.md)).
+
+A published version is run through the run-start endpoint,
+`POST /catalog/{baseWorkflowId}/versions/{versionNumber}/runs`: it validates the inputs against the version's
+baked schema, gates on `runs:write`, pins the version in the path, creates a durable run, and returns `202`
+([ADR 0026](../adr/0026-triggers-async-by-default.md)). This is the "publish the workflow at a configured,
+secured HTTP endpoint" capability, which is why a standalone hosting service is not required
+([ADR 0034](../adr/0034-standalone-hosting-not-required.md)).
+
+## Promotion across environments
+
+Cataloguing a version does not by itself make it runnable in a given environment. A version is **made available**
+in an environment through `IAvailabilityStore.MakeAvailableAsync`, governed by that environment's administrators.
+
+```mermaid
+flowchart LR
+    add["Add package to catalog"] --> ver["Version minted, compiled and hashed"]
+    ver --> req["Request promotion into an environment"]
+    req --> apr{"Environment administrator decides"}
+    apr -->|approve| avail["Made available in the environment"]
+    apr -->|deny| back["Stays out of the environment"]
+    avail --> run["Run in that environment (env-pinned)"]
+```
+
+A version's **readiness** for an environment reflects whether the sources it references have credentials in that
+environment: a version whose sources are not credentialed there is not ready to run, even if it is catalogued.
+An administrator of an environment either makes a ready version available directly, or acts on a promotion
+request from someone who is not an environment administrator. Promotion is gated on `availability:write`,
+authorized by the target environment's administrator set
+([ADR 0027](../adr/0027-runner-environment-binding.md)), and a run is pinned to its environment, so it executes
+only on a runner authorized for that environment.
+
 ## UI
 
 A catalog view in the web kit: a searchable, filterable version list; a version detail showing the package,
 hash, owner, and governance attribution; and write actions (add, edit metadata, obsolete, delete) gated by the
 `catalog:*` scopes. See the catalog components in the
 [UX component catalog](ux-component-catalog.md#catalog).
+
+## See also
+
+- The [runner guide](running-a-runner.md) for how an environment-pinned run is claimed and executed.
+- The [auth and authorization guide](auth-and-authorization.md) for administration and the request-and-approve
+  flow that governs promotion.

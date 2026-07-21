@@ -24,8 +24,7 @@ does not, and links them for the rest.
 | Guide | Covers |
 |-------|--------|
 | [`authoring-generating-running.md`](guides/authoring-generating-running.md) | Authoring an Arazzo document, generating an executor, running it. **(done)** |
-| [`catalog.md`](guides/catalog.md) | The immutable, content-hashed versioned package catalog: the data model, the operation surface, the store. **(done)** |
-| [`catalog-and-promotion.md`](guides/catalog-and-promotion.md) | Packaging, publishing, promotion across environments, readiness. **(done)** |
+| [`catalog.md`](guides/catalog.md) | The immutable, content-hashed versioned package catalog: data model, operations, store, publishing, and promotion across environments. **(done)** |
 | [`execution-host.md`](guides/execution-host.md) | The build side, the runner (load, isolation, registration), triggers, and the execution model. **(done)** |
 | [`running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
 | `durability-and-state-stores.md` | The checkpoint model, resume, writing an `IWorkflowStateStore` backend. *(planned)* |
@@ -34,8 +33,7 @@ does not, and links them for the rest.
 
 | Guide | Covers |
 |-------|--------|
-| [`access-model.md`](guides/access-model.md) | The capability-versus-reach access model, and the authentication and machine-identity reference. **(done)** |
-| [`auth-and-authorization.md`](guides/auth-and-authorization.md) | Wiring authentication, authoring reach, the entitlement lifecycle. **(done)** |
+| [`auth-and-authorization.md`](guides/auth-and-authorization.md) | The capability-versus-reach access model, wiring authentication and machine identities, authoring reach, and the entitlement lifecycle. **(done)** |
 | [`identity-and-authorization.md`](guides/identity-and-authorization.md) | Authorization and row security, administration, and the identity and entitlement lifecycle, in depth. **(done)** |
 | [`security-ui.md`](guides/security-ui.md) | The security and access UI: jobs, information architecture, safe binding authoring. **(done)** |
 | [`source-credentials.md`](guides/source-credentials.md) | `secretRef` storage, the resolver, the rotation lifecycle, separation of duties. **(done)** |
@@ -44,8 +42,7 @@ does not, and links them for the rest.
 
 | Guide | Covers |
 |-------|--------|
-| [`web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit. **(done)** |
-| [`web-ui-design.md`](guides/web-ui-design.md) | The control-plane web UI design: the governance-hub IA and the residual component rationale. **(done)** |
+| [`web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit, and the UI design decisions (governance-hub IA, typed authoring, correct-by-construction). **(done)** |
 | [`ux-component-catalog.md`](guides/ux-component-catalog.md) | Every `arazzo-*` component: purpose, attributes, events, composition. **(done)** |
 | [`workflow-designer.md`](guides/workflow-designer.md) | The designer: authoring on the surface, scenarios, debug runs, diff, git, the CI scenario runner. **(done)** |
 

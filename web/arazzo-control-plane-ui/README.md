@@ -3,7 +3,7 @@
 A zero-build, framework-agnostic kit of composable **web components** over the
 [Arazzo Control Plane REST API](../../docs/arazzo/reference/control-plane-rest-api.md). Drop the pieces you need into any web app
 — React, Vue, Svelte, Angular, or plain HTML — with no toolchain. See
-[`ui-design.md`](../../docs/arazzo/guides/web-ui-design.md) for the full design.
+[the web-ui-kit guide](../../docs/arazzo/guides/web-ui-kit.md) for the design.
 
 ## Install
 

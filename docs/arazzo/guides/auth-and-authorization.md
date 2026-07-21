@@ -45,6 +45,50 @@ time by `ControlPlaneEntitlementClaimsTransformer`, an `IClaimsTransformation`. 
 written ([ADR 0005](../adr/0005-entitlement-scopes-union-into-claims.md)). A principal with no stored grant is
 returned unchanged, so the common path allocates nothing.
 
+## Authentication schemes and machine identities
+
+Authentication is pluggable; the access model only needs the resulting principal to carry two things, a `scope`
+claim (capability) and identity claims that resolve to a `sys:` identity (reach). The dividing line between
+schemes is whether the credential carries its own scopes.
+
+- **Credentials that carry scopes: OAuth2 and OpenID Connect tokens, including client-credentials.** The token
+  is the claims. A **service identity** is exactly this: a machine authenticates through client-credentials,
+  receives a bearer token with its granted scopes and its client identity (`sub` / `client_id`), and the control
+  plane reads it identically to an interactive user's token. Its `sys:` identity for reach resolves from the
+  client identity through the same directory and shell path as any other principal.
+- **Credentials that carry no scopes: client certificates, and by extension API keys.** The deployment maps the
+  credential to scopes and identity out of band, then the same policies and reach resolution apply. Mutual TLS
+  carries no scopes, so an authentication handler validates the certificate and a claims transformation attaches
+  the `scope` claim and the identity. An API key is a bearer credential the deployment validates and maps to its
+  `{ scopes, identity }` from a key store or config.
+
+**Inbound authentication is not the source credentials.** The `apiKey`, `oauth2ClientCredentials`, `basic`,
+`bearer`, and `mtls` kinds in the credential dialog are a different thing that shares the vocabulary: they are
+how a workflow **run** authenticates outbound to the services it calls (the
+[source-credentials guide](source-credentials.md)), not how a caller authenticates inbound to the control
+plane. mTLS is the odd one both directions: a connection-level identity that cannot carry fine-grained
+authorization, so the deployment supplies the mapping on both sides.
+
+### Storing an API key in production
+
+The demo keeps raw keys in an in-memory dictionary and emits only a `scope` claim. A real implementation changes
+only that handler and hardens it:
+
+- **Store a hash, never the raw key.** Give each key a public **prefix** plus a random secret; store
+  `prefix -> record` for an indexed lookup, then constant-time compare the hash of the presented key. Show the
+  full key once, at creation. The record holds `{ prefix, keyHash, subject, issuer, scopes?, expiresAt, disabled,
+  createdBy, createdAt, lastUsedAt }` in a durable store, a first-class resource with its own audit (in the same
+  spirit as source credentials).
+- **Prefer identity plus the entitlement store over scopes on the key.** Map the key to a service-principal
+  identity (`sub` plus `sys:iss`) and emit only those identity claims; the entitlement transformer then supplies
+  the scopes from the same grant and approval store every other principal uses. Scope changes flow through the
+  standard grant flow rather than by editing key records, and the service principal gets a real `sys:` identity
+  so reach works for it too. (A fixed scope set on the record is the simpler alternative for a single-capability
+  key.)
+- **Lifecycle.** Cache the lookup on the warm path with a short TTL and invalidate on revoke; rotate by issuing
+  a new key, honouring both briefly, then disabling the old; record `lastUsedAt` and expire via `expiresAt` and
+  `disabled`.
+
 ## The enforcement flow
 
 A request passes through the two planes in order. Capability is checked first, then reach is resolved and
@@ -233,5 +277,5 @@ a `workflow.journal.read` span recording whether the payloads were returned in f
 ## See also
 
 - The access-model ADRs, [`../adr/README.md`](../adr/README.md), for the rationale behind each decision here.
-- The execution-host design specification for the exhaustive behaviour of the security shell, administration,
-  and the entitlement lifecycle.
+- The [access, identity, and entitlement guide](identity-and-authorization.md) for the exhaustive behaviour of
+  row security, administration, and the entitlement lifecycle.

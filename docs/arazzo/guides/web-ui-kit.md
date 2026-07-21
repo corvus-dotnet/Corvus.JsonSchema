@@ -57,7 +57,16 @@ so it works with any scheme.
 Styling is CSS custom properties (`--arazzo-*` tokens) that a themed ancestor supplies; a component in an open
 shadow root inherits them. Set the tokens once on an ancestor (or use a Layer 2 screen's `theme` attribute,
 which applies a light or dark token set) and the whole kit follows. Light and dark are token sets, not
-component variants.
+component variants. The token set:
+
+```
+--arazzo-font, --arazzo-radius, --arazzo-bg, --arazzo-surface, --arazzo-border,
+--arazzo-text, --arazzo-muted, --arazzo-accent,
+--arazzo-status-running, --arazzo-status-suspended, --arazzo-status-faulted,
+--arazzo-status-completed, --arazzo-status-cancelled, --arazzo-status-pending
+```
+
+There is also a `::part()` on every structural node for deeper restyling without forking.
 
 ## Composing a screen
 
@@ -66,6 +75,30 @@ cross-surface flows by listening for events. For example, the access overview em
 `open-environment`, and `open-credential`, which a host routes to the catalog, environments, and credentials
 surfaces. A Layer 2 screen already does this composition for its area; to build your own, place the Layer 1
 components, share one client, and connect their events.
+
+## Design decisions
+
+Beyond adopting the kit, these are the design decisions the control-plane UI itself makes, the residual rationale
+the ADRs and the component catalog do not carry.
+
+- **The per-workflow detail page is the governance hub.** Administration and source credentials live on the
+  workflow, not in deployment-wide tabs: a workflow's administrator set and its self-service access request are
+  embedded in the catalog version detail (`<arazzo-catalog-detail>`), keyed by the version's `baseWorkflowId`.
+  The same `<arazzo-administrators-panel>` is subject-agnostic, serving a workflow's administrators
+  (`base-workflow-id`, gated on `administrators:write`) or an environment's (`environment`, gated on
+  `environments:write`), so environment governance reuses the workflow pattern.
+- **Typed authoring, not guarded JSON.** `<arazzo-value-editor>` builds a strongly-typed form from a step's
+  precomputed schema metadata and normalizes each schema at the field boundary (`normalizeDescriptor`), so a raw
+  `oneOf`/`anyOf` renders as a union chooser even off the baked path; it does not resolve `$ref`s (the baked
+  path's job). `<arazzo-schema-editor>` authors JSON Schema visually with **normalization parity**: the client
+  renderer (`schema-descriptor.js`) and the server's baked-schema generator (`WorkflowSchemaMetadataGenerator`)
+  apply the same rules, so both consumers agree.
+- **Correct by construction.** No field ever accepts or displays a secret: a credential is a `secretRef`
+  ([ADR 0048](../adr/0048-source-credentials-are-references.md)) and rotation is re-pointing it, and the dialog
+  rejects a value that is not a well-formed `secretRef` before submit. And a request never targets a third
+  party: View and Operate are self-service (request then approve,
+  [ADR 0014](../adr/0014-direct-grant-versus-request-only.md)), administration is the only grant that names
+  someone else, so there is deliberately no unified third-party grant picker.
 
 ## Shared conventions
 
