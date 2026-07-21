@@ -76,6 +76,44 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task GetRunSteps_returns_status_attempt_and_timing_from_the_journal()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            // ADR 0050: a run whose checkpoint carries a per-step journal reports each step's outcome, attempt, and
+            // time window, joined to its outputs. A step that recorded no outputs still appears.
+            DateTimeOffset t = new(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
+            using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "stepA": { "a": 1 } }"""u8.ToArray()))
+            {
+                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r-journal", "wf", default, "development", host.Clock);
+                run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
+                run.RecordStep("stepA", WorkflowStepStatus.Succeeded, 1, t, t.AddMilliseconds(5));
+                run.RecordStep("stepB", WorkflowStepStatus.Faulted, 2, t.AddSeconds(1), t.AddSeconds(2));
+                await run.CheckpointAsync(cursor: 2, default);
+            }
+
+            HttpResponseMessage response = await host.Client.GetAsync("/runs/r-journal/steps");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using Stj.JsonDocument doc2 = await ReadJsonAsync(response);
+            Stj.JsonElement steps = doc2.RootElement.GetProperty("steps");
+            steps.GetArrayLength().ShouldBe(2);
+
+            steps[0].GetProperty("stepId").GetString().ShouldBe("stepA");
+            steps[0].GetProperty("status").GetString().ShouldBe("Succeeded");
+            steps[0].GetProperty("attempt").GetInt32().ShouldBe(1);
+            steps[0].GetProperty("startedAt").GetDateTimeOffset().ShouldBe(t);
+            steps[0].GetProperty("outputs").GetProperty("a").GetInt32().ShouldBe(1);
+
+            steps[1].GetProperty("stepId").GetString().ShouldBe("stepB");
+            steps[1].GetProperty("status").GetString().ShouldBe("Faulted");
+            steps[1].GetProperty("attempt").GetInt32().ShouldBe(2);
+            steps[1].TryGetProperty("outputs", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
     public async Task GetRunSteps_unknown_run_returns_404_problem()
     {
         Host host = await StartAsync();

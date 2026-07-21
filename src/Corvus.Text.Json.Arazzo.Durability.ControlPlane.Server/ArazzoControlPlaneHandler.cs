@@ -216,21 +216,45 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     // payload absent (non-disclosing). The whole-journal redaction for a version an author classified sensitive (§14).
     private static ReadOnlyMemory<byte> RedactAllOutputs(ReadOnlyMemory<byte> journalUtf8)
     {
-        using ParsedJsonDocument<Models.WorkflowRunSteps> doc = ParsedJsonDocument<Models.WorkflowRunSteps>.Parse(journalUtf8);
-        Models.WorkflowRunSteps journal = doc.RootElement;
+        // Blank only the sensitive payload: copy every property except each step's `outputs`, and mark the step
+        // redacted. The per-step status, attempt, and timing (ADR 0050) are not sensitive and are preserved, and
+        // redaction stays decoupled from the journal schema (a new non-payload field survives unchanged here).
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(journalUtf8);
+        JsonElement journal = doc.RootElement;
 
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
         using (var writer = new System.Text.Json.Utf8JsonWriter(buffer))
         {
             writer.WriteStartObject();
-            writer.WriteString("runId"u8, (string)journal.RunId);
-            writer.WriteStartArray("steps"u8);
-            foreach (Models.WorkflowRunStepRecord step in journal.Steps.EnumerateArray())
+            foreach (JsonProperty<JsonElement> property in journal.EnumerateObject())
             {
-                writer.WriteStartObject();
-                writer.WriteString("stepId"u8, (string)step.StepId);
-                writer.WriteBoolean("redacted"u8, true);
-                writer.WriteEndObject();
+                if (property.NameEquals("steps"u8))
+                {
+                    continue;
+                }
+
+                property.WriteTo(writer);
+            }
+
+            writer.WriteStartArray("steps"u8);
+            if (journal.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement step in steps.EnumerateArray())
+                {
+                    writer.WriteStartObject();
+                    foreach (JsonProperty<JsonElement> field in step.EnumerateObject())
+                    {
+                        if (field.NameEquals("outputs"u8) || field.NameEquals("redacted"u8))
+                        {
+                            continue;
+                        }
+
+                        field.WriteTo(writer);
+                    }
+
+                    writer.WriteBoolean("redacted"u8, true);
+                    writer.WriteEndObject();
+                }
             }
 
             writer.WriteEndArray();

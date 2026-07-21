@@ -204,20 +204,62 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             writer.WriteStartObject();
             writer.WriteString("runId"u8, s.RunId.Value);
             writer.WriteStartArray("steps"u8);
-            PooledUtf8Map<JsonElement>.Enumerator entries = s.StepOutputs.GetEnumerator();
-            while (entries.MoveNext())
+            if (s.StepJournal.Count > 0)
             {
-                writer.WriteStartObject();
-                writer.WriteString("stepId"u8, entries.CurrentKey);
-                writer.WritePropertyName("outputs"u8);
-                entries.CurrentValue.WriteTo(writer);
-                writer.WriteEndObject();
+                // ADR 0050: project the per-step journal in execution order, each entry carrying its outcome, attempt,
+                // and time window, joined to the step's outputs (from the products map) when it recorded any. Outputs
+                // are copied bytes-to-bytes; the metadata is not sensitive and is never redacted.
+                foreach (WorkflowStepJournalEntry entry in s.StepJournal)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("stepId"u8, entry.StepId);
+                    writer.WriteString("status"u8, StepStatusName(entry.Status));
+                    writer.WriteNumber("attempt"u8, entry.Attempt);
+                    writer.WriteString("startedAt"u8, entry.StartedAt);
+                    writer.WriteString("endedAt"u8, entry.EndedAt);
+                    if (s.StepOutputs.TryGetValue(entry.StepId, out JsonElement stepOutputs) && stepOutputs.ValueKind != JsonValueKind.Undefined)
+                    {
+                        writer.WritePropertyName("outputs"u8);
+                        stepOutputs.WriteTo(writer);
+                    }
+
+                    writer.WriteEndObject();
+                }
+            }
+            else
+            {
+                // Old-run fallback: a checkpoint written before the journal existed has step outputs but no journal, so
+                // project the outputs alone, in the map's order, with no invented status or timing.
+                PooledUtf8Map<JsonElement>.Enumerator entries = s.StepOutputs.GetEnumerator();
+                while (entries.MoveNext())
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("stepId"u8, entries.CurrentKey);
+                    writer.WritePropertyName("outputs"u8);
+                    entries.CurrentValue.WriteTo(writer);
+                    writer.WriteEndObject();
+                }
             }
 
             writer.WriteEndArray();
+            if (s.JournalTruncated)
+            {
+                writer.WriteBoolean("truncated"u8, true);
+            }
+
             writer.WriteEndObject();
         });
     }
+
+    // ADR 0050: the journal status token, matching the checkpoint's serialization (PascalCase, so a read and the stored
+    // value agree). Written as a UTF-8 span so the projection allocates no per-entry string.
+    private static ReadOnlySpan<byte> StepStatusName(WorkflowStepStatus status) => status switch
+    {
+        WorkflowStepStatus.Succeeded => "Succeeded"u8,
+        WorkflowStepStatus.Faulted => "Faulted"u8,
+        WorkflowStepStatus.Skipped => "Skipped"u8,
+        _ => "Succeeded"u8,
+    };
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowCheckpointState?> LoadStateAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
