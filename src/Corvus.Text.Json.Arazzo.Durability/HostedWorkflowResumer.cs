@@ -27,17 +27,16 @@ public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IAp
 public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags);
 
 /// <summary>
-/// Resolves a run's <see cref="WorkflowRun.WorkflowId"/> to a loaded <see cref="IHostedWorkflow"/> — fetching
-/// the version's compiled executor + manifest from the catalog and loading it through a
-/// <see cref="WorkflowExecutorLoader"/> on first use (cached thereafter) — then runs it. This is the in-process,
-/// collectible-load-context <see cref="IRunExecutionBackend"/> (ADR 0028): its <see cref="AdvanceAsync"/> is the
-/// <see cref="WorkflowResumer"/> the durable worker and management client already expect, so dispatch, resume,
-/// retry, rewind, skip, and cancel all drive real loaded assemblies.
+/// The in-process, collectible-load-context <see cref="IRunExecutionBackend"/> (ADR 0028). It resolves a run's
+/// workflow to a loaded <see cref="IHostedWorkflow"/> through a <see cref="LoaderHostedWorkflowResolver"/> (the
+/// catalog fetch + <see cref="WorkflowExecutorLoader"/> load, cached), then runs it through
+/// <see cref="HostedWorkflowExecution"/>. Its <see cref="AdvanceAsync"/> is the <see cref="WorkflowResumer"/> the
+/// durable worker and management client already expect, so dispatch, resume, retry, rewind, skip, and cancel all
+/// drive real loaded assemblies.
 /// </summary>
 public sealed class HostedWorkflowResumer : IRunExecutionBackend
 {
-    private readonly IWorkflowCatalogStore catalog;
-    private readonly WorkflowExecutorLoader loader;
+    private readonly IHostedWorkflowResolver resolver;
     private readonly WorkflowTransportBinder transportBinder;
     private readonly ScheduleHostedWorkflow? scheduleWorkflow;
 
@@ -53,8 +52,7 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(loader);
         ArgumentNullException.ThrowIfNull(transportBinder);
-        this.catalog = catalog;
-        this.loader = loader;
+        this.resolver = new LoaderHostedWorkflowResolver(catalog, loader);
         this.transportBinder = transportBinder;
         this.scheduleWorkflow = scheduleWorkflow;
     }
@@ -86,58 +84,11 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
             return await scheduler.RunAsync(ImmutableDictionary<string, IApiTransport>.Empty, null, scheduleWorkspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
 
-        IHostedWorkflow hosted = await this.ResolveAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
+        IHostedWorkflow hosted = await this.resolver.ResolveAsync(run, cancellationToken).ConfigureAwait(false);
         return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask PrepareAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
-
-        // Warm the loader cache — fetch, verify, and load the version's executor — so a later AdvanceAsync of it
-        // skips that cost. ResolveAsync returns the cached workflow when it is already loaded, so a repeat is cheap.
-        _ = await this.ResolveAsync($"{baseWorkflowId}-v{versionNumber}", cancellationToken).ConfigureAwait(false);
-    }
-
-    private static (string BaseWorkflowId, int VersionNumber) ParseVersionedId(string workflowId)
-    {
-        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
-        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), out int version))
-        {
-            return (workflowId[..suffix], version);
-        }
-
-        throw new InvalidOperationException($"The workflow id '{workflowId}' is not a versioned id of the form '{{base}}-v{{n}}'.");
-    }
-
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "This is the in-process backend: it loads the version's IL executor by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a separate IRunExecutionBackend that bakes the executor at build time (ADR 0028).")]
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "This is the in-process backend: it loads the version's IL executor by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a separate IRunExecutionBackend that bakes the executor at build time (ADR 0028).")]
-    private async ValueTask<IHostedWorkflow> ResolveAsync(string workflowId, CancellationToken cancellationToken)
-    {
-        (string baseWorkflowId, int versionNumber) = ParseVersionedId(workflowId);
-        if (this.loader.TryGet(baseWorkflowId, versionNumber, out LoadedWorkflow? cached))
-        {
-            return cached.Workflow;
-        }
-
-        // The version document is owned here only to read its hash (an owned copy, safe after dispose).
-        string hash;
-        using (ParsedJsonDocument<CatalogVersion> versionDoc = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog."))
-        {
-            hash = (string)versionDoc.RootElement.Hash;
-        }
-
-        ReadOnlyMemory<byte> assembly = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not runnable (no executor in the package).");
-        ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
-
-        // The detached signature is optional here (empty when the package is unsigned); the loader enforces it only when
-        // it was configured with a verifier — a signing-required runner rejects an unsigned or badly-signed package.
-        ReadOnlyMemory<byte> signature = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
-
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature).Workflow;
-    }
+    public ValueTask PrepareAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+        => this.resolver.PrepareAsync(baseWorkflowId, versionNumber, cancellationToken);
 }
