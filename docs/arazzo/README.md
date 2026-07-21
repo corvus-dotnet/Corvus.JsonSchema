@@ -36,6 +36,7 @@ does not, and links them for the rest.
 |-------|--------|
 | [`auth-and-authorization.md`](guides/auth-and-authorization.md) | The capability-versus-reach access model, wiring authentication and machine identities, authoring reach, and the entitlement lifecycle. **(done)** |
 | [`identity-and-authorization.md`](guides/identity-and-authorization.md) | Authorization and row security, administration, and the identity and entitlement lifecycle, in depth. **(done)** |
+| [`idp-integration.md`](guides/idp-integration.md) | Wiring an identity provider: mapping groups and roles to scopes, the reach-identity claims, and OIDC for each caller. **(done)** |
 | [`security-ui.md`](guides/security-ui.md) | The security and access UI: jobs, information architecture, safe binding authoring. **(done)** |
 | [`source-credentials.md`](guides/source-credentials.md) | `secretRef` storage, the resolver, the rotation lifecycle, separation of duties. **(done)** |
 
