@@ -195,3 +195,76 @@ describe('<arazzo-run-detail> recorded step outputs', () => {
     ok(!faulted.querySelector('.step-out'), 'and does not pretend to have recorded outputs');
   });
 });
+
+describe('<arazzo-run-detail> enriched step journal (#885)', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  function detailForPersona(runId, persona) {
+    const mock = createMockControlPlane({ latencyMs: 0, persona });
+    const e = document.createElement('arazzo-run-detail');
+    e.setAttribute('runid', runId);
+    e.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    return e;
+  }
+
+  // The journal now attests, per executed step, its status (✓/✗/⏭ in the debug tray's grammar), the attempt it
+  // settled on, and its duration — not just the outputs it recorded.
+  it('shows per-step status, duration, and the retry count on a completed run', async () => {
+    el = detailWithMock('run-0a5512cd'); // four succeeded steps; reservePayment settled on attempt 2
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden && p.querySelector('.jst') ? p : null;
+    });
+    equal(prog.querySelectorAll('.jst.ok').length, 4, 'every succeeded step carries the status glyph');
+    const durations = [...prog.querySelectorAll('.jmeta')].map((m) => m.textContent);
+    ok(durations.some((t) => /^\d+ms$/.test(t)), 'a sub-second duration renders in ms');
+    ok(durations.some((t) => /^\d+\.\d+s$/.test(t)), 'a longer duration renders in seconds');
+    const reserve = [...prog.querySelectorAll('.prog-steps li')].find((li) => li.textContent.includes('reservePayment'));
+    ok(reserve.textContent.includes('↻2'), 'a retried step shows the attempt it settled on');
+  });
+
+  it('records the faulting step in the journal with a faulted status glyph', async () => {
+    el = detailWithMock('run-dd44ee55'); // faulted at provisionResources on attempt 2
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden && p.querySelector('.jst') ? p : null;
+    });
+    const prov = [...prog.querySelectorAll('.prog-steps li')].find((li) => li.textContent.includes('provisionResources'));
+    ok(prov.querySelector('.jst.bad'), 'the faulted step is journaled with the ✗ status glyph');
+    ok(!prov.querySelector('.step-out'), 'and exposes no outputs for a step that produced none');
+  });
+
+  // §14: redaction withholds the payload, not the fact the step ran — status and timing stay visible.
+  it('keeps status and timing visible under output redaction, but never the payload', async () => {
+    el = detailForPersona('run-6610ffac', 'viewer'); // sensitive KYC journal read by an auditor
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden && p.querySelector('.pos.out.held') ? p : null;
+    });
+    ok(prog.querySelector('.jst.ok'), 'the recorded status stays visible when outputs are withheld');
+    ok(prog.querySelector('.jmeta'), 'and the timing stays visible');
+    ok(!el.shadowRoot.textContent.includes('881-22-9034'), 'while the sensitive payload is not disclosed');
+  });
+
+  it('flags a capped journal when the server marks it truncated', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const fetch = async (url, opts) => {
+      const res = await mock.fetch(url, opts);
+      if (/\/runs\/run-0a5512cd\/steps/.test(String(url))) {
+        const body = await res.json();
+        return new Response(JSON.stringify({ ...body, truncated: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return res;
+    };
+    el = document.createElement('arazzo-run-detail');
+    el.setAttribute('runid', 'run-0a5512cd');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch });
+    mount(el);
+    const note = await waitFor(() => el.shadowRoot.querySelector('.prog-note'));
+    ok(note.textContent.toLowerCase().includes('capped'), 'the capped-journal note renders');
+  });
+});

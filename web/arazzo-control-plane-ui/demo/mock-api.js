@@ -65,8 +65,9 @@ export function seedRuns() {
       createdAt: iso(-70 * min), updatedAt: iso(-3 * min), etag: nextEtag(),
       fault: { stepId: 'provisionResources', attempt: 2, error: 'QuotaExceededException: region eu-west-1 database quota reached', at: iso(-3 * min) },
       stepOutputs: [
-        { stepId: 'createAccount', outputs: { accountId: 'acct-5150' } },
-        { stepId: 'verifyIdentity', outputs: { verified: true, score: 0.97 } },
+        { stepId: 'createAccount', status: 'Succeeded', attempt: 1, startedAt: iso(-70 * min), endedAt: iso(-70 * min + 210), outputs: { accountId: 'acct-5150' } },
+        { stepId: 'verifyIdentity', status: 'Succeeded', attempt: 1, startedAt: iso(-69 * min), endedAt: iso(-69 * min + 4200), outputs: { verified: true, score: 0.97 } },
+        { stepId: 'provisionResources', status: 'Faulted', attempt: 2, startedAt: iso(-3 * min - 900), endedAt: iso(-3 * min) },
       ],
       _errorType: 'QuotaExceededException',
       correlationId: 'dd44ee55ff66aa77bb88cc99dd00ee11', tags: ['tenant-7'],
@@ -92,12 +93,13 @@ export function seedRuns() {
       id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 4,
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
-      // The checkpoint's step journal (recording order): what GET /runs/{id}/steps projects.
+      // The checkpoint's step journal (recording order): what GET /runs/{id}/steps projects. Every executed step
+      // carries its status, the attempt it settled on, and its start/end timestamps; reservePayment retried once.
       stepOutputs: [
-        { stepId: 'findPet', outputs: { petId: 'pet-77', name: 'Luna' } },
-        { stepId: 'reservePayment', outputs: { reservationId: 'rsv-9001' } },
-        { stepId: 'submitAdoption', outputs: { applicationId: 'app-3141' } },
-        { stepId: 'confirmAdoption', outputs: { confirmed: true, receipt: 'rcpt-2718' } },
+        { stepId: 'findPet', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day), endedAt: iso(-2 * day + 142), outputs: { petId: 'pet-77', name: 'Luna' } },
+        { stepId: 'reservePayment', status: 'Succeeded', attempt: 2, startedAt: iso(-2 * day + 300), endedAt: iso(-2 * day + 300 + 890), outputs: { reservationId: 'rsv-9001' } },
+        { stepId: 'submitAdoption', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day + 1300), endedAt: iso(-2 * day + 1300 + 1210), outputs: { applicationId: 'app-3141' } },
+        { stepId: 'confirmAdoption', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day + 2600), endedAt: iso(-2 * day + 2600 + 340), outputs: { confirmed: true, receipt: 'rcpt-2718' } },
       ],
     },
     {
@@ -112,8 +114,8 @@ export function seedRuns() {
       // A KYC flow's journal carries identity data — the onboard-customer version is classified outputsSensitivity:
       // sensitive, so this journal is redacted for callers below the stronger grant (§14).
       stepOutputs: [
-        { stepId: 'verifyIdentity', outputs: { customerId: 'cust-55021', nationalId: '881-22-9034', dateOfBirth: '1984-03-19' } },
-        { stepId: 'runAmlCheck', outputs: { cleared: true, riskBand: 'low' } },
+        { stepId: 'verifyIdentity', status: 'Succeeded', attempt: 1, startedAt: iso(-40 * day), endedAt: iso(-40 * day + 3100), outputs: { customerId: 'cust-55021', nationalId: '881-22-9034', dateOfBirth: '1984-03-19' } },
+        { stepId: 'runAmlCheck', status: 'Succeeded', attempt: 1, startedAt: iso(-40 * day + 3200), endedAt: iso(-40 * day + 3200 + 780), outputs: { cleared: true, riskBand: 'low' } },
       ],
     },
     {
@@ -1913,8 +1915,9 @@ export function createMockControlPlane(options = {}) {
         return json(toDetail(run));
       }
       if (action === 'steps' && method === 'GET') {
-        // The checkpoint's step journal, verbatim and in recording order — a step that recorded
-        // nothing is absent, and no per-step status or timing is invented (server parity).
+        // The checkpoint's per-step journal in recording order: every executed step with its status, the attempt it
+        // settled on, and its start/end timestamps. Outputs ride along where the step produced them. A long loop can
+        // drive the journal past its cap, in which case truncated is set and the oldest entries are dropped.
         if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
         // §14 disclosure tier: step outputs are a payload tier ABOVE run-metadata visibility, so reading them needs the
         // runs:outputs:read capability scope on top of runs:read (server-enforced; the demo mirrors it).
@@ -1922,13 +1925,16 @@ export function createMockControlPlane(options = {}) {
           return problem(403, 'Forbidden', 'Reading step outputs requires the runs:outputs:read capability scope.');
         }
         const steps = structuredClone(run.stepOutputs ?? []);
-        // A version its author classified sensitive has its whole journal redacted for callers below the stronger grant.
+        const capped = run.journalTruncated === true ? { truncated: true } : {};
+        // A version its author classified sensitive has its OUTPUTS redacted for callers below the stronger grant; the
+        // status, attempt, and timing metadata stay visible (the payload is withheld, not the fact the step ran).
         // The real gate is WRITE reach on the run; the demo proxies operator-level access with runs:write (vs an auditor).
         if (versionOutputsSensitivity(run.workflowId) === 'sensitive' && !persona.scopes.has('runs:write')) {
-          return json({ runId: run.id, steps: steps.map((s) => ({ stepId: s.stepId, redacted: true })) });
+          const redacted = steps.map(({ outputs, ...meta }) => ({ ...meta, redacted: true }));
+          return json({ runId: run.id, steps: redacted, ...capped });
         }
 
-        return json({ runId: run.id, steps });
+        return json({ runId: run.id, steps, ...capped });
       }
       if (!action && method === 'DELETE') return deleteRun(run);
       if (action === 'resume' && method === 'POST') return resumeRun(run, body);

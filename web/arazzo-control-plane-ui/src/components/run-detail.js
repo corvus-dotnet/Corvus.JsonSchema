@@ -157,6 +157,14 @@ class ArazzoRunDetail extends ArazzoElement {
         .prog-steps { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; }
         .prog-steps li { padding: 1px 0; }
         .prog-steps li.dispatched { color: var(--_muted); }
+        /* The attested per-step journal: status glyph + attempt + duration, sharing the debug tray's grammar
+           (✓/✗/⏭ in the status palette, ↻N for a retried step). Absent for a run recorded before journaling. */
+        .jst { font-size: 12px; margin-right: 2px; }
+        .jst.ok { color: var(--arazzo-status-completed, #2a8a4a); }
+        .jst.bad { color: var(--arazzo-status-faulted, #d4351c); }
+        .jst.skip { color: var(--_muted); }
+        .jmeta { font-size: 11px; color: var(--_muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .prog-note { margin: 4px 0 0; font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); }
         .pos-line { font-size: 13px; }
         .pos { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_accent); white-space: nowrap; }
         .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
@@ -281,7 +289,8 @@ class ArazzoRunDetail extends ArazzoElement {
     const bodyEl = host.querySelector('.prog-body');
     const match = /^(.*)-v(\d+)$/.exec(run.workflowId || '');
     let steps = null;
-    let journal = new Map(); // stepId → recorded outputs (the checkpoint's attested journal)
+    let journal = new Map(); // stepId → recorded journal entry (status, attempt, timing, outputs)
+    let journalTruncated = false; // a long loop drove the journal past its cap, so the oldest entries were dropped
     if (match && this.client) {
       try {
         const [, recorded] = await Promise.all([
@@ -297,6 +306,7 @@ class ArazzoRunDetail extends ArazzoElement {
         ]);
         steps = this._progressSteps;
         for (const rec of (recorded?.steps || [])) journal.set(rec.stepId, rec);
+        journalTruncated = recorded?.truncated === true;
       } catch {
         steps = null;
       }
@@ -311,24 +321,52 @@ class ArazzoRunDetail extends ArazzoElement {
     const next = atEnd ? null : steps[run.cursor];
     const waitStep = run.status === 'Suspended' && !atEnd ? next : null;
     const faultStep = run.fault?.stepId || (run.status === 'Faulted' ? next : null);
+    // The attested per-step journal in the debug tray's grammar: a status glyph (✓/✗/⏭ in the status palette),
+    // the attempt the step settled on (↻N when it took more than one), and its recorded duration.
+    const statusGlyph = (rec) => {
+      switch (rec.status) {
+        case 'Succeeded': return '<span class="jst ok" title="Succeeded">✓</span>';
+        case 'Faulted': return '<span class="jst bad" title="Faulted">✗</span>';
+        case 'Skipped': return '<span class="jst skip" title="Skipped without executing the step">⏭</span>';
+        default: return ''; // a run recorded before per-step journaling attests no status
+      }
+    };
+    const stepMeta = (rec) => {
+      const bits = [];
+      if (rec.attempt > 1) bits.push(`<span class="jmeta" title="settled on attempt ${escapeHtml(String(rec.attempt))}">↻${escapeHtml(String(rec.attempt))}</span>`);
+      const ms = rec.startedAt && rec.endedAt ? Date.parse(rec.endedAt) - Date.parse(rec.startedAt) : NaN;
+      if (Number.isFinite(ms) && ms >= 0) {
+        const dur = ms < 1000 ? `${ms}ms` : ms < 60000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.floor(ms / 60000)}m${Math.round((ms % 60000) / 1000)}s`;
+        bits.push(`<span class="jmeta" title="started ${escapeHtml(absoluteTime(rec.startedAt))}">${dur}</span>`);
+      }
+      return bits.join(' ');
+    };
     const rowFor = (id, i, dispatched, marks) => {
       const rec = journal.get(id);
+      const cls = dispatched ? 'dispatched' : '';
       if (rec) {
+        const glyph = statusGlyph(rec);
+        const meta = [marks.join(' '), stepMeta(rec)].filter(Boolean).join(' ');
         // A redacted step (§14): the checkpoint attests it recorded outputs, but they are classified sensitive and
         // withheld from this caller — show a held-back affordance, never the payload.
         if (rec.redacted) {
-          return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')} <span class="pos out held" title="Outputs are classified sensitive and withheld — reading them needs write access to this run.">🔒 outputs withheld</span></li>`;
+          return `<li class="${cls}">${glyph}<span class="mono">${escapeHtml(id)}</span> ${meta} <span class="pos out held" title="Outputs are classified sensitive and withheld — reading them needs write access to this run.">🔒 outputs withheld</span></li>`;
         }
 
-        // A step with recorded outputs expands to show them, verbatim from the checkpoint.
-        const outputs = rec.outputs;
-        return `<li class="${dispatched ? 'dispatched' : ''}"><details class="step-out">
-          <summary><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')} <span class="pos out">outputs</span></summary>
-          <pre>${escapeHtml(JSON.stringify(outputs === undefined ? null : outputs, null, 2))}</pre>
-        </details></li>`;
+        // A step that recorded outputs expands to show them, verbatim from the checkpoint. The glyph rides inside
+        // the summary so it stays inline with the step id (a block-level <details> would otherwise drop it to its own line).
+        if (rec.outputs !== undefined) {
+          return `<li class="${cls}"><details class="step-out">
+            <summary>${glyph}<span class="mono">${escapeHtml(id)}</span> ${meta} <span class="pos out">outputs</span></summary>
+            <pre>${escapeHtml(JSON.stringify(rec.outputs, null, 2))}</pre>
+          </details></li>`;
+        }
+
+        // A journaled step that produced no outputs still attests its status and timing.
+        return `<li class="${cls}">${glyph}<span class="mono">${escapeHtml(id)}</span> ${meta}</li>`;
       }
 
-      return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
+      return `<li class="${cls}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
     };
     const listed = new Set(steps);
     const rows = steps.map((id, i) => {
@@ -347,7 +385,9 @@ class ArazzoRunDetail extends ArazzoElement {
         : `Position ${escapeHtml(String(run.cursor))} of ${steps.length}${next ? ` · next: <span class="mono">${escapeHtml(next)}</span>` : ''}`);
     bodyEl.innerHTML = `
       <div class="pos-line">${summary}</div>
-      <ol class="prog-steps" title="The compiled step order the run's position indexes. goto and retries can revisit earlier steps, so earlier entries mean dispatched, not completed.">${rows}</ol>`;
+      <ol class="prog-steps" title="The compiled step order the run's position indexes. goto and retries can revisit earlier steps, so earlier entries mean dispatched, not completed.">${rows}</ol>${journalTruncated
+        ? '<div class="prog-note" title="A long-running loop drove the recorded journal past its cap. The oldest step entries were dropped.">⚠ Journal capped. Older step entries were dropped.</div>'
+        : ''}`;
     host.hidden = false;
   }
 
