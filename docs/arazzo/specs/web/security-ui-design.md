@@ -1,427 +1,127 @@
-# Security UI design — a coherent, goal-oriented surface for the access model
+# Security UI design
 
-**Status:** substantially built — this began design-first, but most slices have since shipped. See
-**§0 Current state** for the live, code-verified per-slice status; keep that section current as work lands.
-**Scope:** the operator-facing UI for the whole §13–§16.5 access model — administrators, credential
-usage, row-security rules + claim→rule bindings, access requests, and a "who-can-do-what" overview —
-unified around one mental model and one identity primitive. Builds on the §16.5.4 resolved-grantee
-picker and the §15 admin = resolved-identity work already shipped.
+The operator-facing surface for the whole access model: administrators, credential usage, row-security rules
+and claim-to-rule bindings, access requests, and a who-can-do-what overview, unified around one mental model
+and one identity primitive.
 
----
+This spec owns the **UX design**: the jobs it serves, the information architecture, and the safety rules for
+authoring a binding. The access model itself is [`access-model.md`](../access/access-model.md) and its ADRs; the
+enforcement detail is [`identity-and-authorization-design.md`](../access/identity-and-authorization-design.md);
+the concrete components (attributes, events, composition) are the
+[UX component catalog](../../guides/ux-component-catalog.md).
 
-## 0. Current state (living — last verified 2026-07-04 against branch `worktree-arazzo-workflow-engine-plan`)
+## The reframe: every access decision is WHO can do WHAT, WHERE
 
-This section is the ground truth; keep it current as slices land (memory: *keep-control-plane-living-docs-current*).
-The rest of this doc is the original design narrative and lags the code in places — this section reconciles it.
+The model is clean (capability versus reach, [ADR 0001](../../adr/0001-two-plane-access-model.md); a grant's
+verbs are reach, not scopes, [ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)). The challenge is a
+UI that makes it answerable. Every decision has three axes:
 
-**§7 build slices**
+| Axis | Meaning | Mechanism |
+|------|---------|-----------|
+| **WHO** | the principal | a resolved `sys:` identity (administration, credential usage), or a principal claim (a binding's `claimType`/`claimValue`) |
+| **WHAT** | the capability | a scope (`catalog:read`, `runs:write`), or, for reach, a per-verb grant (read / write / purge) |
+| **WHERE** | which rows | reach: a security rule over security tags, inside the deployment's mandated tenant shell ([ADR 0006](../../adr/0006-deployment-access-control-shell.md)) |
 
-- **Slice 1 — Shared grantee chip + kind/label parity — DONE.**
-- **Slice 2 — Credential usage → picker + parity (kind/label stored on the binding) — DONE.**
-- **Slice 3 — Rule grammar (`in (…)` set-membership, ordered `classification <=`) — DONE functionally, via a
-  different architecture than §7.3/§8.5 propose.** Implemented as a **standalone `SecurityRule` engine** in the
-  durability layer (its own parser/AST + bytes-to-bytes evaluator + per-backend SQL emitter + a `/security/orderings`
-  config resource), **not** by extending the shared `SimpleConditionEvaluator` / `SimpleCriterionInliner`
-  step-criterion grammar — those (and the codegen inliner) were deliberately left untouched, so security rules are
-  runtime-compiled, never codegen-inlined. Ordering is real and threaded (configured `SecurityLabelOrderings` →
-  store predicate; fail-closed on unranked labels). Per-backend pushdown: SQL + Cosmos native; InMemory/Mongo/
-  Redis/Nats evaluate in memory (pre-existing pattern). Unit + container-conformance pushdown-oracle + end-to-end tests.
-- **Slice 4 — Reach/Rules UI (`arazzo-rules-panel`) — DONE.** Template-first builder including the set-membership and
-  classification-ordering templates (the latter gated on `/security/orderings`), CRUD, reach-scoped, 13 tests.
-- **Slice 5 — Bindings UI (`grants-panel`) — DONE**, including the server-side **self-elevation guard** (create +
-  update) with a dedicated test; person elevation routed to the request flow.
-- **Slice 6 — Access overview (`GET /access/grants?grantee=…` server aggregation + Overview screen) — DONE (server + UI).**
-  Server: the OpenAPI path + schemas (`AccessGrantsOverview` = grantee echo + matching bindings + administered workflows +
-  usable credentials + resolved capability scopes (`capabilities`, with eligible/expiry) + administered environments
-  (`administersEnvironments`) — the last two added by snag #96), regen (server + CLI), and the bytes-native `HandleGetAccessGrantsAsync` (opaque base64url grantee
-  token → owned `ResolvedGrantee` doc echoed whole; bindings claim-matched **string-free** via
-  `ValueEquals`/`GetUtf8String().Span`; `ListAdministeredWorkflowsAsync` reverse lookup; credentials `IsUsableBy`;
-  closure-free context-threaded `From()` projection, transfer-matched-pages ownership) + 2 server tests. §803 proof: the
-  fair projection benchmark shows the bytes-native projection at **256 B vs the naive 1376 B (0.19×)**; the full
-  end-to-end handler is 4601 B. **Identity form decided (and the handler revised to match):** the grantee token carries
-  the resolved **`sys:` identity** the wire returns (§16.5.4) — administers/credentials use it directly; the binding
-  match derives the operator-facing claim (strip `sys:`, e.g. `sys:sub` → `sub`, design §6.5 lossy). Client/UI: the
-  `getAccessGrants(grantee)` client method (base64url of the grantee JSON), a mock `/access/grants` aggregation,
-  `<arazzo-access-overview>` (grantee picker + reach grants with inline Revoke + administers + credential usage) wired
-  into the demo Access tab, all tested. Credential usage was tidied to list only the credentials **scoped to the
-  grantee's identity** (a new `SourceCredentialBinding.IsUsageScoped` gates the handler filter; shared deployment-wide
-  bindings are omitted, §6.1) — server + mock + tests done.
-  **Remaining — the paged-overview rework (queued as a focused pass; DESIGN CAPTURED):** the three overview sections
-  return **unbounded** lists today, but a grantee can administer/use hundreds — they must be **standard keyset-paged
-  Prev/Next lists** (campaign rule: page every list + its store from the start). Design: replace the single
-  `GET /access/grants` (returns all three) with **three paged sub-resource endpoints** — `GET /access/grants/reach`,
-  `/administered`, `/credentials` — each `grantee` + `limit` + `pageToken` → `{ items, nextPageToken }`. **administered**
-  pages cleanly through the already-keyset `IWorkflowAdministratorStore.ListAdministeredAsync(digest, limit, pageToken)`,
-  reached via a **new paged `ISecuredWorkflowCatalog.ListAdministeredWorkflowsAsync(identity, limit, pageToken)`**
-  (the store isn't at the wiring site — it's wrapped in `SecuredWorkflowCatalog`). **reach** and **credentials** are
-  handler-side **filter-and-page**: read one underlying store page, apply the claim / usage-scope filter, project
-  bytes-native, and carry the store's page token through as the overview continuation (the binding/credential stores
-  don't index by claim/usage-match, so no store-side filter without a 10-backend change). Web: 3 paged client methods,
-  the mock's 3 paged handlers, and the component reworked to three sections each driving `<arazzo-pager>` (Prev/Next).
-  Also fold in the OpenAPI credential-usage description update (the identity-scoped narrowing) with that rework's regen.
-  Then container-conformance, and the slice-7 slotting.
-- **Slice 7 — Access-area reorg — DONE.** Grants (Bindings), Rules (Reach), and the server-aggregated Access
-  overview now live under one **Security** tab with a secondary tab bar; the standalone **Permissions** tab is
-  retired and per-workflow Administrators cross-link from the Catalog detail (§15). Shipped on both surfaces: the
-  .NET/wwwroot demo shell (3443072c3b, 9ecaedde7c) and the web-kit demo (#884). The request/approval inboxes stay
-  their own tabs (the .NET shell's Approvals/Requests split) rather than folding under Security. Tab placement is
-  codified in `smoke.spec.js`; the UX specs navigate via the Security subtabs.
+Two sub-mechanisms name WHO, and reconciling them is the point:
 
-**Security-tags / management-tags thread** — settable + admin-editable-on-update `{key,value}` reach labels
-(catalog `securityTags`; environment/source/credential `managementTags`). **DONE end-to-end** for all four
-entities: OpenAPI / server handler / durability + store-conformance / mock; the web edit UI via the shared
-`<arazzo-tag-editor>` (catalog + environment + credential); and the CLI `--manage`-on-update flag for
-environment/source/credential (parity with catalog's `--security-tag`, with integration tests). **Only remaining
-item:** the registered-**source** has no standalone UI edit panel — **parked** (the sources registry has no
-dedicated panel by design, §7.6); `updateSource` exists server- and mock-side for when a panel lands.
+- **Identity grants** (administration, credential usage) name a principal by their unforgeable `sys:` identity.
+  That is exactly what the resolved-grantee picker produces, so the operator names a real person, team, role, or
+  workflow and the server resolves it ([ADR 0008](../../adr/0008-resolved-grantee-resolution.md)).
+- **Claim-to-rule bindings** name a principal by an inbound claim and grant per-verb reach
+  ([ADR 0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md)).
 
-**Actual app-shell tabs today** (`demo/index.html`): Runs · Runners · Catalog · Sources · Environments · Access ·
-Permissions · Promotions · Runner auth. (The §3 snapshot below predates several of these.)
+The overhaul makes WHO one correct-by-construction act (the grantee picker, never a raw `sys:` tag editor, a
+convention in the [UX catalog's design conventions](../../guides/ux-component-catalog.md#design-conventions)),
+makes WHERE visible and goal-oriented, and gives one who-can-do-what overview, aggregated server-side
+([ADR 0015](../../adr/0015-access-overview-server-aggregated.md)).
 
----
+## End-user goals
 
-## 1. The reframe: every access decision is **WHO can do WHAT, WHERE**
-
-> For the conceptual model on its own — capability (scopes) vs reach (grants + rules), why a grant's
-> verbs are `read`/`write`/`purge` and not scopes, and how the two planes compose — see
-> [`access-model.md`](../access/access-model.md).
-
-The model is clean; the UI today is not. Each access decision has three axes:
-
-| Axis | Meaning | Mechanism (design ref) |
-|------|---------|------------------------|
-| **WHO** | the principal/grantee | a resolved `sys:` **identity** (admin, credential usage) **or** a principal **claim** (a binding's `claimType`/`claimValue`) |
-| **WHAT** | the capability / verb | a **scope** (`catalog:read`, `runs:write`, …, §14.1) and/or a **verb** (read / write / purge, §14.4) |
-| **WHERE** | which rows | **reach**: a security **rule** over security tags, inside the deployment's mandated tenant shell (§14.2/§14.3) |
-
-Two sub-mechanisms name "WHO", and that is the crux of today's inconsistency:
-
-- **Identity grants** name a principal by their unforgeable `sys:` identity tags, matched against a row/run:
-  - **administrators** (§15) — set-equality against the caller's stamped identity;
-  - **credential usage** (§13) — label-**superset** (`IsUsableBy`: a run usable only if it carries *all* the
-    binding's usage tags).
-  Both are exactly what the **resolved-grantee picker** (§16.5.4) produces — name a real person/team/role/
-  workflow, resolve to its `sys:` identity. Administrators already use it; credential usage still hand-types
-  `{dimension,value}` tuples (the §16.5.4 guessing hazard).
-- **Claim→rule bindings** (§14.2) name a principal by an inbound **claim** (`claimType`/`claimValue`, e.g.
-  `team=payments`) and grant per-verb **reach** (a set of rule names, AND-ed, or `unrestricted`). This is the
-  *reach* plane. *(Originally CLI/API-only with no UI — since delivered: the Rules UI (`arazzo-rules-panel`, slice 4)
-  and the Bindings UI (`grants-panel`, slice 5) now exist under the Permissions tab. See §0.)*
-
-So the same question — *"what can Alice do, and where?"* — is unanswerable in the UI, and "who" is authored
-in three different mental models. **The overhaul makes WHO one consistent, correct-by-construction act, makes
-WHERE visible and goal-oriented, and gives a single "who-can-do-what" overview.**
-
----
-
-## 2. The model, precisely (what the UI must express)
-
-The two planes (§16.1): **identity** (who you are — IdP/claims) vs **authorization** (what you may do). A
-principal needs two authorization things, sourced differently (§16.5):
-
-- **Capability** — a scope, usually from a role claim → ASP.NET policy (§14.1). Coarse, standing.
-- **Reach** — which rows, via `sys:` tags → a security rule (§14.2). Coarse standing reach falls out of team
-  membership; fine/elevated reach is granted by an access request → admin approval → an entitlement write.
-
-The managed objects:
-
-1. **Security rule** (`/security/rules`) — `{ name, expression, description }`. `expression` is the Arazzo
-   `simple` grammar over security tags (e.g. `tenant == $claim.tenant`, `domain == 'payments'`). Compiles to
-   an in-memory evaluator **and** an indexed per-backend store predicate. Seeded **bootstrap rules**:
-   tenant-scoped, ABAC label-superset, intersection (§14.2). Rules are the reusable **WHERE** vocabulary.
-2. **Claim→rule binding** (`/security/bindings`) — `{ claimType, claimValue, read, write, purge }` where each
-   verb is a `VerbGrant` = `unrestricted` **or** a conjunction of `ruleNames`. "A principal with this claim
-   gets, per verb, the reach of these rules." This is **WHO (claim) → WHAT (verb) → WHERE (rules)**.
-3. **Credential usage grant** (§13, on a credential binding) — identity grants scoping which runs may **use**
-   the binding. Superset-matched; the picker's resolved identity scopes precisely.
-4. **Workflow administrators** (§15, per base workflow id) — resolved identities that govern a workflow
-   (publish versions, approve requests). Done — digest-keyed, picker-driven, kind/label shown.
-5. **Access request + approval** (§16.5) — the elevate flow: request → route to the §15 admin → approval
-   writes the entitlement (a binding). Done (submit/queue/approve/deny/withdraw/revoke).
-
-The **tenant shell** (§14.3) ANDs a mandated wrapper rule into every decision and stamps immutable,
-client-invisible `sys:` internal tags. Users author within the shell; the UI must never invite editing
-internal (`sys:`-prefixed) tags directly — which is exactly why the grantee picker (intent → resolved
-identity) is the right primitive, not a raw tag editor (see memory: *security-ui-correct-by-construction*).
-
----
-
-## 3. Current UI state + gaps (grounded)
-
-App shell today (`demo/index.html`): top-level tabs **Runs · Runners · Catalog · Connections · Environments ·
-Security · Workflow access · Promotions · Runner auth** (see §0 for the live list). Grants + Rules + the Access
-overview now live under the **Security** tab (secondary tab bar); **Workflow access** holds the request inbox — the
-§7 item 7 reorg (retire the Permissions tab) is DONE on both surfaces (#884). (The table below is the original
-"before" snapshot; §0 has the current per-surface status.)
-
-| Surface | Today | Verdict |
-|---------|-------|---------|
-| Administrators (§15) | `administrators-panel` under Catalog detail; resolved-grantee picker; kind/label shown | ✅ the reference pattern |
-| Grantee picker (§16.5.4) | `grantee-picker` → `{kind, value, identity[], label, complete}` | ✅ the universal WHO primitive |
-| Access requests (§16.5) | `access-requests-panel` under the **Access** tab | ✅ exists |
-| Credential usage (§13) | `credential-dialog` hand-rolled `{dimension,value}` rows; table shows `dim=value` | ⚠️ inconsistent WHO; no kind/label |
-| Security rules (§14.2) | **none** (CLI/API only) | ❌ missing — the reach model is invisible |
-| Claim→rule bindings (§14.2) | **none** (CLI/API only) | ❌ missing |
-| "Who can do what" overview (§16.5 grants view) | **none** | ❌ missing |
-
-The **Access** tab currently holds only requests. It becomes the **home of the whole access model**.
-
----
-
-## 4. End-user goals (jobs-to-be-done) → model mapping
+The design serves these jobs. The point is to make G1, G5, and G6 (which had no UI) and G3 (which was
+error-prone) a few clicks, without making the operator learn the rule grammar for the common cases.
 
 | # | Goal (operator's words) | Model action | Surface |
-|---|--------------------------|--------------|---------|
-| G1 | "Let the payments team read payments workflows" | binding: claim `team=payments` → read = rule `domain==payments` | Access bindings |
-| G2 | "Let Alice run payments workflows" | access request → admin approve → entitlement binding (write reach, scoped to her) | Requests (✅) / direct grant |
-| G3 | "Only nightly-reconcile runs may use this DB credential" | credential usage grant = resolved `workflow` grantee | Sources → credential |
-| G4 | "Who administers nightly-reconcile? add/remove" | administrators (resolved identities) | Catalog detail (✅) |
-| G5 | "What can Alice do, and where? revoke X" | read across bindings/admin/usage; delete a binding/grant | Access overview |
-| G6 | "Define a reusable reach (e.g. the finance domain)" | create/edit a rule (template or expression) | Reach / Rules |
-| G7 | "Approve/deny pending access requests" | decide a request | Requests (✅) |
+|---|-------------------------|--------------|---------|
+| G1 | "Let the payments team read payments workflows" | binding: claim `team=payments`, read = rule `domain==payments` | Grants |
+| G2 | "Let Ada run payments workflows" | access request, admin approves, entitlement scoped to her | Requests, or a direct grant |
+| G3 | "Only nightly-reconcile runs may use this DB credential" | credential usage grant = resolved `workflow` grantee | Credential detail |
+| G4 | "Who administers nightly-reconcile? add or remove" | administrators (resolved identities) | Catalog version detail |
+| G5 | "What can Ada do, and where? revoke X" | read across bindings, administration, and usage; delete a grant | Overview |
+| G6 | "Define a reusable reach (the finance domain)" | create or edit a rule (template or expression) | Rules |
+| G7 | "Approve or deny pending access requests" | decide a request | Requests |
 
-The design's job: make G1, G5, G6 (today impossible in the UI) and G3 (today error-prone) **a few clicks**,
-without making the operator learn the rule grammar for the common cases.
+## The universal primitives
 
----
+**The grantee is the universal WHO.** One grantee picker sits wherever a principal is named (administration,
+credential usage, and the well-known binding kinds), and one shared grantee chip renders a resolved grantee
+consistently: the kind icon and label foremost, the resolved identity secondary, and the opaque digest behind a
+copy affordance, never the headline. This is the resolved-grantee model
+([ADR 0008](../../adr/0008-resolved-grantee-resolution.md)) and the identity-renders-as-a-resolved-label
+convention ([UX catalog](../../guides/ux-component-catalog.md#design-conventions)).
 
-## 5. The universal primitives
+**Goal templates hide the grammar.** Rules are authored from templates for the common cases ("rows in a
+domain", "rows matching the caller's tenant", "rows sharing any label with the caller"), with a single Advanced
+escape hatch that exposes the raw expression grammar and a live preview. The operator picks a goal, and the UI
+writes the rule.
 
-### 5.1 The grantee = the universal WHO
+## Information architecture: the Security area
 
-One `grantee-picker` everywhere a principal is named (administrators ✅, credential usage, and — for
-well-known kinds — the binding principal). One shared **grantee chip** renderer shows a resolved grantee
-consistently wherever displayed:
+The Grants (claim-to-rule bindings), Rules (the reach vocabulary), and the who-can-do-what Overview live under
+one **Security** area with a secondary tab bar:
 
-```
-[👤 person] Ada Lovelace   ·   sys:sub=u-1042
-[👥 team]   Payments       ·   team=payments
-[⚙ workflow] nightly-reconcile · workflow=nightly-reconcile
-```
-
-— kind icon + label foremost, the resolved identity grants secondary/dimmed, the opaque digest behind a
-"copy id" affordance (never the headline). This is the **kind/label parity** applied uniformly (admin panel,
-credential usage, access overview, requests).
-
-> **Precision:** the picker produces a `sys:` **identity** (the WHO for identity grants: admin, usage). A
-> *binding* keys on a **claim** — and the identity→claim mapping is lossy and issuer-sensitive across multiple
-> IdPs. See **§6.5** for the full treatment (direct group bindings vs request-gated person elevation, and the
-> picker→claim / `sys:iss` story). The binding form is explicitly **WHO → WHAT → WHERE**, not an identity grant.
-
-### 5.2 Goal templates hide the grammar
-
-Rules are authored from **templates** (the seeded bootstrap rules) for the common cases — *"rows in domain
-___"*, *"rows matching the caller's tenant"*, *"rows sharing any label with the caller"* — with a single
-**Advanced (expression)** escape hatch exposing the raw `simple` grammar for power users. The operator picks
-a goal; the UI writes the rule.
-
----
-
-## 6. Proposed information architecture — the **Access** tab
-
-The Access tab becomes a small left-nav of the access model; per-workflow Administrators stay in catalog
-detail (they are workflow-scoped) but are cross-linked from the overview.
-
-```
-Access
-├─ Overview        "who can do what, where" — search a grantee → all their access; revoke inline
-├─ Bindings        claim → (read/write/purge) reach — the WHO→WHAT→WHERE editor (G1, G2-direct)
-├─ Reach (Rules)   the reusable WHERE vocabulary — template-first, expression-advanced (G6)
-└─ Requests        the approval queue + my requests (✅ exists, G7)
-   (Administrators are per-workflow, in Catalog → version detail — cross-linked here, G4)
+```mermaid
+flowchart TD
+    SEC["Security area (secondary tab bar)"]
+    SEC --> OV["Overview: who can do what, where; revoke inline"]
+    SEC --> GR["Grants: a claim to per-verb read / write / purge reach"]
+    SEC --> RU["Rules: the reusable reach vocabulary, template-first"]
 ```
 
-### 6.1 Overview (G5) — the headline new screen
+The request and approval inboxes are their own surfaces, not folded under Security. Administrators are
+subject-scoped, so they live on the record they govern: a workflow's administrators on the Catalog version
+detail, an environment's on the Environment detail (the same `arazzo-administrators-panel` serves both, keyed by
+`base-workflow-id` or `environment`). The Overview cross-links to each.
 
-```
-Access ▸ Overview
-┌───────────────────────────────────────────────────────────────────────────┐
-│  Find a grantee:  [ 👤 Ada Lovelace ▾ ]   (grantee-picker)                   │
-├───────────────────────────────────────────────────────────────────────────┤
-│  Ada Lovelace  (person · sys:sub=u-1042)                                     │
-│                                                                             │
-│  Reach (bindings)                                                            │
-│   • read   domain==payments            via binding claim sub=u-1042   [Revoke]│
-│   • write  domain==payments            via binding claim sub=u-1042   [Revoke]│
-│                                                                             │
-│  Administers                                                                 │
-│   • nightly-reconcile                                                  [Open] │
-│                                                                             │
-│  Credential usage                                                           │
-│   • db-main / prod   (run identity carries sys:sub=u-1042)            [Open] │
-└───────────────────────────────────────────────────────────────────────────┘
-```
+For the panels themselves (`arazzo-access-overview`, `arazzo-grants-panel`, `arazzo-rules-panel`,
+`arazzo-administrators-panel`, `arazzo-access-requests`, `arazzo-grantee-picker`) and their attributes, events,
+and composition, see the [UX component catalog](../../guides/ux-component-catalog.md#security-and-access).
 
-Aggregates across bindings + administrators + credential usage for a chosen grantee, with inline revoke.
-(See §8 for the open question on whether this needs a server aggregation endpoint or composes client-side.)
+## Authoring a binding: direct versus request-gated
 
-### 6.2 Bindings (G1) — WHO → WHAT → WHERE
+This is the safety-critical rule of the Grants surface. The decision (split by binding type, with a
+server-side self-elevation guard) is [ADR 0014](../../adr/0014-direct-grant-versus-request-only.md): a standing
+group or policy binding (a group or role claim, typically read reach) is authored **directly** by an
+administrator, while per-person elevation (write or purge reach scoped to a `sub`) stays **request then approve**
+only. The rationale is separation of duties, the audit chain, and no ambient privilege.
 
-```
-Access ▸ Bindings ▸ New
-┌───────────────────────────────────────────────────────────────────────────┐
-│ WHO    grantee  [ 👥 Payments team ▾ ]   →  claim  team = payments           │
-│ WHAT/WHERE                                                                   │
-│   read   ( ) unrestricted   (•) rules: [domain==payments ✕] [+ add reach]    │
-│   write  (•) unrestricted   ( ) rules: …                                     │
-│   purge  ( ) unrestricted   (•) rules: (none — denied)                       │
-│                                                          [Cancel]  [Create]  │
-└───────────────────────────────────────────────────────────────────────────┘
-```
+The residual detail this spec owns is the **picker-to-claim mapping under multiple semi-trusted identity
+providers**, which is why the split above is not just policy but a correctness requirement:
 
-"add reach" opens the Reach picker (existing rules) or "+ new reach" (template). The binding stores
-`{claimType, claimValue, read, write, purge}` verbatim against `/security/bindings`.
+- An identity grant binds on the post-shell `sys:` identity the picker resolves, which includes `sys:iss`, the
+  cross-provider uniqueness key. So identity grants are issuer-safe by construction: `sub=u-1042` from two
+  providers resolves to two different identities and is never conflated.
+- A claim-to-rule binding keys on an inbound claim (pre-shell, before issuer resolution). A naive binding on
+  `sub=u-1042` would match that subject from any issuer, which is an impersonation risk when more than one
+  semi-trusted provider is trusted.
+- Therefore person grantees route to the request flow, where the server, holding the full resolved identity,
+  writes the issuer-qualified entitlement. Group and role bindings authored directly key on a claim the
+  deployment treats as issuer-canonical, and the UI surfaces the caveat ("a claim is only as trustworthy as the
+  issuer asserting it") with a raw-claim fallback for deployments whose claims already carry issuer namespacing.
+  First-class person-scoped direct bindings (the issuer in the binding key) are a flagged model follow-up.
 
-### 6.3 Reach / Rules (G6) — template-first
+## Open question
 
-```
-Access ▸ Reach ▸ New
-┌───────────────────────────────────────────────────────────────────────────┐
-│ Goal:  (•) Rows in a domain        domain = [ payments ]                     │
-│        ( ) Rows matching caller's tenant   (tenant == $claim.tenant)         │
-│        ( ) Rows sharing any label with the caller                            │
-│        ( ) Advanced — write an expression                                    │
-│ Name:  [ reach-payments ]   (auto-suggested)                                 │
-│ Preview:  domain == 'payments'                                               │
-│                                                          [Cancel]  [Create]  │
-└───────────────────────────────────────────────────────────────────────────┘
-```
+The exact claim a `person` grantee implies for the raw-claim fallback is deployment claim-map dependent, and is
+still open.
 
-The template writes the `expression`; Advanced reveals the raw grammar with the live preview as validation.
+## References
 
-### 6.4 Credential usage (G3) — picker + parity (within Sources)
-
-The `credential-dialog`'s hand-rolled grant rows → the grantee picker: name the grantee that may use the
-binding; its resolved identity becomes the usage tags (superset-matched = precise). The credentials table +
-dialog show the grantee **chip** (kind/label), not `sys:sub=…`. (Full parity, per your call — so the
-credential binding *stores* kind/label, mirroring `AdministratorGrant`.)
-
-### 6.5 Binding authoring — direct vs request-gated, and the picker→claim / multi-IdP story
-
-This is the safety-critical heart of the Bindings surface. Two kinds of binding, **two authoring paths**,
-chosen for separation of duties + no-ambient-privilege (§16.5.3):
-
-- **Standing group/policy bindings** — key on a *group/role* claim (e.g. `team=payments`) and grant typically
-  *read* reach. They define what membership *confers*; a new team member inherits them automatically via
-  their claim. This is **policy authoring**, not a per-person ambient grant, so an admin authors them
-  **directly** in the Bindings editor (G1).
-- **Per-principal elevation** — a binding granting *write/purge/run* reach scoped to a *specific person*
-  (`sub`). The escalation-sensitive case. It stays **request→approve only** (the §16.5 flow): requester ≠ the
-  approving §15 admin (separation of duties), the request carries intent+justification and the approval the
-  approver+reason (the audit chain), and §16.5.3's "no ambient privilege" holds. The Bindings editor does
-  **not** offer ad-hoc "grant person X write". **Self-elevation is rejected server-side** as defense in depth.
-
-> Rule the UI encodes: **direct = group + read (policy); request-gated = person + elevated.**
-
-**The picker→claim mapping, and multiple semi-trusted IdPs.** Subtle and safety-critical:
-
-- An **identity grant** (admin, credential usage) binds on the **post-shell `sys:` identity** the picker
-  resolves — which **includes `sys:iss`** (the cross-provider uniqueness key, see memory
-  *arazzo-directory-adapters-identity-uniqueness*). So identity grants are **issuer-safe by construction**:
-  `sub=u-1042` from IdP-A and IdP-B resolve to *different* identities and are never conflated. ✓
-- A **claim→rule binding** keys on an **inbound claim** (`claimType`/`claimValue`) — **pre-shell**, before
-  issuer resolution. A naive binding on `claimType=sub, claimValue=u-1042` matches that subject **from any
-  issuer** → with multiple semi-trusted IdPs an **impersonation / identity-collision risk**.
-- The picker→claim derivation is therefore **lossy**: `grantee.identity` (sys: tags) is the *output* of the
-  deployment's claim→`sys:` map; recovering a single binding *claim* needs the *inverse*, which is not unique.
-  Consequences the design adopts:
-  - **Person grantees → the request flow**, not direct bindings: the server, holding the full resolved
-    identity (iss+sub), writes the correct **issuer-qualified** entitlement. (Reinforces the split above.)
-  - **Group/role bindings** authored directly key on a claim the deployment treats as **canonical / issuer-
-    unique**; the UI **surfaces the caveat** ("a claim is only as trustworthy as the issuer asserting it; with
-    multiple semi-trusted IdPs prefer issuer-qualified claims") and offers the **raw-claim fallback** for
-    deployments whose claims already carry issuer namespacing.
-  - **Model follow-up (flagged, out of v1):** first-class person-scoped *direct* bindings would need the
-    binding key to carry the **issuer** (a `{claimType, claimValue, issuer?}` / composite claim). The request
-    flow covers the v1 need; noted for the security API.
-
----
-
-## 7. Build slices (incremental, each shippable; #803 discipline applies)
-
-Each slice keeps the warning-free build + tests + (for any server/wire change) the per-row ownership ledger +
-MemoryDiagnoser benchmark + container conformance gates. Web-only slices still get node/component/smoke tests.
-
-1. **[DONE] Shared grantee chip + kind/label parity.** Extract one renderer; apply to admin panel + (next slices)
-   credential usage + overview + bindings. *Web only.*
-2. **[DONE] Credential usage → picker + parity.** Web swap in `credential-dialog`/`credentials-table`; the wire
-   already carries `{dimension,value}` — **but** full parity (display kind/label) needs the binding to *store*
-   the grantee kind/label, so this slice includes the credential-binding model + summary projection + mock +
-   the OpenAPI shape (ledger + benchmark per the §803 protocol, mirroring the admin `AdministratorGrant` work).
-3. **[DONE — built as a separate engine, not as framed below] Rule grammar extension.** Adds **set membership**
-   `in (…)` and ordered **classification `<=`** (with absent-label semantics + a **defined ordering** of labels —
-   a configured `SecurityLabelOrderings`, surfaced as the read-only `/security/orderings` resource). **As built,
-   this is a standalone `SecurityRule` engine in the durability layer** (its own parser/AST + bytes-to-bytes
-   evaluator + per-backend SQL emitter). The originally-planned route — extend the shared `SimpleConditionEvaluator`
-   (runtime) + `SimpleCriterionInliner` (codegen) step-criterion grammar — was **not** taken; those were left
-   untouched, so security rules are runtime-compiled, never codegen-inlined. Per-backend store-predicate pushdown
-   (SQL + Cosmos native; InMemory/Mongo/Redis/Nats in-memory). Unit + container-conformance pushdown-oracle +
-   end-to-end tests. Landed before the Reach UI shipped those templates.
-4. **[DONE] Reach / Rules UI.** New web surface over `/security/rules` (template-first incl. the new set-membership +
-   classification templates, raw-expression advanced). Mostly web + mock; server/OpenAPI already expose the ops.
-5. **[DONE] Bindings UI.** New web surface over `/security/bindings` with the WHO→WHAT→WHERE editor: **direct** for
-   group/role policy bindings (picker for well-known kinds + raw-claim fallback + the multi-IdP caveat banner,
-   §6.5); per-person elevation routed to the request flow, not authored here. Web + mock; the server adds a
-   **self-elevation guard** (defense in depth, built + tested — create and update). Server/OpenAPI already expose the binding ops.
-6. **[DONE — server + UI] Access overview** (server-side aggregation, per your call). The reach-scoped endpoint
-   `GET /access/grants?grantee=…` aggregates a grantee's bindings + administered workflows + credential
-   usage server-side (client stays thin). Handler + 2 tests built + green; §803 ledger + MemoryDiagnoser proof landed
-   (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). The Web surface shipped too —
-   `<arazzo-access-overview>` renders the grantee picker + reach grants with inline Revoke + administers +
-   credential usage (see §0).
-7. **[DONE] Access-area reorg.** Grants (Bindings), Rules (Reach), and the Access overview are consolidated under a
-   single **Security** tab with a secondary tab bar, and the standalone **Permissions** tab is retired; per-workflow
-   Administrators cross-link from the Catalog detail. Shipped on both surfaces: the .NET/wwwroot demo shell
-   (3443072c3b, 9ecaedde7c) and the web-kit demo (#884). The request/approval inboxes stay their own tabs (the .NET
-   shell's Approvals/Requests split) rather than folding under Security. Tab placement is codified in `smoke.spec.js`.
-
-Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (grantee primitive, then credentials, then the grammar the rules
-need, then the two missing editors, then the server-aggregated overview, then the reorg). Each is
-independently demoable. **Status: 1–7 DONE — see §0.** The recommended
-order also predates a parallel thread — the **security-tags / management-tags** work (settable + editable reach
-labels on catalog/environment/source/credential) — which is now **done end-to-end** (API/store/mock/web/CLI),
-bar the parked registered-source UI edit panel (§0).
-
----
-
-## 8. Decisions (resolved with the reviewer)
-
-1. **Direct grant vs request-only** → **split by binding type** (§6.5): standing **group/policy** bindings
-   (group/role claim, typically read) are **directly** admin-authored; **per-person elevation** (write/run,
-   `sub`-scoped) stays **request→approve only**, with a server **self-elevation guard**. Rationale: separation
-   of duties, the audit chain, and §16.5.3 no-ambient-privilege.
-2. **Overview aggregation** → **server-side** endpoint `GET /access/grants?grantee=…` (reach-scoped); keep the
-   client thin (slice 6, full §803 ledger/benchmark/conformance).
-3. **Binding principal via picker** → **picker + raw-claim fallback** (§6.5). The picker→claim mapping is
-   lossy/issuer-sensitive: identity grants are issuer-safe (post-shell `sys:` incl. `sys:iss`); claim bindings
-   are pre-shell, so person grantees route to the request flow (server writes the issuer-qualified
-   entitlement), group/role bindings key on an issuer-canonical claim with a multi-IdP caveat banner, and
-   raw-claim entry covers issuer-namespaced deployments. First-class person-scoped *direct* bindings (issuer in
-   the binding key) are a flagged model follow-up, out of v1.
-4. **Credential usage parity** → **full parity**: store kind/label on the credential binding, mirroring
-   `AdministratorGrant` (slice 2).
-5. **Rule templates** → **add classification `<=` and `in (…)` set membership** (common tag-based constructs).
-   *Built (slice 3) — but as a standalone `SecurityRule` engine in the durability layer with per-backend predicate
-   pushdown, NOT by changing `SimpleConditionEvaluator` / `SimpleCriterionInliner` (those were left untouched).
-   Classification ordering is a configured `SecurityLabelOrderings` surfaced as `/security/orderings`. See §0 / §7.3.*
-
-**Residual sub-questions:**
-- ~~Classification ordering: numeric levels vs a deployment-configured label order~~ → **resolved**: a
-  deployment-configured ascending label order (`SecurityLabelOrderings` / `/security/orderings`), fail-closed on
-  unranked labels.
-- ~~`in (…)` semantics for absent/null labels + per-backend store-predicate translation~~ → **resolved**: absent
-  dimension → empty set → `false`; per-backend pushdown implemented (SQL + Cosmos native; InMemory/Mongo/Redis/Nats
-  in-memory).
-- The exact claim a `person` grantee implies for the raw-claim fallback (deployment claim-map dependent). *(still open)*
-
----
-
-## 9. References
-
-- Design: `source-credentials-design.md` §13 (credentials), and `identity-and-authorization-design.md` §14
-  (authorization / row security / shell), §15 (administration), §16.1 (two planes), §16.5 (entitlement
-  lifecycle), §16.5.4 (grantee resolution), §16.5.5 (ambient dimensions).
-- Shipped: `arazzo-admin-resolved-identity` (the pattern to mirror), `security-ui-correct-by-construction`
-  (intent → resolved identity, never raw tuples).
-- API: `/security/rules`, `/security/bindings`, `/credentials`, `/administrators`, `/identity/grantees`,
-  `/accessRequests` (`arazzo-control-plane.openapi.json`).
+- The access model: [`access-model.md`](../access/access-model.md) and ADRs
+  [0001](../../adr/0001-two-plane-access-model.md), [0002](../../adr/0002-grant-verbs-are-reach-not-scopes.md),
+  [0006](../../adr/0006-deployment-access-control-shell.md), [0008](../../adr/0008-resolved-grantee-resolution.md),
+  [0014](../../adr/0014-direct-grant-versus-request-only.md),
+  [0015](../../adr/0015-access-overview-server-aggregated.md).
+- The enforcement detail (row security, administration, the entitlement lifecycle):
+  [`identity-and-authorization-design.md`](../access/identity-and-authorization-design.md).
+- The credential-usage grant: [`source-credentials-design.md`](../credentials/source-credentials-design.md).
+- The components: [UX component catalog](../../guides/ux-component-catalog.md).
