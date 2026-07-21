@@ -87,32 +87,7 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
         }
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
-        WorkflowTransports transports = this.transportBinder(hosted.Descriptor, run.SecurityTags);
-
-        // Unrented (no thread affinity): RunAsync is awaited and a run's async continuation (e.g. an outbound HTTP call
-        // completing on a thread-pool thread) can dispose this workspace on a different thread than the one that created
-        // it, so a thread-local rented workspace would fail its return-to-cache invariant — aborting the process
-        // (SIGABRT) and, if the slot is reused, invalidating live JsonElements. Same posture as the generated OpenAPI
-        // response handlers and DraftWorkflowResumer.
-        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        try
-        {
-            return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
-        }
-        catch (WorkflowPauseException)
-        {
-            // §18: the executor unwound at a debugger pause point. CheckpointAsync already persisted the run as
-            // Suspended with a Pause wait (no wake trigger), so this is a clean suspend — report the same
-            // tri-state Suspended a timer or message suspend returns; the finally still disposes the transports.
-            return WorkflowRunResultKind.Suspended;
-        }
-        finally
-        {
-            foreach (IApiTransport apiTransport in transports.ApiTransports.Values)
-            {
-                await apiTransport.DisposeAsync().ConfigureAwait(false);
-            }
-        }
+        return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
