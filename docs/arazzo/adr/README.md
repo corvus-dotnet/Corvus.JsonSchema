@@ -81,4 +81,14 @@ The template to follow for a full, fork-bearing ADR is
 | [0033](0033-compile-at-catalog-add.md) | Compile at catalog-add; the package is a complete code-generation input | Accepted |
 | [0034](0034-standalone-hosting-not-required.md) | A standalone published-endpoint hosting service is not required | Accepted |
 
-Later domains (the web kit, platform conventions) extend the numbering as their slices land.
+### Platform conventions
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0035](0035-keyset-pagination-everywhere.md) | Keyset pagination everywhere, API and store | Accepted |
+| [0036](0036-bounded-count-contract.md) | The bounded count contract | Accepted |
+| [0037](0037-bytes-native-seams.md) | Bytes-native seams: no record-to-document string round-trips | Accepted |
+| [0038](0038-payload-safe-governance-audit.md) | A payload-safe governance-audit primitive | Accepted |
+| [0039](0039-api-first-openapi-source-of-truth.md) | API-first: the OpenAPI surface is the source of truth | Accepted |
+
+The web-kit domain extends the numbering as its slice lands.

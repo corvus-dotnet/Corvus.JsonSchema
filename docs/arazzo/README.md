@@ -34,7 +34,7 @@ guide owns the walkthrough, and the spec owns the exhaustive detail.
 | `guides/workflow-designer.md` | Scenarios, debug runs, the CI scenario runner. *(planned)* |
 | `guides/deployment-bootstrap.md` | The production bootstrap library versus demo seeding. *(planned)* |
 | `guides/observability.md` | Spans, metrics, and the governance-audit primitive. *(planned)* |
-| `guides/platform-conventions.md` | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. *(planned)* |
+| [`guides/platform-conventions.md`](guides/platform-conventions.md) | High-performance JSON with CTJ, keyset pagination, bounded counts, api-first codegen. **(done)** |
 
 ### Architecture Decision Records
 
