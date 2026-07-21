@@ -235,8 +235,9 @@ everything else flows through the shared store.
 > the runner machine-principal identity remain design intent.
 
 The §5.4 registry above is environment-agnostic and unscoped: a flat global list of processes with no notion of
-*which environment* a runner serves or *whose* it is. That is the gap flagged in `ux-review.md §7.7` ("Runners
-(not yet designed): runners execute in/for an environment and must have the environment's credential set"). It is
+*which environment* a runner serves or *whose* it is. That is the gap the runner-to-environment binding closes
+([ADR 0027](../arazzo/adr/0027-runner-environment-binding.md)): a runner executes in and for an environment and
+must have that environment's credential set. It is
 also an inconsistency: environments are first-class, governed, **reach-scoped** resources
 (`Environment.managementTags`, e.g. `tenant=acme`, §14.2); availability is per `(workflow, version, environment)`
 (§7.8); source credentials and base URLs resolve **per environment** (the transport binder is literally
@@ -1573,10 +1574,10 @@ eligible-for-All`) remains step 6.
 > **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
 > **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped
 > `sys:` identity **contains** the target's named identity. See
-> [`identity-membership-campaign.md`](identity-membership-campaign.md) for the decision, the current-state map of every
-> matching surface, and an antagonistic review of the remaining asymmetries (the environment reverse-index and the
-> administration mutation gates are still exact and are tracked there). The paragraph below is retained as the original
-> resolved-grantee rationale; read "set-equality" as "subset" for the authorization surfaces.
+> [ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md) for the decision and the
+> authorization-versus-identity-operation classification (the identity operations, add-idempotency, digest removal,
+> and the collision probe, stay exact by design). The paragraph below is retained as the original resolved-grantee
+> rationale; read "set-equality" as "subset" for the authorization surfaces.
 
 Administration (§15) and entitlement (§16.5) both **name a security identity**, and membership is **exact set-equality**
 on the caller's whole stamped `sys:` identity (`WorkflowAdministrators.IsAdministeredBy` — *"a superset or partial match

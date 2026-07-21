@@ -160,16 +160,15 @@ Both must pass.
 ## <a id="normalization-decisions"></a>Normalization decisions
 
 Conflicts found by the 2026-07 docs sweep, and the canonical resolutions. Renames were marked ⚠
-while pending; the 2026-07 normalization pass ([`terminology-normalization.md`](./terminology-normalization.md))
-has since applied them all, so no ⚠ remain.
+while pending; the 2026-07 normalization pass has since applied them all, so no ⚠ remain.
 
 | # | Conflict | Resolution |
 |---|----------|------------|
-| A | "Scope" means (1) capability tier, (2) the per-verb grant value `Scoped`, (3) the UI's "Scopes" panel which actually edits security *rules* (`ux-review.md` §"Scopes = security rules"). | (1) is canonical: **capability scope**. Say **scoped reach** for (2). The UI surface is **Rules** (tag `arazzo-rules-panel`); `ui-design.md`, `security-ui-design.md`, `ux-review.md` copy updated. |
+| A | "Scope" means (1) capability tier, (2) the per-verb grant value `Scoped`, (3) the UI's "Scopes" panel which actually edits security *rules*. | (1) is canonical: **capability scope**. Say **scoped reach** for (2). The UI surface is **Rules** (tag `arazzo-rules-panel`); `ui-design.md` and `security-ui-design.md` copy updated. |
 | B | The grant object has four names: grant / security binding / grant binding / claim→rule binding. | **Grant binding** is canonical in docs/UI; **security binding** is recorded as the API/wire synonym. |
-| C | "Source" is overloaded: in-document description, the file, the registry entry, and the UI "Sources" tab that actually manages credentials. | Three precise terms — **source description**, **source document**, **registered source**. The credential-management tab is now **Connections** (was "Sources"); demo, `ui-design.md`, `ux-review.md` updated. |
-| D | "Draft" is also allocation-campaign jargon for a pooled document being built at a store's write leaf (`allocation-matrix.md`, `ValidateDraft`). | **Draft** is the lifecycle term only. Scope-qualify the allocation jargon as **write draft** (or rename to *builder document*) in campaign docs/code as touched. |
+| C | "Source" is overloaded: in-document description, the file, the registry entry, and the UI "Sources" tab that actually manages credentials. | Three precise terms: **source description**, **source document**, **registered source**. The credential-management tab is now **Connections** (was "Sources"); demo and `ui-design.md` updated. |
+| D | "Draft" is also allocation-campaign jargon for a pooled document being built at a store's write leaf (`ValidateDraft`). | **Draft** is the lifecycle term only. Scope-qualify the allocation jargon as **write draft** (or rename to *builder document*) in campaign docs/code as touched. |
 | E | "Publish" as mint-a-version vs the `catalog-design.md` "publish/hosting service" that serves a version at an endpoint. | **Publish** = mint a catalog version. The endpoint-serving service is the **hosting service** (`catalog-design.md` future-phase section updated). |
 | F | Bare "tags" ambiguity (user tags vs security tags vs management tags). | Always qualify: **user tags** / **security tags** / **management tags**; **reach labels** is the umbrella. |
-| G | `ux-review.md` labels the Access area "Reach scopes", re-fusing the two planes. | Say **reach rules**; avoid "reach scopes". |
-| H | "Readiness" described as a soft check in one place and a hard gate in another (`ux-review.md`). | Readiness is a **hard gate** on promotion and the add-workflow wizard; views may *display* readiness, but promotion never bypasses it. |
+| G | The Access area was once labelled "Reach scopes", re-fusing the two planes. | Say **reach rules**; avoid "reach scopes". |
+| H | "Readiness" described as a soft check in one place and a hard gate in another. | Readiness is a **hard gate** on promotion and the add-workflow wizard; views may *display* readiness, but promotion never bypasses it. |

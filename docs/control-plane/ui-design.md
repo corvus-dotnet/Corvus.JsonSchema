@@ -803,7 +803,7 @@ resolution, connection-level client certificate).
 
 ### Subsequent epic — sources / environments / promotion (§7.6–7.8) — DELIVERED
 
-The review feedback above led into the larger **governed-deployment** epic (design `ux-review.md` §7.6–7.8), now
+The review feedback above led into the larger **governed-deployment** epic, now
 delivered full-stack (API-first → 10 durability backends + conformance → handler → CLI → mock + UI):
 
 - **§7.6 sources registry** — a first-class `/sources` registry consumed by the **stepped add-workflow wizard**
