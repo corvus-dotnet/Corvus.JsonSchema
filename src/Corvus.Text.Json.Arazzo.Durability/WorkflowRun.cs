@@ -22,6 +22,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public sealed class WorkflowRun : IWorkflowRun, IDisposable
 {
+    // ADR 0050: the per-step journal is capped so a pathological goto-loop cannot bloat the checkpoint.
+    private const int JournalCap = 500;
+
     private readonly IWorkflowStateStore store;
     private readonly TimeProvider timeProvider;
     private readonly PooledUtf8Map<int> retryCounts;
@@ -42,6 +45,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private WorkflowPauseConfig? pause;
     private int pauseStartCursor;
     private DateTimeOffset? resumeRequestedAt;
+
+    // ADR 0050: the per-step journal, accumulated by RecordStep and persisted in the checkpoint. Capped so a
+    // pathological goto-loop cannot bloat the checkpoint; past the cap the oldest entries are dropped and the run
+    // marks the journal truncated.
+    private readonly List<WorkflowStepJournalEntry> stepJournal;
+    private bool journalTruncated;
 
     private WorkflowRun(
         IWorkflowStateStore store,
@@ -92,6 +101,13 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.pause = pause;
         this.pauseStartCursor = cursor;
         this.resumeRequestedAt = resumeRequestedAt;
+
+        // ADR 0050: restore the per-step journal from the resumed checkpoint (empty for a fresh run, or a run whose
+        // checkpoint predates the journal).
+        this.stepJournal = resumedState?.StepJournal is { Count: > 0 } restoredJournal
+            ? new List<WorkflowStepJournalEntry>(restoredJournal)
+            : [];
+        this.journalTruncated = resumedState?.JournalTruncated ?? false;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -276,6 +292,18 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <inheritdoc/>
     public void SetRetryCount(string stepId, int count) => this.retryCounts.Set(stepId, count);
+
+    /// <inheritdoc/>
+    public void RecordStep(string stepId, WorkflowStepStatus status, int attempt, DateTimeOffset startedAt, DateTimeOffset endedAt)
+    {
+        this.stepJournal.Add(new WorkflowStepJournalEntry(stepId, status, attempt, startedAt, endedAt));
+        if (this.stepJournal.Count > JournalCap)
+        {
+            // Keep the most recent JournalCap entries: drop the oldest and mark the journal truncated (ADR 0050).
+            this.stepJournal.RemoveAt(0);
+            this.journalTruncated = true;
+        }
+    }
 
     /// <summary>
     /// Persists this freshly created run in its <see cref="WorkflowRunStatus.Pending"/> state so a dispatcher
@@ -557,7 +585,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.environment,
             this.pause,
             this.resumeRequestedAt,
-            updatedAt);
+            updatedAt,
+            this.stepJournal,
+            this.journalTruncated);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,

@@ -63,6 +63,49 @@ public sealed class WorkflowCheckpointSerializerTests
         // A checkpoint written without the updatedAt stamp (this one, and any persisted before the stamp existed)
         // deserializes with no UpdatedAt rather than a fabricated instant.
         state.UpdatedAt.ShouldBeNull();
+
+        // A checkpoint written without a step journal (ADR 0050) deserializes to an empty journal, not null.
+        state.StepJournal.ShouldBeEmpty();
+        state.JournalTruncated.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Round_trips_the_step_journal()
+    {
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+
+        DateTimeOffset started = new(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
+        var journal = new List<WorkflowStepJournalEntry>
+        {
+            new("getPet", WorkflowStepStatus.Succeeded, 1, started, started.AddMilliseconds(12)),
+            new("adopt", WorkflowStepStatus.Faulted, 3, started.AddSeconds(1), started.AddSeconds(2)),
+            new("notify", WorkflowStepStatus.Skipped, 1, started.AddSeconds(3), started.AddSeconds(3)),
+        };
+
+        byte[] bytes = WorkflowCheckpointSerializer.Serialize(
+            "run-1",
+            "petWorkflow",
+            WorkflowRunStatus.Faulted,
+            cursor: 2,
+            CreatedAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            stepJournal: journal,
+            journalTruncated: true);
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(bytes);
+
+        state.JournalTruncated.ShouldBeTrue();
+        state.StepJournal.Count.ShouldBe(3);
+        state.StepJournal[0].ShouldBe(new WorkflowStepJournalEntry("getPet", WorkflowStepStatus.Succeeded, 1, started, started.AddMilliseconds(12)));
+        state.StepJournal[1].StepId.ShouldBe("adopt");
+        state.StepJournal[1].Status.ShouldBe(WorkflowStepStatus.Faulted);
+        state.StepJournal[1].Attempt.ShouldBe(3);
+        state.StepJournal[2].Status.ShouldBe(WorkflowStepStatus.Skipped);
     }
 
     [TestMethod]

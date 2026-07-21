@@ -35,7 +35,9 @@ public sealed class WorkflowCheckpointState : IDisposable
         string? environment = null,
         WorkflowPauseConfig? pause = null,
         DateTimeOffset? resumeRequestedAt = null,
-        DateTimeOffset? updatedAt = null)
+        DateTimeOffset? updatedAt = null,
+        IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
+        bool journalTruncated = false)
     {
         this.document = document;
         this.RunId = runId;
@@ -57,6 +59,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Pause = pause;
         this.ResumeRequestedAt = resumeRequestedAt;
         this.UpdatedAt = updatedAt;
+        this.StepJournal = stepJournal ?? [];
+        this.JournalTruncated = journalTruncated;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -76,6 +80,12 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets when the checkpoint was written, if the writer stamped it (absent on a checkpoint written before the stamp existed).</summary>
     public DateTimeOffset? UpdatedAt { get; }
+
+    /// <summary>Gets the run's per-step journal (ADR 0050): one payload-free entry per step execution recorded so far. Empty on a checkpoint written before the journal existed.</summary>
+    public IReadOnlyList<WorkflowStepJournalEntry> StepJournal { get; }
+
+    /// <summary>Gets a value indicating whether the journal was capped and its oldest entries dropped.</summary>
+    public bool JournalTruncated { get; }
 
     /// <summary>Gets the restored per-step retry attempt counts (a pooled UTF-8-keyed map; disposed with this state).</summary>
     public PooledUtf8Map<int> RetryCounters { get; }

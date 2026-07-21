@@ -71,7 +71,9 @@ public static class WorkflowCheckpointSerializer
         string? environment = null,
         WorkflowPauseConfig? pause = null,
         DateTimeOffset? resumeRequestedAt = null,
-        DateTimeOffset? updatedAt = null)
+        DateTimeOffset? updatedAt = null,
+        IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
+        bool journalTruncated = false)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -158,6 +160,30 @@ public static class WorkflowCheckpointSerializer
             }
 
             writer.WriteEndObject();
+
+            // The per-step journal (ADR 0050): payload-free metadata entries, one per step execution, in order. Written
+            // only when there are entries so an unjournaled run's checkpoint is byte-identical to before.
+            if (stepJournal is { Count: > 0 } journal)
+            {
+                writer.WriteStartArray("stepJournal"u8);
+                for (int i = 0; i < journal.Count; i++)
+                {
+                    WorkflowStepJournalEntry entry = journal[i];
+                    writer.WriteStartObject();
+                    writer.WriteString("stepId"u8, entry.StepId);
+                    writer.WriteString("status"u8, StepStatusName(entry.Status));
+                    writer.WriteNumber("attempt"u8, entry.Attempt);
+                    writer.WriteString("startedAt"u8, entry.StartedAt);
+                    writer.WriteString("endedAt"u8, entry.EndedAt);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+                if (journalTruncated)
+                {
+                    writer.WriteBoolean("journalTruncated"u8, true);
+                }
+            }
 
             if (outputs.ValueKind != JsonValueKind.Undefined)
             {
@@ -381,7 +407,24 @@ public static class WorkflowCheckpointSerializer
                 ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
                 : null;
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt);
+            List<WorkflowStepJournalEntry>? journalEntries = null;
+            if (root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array)
+            {
+                journalEntries = new List<WorkflowStepJournalEntry>(journalElement.GetArrayLength());
+                foreach (JsonElement entry in journalElement.EnumerateArray())
+                {
+                    journalEntries.Add(new WorkflowStepJournalEntry(
+                        entry.GetProperty("stepId"u8).GetString() ?? string.Empty,
+                        Enum.Parse<WorkflowStepStatus>(entry.GetProperty("status"u8).GetString() ?? nameof(WorkflowStepStatus.Succeeded)),
+                        entry.GetProperty("attempt"u8).GetInt32(),
+                        entry.GetProperty("startedAt"u8).GetDateTimeOffset(),
+                        entry.GetProperty("endedAt"u8).GetDateTimeOffset()));
+                }
+            }
+
+            bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.GetBoolean();
+
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated);
         }
         catch
         {
@@ -461,6 +504,14 @@ public static class WorkflowCheckpointSerializer
 
     // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a
     // string per call the way Enum.ToString() does. Names match the enum members so Enum.Parse round-trips.
+    private static string StepStatusName(WorkflowStepStatus status) => status switch
+    {
+        WorkflowStepStatus.Succeeded => nameof(WorkflowStepStatus.Succeeded),
+        WorkflowStepStatus.Faulted => nameof(WorkflowStepStatus.Faulted),
+        WorkflowStepStatus.Skipped => nameof(WorkflowStepStatus.Skipped),
+        _ => nameof(WorkflowStepStatus.Succeeded),
+    };
+
     private static string StatusName(WorkflowRunStatus status) => status switch
     {
         WorkflowRunStatus.Pending => nameof(WorkflowRunStatus.Pending),

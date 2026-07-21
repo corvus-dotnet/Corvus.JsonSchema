@@ -62,6 +62,22 @@ public interface IWorkflowRun
     /// <param name="count">The current attempt count.</param>
     void SetRetryCount(string stepId, int count);
 
+    /// <summary>
+    /// Stages a per-step journal entry for the next checkpoint (ADR 0050): payload-free metadata attesting that a
+    /// step executed, with what outcome, on which attempt, and over what time window. The default is a no-op, so a
+    /// non-durable or non-recording run keeps no journal; a durable run overrides it to accumulate the journal in
+    /// the checkpoint.
+    /// </summary>
+    /// <param name="stepId">The id of the step the entry records.</param>
+    /// <param name="status">The step's outcome.</param>
+    /// <param name="attempt">The 1-based attempt number the entry records.</param>
+    /// <param name="startedAt">When the step's execution began.</param>
+    /// <param name="endedAt">When the step's execution ended.</param>
+    void RecordStep(string stepId, WorkflowStepStatus status, int attempt, DateTimeOffset startedAt, DateTimeOffset endedAt)
+    {
+        // Default: a run that keeps no journal records nothing.
+    }
+
     /// <summary>Persists the run's current state at <paramref name="cursor"/> (called after a step completes).</summary>
     /// <param name="cursor">The state index of the next step to run on resume.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
