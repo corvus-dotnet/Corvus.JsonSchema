@@ -613,8 +613,8 @@ the administration, bindings, credential-usage, overview, and catalog surfaces.
 identity by a pluggable directory seam **∪** a store-indexed observed-identity typeahead **∪** a validated free-typed
 subject id; the `{dimension, value}` tuple is never hand-assembled. The control plane separates **three surfaces** over
 one resolved identity, **operate** (`runs:read`/`runs:write`, reach-scoped, *built*), **administer** (§15 governance,
-*built*), and **view** (`catalog:read`, reach-scoped, *grantable server-side*, §17.3; the UI picker that drives it is
-design-intent), so granting sight or operation of a workflow never implies administering it. Arazzo-owned
+*built*), and **view** (`catalog:read`, reach-scoped, *grantable server-side*, §17.3, *built* via the access-request
+picker, where View is the default scope), so granting sight or operation of a workflow never implies administering it. Arazzo-owned
 identity/entitlement/reach queries are to be indexed and store-pushed-down; as built, the observed-identity typeahead and
 the `/identity/grantees` search are reach-filtered, and the by-subject binding query (self-elevation eligibility) is
 pushed down natively where the backend supports it. The directory adapters and backend stores **ship**; the
