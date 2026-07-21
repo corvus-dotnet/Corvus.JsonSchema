@@ -17,7 +17,7 @@ Every element is a custom element registered through `define('arazzo-...', ...)`
 | [Catalog](#catalog) | `catalog`, `catalog-table`, `catalog-detail`, `catalog-add-dialog`, `availability-matrix`, `availability-request-dialog`, `availability-requests`, `workflow-compare` |
 | [Environments and sources](#environments-and-sources) | `environments`, `environment-input`, `environment-picker`, `sources`, `source-operations`, `source-acquisition-dialog` |
 | [Credentials](#credentials) | `credentials`, `credentials-table`, `credential-detail`, `credential-dialog` |
-| [Security and access](#security-and-access) | `access-overview`, `access-requests`, `access-request-dialog`, `grants-panel`, `rules-panel`, `administrators-panel`, `grantee-picker`, `admin-grant-input`, `auth-status` |
+| [Security and access](#security-and-access) | `access-overview`, `access-requests`, `access-request-dialog`, `grants-panel`, `rules-panel`, `administrators-panel`, `grantee-picker`, `auth-status` |
 | [Designer](#designer) | `design-surface`, `text-editor`, `workflow-inspector`, `step-inspector`, `document-inspector`, `criteria-editor`, `action-editor`, `outputs-editor`, `payload-editor`, `expression-input`, `schema-editor`, `value-editor`, `scenario-panel`, `scenario-editor`, `debug-tray`, `operation-browser`, `workspace-table`, `git-dialog`, `git-tree`, `github-connect` |
 | [Shared primitives](#shared-primitives) | `pager`, `status-badge`, `splitbar`, `input-dialog`, `json-view`, `tag-editor`, and the picker family |
 
@@ -347,12 +347,6 @@ Source: `grantee-picker.js`.
 
 - **Attributes:** `placeholder`, `kind`, `kinds`, `source`, `base-url`
 - **Events:** `grantee-selected`, `grantee-cleared`, `error`
-- **Hosts:** falls back to `arazzo-admin-grant-input`
-
-### `<arazzo-admin-grant-input>`
-
-Interim `{dimension, value}` admin-identity input, superseded by `arazzo-grantee-picker`
-(see [Deprecations](#deprecations)). Source: `admin-grant-input.js`.
 
 ### `<arazzo-auth-status>`
 
@@ -598,7 +592,3 @@ objects.
 - **`arazzo-scopes-panel` is an alias of `arazzo-rules-panel`** (`scopes-panel.js`). `arazzo-rules-panel` is
   the primary registration; `arazzo-scopes-panel` is a kept-for-compatibility alias subclass. "Rule" is the
   user-facing term; the `scopes-changed` event and the `scopes` file name persist only for back-compatibility.
-- **`arazzo-admin-grant-input` is superseded by `arazzo-grantee-picker`** (`admin-grant-input.js`). It is the
-  interim free-form `{dimension, value}` input; the picker resolves a real grantee to its exact identity
-  ([ADR 0008](../adr/0008-resolved-grantee-resolution.md)) and is the correct-by-construction successor (it
-  still falls back to hosting the interim input).

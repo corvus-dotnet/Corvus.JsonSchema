@@ -11,7 +11,7 @@
 // Properties : .client, .grant (resolved grantee | null), .reset()
 // Events     : grantee-selected {detail:{grantee}}, grantee-cleared, error {detail:{problem}}
 //
-// This is the correct-by-construction replacement for the interim <arazzo-admin-grant-input>: instead of making
+// This resolves an administrator by identity, not by a hand-assembled tuple: instead of making
 // an operator hand-assemble a {dimension,value} tuple and guess the deployment's grain (a wrong value silently
 // matches no one, over-grants a tenant, or locks the caller out — the §16.5.4 hazard), the operator names a
 // *real* person/team/role/workflow and the server (GET /identity/grantees, directory + observed sources,

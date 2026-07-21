@@ -526,7 +526,7 @@ seen**, or a **validated well-known subject id**; it would drive three choices �
 > `<arazzo-administrators-panel>`); and — now built — the **resolved-grantee `<arazzo-grantee-picker>`** itself (a
 > `GET /identity/grantees` typeahead → resolved `sys:` identity, with a `kinds` allow-list so a surface admits only the
 > grantee kinds it should), wired into the administrator panels and the add-workflow wizard. It **replaces** the earlier
-> interim `<arazzo-admin-grant-input>` tuple builder. The **"view" grant** (`catalog:read`) **is** offered — as the
+> interim `{dimension, value}` tuple builder. The **"view" grant** (`catalog:read`) **is** offered — as the
 > default, least-privilege option in `<arazzo-access-request-dialog>` (§17.3: View / Read runs / Operate), self-service
 > via the request → approve path, with `catalog:read` in the server's `AccessRequestApprovalService.GrantableScopes`.
 > **Deliberate non-goal:** a *unified picker* by which an administrator grants View (or Operate) to a **named third
@@ -624,7 +624,7 @@ composes directly (as the demo page does) — there is no separate packaged cred
   section (`<arazzo-administrators-panel>`) and a self-service **Request access…** action
   (`<arazzo-access-request-dialog>`, locked to the workflow).
 - Toolbar: a guarded **Add version** entry (`<arazzo-catalog-add-dialog>`, `catalog:write`); the Add-workflow
-  flow can stage administration (the interim `<arazzo-admin-grant-input>`) and set up per-source credential
+  flow can stage administration (via `<arazzo-grantee-picker>`) and set up per-source credential
   bindings after the version lands (the guided `<arazzo-credential-dialog>` locked to each declared source).
 
 ### Credentials, access, permissions, environments & promotion surfaces (Layer-1, host-composed)
@@ -697,8 +697,8 @@ web/arazzo-control-plane-ui/
 │                                        resume-dialog, cancel-button, purge-dialog, value-editor,
 │                                        workflow-id-input, workflow-step-picker; catalog: catalog-table,
 │                                        catalog-detail, catalog-add-dialog; credentials: credentials-table,
-│                                        credential-dialog; administrators-panel, admin-grant-input (uncommitted
-│                                        interim); access-requests-panel (<arazzo-access-requests>),
+│                                        credential-dialog; administrators-panel, grantee-picker;
+│                                        access-requests-panel (<arazzo-access-requests>),
 │                                        access-request-dialog
 ├─ demo/                              ← DEV-ONLY sample (not published)
 │  ├─ index.html                       live demo wired to the mock
