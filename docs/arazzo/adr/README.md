@@ -59,5 +59,16 @@ The template to follow for a full, fork-bearing ADR is
 | [0021](0021-state-store-abstraction.md) | The state-store abstraction: core store plus optional wait index | Accepted |
 | [0022](0022-resume-mode-taxonomy.md) | The resume-mode taxonomy | Accepted |
 
-Later domains (the runner, the catalog, the web kit, platform conventions) extend the numbering as their
-slices land.
+### Runner and execution host
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0023](0023-two-process-store-as-queue.md) | Two processes sharing the store, never calling each other on the hot path | Accepted |
+| [0024](0024-collectible-assembly-per-version.md) | One collectible assembly per version, loaded and unloaded on demand | Accepted |
+| [0025](0025-integrity-binding-optional-signature.md) | Integrity binding, with an optional signature custody split | Accepted |
+| [0026](0026-triggers-async-by-default.md) | Triggers are async by default | Accepted |
+| [0027](0027-runner-environment-binding.md) | Runner-to-environment binding, with the revocation fence in the store | Accepted |
+| [0028](0028-pluggable-execution-backends.md) | Pluggable execution backends and isolation models | Proposed |
+| [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
+
+Later domains (the catalog, the web kit, platform conventions) extend the numbering as their slices land.
