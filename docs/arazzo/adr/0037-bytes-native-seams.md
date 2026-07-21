@@ -33,6 +33,11 @@ bytes, builds typed documents into pooled arenas, and reads through generated ty
 - **A string is materialised only at the leaf.** A managed string, or an owned `byte[]`, is produced only at
   the genuine sink: a database parameter, a searchable indexed column, or a driver whose API only accepts an
   array. This is the "realise at leaf" rule.
+- **The string contract survives as a deliberate opt-in at extension points.** Bytes-native is the default for
+  in-box, warm-path code, but the ergonomic string or record contract is kept on purpose where a third party or
+  a cold caller needs it: a deployment-authored directory mapper (`IDirectoryIdentityMapper`) gets the record
+  contract while the built-in adapters take the bytes path, and cold or compatibility surfaces
+  (`SourceCredentialStoreExtensions`) keep their string forms. Bytes-native is not a mandate to strip these.
 
 ## Decision
 
@@ -54,3 +59,6 @@ API). The record-to-document string round-trip on a warm path is the anti-patter
 - Reifying a string only at the leaf keeps the paging token ([ADR 0035](0035-keyset-pagination-everywhere.md))
   and the count ([ADR 0036](0036-bounded-count-contract.md)) allocation-lean, because their hot paths never
   build an intermediate string.
+- The anti-pattern is the string round-trip on a warm in-box path, not the existence of a string contract. An
+  extension point deliberately offers the string form for the author who needs it, so the rule governs the
+  default path, not a ban on the string surface.

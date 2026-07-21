@@ -80,5 +80,9 @@ raw OIDC claims.
   subset-digests, so the write path is unchanged and the read stays an indexed lookup, not a scan.
 - Coarse over-reach is prevented not by narrowing the identity but by resolving grantees to the exact grain
   before storing them (ADR 0008).
-- An identity-collision probe re-examines "conflict" under membership rather than set-equality
-  (`FindIdentityConflictAsync`).
+- Membership governs the **authorization** facets only. A distinct class of **identity operations** stays exact
+  by design: add-idempotency and digest-keyed removal in the observed-identity and administrator stores, and the
+  uniqueness collision probe (`FindIdentityConflictAsync`), whose 409 stays exact set-equality with membership
+  added only as a non-blocking broadening advisory. When a new identity-matching surface is added it is
+  classified first, an authorization facet matches by membership, an identity operation stays exact, so the
+  asymmetry between the two that produced the earlier matching bugs cannot recur unrecorded.

@@ -25,6 +25,13 @@ can end up in a log or a trace, which is exactly the sensitive data the disclosu
   that takes one.
 - **It is zero-cost when unobserved.** The span is zero-cost when no listener is attached, and the log is
   emitted only if the host wired an audit logger, so the primitive costs nothing when nobody is watching.
+- **It also feeds a governance-decision rate counter.** Alongside the span and log, `Mutation` increments
+  `ArazzoTelemetry.GovernanceDecisions` dimensioned by action and outcome, so approval, denial, revocation, and
+  refusal rates are queryable per action without a bespoke counter each.
+- **The audited actor is the authenticated principal, and a refusal is audited too.** The `actor` is the caller
+  who performed the action, not a domain service's fixed owner identity, and a refused governed action is
+  audited with its refusal outcome (for example `refused-own-request`), because a security control firing is
+  exactly what an audit wants to record.
 
 ## Decision
 
@@ -45,3 +52,5 @@ unobserved.
   deployments that do not collect it.
 - Because the primitive is shared, adding a new governed action means calling it, not inventing a new audit
   shape, which keeps the trail consistent as the surface grows.
+- Governance decisions are observable as a rate, not only as individual spans, so a deployment can alert on a
+  spike in denials or refusals without instrumenting each action.

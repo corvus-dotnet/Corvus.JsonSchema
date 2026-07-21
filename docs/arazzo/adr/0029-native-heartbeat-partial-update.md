@@ -24,6 +24,14 @@ than bytes.
   step, taking the heartbeat from read-then-write to a single write.
 - **It is a distinct optimisation axis.** This is the throughput campaign, measured by round-trips and payload
   rather than by `MemoryDiagnoser`, and it applies where the backend can express a server-side partial update.
+- **In-place JSON patching needs a charset-safe column.** A server-side JSON patch is only correct where the
+  column decodes with an explicit UTF-8 charset. `SqlServerRunnerRegistry` stores the document in a
+  `VARCHAR(MAX)` column under a `_UTF8` collation so `JSON_MODIFY` is safe, and reads it back bytes-native with
+  `CAST(doc AS VARBINARY(MAX))`; a raw binary column would double-encode non-ASCII. An in-place JSON edit is
+  guarded by a non-ASCII probe, because a conformance suite that exercises only ASCII would miss the corruption.
+- **The indexed column and the mirrored field update together.** The heartbeat advances both the queryable
+  `last_seen_at` column and the document's mirrored `lastSeenAt` field in the one statement, so a later read
+  reconstructs a consistent record; letting the two drift would be a data bug.
 
 ## Decision
 
@@ -38,7 +46,14 @@ heartbeat falls back to the read-modify-write, but the common relational and doc
   on the backends that support it.
 - The optimisation is local to the heartbeat path. The rest of the persistence layer keeps its read-load-write
   shape where a full document is genuinely being replaced; only this hot, single-field update is specialised.
-- Because it is measured in round-trips, its benefit shows up under container-backed latency benchmarks rather
-  than allocation benchmarks, which is the throughput campaign's measurement axis.
+- Because it is measured in round-trips, the definitive metric is the structural round-trip and payload count,
+  not a local latency delta. A local-container benchmark systematically under-measures the win, since the
+  collapse can show no local delta yet still remove a full round-trip in production, so a correct round-trip
+  reduction is kept on the structural count and not reverted for want of a local latency difference.
+- The single-statement path is taken only where the backend stores queryable JSON with a charset-safe column
+  (Postgres, SQL Server, MySQL, Cosmos). A backend that stores the document as an opaque blob or a whole value
+  (Sqlite in-process, Mongo's BSON, Azure Storage's binary property, Redis and NATS KV) keeps the
+  read-modify-write, because a partial update there would need an invasive reshape or a read-side reconstruction
+  for no net win.
 - The lease and authorization paths ([ADR 0027](0027-runner-environment-binding.md)) are not changed by this;
   only the liveness heartbeat is specialised.

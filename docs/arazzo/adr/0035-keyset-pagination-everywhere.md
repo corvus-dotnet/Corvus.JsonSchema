@@ -26,6 +26,12 @@ degrade.
   is a sealed disposable class, not a record struct: a value copy would double-return the pooled rent.
 - **The exemptions are named.** A bounded single-record read (the administrators of one workflow) and small
   configuration (the label orderings) are the documented exceptions, because they are bounded by construction.
+- **Search is part of the same principle.** A client-side filter over a fully loaded list is find, not scale,
+  because it still loads and renders every row. The list surfaces pair paging with a server-side `q` search (the
+  security rules list debounces `q` into `searchSecurityRules`), so the filtered case is bounded too.
+- **Paging bounds the client-facing list surface, not every internal read.** An internal full-corpus read that
+  is not a client list stays unpaged by design: `PersistentRowSecurityPolicy.RefreshAsync` compiles the whole
+  rule set in a single load, a bounded internal need rather than a list a caller pages.
 
 ## Decision
 
@@ -43,3 +49,5 @@ as a latent failure, and the only exceptions are results bounded by construction
   the store's key, and the store can change its physical cursor without changing the token contract.
 - The bytes-native token carrier keeps the paging hot path allocation-lean
   ([ADR 0037](0037-bytes-native-seams.md)), reifying a string only at the backend leaf.
+- Search is server-side, so filtering a large list does not degrade into loading it whole; the filtered read is
+  bounded by the same page, not by the client.
