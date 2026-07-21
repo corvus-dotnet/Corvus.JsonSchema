@@ -243,9 +243,26 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         string own = await host.SubmitAsync("checkout", 1, "production", "acme");
         (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{own}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        audit.Outcomes(approved).ShouldBe(["approved"]);
-        audit.Outcomes(denied).ShouldBe(["denied"]);
-        audit.Outcomes(own).ShouldBe(["refused-own-request"]);
+        audit.Outcomes(approved).ShouldBe(["submitted", "approved"]);
+        audit.Outcomes(denied).ShouldBe(["submitted", "denied"]);
+        audit.Outcomes(own).ShouldBe(["submitted", "refused-own-request"]);
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_a_promotion_request_and_the_non_requester_refusal_emit_governance_audit_spans()
+    {
+        // §850: the requester withdrawing their own promotion request is audited (closing the parallel gap with the
+        // access-request withdraw), and a non-requester's refused attempt leaves a trace too.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+
+        string id = await host.SubmitAsync("checkout", 1, "production", "globex");
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/withdraw", "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/withdraw", "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.Outcomes(id).ShouldBe(["submitted", "refused-not-requester", "withdrawn"]);
     }
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)

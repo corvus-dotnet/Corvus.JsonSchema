@@ -20,8 +20,8 @@ The run lifecycle emits its own counters and the checkpoint histogram (see the
 ([ADR 0013](../adr/0013-step-output-disclosure-tier.md)). Ordinary list and get reads are not audited by design.
 
 This catalog was verified against the control-plane handlers and `ArazzoTelemetry`. The
-[not-yet-instrumented](#not-yet-instrumented) section at the end records the actions and instruments that are
-not covered today, so the catalog states reality rather than intent.
+[not-yet-instrumented](#not-yet-instrumented) section at the end records the instruments not yet emitted, so the
+catalog states reality rather than intent.
 
 ## Runs (O-RUN)
 
@@ -50,8 +50,10 @@ not covered today, so the catalog states reality rather than intent.
 | Add, transfer, or remove environment administrator | `environment.add-administrator` / `.transfer-administration` / `.remove-administrator` | decisions | yes |
 | Promote (make a version available) | `environment.promote` | decisions | yes |
 | Demote (withdraw availability) | `environment.demote` | decisions | yes |
+| Submit a promotion request | `availability-request.submit` | decisions | yes |
 | Approve promotion request | `availability-request.approve` | decisions | yes |
 | Deny promotion request | `availability-request.deny` | decisions | yes |
+| Withdraw a promotion request | `availability-request.withdraw` | decisions | yes |
 
 ## Sources and credentials (O-CRED)
 
@@ -76,7 +78,7 @@ Rule ordering is deployment configuration, not a runtime mutation, so there is n
 
 | Action | Span | Metric | Audit log |
 |---|---|---|---|
-| Submit a request | none | none | none (see below) |
+| Submit a request | `access-request.submit` | decisions | yes |
 | Approve (grant) | `access-request.approve` | decisions | yes |
 | Grant directly | `access-request.grant` | decisions | yes |
 | Grant as eligible | `access-request.grant-eligible` | decisions | yes |
@@ -111,8 +113,8 @@ A self-approval attempt is refused and audited on every decision verb, with the 
 | Start a debug run | `debug-run.start` | decisions | yes |
 | Cancel a debug run | `debug-run.cancel` | decisions | yes |
 | Delete a debug run | `debug-run.delete` | decisions | yes |
-| Resume a debug run | none | none | none (see below) |
-| Inject a message into a debug run | none | none | none (see below) |
+| Resume a debug run | `debug-run.resume` | decisions | yes |
+| Inject a message into a debug run | `debug-run.inject-message` | decisions | yes |
 
 ## Schedules (O-SCH)
 
@@ -131,19 +133,10 @@ A self-approval attempt is refused and audited on every decision verb, with the 
 
 ## Not yet instrumented
 
-These actions and instruments are known gaps in today's code. They are recorded here so the catalog is accurate,
-not aspirational.
-
-- **Submit an access request** emits no span, metric, or audit. The stakes are low (a request grants nothing until
-  it is decided, and every decision is audited), but the submission itself is not recorded.
-- **Submit a promotion (availability) request** emits no span, metric, or audit, for the same reason.
-- **Withdraw a promotion request** emits no audit, whereas the parallel access-request withdraw is audited. This
-  asymmetry is the clearest of the request-side gaps.
-- **Resume a debug run** and **inject a message into a debug run** emit no audit, whereas start, cancel, and delete
-  on the same designer surface are audited.
-- Four instruments are declared on the meter but not yet emitted by any production or generated code:
-  `corvus.arazzo.steps.retries`, `corvus.arazzo.gotos`, `corvus.arazzo.workflow.duration`, and
-  `corvus.arazzo.step.duration`.
+Every governed action above is audited. The remaining gap is on the metrics side: four instruments are declared on
+the meter but not yet emitted by any production or generated code, `corvus.arazzo.steps.retries`,
+`corvus.arazzo.gotos`, `corvus.arazzo.workflow.duration`, and `corvus.arazzo.step.duration`. Wiring their emission
+into the executor code generation is tracked separately from the governance-audit surface this catalog covers.
 
 ## See also
 

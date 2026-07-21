@@ -1549,6 +1549,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         workspace.TakeOwnership(v);
+        GovernanceAudit.Mutation(this.auditLogger, "debug-run.resume", this.AuditActor(), DebugRunTargetKind, runId.Value, "resumed");
         return ResumeDebugRunResult.Ok(v.RootElement, workspace);
     }
 
@@ -1613,6 +1614,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         workspace.TakeOwnership(v);
+        GovernanceAudit.Mutation(this.auditLogger, "debug-run.inject-message", this.AuditActor(), DebugRunTargetKind, runId.Value, "injected");
         return InjectDebugRunMessageResult.Ok(v.RootElement, workspace);
     }
 

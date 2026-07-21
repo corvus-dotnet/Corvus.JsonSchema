@@ -120,6 +120,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             baseWorkflowId, versionNumber, environment, reason, PrincipalDisplayName.Resolve(this.access.CurrentPrincipal));
         ParsedJsonDocument<AvailabilityRequest> created = await this.requests.CreateAsync(draft.RootElement, this.CallerActor(), cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(created);
+        GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.CallerActor(), TargetKind, created.RootElement.IdValue, "submitted");
         return SubmitAvailabilityRequestResult.Created(ToView(created.RootElement), workspace);
     }
 
@@ -413,6 +414,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // Only the requester may withdraw their own request (refused 403, distinct from a wrong-state conflict).
         if (!isRequester)
         {
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.CallerActor(), TargetKind, id, "refused-not-requester");
             return WithdrawAvailabilityRequestResult.Forbidden(NotRequesterProblem(), workspace);
         }
 
@@ -430,6 +432,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             }
 
             workspace.TakeOwnership(decided);
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.CallerActor(), TargetKind, id, "withdrawn");
             return WithdrawAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
         catch (AvailabilityRequestConflictException)

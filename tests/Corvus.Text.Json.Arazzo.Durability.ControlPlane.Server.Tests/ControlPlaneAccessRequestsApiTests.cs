@@ -260,10 +260,10 @@ public sealed class ControlPlaneAccessRequestsApiTests
     {
         // §850: a governance decision leaves an audit trace — the span names the action, the decider (actor), the
         // targeted request, and the outcome. The decider is the authenticated principal, not a fixed service identity.
-        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         await using Scoped host = await StartAsync();
         await EstablishAsync(host.Catalog, "flow", "boss");
         string id = await SubmitAsync(host, "flow", "alice");
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
 
         (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve", Auth, "boss")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -279,10 +279,10 @@ public sealed class ControlPlaneAccessRequestsApiTests
     {
         // The independent-decision bar refuses alice deciding her own request; that the security control fired — who
         // tried to self-approve what — is exactly the signal a security team wants, so the refusal is audited too.
-        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         await using Scoped host = await StartAsync();
         await EstablishAsync(host.Catalog, "flow", "alice");
         string id = await SubmitAsync(host, "flow", "alice");
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
 
         (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
@@ -295,16 +295,33 @@ public sealed class ControlPlaneAccessRequestsApiTests
     [TestMethod]
     public async Task Denying_a_request_emits_a_denied_governance_audit_span()
     {
-        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         await using Scoped host = await StartAsync();
         await EstablishAsync(host.Catalog, "flow", "boss");
         string id = await SubmitAsync(host, "flow", "alice");
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
 
         (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/deny", Auth, "boss")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         Activity span = audit.ForTarget(id);
         span.OperationName.ShouldBe("access-request.deny");
         span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("denied");
+    }
+
+    [TestMethod]
+    public async Task Submitting_a_request_emits_a_submitted_governance_audit_span()
+    {
+        // §850: the submission opens the request's audit trail, who asked for what, before any decision. The captured
+        // span names the requester, the new request id, and the submitted outcome.
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "boss");
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        string id = await SubmitAsync(host, "flow", "alice");
+
+        Activity span = audit.ForTarget(id);
+        span.OperationName.ShouldBe("access-request.submit");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("submitted");
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("alice");
+        span.GetTagItem(ArazzoTelemetry.TargetKindTag).ShouldBe("access-request");
     }
 
     private static async Task<string> SubmitAsync(Scoped host, string workflowId, string who)

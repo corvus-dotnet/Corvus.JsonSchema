@@ -287,6 +287,30 @@ public sealed class ControlPlaneDebugRunApiTests
     }
 
     [TestMethod]
+    public async Task Resuming_a_debug_run_emits_a_resumed_governance_audit_span()
+    {
+        // §850: continuing a paused debug run is a real re-execution, so it is audited alongside start and cancel.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
+
+        HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"},"pause":{"afterEachStep":true}}""", StartScopes);
+        started.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string debugRunId;
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // Advance to the after-first-step pause, then a bare resume carries the pause off (200, audited).
+        (await host.PumpAndGetAsync(id, debugRunId)).Dispose();
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.Outcomes(debugRunId).ShouldBe(["started", "resumed"]);
+    }
+
+    [TestMethod]
     public async Task A_run_with_no_pause_advances_straight_to_completion()
     {
         await using Scoped host = await StartAsync(withRunner: true, HappyMock());
@@ -515,6 +539,7 @@ public sealed class ControlPlaneDebugRunApiTests
     [TestMethod]
     public async Task Injecting_a_message_resumes_a_run_suspended_on_a_receive()
     {
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
         await using var messageTransport = new Corvus.Text.Json.AsyncApi.Testing.InMemoryMessageTransport();
         await using Scoped host = await StartAsync(withRunner: true, HappyMock(), messageTransport);
         string id = await host.CreateWorkingCopyAsync(ReceiveDoc, PetstoreDoc);
@@ -568,6 +593,9 @@ public sealed class ControlPlaneDebugRunApiTests
         (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message",
             """{"channel":"kyc.verdict","payload":{"approved":true}}""", StartScopes))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // §850: only the successful message injection is a governed action (the wrong-channel and terminal 409s are not).
+        audit.Outcomes(debugRunId).ShouldBe(["started", "injected"]);
     }
 
     private static MockApiTransport HappyMock()

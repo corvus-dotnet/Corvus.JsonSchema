@@ -96,6 +96,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         {
             ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(draft.RootElement, ActorOf(principal), principal, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(created);
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.submit", this.CallerActor(), TargetKind, created.RootElement.IdValue, "submitted");
             return SubmitAccessRequestResult.Created(ToView(created.RootElement), workspace);
         }
         catch (AccessRequestStateException ex)
