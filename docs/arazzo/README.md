@@ -23,7 +23,7 @@ guide owns the walkthrough, and the spec owns the exhaustive detail.
 | Guide | Covers |
 |-------|--------|
 | [`guides/auth-and-authorization.md`](guides/auth-and-authorization.md) | The two-plane access model, wiring authentication, authoring reach, the entitlement lifecycle. **(done)** |
-| `guides/authoring-generating-running.md` | Authoring an Arazzo document, generating an executor, running it. *(planned, absorbs the former docs/Arazzo.md scope)* |
+| [`guides/authoring-generating-running.md`](guides/authoring-generating-running.md) | Authoring an Arazzo document, generating an executor, running it. **(done, absorbs the former docs/Arazzo.md scope)** |
 | `guides/durability-and-state-stores.md` | The checkpoint model, resume, writing an `IWorkflowStateStore` backend. *(planned)* |
 | `guides/running-a-runner.md` | Deploying and operating an execution host. *(planned)* |
 | `guides/control-plane-rest-api.md` | The REST surface, client and CLI generation, scopes, resume modes. *(planned)* |

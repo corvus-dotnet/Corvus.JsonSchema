@@ -48,5 +48,16 @@ The template to follow for a full, fork-bearing ADR is
 | [0015](0015-access-overview-server-aggregated.md) | The access overview is server-aggregated | Accepted |
 | [0016](0016-control-plane-security-mode.md) | `ControlPlaneSecurityMode`: one explicit posture, no insecure default | Accepted |
 
-Later domains (engine and durability, the runner, the catalog, the web kit, platform conventions) extend
-the numbering as their slices land.
+### Engine and durability
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0017](0017-code-generate-the-executor.md) | Code-generate the executor, not a runtime interpreter | Accepted |
+| [0018](0018-generate-only-what-is-used.md) | Generate only the operations a workflow uses | Accepted |
+| [0019](0019-products-are-the-checkpoint.md) | The products are the checkpoint | Accepted |
+| [0020](0020-durability-is-opt-in-codegen.md) | Durability is opt-in code generation | Accepted |
+| [0021](0021-state-store-abstraction.md) | The state-store abstraction: core store plus optional wait index | Accepted |
+| [0022](0022-resume-mode-taxonomy.md) | The resume-mode taxonomy | Accepted |
+
+Later domains (the runner, the catalog, the web kit, platform conventions) extend the numbering as their
+slices land.
