@@ -91,4 +91,13 @@ The template to follow for a full, fork-bearing ADR is
 | [0038](0038-payload-safe-governance-audit.md) | A payload-safe governance-audit primitive | Accepted |
 | [0039](0039-api-first-openapi-source-of-truth.md) | API-first: the OpenAPI surface is the source of truth | Accepted |
 
-The web-kit domain extends the numbering as its slice lands.
+### Web kit and designer
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0040](0040-three-layer-web-kit.md) | The web kit is three layers, and Layer 1 never fetches | Accepted |
+| [0041](0041-standards-only-zero-build-elements.md) | Standards-only, zero-build custom elements | Accepted |
+| [0042](0042-auth-agnostic-host-owns-session.md) | Auth-agnostic: the host owns the session | Accepted |
+| [0043](0043-first-party-svg-design-surface.md) | A first-party SVG design surface, not a graph library | Accepted |
+| [0044](0044-collaboration-ready-document-model.md) | A collaboration-ready document model: identity-addressed operations with inverses | Accepted |
+| [0045](0045-debug-runs-never-credentials-in-browser.md) | Remote dev-environment debug runs, never credentials in the browser | Accepted |

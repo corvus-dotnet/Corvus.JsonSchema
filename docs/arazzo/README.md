@@ -29,8 +29,8 @@ guide owns the walkthrough, and the spec owns the exhaustive detail.
 | `guides/control-plane-rest-api.md` | The REST surface, client and CLI generation, scopes, resume modes. *(planned)* |
 | `guides/source-credentials.md` | `secretRef` storage, `ISecretResolver`, separation of duties. *(planned)* |
 | [`guides/catalog-and-promotion.md`](guides/catalog-and-promotion.md) | Packaging, publishing, promotion across environments, readiness. **(done)** |
-| `guides/web-ui-kit.md` | Adopting, theming, and composing the web component kit. *(planned)* |
-| `guides/ux-component-catalog.md` | Every `arazzo-*` component: purpose, attributes, events, composition. *(planned)* |
+| [`guides/web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit. **(done)** |
+| [`guides/ux-component-catalog.md`](guides/ux-component-catalog.md) | Every `arazzo-*` component: purpose, attributes, events, composition. **(done)** |
 | `guides/workflow-designer.md` | Scenarios, debug runs, the CI scenario runner. *(planned)* |
 | `guides/deployment-bootstrap.md` | The production bootstrap library versus demo seeding. *(planned)* |
 | `guides/observability.md` | Spans, metrics, and the governance-audit primitive. *(planned)* |
