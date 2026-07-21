@@ -986,8 +986,11 @@ is standard and **per-deployment configurable**, with a concrete strategy shippe
   plane keys entirely on `ClaimsPrincipal` and treats *how* claims are acquired as the host's concern, a deployment
   may synthesize claims from the request itself — a vanity host, a route prefix, an API-gateway header — through an
   `IClaimsTransformation` / middleware, so a `sys:` dimension such as `sys:tenant` need **not** come from the token.
-  This is sound for the *runtime caller*, but exact-set-equality membership (§16.5.4) imposes a consistency
-  requirement at *grant-authoring* time that is easy to miss. The full treatment — the seam, the trap, and how it is
+  This is sound for the *runtime caller*, but membership matching
+  ([ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md)) imposes a consistency
+  requirement at *grant-authoring* time that is easy to miss: a grant's named dimension only matches a caller
+  whose stamped identity will contain it, so an ambient dimension has to be authored with the same value it is
+  later stamped with. The full treatment — the seam, the trap, and how it is
   built — is **§16.5.5** (now implemented via the `IAmbientIdentityDimensions` provider).
 
 ### 14.2 Row-level security — security tags + rule engine
@@ -1142,9 +1145,11 @@ and freely editable. The authority is the **administrator**, and it is a *securi
   version-1 identity — surfaced as a synthetic display-only record — and the management operations are unavailable.)
 - **Publishing a further version requires being an administrator.** `SecuredWorkflowCatalog.AddAsync` refuses
   (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
-  administrator set — so `sys:workflow` cannot be squatted. Membership is order-independent set-equality on the
-  stamped identity (`WorkflowIdentity.SameAdministrator`); the catalog Add path carries the stamped identity, not an
-  `AccessContext`.
+  administrator set, so `sys:workflow` cannot be squatted. Membership is the subset test of
+  [ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md): a stored administrator identity
+  administers a submitter whose stamped identity contains it (`WorkflowIdentity.SameAdministrator`, founder ⊆
+  candidate). This supersedes the earlier set-equality rule. The catalog Add path carries the stamped identity,
+  not an `AccessContext`.
 
 ### 15.3 Managing administrators (reassignment and co-administration)
 
@@ -1180,16 +1185,17 @@ record** materialized at creation (§15.2) and the authoritative source thereaft
 
 The forward record answers *"who administers base id X?"*. The **approver inbox** (§16.5) needs the reverse: *"which
 workflows does this caller administer?"* — so an approver sees every pending access request they can act on, without
-having to name a workflow first. Because administration membership is **exact set-equality** ⟺ **digest-equality**
-(`WorkflowAdministrators.IsAdministeredBy` → `WorkflowIdentity.SameAdministrator` → `SecurityTagSet.SetEquals`;
-`SecurityIdentityDigest` is canonical, so "set-equal iff digests equal"), the reverse is an **indexed digest lookup**,
-never a scan:
+having to name a workflow first. Administration membership is the subset test of
+[ADR 0003](../arazzo/adr/0003-membership-matching-over-canonical-identity.md) (`WorkflowAdministrators.IsAdministeredBy`
+→ `WorkflowIdentity.SameAdministrator`, founder ⊆ candidate). The stored side stays keyed on the founder's canonical
+digest (`SecurityIdentityDigest`), so the reverse lookup is still indexed and never a scan; only the read side fans out,
+looking up every non-empty subset-digest of the caller's identity (`SecurityIdentityDigest.SubsetDigests`):
 
 - **Index.** Each `IWorkflowAdministratorStore` maintains a reverse map `adminDigest → {baseWorkflowId}` (the in-memory
-  analogue of a backend's indexed digest column — the `InMemoryObservedIdentityStore.byDigest` collision-probe pattern,
+  analogue of a backend's indexed digest column, the `InMemoryObservedIdentityStore.byDigest` collision-probe pattern,
   §16.5.4), refreshed on every `PutAsync` (diff the base id's old vs new administrator digests; add/remove its id per
   digest). Because administration is now materialized **at creation** (§15.2), the index has an entry for every workflow
-  from birth — no implicit-version-1 blind spot.
+  from birth, with no implicit-version-1 blind spot.
 - **Query.** `ListAdministeredAsync(adminDigest, limit, pageToken)` returns the caller's administered base ids, keyset-
   paged (bytes-native continuation token, like every other §803 list). The inbox resolves the caller's digest
   (`SecurityIdentityDigest.Compute(CallerIdentity())`) and lists access requests across that set (§16.5).

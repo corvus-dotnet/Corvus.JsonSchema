@@ -1,4 +1,4 @@
-# ADR. Delivering an approver's decision to a suspended approval-workflow run
+# ADR 0012. Delivering an approver's decision to a suspended approval-workflow run
 
 Date: 2026-07-19. Status: **Accepted**. Scope: the
 approval capstone (#880, design §16.5.1), piece 3 (decision correlation). This records why the
