@@ -131,12 +131,14 @@ A self-approval attempt is refused and audited on every decision verb, with the 
 | Read a run's step journal (sensitive) | `workflow.journal.read` | none (reads are not counted) | yes, with the disclosure tier (`full`, `redacted`, or `refused`) |
 | Other list or get reads | none by design | none | none by design |
 
-## Not yet instrumented
+## Run-lifecycle metrics
 
-Every governed action above is audited. The remaining gap is on the metrics side: four instruments are declared on
-the meter but not yet emitted by any production or generated code, `corvus.arazzo.steps.retries`,
-`corvus.arazzo.gotos`, `corvus.arazzo.workflow.duration`, and `corvus.arazzo.step.duration`. Wiring their emission
-into the executor code generation is tracked separately from the governance-audit surface this catalog covers.
+Every governed action above is audited, and the run-lifecycle counters, including `corvus.arazzo.steps.retries`
+and `corvus.arazzo.gotos`, are emitted by the generated executor. There is deliberately no `workflow.duration` or
+`step.duration` histogram. A durable run re-enters the executor at its cursor per advance
+([ADR 0019](../adr/0019-products-are-the-checkpoint.md)), so an in-process timer would measure a single advance
+rather than end-to-end duration. The per-workflow and per-step trace spans (the durable executor re-establishes
+the original trace via the run's correlation id) and `corvus.arazzo.checkpoint.duration` carry timing instead.
 
 ## See also
 

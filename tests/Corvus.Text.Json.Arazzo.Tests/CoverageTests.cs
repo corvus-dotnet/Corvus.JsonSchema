@@ -189,8 +189,6 @@ public class CoverageTests
         ArazzoTelemetry.StepsExecuted.Add(1);
         ArazzoTelemetry.StepRetries.Add(1);
         ArazzoTelemetry.Gotos.Add(1);
-        ArazzoTelemetry.WorkflowDuration.Record(0.1);
-        ArazzoTelemetry.StepDuration.Record(0.1);
     }
 
     [TestMethod]

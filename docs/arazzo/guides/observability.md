@@ -20,10 +20,11 @@ Every instrument is zero-cost when no listener is attached, so a deployment that
 ## Metrics
 
 The run lifecycle emits counters (`corvus.arazzo.workflows.{started, completed, faulted, resumed, cancelled,
-suspended, purged, deleted}` and `corvus.arazzo.steps.executed`) and a histogram for checkpoint persistence
-(`corvus.arazzo.checkpoint.duration`, in seconds). Four further instruments (`corvus.arazzo.steps.retries`,
-`corvus.arazzo.gotos`, `corvus.arazzo.workflow.duration`, `corvus.arazzo.step.duration`) are declared on the
-meter but not yet emitted by the current executor. Governance emits
+suspended, purged, deleted}`, `corvus.arazzo.steps.{executed, retries}`, and `corvus.arazzo.gotos`) and a
+histogram for checkpoint persistence (`corvus.arazzo.checkpoint.duration`, in seconds). There is deliberately no
+workflow-duration or step-duration histogram. A durable run re-enters the executor at its cursor per advance, so
+end-to-end timing is carried by the per-workflow and per-step trace spans, not an in-process timer. Governance
+emits
 `corvus.arazzo.credentials.rotated` and `corvus.arazzo.governance.decisions`, the governance-decision rate
 dimensioned by action and outcome, so approval, denial, revocation, and refusal rates are queryable per action.
 

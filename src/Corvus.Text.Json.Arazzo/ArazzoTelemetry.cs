@@ -136,17 +136,11 @@ public static class ArazzoTelemetry
     public static Counter<long> Gotos { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.gotos", "{goto}", "Control-flow goto transfers");
 
-    /// <summary>
-    /// Gets the histogram measuring whole-workflow execution duration, in seconds.
-    /// </summary>
-    public static Histogram<double> WorkflowDuration { get; } =
-        Meter.CreateHistogram<double>("corvus.arazzo.workflow.duration", "s", "Duration of workflow execution");
-
-    /// <summary>
-    /// Gets the histogram measuring per-step execution duration, in seconds.
-    /// </summary>
-    public static Histogram<double> StepDuration { get; } =
-        Meter.CreateHistogram<double>("corvus.arazzo.step.duration", "s", "Duration of step execution");
+    // There is deliberately no workflow.duration or step.duration histogram. A durable run re-enters the executor
+    // at its cursor on each advance (ADR 0019), so an in-process timer would measure a single advance, not the
+    // end-to-end duration its name would imply. End-to-end timing is carried by the per-workflow and per-step trace
+    // spans (the durable executor re-establishes the original trace via the run's correlation id), and the cost of
+    // persisting an advance is the checkpoint.duration histogram below.
 
     /// <summary>
     /// Gets the counter for runs an operator resumed through the control plane (tagged with the resume mode).

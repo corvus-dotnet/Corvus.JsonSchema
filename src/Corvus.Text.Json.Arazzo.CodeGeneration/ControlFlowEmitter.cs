@@ -346,6 +346,7 @@ internal static class ControlFlowEmitter
         // ── retry ──
         c.Append("    if (").Append(camel).AppendLine("Retry)");
         c.AppendLine("    {");
+        c.AppendLine("        ArazzoTelemetry.StepRetries.Add(1);");
         if (durable)
         {
             c.Append("        __state = ").Append(indexLiteral).AppendLine(";");
@@ -1092,10 +1093,10 @@ internal static class ControlFlowEmitter
                         // IWorkflowRun? child scope before the token — so the unthreaded call drops the token into the
                         // run slot (CS1503). Thread a child scope (null today ⇒ untracked) and the time provider; the
                         // transferred run's tri-state result becomes this run's result directly.
-                        return $"return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, run?.BeginSubWorkflow({EmitText.Quote(targetWorkflow)}, {EmitText.Quote(targetWorkflow)}), cancellationToken, timeProvider).ConfigureAwait(false);\n";
+                        return $"ArazzoTelemetry.Gotos.Add(1); return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, run?.BeginSubWorkflow({EmitText.Quote(targetWorkflow)}, {EmitText.Quote(targetWorkflow)}), cancellationToken, timeProvider).ConfigureAwait(false);\n";
                     }
 
-                    return $"return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
+                    return $"ArazzoTelemetry.Gotos.Add(1); return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
                 }
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))
@@ -1104,7 +1105,7 @@ internal static class ControlFlowEmitter
                         $"Action '{action.Name}' performs a goto to unknown step '{action.TargetStepId}'.");
                 }
 
-                return $"{camel}Next = {target.ToString(CultureInfo.InvariantCulture)};\n";
+                return $"ArazzoTelemetry.Gotos.Add(1); {camel}Next = {target.ToString(CultureInfo.InvariantCulture)};\n";
 
             case StepActionKind.Retry:
             {

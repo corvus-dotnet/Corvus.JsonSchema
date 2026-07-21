@@ -46,12 +46,12 @@ public class RecordedTelemetryTests
     {
         using var recorded = new RecordedTelemetry();
 
-        ArazzoTelemetry.StepDuration.Record(0.5, new KeyValuePair<string, object?>("step.id", "login"));
-        ArazzoTelemetry.StepDuration.Record(1.5);
+        ArazzoTelemetry.CheckpointDuration.Record(0.5, new KeyValuePair<string, object?>("step.id", "login"));
+        ArazzoTelemetry.CheckpointDuration.Record(1.5);
 
-        recorded.Sum("corvus.arazzo.step.duration").ShouldBe(2.0);
+        recorded.Sum("corvus.arazzo.checkpoint.duration").ShouldBe(2.0);
         recorded.Measurements
-            .First(m => m.InstrumentName == "corvus.arazzo.step.duration" && m.Value == 0.5)
+            .First(m => m.InstrumentName == "corvus.arazzo.checkpoint.duration" && m.Value == 0.5)
             .Tags.ShouldContain(new KeyValuePair<string, object?>("step.id", "login"));
     }
 

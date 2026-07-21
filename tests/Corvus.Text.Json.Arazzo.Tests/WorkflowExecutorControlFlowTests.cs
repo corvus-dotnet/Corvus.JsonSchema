@@ -184,12 +184,16 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
+        using var recorded = new RecordedTelemetry();
         var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         transport.Requests.Count.ShouldBe(2);
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
         name.GetString().ShouldBe("Fido");
+
+        // The retry attempt is metered (corvus.arazzo.steps.retries).
+        recorded.Sum("corvus.arazzo.steps.retries").ShouldBeGreaterThanOrEqualTo(1);
     }
 
     [TestMethod]
@@ -283,6 +287,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
+        using var recorded = new RecordedTelemetry();
         var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
@@ -290,6 +295,9 @@ public partial class WorkflowExecutorEndToEndTests
         transport.Requests.Count.ShouldBe(2);
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
         name.GetString().ShouldBe("Fido");
+
+        // The goto transfer is metered (corvus.arazzo.gotos).
+        recorded.Sum("corvus.arazzo.gotos").ShouldBeGreaterThanOrEqualTo(1);
     }
 
     /// <summary>A <see cref="TimeProvider"/> that fires every timer immediately and records how many it
