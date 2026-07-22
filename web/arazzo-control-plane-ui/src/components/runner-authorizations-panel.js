@@ -211,7 +211,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         .toolbar .grow { flex: 1; }
         .toolbar .env { min-width: 220px; flex: 1; }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }

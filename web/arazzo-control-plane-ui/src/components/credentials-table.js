@@ -168,7 +168,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         .toolbar .grow { flex: 1; }
         .toolbar label { font-size: 12px; color: var(--_muted); }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }

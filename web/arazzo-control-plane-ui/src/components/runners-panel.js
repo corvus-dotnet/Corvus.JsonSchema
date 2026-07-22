@@ -184,7 +184,7 @@ class ArazzoRunners extends ArazzoElement {
         .head .grow { flex: 1; }
         .head .count { color: var(--_muted); font-size: 12px; }
         .err { flex: none; margin: 10px 12px; }
-        .list { display: grid; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
         .runner { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
         .runner:last-child { border-bottom: none; }
         .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }

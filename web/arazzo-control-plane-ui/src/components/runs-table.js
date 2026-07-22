@@ -167,7 +167,7 @@ class ArazzoRunsTable extends ArazzoElement {
         ${SHARED_CSS}
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
           text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);

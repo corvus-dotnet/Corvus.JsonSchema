@@ -245,7 +245,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
         .tabs button[aria-selected="true"] { color: var(--_text); border-bottom-color: var(--_accent); font-weight: 600; }
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         .toolbar .grow { flex: 1; }
         .toolbar .env { min-width: 220px; flex: 1; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }

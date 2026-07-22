@@ -295,7 +295,7 @@ class ArazzoSchedules extends ArazzoElement {
         .flash.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
         .flash.err { color: var(--arazzo-status-faulted, #b3261e); border-color: currentColor; }
         .err { flex: none; margin: 10px 12px; }
-        .list { display: grid; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
         .sched { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
         .sched:last-child { border-bottom: none; }
         .shead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }

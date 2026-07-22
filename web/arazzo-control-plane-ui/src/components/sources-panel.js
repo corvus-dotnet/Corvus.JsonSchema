@@ -262,7 +262,7 @@ class ArazzoSources extends ArazzoElement {
         .toolbar .grow { flex: 1; }
         .err { flex: none; margin: 10px 12px; }
         .err:empty { display: none; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
