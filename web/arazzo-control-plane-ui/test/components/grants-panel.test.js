@@ -17,8 +17,8 @@ const $ = (el, sel) => el.shadowRoot.querySelector(sel);
 const setInput = (el, sel, value) => { const i = $(el, sel); i.value = value; i.dispatchEvent(new Event('input')); };
 const verbSelect = (el, verb) => [...el.shadowRoot.querySelectorAll('.verb-mode')].find((s) => s.dataset.verb === verb);
 const setVerbMode = (el, verb, mode) => { const s = verbSelect(el, verb); s.value = mode; s.dispatchEvent(new Event('change')); };
-// The editor is a RHS detail pane (master-detail), not a modal — "open" means the pane holds an authoring form.
-const editorOpen = (el) => !!$(el, '.detail-pane .content');
+// An authoring form is "open" when a container holds it: the modal for create, the detail pane for edit.
+const editorOpen = (el) => !!$(el, '.cmodal[open] .content') || !!$(el, '.detail-pane .content');
 
 async function pickGrantee(el, query) {
   const picker = $(el, '.who-picker');
@@ -102,7 +102,8 @@ describe('<arazzo-grants-panel>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.new').click();
-    ok(editorOpen(el), 'the authoring pane opens on the RHS (not a modal)');
+    ok(editorOpen(el), 'the create form opens in a modal');
+    ok($(el, '.cmodal[open]'), 'create authors in a modal, matching the other create flows');
     setInput(el, '.f-claimType', 'region');
     setInput(el, '.f-claimValue', 'eu');
     setVerbMode(el, 'read', 'unrestricted');
@@ -236,15 +237,22 @@ describe('<arazzo-grants-panel>', () => {
     ok(!editorOpen(el), 'the pane clears after create (no error banner)');
   });
 
-  it('steers a person grantee to the request flow instead of a direct grant', async () => {
+  it('does not offer a person as a grantee (per-person access goes through requests)', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.new').click();
-    await pickGrantee(el, 'ada');
-    ok($(el, '.steer'), 'request-flow steer banner');
-    $(el, '.confirm').click();
-    ok($(el, '.form-err .error-banner'), 'create blocked for a person');
+    // The grants picker is constrained to team/role/workflow, so searching a person (Ada) yields no
+    // result — a person is requested-and-approved, never granted directly.
+    const picker = $(el, '.who-picker');
+    const q = picker.shadowRoot.querySelector('.q');
+    q.value = 'ada';
+    q.dispatchEvent(new Event('input'));
+    // Give the debounced search room to run, then assert no person appears.
+    await new Promise((r) => setTimeout(r, 400));
+    const results = [...picker.shadowRoot.querySelectorAll('.results li[data-index]')];
+    ok(!results.some((li) => /ada lovelace/i.test(li.textContent)), 'no person in the results');
+    ok(!results.some((li) => li.querySelector('.badge')?.textContent === 'person'), 'no person-kind results');
   });
 
   it('selects a grant row into the pane (claim is the immutable key) and saves the new access', async () => {
@@ -346,6 +354,8 @@ describe('<arazzo-grants-panel> conjunction semantics', () => {
   });
 
   function detailText(panel) {
-    return panel.shadowRoot.querySelector('.detail-pane')?.textContent ?? '';
+    // The active authoring form lives in the modal (create) or the detail pane (edit).
+    const modal = panel.shadowRoot.querySelector('.cmodal[open]');
+    return (modal ?? panel.shadowRoot.querySelector('.detail-pane'))?.textContent ?? '';
   }
 });

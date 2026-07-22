@@ -16,8 +16,8 @@ const rows = (el) => el.shadowRoot.querySelectorAll('.srow');
 const $ = (el, sel) => el.shadowRoot.querySelector(sel);
 const setField = (el, sel, value) => { const i = $(el, sel); i.value = value; i.dispatchEvent(new Event('input')); };
 const preview = (el) => $(el, '.preview-expr').textContent;
-// The editor is a RHS detail pane (master-detail), not a modal — "open" means the pane holds an authoring form.
-const editorOpen = (el) => !!$(el, '.detail-pane .content');
+// An authoring form is "open" when a container holds it: the modal for create, the detail pane for edit.
+const editorOpen = (el) => !!$(el, '.cmodal[open] .content') || !!$(el, '.detail-pane .content');
 
 describe('<arazzo-rules-panel>', () => {
   let el;
@@ -75,7 +75,8 @@ describe('<arazzo-rules-panel>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.new').click();
-    ok(editorOpen(el), 'the authoring pane opens on the RHS (not a modal)');
+    ok(editorOpen(el), 'the create form opens in a modal');
+    ok($(el, '.cmodal[open]'), 'create authors in a modal, matching the other create flows');
     setField(el, '.f-value', 'marketing');
     equal(preview(el), "domain == 'marketing'", 'template wrote the expression');
     equal($(el, '.f-name').value, 'rule-marketing', 'name auto-suggested');
