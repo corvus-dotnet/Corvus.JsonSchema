@@ -113,9 +113,12 @@ class ArazzoJsonView extends ArazzoElement {
       { tag: t.brace, color: 'var(--arazzo-muted, #6b7280)' },
       { tag: t.squareBracket, color: 'var(--arazzo-muted, #6b7280)' },
     ]));
+    // CodeMirror's base theme sets a light-mode (near-black) content colour; without overriding it the document is
+    // invisible on the dark theme. Follow the app's text colour so unhighlighted text (and the whole document if the
+    // highlighter does not apply) is always legible; the syntax colours below override it per token.
     const chrome = view.EditorView.theme({
-      '&': { backgroundColor: 'transparent' },
-      '.cm-content': { caretColor: 'transparent' },
+      '&': { backgroundColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
+      '.cm-content': { caretColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
     });
 
     const editor = new view.EditorView({
