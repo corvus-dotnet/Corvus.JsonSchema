@@ -430,3 +430,34 @@ test('the virtual clock advances past a retryAfter and the tray narrates it', as
   await expect(ctx).toContainText('timer due');
   assertClean(errors);
 });
+
+test('a run may not START while the document has error findings — ▶/⏭ disable and lift once valid', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/demo/designer.html');
+  const wctable = page.locator('arazzo-workspace-table');
+  await expect(wctable.getByText('Order processing')).toBeVisible();
+
+  // A fresh blank copy carries structural ERROR findings (empty sourceDescriptions/workflows), so
+  // a debug/simulation run must not start: ▶ Run and ⏭ Step disable, with a steering title, and
+  // the debug dock never opens.
+  await wctable.locator('button.new').click();
+  const ask = wctable.locator('arazzo-input-dialog');
+  await ask.locator('input.in-field').fill('gate-test');
+  await ask.locator('button.confirm').click();
+  await expect(page.locator('#surface')).toBeVisible();
+
+  await expect(page.locator('#problems-badge')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('#simulate')).toBeDisabled();
+  await expect(page.locator('#step')).toBeDisabled();
+  await expect(page.locator('#simulate')).toHaveAttribute('title', /Resolve the error findings/);
+  await expect(page.locator('#debug-dock')).toBeHidden();
+
+  // A valid document lifts the gate: the seeded "Order processing" copy has no findings, so ▶/⏭
+  // are live again (updateRunGating re-runs when validation clears).
+  await page.locator('#back').click();
+  await wctable.getByText('Order processing').click();
+  await expect(page.locator('#surface')).toBeVisible();
+  await expect(page.locator('#simulate')).toBeEnabled();
+  await expect(page.locator('#step')).toBeEnabled();
+  assertClean(errors);
+});

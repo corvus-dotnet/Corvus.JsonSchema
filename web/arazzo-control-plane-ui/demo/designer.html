@@ -146,10 +146,17 @@
         <div style="margin-top: 6px;"><b>Ports</b>: the small circles are edge handles — drag between them to connect steps. A filled dot on the left border is a breakpoint (debugger).</div>
       </div>
       <div id="canvas-empty" hidden style="position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 8px; pointer-events: none; color: var(--arazzo-muted, #6b7280); font-size: 13px;">
-        <div style="font-size: 15px; font-weight: 600;">An empty canvas</div>
-        <div>Steps come from a source's operations:</div>
-        <div>1 — attach an OpenAPI/AsyncAPI source &nbsp;·&nbsp; 2 — drag an operation onto the canvas</div>
-        <button id="canvas-empty-cta" type="button" style="pointer-events: auto; justify-self: center; font-size: 13px; padding: 4px 14px;">Open Sources →</button>
+        <div id="canvas-empty-nosteps" style="display: grid; gap: 8px; justify-items: center;">
+          <div style="font-size: 15px; font-weight: 600;">An empty canvas</div>
+          <div>Steps come from a source's operations:</div>
+          <div>1 — attach an OpenAPI/AsyncAPI source &nbsp;·&nbsp; 2 — drag an operation onto the canvas</div>
+          <button id="canvas-empty-cta" type="button" style="pointer-events: auto; font-size: 13px; padding: 4px 14px;">Open Sources →</button>
+        </div>
+        <div id="canvas-empty-noworkflows" hidden style="display: grid; gap: 8px; justify-items: center;">
+          <div style="font-size: 15px; font-weight: 600;">No workflows yet</div>
+          <div>A document holds one or more workflows. Create your first to start designing.</div>
+          <button id="canvas-empty-newwf" type="button" style="pointer-events: auto; font-size: 13px; padding: 4px 14px;">+ New workflow</button>
+        </div>
       </div>
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
       <dialog id="run-inputs-dialog" style="border:1px solid var(--arazzo-border,#e3e6ea); border-radius:10px; background:var(--arazzo-bg,#fff); color:var(--arazzo-text,inherit); padding:0; width:min(460px,92vw);">
@@ -348,11 +355,20 @@
 
     let refreshExpressionContext = () => {}; // assigned once the console exists; project() keeps it current
     function project() {
-      surface.graph = projectWorkflow(doc, select.value);
-      // The empty canvas teaches the happy path instead of staring blankly (steps come from
+      const graph = projectWorkflow(doc, select.value);
+      const workflows = doc.workflows ?? [];
+      const wf = workflows.find((w) => w.workflowId === select.value) ?? workflows[0];
+      const hasSteps = !!(wf?.steps?.length);
+      // Until the first step is added, keep the canvas truly empty: the start/end anchors would
+      // otherwise sit beneath the "empty canvas" prompt. They reappear the moment a step exists.
+      surface.graph = hasSteps ? graph : { ...graph, nodes: [], edges: [] };
+      // The empty canvas teaches the happy path instead of staring blankly. Two states: no
+      // workflows at all (create the first one) vs. a workflow with no steps yet (steps come from
       // an attached source's operations).
-      const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
-      document.getElementById('canvas-empty').hidden = !!(wf?.steps?.length);
+      const hasWorkflows = workflows.length > 0;
+      document.getElementById('canvas-empty').hidden = hasSteps;
+      document.getElementById('canvas-empty-noworkflows').hidden = hasWorkflows;
+      document.getElementById('canvas-empty-nosteps').hidden = !hasWorkflows;
       // One name concept: the title bar shows the DOCUMENT's title, live (editing info.title on
       // the settings page renames the working copy on the next save).
       document.getElementById('wc-name').textContent = doc.info?.title || shell.name || 'untitled';
@@ -363,6 +379,7 @@
       refreshExpressionContext();
     }
     document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
+    document.getElementById('canvas-empty-newwf').addEventListener('click', () => { showDocumentInspector(); switchSideTab('inspect'); });
 
     // The canvas key: notation must be learnable in the UI itself, not the design doc.
     const legendBtn = document.getElementById('legend-btn');
@@ -519,8 +536,30 @@
 
     const SEVERITY_ICON = { error: '⛔', warning: '⚠️', info: 'ℹ️' };
 
+    // Debug gating: a run may not START while the document carries error findings — ▶ Run / ⏭ Step
+    // disable and steer to Problems. An attached durable run or an existing simulated trace stays
+    // navigable (it snapshotted a document that was valid enough to run), so only a fresh start is
+    // gated. Warnings and info never block.
+    let lastDiagnostics = [];
+    const hasBlockingProblems = () => lastDiagnostics.some((d) => d.severity === 'error');
+    function blockedRunNotice() {
+      showToast('Resolve the Problems (error findings) before running.', 'error');
+      switchSideTab('problems');
+    }
+    function updateRunGating() {
+      const block = !shell.debugRun && !tray.trace && hasBlockingProblems();
+      for (const btn of [document.getElementById('simulate'), document.getElementById('step')]) {
+        if (!btn) continue;
+        if (btn.dataset.baseTitle === undefined) btn.dataset.baseTitle = btn.title;
+        btn.disabled = block;
+        btn.title = block ? 'Resolve the error findings in Problems before running' : btn.dataset.baseTitle;
+      }
+    }
+
     function renderProblems(outcome, { reveal = false } = {}) {
       const badge = document.getElementById('problems-badge');
+      lastDiagnostics = outcome.diagnostics;
+      updateRunGating();
       badge.hidden = outcome.diagnostics.length === 0;
       badge.textContent = outcome.diagnostics.length;
       if (reveal) switchSideTab('problems'); // only a deliberate act steals the tab (§ item 29)
@@ -1337,6 +1376,7 @@
       const faultedRun = !!(shell.debugRun && shell.debugRun.status === 'faulted');
       retryBtn.hidden = !faultedRun;
       remediateBtn.hidden = !faultedRun;
+      updateRunGating(); // an attached run / cleared trace changes whether ▶/⏭ may start
     }
 
     async function runSimulation({ until, stepPastEnd = false, workflowId } = {}) {
@@ -1527,6 +1567,7 @@
     }
     simBtn.addEventListener('click', async () => {
       if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('continue') }); return; } // attached ▶ = run to next breakpoint / end
+      if (hasBlockingProblems()) { blockedRunNotice(); return; } // no fresh run while errors stand
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       const baked = await fetchBakedInputs(select.value); // ref-resolved, so a $ref/combiner-rooted schema still opens
       const envs = await loadDraftRunEnvironments();
@@ -1701,8 +1742,9 @@
     }
     stepBtn.addEventListener('click', () => {
       if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('step') }); return; } // forward-only single step
-      if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
-      else runSimulation({ stepPastEnd: !!tray.trace });
+      if (tray.trace && tray.cursor < tray.length) { tray.cursor += 1; return; } // navigate the existing trace
+      if (hasBlockingProblems()) { blockedRunNotice(); return; } // a fresh start / step-past-end needs a clean document
+      runSimulation({ stepPastEnd: !!tray.trace });
     });
     stopBtn.addEventListener('click', () => { if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); } tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {

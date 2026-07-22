@@ -31,7 +31,7 @@ async function selectStartNode(page) {
 
 // ── the workspace table ───────────────────────────────────────────────────────────────────────────
 
-test('New workflow creates a named blank working copy that opens on the empty-canvas teaching state', async ({ page }) => {
+test('New working copy opens on the "no workflows" state; adding a workflow gives a truly empty canvas (no superimposed start/end)', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/demo/designer.html');
   const wctable = page.locator('arazzo-workspace-table');
@@ -44,18 +44,37 @@ test('New workflow creates a named blank working copy that opens on the empty-ca
   await ask.locator('input.in-field').fill('inventory-sync');
   await ask.locator('button.confirm').click();
 
-  // It opens straight into the designer: named by its title, saved, and teaching the happy path
-  // (steps come from a source's operations) instead of staring blankly.
+  // It opens straight into the designer: named by its title and saved. A fresh copy has NO
+  // workflows, so the empty canvas prompts to create the FIRST WORKFLOW (not to attach a source),
+  // and no start/end anchors are drawn yet — the canvas is genuinely empty behind the prompt.
   await expect(page.locator('#surface')).toBeVisible();
   await expect(page.locator('#wc-name')).toHaveText('inventory-sync');
   await expect(page.locator('#save-status')).toHaveText('all changes saved');
   await expect(page.locator('#canvas-empty')).toBeVisible();
-  await expect(page.locator('#canvas-empty')).toContainText('An empty canvas');
-  await expect(page.locator('#canvas-empty-cta')).toBeVisible();
+  await expect(page.locator('#canvas-empty-noworkflows')).toBeVisible();
+  await expect(page.locator('#canvas-empty-noworkflows')).toContainText('No workflows yet');
+  await expect(page.locator('#canvas-empty-newwf')).toBeVisible();
+  await expect(page.locator('#canvas-empty-nosteps')).toBeHidden();
+  await expect(page.locator('#surface .node')).toHaveCount(0);
 
   // Validation is live from the first look: a blank document has structural findings (empty
   // sourceDescriptions/workflows), so the Problems badge lights without any button press.
   await expect(page.locator('#problems-badge')).toBeVisible({ timeout: 8000 });
+
+  // Create the first workflow from the empty-canvas CTA: it opens the document inspector, where a
+  // workflowId is added. The canvas then switches to the source/operation teaching state — and STILL
+  // draws no start/end, because the new workflow has no steps yet (the reported superimposition).
+  await page.locator('#canvas-empty-newwf').click();
+  const inspector = page.locator('arazzo-document-inspector[sections="document"]');
+  await expect(inspector).toBeVisible();
+  await inspector.locator('input.newwf').fill('sync-inventory');
+  await inspector.locator('button.addwf').click();
+
+  await expect(page.locator('#canvas-empty-nosteps')).toBeVisible();
+  await expect(page.locator('#canvas-empty-nosteps')).toContainText('An empty canvas');
+  await expect(page.locator('#canvas-empty-cta')).toBeVisible();
+  await expect(page.locator('#canvas-empty-noworkflows')).toBeHidden();
+  await expect(page.locator('#surface .node')).toHaveCount(0);
 
   // Back in the workspace the new copy is listed.
   await page.locator('#back').click();
