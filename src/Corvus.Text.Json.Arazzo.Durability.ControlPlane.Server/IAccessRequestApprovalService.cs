@@ -64,21 +64,6 @@ public interface IAccessRequestApprovalService
     /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if absent.</returns>
     ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken);
 
-    /// <summary>Enacts a pending request's decided outcome under the platform ceiling <em>without</em> a §15-administrator
-    /// check — the single system-credentialed enactment path (design §16.5.1) the bootstrapped approval workflow calls
-    /// once per decision, so every outcome flows through the same run. <c>approved</c> writes the capped grant
-    /// (<see cref="GrantRequestAsync"/>), <c>eligible</c> the standing eligibility (<see cref="GrantRequestAsEligibleAsync"/>),
-    /// <c>rejected</c> marks the request <see cref="AccessRequestStatus.Denied"/>, and <c>withdrawn</c> marks it
-    /// <see cref="AccessRequestStatus.Withdrawn"/>. Reachable only with the narrow <c>accessRequests:grant</c> capability.</summary>
-    /// <param name="requestId">The request id.</param>
-    /// <param name="outcome">The decided outcome to enact: <c>approved</c> | <c>eligible</c> | <c>rejected</c> | <c>withdrawn</c>.</param>
-    /// <param name="actor">The enacting system principal's audit identity.</param>
-    /// <param name="reason">An optional decision note carried through the workflow.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The request in its settled terminal state, or <see langword="null"/> if absent.</returns>
-    /// <exception cref="ArgumentException">The outcome is not a recognised value.</exception>
-    ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, string actor, string? reason, CancellationToken cancellationToken);
-
     /// <summary>Approves a pending request as durable eligibility (§16.5.3) rather than a live grant — the requester may
     /// thereafter self-elevate JIT without re-approval (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>

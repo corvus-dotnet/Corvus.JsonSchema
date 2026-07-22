@@ -112,12 +112,18 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
         => this.DecideByPublishingAsync(requestId, approverIdentity, actor, reason, OutcomeEligible, cancellationToken);
 
     /// <inheritdoc/>
-    // Deny is now workflow-backed exactly like approve: authenticate the §15 administrator and publish the 'rejected'
-    // outcome, and the access-approval run enacts the denial through settleAccessRequest. The request is returned still
-    // pending and reaches Denied when the run completes, so every approver decision flows through the one run instead of
-    // deny short-circuiting it with a synchronous mark.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
-        => this.DecideByPublishingAsync(requestId, approverIdentity, actor, reason, OutcomeRejected, cancellationToken);
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    {
+        // The built-in marks the request Denied (§15-admin checked; there is no grant to write), then the run is resumed
+        // so its rejected path (notify) runs and it does not linger suspended.
+        ParsedJsonDocument<AccessRequest>? denied = await this.inner.DenyAsync(requestId, approverIdentity, actor, reason, cancellationToken).ConfigureAwait(false);
+        if (denied is not null)
+        {
+            await this.PublishDecisionAsync(requestId, OutcomeRejected, actor, reason, cancellationToken).ConfigureAwait(false);
+        }
+
+        return denied;
+    }
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> WithdrawAsync(string requestId, string subjectClaimType, string subjectClaimValue, string actor, CancellationToken cancellationToken)
@@ -147,12 +153,6 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     /// <inheritdoc/>
     public ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
         => this.inner.GrantRequestAsEligibleAsync(requestId, actor, reason, cancellationToken);
-
-    /// <inheritdoc/>
-    // The single enactment the approval workflow calls: delegates to the built-in, which grants (approved/eligible) or
-    // marks the request terminal (rejected/withdrawn) under the platform ceiling with no administrator check.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, string actor, string? reason, CancellationToken cancellationToken)
-        => this.inner.SettleRequestAsync(requestId, outcome, actor, reason, cancellationToken);
 
     // Authenticates the approver as a §15 administrator, publishes the decision outcome, and returns the request as it
     // now stands (still pending; it reaches its terminal state when the workflow enacts the grant). Used by approve and

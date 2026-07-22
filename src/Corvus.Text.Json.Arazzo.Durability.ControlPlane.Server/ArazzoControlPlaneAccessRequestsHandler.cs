@@ -300,38 +300,6 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     }
 
     /// <inheritdoc/>
-    public async ValueTask<SettleAccessRequestResult> HandleSettleAccessRequestAsync(SettleAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string id = (string)parameters.RequestId;
-        string outcome = (string)parameters.Body.Outcome;
-
-        // The single system-credentialed enactment path: no own-request or §15-administrator check (the caller is the
-        // approval workflow's §13 system credential, gated by the narrow accessRequests:grant capability). The decision
-        // was made inside the workflow; this enacts it — grant (approved/eligible) or mark terminal (rejected/withdrawn).
-        // The platform ceiling on a grant still applies unconditionally.
-        try
-        {
-            ParsedJsonDocument<AccessRequest>? result = await this.approval.SettleRequestAsync(id, outcome, this.CallerActor(), SettlementReason(parameters.Body), cancellationToken).ConfigureAwait(false);
-            if (result is null)
-            {
-                return SettleAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
-            }
-
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.settle", this.CallerActor(), TargetKind, id, outcome);
-            workspace.TakeOwnership(result);
-            return SettleAccessRequestResult.Ok(ToView(result.RootElement), workspace);
-        }
-        catch (AccessRequestStateException ex)
-        {
-            return SettleAccessRequestResult.Conflict(Problem("invalid-state", "Cannot settle the request", 409, ex.Message), workspace);
-        }
-        catch (ArgumentException ex)
-        {
-            return SettleAccessRequestResult.Conflict(Problem("invalid-outcome", "Unrecognised settlement outcome", 409, ex.Message), workspace);
-        }
-    }
-
-    /// <inheritdoc/>
     public async ValueTask<GrantAccessRequestAsEligibleResult> HandleGrantAccessRequestAsEligibleAsync(GrantAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
@@ -512,9 +480,6 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         => CountAccessRequestsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
 
     private static string? NoteReason(Models.AccessRequestDecisionNote body)
-        => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
-
-    private static string? SettlementReason(Models.AccessRequestSettlement body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
 
     private static string? EligibilityReason(Models.AccessRequestEligibilityNote body)
