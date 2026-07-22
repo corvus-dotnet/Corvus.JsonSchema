@@ -204,6 +204,29 @@ test('pointer completions: message payload and step output schemas', () => {
   );
 });
 
+test('dotted completions: response body top-level properties with type details', () => {
+  const r = scomplete('$response.body.');
+  assert.deepEqual(r.options.map((o) => o.label), ['status', 'authorizationId', 'card', 'attempts']);
+  assert.equal(r.options.find((o) => o.label === 'card').detail, 'object');
+});
+
+test('dotted completions: nested descent, prefix filter, and from position', () => {
+  const r = scomplete('$response.body.card.la');
+  assert.deepEqual(r.options.map((o) => o.label), ['last4']);
+  assert.equal(r.from, '$response.body.card.'.length);
+});
+
+test('dotted completions: array items by index, unknown paths yield null', () => {
+  assert.deepEqual(scomplete('$response.body.attempts.0.').options.map((o) => o.label), ['at']);
+  assert.equal(scomplete('$response.body.nope.'), null);
+});
+
+test('dotted completions: request body, message payload, and header surfaces', () => {
+  // A surface with no schema (header) still offers nothing below it rather than throwing.
+  assert.equal(scomplete('$response.header.'), null);
+  assert.deepEqual(scomplete('$message.payload.').options.map((o) => o.label), ['confirmed']);
+});
+
 test('inputs as a JSON Schema: names + details at the first level, pointer descent below', () => {
   const first = scomplete('$inputs.');
   assert.deepEqual(first.options.map((o) => o.label), ['orderId', 'customer']);

@@ -167,12 +167,35 @@ export function completionsFor(text, pos, context = {}) {
     }
     case '$response':
     case '$request':
-      return parts.length === 2 ? filter(['body', 'header', 'query', 'path'], 'keyword') : null;
-    case '$message':
-      return parts.length === 2 ? filter(['payload', 'header'], 'keyword') : null;
+    case '$message': {
+      const surfaces = parts[0] === '$message' ? ['payload', 'header'] : ['body', 'header', 'query', 'path'];
+      if (parts.length === 2) return filter(surfaces, 'keyword');
+      // Dotted descent into the body/payload schema — the same schema surface the `#/pointer`
+      // branch walks, so `$response.body.` completes property names exactly like `$response.body#/`.
+      const schema = schemaForExpression(`${parts[0]}.${parts[1]}`, context);
+      return schemaProperties(schema, parts.slice(2, -1), filter);
+    }
     default:
       return null;
   }
+}
+
+/**
+ * Complete the property names of a JSON Schema reached by descending `segments` from `schema`
+ * (each an object property or an array index), filtered by the partial last segment. Shared by the
+ * dotted (`$response.body.receipt.`) and pointer (`$response.body#/receipt/`) completion paths.
+ */
+function schemaProperties(schema, segments, filter) {
+  if (!schema) return null;
+  let target = schema;
+  for (const seg of segments) {
+    target = stepInto(target, seg);
+    if (!target) return null;
+  }
+  const props = target.properties || {};
+  return filter(Object.keys(props), 'property', Object.fromEntries(
+    Object.entries(props).map(([n, s]) => [n, schemaDetail(s)]).filter(([, v]) => v),
+  ));
 }
 
 /** The JSON Schema a pointer-completed expression addresses, if the context carries one. */
