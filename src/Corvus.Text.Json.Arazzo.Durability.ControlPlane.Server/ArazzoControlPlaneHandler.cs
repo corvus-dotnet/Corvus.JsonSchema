@@ -223,7 +223,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         JsonElement journal = doc.RootElement;
 
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
-        using (var writer = new System.Text.Json.Utf8JsonWriter(buffer))
+        using (var writer = new Utf8JsonWriter(buffer))
         {
             writer.WriteStartObject();
             foreach (JsonProperty<JsonElement> property in journal.EnumerateObject())
