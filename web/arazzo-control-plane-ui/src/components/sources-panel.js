@@ -19,6 +19,7 @@ import './tag-editor.js';
 import './pager.js';
 import './credential-dialog.js';
 import './source-operations.js';
+import './source-acquisition-dialog.js';
 import './json-view.js';
 import './splitbar.js';
 
@@ -44,7 +45,6 @@ class ArazzoSources extends ArazzoElement {
     /** @private */ this._totalCapped = false;     // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
-    /** @private */ this._form = null;            // the create-dialog form state
   }
 
   connectedCallback() {
@@ -226,49 +226,17 @@ class ArazzoSources extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', type: 'openapi', displayName: '', description: '', document: '', managementTags: [], formError: null };
-    this.renderEditor();
-    this.$('dialog').showModal();
-    this.$('.f-name')?.focus();
+    // Register a new source through the same sophisticated acquisition UX the designer uses (Fetch URL / Upload /
+    // GitHub, with a server-side preview of the detected type, version, and digest), rather than a raw paste-JSON box.
+    const dlg = this.$('.acq-dialog');
+    dlg.client = this.buildClient();
+    dlg.openForRegister({});
   }
 
-  closeEditor() {
-    this.$('dialog')?.close();
-    this._form = null;
-  }
-
-  async submitForm() {
-    if (!this._form) return;
-    const form = this._form;
-    const name = (form.name || '').trim();
-    if (!name) { form.formError = { title: 'A source name is required.' }; this.renderEditor(); return; }
-    let document;
-    try {
-      document = JSON.parse(form.document);
-    } catch {
-      form.formError = { title: 'The document must be valid JSON.', detail: 'Paste the source’s OpenAPI or AsyncAPI document.' };
-      this.renderEditor();
-      return;
-    }
-    try {
-      const managementTags = this.$('.f-mgmt-editor')?.tags ?? [];
-      const created = await this.buildClient().createSource({
-        name,
-        type: form.type,
-        document,
-        displayName: (form.displayName || '').trim() || undefined,
-        description: (form.description || '').trim() || undefined,
-        managementTags: managementTags.length ? managementTags : undefined,
-      });
-      this.closeEditor();
-      await this.reload();
-      await this.select(created.name);
-      this.emit('source-created', { source: created });
-    } catch (err) {
-      form.formError = err.problem || { title: err.message };
-      this.renderEditor();
-      this.emit('error', { problem: form.formError, error: err });
-    }
+  async onSourceRegistered(source) {
+    await this.reload();
+    await this.select(source.name);
+    this.emit('source-created', { source });
   }
 
   // ---- rendering --------------------------------------------------------------------------------
@@ -361,24 +329,15 @@ class ArazzoSources extends ArazzoElement {
                          aria-label="Resize the detail pane"></arazzo-splitbar>
         <div class="detail-pane"></div>
       </div>
-      <dialog part="dialog">
-        <div class="dlg-head">Register source</div>
-        <div class="content"></div>
-        <div class="foot">
-          <button class="cancel ghost" type="button">Cancel</button>
-          <button class="confirm primary" type="button">Register</button>
-        </div>
-      </dialog>
+      <arazzo-source-acquisition-dialog class="acq-dialog"></arazzo-source-acquisition-dialog>
       <arazzo-credential-dialog></arazzo-credential-dialog>
     `;
     this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.new').addEventListener('click', () => this.openCreate());
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
-    this.$('.cancel').addEventListener('click', () => this.closeEditor());
-    this.$('.confirm').addEventListener('click', () => this.submitForm());
-    this.$('dialog').addEventListener('close', () => { this._form = null; });
-    this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.closeEditor(); });
+    this.$('.acq-dialog').addEventListener('source-registered', (e) => this.onSourceRegistered(e.detail.source));
+    this.$('.acq-dialog').addEventListener('error', (e) => this.emit('error', e.detail));
     this.$('arazzo-credential-dialog').addEventListener('credential-saved', (e) => this.emit('credential-saved', e.detail));
   }
 
@@ -501,32 +460,6 @@ class ArazzoSources extends ArazzoElement {
     if (delBtn) delBtn.addEventListener('click', () => this.deleteSource(s.name));
   }
 
-  renderEditor() {
-    const content = this.$('.content');
-    const f = this._form;
-    if (!content || !f) return;
-    content.innerHTML = `
-      <div class="field"><span>Name</span><input class="f-name" placeholder="onboarding" value="${escapeHtml(f.name)}"></div>
-      <div class="field"><span>Type</span><select class="f-type">
-        <option value="openapi"${f.type === 'openapi' ? ' selected' : ''}>OpenAPI</option>
-        <option value="asyncapi"${f.type === 'asyncapi' ? ' selected' : ''}>AsyncAPI</option>
-      </select></div>
-      <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
-      <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
-      <div class="field"><span>Document (JSON)</span><textarea class="f-document doc" placeholder='{"openapi":"3.1.0", …}'>${escapeHtml(f.document)}</textarea></div>
-      <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
-      <div class="hint">Register the source's OpenAPI or AsyncAPI document so a workflow's <code>sourceDescriptions</code> entry resolves it. Management tags scope who may manage and see it; the reserved <code>sys:</code> prefix is not allowed.</div>
-      <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
-    `;
-    content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
-    content.querySelector('.f-type').addEventListener('change', (ev) => { f.type = ev.target.value; });
-    content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
-    content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
-    content.querySelector('.f-document').addEventListener('input', (ev) => { f.document = ev.target.value; });
-    const mgmtEd = content.querySelector('.f-mgmt-editor');
-    mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
-    mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });
-  }
 }
 
 define('arazzo-sources', ArazzoSources);

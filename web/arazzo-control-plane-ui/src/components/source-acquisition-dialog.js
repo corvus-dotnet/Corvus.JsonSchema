@@ -6,10 +6,15 @@
 //   host.appendChild(dlg);
 //   dlg.open({ workingCopyId: 'wc-…', suggestedName: 'payments' });
 //
+// It also registers a NEW source into the sources registry (§7.6), reusing the same Fetch/Upload/GitHub acquisition:
+//   dlg.openForRegister({ suggestedName: 'payments' });   // Registry + Catalog modes are hidden; commits via createSource
+//
 // Properties : .client
-// Methods    : open({ workingCopyId, suggestedName? }), close()
-// Events     : source-attached {attachment}   (the attachment carries the working copy's NEW etag —
-//                                              hosts refresh their save token from it)
+// Methods    : open({ workingCopyId, suggestedName? }) — attach to a working copy
+//              openForRegister({ suggestedName? })      — register a new source in the registry
+//              close()
+// Events     : source-attached {attachment}    (attach: carries the working copy's NEW etag — hosts refresh their save token)
+//              source-registered {source}       (register: the created source record)
 //              error {problem}
 //
 // The four acquisition modes end at the same seam: attachWorkingCopySource with a registry
@@ -21,10 +26,13 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './catalog-table.js';
+import './tag-editor.js';
 
 class ArazzoSourceAcquisitionDialog extends ArazzoElement {
   constructor() {
     super();
+    /** @private The commit target: 'attach' (to a working copy) or 'register' (a new source in the registry). */
+    this._target = 'attach';
     /** @private */ this._workingCopyId = null;
     /** @private */ this._mode = 'registry';
     /** @private */ this._registry = [];
@@ -39,6 +47,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
   /** Open the dialog for a working copy; `suggestedName` seeds the sourceDescriptions-name input. */
   open({ workingCopyId, suggestedName = '' } = {}) {
+    this._target = 'attach';
     this._workingCopyId = workingCopyId;
     this._mode = 'registry';
     this._registry = [];
@@ -51,6 +60,28 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
     this.$('dialog').showModal();
     this.loadRegistry();
+  }
+
+  /**
+   * Open the dialog to REGISTER a new source in the sources registry (§7.6) rather than attach one to a working copy.
+   * Reuses the same Fetch-URL / Upload / GitHub acquisition modes and preview; the Registry and Catalog modes (which
+   * pick an existing source or a workflow trigger) do not apply and are hidden. Commits with `createSource` and emits
+   * `source-registered {source}`. `suggestedName` seeds the source-name input.
+   */
+  openForRegister({ suggestedName = '' } = {}) {
+    this._target = 'register';
+    this._workingCopyId = null;
+    this._mode = 'fetch';
+    this._registry = [];
+    this._fetched = null;
+    this._uploaded = null;
+    this._github = { picked: null, path: '' };
+    this.render();
+    this.$('.name-in').value = suggestedName;
+    this.$('.gh-connect').client = this._client;
+    if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
+    this.$('dialog').showModal();
+    this.switchMode('fetch');
   }
 
   close() {
@@ -92,17 +123,17 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .error-banner[hidden] { display: none; }
       </style>
       <dialog part="dialog">
-        <div class="head"><h2>Attach a source</h2><button class="x" type="button" title="Close">✕</button></div>
+        <div class="head"><h2>${this._target === 'register' ? 'Register a source' : 'Attach a source'}</h2><button class="x" type="button" title="Close">✕</button></div>
         <div class="body">
           <div class="error-banner" hidden></div>
           <label>Name — matches the document's <code>sourceDescriptions</code>
             <input class="name-in" type="text" placeholder="e.g. payments" autocomplete="off">
           </label>
           <div class="tabs" role="tablist">
-            <button type="button" data-mode="registry" class="active">Registry</button>
-            <button type="button" data-mode="fetch">Fetch URL</button>
+            <button type="button" data-mode="registry" class="active" ${this._target === 'register' ? 'hidden' : ''}>Registry</button>
+            <button type="button" data-mode="fetch" ${this._target === 'register' ? 'class="active"' : ''}>Fetch URL</button>
             <button type="button" data-mode="upload">Upload</button>
-            <button type="button" data-mode="catalog">Catalog</button>
+            <button type="button" data-mode="catalog" ${this._target === 'register' ? 'hidden' : ''}>Catalog</button>
             <button type="button" data-mode="github">GitHub</button>
           </div>
           <div class="mode mode-registry">
@@ -150,10 +181,20 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             </div>
             <div class="preview gh-preview" hidden></div>
           </div>
+          ${this._target === 'register' ? `
+          <label>Display name <span class="muted">(optional)</span>
+            <input class="displayname-in" type="text" autocomplete="off">
+          </label>
+          <label>Description <span class="muted">(optional)</span>
+            <input class="description-in" type="text" autocomplete="off">
+          </label>
+          <label>Management tags <span class="muted">(optional)</span></label>
+          <arazzo-tag-editor class="reg-mgmt-editor"></arazzo-tag-editor>
+          ` : ''}
         </div>
         <div class="foot">
           <button class="cancel" type="button">Cancel</button>
-          <button class="attach" type="button" disabled>Attach</button>
+          <button class="attach" type="button" disabled>${this._target === 'register' ? 'Register' : 'Attach'}</button>
         </div>
       </dialog>
     `;
@@ -465,6 +506,11 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
   async attach() {
     this.clearError();
     const name = this.$('.name-in').value.trim();
+    if (this._target === 'register') {
+      await this.register(name);
+      return;
+    }
+
     let attachment;
     if (this._mode === 'registry') {
       attachment = { sourceName: this.$('.registry-in').value };
@@ -482,6 +528,34 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     try {
       const attached = await this._client.attachWorkingCopySource(this._workingCopyId, name, attachment);
       this.emit('source-attached', { attachment: attached });
+      this.close();
+    } catch (err) {
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+      this.updateAttachState();
+      this.emit('error', { problem: err.problem, error: err });
+    }
+  }
+
+  /** Register the acquired document as a new source in the registry (the 'register' target). */
+  async register(name) {
+    let type;
+    let document;
+    if (this._mode === 'fetch') { type = this._fetched.type; document = this._fetched.document; }
+    else if (this._mode === 'github') { type = this._github.picked.type; document = this._github.picked.document; }
+    else { type = this._uploaded.type; document = this._uploaded.document; }
+
+    this.$('button.attach').disabled = true;
+    try {
+      const managementTags = this.$('.reg-mgmt-editor')?.tags ?? [];
+      const created = await this._client.createSource({
+        name,
+        type,
+        document,
+        displayName: this.$('.displayname-in')?.value.trim() || undefined,
+        description: this.$('.description-in')?.value.trim() || undefined,
+        managementTags: managementTags.length ? managementTags : undefined,
+      });
+      this.emit('source-registered', { source: created });
       this.close();
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
