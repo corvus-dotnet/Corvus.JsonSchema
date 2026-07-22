@@ -239,18 +239,41 @@ describe('<arazzo-schema-editor>', () => {
     equal((await changed).detail.schema.properties.addr.$ref, '#/components/inputs/Fresh', 'the node references the new blank type');
   });
 
-  it('format is a constrained dropdown, not free text (#102)', async () => {
+  it('format is a constrained dropdown promoted above more…, not free text (#102)', async () => {
     make({ type: 'object', properties: { when: { type: 'string' } } });
     const whenRow = names().find((n) => n.value === 'when').closest('.node');
-    whenRow.querySelector('details.more').open = true;
-    const label = [...whenRow.querySelectorAll('.more-body label')].find((l) => l.textContent === 'format');
-    const control = label.nextElementSibling;
+    // format is a TOP-LEVEL field now (a .format-row), not tucked inside more…
+    const control = whenRow.querySelector('.format-row select');
+    ok(control, 'format renders at the top level (.format-row)');
     equal(control.tagName, 'SELECT', 'format renders as a select');
     ok([...control.options].some((o) => o.value === 'date-time'), 'offers the recognised string formats');
     ok([...control.options].some((o) => o.value === '' && /none/.test(o.textContent)), 'defaults to (none)');
+    // It sits ABOVE the collapsible more… section, not within it.
+    const formatRow = whenRow.querySelector(':scope > .format-row');
+    const more = whenRow.querySelector(':scope > details.more');
+    ok(more.compareDocumentPosition(formatRow) & Node.DOCUMENT_POSITION_PRECEDING, 'format is above more…');
+    ok(![...whenRow.querySelectorAll('.more-body label')].some((l) => l.textContent === 'format'), 'not duplicated in more…');
     const changed = nextEvent(el, 'schema-changed');
     control.value = 'uuid'; control.dispatchEvent(new Event('change'));
     equal((await changed).detail.schema.properties.when.format, 'uuid', 'selecting sets the format');
+  });
+
+  it("object members render above the more… constraints", async () => {
+    make({ type: 'object', properties: { a: { type: 'string' } } });
+    const root = el.shadowRoot.querySelector('.form').firstElementChild;
+    const add = root.querySelector('.add'); // the '+ Add property' button lives in the object body
+    const more = root.querySelector(':scope > details.more');
+    ok(add && more, 'both the object body and the more section are present');
+    ok(more.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_PRECEDING, 'the object body is above more…');
+  });
+
+  it('the typed default sits in the constraint grid, not a standout cluster', async () => {
+    make({ type: 'object', properties: { a: { type: 'number' } } });
+    const aRow = names().find((n) => n.value === 'a').closest('.node');
+    aRow.querySelector('details.more').open = true;
+    ok(!aRow.querySelector('.default-cluster'), 'no accent-edged default cluster');
+    ok(aRow.querySelector('.more-body arazzo-value-editor.default-ve'), 'default is a normal more-body row');
+    ok([...aRow.querySelectorAll('.more-body label')].some((l) => l.textContent === 'default'), 'default has a plain grid label');
   });
 
   it('a dangling library reference renders a problem row', () => {

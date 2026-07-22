@@ -131,6 +131,10 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .iconbtn { border: none; background: none; color: var(--_muted); cursor: pointer; font-size: 13px; padding: 0 3px; }
         .iconbtn:hover { color: inherit; }
         .desc { width: 100%; box-sizing: border-box; font: 12px var(--_font); padding: 3px 6px; margin-top: 4px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+        /* format (scalars) is promoted out of more... to a top-level labelled row, above the nested body. */
+        .format-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .format-row > label { font-size: 11px; color: var(--_muted); }
+        .format-row select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .more { margin-top: 6px; }
         .more summary { cursor: pointer; font-size: 11px; color: var(--_muted); }
         .more-body { display: grid; grid-template-columns: max-content 1fr; gap: 4px 8px; align-items: center; padding: 6px 0 2px; }
@@ -138,10 +142,8 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .more-body input, .more-body select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .more-body input.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
         .full { grid-column: 1 / -1; }
-        /* The default is the one constraint that changes RUNTIME behaviour (the generated getter serves it),
-           so it gets its own accent-edged cluster instead of blending into the constraint grid (#858). */
-        .default-cluster { display: grid; grid-template-columns: max-content 1fr; gap: 4px 8px; align-items: center; margin-top: 4px; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 35%, var(--_border)); border-left-width: 3px; border-radius: 6px; background: color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 6%, transparent); }
-        .default-cluster > label { font-size: 10.5px; font-weight: 700; color: var(--arazzo-accent, #3b6cf6); text-transform: uppercase; letter-spacing: 0.04em; }
+        /* The typed default editor sits in the constraint grid at the same scale as the other rows. */
+        .more-body .default-ve { min-width: 0; font-size: 12px; }
         .variant { border: 1px dashed var(--_border); border-radius: 8px; padding: 6px 8px; margin: 6px 0; }
         .variant .vhead { display: flex; align-items: center; gap: 6px; }
         .variant .vlabel { flex: 1; font: 12px var(--_font); padding: 2px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
@@ -445,16 +447,33 @@ class ArazzoSchemaEditor extends ArazzoElement {
     desc.addEventListener('input', () => { setConstraint(schema, 'description', desc.value); this._commit(); });
     node.appendChild(desc);
 
-    // more… constraints
+    // Primary structure sits ABOVE the collapsible constraints: a scalar's `format`, or a container's
+    // members (an object's properties / an array's items) — the fields authored most, promoted out of more…
+    const type = schema.type ?? (schema.properties ? 'object' : (schema.items ? 'array' : undefined));
+    if (FORMATS[type]) node.appendChild(this._formatField(schema, type));
+    if (type === 'object') node.appendChild(this._objectBody(schema));
+    else if (type === 'array') node.appendChild(this._arrayBody(schema));
+
+    // more… constraints (format is promoted above; the rest stay here)
     node.appendChild(this._moreSection(schema));
     // +N more preserved keywords
     const more = unrenderedKeywords(schema).filter((k) => k !== 'default');
     if (more.length) node.appendChild(this._chips(more));
+  }
 
-    // nested structure
-    const type = schema.type ?? (schema.properties ? 'object' : (schema.items ? 'array' : undefined));
-    if (type === 'object') node.appendChild(this._objectBody(schema));
-    else if (type === 'array') node.appendChild(this._arrayBody(schema));
+  /** The `format` keyword, promoted to a top-level field for the scalar types that support it. */
+  _formatField(schema, type) {
+    const wrap = document.createElement('div');
+    wrap.className = 'format-row';
+    const label = document.createElement('label'); label.textContent = 'format';
+    const sel = document.createElement('select');
+    sel.disabled = this.readonly;
+    const options = FORMATS[type] ?? FORMATS.string;
+    sel.innerHTML = ['', ...options].map((f) => `<option value="${escapeHtml(f)}">${f || '(none)'}</option>`).join('');
+    sel.value = typeof schema.format === 'string' ? schema.format : '';
+    sel.addEventListener('change', () => { setConstraint(schema, 'format', sel.value || undefined); this._commit(); });
+    wrap.append(label, sel);
+    return wrap;
   }
 
   _renameRow(ctx, input) {
@@ -487,7 +506,8 @@ class ArazzoSchemaEditor extends ArazzoElement {
     details.className = 'more';
     const body = document.createElement('div');
     body.className = 'more-body';
-    const rows = [['title', 'text'], ...(CONSTRAINTS[type] || [])];
+    // `format` is promoted to a top-level field (see _formatField); the rest of the constraints stay here.
+    const rows = [['title', 'text'], ...(CONSTRAINTS[type] || []).filter(([key]) => key !== 'format')];
     for (const [key, kind] of rows) this._constraintRow(body, schema, key, kind);
     // enum (chip list) + const, values typed by the row's type (§3.2).
     this._enumRow(body, schema);
@@ -501,18 +521,6 @@ class ArazzoSchemaEditor extends ArazzoElement {
 
   _constraintRow(body, schema, key, kind) {
     const label = document.createElement('label'); label.textContent = key;
-    if (kind === 'format') {
-      // `format` is constrained to the recognised set for the node's type (string / numeric), with a
-      // "(none)" default — no free text, no spurious value.
-      const sel = document.createElement('select');
-      sel.disabled = this.readonly;
-      const options = FORMATS[schema.type] ?? FORMATS.string;
-      sel.innerHTML = ['', ...options].map((f) => `<option value="${escapeHtml(f)}">${f || '(none)'}</option>`).join('');
-      sel.value = typeof schema.format === 'string' ? schema.format : '';
-      sel.addEventListener('change', () => { setConstraint(schema, 'format', sel.value || undefined); this._commit(); });
-      body.append(label, sel);
-      return;
-    }
     const input = document.createElement('input');
     input.type = kind === 'number' ? 'number' : (kind === 'checkbox' ? 'checkbox' : 'text');
     input.disabled = this.readonly;
@@ -566,19 +574,19 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   _defaultRow(body, schema) {
-    // Its own accent-edged cluster (see .default-cluster): the default must not blend into the constraint grid.
-    const cluster = document.createElement('div');
-    cluster.className = 'default-cluster full';
+    // Typed by the row's schema (a number default gets a number input, a boolean a checkbox, …). Sits in
+    // the constraint grid like the other rows — its own accent-edged cluster made 'default' read as
+    // gigantic next to const/enum (snag); it now matches their size.
     const label = document.createElement('label'); label.textContent = 'default';
     const ve = document.createElement('arazzo-value-editor');
+    ve.className = 'default-ve';
     if (schema.default !== undefined) ve.seed = schema.default; // seed BEFORE descriptor (value-editor contract)
     ve.descriptor = schema;
     // Native input events are composed, so an edit inside value-editor's shadow root reaches here.
     ve.addEventListener('input', () => {
       try { const v = ve.value; if (v === undefined) delete schema.default; else schema.default = v; this._commit(); } catch { /* invalid default held */ }
     });
-    cluster.append(label, ve);
-    body.append(cluster);
+    body.append(label, ve);
   }
 
   _objectBody(schema) {
