@@ -82,23 +82,28 @@ The preferred launcher is the Aspire CLI. Build the AppHost first, then from the
 
 ```bash
 dotnet build samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost -c Debug
-ASPIRE_ENABLE_CONTAINER_TUNNEL=false aspire start --no-build --isolated --non-interactive \
+ASPIRE_ENABLE_CONTAINER_TUNNEL=false aspire start --no-build --non-interactive \
   --apphost samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.csproj
 ```
 
-It prints `✅ AppHost started successfully` with an HTTPS dashboard URL, e.g.
-`https://localhost:45047/login?t=...`. Open it (on WSL the browser runs on Windows, which does not trust the
-Linux dev cert, so click through the warning). You will see every resource (vault, vault-init, keycloak,
+It prints `✅ AppHost started successfully` with the dashboard at the **fixed** `https://localhost:17245` — a
+bookmarkable address that stays the same across rebuilds, with **no `?t=` login token** (the AppHost sets
+`DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS`, so on localhost the dashboard opens straight in — one tab you
+keep open and just refresh after a restart). Open it (on WSL the browser runs on Windows, which does not trust
+the Linux dev cert, so click through the warning). You will see every resource (vault, vault-init, keycloak,
 controlplane, runner) with its logs, traces, and endpoints. Follow the **controlplane** resource's HTTP
 endpoint to reach the designer at `/ui/demo/designer.html?live`. Check status any time with `aspire ps`.
 
-Two flags matter on this box:
+Two things matter on this box:
 
 - **`--no-build` is required** (hence the separate `dotnet build` first). Without it the detached AppHost
   spends a couple of minutes building, the parent CLI's wait-for-backchannel times out mid-build, and the
   child self-cancels at `DashboardServiceHost.StartAsync` — exiting 0 having never come up.
-- **`--isolated`** gives the run its own randomized ports and user secrets (needed when launching from a git
-  worktree, harmless otherwise).
+- **No `--isolated`.** Omitting it lets the launchSettings ports hold steady — the control plane on the pinned
+  8090, the dashboard on 17245, OTLP/resource on their fixed ports — so the dashboard URL never changes between
+  rebuilds. The trade-off is that only ONE composition may run at a time (this worktree OR another checkout);
+  the AppHost keeps no meaningful state in user secrets, so nothing else needs the isolation. Add `--isolated`
+  back only when you deliberately want to run two compositions side by side (it re-randomizes every port).
 
 `aspire start` needs a trusted dev certificate and podman 5.x on the default `PATH` — see the two notes below
 if either is missing. To avoid the certificate entirely, the fallback launcher runs the dashboard over HTTP:
@@ -109,7 +114,7 @@ dotnet run --project samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ap
 ```
 
 The `http` profile sets `ASPIRE_ALLOW_UNSECURED_TRANSPORT` and `ASPIRE_ENABLE_CONTAINER_TUNNEL=false`,
-sidestepping the certificate, and prints `http://localhost:15154/login?t=...`.
+sidestepping the certificate, and serves the dashboard at the fixed `http://localhost:15154` (also token-free).
 
 ### HTTPS dev certificate on WSL2 — regenerate it if `aspire start` crashes
 

@@ -53,10 +53,14 @@ if (Test-ControlPlaneHealthy) {
 else {
     # aspire start DETACHES: it spawns the AppHost, prints its PID, and returns - so the AppHost pid comes from
     # parsing that output (after stripping ANSI colour and OSC 8 hyperlink escapes), not from the CLI process.
-    Write-Host '>> Booting the Aspire composition (aspire start --no-build --isolated --non-interactive)...'
+    # No --isolated: the launchSettings ports (control plane 8090, dashboard 17245, OTLP/resource) then hold
+    # steady across runs, so the Aspire dashboard keeps a stable, bookmarkable URL instead of a fresh random
+    # port every boot. The trade-off is that only ONE composition (this worktree OR another checkout) can run
+    # at a time — which the health probe above already assumes when it reuses a running instance.
+    Write-Host '>> Booting the Aspire composition (aspire start --no-build --non-interactive)...'
     Push-Location $appHostDir
     try {
-        $startOutput = (& aspire start --no-build --isolated --non-interactive 2>&1) -join "`n"
+        $startOutput = (& aspire start --no-build --non-interactive 2>&1) -join "`n"
     }
     finally {
         Pop-Location
