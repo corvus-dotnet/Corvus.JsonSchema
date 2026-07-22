@@ -13,6 +13,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 
 const PRESETS = [
+  { label: 'Up to now', days: 0 },
   { label: '7 days', days: 7 },
   { label: '30 days', days: 30 },
   { label: '90 days', days: 90 },
@@ -40,7 +41,12 @@ class ArazzoPurgeDialog extends ArazzoElement {
 
   setOlderThanDaysAgo(days) {
     this._lastDays = days; // remembered across opens so the chosen window sticks (P2.6)
-    const d = new Date(Date.now() - days * 86400000);
+    // days === 0 ("Up to now") means purge EVERY completed/cancelled run: the cutoff is this moment.
+    // The predicate is UpdatedAt < olderThan and the datetime-local input has minute precision, so
+    // ceil to the NEXT minute — otherwise a run updated in the current partial minute would sit at
+    // or after a floored cutoff and survive. Older-than-N-days windows floor as before.
+    const ms = days === 0 ? Math.ceil(Date.now() / 60000) * 60000 : Date.now() - days * 86400000;
+    const d = new Date(ms);
     // datetime-local wants local time without the timezone/seconds.
     const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     this.$('#olderThan').value = local;

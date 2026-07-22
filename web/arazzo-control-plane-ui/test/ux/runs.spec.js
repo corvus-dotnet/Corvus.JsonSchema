@@ -124,3 +124,33 @@ test('purge is scope-gated, preset-driven, and reaps old terminal runs', async (
   await expect.poll(async () => rows.count()).toBeLessThan(before);
   assertClean(errors);
 });
+
+test('the "Up to now" preset purges EVERY completed/cancelled run, including recent ones', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openApp(page);
+  await expect(page.locator('arazzo-runs-table tbody tr[data-id]').first()).toBeVisible();
+
+  // Count the terminal (completed/cancelled) runs on the list — the ones a purge may reap.
+  const terminalCount = () => page.locator('arazzo-runs-table tbody tr[data-id]').evaluateAll((trs) =>
+    trs.filter((tr) => ['Completed', 'Cancelled'].includes(tr.querySelector('arazzo-status-badge')?.getAttribute('status'))).length);
+  const before = await terminalCount();
+  expect(before).toBeGreaterThan(0);
+
+  const purgeBtn = page.locator('#view-runs .purge-btn');
+  await purgeBtn.click();
+  const dialog = page.locator('#view-runs arazzo-purge-dialog dialog[part="dialog"]');
+  await expect(dialog).toBeVisible();
+  // "Up to now" is the fix: a rolling N-days window can never reach runs created today (the reported
+  // "purge all before now → 0"); this cutoff is the current moment, so every terminal run qualifies.
+  await dialog.locator('.preset[data-days="0"]').click();
+  await dialog.locator('.confirm').click();
+  const strongConfirm = page.locator('#view-runs arazzo-purge-dialog dialog.arazzo-confirm');
+  await expect(strongConfirm).toBeVisible();
+  await strongConfirm.locator('button.confirm, button.danger').first().click();
+  await expect(dialog.locator('.result')).toContainText(/purged \d+ run/i);
+  await dialog.locator('button[value="dismiss"]').click();
+
+  // No completed/cancelled run survives, however recently it finished.
+  await expect.poll(terminalCount).toBe(0);
+  assertClean(errors);
+});
