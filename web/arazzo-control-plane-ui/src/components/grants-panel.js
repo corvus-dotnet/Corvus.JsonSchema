@@ -220,7 +220,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
   renderRuleDropdown() {
     const verb = this._activeRuleVerb;
     if (!verb) return;
-    const list = this._pane?.querySelector(`.results[data-verb="${verb}"]`);
+    const list = this._formRoot?.querySelector(`.results[data-verb="${verb}"]`);
     if (!list) return;
     const added = new Set(this._form?.verbs[verb]?.scopes || []);
     const options = this._scopes.filter((s) => !added.has(s.name));
@@ -244,14 +244,14 @@ class ArazzoGrantsPanel extends ArazzoElement {
     // sits below the verb row (including the pane's footer), so a completed selection must leave it
     // closed — typing again re-opens it.
     this._squelchFocusPop = true;
-    this._pane?.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
+    this._formRoot?.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
     this._squelchFocusPop = false;
   }
 
   /** Hide any open rule dropdown. */
   hideRuleDropdowns() {
     this._activeRuleVerb = null;
-    this._pane?.querySelectorAll('.results').forEach((el) => { el.hidden = true; });
+    this._formRoot?.querySelectorAll('.results').forEach((el) => { el.hidden = true; });
   }
 
   // ---- detail-pane authoring --------------------------------------------------------------------
@@ -482,6 +482,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .dfoot .grow { flex: 1; }
         .placeholder { color: var(--_muted); padding: 24px 14px; text-align: center; }
+
+        /* Create authors in a modal (matching the Catalog / Sources / Environments create flows);
+           edit stays in the detail pane. The .detail card fills the dialog, its header/footer pinned
+           and its content scrolling when the form is tall. */
+        .cmodal { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); max-height: 88vh; overflow: hidden; }
+        .cmodal::backdrop { background: rgb(0 0 0 / 0.4); }
+        .cmodal:not([open]) { display: none; }
+        .cmodal-body { display: flex; max-height: 88vh; }
+        .cmodal .detail { border: none; border-radius: 0; display: flex; flex-direction: column; max-height: 88vh; flex: 1; min-width: 0; }
+        .cmodal .dhead, .cmodal .dfoot { flex: none; }
+        .cmodal .content { flex: 1; min-height: 0; overflow-y: auto; }
       </style>
       <div class="layout" part="layout">
         <div class="wrap" part="panel">
@@ -503,6 +514,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
         </div>
         <div class="detail-pane"></div>
       </div>
+      <dialog class="cmodal" part="create-modal"><div class="cmodal-body"></div></dialog>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
     this.$('.refresh').addEventListener('click', () => this.reload());
@@ -521,13 +533,19 @@ class ArazzoGrantsPanel extends ArazzoElement {
       const verb = this._activeRuleVerb;
       if (!verb) return;
       const path = e.composedPath();
-      const input = this._pane?.querySelector(`.scope-input[data-verb="${verb}"]`);
-      const list = this._pane?.querySelector(`.results[data-verb="${verb}"]`);
+      const input = this._formRoot?.querySelector(`.scope-input[data-verb="${verb}"]`);
+      const list = this._formRoot?.querySelector(`.results[data-verb="${verb}"]`);
       if ((input && path.includes(input)) || (list && path.includes(list))) return;
       this.hideRuleDropdowns();
     });
     this._pane = this.$('.detail-pane');
     this._layout = this.$('.layout');
+    this._cmodal = this.$('.cmodal');
+    this._cbody = this.$('.cmodal-body');
+    // The active form's container: the detail pane for edit, the modal body for create.
+    this._formRoot = this._pane;
+    // Dismissing the create modal (Escape or backdrop) discards the in-progress grant.
+    this._cmodal.addEventListener('close', () => { if (this._form?.mode === 'create') this.clearDetail(); });
   }
 
   disconnectedCallback() {
@@ -633,13 +651,29 @@ class ArazzoGrantsPanel extends ArazzoElement {
   }
 
   renderDetail() {
-    const pane = this._pane;
-    if (!pane) return;
+    if (!this._pane) return; // renderShell has not run yet (an upgrade-time attribute change)
     const f = this._form;
-    this._layout.classList.toggle('has-selection', !!f);
-    if (!f) { pane.replaceChildren(); return; }
+    if (!f) {
+      this.closeCreateModal();
+      this._layout.classList.remove('has-selection');
+      this._pane.replaceChildren();
+      return;
+    }
 
     const isEdit = f.mode === 'edit';
+    // The shared authoring form renders into whichever container is active: the in-place detail pane
+    // for edit, the modal body for create (matching the Catalog / Sources / Environments create flows).
+    let pane;
+    if (isEdit) {
+      this.closeCreateModal();
+      this._layout.classList.add('has-selection');
+      pane = this._formRoot = this._pane;
+    } else {
+      this._layout.classList.remove('has-selection');
+      this._pane?.replaceChildren();
+      pane = this._formRoot = this._cbody;
+    }
+    if (!pane) return;
     pane.innerHTML = `
       <div class="detail" part="detail">
         <div class="dhead">
@@ -759,6 +793,16 @@ class ArazzoGrantsPanel extends ArazzoElement {
       pane.querySelector('.del')?.remove();
       pane.querySelector('.cancel').textContent = 'Close';
     }
+
+    // Open the create modal once (subsequent re-renders during authoring keep it open).
+    if (!isEdit && !this._cmodal.open) this._cmodal.showModal();
+  }
+
+  /** Close the create modal if it is open (idempotent — safe from the dialog's own close event) and
+   *  drop its form, so a closed modal never leaves a second copy of the fields in the tree. */
+  closeCreateModal() {
+    if (this._cmodal?.open) this._cmodal.close();
+    this._cbody?.replaceChildren();
   }
 }
 

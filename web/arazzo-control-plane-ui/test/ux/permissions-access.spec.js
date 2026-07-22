@@ -228,7 +228,7 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
   assertClean(errors);
 });
 
-test('picking a person grantee steers to the access-request flow: the grant editor blocks a direct per-person grant', async ({ page }) => {
+test('a person is not offered as a grantee: the grants picker excludes people (per-person access goes through requests)', async ({ page }) => {
   const errors = watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
@@ -239,18 +239,49 @@ test('picking a person grantee steers to the access-request flow: the grant edit
   const pickerInput = grants.locator('arazzo-grantee-picker input.q');
   await pickerInput.click();
   await pickerInput.fill('Ada');
-  const personHit = grants.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'Ada Lovelace' });
-  await expect(personHit.locator('.badge')).toHaveText('person');
-  await personHit.click();
 
-  // The steer renders inline and the claim stays empty — a person is requested-and-approved, never granted directly.
-  await expect(grants.locator('.error-banner.steer')).toContainText('access-request flow');
-  await expect(grants.locator('input.f-claimType')).toHaveValue('');
+  // Ada Lovelace is a person; the grants picker is constrained to team/role/workflow, so a person is
+  // never offered — per-person elevation goes through the access-request flow, not a direct grant.
+  const results = grants.locator('arazzo-grantee-picker .results');
+  await expect(results.locator('li[data-index]', { hasText: 'Ada Lovelace' })).toHaveCount(0);
+  await expect(grants.locator('arazzo-grantee-picker .results li[data-index] .badge', { hasText: 'person' })).toHaveCount(0);
+  assertClean(errors);
+});
 
-  // Submitting anyway is refused client-side with the same steer.
-  await grants.locator('.dfoot .confirm').click();
-  await expect(grants.locator('.form-err .error-banner')).toContainText('Use the access-request flow for a person');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // nothing was created
+test('New grant / New rule open in a modal, while editing an existing one stays in the detail pane', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openApp(page);
+
+  // Grants: New grant opens a modal (matching the Catalog / Sources / Environments create flows); the
+  // form lives in the open dialog and the detail pane holds nothing during create.
+  await selectSecurity(page, 'Grants');
+  const grants = page.locator('arazzo-grants-panel');
+  await expect(grants.locator('tbody tr.grow-row').first()).toBeVisible();
+  await grants.locator('button.new').click();
+  await expect(grants.locator('dialog.cmodal[open]')).toBeVisible();
+  await expect(grants.locator('dialog.cmodal .detail .dtitle')).toHaveText('New grant');
+  await expect(grants.locator('.detail-pane')).toBeEmpty();
+  await page.keyboard.press('Escape'); // dismiss without creating
+  await expect(grants.locator('dialog.cmodal')).not.toBeVisible();
+  // Editing an existing grant opens in the in-place detail pane, not a modal.
+  await grants.locator('tbody tr.grow-row').first().click();
+  await expect(grants.locator('.detail-pane .detail')).toBeVisible();
+  await expect(grants.locator('dialog.cmodal')).not.toBeVisible();
+
+  // Rules: the same shape — New rule is a modal, editing stays in the pane.
+  await selectSecurity(page, 'Rules');
+  const rules = page.locator('arazzo-rules-panel');
+  await expect(rules.locator('tbody tr.srow').first()).toBeVisible();
+  await rules.locator('button.new').click();
+  await expect(rules.locator('dialog.cmodal[open]')).toBeVisible();
+  await expect(rules.locator('dialog.cmodal .detail .dtitle')).toHaveText('New rule');
+  await expect(rules.locator('.detail-pane')).toBeEmpty();
+  await page.keyboard.press('Escape');
+  await expect(rules.locator('dialog.cmodal')).not.toBeVisible();
+  await rules.locator('tbody tr.srow').first().click();
+  await expect(rules.locator('.detail-pane .detail')).toBeVisible();
+  await expect(rules.locator('dialog.cmodal')).not.toBeVisible();
+
   assertClean(errors);
 });
 
