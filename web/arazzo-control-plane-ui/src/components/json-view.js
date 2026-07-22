@@ -80,7 +80,6 @@ class ArazzoJsonView extends ArazzoElement {
         pre { margin: 0; padding: 10px 12px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
         .cm-editor { font-size: 12px; }
         .cm-editor .cm-content { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .cm-editor .cm-gutters { background: transparent; border-right: 1px solid var(--_border); color: var(--_muted); }
       </style>
       <div class="scroll"><pre></pre></div>
     `;
@@ -127,6 +126,10 @@ class ArazzoJsonView extends ArazzoElement {
       '&': { backgroundColor: 'transparent', color: 'var(--arazzo-text, inherit)', maxHeight: 'var(--_maxh, 320px)' },
       '.cm-scroller': { overflow: 'auto' },
       '.cm-content': { caretColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
+      // The gutter MUST be themed here (a CM theme), not in the shadow <style>: CodeMirror's own base
+      // theme outranks a plain stylesheet rule and paints a light gutter, so on the dark theme the line
+      // numbers showed dark-on-white. Match text-editor.js — surface background, muted numerals.
+      '.cm-gutters': { backgroundColor: 'var(--arazzo-surface, #f7f8fa)', color: 'var(--arazzo-muted, #6b7280)', borderRight: '1px solid var(--arazzo-border, #e3e6ea)' },
     });
 
     const scroll = this.$('.scroll');
