@@ -26,6 +26,7 @@ import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, d
 import './grantee-picker.js';
 import './tag-editor.js';
 import './environment-input.js';
+import './source-input.js';
 
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
 
@@ -340,6 +341,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const ro = !!b;                   // editing locks source + environment; create/duplicate do not
 
     this.$('#sourceName').value = b?.sourceName || dup?.sourceName || this._prefillSource || '';
+    this.$('#sourceName').client = this.client; // the source-input's filtered dropdown of registered sources (§7.6)
     this.$('#environment').value = b?.environment || ''; // duplicate: the environment is the thing you change → blank
     this.$('#environment').client = this.client; // the environment-input's filtered dropdown of real environments (§7.7)
     this.$('#sourceName').readOnly = ro || this._lockSource; // locked for a catalogued/duplicated source
@@ -782,7 +784,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
             <fieldset>
               <legend>Identity</legend>
               <div class="grid2">
-                <div><label for="sourceName">Source name *</label><input id="sourceName" type="text" placeholder="petstore"></div>
+                <div><label for="sourceName">Source name *</label><arazzo-source-input id="sourceName" placeholder="Choose or type a source…"></arazzo-source-input></div>
                 <div><label for="environment">Environment *</label><arazzo-environment-input id="environment" placeholder="Choose or type an environment…"></arazzo-environment-input></div>
               </div>
               <div class="grid2">
