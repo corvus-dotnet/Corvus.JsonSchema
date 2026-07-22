@@ -121,7 +121,14 @@ class ArazzoJsonView extends ArazzoElement {
       '.cm-content': { caretColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
     });
 
+    const scroll = this.$('.scroll');
+    scroll.replaceChildren(); // drop the <pre> fallback before mounting the editor
     const editor = new view.EditorView({
+      // root MUST be this shadow root: CodeMirror injects its theme + syntax-highlight stylesheets into the editor's
+      // root node. Without this, they land in document.head and cannot cross into the shadow tree the editor DOM lives
+      // in, so the document renders unstyled (no syntax colours). text-editor.js passes the same root.
+      root: this.shadowRoot,
+      parent: scroll,
       state: state.EditorState.create({
         doc: this._value,
         extensions: [
@@ -135,7 +142,6 @@ class ArazzoJsonView extends ArazzoElement {
         ],
       }),
     });
-    this.$('.scroll').replaceChildren(editor.dom);
     this._view = editor;
   }
 }
