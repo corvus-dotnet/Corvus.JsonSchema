@@ -74,6 +74,9 @@ class ArazzoJsonView extends ArazzoElement {
         ${SHARED_CSS}
         :host { display: block; }
         .scroll { max-height: var(--_maxh, 320px); overflow: auto; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
+        /* Once CodeMirror mounts it owns the scrolling (its .cm-scroller). The outer container must NOT also
+           scroll, or two nested scrollers fight and CM's viewport virtualisation paints the wrong lines. */
+        .scroll.cm-mounted { overflow: hidden; }
         pre { margin: 0; padding: 10px 12px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
         .cm-editor { font-size: 12px; }
         .cm-editor .cm-content { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -117,12 +120,18 @@ class ArazzoJsonView extends ArazzoElement {
     // invisible on the dark theme. Follow the app's text colour so unhighlighted text (and the whole document if the
     // highlighter does not apply) is always legible; the syntax colours below override it per token.
     const chrome = view.EditorView.theme({
-      '&': { backgroundColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
+      // Bound the editor to the view's max-height so CodeMirror's OWN scroller does the scrolling and its
+      // viewport virtualisation measures against a scroller that actually moves. Without this the outer
+      // .scroll div scrolled while .cm-scroller grew to the full document height (scrollTop stuck at 0), so
+      // CM painted only the top ~30 lines of a long document and reserved the rest as blank space.
+      '&': { backgroundColor: 'transparent', color: 'var(--arazzo-text, inherit)', maxHeight: 'var(--_maxh, 320px)' },
+      '.cm-scroller': { overflow: 'auto' },
       '.cm-content': { caretColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
     });
 
     const scroll = this.$('.scroll');
     scroll.replaceChildren(); // drop the <pre> fallback before mounting the editor
+    scroll.classList.add('cm-mounted'); // CM owns the scroll now; the outer container must not also scroll
     const editor = new view.EditorView({
       // root MUST be this shadow root: CodeMirror injects its theme + syntax-highlight stylesheets into the editor's
       // root node. Without this, they land in document.head and cannot cross into the shadow tree the editor DOM lives
@@ -147,3 +156,4 @@ class ArazzoJsonView extends ArazzoElement {
 }
 
 define('arazzo-json-view', ArazzoJsonView);
+export { ArazzoJsonView };
