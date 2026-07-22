@@ -114,13 +114,14 @@ public sealed class SystemWorkflowInstallerTests
             var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "system", credentials);
             var availability = new InMemoryAvailabilityStore();
             var environments = new InMemoryEnvironmentStore();
+            var administrators = new InMemoryEnvironmentAdministratorStore();
             return new Fixture
             {
                 Catalog = catalog,
                 Availability = availability,
                 Credentials = credentials,
                 Environments = environments,
-                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments),
+                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, administrators),
             };
         }
     }
