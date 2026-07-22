@@ -168,12 +168,25 @@ export function completionsFor(text, pos, context = {}) {
     case '$response':
     case '$request':
     case '$message': {
-      const surfaces = parts[0] === '$message' ? ['payload', 'header'] : ['body', 'header', 'query', 'path'];
-      if (parts.length === 2) return filter(surfaces, 'keyword');
-      // Dotted descent into the body/payload schema — the same schema surface the `#/pointer`
-      // branch walks, so `$response.body.` completes property names exactly like `$response.body#/`.
-      const schema = schemaForExpression(`${parts[0]}.${parts[1]}`, context);
-      return schemaProperties(schema, parts.slice(2, -1), filter);
+      // Only the surface position (`$response.`) completes here. Each surface carries the continuation
+      // the Arazzo grammar requires, so the author never has to guess: the body / payload is addressed
+      // by a JSON Pointer (`body#/…`), the flat maps by a name (`header.…`). A response exposes body +
+      // header; a request adds query + path; a message exposes its payload + header.
+      if (parts.length !== 2) {
+        // A dotted tail into the body / payload (`$response.body.foo`) is not a valid Arazzo expression:
+        // the runtime reads `$response.body.foo` as a literal. Descent is the `#/pointer` form, served by
+        // the hash branch. So offer nothing here rather than lead the author into an invalid expression.
+        return null;
+      }
+      const surfaces = parts[0] === '$message'
+        ? [['payload', 'payload#/'], ['header', 'header.']]
+        : parts[0] === '$response'
+          ? [['body', 'body#/'], ['header', 'header.']]
+          : [['body', 'body#/'], ['header', 'header.'], ['query', 'query.'], ['path', 'path.']];
+      const options = surfaces
+        .filter(([name]) => name.toLowerCase().startsWith(last.toLowerCase()))
+        .map(([name, apply]) => ({ label: name, type: 'keyword', apply }));
+      return options.length ? { from, options } : null;
     }
     default:
       return null;
@@ -181,21 +194,46 @@ export function completionsFor(text, pos, context = {}) {
 }
 
 /**
- * Complete the property names of a JSON Schema reached by descending `segments` from `schema`
- * (each an object property or an array index), filtered by the partial last segment. Shared by the
- * dotted (`$response.body.receipt.`) and pointer (`$response.body#/receipt/`) completion paths.
+ * The expression-completion context for a step's editors: the workflow-wide roots (`$inputs` / `$steps`
+ * / `$outputs`) plus THIS step's OWN operation surfaces, so `$response.body#/…` and `$request.body#/…`
+ * complete against the REAL response / request body schema of the operation the step calls, not a
+ * stand-in. Body descent is a JSON Pointer, so these are the JSON Schemas the pointer walk reads.
+ * `$response` / `$request` / `$message` are per-step (they depend on the operation the step calls), so
+ * they are derived here rather than carried on a workflow-wide context.
+ *
+ * @param {object} base The workflow-wide context (`$inputs` / `$steps` / `$outputs`); any response /
+ *   request / message it carries is dropped, since those are per-step.
+ * @param {{ responses?: Record<string, {schema?: object}>, request?: {schema?: object} }} [op] The
+ *   step's resolved operation (the `listSourceOperations` shape): a response map keyed by status code,
+ *   each with a body `schema`, and a request with a body `schema`.
+ * @param {{ channelPath?: string }} [step] The step, so a message (channel) step surfaces its payload
+ *   as `$message.payload` rather than a `$response` / `$request` body.
+ * @returns {object} The per-step completion context.
  */
-function schemaProperties(schema, segments, filter) {
-  if (!schema) return null;
-  let target = schema;
-  for (const seg of segments) {
-    target = stepInto(target, seg);
-    if (!target) return null;
+export function stepCompletionContext(base, op, step) {
+  const ctx = { ...base };
+  delete ctx.response;
+  delete ctx.request;
+  delete ctx.message;
+  if (!op) {
+    return ctx;
   }
-  const props = target.properties || {};
-  return filter(Object.keys(props), 'property', Object.fromEntries(
-    Object.entries(props).map(([n, s]) => [n, schemaDetail(s)]).filter(([, v]) => v),
-  ));
+  if (step?.channelPath) {
+    // A message (send / receive) step: its payload is the channel operation's message schema, the same
+    // schema the body-skeleton template derives from.
+    if (op.request?.schema) ctx.message = { payload: op.request.schema };
+    return ctx;
+  }
+  if (op.responses) {
+    const codes = Object.keys(op.responses);
+    const status = codes.find((c) => /^2\d\d$/.test(c)) ?? codes[0];
+    const schema = status ? op.responses[status]?.schema : undefined;
+    if (schema) ctx.response = { body: schema };
+  }
+  if (op.request?.schema) {
+    ctx.request = { body: op.request.schema };
+  }
+  return ctx;
 }
 
 /** The JSON Schema a pointer-completed expression addresses, if the context carries one. */

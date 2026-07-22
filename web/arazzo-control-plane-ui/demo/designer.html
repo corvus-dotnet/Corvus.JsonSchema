@@ -251,7 +251,7 @@
   <script type="module">
     import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from '/ui/demo/designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '/ui/src/workflow-graph.js';
-    import { EXPRESSION_ROOTS, resolveAgainstFrame } from '/ui/src/expression-language.js';
+    import { EXPRESSION_ROOTS, resolveAgainstFrame, stepCompletionContext } from '/ui/src/expression-language.js';
     import { templatesFromResponses, payloadSkeletonFromSchema } from '/ui/src/operation-templates.js';
     import { WorkflowDocumentModel } from '/ui/src/workflow-document-model.js';
     import '/ui/src/components/design-surface.js';
@@ -340,6 +340,9 @@
         }
       }
     }
+
+    // stepCompletionContext (imported from expression-language.js) builds a step's completion context
+    // from that step's resolved operation, so $response.body#/… completes against the real schema.
 
     function refreshWorkflowOptions() {
       select.innerHTML = '';
@@ -1048,10 +1051,12 @@
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
         ed.components = doc.components;
-        ed.completionContext = expr.completionContext;
         // The live operation surface (listSourceOperations): documented responses drive the
         // criteria templates, the request/message schema drives the body-skeleton template.
         const op = operationIndex.get(step.operationId) ?? (step.channelPath ? operationIndex.get(step.channelPath) : undefined);
+        // THIS step's own operation surfaces feed the expression completions, so `$response.body#/…`
+        // completes against the real response body of the operation this step calls, not a stand-in.
+        ed.completionContext = stepCompletionContext(expr.completionContext, op, step);
         if (op?.responses) ed.operationResponses = op.responses;
         if (op?.request) ed.operationRequest = op.request;
         if (op?.parameters) ed.operationParameters = op.parameters;
@@ -1776,25 +1781,9 @@
           outputs: Object.keys(s.outputs || {}),
           summary: s.description,
         }])),
-        // In the real designer these come from the selected step's operation via the baked schemas;
-        // the demo stands in with the authorize-payment shapes so `$response.body#/…` completes.
-        response: {
-          body: {
-            type: 'object',
-            properties: {
-              status: { type: 'string' },
-              authorizationId: { type: 'string' },
-              card: { type: 'object', properties: { last4: { type: 'string' }, brand: { type: 'string' } } },
-              receipt: { type: 'object', properties: { id: { type: 'string' }, total: { type: 'number' } } },
-            },
-          },
-        },
-        message: {
-          payload: {
-            type: 'object',
-            properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } },
-          },
-        },
+        // $response.body / $request.body / $message.payload are PER-STEP surfaces — they depend on the
+        // operation a step calls — so they are not set on this workflow-wide console context. Each step's
+        // inspector builds them from that step's own operation (see stepCompletionContext).
       };
     };
     refreshExpressionContext();

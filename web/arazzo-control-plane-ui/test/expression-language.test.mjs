@@ -2,7 +2,7 @@
 // CM6-shaped StreamParser with a fake stream so no browser is needed.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { expressionStreamParser, completionsFor, resolveAgainstFrame, EXPRESSION_ROOTS } from '../src/expression-language.js';
+import { expressionStreamParser, completionsFor, resolveAgainstFrame, EXPRESSION_ROOTS, stepCompletionContext } from '../src/expression-language.js';
 
 class FakeStream {
   constructor(s) { this.string = s; this.pos = 0; }
@@ -136,10 +136,23 @@ test('completions: step ids, then outputs, then output names', () => {
   );
 });
 
-test('completions: $response parts; none for plain words or unknown roots', () => {
-  assert.deepEqual(complete('$response.').options.map((o) => o.label), ['body', 'header', 'query', 'path']);
+test('completions: $response exposes body + header, each with its grammar continuation', () => {
+  const r = complete('$response.');
+  // A response has only a body and headers (no query / path — those are request surfaces).
+  assert.deepEqual(r.options.map((o) => o.label), ['body', 'header']);
+  // The body is addressed by a JSON Pointer and headers by name, so the completion applies the right
+  // continuation for each: the author never has to guess the separator.
+  assert.equal(r.options.find((o) => o.label === 'body').apply, 'body#/');
+  assert.equal(r.options.find((o) => o.label === 'header').apply, 'header.');
   assert.equal(complete('receipt'), null);
   assert.equal(complete('$bogus.'), null);
+});
+
+test('completions: $request adds query + path; $message exposes payload + header', () => {
+  assert.deepEqual(complete('$request.').options.map((o) => o.label), ['body', 'header', 'query', 'path']);
+  assert.deepEqual(complete('$request.').options.map((o) => o.apply), ['body#/', 'header.', 'query.', 'path.']);
+  assert.deepEqual(complete('$message.').options.map((o) => o.label), ['payload', 'header']);
+  assert.deepEqual(complete('$message.').options.map((o) => o.apply), ['payload#/', 'header.']);
 });
 
 test('completions: mid-text caret completes the fragment under it', () => {
@@ -204,27 +217,16 @@ test('pointer completions: message payload and step output schemas', () => {
   );
 });
 
-test('dotted completions: response body top-level properties with type details', () => {
-  const r = scomplete('$response.body.');
-  assert.deepEqual(r.options.map((o) => o.label), ['status', 'authorizationId', 'card', 'attempts']);
-  assert.equal(r.options.find((o) => o.label === 'card').detail, 'object');
-});
-
-test('dotted completions: nested descent, prefix filter, and from position', () => {
-  const r = scomplete('$response.body.card.la');
-  assert.deepEqual(r.options.map((o) => o.label), ['last4']);
-  assert.equal(r.from, '$response.body.card.'.length);
-});
-
-test('dotted completions: array items by index, unknown paths yield null', () => {
-  assert.deepEqual(scomplete('$response.body.attempts.0.').options.map((o) => o.label), ['at']);
-  assert.equal(scomplete('$response.body.nope.'), null);
-});
-
-test('dotted completions: request body, message payload, and header surfaces', () => {
-  // A surface with no schema (header) still offers nothing below it rather than throwing.
+test('a dotted tail into the body / payload is refused; descent is a JSON Pointer', () => {
+  // `$response.body.status` is not a valid Arazzo expression — the runtime reads it as a literal, not a
+  // descent into the body — so the completion offers nothing after the dot rather than leading the author
+  // into an invalid expression. Property completion happens on the `#/pointer` form (tested above).
+  assert.equal(scomplete('$response.body.'), null);
+  assert.equal(scomplete('$response.body.card.'), null);
+  assert.equal(scomplete('$response.body.attempts.0.'), null);
+  assert.equal(scomplete('$message.payload.'), null);
+  // A header surface descends by name, but with no header schema in the context there is nothing to offer.
   assert.equal(scomplete('$response.header.'), null);
-  assert.deepEqual(scomplete('$message.payload.').options.map((o) => o.label), ['confirmed']);
 });
 
 test('inputs as a JSON Schema: names + details at the first level, pointer descent below', () => {
@@ -238,6 +240,46 @@ test('inputs as a JSON Schema: names + details at the first level, pointer desce
 test('step output names fall back to the outputSchemas keys when no list is given', () => {
   const r = scomplete('$steps.authorize-payment.outputs.');
   assert.deepEqual(r.options.map((o) => o.label), ['receipt']);
+});
+
+// ---- stepCompletionContext: a step's OWN operation drives its response/request completions ---------
+
+const props = (ctx, expr) => {
+  const r = completionsFor(expr, expr.length, ctx);
+  return r ? r.options.map((o) => o.label) : null;
+};
+
+test('stepCompletionContext: the step gets ITS operation body, and the base body is dropped', () => {
+  // The base carries a stale response.body (a workflow-wide stand-in); it must NOT leak into a step.
+  const base = { inputs: { type: 'object', properties: { orderId: { type: 'string' } } }, response: { body: { type: 'object', properties: { STALE: {} } } } };
+  const op = {
+    responses: { 200: { schema: { type: 'object', properties: { validated: { type: 'boolean' } } } }, 402: { schema: {} } },
+    request: { schema: { type: 'object', properties: { amount: { type: 'number' } } } },
+  };
+  const ctx = stepCompletionContext(base, op, { operationId: 'op' });
+  assert.deepEqual(props(ctx, '$inputs.'), ['orderId'], 'the workflow-wide roots carry through');
+  assert.deepEqual(props(ctx, '$response.body#/'), ['validated'], "THIS step's response body, not the stale base");
+  assert.deepEqual(props(ctx, '$request.body#/'), ['amount']);
+});
+
+test('stepCompletionContext: prefers the 2xx response, else the first documented status', () => {
+  const twoXX = stepCompletionContext({}, { responses: { 404: { schema: { type: 'object', properties: { err: {} } } }, 201: { schema: { type: 'object', properties: { id: {} } } } } }, {});
+  assert.deepEqual(props(twoXX, '$response.body#/'), ['id']);
+  const noSuccess = stepCompletionContext({}, { responses: { 404: { schema: { type: 'object', properties: { err: {} } } } } }, {});
+  assert.deepEqual(props(noSuccess, '$response.body#/'), ['err']);
+});
+
+test('stepCompletionContext: a channel step surfaces its payload, and has no $response body', () => {
+  const ctx = stepCompletionContext({}, { request: { schema: { type: 'object', properties: { confirmed: { type: 'boolean' } } } } }, { channelPath: '/channels/x' });
+  assert.deepEqual(props(ctx, '$message.payload#/'), ['confirmed']);
+  assert.equal(props(ctx, '$response.body#/'), null, 'a message step exposes no response body');
+});
+
+test('stepCompletionContext: no operation drops the per-step surfaces (base response never leaks)', () => {
+  const ctx = stepCompletionContext({ inputs: { type: 'object', properties: { a: {} } }, response: { body: { type: 'object', properties: { x: {} } } } }, undefined, {});
+  assert.deepEqual(props(ctx, '$inputs.'), ['a']);
+  assert.equal(ctx.response, undefined);
+  assert.equal(props(ctx, '$response.body#/'), null);
 });
 
 // ---- resolveAgainstFrame: the paused-context expression console (§3.3) ----------------------------
