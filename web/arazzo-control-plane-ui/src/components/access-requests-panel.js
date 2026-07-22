@@ -48,6 +48,8 @@ class ArazzoAccessRequests extends ArazzoElement {
     /** @private */ this._requests = [];
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
+    /** @private — a transient info line (e.g. "provisioning the grant…" while an async approve settles). */
+    this._notice = null;
     // null = "use the view's default status" (Pending for the approver inbox — the actionable to-do; all for My requests).
     /** @private */ this._statusFilter = null;
     /** @private */ this._history = [];          // pageTokens of pages before the current one
@@ -214,9 +216,39 @@ class ArazzoAccessRequests extends ArazzoElement {
       const updated = await call(note);
       this._error = null;
       this.emit('access-request-decided', { request: updated, action });
+      // A workflow-backed decision is ASYNCHRONOUS: the access-approval run enacts it, so the call returns
+      // the request STILL Pending and it reaches its terminal state (~1s later) only when that run
+      // completes. Wait for the transition before reloading, so the inbox clears the request rather than
+      // showing it unchanged — the reported "approve did nothing". A synchronous decision returns already
+      // terminal, so this is a no-op for it; polling on the returned status (not the action) means it
+      // covers every path uniformly, including any that become workflow-backed.
+      if (updated?.status === 'Pending') {
+        this._notice = 'Applying the decision…';
+        this.renderBody();
+        await this.awaitTransition(updated.id ?? request.id);
+      }
+      this._notice = null;
       await this.reload();
     } catch (err) {
+      this._notice = null;
       this.showError(err.problem || { title: err.message }, err);
+    }
+  }
+
+  /**
+   * Poll a just-approved request until it leaves Pending (the async access-approval grant lands) or a
+   * short budget elapses. Bounded so a slow/queued provisioning still returns control — a reload then
+   * shows the current state rather than hanging.
+   */
+  async awaitTransition(id, attempts = 20, intervalMs = 500) {
+    const client = this.buildClient();
+    for (let i = 0; i < attempts; i++) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      try {
+        if ((await client.getAccessRequest(id)).status !== 'Pending') return;
+      } catch (err) {
+        if (err.problem?.status === 404) return; // no longer visible in this scope; a reload reflects it
+      }
     }
   }
 
@@ -284,6 +316,10 @@ class ArazzoAccessRequests extends ArazzoElement {
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { flex: none; margin: 10px 12px; }
         .err:empty { display: none; }
+        .notice-banner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--_muted); padding: 6px 10px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); }
+        .notice-banner .spin { display: inline-block; animation: nb-spin 0.9s linear infinite; }
+        @keyframes nb-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .notice-banner .spin { animation: none; } }
         ${PAGER_CSS}
         .pager { flex: none; }
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
@@ -410,7 +446,7 @@ class ArazzoAccessRequests extends ArazzoElement {
     if (err) {
       err.innerHTML = this._error
         ? `<div class="error-banner"><span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span></div>`
-        : '';
+        : (this._notice ? `<div class="notice-banner"><span class="spin">↻</span><span>${escapeHtml(this._notice)}</span></div>` : '');
     }
 
     if (this._loading && this._requests.length === 0) {
