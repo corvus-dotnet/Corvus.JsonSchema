@@ -159,9 +159,11 @@ public static class DemoData
     {
         try
         {
-            // Every minute (a fast cadence for the demo); the target's inputs are the reconciliation date. A fresh $schedule
-            // run seeds its watermark to now and fires no back-dated occurrence, then suspends until the next minute — at
-            // which the app runner resumes it and fires the target through the control plane.
+            // The target workflow is the NIGHTLY reconciliation, but the demo cron is "* * * * *" (every minute) ON
+            // PURPOSE: a fast cadence so the schedule visibly fires within a demo session rather than once a day. The
+            // 'nightly' in the id/target names the workflow's real job, not this demo cadence. The target's inputs are
+            // the reconciliation date. A fresh $schedule run seeds its watermark to now and fires no back-dated
+            // occurrence, then suspends until the next minute, at which the app runner resumes it and fires the target.
             const string scheduleId = "nightly-reconcile-cron";
             string date = time.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(
@@ -172,7 +174,7 @@ public static class DemoData
             string runId = SecuredWorkflowManagement.IdempotentRunId(ScheduleHostedWorkflow.ScheduleWorkflowId, scheduleId).Value;
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
             await run.EnqueueAsync(default).ConfigureAwait(false);
-            log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' (every minute -> nightly-reconcile-v2) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");
+            log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' -> nightly-reconcile-v2, cron '* * * * *' (every minute, a deliberately fast demo cadence so it visibly fires; the target workflow is the nightly job) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");
         }
         catch (Exception ex)
         {
