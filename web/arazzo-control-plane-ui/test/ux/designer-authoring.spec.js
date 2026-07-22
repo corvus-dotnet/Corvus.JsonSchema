@@ -588,3 +588,41 @@ test('the canvas key stays bounded on a narrow viewport and dismisses on any out
   await expect(legend).toBeHidden();
   assertClean(errors);
 });
+
+test('GitHub source acquisition: after connecting, a branch is chosen and a file browsed for import', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+
+  // Open the acquisition dialog from the Sources rail, on its GitHub tab, and connect (the mock's
+  // authorize URL self-completes through the wired windowOpener).
+  await page.locator('aside .side-tabs [data-tab="sources"]').click();
+  await page.locator('arazzo-operation-browser button.add').click();
+  const dlg = page.locator('#acqdialog');
+  await expect(dlg.locator('dialog')).toBeVisible();
+  await dlg.locator('.tabs button[data-mode="github"]').click();
+  await dlg.locator('.gh-connect .connect').click();
+  await expect(dlg.locator('.gh-connect .chip')).toContainText('octo', { timeout: 10_000 });
+
+  // Picking the seeded repo now reveals a BRANCH picker (previously missing entirely) with the
+  // default branch pre-selected, and lists the repo tree for browsing.
+  await dlg.locator('select.gh-repo-in').selectOption('acme-org/specs');
+  const branch = dlg.locator('select.gh-branch-in');
+  await expect(dlg.locator('label.gh-branch-label')).toBeVisible();
+  await expect(branch.locator('option')).toHaveText([/main \(default\)/]);
+  await expect(branch).toHaveValue('main');
+  const list = dlg.locator('.gh-list');
+  await expect(list).toBeVisible();
+  await expect(list.getByRole('button', { name: /petstore\.openapi\.json/ })).toBeVisible();
+
+  // Browse into a folder and back out, then import the JSON spec — the preview confirms the type,
+  // and the file was read at the chosen branch (ref threaded through browseRepo).
+  await list.getByRole('button', { name: /flows/ }).click();
+  await expect(dlg.locator('.gh-path')).toHaveText('acme-org/specs/flows');
+  await dlg.locator('.gh-up').click();
+  await expect(dlg.locator('.gh-path')).toHaveText('acme-org/specs/');
+  await list.getByRole('button', { name: /petstore\.openapi\.json/ }).click();
+  await expect(dlg.locator('.gh-preview')).toContainText('openapi');
+  await expect(dlg.locator('button.attach')).toBeEnabled();
+
+  assertClean(errors);
+});

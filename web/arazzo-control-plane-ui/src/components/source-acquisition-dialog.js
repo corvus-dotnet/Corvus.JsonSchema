@@ -39,6 +39,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     /** @private */ this._fetched = null;   // the fetchSourceDocument result awaiting attach
     /** @private */ this._uploaded = null;  // { document, type } parsed from the chosen file
     /** @private */ this._seq = 0;
+    /** @private — races the branch-list load against a newer repo choice. */ this._branchSeq = 0;
   }
 
   /** The Layer-0 client used to load choices, fetch, and attach. */
@@ -117,7 +118,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .gh-list button { text-align: left; border: none; background: none; padding: 6px 10px; font-size: 12px; cursor: pointer; color: inherit; border-radius: 0; }
         .gh-list button:hover:not(:disabled) { background: rgb(127 127 127 / 0.12); }
         .gh-list button:disabled { opacity: 0.45; cursor: default; }
-        .gh-repo-label[hidden], .gh-browser[hidden] { display: none; }
+        .gh-repo-label[hidden], .gh-branch-label[hidden], .gh-browser[hidden] { display: none; }
         .preview .digest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; overflow-wrap: anywhere; color: var(--_muted); }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .error-banner[hidden] { display: none; }
@@ -175,6 +176,9 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             <label class="gh-repo-label" hidden>Repository (the user ∩ installation intersection)
               <select class="gh-repo-in"></select>
             </label>
+            <label class="gh-branch-label" hidden>Branch
+              <select class="gh-branch-in"></select>
+            </label>
             <div class="gh-browser" hidden>
               <div class="crumb"><button class="gh-up ghost" type="button" title="Up" hidden>↑</button><span class="gh-path"></span></div>
               <div class="gh-list"></div>
@@ -209,7 +213,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.file-in').addEventListener('change', () => this.readUpload());
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderGitHubRepos());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderGitHubRepos());
-    this.$('.gh-repo-in').addEventListener('change', () => this.browseGitHub(''));
+    this.$('.gh-repo-in').addEventListener('change', () => this.onRepoChosen());
+    this.$('.gh-branch-in').addEventListener('change', () => this.browseGitHub(''));
     this.$('.gh-up').addEventListener('click', () => this.browseGitHub(this._github.path.split('/').slice(0, -1).join('/')));
   }
 
@@ -420,13 +425,15 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     const session = this.$('.gh-connect').session;
     const repos = session?.connected ? (session.installations ?? []).flatMap((i) => i.repositories ?? []) : [];
     const label = this.$('.gh-repo-label');
-    const browser = this.$('.gh-browser');
+    // The repo list is (re)built here, which resets the selection — so collapse the branch picker
+    // and browser until a repo is chosen (again).
+    this.$('.gh-branch-label').hidden = true;
+    this.$('.gh-browser').hidden = true;
+    this.$('.gh-preview').hidden = true;
+    this._github = { picked: null, path: '' };
     label.hidden = repos.length === 0;
     if (repos.length === 0) {
-      browser.hidden = true;
-      this._github = { picked: null, path: '' };
       this._catalog = { picked: null };
-      this.$('.gh-preview').hidden = true;
       this.updateAttachState();
       return;
     }
@@ -434,19 +441,63 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     const sel = this.$('.gh-repo-in');
     sel.innerHTML = `<option value="">Choose a repository…</option>` + repos.map((r) =>
       `<option value="${escapeHtml(`${r.owner}/${r.name}`)}">${escapeHtml(r.fullName)}</option>`).join('');
+    this.updateAttachState();
+  }
+
+  /** A repo choice: load its branches, then browse the chosen (default) branch from the root. */
+  async onRepoChosen() {
+    const sel = this.$('.gh-repo-in');
+    this.$('.gh-preview').hidden = true;
+    this._github = { picked: null, path: '' };
+    this.updateAttachState();
+    if (!sel.value) {
+      this.$('.gh-branch-label').hidden = true;
+      this.$('.gh-browser').hidden = true;
+      return;
+    }
+    const [owner, repo] = [sel.value.slice(0, sel.value.indexOf('/')), sel.value.slice(sel.value.indexOf('/') + 1)];
+    await this.loadGitHubBranches(owner, repo);
+  }
+
+  /** Populate the branch picker from the repo's real branches (default branch pre-selected), then
+   *  browse it — so a file can be imported from a NON-default branch, not only the repo default. */
+  async loadGitHubBranches(owner, repo) {
+    const branchSel = this.$('.gh-branch-in');
+    const branchLabel = this.$('.gh-branch-label');
+    branchLabel.hidden = false;
+    branchSel.disabled = true;
+    branchSel.innerHTML = `<option value="">Loading…</option>`;
+    this.$('.gh-browser').hidden = true;
+    const seq = ++this._branchSeq;
+    try {
+      const list = await this._client.listRepoBranches(owner, repo);
+      if (seq !== this._branchSeq || this._mode !== 'github') return; // a newer repo choice superseded this
+      const names = (list.branches ?? []).map((b) => b.name);
+      const picked = list.defaultBranch ?? names[0] ?? '';
+      branchSel.innerHTML = names.map((name) =>
+        `<option value="${escapeHtml(name)}"${name === picked ? ' selected' : ''}>${escapeHtml(name)}${name === list.defaultBranch ? ' (default)' : ''}</option>`).join('');
+      branchSel.disabled = names.length === 0;
+      this.browseGitHub('');
+    } catch (err) {
+      if (seq !== this._branchSeq) return;
+      branchSel.innerHTML = `<option value="">Branches could not be loaded</option>`;
+      branchSel.disabled = true;
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+    }
   }
 
   async browseGitHub(path) {
     const sel = this.$('.gh-repo-in');
     if (!sel.value) return;
     const [owner, repo] = [sel.value.slice(0, sel.value.indexOf('/')), sel.value.slice(sel.value.indexOf('/') + 1)];
+    const branch = this.$('.gh-branch-in').value || undefined;
     this.clearError();
-    this._github = { owner, repo, path, picked: null };
+    this._github = { owner, repo, branch, path, picked: null };
     this.$('.gh-preview').hidden = true;
     this.updateAttachState();
     const seq = ++this._seq;
     try {
-      const result = await this._client.browseRepo(owner, repo, { path: path || undefined });
+      const result = await this._client.browseRepo(owner, repo, { path: path || undefined, ref: branch });
       if (seq !== this._seq || this._mode !== 'github') return;
       const browser = this.$('.gh-browser');
       browser.hidden = false;
@@ -470,13 +521,13 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
   async pickGitHubFile(path, name) {
     this.clearError();
-    const { owner, repo } = this._github;
+    const { owner, repo, branch } = this._github;
     const preview = this.$('.gh-preview');
     preview.hidden = false;
     preview.textContent = 'Loading…';
     const seq = ++this._seq;
     try {
-      const result = await this._client.browseRepo(owner, repo, { path });
+      const result = await this._client.browseRepo(owner, repo, { path, ref: branch });
       if (seq !== this._seq || this._mode !== 'github') return;
       const text = new TextDecoder().decode(Uint8Array.from(atob((result.file?.content ?? '').replace(/\s/g, '')), (c) => c.charCodeAt(0)));
       const document = JSON.parse(text);
