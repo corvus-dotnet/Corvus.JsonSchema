@@ -1,5 +1,13 @@
 # Version History
 
+## V5.2.9
+
+V5.2.9 adds end positions to YAML events: every `YamlEvent` now reports the full source span of its content.
+
+### New features
+
+- **`YamlEvent` now exposes `EndLine` and `EndColumn` properties** — A `YamlEvent` surfaced by `YamlDocument.EnumerateEvents` previously reported only its start position (`Line`/`Column`), so a consumer that needed the extent of an event's source text — an editor highlight, a linter diagnostic, or mapping a validation failure back to the YAML source — had to re-scan the text to find where the event ended. Every event now also carries `EndLine` and `EndColumn`: the 1-based position one past the last character of the event's content, so the half-open `(Line, Column)`–`(EndLine, EndColumn)` range slices the event's raw source text exactly. A scalar's span covers its complete source form — the bare word of a plain scalar, a quoted scalar including its quotes, a block scalar from its `|`/`>` header through its last content character. Purely structural events (stream and document boundaries, mapping and sequence starts and ends) report a zero-width span (start equals end): a start event sits where its construct begins and an end event just past where it ends. The new `YamlEventSpanTests` suite pins the spans for every event type across plain, quoted, and literal block scalars, flow and block collections, and empty nodes. This is a purely additive runtime change in `Corvus.Text.Json.Yaml`; no regeneration is required. Contributed by [@OpenByteDev](https://github.com/OpenByteDev). See [#897](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/897).
+
 ## V5.2.8
 
 V5.2.8 fixes a code-generation defect in which multiple hoisted `allOf` branches were committed to a validation results collector out of LIFO order.
