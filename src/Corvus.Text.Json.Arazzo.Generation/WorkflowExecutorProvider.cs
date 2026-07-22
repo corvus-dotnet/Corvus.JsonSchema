@@ -64,6 +64,52 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         }
     }
 
+    /// <summary>
+    /// Builds the generated C# source for a workflow executor without compiling it: the compile-time input an AOT
+    /// execution backend bakes into a native host (ADR 0028). Returns <see langword="null"/> when the package is
+    /// not runnable, on the same rules as <see cref="BuildExecutor"/>.
+    /// </summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The package's source documents (OpenAPI/AsyncAPI plus any external schemas), keyed by name.</param>
+    /// <param name="packageHash">The catalog version's content hash the executor binds to.</param>
+    /// <returns>The generated source, or <see langword="null"/> when the package cannot be generated.</returns>
+    public WorkflowExecutorSource? BuildExecutorSource(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+        string packageHash)
+    {
+        ArgumentNullException.ThrowIfNull(sources);
+        ArgumentException.ThrowIfNullOrEmpty(packageHash);
+
+        try
+        {
+            return this.GenerateSource(workflowUtf8, sources, packageHash);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
+        {
+            this.progress?.Invoke($"Executor source build skipped: {ex.Message}");
+            return null;
+        }
+    }
+
+    private WorkflowExecutorArtifact? BuildCore(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+        string packageHash)
+    {
+        if (this.GenerateSource(workflowUtf8, sources, packageHash) is not { } source)
+        {
+            return null;
+        }
+
+        this.progress?.Invoke($"Compiling {source.Files.Count} generated file(s)...");
+        byte[] assembly = DynamicCompiler.CompileToAssemblyBytes(source.Files, typeof(WorkflowExecutorProvider).Assembly);
+        byte[] manifest = BuildManifest(assembly, packageHash, source.WorkflowId, source.EntryType, this.durable, source.Sources);
+
+        this.progress?.Invoke($"Executor built for '{source.WorkflowId}' ({assembly.Length} bytes).");
+        return new WorkflowExecutorArtifact(assembly, manifest);
+    }
+
     private static (string? WorkflowId, string? Self, IReadOnlyList<(string Name, string Url, string Type)> Sources) ReadWorkflowFacts(ReadOnlyMemory<byte> workflowUtf8)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(workflowUtf8);
@@ -112,7 +158,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         return (workflowId, self, sourceList);
     }
 
-    private WorkflowExecutorArtifact? BuildCore(
+    private WorkflowExecutorSource? GenerateSource(
         ReadOnlyMemory<byte> workflowUtf8,
         IReadOnlyList<KeyValuePair<string, byte[]>> sources,
         string packageHash)
@@ -191,16 +237,12 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
                 return null;
             }
 
-            this.progress?.Invoke($"Compiling {generatedCode.Count} generated file(s)...");
-            byte[] assembly = DynamicCompiler.CompileToAssemblyBytes(generatedCode, typeof(WorkflowExecutorProvider).Assembly);
-
             // A durable build emits a host adapter ({ClassName}Host : IHostedWorkflow) the runner activates;
             // a non-durable build has only the static executor class.
             string entryType = $"{RootNamespace}.{WorkflowsNamespaceSuffix}.{ToPascalCase(workflowId)}Workflow{(this.durable ? "Host" : string.Empty)}";
-            byte[] manifest = BuildManifest(assembly, packageHash, workflowId, entryType, this.durable, sourceRefs);
 
-            this.progress?.Invoke($"Executor built for '{workflowId}' ({assembly.Length} bytes).");
-            return new WorkflowExecutorArtifact(assembly, manifest);
+            this.progress?.Invoke($"Executor source generated for '{workflowId}' ({generatedCode.Count} file(s)).");
+            return new WorkflowExecutorSource(workflowId, entryType, generatedCode, sourceRefs);
         }
         finally
         {

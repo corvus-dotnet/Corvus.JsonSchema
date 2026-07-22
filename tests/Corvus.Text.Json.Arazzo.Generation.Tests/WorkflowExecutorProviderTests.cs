@@ -222,6 +222,34 @@ public class WorkflowExecutorProviderTests
         artifact.ShouldBeNull();
     }
 
+    [TestMethod]
+    public void BuildExecutorSource_exposes_the_generated_source_before_compilation()
+    {
+        var log = new List<string>();
+        var provider = new WorkflowExecutorProvider(durable: true, log.Add);
+        var sources = new List<KeyValuePair<string, byte[]>>
+        {
+            new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi)),
+        };
+
+        WorkflowExecutorSource? built = provider.BuildExecutorSource(
+            Encoding.UTF8.GetBytes(WorkflowJson), sources, "testhash");
+
+        built.ShouldNotBeNull($"source build failed. Progress:\n{string.Join("\n", log)}");
+        WorkflowExecutorSource source = built!.Value;
+
+        source.WorkflowId.ShouldBe("adopt-v1");
+
+        // The same entry type the compiled manifest records, so a baked AOT host activates the right type.
+        source.EntryType.ShouldBe("Corvus.Workflows.Generated.Workflows.AdoptV1WorkflowHost");
+        source.Sources.ShouldContain(s => s.Name == "petstore" && s.Type == "openapi");
+
+        // Real generated C#: every file is a .cs source, and the host adapter's own class is among them.
+        source.Files.ShouldNotBeEmpty();
+        source.Files.ShouldAllBe(f => f.FileName.EndsWith(".cs", StringComparison.Ordinal));
+        source.Files.ShouldContain(f => f.FileContent.Contains("AdoptV1WorkflowHost", StringComparison.Ordinal));
+    }
+
     private static WorkflowExecutorArtifact BuildOrFail(string packageHash = "testhash", bool durable = true)
     {
         var log = new List<string>();
