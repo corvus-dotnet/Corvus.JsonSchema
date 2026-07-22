@@ -23790,7 +23790,7 @@
     "Title": "YamlEvent",
     "Description": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.",
     "Keywords": "YamlEvent struct Corvus.Text.Json.Yaml",
-    "Body": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.\nThis is a `ref struct` because it contains [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) fields that point directly into the source YAML buffer. The event is only valid for the duration of the [`YamlEventCallback`](/api/v5/corvus-text-json-yaml-yamleventcallback.html) invocation.\nType: Gets the event type.\nValue: Gets the scalar value or alias anchor name as raw UTF-8 bytes.\nScalarStyle: Gets the scalar style. Only meaningful for [`Scalar`](/api/v5/corvus-text-json-yaml-yamleventtype.scalar.html) events.\nAnchor: Gets the anchor name (without the leading `&`) if the node has an anchor, or an empty span otherwise.\nTag: Gets the tag text as it appears in the source (e.g. `!!str`, `!local`, `!<tag:yaml.org,2002:str>`), or an empty span if no tag is present.\nLine: Gets the 1-based line number where this event starts.\nColumn: Gets the 1-based column number where this event starts.\nIsImplicit: Gets a value indicating whether the document start or end is implicit (no explicit `---` or `...` marker). Only meaningful for [`DocumentStart`](/api/v5/corvus-text-json-yaml-yamleventtype.documentstart.html) and [`DocumentEnd`](/api/v5/corvus-text-json-yaml-yamleventtype.documentend.html) events.\nIsFlowStyle: Gets a value indicating whether a collection (mapping or sequence) uses flow style (`{}` or `[]`). Only meaningful for [`MappingStart`](/api/v5/corvus-text-json-yaml-yamleventtype.mappingstart.html) and [`SequenceStart`](/api/v5/corvus-text-json-yaml-yamleventtype.sequencestart.html) events."
+    "Body": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.\nThis is a `ref struct` because it contains [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) fields that point directly into the source YAML buffer. The event is only valid for the duration of the [`YamlEventCallback`](/api/v5/corvus-text-json-yaml-yamleventcallback.html) invocation.\nType: Gets the event type.\nValue: Gets the scalar value or alias anchor name as raw UTF-8 bytes.\nScalarStyle: Gets the scalar style. Only meaningful for [`Scalar`](/api/v5/corvus-text-json-yaml-yamleventtype.scalar.html) events.\nAnchor: Gets the anchor name (without the leading `&`) if the node has an anchor, or an empty span otherwise.\nTag: Gets the tag text as it appears in the source (e.g. `!!str`, `!local`, `!<tag:yaml.org,2002:str>`), or an empty span if no tag is present.\nLine: Gets the 1-based line number where this event starts.\nColumn: Gets the 1-based column number where this event starts.\nEndLine: Gets the 1-based line number one position past the end of this event's content.\nEndColumn: Gets the 1-based column number one position past the end of this event's content.\nIsImplicit: Gets a value indicating whether the document start or end is implicit (no explicit `---` or `...` marker). Only meaningful for [`DocumentStart`](/api/v5/corvus-text-json-yaml-yamleventtype.documentstart.html) and [`DocumentEnd`](/api/v5/corvus-text-json-yaml-yamleventtype.documentend.html) events.\nIsFlowStyle: Gets a value indicating whether a collection (mapping or sequence) uses flow style (`{}` or `[]`). Only meaningful for [`MappingStart`](/api/v5/corvus-text-json-yaml-yamleventtype.mappingstart.html) and [`SequenceStart`](/api/v5/corvus-text-json-yaml-yamleventtype.sequencestart.html) events."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlevent.type.html",
@@ -23840,6 +23840,20 @@
     "Description": "Gets the 1-based column number where this event starts.",
     "Keywords": "YamlEvent Column property Corvus.Text.Json.Yaml",
     "Body": "Gets the 1-based column number where this event starts."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlevent.endline.html",
+    "Title": "YamlEvent.EndLine",
+    "Description": "Gets the 1-based line number one position past the end of this event's content.",
+    "Keywords": "YamlEvent EndLine property Corvus.Text.Json.Yaml",
+    "Body": "Gets the 1-based line number one position past the end of this event's content."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlevent.endcolumn.html",
+    "Title": "YamlEvent.EndColumn",
+    "Description": "Gets the 1-based column number one position past the end of this event's content.",
+    "Keywords": "YamlEvent EndColumn property Corvus.Text.Json.Yaml",
+    "Body": "Gets the 1-based column number one position past the end of this event's content."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-yamlevent.isimplicit.html",
@@ -24224,7 +24238,7 @@
     "Title": "YamlEvent",
     "Description": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.",
     "Keywords": "YamlEvent struct Corvus.Yaml",
-    "Body": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.\nThis is a `ref struct` because it contains [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) fields that point directly into the source YAML buffer. The event is only valid for the duration of the [`YamlEventCallback`](/api/v5/corvus-yaml-yamleventcallback.html) invocation.\nType: Gets the event type.\nValue: Gets the scalar value or alias anchor name as raw UTF-8 bytes.\nScalarStyle: Gets the scalar style. Only meaningful for [`Scalar`](/api/v5/corvus-yaml-yamleventtype.scalar.html) events.\nAnchor: Gets the anchor name (without the leading `&`) if the node has an anchor, or an empty span otherwise.\nTag: Gets the tag text as it appears in the source (e.g. `!!str`, `!local`, `!<tag:yaml.org,2002:str>`), or an empty span if no tag is present.\nLine: Gets the 1-based line number where this event starts.\nColumn: Gets the 1-based column number where this event starts.\nIsImplicit: Gets a value indicating whether the document start or end is implicit (no explicit `---` or `...` marker). Only meaningful for [`DocumentStart`](/api/v5/corvus-yaml-yamleventtype.documentstart.html) and [`DocumentEnd`](/api/v5/corvus-yaml-yamleventtype.documentend.html) events.\nIsFlowStyle: Gets a value indicating whether a collection (mapping or sequence) uses flow style (`{}` or `[]`). Only meaningful for [`MappingStart`](/api/v5/corvus-yaml-yamleventtype.mappingstart.html) and [`SequenceStart`](/api/v5/corvus-yaml-yamleventtype.sequencestart.html) events."
+    "Body": "Represents a single YAML parse event with zero-copy access to the underlying UTF-8 data.\nThis is a `ref struct` because it contains [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) fields that point directly into the source YAML buffer. The event is only valid for the duration of the [`YamlEventCallback`](/api/v5/corvus-yaml-yamleventcallback.html) invocation.\nType: Gets the event type.\nValue: Gets the scalar value or alias anchor name as raw UTF-8 bytes.\nScalarStyle: Gets the scalar style. Only meaningful for [`Scalar`](/api/v5/corvus-yaml-yamleventtype.scalar.html) events.\nAnchor: Gets the anchor name (without the leading `&`) if the node has an anchor, or an empty span otherwise.\nTag: Gets the tag text as it appears in the source (e.g. `!!str`, `!local`, `!<tag:yaml.org,2002:str>`), or an empty span if no tag is present.\nLine: Gets the 1-based line number where this event starts.\nColumn: Gets the 1-based column number where this event starts.\nEndLine: Gets the 1-based line number one position past the end of this event's content.\nEndColumn: Gets the 1-based column number one position past the end of this event's content.\nIsImplicit: Gets a value indicating whether the document start or end is implicit (no explicit `---` or `...` marker). Only meaningful for [`DocumentStart`](/api/v5/corvus-yaml-yamleventtype.documentstart.html) and [`DocumentEnd`](/api/v5/corvus-yaml-yamleventtype.documentend.html) events.\nIsFlowStyle: Gets a value indicating whether a collection (mapping or sequence) uses flow style (`{}` or `[]`). Only meaningful for [`MappingStart`](/api/v5/corvus-yaml-yamleventtype.mappingstart.html) and [`SequenceStart`](/api/v5/corvus-yaml-yamleventtype.sequencestart.html) events."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlevent.type.html",
@@ -24274,6 +24288,20 @@
     "Description": "Gets the 1-based column number where this event starts.",
     "Keywords": "YamlEvent Column property Corvus.Yaml",
     "Body": "Gets the 1-based column number where this event starts."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlevent.endline.html",
+    "Title": "YamlEvent.EndLine",
+    "Description": "Gets the 1-based line number one position past the end of this event's content.",
+    "Keywords": "YamlEvent EndLine property Corvus.Yaml",
+    "Body": "Gets the 1-based line number one position past the end of this event's content."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlevent.endcolumn.html",
+    "Title": "YamlEvent.EndColumn",
+    "Description": "Gets the 1-based column number one position past the end of this event's content.",
+    "Keywords": "YamlEvent EndColumn property Corvus.Yaml",
+    "Body": "Gets the 1-based column number one position past the end of this event's content."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-yaml-yamlevent.isimplicit.html",
