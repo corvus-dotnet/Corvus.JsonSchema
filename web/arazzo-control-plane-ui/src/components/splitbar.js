@@ -36,8 +36,12 @@ class ArazzoSplitbar extends HTMLElement {
     this.setAttribute('role', 'separator');
     this.setAttribute('aria-orientation', vertical ? 'vertical' : 'horizontal');
     if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
+    // Do NOT set `display` here: an inline style would beat the container's `.layout .splitbar { display: none }` rule
+    // (inline styles override selectors), so the bar could never be hidden in the no-selection state — it would steal a
+    // grid row and halve the list. The container owns visibility (none when nothing is selected, block beside the
+    // detail pane when something is); this element only styles its own appearance.
     this.style.cssText = `
-      display: block; flex: none; touch-action: none; z-index: 5;
+      flex: none; touch-action: none; z-index: 5;
       ${vertical ? 'width: 6px; cursor: col-resize;' : 'height: 6px; cursor: row-resize;'}
       background: transparent; transition: background 120ms;`;
     this.addEventListener('pointerenter', () => { this.style.background = 'color-mix(in srgb, var(--arazzo-accent, #2563eb) 35%, transparent)'; });
