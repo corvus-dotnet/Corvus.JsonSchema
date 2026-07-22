@@ -238,6 +238,7 @@ if (enableSystemApprovalWorkflow)
         sourceCredentials,
         availabilityStore,
         environmentStore,
+        environmentAdministratorStore,
         bootstrapOptions);
 }
 PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);

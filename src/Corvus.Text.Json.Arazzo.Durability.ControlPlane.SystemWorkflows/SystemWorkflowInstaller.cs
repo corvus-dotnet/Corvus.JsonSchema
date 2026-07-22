@@ -50,6 +50,7 @@ public sealed class SystemWorkflowInstaller
     private readonly IAvailabilityStore availability;
     private readonly ISourceCredentialStore credentials;
     private readonly IEnvironmentStore environments;
+    private readonly IEnvironmentAdministratorStore environmentAdministrators;
 
     /// <summary>Initializes a new instance of the <see cref="SystemWorkflowInstaller"/> class.</summary>
     /// <param name="catalog">The catalog the approval version is published to. Must be configured with the same credential
@@ -57,21 +58,26 @@ public sealed class SystemWorkflowInstaller
     /// <param name="availability">The availability store the version is made available in.</param>
     /// <param name="credentials">The credential store the runner's OAuth2 client-credentials identity is provisioned in.</param>
     /// <param name="environments">The environment store the internal environment is created in.</param>
+    /// <param name="environmentAdministrators">The environment-administrator store, so the internal environment is granted
+    /// its administration (the genesis administrator) just as a normally-created environment is (§7.7).</param>
     public SystemWorkflowInstaller(
         ISecuredWorkflowCatalog catalog,
         IAvailabilityStore availability,
         ISourceCredentialStore credentials,
-        IEnvironmentStore environments)
+        IEnvironmentStore environments,
+        IEnvironmentAdministratorStore environmentAdministrators)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(availability);
         ArgumentNullException.ThrowIfNull(credentials);
         ArgumentNullException.ThrowIfNull(environments);
+        ArgumentNullException.ThrowIfNull(environmentAdministrators);
 
         this.catalog = catalog;
         this.availability = availability;
         this.credentials = credentials;
         this.environments = environments;
+        this.environmentAdministrators = environmentAdministrators;
     }
 
     /// <summary>Installs the access-approval workflow and its supporting environment and credential, idempotently.</summary>
@@ -123,15 +129,24 @@ public sealed class SystemWorkflowInstaller
         if (existing is not null)
         {
             existing.Dispose();
-            return;
+        }
+        else
+        {
+            using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.Draft(
+                options.Environment,
+                options.EnvironmentDisplayName,
+                options.EnvironmentDescription,
+                management);
+            (await this.environments.AddAsync(draft.RootElement, options.Actor, cancellationToken).ConfigureAwait(false)).Dispose();
         }
 
-        using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.Draft(
-            options.Environment,
-            options.EnvironmentDisplayName,
-            options.EnvironmentDescription,
-            management);
-        (await this.environments.AddAsync(draft.RootElement, options.Actor, cancellationToken).ConfigureAwait(false)).Dispose();
+        // Grant the genesis administrator administration of the internal environment, exactly as creating an environment
+        // through the API does ("creating one grants the creator administration", §7.7). Without this the environment is
+        // created and reachable but carries no administrators record, so listing its administrators 404s even for a caller
+        // in reach. Run it unconditionally, not only on first create: EstablishAsync is idempotent (a conflict is a
+        // no-op), so it also repairs a deployment whose system environment predates this fix.
+        var administration = new SecuredEnvironmentAdministration(this.environmentAdministrators, options.Actor);
+        await administration.EstablishAsync(options.Environment, options.AdministratorIdentity, default, hasKind: false, default, hasLabel: false, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask EnsureCredentialAsync(SystemWorkflowInstallOptions options, SecurityTagSet management, CancellationToken cancellationToken)

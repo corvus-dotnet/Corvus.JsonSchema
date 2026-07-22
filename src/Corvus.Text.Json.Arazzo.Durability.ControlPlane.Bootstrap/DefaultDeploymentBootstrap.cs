@@ -83,6 +83,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         ISourceCredentialStore credentials,
         IAvailabilityStore availability,
         IEnvironmentStore environments,
+        IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
         CancellationToken cancellationToken = default)
     {
@@ -92,6 +93,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         ArgumentNullException.ThrowIfNull(credentials);
         ArgumentNullException.ThrowIfNull(availability);
         ArgumentNullException.ThrowIfNull(environments);
+        ArgumentNullException.ThrowIfNull(environmentAdministrators);
 
         // Not opted in: the deployment runs approvals through the built-in direct-to-administrator strategy.
         if (!options.SystemWorkflows.IsNotUndefined())
@@ -106,7 +108,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         // credential, and the administrator store records the §15 administrator (established when v1 is added), so the
         // genesis administrator can later approve the requests the workflow governs.
         var catalog = new SecuredWorkflowCatalog(catalogStore, runs, "bootstrap", credentials, administrators);
-        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments);
+        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, environmentAdministrators);
         await installer.InstallAsync(
             new SystemWorkflowInstallOptions
             {

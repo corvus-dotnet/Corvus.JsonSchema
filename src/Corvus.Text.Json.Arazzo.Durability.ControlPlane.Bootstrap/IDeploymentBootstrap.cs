@@ -55,6 +55,8 @@ public interface IDeploymentBootstrap
     /// store the catalog-time credential gate resolves through).</param>
     /// <param name="availability">The availability store the version is made available in.</param>
     /// <param name="environments">The environment store the internal environment is created in.</param>
+    /// <param name="environmentAdministrators">The environment-administrator store the internal environment's administration
+    /// is established in (the genesis administrator), so it is governable like a normally-created environment (§7.7).</param>
     /// <param name="options">The deployment configuration (its <see cref="DeploymentBootstrapOptions.SystemWorkflows"/>
     /// carries the token endpoint, client id, and secret reference; the §15 administrator is the genesis administrator).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -66,6 +68,7 @@ public interface IDeploymentBootstrap
         ISourceCredentialStore credentials,
         IAvailabilityStore availability,
         IEnvironmentStore environments,
+        IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
         CancellationToken cancellationToken = default);
 }

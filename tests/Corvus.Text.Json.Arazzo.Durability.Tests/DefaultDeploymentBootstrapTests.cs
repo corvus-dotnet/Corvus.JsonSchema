@@ -133,9 +133,10 @@ public sealed class DefaultDeploymentBootstrapTests
         var credentials = new InMemorySourceCredentialStore();
         var availability = new InMemoryAvailabilityStore();
         var environments = new InMemoryEnvironmentStore();
+        var environmentAdministrators = new InMemoryEnvironmentAdministratorStore();
 
         await new DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
-            catalogStore, stateStore, administrators, credentials, availability, environments, optionsDoc.RootElement);
+            catalogStore, stateStore, administrators, credentials, availability, environments, environmentAdministrators, optionsDoc.RootElement);
 
         // Catalogued as access-approval v1, available in the system environment, credential + environment provisioned.
         var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "test", credentials, administrators);
@@ -169,6 +170,15 @@ public sealed class DefaultDeploymentBootstrapTests
             admins.ShouldNotBeNull();
             admins!.RootElement.IsAdministeredBy(genesis).ShouldBeTrue();
         }
+
+        // The system ENVIRONMENT is likewise administered by the genesis administrator (§7.7): creating it grants
+        // administration, so listing its administrators returns the genesis identity rather than 404ing on a
+        // reachable-but-unadministered environment (the regression this guards).
+        using (var envAdmins = await new SecuredEnvironmentAdministration(environmentAdministrators, "test").GetAdministratorsAsync("system", default))
+        {
+            envAdmins.ShouldNotBeNull();
+            envAdmins!.RootElement.IsAdministeredBy(genesis).ShouldBeTrue();
+        }
     }
 
     [TestMethod]
@@ -182,9 +192,10 @@ public sealed class DefaultDeploymentBootstrapTests
         var credentials = new InMemorySourceCredentialStore();
         var availability = new InMemoryAvailabilityStore();
         var environments = new InMemoryEnvironmentStore();
+        var environmentAdministrators = new InMemoryEnvironmentAdministratorStore();
 
         await new DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
-            catalogStore, stateStore, administrators, credentials, availability, environments, optionsDoc.RootElement);
+            catalogStore, stateStore, administrators, credentials, availability, environments, environmentAdministrators, optionsDoc.RootElement);
 
         // Absent systemWorkflows option: nothing is installed.
         var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "test", credentials, administrators);
