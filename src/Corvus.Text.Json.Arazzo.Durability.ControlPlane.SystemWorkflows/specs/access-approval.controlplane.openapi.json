@@ -26,6 +26,26 @@
         }
       }
     },
+    "/accessRequests/{requestId}/settle": {
+      "post": {
+        "operationId": "settleAccessRequest",
+        "summary": "Settle a pending access request per its decision outcome (system-credentialed)",
+        "description": "The single enactment the approval workflow calls once per decision: 'approved' writes the capped grant, 'eligible' writes standing eligibility, 'rejected' marks the request Denied, 'withdrawn' marks it Withdrawn. Gated by the narrow accessRequests:grant capability the system credential holds.",
+        "parameters": [
+          { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestSettlement" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The request in its settled terminal state.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } }
+          }
+        }
+      }
+    },
     "/accessRequests/{requestId}/grantAsEligible": {
       "post": {
         "operationId": "grantAccessRequestAsEligible",
@@ -53,6 +73,18 @@
         "type": "object",
         "properties": {
           "reason": { "type": "string", "description": "An optional grant note, typically the approver's decision note." }
+        }
+      },
+      "AccessRequestSettlement": {
+        "type": "object",
+        "required": ["outcome"],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": ["approved", "eligible", "rejected", "withdrawn"],
+            "description": "The decided outcome to enact."
+          },
+          "reason": { "type": "string", "description": "An optional decision note carried from the approver." }
         }
       },
       "AccessRequestView": {

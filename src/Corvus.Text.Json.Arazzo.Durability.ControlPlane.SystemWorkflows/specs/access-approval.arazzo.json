@@ -67,7 +67,7 @@
             {
               "name": "onRejected",
               "type": "goto",
-              "stepId": "notifyDenied",
+              "stepId": "settleDenied",
               "criteria": [ { "condition": "$steps.awaitDecision.outputs.outcome == 'rejected'" } ]
             },
             {
@@ -80,15 +80,16 @@
         },
         {
           "stepId": "grantAccess",
-          "description": "Write the capped, time-boxed grant the decision authorized, through the control plane's bounded grant operation, presenting the system credential.",
-          "operationId": "grantAccessRequest",
+          "description": "Enact the approved decision — write the capped, time-boxed grant — through the control plane's single settlement operation, presenting the system credential.",
+          "operationId": "settleAccessRequest",
           "parameters": [
             { "name": "requestId", "in": "path", "value": "$inputs.requestId" }
           ],
           "requestBody": {
             "contentType": "application/json",
-            "payload": { "reason": "placeholder" },
+            "payload": { "outcome": "placeholder", "reason": "placeholder" },
             "replacements": [
+              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
               { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
             ]
           },
@@ -119,15 +120,16 @@
         },
         {
           "stepId": "grantEligibility",
-          "description": "Write standing eligibility (design section 16.5.3) the decision authorized, through the control plane's bounded grant-as-eligible operation, presenting the system credential. The requester may thereafter self-elevate this access JIT without re-approval.",
-          "operationId": "grantAccessRequestAsEligible",
+          "description": "Enact the eligible decision — write standing eligibility (design section 16.5.3) — through the control plane's single settlement operation, presenting the system credential. The requester may thereafter self-elevate this access JIT without re-approval.",
+          "operationId": "settleAccessRequest",
           "parameters": [
             { "name": "requestId", "in": "path", "value": "$inputs.requestId" }
           ],
           "requestBody": {
             "contentType": "application/json",
-            "payload": { "reason": "placeholder" },
+            "payload": { "outcome": "placeholder", "reason": "placeholder" },
             "replacements": [
+              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
               { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
             ]
           },
@@ -155,6 +157,25 @@
           "onSuccess": [
             { "name": "done", "type": "end" }
           ]
+        },
+        {
+          "stepId": "settleDenied",
+          "description": "Enact the rejected decision — mark the request Denied — through the control plane's single settlement operation, so a denial flows through the approval run exactly like an approval instead of short-circuiting it. Falls through to notifyDenied.",
+          "operationId": "settleAccessRequest",
+          "parameters": [
+            { "name": "requestId", "in": "path", "value": "$inputs.requestId" }
+          ],
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": { "outcome": "placeholder", "reason": "placeholder" },
+            "replacements": [
+              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
+              { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
+            ]
+          },
+          "outputs": {
+            "status": "$response.body#/status"
+          }
         },
         {
           "stepId": "notifyDenied",
