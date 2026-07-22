@@ -651,7 +651,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
           <div class="section">
             <span class="slabel">WHO — the claim this grant keys on</span>
             ${isEdit ? '' : `
-              <div class="field"><span>Grantee</span><arazzo-grantee-picker class="who-picker" placeholder="a team or role…"></arazzo-grantee-picker></div>
+              <div class="field"><span>Grantee</span><arazzo-grantee-picker class="who-picker" kinds="team role workflow" placeholder="a team or role…"></arazzo-grantee-picker></div>
               ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
             <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
             <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}" ${isEdit ? 'readonly' : ''}></div>
