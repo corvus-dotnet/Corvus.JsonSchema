@@ -321,6 +321,52 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Withdrawn), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, string actor, string? reason, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(requestId);
+        ArgumentNullException.ThrowIfNull(outcome);
+        ArgumentNullException.ThrowIfNull(actor);
+        return outcome switch
+        {
+            "approved" => await this.GrantRequestAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
+            "eligible" => await this.GrantRequestAsEligibleAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
+            "rejected" => await this.EnactDenialAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
+            "withdrawn" => await this.EnactWithdrawalAsync(requestId, actor, cancellationToken).ConfigureAwait(false),
+            _ => throw new ArgumentException($"Unrecognised settlement outcome '{outcome}'.", nameof(outcome)),
+        };
+    }
+
+    // Marks a pending request Denied under the system-credentialed enactment path, WITHOUT the §15 administrator check
+    // DenyAsync applies — the approver's decision was already authorised when it was published into the approval run.
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactDenialAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return null;
+        }
+
+        AccessRequest request = fetched.RootElement;
+        RequireStatus(request, AccessRequestStatus.Pending);
+        return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Denied, reason), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Marks a pending request Withdrawn under the system-credentialed enactment path, WITHOUT the requester-identity check
+    // WithdrawAsync applies — the requester's withdrawal was already authorised when it was published into the run.
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactWithdrawalAsync(string requestId, string actor, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return null;
+        }
+
+        AccessRequest request = fetched.RootElement;
+        RequireStatus(request, AccessRequestStatus.Pending);
+        return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Withdrawn), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Revokes an approved grant or an eligibility assignment early. The revoker must be a §15 administrator
     /// of the target workflow; the granted binding is deleted (an active grant stops at the next resolution, fail-safe;
     /// an eligibility assignment can no longer be activated) before the request is marked revoked.</summary>

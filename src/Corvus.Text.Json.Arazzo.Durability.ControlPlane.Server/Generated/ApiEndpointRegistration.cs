@@ -13796,6 +13796,109 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "accessRequests:grant" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "accessRequests:grant" }, "openIdConnect") }, false) }),
             __GrantAccessRequestAsEligibleEndpoint);
 
+        IEndpointConventionBuilder __SettleAccessRequestEndpoint = app.MapPost("/accessRequests/{requestId}/settle", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestSettlement>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RequestIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("requestId", out object? RequestIdRouteVal) && RequestIdRouteVal is string RequestIdRaw)
+                {
+                    RequestIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RequestIdRaw, workspace);
+                }
+
+                if (RequestIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'requestId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RequestIdValue.IsUndefined() && !RequestIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'requestId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestSettlement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                SettleAccessRequestParams parameters = new()
+                {
+                    RequestId = RequestIdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                SettleAccessRequestResult result = await accessRequestsHandler.HandleSettleAccessRequestAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "settleAccessRequest",
+                methodName: "SettleAccessRequest",
+                httpMethod: "POST",
+                routeTemplate: "/accessRequests/{requestId}/settle",
+                tags: new[] { "accessRequests" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "accessRequests:grant" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "accessRequests:grant" }, "openIdConnect") }, false) }),
+            __SettleAccessRequestEndpoint);
+
         IEndpointConventionBuilder __ListAvailabilityRequestsEndpoint = app.MapGet("/availabilityRequests", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -16050,6 +16153,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GrantAccessRequestAsEligible</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GrantAccessRequestAsEligibleOpenIdConnectScopes = ["accessRequests:grant"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SettleAccessRequest</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SettleAccessRequestOauth2Scopes = ["accessRequests:grant"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SettleAccessRequest</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SettleAccessRequestOpenIdConnectScopes = ["accessRequests:grant"];
 
         /// <summary>
         /// Gets the scopes required by <c>SearchGrantees</c> for the <c>Oauth2</c> scheme.

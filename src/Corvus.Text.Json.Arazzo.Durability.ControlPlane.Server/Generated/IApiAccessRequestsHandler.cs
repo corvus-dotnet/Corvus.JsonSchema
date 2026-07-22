@@ -118,4 +118,13 @@ public interface IApiAccessRequestsHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<GrantAccessRequestAsEligibleResult> HandleGrantAccessRequestAsEligibleAsync(GrantAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /accessRequests/{requestId}/settle — Settle a pending access request per its decision outcome (system-credentialed, no administrator check)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<SettleAccessRequestResult> HandleSettleAccessRequestAsync(SettleAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }
