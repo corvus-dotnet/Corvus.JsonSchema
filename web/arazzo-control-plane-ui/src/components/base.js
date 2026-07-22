@@ -217,8 +217,13 @@ export function granteeChip(grantee, { showIdentity = true } = {}) {
   // is plumbing that repeats on every identity in a single-IdP deployment, so it stays out of the
   // visible line — the FULL tuple (issuer included) is always one hover away on the title.
   const primary = identity.find((t) => !String(t.dimension).startsWith('sys:iss') && t.dimension !== 'iss');
-  const derived = primary ? `${primary.dimension.replace(/^sys:/, '')} ${primary.value}` : '';
-  const kind = g.kind ? escapeHtml(g.kind) : '';
+  const primaryDim = primary ? primary.dimension.replace(/^sys:/, '') : '';
+  // A resolved grantee is always one of the well-known kinds (person/team/role/workflow). When a stored grant carries
+  // no explicit kind (a raw identity, such as the bootstrapped administrator group), derive the kind from its grant
+  // dimension so it still shows the right badge rather than a raw dimension word: a directory group is a team (the
+  // directory search maps a group to a team grantee), a tenant is a team, and so on.
+  const kind = escapeHtml(g.kind || dimensionToKind(primaryDim));
+  const derived = primary ? (kind ? primary.value : `${primaryDim} ${primary.value}`) : '';
   const label = escapeHtml(g.label || g.value || derived);
   const fullIdent = identity.map((t) => `${escapeHtml(t.dimension)}=${escapeHtml(t.value)}`).join(' · ');
   const shownIdent = identity
@@ -231,6 +236,22 @@ export function granteeChip(grantee, { showIdentity = true } = {}) {
     + (showIdentity && shownIdent && g.label ? `<span class="gident">${shownIdent}</span>` : '')
     + (partial ? `<span class="gpartial" title="A partial identity — a grant matches by exact identity, so it may match no one.">partial</span>` : '')
     + `</span>`;
+}
+
+/**
+ * The well-known grantee kind a grant dimension names, for a raw identity that carries no explicit kind. Mirrors the
+ * directory search mapping: a group (Keycloak) or tenant resolves to a team, a subject to a person, and role/workflow
+ * name themselves. An unrecognised custom dimension names no kind (returns '') and falls back to the dimension word.
+ */
+function dimensionToKind(dimension) {
+  switch (dimension) {
+    case 'sub': return 'person';
+    case 'tenant':
+    case 'group': return 'team';
+    case 'role': return 'role';
+    case 'workflow': return 'workflow';
+    default: return '';
+  }
 }
 
 /** Styles for {@link granteeChip}; include in a component's shadow `<style>` (alongside {@link SHARED_CSS}). */

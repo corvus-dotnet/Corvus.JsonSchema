@@ -287,7 +287,6 @@ class ArazzoSources extends ArazzoElement {
           .layout.has-selection > .detail-pane { margin-left: 14px; }
         }
         .layout > * { min-height: 0; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
 
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }

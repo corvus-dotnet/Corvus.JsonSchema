@@ -14,7 +14,14 @@
 // runner registry to surface which environments are schedulable up front, and the create call is the authoritative gate.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, define } from './base.js';
+
+// A schedule is a durable run that sits Suspended on its timer between fires. "Suspended" reads as broken for a cron,
+// so a schedule parked on its timer is shown as "Waiting" (the ubiquitous-language term for why a run is suspended:
+// a wait). Every other run status reads correctly for a schedule, so only Suspended is relabelled.
+function scheduleStatusLabel(status) {
+  return status && status.toLowerCase() === 'suspended' ? 'Waiting' : status;
+}
 import './pager.js';
 
 class ArazzoSchedules extends ArazzoElement {
@@ -386,14 +393,14 @@ class ArazzoSchedules extends ArazzoElement {
   scheduleHtml(s) {
     const status = (s.status || '').toLowerCase();
     const busy = this._busy.has(s.scheduleId);
-    const next = s.nextOccurrence ? `<span>next <b title="${escapeHtml(absoluteTime(s.nextOccurrence))}">${escapeHtml(relativeTime(s.nextOccurrence))}</b></span>` : '';
+    const next = s.nextOccurrence ? `<span>next <b title="${escapeHtml(absoluteTime(s.nextOccurrence))}">${escapeHtml(countdown(s.nextOccurrence))}</b></span>` : '';
     const last = s.lastFiredOccurrence ? `<span>last fired <b title="${escapeHtml(absoluteTime(s.lastFiredOccurrence))}">${escapeHtml(relativeTime(s.lastFiredOccurrence))}</b></span>` : '';
     return `
       <div class="sched" part="schedule">
         <div class="shead">
           <span class="sid">${escapeHtml(s.scheduleId)}</span>
           ${s.environment ? `<span class="senv" title="Pinned to the ${escapeHtml(s.environment)} environment">${escapeHtml(s.environment)}</span>` : ''}
-          ${s.status ? `<span class="sstatus ${escapeHtml(status)}">${escapeHtml(s.status)}</span>` : ''}
+          ${s.status ? `<span class="sstatus ${escapeHtml(status)}" title="Scheduler run ${escapeHtml(s.status)}${status === 'suspended' ? ' (waiting on its timer until the next occurrence)' : ''}">${escapeHtml(scheduleStatusLabel(s.status))}</span>` : ''}
           <span class="sgrow"></span>
           <span class="actions">
             <button class="ghost" type="button" data-run="${escapeHtml(s.scheduleId)}" ${busy ? 'disabled' : ''}>Run now</button>

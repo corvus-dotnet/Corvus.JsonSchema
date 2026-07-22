@@ -22,10 +22,11 @@
 //   4. Review & commit  — everything is gathered first; one commit registers new sources, adds the version, applies
 //                         the administrators, and opens the guided credential dialog for each source flagged for setup.
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, parseSecurityTags, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
 import './credential-dialog.js';
 import './grantee-picker.js';
+import './tag-editor.js';
 
 const STEP_FLOW = {
   build: ['details', 'sources', 'admins', 'review'],
@@ -115,7 +116,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         url: this.$('#ownerUrl')?.value.trim() || '',
       };
       this._tags = (this.$('#tags')?.value || '').split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
-      this._securityTags = parseSecurityTags(this.$('#securityTags')?.value);
+      this._securityTags = this.$('.sec-tags-editor')?.tags ?? this._securityTags;
     }
     // The sources step has no deferred fields — uploads parse on change and credentials are set up inline.
   }
@@ -502,6 +503,11 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
       this.$$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => { this.saveStep('details'); this.renderStep(); }));
       this.$('#workflowFile')?.addEventListener('change', () => this.deriveWorkflow());
       this.$('#packageFile')?.addEventListener('change', () => { this._packageFile = this.$('#packageFile').files?.[0] || null; });
+      const secTags = this.$('.sec-tags-editor');
+      if (secTags) {
+        secTags.tags = this._securityTags;
+        secTags.addEventListener('tags-changed', () => { this._securityTags = secTags.tags; });
+      }
     } else if (step === 'sources') {
       this.$$('.src-file').forEach((i) => i.addEventListener('change', () => this.onSourceFile(i)));
       this.$$('.setup-cred-btn').forEach((b) => b.addEventListener('click', () => this.openCredentialSetup(b.dataset.name)));
@@ -529,7 +535,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         <fieldset>
           <legend>Package</legend>
           <div><label for="packageFile">Package file (.awp from <code>arazzo catalog pack</code>)</label><input id="packageFile" type="file" accept=".awp,application/octet-stream"></div>
-          ${this._packageFile ? `<div class="wf-status ok">✓ ${escapeHtml(this._packageFile.name)}</div>` : ''}
+          <div class="wf-status ${this._packageFile ? 'ok' : ''}">${this._packageFile ? `✓ ${escapeHtml(this._packageFile.name)}` : ''}</div>
         </fieldset>`}
       <fieldset>
         <legend>Owner (governance)</legend>
@@ -541,7 +547,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         </div>
       </fieldset>
       <div><label for="tags">Tags (space or comma separated)</label><input id="tags" type="text" placeholder="prod billing" value="${escapeHtml(this._tags.join(' '))}"></div>
-      <div><label for="securityTags">Security tags <span class="hint">(reach labels, <code>key=value</code>, space separated)</span></label><input id="securityTags" type="text" placeholder="domain=payments" value="${escapeHtml(this._securityTags.map((t) => `${t.key}=${t.value}`).join(' '))}"></div>
+      <div><label>Security tags <span class="hint">(reach labels, <code>key=value</code>)</span></label><arazzo-tag-editor class="sec-tags-editor"></arazzo-tag-editor></div>
       <div class="hint">The catalog assigns the version — a new workflow id starts at v1, an existing one gets the next. Submit the bare id (no <code>-vN</code>). The reserved <code>sys:</code> prefix is deployment-owned.</div>
     `;
   }
