@@ -4375,30 +4375,6 @@
         }
       }
     },
-    "/accessRequests/{requestId}/settle": {
-      "parameters": [
-        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
-      ],
-      "post": {
-        "operationId": "settleAccessRequest",
-        "security": [
-          { "oauth2": ["accessRequests:grant"] },
-          { "openIdConnect": ["accessRequests:grant"] }
-        ],
-        "tags": ["accessRequests"],
-        "summary": "Settle a pending access request per its decision outcome (system-credentialed, no administrator check)",
-        "description": "Enacts the terminal state a pending request's decision authorized, WITHOUT the §15-administrator check the caller-facing approve/deny apply — the single system-credentialed enactment path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this once to enact whatever was decided, so every outcome flows through the same run. 'approved' writes the capped, time-boxed grant; 'eligible' writes standing eligibility (§16.5.3); 'rejected' marks the request Denied; 'withdrawn' marks it Withdrawn. The platform ceiling on a grant is identical to approve and holds regardless of caller, so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).",
-        "requestBody": {
-          "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestSettlement" } } }
-        },
-        "responses": {
-          "200": { "description": "The request in its settled terminal state.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestView" } } } },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" }
-        }
-      }
-    },
     "/availabilityRequests": {
       "post": {
         "operationId": "submitAvailabilityRequest",
@@ -8290,19 +8266,6 @@
         "description": "An optional note recorded with an approve/deny/withdraw/revoke decision (design §16.5).",
         "properties": {
           "reason": { "type": "string", "description": "An optional note explaining the decision." }
-        }
-      },
-      "AccessRequestSettlement": {
-        "type": "object",
-        "description": "The decision the bootstrapped approval workflow enacts through settleAccessRequest: which terminal state to move the pending request to, plus the approver's optional note (design §16.5.1).",
-        "required": ["outcome"],
-        "properties": {
-          "outcome": {
-            "type": "string",
-            "enum": ["approved", "eligible", "rejected", "withdrawn"],
-            "description": "The decided outcome to enact: 'approved' writes the capped grant; 'eligible' writes standing eligibility; 'rejected' marks the request Denied; 'withdrawn' marks it Withdrawn."
-          },
-          "reason": { "type": "string", "description": "An optional note explaining the decision, carried from the approver." }
         }
       },
       "AccessRequestEligibilityNote": {
