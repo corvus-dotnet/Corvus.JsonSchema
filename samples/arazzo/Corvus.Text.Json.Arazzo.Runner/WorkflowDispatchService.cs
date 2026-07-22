@@ -52,7 +52,11 @@ public sealed class WorkflowDispatchService(
                 if (hostedIds.Length > 0)
                 {
                     int dispatched = await dispatcher.DispatchClaimableAsync(hostedIds, resumer, stoppingToken).ConfigureAwait(false);
-                    int resumed = await worker.ResumeDueTimersAsync(resumer, stoppingToken).ConfigureAwait(false);
+
+                    // Timer-resume is environment-scoped exactly as dispatch is (§5.5): pass the runner's environment so it
+                    // only resumes due runs pinned to it, never another environment's due run (which it could not resume with
+                    // the right credentials, and — for a $schedule run — would fault for lack of that environment's scheduler).
+                    int resumed = await worker.ResumeDueTimersAsync(resumer, options.Environment, stoppingToken).ConfigureAwait(false);
                     if (dispatched + resumed > 0)
                     {
                         logger.LogInformation("Dispatched {Dispatched} new/orphaned run(s); resumed {Resumed} due run(s).", dispatched, resumed);

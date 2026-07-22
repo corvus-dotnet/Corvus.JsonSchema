@@ -252,11 +252,25 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+        => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and Status eq {SuspendedStatus} and DueAt le {before.ToUnixTimeMilliseconds()}");
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
+            // §5.5 environment-scoped timer-resume. A real runner (non-null runnerEnvironment) resumes a due timer
+            // only when the run is pinned to EXACTLY its environment; an unpinned or differently-pinned run is
+            // excluded. A null runnerEnvironment is the env-agnostic base overload (return all due runs). The §5.5
+            // environment predicate cannot be expressed over a possibly-absent property in OData, so it is applied
+            // in process, matching QueryClaimableAsync.
+            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
+            {
+                continue;
+            }
+
             yield return new WorkflowRunId(entity.RowKey);
         }
     }

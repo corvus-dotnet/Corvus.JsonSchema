@@ -217,11 +217,22 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         long cutoff = before.ToUnixTimeMilliseconds();
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
+            // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when
+            // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
+            // runnerEnvironment is the env-agnostic base overload that surfaces every due run regardless of environment.
+            if (!MatchesEnvironment(index.Environment, runnerEnvironment))
+            {
+                continue;
+            }
+
             if (index.Status == WorkflowRunStatus.Suspended && index.DueAt is { } due && due.ToUnixTimeMilliseconds() <= cutoff)
             {
                 yield return runId;

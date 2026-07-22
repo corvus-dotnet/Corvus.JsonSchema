@@ -292,13 +292,25 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+        => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before;";
+
+        // §5.5 environment-scoped timer-resume: a real runner (non-null @runner_environment) resumes a due run only when
+        // pinned to EXACTLY its environment — the equality excludes an unpinned run (environment IS NULL, since NULL =
+        // value is never true) and a differently-pinned run, mirroring the dispatch scope so a run never crosses the
+        // credential boundary. A null @runner_environment is the env-agnostic base overload (an in-process host resuming every due run).
+        select.CommandText =
+            "SELECT run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before"
+            + " AND (@runner_environment IS NULL OR environment = @runner_environment);";
         select.Parameters.AddWithValue("status", SuspendedStatus);
         select.Parameters.AddWithValue("before", before.ToUnixTimeMilliseconds());
+        select.Parameters.Add(NullableText("runner_environment", runnerEnvironment));
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {

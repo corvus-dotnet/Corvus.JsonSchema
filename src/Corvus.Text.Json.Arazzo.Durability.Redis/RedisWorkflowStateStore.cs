@@ -238,13 +238,30 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         RedisValue[] members = await this.database.SortedSetRangeByScoreAsync(DueKey, double.NegativeInfinity, before.ToUnixTimeMilliseconds()).ConfigureAwait(false);
         foreach (RedisValue member in members)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            yield return new WorkflowRunId(member!);
+            if (runnerEnvironment is null)
+            {
+                yield return new WorkflowRunId(member!);
+                continue;
+            }
+
+            // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when it
+            // is pinned to EXACTLY its environment (an unpinned or differently-pinned run is skipped); a null runnerEnvironment
+            // is the env-agnostic base overload (return every due run regardless of environment), never a runner.
+            RedisValue storedEnvironment = await this.database.HashGetAsync(RunKey((string)member!), "environment").ConfigureAwait(false);
+            string? environment = storedEnvironment.IsNull ? null : (string)storedEnvironment!;
+            if (MatchesEnvironment(environment, runnerEnvironment))
+            {
+                yield return new WorkflowRunId(member!);
+            }
         }
     }
 

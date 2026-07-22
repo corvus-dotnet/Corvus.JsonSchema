@@ -229,6 +229,38 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task QueryDue_constrains_runs_to_the_runners_environment()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        var index = (IWorkflowWaitIndex)store;
+
+        // Three suspended runs whose timers are all due, pinned to production, staging, and nothing (an unpinned legacy run).
+        await store.SaveAsync("prod", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1), environment: "production"), WorkflowEtag.None, default);
+        await store.SaveAsync("staging", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1), environment: "staging"), WorkflowEtag.None, default);
+        await store.SaveAsync("legacy", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default); // unpinned (null environment)
+
+        DateTimeOffset cutoff = T0 + TimeSpan.FromMinutes(5);
+
+        // §5.5: a runner serving production resumes ONLY the production-pinned due run — never the staging run, and never the
+        // unpinned legacy run. The timer-resume path is environment-scoped exactly as dispatch is, so a due run never
+        // crosses the credential boundary (mirrors QueryClaimable_constrains_runs_to_the_runners_environment). This is the
+        // regression guard for the defect where the demo's system runner resumed a development-pinned $schedule run.
+        List<string> production = (await Collect(index.QueryDueAsync(cutoff, "production", default))).Select(r => r.Value).ToList();
+        production.ShouldBe(["prod"]);
+
+        // A runner serving staging resumes only the staging run (confirming each environment round-trips through the index).
+        List<string> staging = (await Collect(index.QueryDueAsync(cutoff, "staging", default))).Select(r => r.Value).ToList();
+        staging.ShouldBe(["staging"]);
+
+        // The env-agnostic base overload (null runnerEnvironment) is an in-process host, not a runner: it resumes EVERY due
+        // run regardless of environment — the pinned runs and the unpinned legacy one alike.
+        List<string> agnostic = (await Collect(index.QueryDueAsync(cutoff, null, default))).Select(r => r.Value).ToList();
+        agnostic.ShouldContain("prod");
+        agnostic.ShouldContain("staging");
+        agnostic.ShouldContain("legacy");
+    }
+
+    [TestMethod]
     public async Task QueryAwaiting_matches_channel_and_correlation()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
@@ -692,8 +724,8 @@ public abstract class WorkflowStateStoreConformance
     private static WorkflowRunIndexEntry Tagged(string? correlationId, params string[] tags)
         => new("wf", WorkflowRunStatus.Running, T0, T0, CorrelationId: correlationId, Tags: TagSet.FromTags(tags));
 
-    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null)
-        => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId);
+    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null, string? environment = null)
+        => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId, Environment: environment);
 
     private static byte[] Bytes(string value) => Encoding.UTF8.GetBytes(value);
 

@@ -104,6 +104,10 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         => this.RequireIndex().QueryDueAsync(before, cancellationToken);
 
     /// <inheritdoc/>
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
+        => this.RequireIndex().QueryDueAsync(before, runnerEnvironment, cancellationToken);
+
+    /// <inheritdoc/>
     public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAwaitingAsync(channel, correlationId, cancellationToken);
 

@@ -233,13 +233,21 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before;";
+
+        // §5.5 environment-scoped timer-resume: a real runner (non-null @runner_environment) resumes a due timer only when
+        // the run is pinned to EXACTLY its environment (the equality excludes an unpinned run); a null @runner_environment
+        // is the env-agnostic base overload that resumes every due timer, never a runner.
+        select.CommandText = "SELECT run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before AND (@runner_environment IS NULL OR environment = @runner_environment);";
         select.Parameters.AddWithValue("@status", SuspendedStatus);
         select.Parameters.AddWithValue("@before", before.ToUnixTimeMilliseconds());
+        select.Parameters.Add(NullableText("@runner_environment", runnerEnvironment));
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {

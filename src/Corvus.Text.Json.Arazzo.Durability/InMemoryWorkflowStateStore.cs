@@ -158,11 +158,16 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+        => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await Task.CompletedTask.ConfigureAwait(false);
         foreach (WorkflowRunId id in this.Snapshot(e =>
-            e.Index.Status == WorkflowRunStatus.Suspended && e.Index.DueAt is { } due && due <= before))
+            e.Index.Status == WorkflowRunStatus.Suspended && e.Index.DueAt is { } due && due <= before
+            && MatchesEnvironment(e.Index.Environment, runnerEnvironment)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return id;

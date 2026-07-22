@@ -24,6 +24,24 @@ public interface IWorkflowWaitIndex
     /// <returns>The ids of the due runs.</returns>
     IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The environment-scoped overload (design §5.5): as <see cref="QueryDueAsync(DateTimeOffset, CancellationToken)"/>,
+    /// but additionally constrains due runs to those pinned to <strong>exactly</strong> <paramref name="runnerEnvironment"/>.
+    /// A real runner (non-null <paramref name="runnerEnvironment"/>) never resumes a run pinned to a different environment,
+    /// nor an unpinned one — a run started against environment <em>E</em> is only ever resumed by a runner serving <em>E</em>,
+    /// exactly as dispatch is scoped (see <see cref="IWorkflowDispatchIndex.QueryClaimableAsync(IReadOnlyCollection{string}, string?, DateTimeOffset, CancellationToken)"/>).
+    /// A <see langword="null"/> <paramref name="runnerEnvironment"/> is the env-agnostic base overload: an in-process host
+    /// that owns the whole store resumes every due run regardless of environment (deliberately unscoped).
+    /// </summary>
+    /// <param name="before">The cutoff instant (typically "now").</param>
+    /// <param name="runnerEnvironment">The single environment a runner serves — a due run resumes only when pinned to exactly it; <see langword="null"/> is env-agnostic (the base overload, not a runner).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The ids of the due runs pinned to the runner's environment (all due runs when <paramref name="runnerEnvironment"/> is <see langword="null"/>).</returns>
+    /// <remarks>The default implementation ignores <paramref name="runnerEnvironment"/> and delegates to the unscoped
+    /// overload (the pre-pinning behaviour); a backend overrides it with a native environment-filtered query.</remarks>
+    IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
+        => this.QueryDueAsync(before, cancellationToken);
+
     /// <summary>Finds suspended runs awaiting a message on a channel (optionally for a specific correlation id).</summary>
     /// <param name="channel">The channel a message was delivered on.</param>
     /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match runs awaiting the channel with no specific correlation.</param>

@@ -49,17 +49,33 @@ public sealed class WorkflowWorker
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);
     }
 
-    /// <summary>Resumes every suspended run whose durable timer is now due.</summary>
+    /// <summary>Resumes every suspended run whose durable timer is now due, across all environments.</summary>
     /// <param name="resume">The adapter that re-enters the run's generated executor.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs this worker resumed (runs another worker held are skipped).</returns>
-    public async ValueTask<int> ResumeDueTimersAsync(WorkflowResumer resume, CancellationToken cancellationToken)
+    /// <remarks>The unscoped overload — an in-process host that owns the whole store resumes every due run. A runner
+    /// serving a single environment must pass its environment to <see cref="ResumeDueTimersAsync(WorkflowResumer, string?, CancellationToken)"/>
+    /// so it never resumes another environment's run (the §5.5 credential boundary).</remarks>
+    public ValueTask<int> ResumeDueTimersAsync(WorkflowResumer resume, CancellationToken cancellationToken)
+        => this.ResumeDueTimersAsync(resume, null, cancellationToken);
+
+    /// <summary>
+    /// Resumes every suspended run whose durable timer is now due <em>and</em> which is pinned to
+    /// <paramref name="runnerEnvironment"/> — the environment-scoped timer-resume a runner uses so it never resumes a
+    /// run pinned to another environment (matching the §5.5 environment-scoped dispatch). A <see langword="null"/>
+    /// <paramref name="runnerEnvironment"/> resumes every due run regardless of environment (the unscoped in-process host).
+    /// </summary>
+    /// <param name="resume">The adapter that re-enters the run's generated executor.</param>
+    /// <param name="runnerEnvironment">The single environment this worker serves, or <see langword="null"/> to resume every due run.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs this worker resumed (runs another worker held, or pinned to a different environment, are skipped).</returns>
+    public async ValueTask<int> ResumeDueTimersAsync(WorkflowResumer resume, string? runnerEnvironment, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(resume);
 
         int resumed = 0;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        await foreach (WorkflowRunId id in this.index.QueryDueAsync(now, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunId id in this.index.QueryDueAsync(now, runnerEnvironment, cancellationToken).ConfigureAwait(false))
         {
             if (await this.TryResumeAsync(id, deliveredMessage: default, deliveredHeaders: default, hasDelivered: false, resume, cancellationToken).ConfigureAwait(false))
             {

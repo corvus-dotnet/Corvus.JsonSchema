@@ -112,10 +112,37 @@ public sealed class WorkflowWorkerTests
         count.ShouldBe(1);
     }
 
-    private static async ValueTask SuspendTimer(InMemoryWorkflowStateStore store, TimeProvider time, string id, TimeSpan delay)
+    [TestMethod]
+    public async Task Worker_scoped_to_an_environment_skips_a_due_run_pinned_to_another_environment()
+    {
+        var time = new TestTimeProvider(Start);
+        var store = new InMemoryWorkflowStateStore(time);
+        await SuspendTimer(store, time, "dev-timer", TimeSpan.FromMinutes(1), environment: "development");
+        time.Advance(TimeSpan.FromMinutes(2)); // the timer is now due
+
+        var worker = new WorkflowWorker(store, "runner", time);
+
+        // A runner serving "system" must NOT resume a run pinned to "development": the timer-resume path is
+        // environment-scoped exactly as dispatch is (§5.5), so a due run never crosses the credential boundary. This is
+        // the defect behind the demo's system-runner faulting on the development-pinned $schedule run every minute.
+        int crossEnv = await worker.ResumeDueTimersAsync(
+            (run, ct) => ValueTask.FromResult(WorkflowRunResultKind.Completed),
+            "system",
+            default);
+        crossEnv.ShouldBe(0);
+
+        // Its own environment resumes it (and the unscoped overload still resumes every due run).
+        int sameEnv = await worker.ResumeDueTimersAsync(
+            (run, ct) => ValueTask.FromResult(WorkflowRunResultKind.Completed),
+            "development",
+            default);
+        sameEnv.ShouldBe(1);
+    }
+
+    private static async ValueTask SuspendTimer(InMemoryWorkflowStateStore store, TimeProvider time, string id, TimeSpan delay, string environment = "development")
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray());
-        using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time);
+        using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, environment, time);
         await run.SuspendForTimerAsync(1, delay, default);
     }
 

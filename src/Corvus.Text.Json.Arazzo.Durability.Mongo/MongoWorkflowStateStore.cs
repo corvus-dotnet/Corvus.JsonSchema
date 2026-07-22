@@ -229,12 +229,24 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
             Builders<BsonDocument>.Filter.Eq("status", SuspendedStatus),
             Builders<BsonDocument>.Filter.Ne<BsonValue>("dueAt", BsonNull.Value),
             Builders<BsonDocument>.Filter.Lte("dueAt", before.ToUnixTimeMilliseconds()));
+
+        // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due timer only when
+        // the run is pinned to EXACTLY its environment. Filter.Eq excludes an unpinned run (absent/null environment) and
+        // a differently-pinned run. A null runnerEnvironment is the env-agnostic base overload (no environment filter).
+        if (runnerEnvironment is not null)
+        {
+            filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Eq("environment", runnerEnvironment));
+        }
+
         using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
         while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
         {

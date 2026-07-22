@@ -277,14 +277,23 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+        => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due run only when
+        // pinned to EXACTLY its environment — the equality excludes an unpinned run (Environment IS NULL, since NULL =
+        // value is never true) and a differently-pinned run, mirroring the dispatch scope so a run never crosses the
+        // credential boundary. A null @runnerEnvironment is the env-agnostic base overload (an in-process host resuming every due run).
         List<WorkflowRunId> due = await this.QueryIdsAsync(
-            "SELECT RunId FROM WorkflowRuns WHERE Status = @status AND DueAt IS NOT NULL AND DueAt <= @before;",
+            "SELECT RunId FROM WorkflowRuns WHERE Status = @status AND DueAt IS NOT NULL AND DueAt <= @before AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);",
             cmd =>
             {
                 cmd.Parameters.AddWithValue("@status", SuspendedStatus);
                 cmd.Parameters.AddWithValue("@before", before.ToUnixTimeMilliseconds());
+                cmd.Parameters.AddWithValue("@runnerEnvironment", (object?)runnerEnvironment ?? DBNull.Value);
             },
             cancellationToken).ConfigureAwait(false);
 

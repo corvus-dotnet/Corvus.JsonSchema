@@ -290,11 +290,20 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.status = @status AND IS_DEFINED(c.dueAt) AND c.dueAt <= @before")
+        // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due suspended run
+        // only when pinned to EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run
+        // (undefined = value → false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base
+        // overload (list all due): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by due timer only,
+        // never a runner.
+        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.status = @status AND IS_DEFINED(c.dueAt) AND c.dueAt <= @before AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@status", SuspendedStatus)
-            .WithParameter("@before", before.ToUnixTimeMilliseconds());
+            .WithParameter("@before", before.ToUnixTimeMilliseconds())
+            .WithParameter("@runnerEnvironment", runnerEnvironment);
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
             if (CosmosJson.GetString(element, IdProperty) is { } runId)
