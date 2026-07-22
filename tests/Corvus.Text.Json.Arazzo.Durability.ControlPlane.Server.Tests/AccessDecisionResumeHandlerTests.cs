@@ -41,7 +41,7 @@ public sealed class AccessDecisionResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "system-runner");
-        var handler = new AccessDecisionResumeHandler(worker, resumer, NullLogger<AccessDecisionResumeHandler>.Instance);
+        var handler = new AccessDecisionResumeHandler(worker, resumer, "system", NullLogger<AccessDecisionResumeHandler>.Instance);
 
         // A decision for a request nobody awaits resumes nothing — both runs stay suspended.
         using (ParsedJsonDocument<SwModels.AccessDecisionPayload> stray = Decision("req-9"))
@@ -58,6 +58,40 @@ public sealed class AccessDecisionResumeHandlerTests
         }
 
         resumedRuns.ShouldBe(["run-req-1"]);
+    }
+
+    [TestMethod]
+    public async Task A_decision_does_not_resume_an_approval_run_pinned_to_another_environment()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using (ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray()))
+        {
+            // Two runs await the SAME request's decision, one pinned to this runner's environment ("system"), one to another.
+            using WorkflowRun mine = WorkflowRun.CreateNew(store, "run-system", "access-approval", inputs.RootElement, "system");
+            await mine.SuspendForMessageAsync(1, "access.decision", "req-1", default);
+            using WorkflowRun other = WorkflowRun.CreateNew(store, "run-dev", "access-approval", inputs.RootElement, "development");
+            await other.SuspendForMessageAsync(1, "access.decision", "req-1", default);
+        }
+
+        var resumedRuns = new List<string>();
+        WorkflowResumer resumer = async (run, ct) =>
+        {
+            resumedRuns.Add(run.Id.Value);
+            await run.CompleteAsync(default, ct);
+            return WorkflowRunResultKind.Completed;
+        };
+
+        var worker = new WorkflowWorker(store, "system-runner");
+        var handler = new AccessDecisionResumeHandler(worker, resumer, "system", NullLogger<AccessDecisionResumeHandler>.Instance);
+
+        // The system runner's decision consumer resumes ONLY the system-pinned approval run, never the development-pinned
+        // one that awaits the same channel and correlation (§5.5 message-delivery credential boundary).
+        using (ParsedJsonDocument<SwModels.AccessDecisionPayload> decision = Decision("req-1"))
+        {
+            await handler.HandleAccessDecisionAsync(decision.RootElement);
+        }
+
+        resumedRuns.ShouldBe(["run-system"]);
     }
 
     // Build the decision the same typed, owning-document way the producer does — no hand-rolled JSON string.

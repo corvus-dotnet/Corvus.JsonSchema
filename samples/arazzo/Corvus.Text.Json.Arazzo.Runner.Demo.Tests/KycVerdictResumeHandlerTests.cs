@@ -42,7 +42,7 @@ public sealed class KycVerdictResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "test-runner");
-        var handler = new KycVerdictResumeHandler(worker, resumer, NullLogger<KycVerdictResumeHandler>.Instance);
+        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
 
         // A verdict for an account nobody awaits resumes nothing — both runs stay suspended.
         using (ParsedJsonDocument<NModels.KycVerdictPayload> stray = ParsedJsonDocument<NModels.KycVerdictPayload>.Parse(
@@ -97,12 +97,45 @@ public sealed class KycVerdictResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "test-runner");
-        var handler = new KycVerdictResumeHandler(worker, resumer, NullLogger<KycVerdictResumeHandler>.Instance);
+        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
 
         using ParsedJsonDocument<NModels.KycVerdictPayload> anonymous = ParsedJsonDocument<NModels.KycVerdictPayload>.Parse(
             """{"verified":false,"score":0.1}"""u8.ToArray());
         await handler.HandleKycVerdictAsync(anonymous.RootElement);
 
         resumedRuns.ShouldBe(["run-corr"]);
+    }
+
+    [TestMethod]
+    public async Task A_verdict_does_not_resume_a_run_pinned_to_another_environment()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using (ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray()))
+        {
+            // Two runs await the SAME account's verdict, one pinned to this runner's environment ("development"), one to another.
+            using WorkflowRun mine = WorkflowRun.CreateNew(store, "run-dev", "onboard", inputs.RootElement, "development");
+            await mine.SuspendForMessageAsync(1, "kyc.verdict", "acct-1", default);
+            using WorkflowRun other = WorkflowRun.CreateNew(store, "run-prod", "onboard", inputs.RootElement, "production");
+            await other.SuspendForMessageAsync(1, "kyc.verdict", "acct-1", default);
+        }
+
+        var resumedRuns = new List<string>();
+        WorkflowResumer resumer = async (run, ct) =>
+        {
+            resumedRuns.Add(run.Id.Value);
+            await run.CompleteAsync(default, ct);
+            return WorkflowRunResultKind.Completed;
+        };
+
+        var worker = new WorkflowWorker(store, "test-runner");
+        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
+
+        // The development runner's verdict consumer resumes ONLY the development-pinned run, never the production-pinned
+        // one that awaits the same channel and correlation (§5.5 message-delivery credential boundary).
+        using ParsedJsonDocument<NModels.KycVerdictPayload> verdict = ParsedJsonDocument<NModels.KycVerdictPayload>.Parse(
+            """{"accountId":"acct-1","verified":true,"score":0.98}"""u8.ToArray());
+        await handler.HandleKycVerdictAsync(verdict.RootElement);
+
+        resumedRuns.ShouldBe(["run-dev"]);
     }
 }

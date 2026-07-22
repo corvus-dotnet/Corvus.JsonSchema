@@ -241,11 +241,22 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
+            // §5.5 environment-scoped signal-resume: a real runner (non-null runnerEnvironment) resumes an awaiting run only when
+            // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
+            // runnerEnvironment is the env-agnostic base overload that surfaces every awaiting run regardless of environment.
+            if (!MatchesEnvironment(index.Environment, runnerEnvironment))
+            {
+                continue;
+            }
+
             if (index.Status == WorkflowRunStatus.Suspended
                 && index.AwaitingChannel == channel
                 && (correlationId is null || index.AwaitingCorrelationId is null || index.AwaitingCorrelationId == correlationId))

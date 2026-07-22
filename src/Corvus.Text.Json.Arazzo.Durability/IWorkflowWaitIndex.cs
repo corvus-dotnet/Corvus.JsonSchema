@@ -49,6 +49,24 @@ public interface IWorkflowWaitIndex
     /// <returns>The ids of the runs the message can resume.</returns>
     IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The environment-scoped overload (design §5.5): as <see cref="QueryAwaitingAsync(string, string?, CancellationToken)"/>,
+    /// but additionally constrains awaiting runs to those pinned to <strong>exactly</strong> <paramref name="runnerEnvironment"/>.
+    /// A message consumer for environment <em>E</em> (non-null <paramref name="runnerEnvironment"/>) never resumes a run
+    /// pinned to a different environment, nor an unpinned one, even when two environments have runs awaiting the same channel
+    /// name — the message-delivery credential boundary, exactly as timer-resume and dispatch are scoped. A <see langword="null"/>
+    /// <paramref name="runnerEnvironment"/> is the env-agnostic base overload (an in-process host delivering to every awaiting run).
+    /// </summary>
+    /// <param name="channel">The channel a message was delivered on.</param>
+    /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match runs awaiting the channel with no specific correlation.</param>
+    /// <param name="runnerEnvironment">The single environment a consumer serves — an awaiting run matches only when pinned to exactly it; <see langword="null"/> is env-agnostic (the base overload).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The ids of the runs the message can resume, constrained to the consumer's environment (all matching runs when <paramref name="runnerEnvironment"/> is <see langword="null"/>).</returns>
+    /// <remarks>The default implementation ignores <paramref name="runnerEnvironment"/> and delegates to the unscoped
+    /// overload (the pre-pinning behaviour); a backend overrides it with a native environment-filtered query.</remarks>
+    IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
+        => this.QueryAwaitingAsync(channel, correlationId, cancellationToken);
+
     /// <summary>Runs an operator visibility query (plan §11).</summary>
     /// <param name="query">The query (status / workflow-id filters and a limit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>

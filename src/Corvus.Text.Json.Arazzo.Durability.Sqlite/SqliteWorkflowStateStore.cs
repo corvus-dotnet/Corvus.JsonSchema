@@ -305,21 +305,30 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+        => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
+        // §5.5 environment-scoped message delivery: a real runner (non-null @runnerEnvironment) delivers to an awaiting
+        // run only when pinned to EXACTLY its environment (the equality excludes an unpinned run); a null
+        // @runnerEnvironment is the env-agnostic base overload that delivers to every awaiting run.
         List<WorkflowRunId> awaiting = await this.QueryIdsAsync(
             """
             SELECT RunId FROM WorkflowRuns
             WHERE Status = @status AND AwaitingChannel = @channel
-              AND (@correlationId IS NULL OR AwaitingCorrelationId IS NULL OR AwaitingCorrelationId = @correlationId);
+              AND (@correlationId IS NULL OR AwaitingCorrelationId IS NULL OR AwaitingCorrelationId = @correlationId)
+              AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);
             """,
             cmd =>
             {
                 cmd.Parameters.AddWithValue("@status", SuspendedStatus);
                 cmd.Parameters.AddWithValue("@channel", channel);
                 cmd.Parameters.AddWithValue("@correlationId", (object?)correlationId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@runnerEnvironment", (object?)runnerEnvironment ?? DBNull.Value);
             },
             cancellationToken).ConfigureAwait(false);
 

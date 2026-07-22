@@ -21,16 +21,21 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
 
     private readonly WorkflowWorker worker;
     private readonly WorkflowResumer resumer;
+    private readonly string? runnerEnvironment;
     private readonly ILogger<AccessDecisionResumeHandler> logger;
 
     /// <summary>Initializes a new instance of the <see cref="AccessDecisionResumeHandler"/> class.</summary>
     /// <param name="worker">The worker that leases and resumes suspended runs over the shared durable store.</param>
     /// <param name="resumer">The resumer that re-enters a run's generated executor.</param>
+    /// <param name="runnerEnvironment">The single environment this runner serves (§5.5), so a decision resumes only an
+    /// approval run pinned to it and never one in another environment that happens to await the same channel. A runner
+    /// always supplies its environment; <see langword="null"/> is the env-agnostic form (an in-process host).</param>
     /// <param name="logger">Logs each decision receipt and how many suspended runs it resumed.</param>
-    public AccessDecisionResumeHandler(WorkflowWorker worker, WorkflowResumer resumer, ILogger<AccessDecisionResumeHandler> logger)
+    public AccessDecisionResumeHandler(WorkflowWorker worker, WorkflowResumer resumer, string? runnerEnvironment, ILogger<AccessDecisionResumeHandler> logger)
     {
         this.worker = worker ?? throw new ArgumentNullException(nameof(worker));
         this.resumer = resumer ?? throw new ArgumentNullException(nameof(resumer));
+        this.runnerEnvironment = runnerEnvironment;
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -49,7 +54,7 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
         string? requestId = requestIdValue.IsNotUndefined() ? (string)requestIdValue : null;
 
         int resumed = await this.worker.DeliverMessageAsync(
-            DecisionChannel, requestId, (JsonElement)payload, this.resumer, cancellationToken).ConfigureAwait(false);
+            DecisionChannel, requestId, (JsonElement)payload, this.resumer, this.runnerEnvironment, cancellationToken).ConfigureAwait(false);
 
         // Make the exchange visible: without this the runner resumes the run silently and the operator sees nothing.
         this.logger.LogInformation(

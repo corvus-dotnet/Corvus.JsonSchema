@@ -266,24 +266,40 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         RedisValue[] candidates = await this.database.SetMembersAsync(AwaitingKey(channel)).ConfigureAwait(false);
         foreach (RedisValue candidate in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (correlationId is null)
+
+            if (correlationId is not null)
             {
-                yield return new WorkflowRunId(candidate!);
-                continue;
+                RedisValue stored = await this.database.HashGetAsync(RunKey((string)candidate!), "awaiting_correlation_id").ConfigureAwait(false);
+                if (!stored.IsNull && stored != correlationId)
+                {
+                    continue;
+                }
             }
 
-            RedisValue stored = await this.database.HashGetAsync(RunKey((string)candidate!), "awaiting_correlation_id").ConfigureAwait(false);
-            if (stored.IsNull || stored == correlationId)
+            // §5.5 environment-scoped event-resume. A real runner (non-null runnerEnvironment) resumes an awaiting run only
+            // when it is pinned to EXACTLY its environment (an unpinned or differently-pinned run is skipped). A null
+            // runnerEnvironment is the env-agnostic base overload (return every awaiting run regardless of environment), never a runner.
+            if (runnerEnvironment is not null)
             {
-                yield return new WorkflowRunId(candidate!);
+                RedisValue storedEnvironment = await this.database.HashGetAsync(RunKey((string)candidate!), "environment").ConfigureAwait(false);
+                string? environment = storedEnvironment.IsNull ? null : (string)storedEnvironment!;
+                if (!MatchesEnvironment(environment, runnerEnvironment))
+                {
+                    continue;
+                }
             }
+
+            yield return new WorkflowRunId(candidate!);
         }
     }
 

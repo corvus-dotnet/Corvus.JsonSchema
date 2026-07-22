@@ -258,7 +258,10 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
@@ -271,6 +274,14 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Or(
                 b.Eq<BsonValue>("awaitingCorrelationId", BsonNull.Value),
                 b.Eq("awaitingCorrelationId", correlationId)));
+        }
+
+        // §5.5 environment-scoped event-resume. A real runner (non-null runnerEnvironment) resumes an awaiting run only
+        // when the run is pinned to EXACTLY its environment. b.Eq excludes an unpinned run (absent/null environment) and
+        // a differently-pinned run. A null runnerEnvironment is the env-agnostic base overload (no environment filter).
+        if (runnerEnvironment is not null)
+        {
+            filter = b.And(filter, b.Eq("environment", runnerEnvironment));
         }
 
         using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);

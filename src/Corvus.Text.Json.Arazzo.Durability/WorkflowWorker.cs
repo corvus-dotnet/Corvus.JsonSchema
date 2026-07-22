@@ -97,7 +97,7 @@ public sealed class WorkflowWorker
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs this worker resumed with the message.</returns>
     public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, WorkflowResumer resume, CancellationToken cancellationToken)
-        => this.DeliverMessageAsync(channel, correlationId, payload, default, resume, cancellationToken);
+        => this.DeliverMessageAsync(channel, correlationId, payload, default, resume, null, cancellationToken);
 
     /// <summary>
     /// Delivers a message and its headers to every run awaiting <paramref name="channel"/> +
@@ -111,13 +111,46 @@ public sealed class WorkflowWorker
     /// <param name="resume">Re-enters the run's executor after the message is handed in.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs resumed.</returns>
-    public async ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, JsonElement headers, WorkflowResumer resume, CancellationToken cancellationToken)
+    public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, JsonElement headers, WorkflowResumer resume, CancellationToken cancellationToken)
+        => this.DeliverMessageAsync(channel, correlationId, payload, headers, resume, null, cancellationToken);
+
+    /// <summary>
+    /// Delivers a message to every run awaiting <paramref name="channel"/> + <paramref name="correlationId"/> that is
+    /// pinned to <paramref name="runnerEnvironment"/> — the environment-scoped message delivery a consumer serving a
+    /// single environment uses so it never resumes a run pinned to another environment, even when two environments
+    /// have runs awaiting the same channel name (matching the §5.5 scoping of dispatch and timer-resume). A
+    /// <see langword="null"/> <paramref name="runnerEnvironment"/> delivers to every awaiting run (the unscoped in-process host).
+    /// </summary>
+    /// <param name="channel">The channel the message arrived on.</param>
+    /// <param name="correlationId">The delivered message's correlation token, or <see langword="null"/> for an uncorrelated wait.</param>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="resume">Re-enters the run's executor after the message is handed in.</param>
+    /// <param name="runnerEnvironment">The single environment this consumer serves, or <see langword="null"/> to deliver to every awaiting run.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs resumed.</returns>
+    public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, WorkflowResumer resume, string? runnerEnvironment, CancellationToken cancellationToken)
+        => this.DeliverMessageAsync(channel, correlationId, payload, default, resume, runnerEnvironment, cancellationToken);
+
+    /// <summary>
+    /// The environment-scoped, header-carrying message delivery (the real implementation the other overloads delegate
+    /// to): delivers to every run awaiting <paramref name="channel"/> + <paramref name="correlationId"/> pinned to
+    /// <paramref name="runnerEnvironment"/> (or every awaiting run when it is <see langword="null"/>).
+    /// </summary>
+    /// <param name="channel">The channel the message arrived on.</param>
+    /// <param name="correlationId">The delivered message's correlation token, or <see langword="null"/> for an uncorrelated wait.</param>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="headers">The message headers (default when the transport carried none).</param>
+    /// <param name="resume">Re-enters the run's executor after the message is handed in.</param>
+    /// <param name="runnerEnvironment">The single environment this consumer serves, or <see langword="null"/> to deliver to every awaiting run.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs resumed.</returns>
+    public async ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, JsonElement headers, WorkflowResumer resume, string? runnerEnvironment, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         ArgumentNullException.ThrowIfNull(resume);
 
         int resumed = 0;
-        await foreach (WorkflowRunId id in this.index.QueryAwaitingAsync(channel, correlationId, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunId id in this.index.QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken).ConfigureAwait(false))
         {
             if (await this.TryResumeAsync(id, payload, headers, hasDelivered: true, resume, cancellationToken).ConfigureAwait(false))
             {

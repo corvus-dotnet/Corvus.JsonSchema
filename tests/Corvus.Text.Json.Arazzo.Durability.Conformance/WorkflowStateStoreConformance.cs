@@ -285,6 +285,33 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task QueryAwaiting_constrains_runs_to_the_runners_environment()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        var index = (IWorkflowWaitIndex)store;
+
+        // Three suspended runs awaiting the SAME channel + correlation, pinned to production, staging, and nothing.
+        await store.SaveAsync("prod", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1", environment: "production"), WorkflowEtag.None, default);
+        await store.SaveAsync("staging", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1", environment: "staging"), WorkflowEtag.None, default);
+        await store.SaveAsync("legacy", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1"), WorkflowEtag.None, default); // unpinned (null environment)
+
+        // §5.5: a consumer serving production delivers ONLY to the production-pinned awaiting run, even though all three
+        // await the same channel and correlation. Message delivery is environment-scoped exactly as timer-resume and
+        // dispatch are, so a run never crosses the credential boundary on a channel-name collision across environments.
+        List<string> production = (await Collect(index.QueryAwaitingAsync("responses", "order-1", "production", default))).Select(r => r.Value).ToList();
+        production.ShouldBe(["prod"]);
+
+        List<string> staging = (await Collect(index.QueryAwaitingAsync("responses", "order-1", "staging", default))).Select(r => r.Value).ToList();
+        staging.ShouldBe(["staging"]);
+
+        // The env-agnostic base overload (null runnerEnvironment) delivers to every awaiting run regardless of environment.
+        List<string> agnostic = (await Collect(index.QueryAwaitingAsync("responses", "order-1", null, default))).Select(r => r.Value).ToList();
+        agnostic.ShouldContain("prod");
+        agnostic.ShouldContain("staging");
+        agnostic.ShouldContain("legacy");
+    }
+
+    [TestMethod]
     public async Task QueryClaimable_returns_pending_and_lease_expired_running_for_hosted_workflows()
     {
         var clock = new TestClock(T0);

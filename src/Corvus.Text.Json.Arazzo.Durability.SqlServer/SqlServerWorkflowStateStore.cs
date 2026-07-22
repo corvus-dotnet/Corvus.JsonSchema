@@ -256,21 +256,30 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
+
+        // §5.5 environment-scoped message delivery: a real runner (non-null @runner_environment) delivers to an awaiting
+        // run only when the run is pinned to EXACTLY its environment (the equality excludes an unpinned run); a null
+        // @runner_environment is the env-agnostic base overload that delivers to every awaiting run, never a runner.
         select.CommandText =
             """
             SELECT run_id FROM workflow_runs
             WHERE status = @status AND awaiting_channel = @channel
-              AND (@correlation_id IS NULL OR awaiting_correlation_id IS NULL OR awaiting_correlation_id = @correlation_id);
+              AND (@correlation_id IS NULL OR awaiting_correlation_id IS NULL OR awaiting_correlation_id = @correlation_id)
+              AND (@runner_environment IS NULL OR environment = @runner_environment);
             """;
         select.Parameters.AddWithValue("@status", SuspendedStatus);
         select.Parameters.AddWithValue("@channel", channel);
         select.Parameters.Add(NullableText("@correlation_id", correlationId));
+        select.Parameters.Add(NullableText("@runner_environment", runnerEnvironment));
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {

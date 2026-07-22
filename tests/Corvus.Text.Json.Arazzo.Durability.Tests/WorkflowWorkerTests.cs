@@ -139,6 +139,38 @@ public sealed class WorkflowWorkerTests
         sameEnv.ShouldBe(1);
     }
 
+    [TestMethod]
+    public async Task Two_runners_on_a_shared_store_each_resume_only_their_own_environments_due_run()
+    {
+        var time = new TestTimeProvider(Start);
+        var store = new InMemoryWorkflowStateStore(time);
+
+        // A shared store with two due suspended runs, mirroring the control-plane demo: one pinned to "development" (the
+        // app runner's environment, the seeded $schedule) and one to "system" (the system runner's environment). This is
+        // the exact two-runner topology where the timer-resume isolation defect fired every minute.
+        await SuspendTimer(store, time, "dev-schedule", TimeSpan.FromMinutes(1), environment: "development");
+        await SuspendTimer(store, time, "system-run", TimeSpan.FromMinutes(1), environment: "system");
+        time.Advance(TimeSpan.FromMinutes(2)); // both timers are now due
+
+        var resumedByDev = new List<string>();
+        var resumedBySystem = new List<string>();
+        WorkflowResumer devResumer = async (run, ct) => { resumedByDev.Add(run.Id.Value); await run.CompleteAsync(default, ct); return WorkflowRunResultKind.Completed; };
+        WorkflowResumer systemResumer = async (run, ct) => { resumedBySystem.Add(run.Id.Value); await run.CompleteAsync(default, ct); return WorkflowRunResultKind.Completed; };
+
+        var appRunner = new WorkflowWorker(store, "app-runner", time);
+        var systemRunner = new WorkflowWorker(store, "system-runner", time);
+
+        // Both runners poll the same shared store, but each resumes ONLY its own environment's due run and never sees the
+        // other's, so the system runner never faults on the development-pinned $schedule run (the original symptom).
+        int devCount = await appRunner.ResumeDueTimersAsync(devResumer, "development", default);
+        int systemCount = await systemRunner.ResumeDueTimersAsync(systemResumer, "system", default);
+
+        devCount.ShouldBe(1);
+        systemCount.ShouldBe(1);
+        resumedByDev.ShouldBe(["dev-schedule"]);
+        resumedBySystem.ShouldBe(["system-run"]);
+    }
+
     private static async ValueTask SuspendTimer(InMemoryWorkflowStateStore store, TimeProvider time, string id, TimeSpan delay, string environment = "development")
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray());

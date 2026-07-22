@@ -314,15 +314,24 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
         // Filter by channel server-side; the null-correlation rule is applied client-side because a document
         // awaiting any correlation omits the property entirely.
-        var query = new QueryDefinition("SELECT c.id, c.awaitingCorrelationId FROM c WHERE c.status = @status AND c.awaitingChannel = @channel")
+        // §5.5 environment-scoped event-resume. A real runner (non-null @runnerEnvironment) resumes an awaiting run
+        // only when pinned to EXACTLY its environment. `c.environment = @runnerEnvironment` excludes an unpinned run
+        // (undefined = value yields false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic
+        // base overload (list all awaiting). NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by channel
+        // only, never a runner.
+        var query = new QueryDefinition("SELECT c.id, c.awaitingCorrelationId FROM c WHERE c.status = @status AND c.awaitingChannel = @channel AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@status", SuspendedStatus)
-            .WithParameter("@channel", channel);
+            .WithParameter("@channel", channel)
+            .WithParameter("@runnerEnvironment", runnerEnvironment);
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
             string? runId = CosmosJson.GetString(element, IdProperty);

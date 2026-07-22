@@ -199,6 +199,7 @@ var decisionConsumer = new ReceiveAccessDecisionConsumer(
     new AccessDecisionResumeHandler(
         new WorkflowWorker(stateStore, options.RunnerId),
         catalogResumer,
+        runnerEnvironment,
         app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<AccessDecisionResumeHandler>()));
 
 // Start the decision consumer now the process is up: it subscribes to access.decision and resumes the suspended run.

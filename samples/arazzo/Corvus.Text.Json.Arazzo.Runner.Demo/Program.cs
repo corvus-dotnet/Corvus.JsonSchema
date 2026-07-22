@@ -304,6 +304,7 @@ var verdictConsumer = new ReceiveKycVerdictConsumer(
     new KycVerdictResumeHandler(
         new WorkflowWorker(stateStore, options.RunnerId),
         catalogResumer,
+        runnerEnvironment,
         app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<KycVerdictResumeHandler>()));
 
 // Start the KYC verdict consumer now the process is up: it subscribes to kyc.verdict and resumes suspended async runs.

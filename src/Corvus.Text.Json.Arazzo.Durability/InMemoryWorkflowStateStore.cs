@@ -175,14 +175,19 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+        => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         await Task.CompletedTask.ConfigureAwait(false);
         foreach (WorkflowRunId id in this.Snapshot(e =>
             e.Index.Status == WorkflowRunStatus.Suspended
             && e.Index.AwaitingChannel == channel
-            && (correlationId is null || e.Index.AwaitingCorrelationId is null || e.Index.AwaitingCorrelationId == correlationId)))
+            && (correlationId is null || e.Index.AwaitingCorrelationId is null || e.Index.AwaitingCorrelationId == correlationId)
+            && MatchesEnvironment(e.Index.Environment, runnerEnvironment)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return id;
