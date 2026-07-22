@@ -464,12 +464,11 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddBindingAsync(eligible.RootElement, "arazzo-admin", cancellationToken)).Dispose();
         }
 
-        // oscar's PENDING request: the approver-inbox content (routed to the onboard-customer administrators).
-        using (ParsedJsonDocument<AccessRequest> pending = AccessRequest.Draft(
-            "onboard-customer", ["runs:write"], "sub", "oscar", "Oscar (Observer)", "Investigating a stuck onboarding run.", 4 * 3600))
-        {
-            (await context.AccessRequests.CreateAsync(pending.RootElement, "oscar", cancellationToken)).Dispose();
-        }
+        // oscar's PENDING request (the approver-inbox content) is seeded in Program.cs AFTER the control-plane endpoints
+        // are mapped, through the SAME IAccessRequestApprovalService a real caller submits through — so it starts the
+        // bootstrapped approval run (§16.5.1) and can actually be enacted. Writing it straight to the store here (as this
+        // did previously) left a pending request with no suspended run, so approving it resumed nothing and it never
+        // settled. The approval service only exists once the endpoints are composed, hence the split.
     }
 
     /// <inheritdoc/>

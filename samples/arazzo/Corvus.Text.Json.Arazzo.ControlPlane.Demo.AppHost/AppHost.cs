@@ -461,6 +461,11 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("system-runner")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
+    // Opt-in diagnostics for the headless system runner: when the host is launched with RUNNER_DIAG_LOG set, the runner
+    // tees its console + any unhandled exception to that file, so a start-up or resume failure of this critical component
+    // is legible from outside the DCP-managed console (which otherwise streams only to the Aspire dashboard). Unset by
+    // default (empty env), so it costs nothing unless a developer explicitly turns it on to investigate the runner.
+    .WithEnvironment("RUNNER_DIAG_LOG", System.Environment.GetEnvironmentVariable("RUNNER_DIAG_LOG") ?? string.Empty)
     .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)

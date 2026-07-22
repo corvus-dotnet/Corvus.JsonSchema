@@ -87,7 +87,8 @@ public static class ControlPlaneEndpointExtensions
         IDraftRunStore? draftRunStore = null,
         InProcessDraftRunner? draftRunner = null,
         IDraftRunTraceStore? draftRunTraceStore = null,
-        WorkflowApprovalOptions? workflowApproval = null)
+        WorkflowApprovalOptions? workflowApproval = null,
+        Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -178,6 +179,11 @@ public static class ControlPlaneEndpointExtensions
         IAccessRequestApprovalService approvalService = workflowApproval is null
             ? builtInApproval
             : new WorkflowBackedAccessRequestApprovalService(builtInApproval, requestStore, management, catalog, new PublishAccessDecisionProducer(workflowApproval.DecisionTransport), workflowApproval.ApprovalWorkflowId, workflowApproval.Environment, auditLogger);
+
+        // Hand the composed strategy back to the host (e.g. so a demo can seed a pending request through the SAME
+        // submission path a real caller uses — starting the approval run — rather than writing a request straight to the
+        // store with no run to enact it, §16.5.1). The handler still depends only on the IAccessRequestApprovalService seam.
+        onApprovalServiceBuilt?.Invoke(approvalService);
         var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, auditLogger);
 
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);

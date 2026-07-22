@@ -128,7 +128,20 @@ if (builder.Configuration["ControlPlane:SigningVault:Address"] is { Length: > 0 
 
 // The executor provider compiles a runnable executor into each catalogued version at add time (alongside the typed
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
-PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider(), signer: executorSigner);
+// The provider's build progress is surfaced (not swallowed): a "skipped" line means a catalogued version could not be
+// compiled into a runnable executor. For an ordinary user workflow that is a diagnosable state; for a bootstrapped SYSTEM
+// workflow it is a deployment error, so the message must be visible rather than lost to a null progress sink.
+PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(
+    dataSource,
+    metadataProvider: metadata,
+    executorProvider: new WorkflowExecutorProvider(progress: msg =>
+    {
+        if (msg.Contains("skipped", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"[executor-build] {msg}");
+        }
+    }),
+    signer: executorSigner);
 
 // Live execution (§5/§8): a resumed run re-enters its baked executor, calling the real external source services
 // (onboarding, ledger, kyc — their own processes + databases). The resumer is built now but invoked only after the
@@ -628,6 +641,9 @@ if (!string.IsNullOrWhiteSpace(keycloakBaseUrl))
 // whose pointer misses an absent field is omitted, not fatal (OutputExtractionEmitter / AppendWorkflowOutputs guard).
 var workflowSimulator = new Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
 
+// Captured from the endpoint mapping so the demo can seed its pending access request through the SAME submission path a
+// real caller uses (starting the approval run), rather than writing it straight to the store with no run to enact it.
+IAccessRequestApprovalService? seedApprovalService = null;
 app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     management,
     catalog,
@@ -667,7 +683,20 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
             ApprovalWorkflowId = "access-approval-v1",
             Environment = "system",
         }
-        : null);
+        : null,
+    onApprovalServiceBuilt: svc => seedApprovalService = svc);
+
+// oscar's PENDING access request (the approver-inbox content): seeded THROUGH the approval service, exactly as a real
+// caller submits — so with the system approval workflow enabled it starts the bootstrapped approval run and can be
+// enacted by an approver's decision (§16.5.1). Writing it straight to the store (as the seed did before) left a pending
+// request with no suspended run, so approving it resumed nothing and it never settled. The subject claim type matches
+// the API's (preferred_username), so the seeded request is indistinguishable from one oscar submits himself.
+if (seedExampleData && seedApprovalService is { } approvalForSeed)
+{
+    using ParsedJsonDocument<AccessRequest> pending = AccessRequest.Draft(
+        "onboard-customer", ["runs:write"], "preferred_username", "oscar", "Oscar (Observer)", "Investigating a stuck onboarding run.", 4 * 3600);
+    (await approvalForSeed.SubmitAsync(pending.RootElement, "oscar", principal: null, cancellationToken: default)).Dispose();
+}
 
 // The source backends the workflows call — onboarding, ledger, and kyc — are all real external services (their own
 // processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP). This

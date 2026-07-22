@@ -57,9 +57,23 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
             DecisionChannel, requestId, (JsonElement)payload, this.resumer, this.runnerEnvironment, cancellationToken).ConfigureAwait(false);
 
         // Make the exchange visible: without this the runner resumes the run silently and the operator sees nothing.
-        this.logger.LogInformation(
-            "Access decision received for request {RequestId}; resumed {ResumedCount} suspended run(s).",
-            requestId ?? "(none)",
-            resumed);
+        // Resuming zero runs is an ANOMALY, not routine: a decision was published for a request that has no approval run
+        // suspended awaiting it, so the decision cannot be enacted and the request will stay pending forever. That happens
+        // when a pending request was written to the store WITHOUT starting its approval run (design §16.5.1 requires
+        // submission to go through the approval service). Surface it at warning so the operator sees the request will not
+        // settle, rather than mistaking silence for success.
+        if (resumed == 0)
+        {
+            this.logger.LogWarning(
+                "Access decision received for request {RequestId} but no suspended approval run was awaiting it (resumed 0); the request cannot be enacted and will stay pending. Was it created without starting an approval run?",
+                requestId ?? "(none)");
+        }
+        else
+        {
+            this.logger.LogInformation(
+                "Access decision received for request {RequestId}; resumed {ResumedCount} suspended run(s).",
+                requestId ?? "(none)",
+                resumed);
+        }
     }
 }

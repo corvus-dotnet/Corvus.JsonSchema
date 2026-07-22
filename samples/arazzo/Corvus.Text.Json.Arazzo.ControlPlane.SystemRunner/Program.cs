@@ -25,6 +25,19 @@ using Npgsql;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.AppRole;
 
+// Opt-in diagnostics: when RUNNER_DIAG_LOG names a file, tee stdout/stderr to it and record any unhandled exception, so a
+// start-up or resume failure of this headless runner is legible from outside the DCP-managed console (which otherwise
+// streams only to the Aspire dashboard). Unset by default, so it is a no-op unless a developer turns it on. Set before
+// the host builds so the console logger's writer is the tee.
+if (System.Environment.GetEnvironmentVariable("RUNNER_DIAG_LOG") is { Length: > 0 } diagLogPath)
+{
+    var diag = new StreamWriter(File.Open(diagLogPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true };
+    Console.SetOut(new TeeTextWriter(Console.Out, diag));
+    Console.SetError(new TeeTextWriter(Console.Error, diag));
+    AppDomain.CurrentDomain.UnhandledException += (_, e) => { diag.WriteLine($"[UNHANDLED {DateTime.UtcNow:O}] {e.ExceptionObject}"); diag.Flush(); };
+    TaskScheduler.UnobservedTaskException += (_, e) => { diag.WriteLine($"[UNOBSERVED {DateTime.UtcNow:O}] {e.Exception}"); diag.Flush(); };
+}
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -211,3 +224,34 @@ app.MapDefaultEndpoints();
 app.MapGet("/", () => Results.Text($"Arazzo control-plane system runner '{options.RunnerId}'. Health at /health.", "text/plain"));
 
 app.Run();
+
+/// <summary>A <see cref="TextWriter"/> that forwards every write to two underlying writers (the original console and a
+/// diagnostic file), so the runner's console is captured to a host file without losing the DCP/dashboard stream.</summary>
+internal sealed class TeeTextWriter(TextWriter primary, TextWriter secondary) : TextWriter
+{
+    public override System.Text.Encoding Encoding => primary.Encoding;
+
+    public override void Write(char value)
+    {
+        primary.Write(value);
+        secondary.Write(value);
+    }
+
+    public override void Write(string? value)
+    {
+        primary.Write(value);
+        secondary.Write(value);
+    }
+
+    public override void WriteLine(string? value)
+    {
+        primary.WriteLine(value);
+        secondary.WriteLine(value);
+    }
+
+    public override void Flush()
+    {
+        primary.Flush();
+        secondary.Flush();
+    }
+}
