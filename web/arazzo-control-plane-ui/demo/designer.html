@@ -682,6 +682,14 @@
     // stashed the full attachment before detaching; the toast's Restore re-attaches it verbatim
     // (declaration and all). This is the undo story — attachments cannot ride the document's
     // undo stack (they are workspace state with their own etag lifecycle).
+    // Registering an inline attachment (§7.6 promote): the re-attach as a registry reference bumped
+    // the etag — refresh the save token and narrate.
+    opBrowser.addEventListener('source-registered', (e) => {
+      shell.etag = e.detail.attachment?.etag ?? shell.etag;
+      setSaveUi('source registered');
+      showToast(`Source '${e.detail.name}' registered — this copy now references the registry.`);
+      logEvent('source-registered', { name: e.detail.name });
+    });
     const detachedStash = new Map();
     opBrowser.addEventListener('source-detached', async (e) => {
       const wc = await client.getWorkingCopy(shell.id); // the detach bumped the etag; refresh the save token

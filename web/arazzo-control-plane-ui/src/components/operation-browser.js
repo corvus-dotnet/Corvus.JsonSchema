@@ -226,6 +226,9 @@ class ArazzoOperationBrowser extends ArazzoElement {
     body.querySelectorAll('button.detach').forEach((button) => {
       button.addEventListener('click', (e) => { e.stopPropagation(); this.detach(button.dataset.name); });
     });
+    body.querySelectorAll('button.register').forEach((button) => {
+      button.addEventListener('click', (e) => { e.stopPropagation(); this.registerInRegistry(button.dataset.name); });
+    });
     body.querySelectorAll('.group-head.toggle').forEach((head) => {
       const toggle = () => {
         const name = head.dataset.name;
@@ -290,6 +293,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
           ${source.type ? `<span class="type">${escapeHtml(source.type)}</span>` : ''}
           <span class="count">${operations.length} op${operations.length === 1 ? '' : 's'}</span>
           <span class="spacer"></span>
+          ${source.kind !== 'registry' ? `<button class="register" type="button" data-name="${escapeHtml(source.name)}" title="Register this source in the Sources registry — publish only packages a workflow-scoped copy; registering makes it reusable and governed">↗ register</button>` : ''}
           <button class="detach" type="button" data-name="${escapeHtml(source.name)}" title="Detach this source">✕</button>
         </div>
         ${rows}
@@ -311,6 +315,33 @@ class ArazzoOperationBrowser extends ArazzoElement {
   }
 
   // ---- actions ----------------------------------------------------------------------------------
+
+  /** Promote an inline attachment into the Sources registry (§7.6) as a deliberate act — publish
+   *  never registers (it packages workflow-scoped copies). The registered copy becomes reusable and
+   *  governed; this working copy is then re-attached as a registry REFERENCE so it tracks the
+   *  registered source rather than keeping a drifting private copy. */
+  async registerInRegistry(name) {
+    const client = this.client;
+    if (!client || !this._workingCopyId) return;
+    try {
+      const attachment = await client.getWorkingCopySource(this._workingCopyId, name);
+      const sure = await this.$('.ask').ask({
+        title: `Register '${name}' in the Sources registry?`,
+        message: 'The document becomes a registered source, reusable by any working copy and governed like the rest of the registry. This copy is then re-attached as a registry reference, so it tracks the registered source instead of keeping a private inline copy.',
+        confirmLabel: 'Register',
+      });
+      if (!sure) return;
+
+      await client.createSource({ name, type: attachment.type ?? 'openapi', document: attachment.document });
+      const rebound = await client.attachWorkingCopySource(this._workingCopyId, name, { sourceName: name });
+      this.emit('source-registered', { name, attachment: rebound });
+      this.refresh();
+    } catch (err) {
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+      this.emit('error', { problem: this._error, error: err });
+    }
+  }
 
   async detach(name) {
     const client = this.client;

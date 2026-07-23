@@ -179,3 +179,51 @@ describe('<arazzo-operation-browser>', () => {
     await waitFor(() => opRows(el).length === 1);
   });
 });
+
+describe('<arazzo-operation-browser> registry promotion (§7.6)', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  it('an inline attachment offers ↗ register; the flow registers and re-attaches as a registry reference', async () => {
+    const ctx = await browserWithSources();
+    el = ctx.el;
+
+    const registerBtn = el.shadowRoot.querySelector('button.register[data-name="pets"]');
+    ok(registerBtn, 'an inline source offers the register affordance');
+
+    const registered = nextEvent(el, 'source-registered');
+    registerBtn.click();
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    const confirm = await waitFor(() => {
+      const b = ask.shadowRoot.querySelector('.confirm');
+      return b && ask.shadowRoot.querySelector('dialog').open ? b : null;
+    }, 'the register confirmation');
+    ok(ask.shadowRoot.textContent.includes('registry reference'), 'the confirm explains the re-attach');
+    confirm.click();
+    const e = await registered;
+    equal(e.detail.name, 'pets');
+
+    // The registry holds it; the attachment is now a registry reference (no register button).
+    const { sources } = await ctx.client.listSources({});
+    ok(sources.some((s) => s.name === 'pets'), 'the source landed in the registry');
+    const attachment = await ctx.client.getWorkingCopySource(ctx.wc.id, 'pets');
+    equal(attachment.kind, 'registry', 'the working copy now references the registry');
+    await waitFor(() => !el.shadowRoot.querySelector('button.register[data-name="pets"]'), 'the affordance disappears once registered');
+  });
+
+  it('a registry attachment never offers register', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    await client.createSource({ name: 'reg-pets', type: 'openapi', document: petstore });
+    const wc = await client.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0' } });
+    await client.attachWorkingCopySource(wc.id, 'reg-pets', { sourceName: 'reg-pets' });
+
+    el = document.createElement('arazzo-operation-browser');
+    el.client = client;
+    mount(el);
+    el.workingCopyId = wc.id;
+    await nextEvent(el, 'loaded');
+    ok(!el.shadowRoot.querySelector('button.register'), 'no register affordance on a registry reference');
+    ok(el.shadowRoot.querySelector('button.detach[data-name="reg-pets"]'), 'detach still offered');
+  });
+});

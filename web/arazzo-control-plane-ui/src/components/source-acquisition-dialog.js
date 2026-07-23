@@ -54,6 +54,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._registry = [];
     this._fetched = null;
     this._uploaded = null;
+    this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
     this._github = { picked: null, path: '' };
     this.render();
     this.$('.name-in').value = suggestedName;
@@ -76,6 +77,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._registry = [];
     this._fetched = null;
     this._uploaded = null;
+    this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
     this._github = { picked: null, path: '' };
     this.render();
     this.$('.name-in').value = suggestedName;
@@ -110,7 +112,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .tabs button.active { opacity: 1; border-color: var(--_accent); font-weight: 600; }
         .mode[hidden] { display: none; }
         .mode { display: grid; gap: 10px; }
-        .cred { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .cred { display: grid; gap: 4px; }
+        .cred .hint { font-size: 11px; color: var(--_muted); }
         .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
         .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
         .crumb button { font-size: 11px; padding: 0 8px; }
@@ -147,12 +150,11 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
               <input class="url-in" type="url" placeholder="https://api.example.com/openapi.json">
             </label>
             <div class="cred">
-              <label>Credential source <span class="muted">(optional)</span>
-                <input class="cred-source-in" type="text" autocomplete="off">
+              <label>Authenticate the fetch <span class="muted">(optional)</span>
+                <select class="cred-binding-in"><option value="">(none — fetch anonymously)</option></select>
               </label>
-              <label>Environment
-                <input class="cred-env-in" type="text" autocomplete="off">
-              </label>
+              <span class="hint">A registered credential binding (source · environment) authenticates the
+                server-side fetch — for spec endpoints that need auth. Leave unset for a public URL.</span>
             </div>
             <div><button class="fetch" type="button">Fetch &amp; preview</button></div>
             <div class="preview fetch-preview" hidden></div>
@@ -228,7 +230,28 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.mode-catalog').hidden = mode !== 'catalog';
     if (mode === 'github') this.renderGitHubRepos();
     if (mode === 'catalog') this.loadCatalog();
+    if (mode === 'fetch') this.loadCredentialBindings();
     this.updateAttachState();
+  }
+
+  /** @private — populates the fetch-auth picker with the registered credential bindings (source ·
+   *  environment pairs, non-secret metadata only). Loaded once per open; a deployment without the
+   *  credentials surface just keeps the anonymous option. */
+  async loadCredentialBindings() {
+    if (this._credsLoaded) return;
+    this._credsLoaded = true;
+    const select = this.$('.cred-binding-in');
+    try {
+      const { credentials } = await this._client.listCredentials({ limit: 200 });
+      for (const c of credentials) {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify({ sourceName: c.sourceName, environment: c.environment });
+        opt.textContent = `${c.sourceName} · ${c.environment}${c.authKind ? ` (${c.authKind})` : ''}`;
+        select.appendChild(opt);
+      }
+    } catch {
+      // No credentials surface (or no reach): the anonymous option stands alone.
+    }
   }
 
   showError(message) {
@@ -344,8 +367,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       return;
     }
 
-    const credentialSource = this.$('.cred-source-in').value.trim();
-    const credentialEnvironment = this.$('.cred-env-in').value.trim();
+    const binding = this.$('.cred-binding-in').value;
+    const credential = binding ? JSON.parse(binding) : null;
     const preview = this.$('.fetch-preview');
     preview.hidden = false;
     preview.textContent = 'Fetching…';
@@ -355,7 +378,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     try {
       const fetched = await this._client.fetchSourceDocument({
         url,
-        ...(credentialSource ? { credential: { sourceName: credentialSource, environment: credentialEnvironment } } : {}),
+        ...(credential ? { credential } : {}),
       });
       if (seq !== this._seq) return;
       this._fetched = fetched;
