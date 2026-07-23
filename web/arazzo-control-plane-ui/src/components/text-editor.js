@@ -47,6 +47,10 @@ class ArazzoTextEditor extends ArazzoElement {
   get standalone() { return this._standalone ?? this.hasAttribute('standalone'); }
   set standalone(v) { this._standalone = !!v; }
 
+  /** Read-only: the buffer renders but cannot be edited (e.g. a read-only schema). Set before connection. */
+  get readonly() { return this._readonly ?? this.hasAttribute('readonly'); }
+  set readonly(v) { this._readonly = !!v; const ta = this.$?.('textarea'); if (ta) ta.readOnly = this.readonly; }
+
   get value() {
     if (this._view) return this._view.state.doc.toString();
     if (this._built) return this.$('textarea')?.value ?? '';
@@ -129,6 +133,7 @@ class ArazzoTextEditor extends ArazzoElement {
     `;
     const ta = this.$('textarea');
     ta.value = initial;
+    ta.readOnly = this.readonly;
     ta.addEventListener('input', () => this._scheduleChange());
   }
 
@@ -204,6 +209,7 @@ class ArazzoTextEditor extends ArazzoElement {
           view.EditorView.updateListener.of((u) => {
             if (u.docChanged && !this._suppress) this._scheduleChange();
           }),
+          view.EditorView.editable.of(!this.readonly),
         ],
       }),
     });

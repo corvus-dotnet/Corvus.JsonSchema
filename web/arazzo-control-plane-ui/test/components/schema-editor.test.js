@@ -70,15 +70,27 @@ describe('<arazzo-schema-editor>', () => {
     equal((await changed).detail.schema.properties.a.type, 'integer');
   });
 
-  it('the Form | JSON toggle round-trips the schema', async () => {
+  it('the Form | JSON toggle round-trips the schema through the syntax-highlighted editor', async () => {
     make({ type: 'object', properties: { a: { type: 'string', 'x-keep': 1 } } });
     el.shadowRoot.querySelector('.t-json').click();
-    const ta = el.shadowRoot.querySelector('textarea.json');
-    ok(ta && !el.shadowRoot.querySelector('.json').hidden, 'JSON tier shown');
-    ok(ta.value.includes('x-keep'), 'raw JSON exposes the unrendered keyword');
+    const ed = el.shadowRoot.querySelector('.json-ed');
+    equal(ed.tagName.toLowerCase(), 'arazzo-text-editor', 'the JSON tier is the syntax-highlighted editor, not a bare textarea');
+    ok(ed && !el.shadowRoot.querySelector('.json').hidden, 'JSON tier shown');
+    ok(ed.value.includes('x-keep'), 'raw JSON exposes the unrendered keyword');
     el.shadowRoot.querySelector('.t-form').click();
     ok(!el.shadowRoot.querySelector('.form').hidden, 'back to Form');
     ok(names().some((n) => n.value === 'a'), 're-derives rows');
+  });
+
+  it('object members are an indented list under a "properties" label, not boxed cards', () => {
+    make({ type: 'object', properties: { a: { type: 'string' }, b: { type: 'integer' } } });
+    const labels = [...el.shadowRoot.querySelectorAll('.body-label')].map((l) => l.textContent);
+    ok(labels.includes('properties'), 'a "properties" label heads the member list');
+    const child = el.shadowRoot.querySelector('.node.child');
+    ok(child, 'members render as child rows');
+    const cs = getComputedStyle(child);
+    equal(cs.borderTopStyle, 'none', 'a member is not a boxed card (no full border)');
+    ok(parseFloat(cs.borderLeftWidth) > 0, 'it hangs off the parent accent rail');
   });
 
   it('a combiner node shows a kind select and one card per variant with a label input', () => {

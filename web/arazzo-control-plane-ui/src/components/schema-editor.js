@@ -24,7 +24,8 @@
 // | +N more     | preserved unrendered keyword names | preserved verbatim |
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
-import { wireGuardedJson } from './guarded-json.js';
+import { wireGuardedJsonEditor } from './guarded-json.js';
+import './text-editor.js';
 import {
   classifyNode, unrenderedKeywords, RENDERABLE_TYPES, COMBINER_KINDS,
   addProperty, renameProperty, reorderProperty, removeProperty, setRequired,
@@ -121,7 +122,12 @@ class ArazzoSchemaEditor extends ArazzoElement {
         /* Rows sit on the surface tone (inputs inside stay on bg) so each property reads as its own card,
            and nested levels hang off an accent-tinted rail — depth you can see at a glance (#858). */
         .node { border: 1px solid var(--_border); border-radius: 8px; padding: 6px 8px; background: var(--_surface); }
-        .node.child { margin-left: 14px; border-left: 3px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 35%, var(--_border)); }
+        /* A child property is NOT a boxed card: it hangs off the parent's accent rail as an indented list
+           row (the rail is the depth cue, #858), so drop the box border/radius/fill the base .node gives. */
+        .node.child { margin-left: 4px; border: none; border-radius: 0; background: none; border-left: 2px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 30%, var(--_border)); padding: 2px 0 2px 10px; }
+        /* The label that heads a container's members ("properties" / "items"), sitting at the parent's own
+           level with the members indented beneath it. */
+        .body-label { font: 11px var(--_font); color: var(--_muted); margin: 6px 0 3px; }
         .rowline { display: flex; align-items: center; gap: 6px; }
         .rowline .name { flex: 1; min-width: 60px; font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .rowline .name.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
@@ -153,8 +159,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .ghost { color: var(--arazzo-status-faulted, #d4351c); font-size: 12px; display: flex; align-items: center; gap: 8px; }
         .empty { color: var(--_muted); font-size: 12px; padding: 4px 0; }
-        textarea.json { width: 100%; box-sizing: border-box; min-height: 160px; font: 12px ui-monospace, Menlo, monospace; padding: 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; }
-        textarea.json.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
+        arazzo-text-editor.json-ed { display: block; height: 300px; min-height: 160px; }
         .json-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
         .preview { margin-top: 10px; }
         .preview summary { cursor: pointer; font-size: 12px; color: var(--_muted); }
@@ -170,7 +175,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
       </div>
       <div class="form" part="editor"></div>
       <div class="json" part="json" hidden>
-        <textarea class="json" spellcheck="false"></textarea>
+        <arazzo-text-editor class="json-ed" standalone></arazzo-text-editor>
         <div class="json-hint">the raw JSON Schema; edits apply when it parses</div>
       </div>
       <details class="preview">
@@ -187,8 +192,8 @@ class ArazzoSchemaEditor extends ArazzoElement {
     if (mode === this._mode) return;
     // JSON → Form re-derives from the (parseable) buffer; an unparseable buffer blocks the switch.
     if (mode === 'form' && this._mode === 'json') {
-      const ta = this.$('textarea.json');
-      try { this._schema = JSON.parse(ta.value); } catch { ta.classList.add('invalid'); return; }
+      const ed = this.$('.json-ed');
+      try { this._schema = JSON.parse(ed.value); } catch { ed.setProblem?.('not JSON yet: fix the buffer to switch to Form'); return; }
     }
     this._mode = mode;
     this._render();
@@ -208,13 +213,13 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   _renderJson() {
-    const ta = this.$('textarea.json');
-    ta.value = JSON.stringify(this._schema, null, 2);
-    ta.classList.remove('invalid');
-    if (!ta._wired) {
-      ta._wired = true;
-      ta.readOnly = this.readonly;
-      wireGuardedJson(ta, {
+    const ed = this.$('.json-ed');
+    ed.readonly = this.readonly;
+    ed.value = JSON.stringify(this._schema, null, 2);
+    ed.setProblem?.(null);
+    if (!ed._wired) {
+      ed._wired = true;
+      wireGuardedJsonEditor(ed, {
         hint: this.$('.json-hint'),
         baseHint: 'the raw JSON Schema; edits apply when it parses',
         emptyDeletes: this._emptyDeletes, // per host (§3.4)
@@ -594,6 +599,9 @@ class ArazzoSchemaEditor extends ArazzoElement {
     const props = (schema.properties && typeof schema.properties === 'object') ? schema.properties : {};
     const required = new Set(Array.isArray(schema.required) ? schema.required : []);
     const names = Object.keys(props);
+    // A "properties" label heads the member list, at this object's own level; the members indent beneath it.
+    const label = document.createElement('div'); label.className = 'body-label'; label.textContent = 'properties';
+    wrap.appendChild(label);
     // ghost rows: required names with no property (§3.2).
     for (const r of required) if (!(r in props)) wrap.appendChild(this._ghostRow(schema, r));
     if (!names.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No properties.'; wrap.appendChild(e); }
@@ -628,7 +636,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
 
   _arrayBody(schema) {
     const wrap = document.createElement('div');
-    const label = document.createElement('div'); label.className = 'empty'; label.textContent = 'items:';
+    const label = document.createElement('div'); label.className = 'body-label'; label.textContent = 'items';
     wrap.appendChild(label);
     if (!schema.items || typeof schema.items !== 'object') schema.items = { type: 'string' };
     wrap.appendChild(this._renderNode(schema.items, { name: null, parent: schema, itemsOf: schema }));
