@@ -2264,6 +2264,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         var channels = new HashSet<string>(StringComparer.Ordinal);
         var operationNodes = new Dictionary<string, (JsonElement Root, JsonElement Operation)>(StringComparer.Ordinal);
         var operationPathItems = new Dictionary<string, JsonElement>(StringComparer.Ordinal); // opId → its path item (path-level parameters)
+        var channelPayloads = new Dictionary<string, (JsonElement Root, JsonElement Payload)>(StringComparer.Ordinal); // channel key AND address → its ONE message payload schema
+        var ambiguousChannels = new HashSet<string>(StringComparer.Ordinal); // multi-message channels: typing gives the benefit of the doubt
         var rentedSourceDocs = new List<IDisposable>();
         bool anySurfaceResolved = false;
         try
@@ -2312,6 +2314,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 {
                     CollectOperationIdentities(inline, operations, channels);
                     CollectOperationNodes(inline, operationNodes, operationPathItems);
+                    CollectChannelPayloads(inline, channelPayloads, ambiguousChannels);
                     anySurfaceResolved = true;
                 }
                 else if (this.sources is not null
@@ -2326,6 +2329,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                         rentedSourceDocs.Add(r);
                         CollectOperationIdentities((JsonElement)r.RootElement.Document, operations, channels);
                         CollectOperationNodes((JsonElement)r.RootElement.Document, operationNodes, operationPathItems);
+                        CollectChannelPayloads((JsonElement)r.RootElement.Document, channelPayloads, ambiguousChannels);
                         anySurfaceResolved = true;
                     }
                 }
@@ -2387,55 +2391,30 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     }
                 }
 
-                if (bindsChannel)
+                string? channel = bindsChannel ? channelPath.GetString() : null;
+                if (channel is not null && !channels.Contains(channel))
                 {
-                    string channel = channelPath.GetString()!;
-                    if (!channels.Contains(channel))
-                    {
-                        findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/channelPath", $"Channel '{channel}' is not found in any attached source.", null));
-                    }
+                    findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/channelPath", $"Channel '{channel}' is not found in any attached source.", null));
                 }
 
                 // Request-shape typing: literals AND statically-typed expressions checked against the
-                // bound operation's schemas. A plain "tru" on a boolean leaf can never be valid; neither
-                // can "$inputs.orderId" (a string, per the workflow's own inputs schema) — only
-                // expressions whose type cannot be resolved get the benefit of the doubt. Three surfaces
-                // share the walk: the request payload, each replacement's value (against the schema AT
-                // its target pointer), and each step parameter (against the operation's parameter schema).
+                // bound schemas. A plain "tru" on a boolean leaf can never be valid; neither can
+                // "$inputs.orderId" (a string, per the workflow's own inputs schema) — only expressions
+                // whose type cannot be resolved get the benefit of the doubt. An OPERATION step checks
+                // three surfaces (payload, replacement values against the schema AT their target,
+                // parameters against the operation's parameter schemas); a CHANNEL step checks the same
+                // body surfaces against the channel's ONE message payload schema (a multi-message
+                // channel — ambiguous which message the send carries — gets the benefit of the doubt).
                 if (op is not null && operationNodes.TryGetValue(op, out (JsonElement Root, JsonElement Operation) node))
                 {
-                    var typing = new ExpressionTypingContext(workflow, operationNodes);
+                    var typing = new ExpressionTypingContext(workflow, operationNodes, channelPayloads);
 
                     if (step.TryGetProperty("requestBody"u8, out JsonElement requestBody) && requestBody.ValueKind == JsonValueKind.Object)
                     {
                         JsonElement schema = ResolveRequestSchema(node.Operation, node.Root);
                         if (schema.ValueKind == JsonValueKind.Object)
                         {
-                            if (requestBody.TryGetProperty("payload"u8, out JsonElement payload))
-                            {
-                                CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0, typing);
-                            }
-
-                            if (requestBody.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
-                            {
-                                int replacementIndex = -1;
-                                foreach (JsonElement replacement in replacements.EnumerateArray())
-                                {
-                                    replacementIndex++;
-                                    if (replacement.ValueKind == JsonValueKind.Object
-                                        && replacement.TryGetProperty("target"u8, out JsonElement target)
-                                        && target.ValueKind == JsonValueKind.String
-                                        && replacement.TryGetProperty("value"u8, out JsonElement replacementValue))
-                                    {
-                                        using UnescapedUtf8JsonString targetUtf8 = target.GetUtf8String();
-                                        JsonElement targetSchema = SchemaAtPointer(schema, node.Root, targetUtf8.Span);
-                                        if (targetSchema.ValueKind == JsonValueKind.Object)
-                                        {
-                                            CheckPayloadAgainstSchema(replacementValue, targetSchema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/replacements/{replacementIndex}/value", findings, 0, typing);
-                                        }
-                                    }
-                                }
-                            }
+                            CheckRequestBodySurfaces(requestBody, schema, node.Root, workflowIndex, stepIndex, findings, typing);
                         }
                     }
 
@@ -2462,6 +2441,14 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                             }
                         }
                     }
+                }
+
+                if (channel is not null
+                    && channelPayloads.TryGetValue(channel, out (JsonElement Root, JsonElement Payload) message)
+                    && step.TryGetProperty("requestBody"u8, out JsonElement channelRequestBody)
+                    && channelRequestBody.ValueKind == JsonValueKind.Object)
+                {
+                    CheckRequestBodySurfaces(channelRequestBody, message.Payload, message.Root, workflowIndex, stepIndex, findings, new ExpressionTypingContext(workflow, operationNodes, channelPayloads));
                 }
             }
         }
@@ -2501,6 +2488,142 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 {
                     nodes.TryAdd(operationId, (doc, method.Value));
                     pathItems.TryAdd(operationId, path.Value);
+                }
+            }
+        }
+    }
+
+    /// <summary>Checks a step request body's two typed surfaces against a resolved schema: the payload
+    /// walks whole; each replacement's value checks against the schema AT its target pointer. Shared by
+    /// operation steps (the request-body schema) and channel steps (the message payload schema).</summary>
+    private static void CheckRequestBodySurfaces(in JsonElement requestBody, JsonElement schema, JsonElement root, int workflowIndex, int stepIndex, List<Finding> findings, ExpressionTypingContext typing)
+    {
+        if (requestBody.TryGetProperty("payload"u8, out JsonElement payload))
+        {
+            CheckPayloadAgainstSchema(payload, schema, root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0, typing);
+        }
+
+        if (requestBody.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
+        {
+            int replacementIndex = -1;
+            foreach (JsonElement replacement in replacements.EnumerateArray())
+            {
+                replacementIndex++;
+                if (replacement.ValueKind == JsonValueKind.Object
+                    && replacement.TryGetProperty("target"u8, out JsonElement target)
+                    && target.ValueKind == JsonValueKind.String
+                    && replacement.TryGetProperty("value"u8, out JsonElement replacementValue))
+                {
+                    using UnescapedUtf8JsonString targetUtf8 = target.GetUtf8String();
+                    JsonElement targetSchema = SchemaAtPointer(schema, root, targetUtf8.Span);
+                    if (targetSchema.ValueKind == JsonValueKind.Object)
+                    {
+                        CheckPayloadAgainstSchema(replacementValue, targetSchema, root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/replacements/{replacementIndex}/value", findings, 0, typing);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Maps each AsyncAPI channel — under its key AND its address (a step's <c>channelPath</c>
+    /// binds by address in 3.0; 2.x keys ARE the address) — to its ONE message payload schema, following
+    /// local <c>$ref</c>s. A channel carrying several distinct message payloads (3.0 <c>messages</c> map,
+    /// 2.x <c>oneOf</c>, or publish+subscribe pairs) is AMBIGUOUS: which message a given send carries is
+    /// unknowable statically, so it registers in <paramref name="ambiguous"/> and is never typed.</summary>
+    private static void CollectChannelPayloads(JsonElement doc, Dictionary<string, (JsonElement Root, JsonElement Payload)> payloads, HashSet<string> ambiguous)
+    {
+        if (!doc.TryGetProperty("channels"u8, out JsonElement channelMap) || channelMap.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        foreach (JsonProperty<JsonElement> channel in channelMap.EnumerateObject())
+        {
+            JsonElement resolved = Deref(channel.Value, doc);
+            if (resolved.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            JsonElement payload = default;
+            int count = 0;
+            void Consider(JsonElement messageElement)
+            {
+                JsonElement messageNode = Deref(messageElement, doc);
+                if (messageNode.ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (messageNode.TryGetProperty("oneOf"u8, out JsonElement oneOf) && oneOf.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement alternative in oneOf.EnumerateArray())
+                    {
+                        Consider(alternative);
+                    }
+
+                    return;
+                }
+
+                if (messageNode.TryGetProperty("payload"u8, out JsonElement messagePayload))
+                {
+                    messagePayload = Deref(messagePayload, doc);
+                    if (messagePayload.ValueKind == JsonValueKind.Object)
+                    {
+                        count++;
+                        if (count == 1)
+                        {
+                            payload = messagePayload;
+                        }
+                    }
+                }
+            }
+
+            // 3.0: the channel's messages map. 2.x: the publish/subscribe operations' message.
+            if (resolved.TryGetProperty("messages"u8, out JsonElement messages) && messages.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonProperty<JsonElement> message in messages.EnumerateObject())
+                {
+                    Consider(message.Value);
+                }
+            }
+
+            if (resolved.TryGetProperty("publish"u8, out JsonElement publish) && publish.ValueKind == JsonValueKind.Object
+                && publish.TryGetProperty("message"u8, out JsonElement publishMessage))
+            {
+                Consider(publishMessage);
+            }
+
+            if (resolved.TryGetProperty("subscribe"u8, out JsonElement subscribe) && subscribe.ValueKind == JsonValueKind.Object
+                && subscribe.TryGetProperty("message"u8, out JsonElement subscribeMessage))
+            {
+                Consider(subscribeMessage);
+            }
+
+            if (count == 0)
+            {
+                continue;
+            }
+
+            using UnescapedUtf8JsonString keyUtf8 = channel.Utf8NameSpan;
+            Register(Encoding.UTF8.GetString(keyUtf8.Span));
+            if (resolved.TryGetProperty("address"u8, out JsonElement address)
+                && address.ValueKind == JsonValueKind.String
+                && address.GetString() is { Length: > 0 } channelAddress)
+            {
+                Register(channelAddress);
+            }
+
+            void Register(string identity)
+            {
+                if (count > 1)
+                {
+                    ambiguous.Add(identity);
+                    payloads.Remove(identity);
+                }
+                else if (!ambiguous.Contains(identity))
+                {
+                    payloads.TryAdd(identity, (doc, payload)); // first attachment wins, like operationNodes
                 }
             }
         }
@@ -2680,7 +2803,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// <summary>Resolves an expression's STATIC type from the document itself: the workflow's inputs
     /// schema for <c>$inputs.…</c>, and a step's output declaration chased through its operation's
     /// response schema for <c>$steps.&lt;id&gt;.outputs.&lt;name&gt;</c>. Null = unknown (no finding).</summary>
-    private sealed class ExpressionTypingContext(JsonElement workflow, Dictionary<string, (JsonElement Root, JsonElement Operation)> operationNodes)
+    private sealed class ExpressionTypingContext(JsonElement workflow, Dictionary<string, (JsonElement Root, JsonElement Operation)> operationNodes, Dictionary<string, (JsonElement Root, JsonElement Payload)>? channelPayloads = null)
     {
         public string? ResolveType(string expression)
         {
@@ -2744,6 +2867,25 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     }
 
                     return baseType;
+                }
+
+                // A channel step's output declared from the received/sent MESSAGE ($message.payload#/…)
+                // types through the channel's one message payload schema, exactly as $response.body does
+                // through the operation's response schema.
+                if (outputExpression.StartsWith("$message.payload", StringComparison.Ordinal)
+                    && channelPayloads is not null
+                    && target.TryGetProperty("channelPath"u8, out JsonElement stepChannel)
+                    && stepChannel.GetString() is { } stepChannelPath
+                    && channelPayloads.TryGetValue(stepChannelPath, out (JsonElement Root, JsonElement Payload) message))
+                {
+                    string? messagePointer = outputExpression.Length > "$message.payload".Length ? outputExpression["$message.payload".Length..] : null;
+                    if (segments.Length > 4 || pointer is not null)
+                    {
+                        JsonElement descended = DescendSchema(message.Payload, messagePointer);
+                        return descended.ValueKind == JsonValueKind.Object ? SchemaTypeAt(descended, segments.AsSpan(4), pointer) : null;
+                    }
+
+                    return SchemaTypeAt(message.Payload, [], messagePointer);
                 }
             }
 

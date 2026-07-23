@@ -1496,6 +1496,60 @@ test('validate flags payload literals that can never satisfy the operation schem
   assert.ok(!clean.diagnostics.some((d) => d.category === 'payload-typing'), 'expressions + literals of the right type pass');
 });
 
+test('validate types a channel step\'s payload against its message schema; multi-message channels get the benefit of the doubt', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'typed-channel-payloads',
+    document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'notifications', url: './n.json', type: 'asyncapi' }],
+      workflows: [{ workflowId: 'wf', steps: [
+        // Binds the channel ADDRESS (3.0 key ≠ address); 'urgent' can never be the boolean.
+        { stepId: 'notify', channelPath: 'access.notify', action: 'send', requestBody: { payload: { requestId: 'r-1', urgent: 'tru' } } },
+        // Two distinct messages — ambiguous, never typed.
+        { stepId: 'multi', channelPath: 'multi.message', action: 'send', requestBody: { payload: { anything: 'goes' } } },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'notifications', { document: {
+    asyncapi: '3.0.0', info: { title: 'n', version: '1' },
+    channels: {
+      accessNotify: { address: 'access.notify', messages: { note: { payload: { $ref: '#/components/schemas/Note' } } } },
+      multiMessage: { address: 'multi.message', messages: {
+        a: { payload: { type: 'object', properties: { x: { type: 'string' } } } },
+        b: { payload: { type: 'object', properties: { y: { type: 'integer' } } } },
+      } },
+    },
+    components: { schemas: { Note: { type: 'object', properties: { requestId: { type: 'string' }, urgent: { type: 'boolean' } } } } },
+  } });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  const typing = report.diagnostics.filter((d) => d.category === 'payload-typing');
+  const bad = typing.find((d) => d.severity === 'error');
+  assert.match(bad.message, /'tru' is neither a boolean nor a runtime expression/);
+  assert.equal(bad.instancePath, '/workflows/0/steps/0/requestBody/payload/urgent');
+  assert.ok(!typing.some((d) => d.instancePath.startsWith('/workflows/0/steps/1/')), 'the multi-message channel is not typed');
+
+  // An output declared from the MESSAGE ($message.payload#/requestId → string) types the expression
+  // that reads it: on an operation's boolean leaf it is an error, not a benefit of the doubt.
+  const fresh = await c.getWorkingCopy(wc.id);
+  fresh.document.sourceDescriptions.push({ name: 'cp', url: './cp.json', type: 'openapi' });
+  fresh.document.workflows[0].steps.push(
+    { stepId: 'await', channelPath: 'access.notify', action: 'receive', outputs: { requestId: '$message.payload#/requestId' } },
+    { stepId: 'settle', operationId: 'settle', requestBody: { payload: { urgent: '$steps.await.outputs.requestId' } } },
+  );
+  await c.saveWorkingCopy(wc.id, { document: fresh.document, expectedEtag: fresh.etag });
+  await c.attachWorkingCopySource(wc.id, 'cp', { document: {
+    openapi: '3.1.0', info: { title: 'cp', version: '1' },
+    paths: { '/settle': { post: { operationId: 'settle', requestBody: { content: { 'application/json': { schema: {
+      type: 'object', properties: { urgent: { type: 'boolean' } },
+    } } } }, responses: { 200: { description: 'ok' } } } } },
+  } });
+  const withExpr = await c.validateWorkingCopy(wc.id);
+  const exprBad = withExpr.diagnostics.find((d) => d.category === 'payload-typing' && d.instancePath === '/workflows/0/steps/3/requestBody/payload/urgent');
+  assert.match(exprBad.message, /resolves to a string/);
+});
+
 test('a workflowId-bound step runs its sub-workflow inline and carries the nested trace (§3.3 step-into)', async () => {
   const c = makeClient();
   const wc = await c.createWorkingCopy({

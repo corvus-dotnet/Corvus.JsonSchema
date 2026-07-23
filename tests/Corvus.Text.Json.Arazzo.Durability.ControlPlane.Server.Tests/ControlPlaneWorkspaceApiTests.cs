@@ -1006,6 +1006,110 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Validate_types_a_channel_steps_payload_against_the_message_schema()
+    {
+        await using Scoped host = await StartAsync();
+
+        // A 3.0 channel (key 'accessNotify', ADDRESS 'access.notify' — the step binds the address) with ONE
+        // message: requestId string, urgent boolean. The send's payload mistypes both ways; a second channel
+        // carries TWO distinct messages, so its send gets the benefit of the doubt.
+        const string doc = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1" },
+          "sourceDescriptions": [{ "name": "notifications", "url": "./n.asyncapi.json", "type": "asyncapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "requestId": { "type": "string" } } },
+            "steps": [
+              {
+                "stepId": "notify",
+                "channelPath": "access.notify",
+                "action": "send",
+                "requestBody": {
+                  "payload": { "requestId": "$inputs.requestId", "urgent": "tru", "count": true },
+                  "replacements": [ { "target": "/urgent", "value": "$inputs.requestId" } ]
+                }
+              },
+              {
+                "stepId": "multi",
+                "channelPath": "multi.message",
+                "action": "send",
+                "requestBody": { "payload": { "anything": "goes" } }
+              },
+              {
+                "stepId": "await",
+                "channelPath": "access.notify",
+                "action": "receive",
+                "outputs": { "requestId": "$message.payload#/requestId" }
+              },
+              {
+                "stepId": "settle",
+                "operationId": "settle",
+                "requestBody": { "payload": { "urgent": "$steps.await.outputs.requestId" } }
+              }
+            ]
+          }]
+        }
+        """;
+        string id = await CreateWithDocumentAsync(host, doc);
+        const string asyncapi = """
+        {
+          "asyncapi": "3.0.0",
+          "info": { "title": "n", "version": "1" },
+          "channels": {
+            "accessNotify": {
+              "address": "access.notify",
+              "messages": { "note": { "payload": { "$ref": "#/components/schemas/Note" } } }
+            },
+            "multiMessage": {
+              "address": "multi.message",
+              "messages": {
+                "a": { "payload": { "type": "object", "properties": { "x": { "type": "string" } } } },
+                "b": { "payload": { "type": "object", "properties": { "y": { "type": "integer" } } } }
+              }
+            }
+          },
+          "components": { "schemas": { "Note": { "type": "object", "properties": { "requestId": { "type": "string" }, "urgent": { "type": "boolean" }, "count": { "type": "integer" } } } } }
+        }
+        """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/notifications", $$"""{"document":{{asyncapi}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        const string settleApi = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "cp", "version": "1" },
+          "paths": { "/settle": { "post": {
+            "operationId": "settle",
+            "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "urgent": { "type": "boolean" } } } } } },
+            "responses": { "200": { "description": "ok" } } } } }
+        }
+        """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/controlplane", $$"""{"document":{{settleApi}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", "{}", Read));
+        var typing = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Where(d => d.GetProperty("category").GetString() == "payload-typing")
+            .Select(d => (Path: d.GetProperty("instancePath").GetString()!, Message: d.GetProperty("message").GetString()!))
+            .ToList();
+
+        // The literal that can never be the boolean; the boolean that can never be the integer; the
+        // well-typed expression untouched — all against the $ref-resolved message payload schema.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/payload/urgent" && t.Message.Contains("neither a boolean nor a runtime expression"));
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/payload/count" && t.Message.Contains("is a boolean"));
+        typing.ShouldNotContain(t => t.Path == "/workflows/0/steps/0/requestBody/payload/requestId");
+
+        // A replacement's value checks against the schema at its target within the MESSAGE payload.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/0/value" && t.Message.Contains("resolves to a string"));
+
+        // The multi-message channel is ambiguous — no typing findings for its step.
+        typing.ShouldNotContain(t => t.Path.StartsWith("/workflows/0/steps/1/"));
+
+        // An output declared from the MESSAGE ($message.payload#/requestId → string) types the
+        // expression that reads it: on the settle operation's boolean leaf it is an error.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/3/requestBody/payload/urgent" && t.Message.Contains("resolves to a string"));
+    }
+
+    [TestMethod]
     public async Task Validate_resolves_a_channelPath_step_against_the_channel_address_not_only_its_key()
     {
         await using Scoped host = await StartAsync();

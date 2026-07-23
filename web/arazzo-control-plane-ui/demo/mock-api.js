@@ -3633,6 +3633,31 @@ export function createMockControlPlane(options = {}) {
       }
       return null;
     };
+    // A channel's ONE message payload schema (mirror of the server's CollectChannelPayloads): matched by
+    // channel key OR address, messages drawn from the 3.0 messages map or the 2.x publish/subscribe
+    // message (+ oneOf). A channel carrying several distinct payloads is ambiguous — never typed.
+    const channelSchema = (channelPath) => {
+      for (const root of attachedDocs) {
+        for (const [key, raw] of Object.entries(root.channels ?? {})) {
+          const ch = deref(raw, root);
+          if (!ch || typeof ch !== 'object') continue;
+          if (key !== channelPath && ch.address !== channelPath) continue;
+          const payloads = [];
+          const consider = (m) => {
+            m = deref(m, root);
+            if (!m || typeof m !== 'object') return;
+            if (Array.isArray(m.oneOf)) { m.oneOf.forEach(consider); return; }
+            const p = deref(m.payload, root);
+            if (p && typeof p === 'object') payloads.push(p);
+          };
+          Object.values(ch.messages ?? {}).forEach(consider);
+          if (ch.publish?.message) consider(ch.publish.message);
+          if (ch.subscribe?.message) consider(ch.subscribe.message);
+          return payloads.length === 1 ? { schema: payloads[0], root } : null;
+        }
+      }
+      return null;
+    };
     // An expression's STATIC type, resolved from the document itself: the workflow's inputs
     // schema for $inputs.…, a step's output declaration chased through its operation's first 2xx
     // response schema for $steps.<id>.outputs.<name>. null = unknown (benefit of the doubt).
@@ -3691,6 +3716,16 @@ export function createMockControlPlane(options = {}) {
           if (!at) return null;
           return typeAt(at, segs.slice(4), ptr, resolved.root);
         }
+        // A channel step's output declared from the MESSAGE ($message.payload#/…) types through the
+        // channel's one message payload schema, exactly as $response.body does through the response.
+        if (decl.startsWith('$message.payload') && st.channelPath) {
+          const resolved = channelSchema(st.channelPath);
+          if (!resolved) return null;
+          const declPtr = decl.length > '$message.payload'.length ? decl.slice('$message.payload'.length) : null;
+          const at = descendSchema(resolved.schema, declPtr, resolved.root);
+          if (!at) return null;
+          return typeAt(at, segs.slice(4), ptr, resolved.root);
+        }
       }
       return null;
     };
@@ -3730,8 +3765,12 @@ export function createMockControlPlane(options = {}) {
     for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
       for (const [si, step] of (Array.isArray(workflow?.steps) ? workflow.steps : []).entries()) {
         const payload = step?.requestBody?.payload;
-        if (payload === undefined || !step?.operationId) continue;
-        const resolved = opSchema(step.operationId);
+        if (payload === undefined) continue;
+        // An operation step types against the request-body schema; a channel step against the
+        // channel's one message payload schema (mirror of the server's pass).
+        const resolved = step?.operationId ? opSchema(step.operationId)
+          : step?.channelPath ? channelSchema(step.channelPath)
+          : null;
         if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`, 0, { workflow });
       }
     }
