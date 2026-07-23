@@ -112,17 +112,20 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
     }
 
     [TestMethod]
-    public async Task Denying_marks_the_request_denied_and_publishes_a_rejected_decision()
+    public async Task Denying_publishes_a_rejected_decision_and_does_not_settle_inline()
     {
         Harness h = await Harness.CreateAsync();
         string id = await h.SubmitPendingAsync(["runs:write"]);
 
         using (ParsedJsonDocument<AccessRequest>? denied = await h.Service.DenyAsync(id, Boss, "boss", "not now", default))
         {
-            denied!.RootElement.StatusValue.ShouldBe("Denied");
+            // A denial flows through the approval run exactly like an approval (the workflow's settleDenied
+            // step enacts it), so the request is still pending here — no short-circuit settlement.
+            denied!.RootElement.StatusValue.ShouldBe("Pending");
         }
 
         h.LastDecision()!.Value.Outcome.ShouldBe("rejected");
+        h.LastDecision()!.Value.RequestId.ShouldBe(id);
     }
 
     [TestMethod]
