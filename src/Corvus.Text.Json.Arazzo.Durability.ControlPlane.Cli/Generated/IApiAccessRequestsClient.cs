@@ -118,6 +118,16 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
         public static readonly string[] GrantAccessRequestAsEligibleOpenIdConnectScopes = ["accessRequests:grant"];
 
         /// <summary>
+        /// Gets the scopes required by <c>SettleAccessRequest</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SettleAccessRequestOauth2Scopes = ["accessRequests:grant"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SettleAccessRequest</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SettleAccessRequestOpenIdConnectScopes = ["accessRequests:grant"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["accessRequests:grant"];
@@ -250,4 +260,15 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GrantAccessRequestAsEligibleResponse> GrantAccessRequestAsEligibleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Settle a pending access request per its decision outcome (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Enacts the terminal state a pending request's decision authorized, WITHOUT the §15-administrator check the caller-facing approve/deny apply — the single system-credentialed enactment path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this once to enact whatever was decided, so every outcome flows through the same run. 'approved' writes the capped, time-boxed grant; 'eligible' writes standing eligibility (§16.5.3); 'rejected' marks the request Denied; 'withdrawn' marks it Withdrawn. The platform ceiling on a grant is identical to approve and holds regardless of caller, so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SettleAccessRequestResponse> SettleAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

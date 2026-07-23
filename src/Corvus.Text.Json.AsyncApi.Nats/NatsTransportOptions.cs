@@ -72,6 +72,34 @@ public sealed class NatsTransportOptions : ITransportOptions
     public string? Name { get; set; }
 
     /// <summary>
+    /// Gets or sets the authentication token presented in the CONNECT handshake (the <c>bearer</c> credential
+    /// shape, ADR 0051). Mutually exclusive with the other auth settings.
+    /// </summary>
+    public string? Token { get; set; }
+
+    /// <summary>
+    /// Gets or sets the username presented in the CONNECT handshake (the <c>basic</c> credential shape,
+    /// ADR 0051); pairs with <see cref="Password"/>.
+    /// </summary>
+    public string? Username { get; set; }
+
+    /// <summary>
+    /// Gets or sets the password presented in the CONNECT handshake; pairs with <see cref="Username"/>.
+    /// </summary>
+    public string? Password { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user JWT for decentralized (NKey) authentication; pairs with <see cref="NKeySeed"/>.
+    /// </summary>
+    public string? Jwt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the NKey seed used to sign the server's challenge; pairs with <see cref="Jwt"/> (or stands
+    /// alone for bare NKey auth).
+    /// </summary>
+    public string? NKeySeed { get; set; }
+
+    /// <summary>
     /// Gets or sets the dead-letter subject suffix.
     /// </summary>
     public string DeadLetterSuffix { get; set; } = ".dead-letter";

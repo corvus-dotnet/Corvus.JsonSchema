@@ -17,24 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// The decision the bootstrapped approval workflow enacts through settleAccessRequest: which terminal state to move the pending request to, plus the approver&#39;s optional note (design &#167;16.5.1).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct CredentialBindingUpdate
+public readonly partial struct AccessRequestSettlement
 #if NET8_0_OR_GREATER
-    : IJsonElement<CredentialBindingUpdate>,
+    : IJsonElement<AccessRequestSettlement>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<CredentialBindingUpdate>,
+    : IJsonElement<AccessRequestSettlement>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct CredentialBindingUpdate
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="CredentialBindingUpdate"/> struct.
+    /// Initializes a new instance of the <see cref="AccessRequestSettlement"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal CredentialBindingUpdate(IJsonDocument parent, int idx)
+    internal AccessRequestSettlement(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static CredentialBindingUpdate DefaultInstance { get; }
+    public static AccessRequestSettlement DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,21 +159,21 @@ public readonly partial struct CredentialBindingUpdate
     }
 
     /// <summary>
-    /// Gets the <c>authKind</c> property.
+    /// Gets the <c>outcome</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The credential SHAPE the resolved secret(s) build into a provider (non-sensitive metadata) — how a secret becomes an authenticator, not where it is applied. For an OpenAPI source the header kinds attach per request; for an AsyncAPI (channel) source the same kinds describe the broker credential presented at connect (ADR 0051): &#39;bearer&#39; = one opaque secret presented at connection (a NATS token, an Azure Service Bus SAS); &#39;basic&#39; = username + password (NATS user/pass, Kafka SASL/PLAIN or SCRAM, with the mechanism as non-secret config); &#39;oauth2ClientCredentials&#39; = a client-credential exchange (Kafka OAUTHBEARER, Entra); &#39;mtls&#39; = a client certificate at the TLS handshake. A channel binding also carries the environment&#39;s broker URL as non-secret config (&#39;serverUrl&#39;, the channel analogue of the HTTP &#39;baseUrl&#39; override); the transport protocol comes from the source document&#39;s servers[].protocol, never from the binding. &#39;mtls&#39; — and EVERY kind on a channel binding — is connection-scoped (the credential authenticates the deployment&#39;s connection, not a run) and so cannot be usage-scoped to an individual run.
+    /// The decided outcome to enact: &#39;approved&#39; writes the capped grant; &#39;eligible&#39; writes standing eligibility; &#39;rejected&#39; marks the request Denied; &#39;withdrawn&#39; marks it Withdrawn.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind AuthKind
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.OutcomeEntity Outcome
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthKindUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutcomeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.OutcomeEntity value))
             {
                 return value;
             }
@@ -183,113 +183,18 @@ public readonly partial struct CredentialBindingUpdate
     }
 
     /// <summary>
-    /// Gets the (optional) <c>config</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.CredentialConfigEntryArray Config
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.CredentialConfigEntryArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>description</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Description
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>expiresAt</c> property.
+    /// Gets the (optional) <c>reason</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// When the (rotated) referenced secret expires, if knowable. Non-sensitive lifecycle metadata (&#167;13.2); omit when unknown.
+    /// An optional note explaining the decision, carried from the approver.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime ExpiresAt
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Reason
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpiresAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>managementTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Replacement non-internal security tags scoping who may MANAGE this binding (&#167;14.2); absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.CredentialSecurityTagArray ManagementTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.CredentialSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>rotatedAt</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When the referenced secret was last rotated, if known. Non-sensitive lifecycle metadata for operator visibility.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime RotatedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>secretRefs</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray SecretRefs
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretRefsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -332,7 +237,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in CredentialBindingUpdate left, in CredentialBindingUpdate right)
+    public static bool operator ==(in AccessRequestSettlement left, in AccessRequestSettlement right)
     {
         return left.Equals(right);
     }
@@ -345,7 +250,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in CredentialBindingUpdate left, in CredentialBindingUpdate right)
+    public static bool operator !=(in AccessRequestSettlement left, in AccessRequestSettlement right)
     {
         return !left.Equals(right);
     }
@@ -358,7 +263,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in CredentialBindingUpdate left, in JsonElement right)
+    public static bool operator ==(in AccessRequestSettlement left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -371,7 +276,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in CredentialBindingUpdate left, in JsonElement right)
+    public static bool operator !=(in AccessRequestSettlement left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -382,7 +287,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(CredentialBindingUpdate instance)
+    public static implicit operator JsonElement(AccessRequestSettlement instance)
     {
         return JsonElement.From(instance);
     }
@@ -393,9 +298,9 @@ public readonly partial struct CredentialBindingUpdate
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator CredentialBindingUpdate(JsonElement instance)
+    public static implicit operator AccessRequestSettlement(JsonElement instance)
     {
-        return CredentialBindingUpdate.From(instance);
+        return AccessRequestSettlement.From(instance);
     }
 
     /// <summary>
@@ -404,7 +309,7 @@ public readonly partial struct CredentialBindingUpdate
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CredentialBindingUpdate From<T>(in T instance)
+    public static AccessRequestSettlement From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -429,10 +334,10 @@ public readonly partial struct CredentialBindingUpdate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CredentialBindingUpdate ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static AccessRequestSettlement ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CredentialBindingUpdate>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<AccessRequestSettlement>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -455,10 +360,10 @@ public readonly partial struct CredentialBindingUpdate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CredentialBindingUpdate ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static AccessRequestSettlement ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CredentialBindingUpdate>(json, options);
+        return JsonElementHelpers.ParseValue<AccessRequestSettlement>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -481,10 +386,10 @@ public readonly partial struct CredentialBindingUpdate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CredentialBindingUpdate ParseValue(string json, JsonDocumentOptions options = default)
+    public static AccessRequestSettlement ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CredentialBindingUpdate>(json, options);
+        return JsonElementHelpers.ParseValue<AccessRequestSettlement>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -524,10 +429,10 @@ public readonly partial struct CredentialBindingUpdate
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static CredentialBindingUpdate ParseValue(ref Utf8JsonReader reader)
+    public static AccessRequestSettlement ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CredentialBindingUpdate>(ref reader);
+        return JsonElementHelpers.ParseValue<AccessRequestSettlement>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -569,16 +474,16 @@ public readonly partial struct CredentialBindingUpdate
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out CredentialBindingUpdate? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out AccessRequestSettlement? result)
     {
-        return JsonElementHelpers.TryParseValue<CredentialBindingUpdate>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<AccessRequestSettlement>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new CredentialBindingUpdate(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new AccessRequestSettlement(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -668,11 +573,11 @@ public readonly partial struct CredentialBindingUpdate
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static CredentialBindingUpdate IJsonElement<CredentialBindingUpdate>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static AccessRequestSettlement IJsonElement<AccessRequestSettlement>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"CredentialBindingUpdate: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"AccessRequestSettlement: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -687,11 +592,11 @@ public readonly partial struct CredentialBindingUpdate
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="CredentialBindingUpdate"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="AccessRequestSettlement"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="CredentialBindingUpdate"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="AccessRequestSettlement"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -700,10 +605,10 @@ public readonly partial struct CredentialBindingUpdate
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public CredentialBindingUpdate Clone()
+    public AccessRequestSettlement Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<CredentialBindingUpdate>(_idx);
+        return _parent.CloneElement<AccessRequestSettlement>(_idx);
     }
 
     /// <summary>
@@ -711,7 +616,7 @@ public readonly partial struct CredentialBindingUpdate
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="CredentialBindingUpdate"/> that lives for the lifetime of its
+    /// An immutable <see cref="AccessRequestSettlement"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -725,12 +630,12 @@ public readonly partial struct CredentialBindingUpdate
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public CredentialBindingUpdate Freeze()
+    public AccessRequestSettlement Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<CredentialBindingUpdate>(_idx);
+            return mutable.FreezeElement<AccessRequestSettlement>(_idx);
         }
 
         return this;
@@ -742,74 +647,24 @@ public readonly partial struct CredentialBindingUpdate
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="AuthKind"/>.
+        /// Gets the JSON property name for <see cref="Outcome"/>.
         /// </summary>
-        public const string AuthKind = "authKind";
+        public const string Outcome = "outcome";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Config"/>.
+        /// Gets the JSON property name for <see cref="Reason"/>.
         /// </summary>
-        public const string Config = "config";
+        public const string Reason = "reason";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
+        /// Gets the JSON property name for <see cref="Outcome"/>.
         /// </summary>
-        public const string Description = "description";
+        public static ReadOnlySpan<byte> OutcomeUtf8 => "outcome"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
+        /// Gets the JSON property name for <see cref="Reason"/>.
         /// </summary>
-        public const string ExpiresAt = "expiresAt";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public const string ManagementTags = "managementTags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RotatedAt"/>.
-        /// </summary>
-        public const string RotatedAt = "rotatedAt";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecretRefs"/>.
-        /// </summary>
-        public const string SecretRefs = "secretRefs";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="AuthKind"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> AuthKindUtf8 => "authKind"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Config"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ConfigUtf8 => "config"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ExpiresAtUtf8 => "expiresAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RotatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RotatedAtUtf8 => "rotatedAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecretRefs"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecretRefsUtf8 => "secretRefs"u8;
+        public static ReadOnlySpan<byte> ReasonUtf8 => "reason"u8;
     }
 
     /// <summary>
@@ -818,39 +673,14 @@ public readonly partial struct CredentialBindingUpdate
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="AuthKind"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Outcome"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AuthKind => "authKind"u8;
+        public static ReadOnlySpan<byte> Outcome => "outcome"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Config"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Config => "config"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => "description"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ExpiresAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ExpiresAt => "expiresAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="RotatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RotatedAt => "rotatedAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecretRefs"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecretRefs => "secretRefs"u8;
+        public static ReadOnlySpan<byte> Reason => "reason"u8;
     }
 
     /// <summary>
@@ -860,38 +690,13 @@ public readonly partial struct CredentialBindingUpdate
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="AuthKind"/>.
+        /// Gets the pre-baked property name blob for <see cref="Outcome"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AuthKind => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x4B, 0x69, 0x6E, 0x64, 0x22];
+        public static ReadOnlySpan<byte> Outcome => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x63, 0x6F, 0x6D, 0x65, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Config"/>.
+        /// Gets the pre-baked property name blob for <see cref="Reason"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Config => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ExpiresAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ExpiresAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="RotatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RotatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x74, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecretRefs"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecretRefs => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x52, 0x65, 0x66, 0x73, 0x22];
+        public static ReadOnlySpan<byte> Reason => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x73, 0x6F, 0x6E, 0x22];
     }
 }

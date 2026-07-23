@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-21T18:08:18.8227847\u002B00:00",
+  "generatedAt": "2026-07-23T21:48:57.8897992\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -276,6 +276,8 @@
     "GrantAccessRequestResponse.cs",
     "GrantAccessRequestAsEligibleRequest.cs",
     "GrantAccessRequestAsEligibleResponse.cs",
+    "SettleAccessRequestRequest.cs",
+    "SettleAccessRequestResponse.cs",
     "ListAvailabilityRequestsRequest.cs",
     "ListAvailabilityRequestsResponse.cs",
     "SubmitAvailabilityRequestRequest.cs",
@@ -421,6 +423,12 @@
     "Models/AccessRequestList.AccessRequestViewArray.cs",
     "Models/AccessRequestList.AccessRequestViewArray.Mutable.cs",
     "Models/AccessRequestList.AccessRequestViewArray.JsonSchema.cs",
+    "Models/AccessRequestSettlement.cs",
+    "Models/AccessRequestSettlement.Mutable.cs",
+    "Models/AccessRequestSettlement.JsonSchema.cs",
+    "Models/AccessRequestSettlement.OutcomeEntity.cs",
+    "Models/AccessRequestSettlement.OutcomeEntity.Mutable.cs",
+    "Models/AccessRequestSettlement.OutcomeEntity.JsonSchema.cs",
     "Models/AccessRequestSubmit.cs",
     "Models/AccessRequestSubmit.Mutable.cs",
     "Models/AccessRequestSubmit.JsonSchema.cs",
@@ -1440,6 +1448,6 @@
   "generatorVersion": "1.0.0\u002B412e0e74343fcecad7f97dfaa5a5aa68b7fc6411",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "36968a6416dd261136b92fc6d866a0a2268ccab84aef23b6a33763d38fc14fff",
+  "specFileHash": "18b343eb035d2e02c07944054d1ef3e9c53ab68020d0f95b5eb17854ab326226",
   "specVersion": "3.2"
 }

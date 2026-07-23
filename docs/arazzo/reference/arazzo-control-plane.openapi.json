@@ -7673,7 +7673,7 @@
       },
       "SourceCredentialKind": {
         "type": "string",
-        "description": "The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). 'mtls' is connection-level (a client certificate presented at the TLS handshake, §13.1): it carries a 'certificate' secret (a base64 PKCS#12, or a PEM 'certificate' paired with a PEM 'privateKey') plus an optional 'passphrase', and — being connection-scoped — cannot be usage-scoped to an individual run.",
+        "description": "The credential SHAPE the resolved secret(s) build into a provider (non-sensitive metadata) — how a secret becomes an authenticator, not where it is applied. For an OpenAPI source the header kinds attach per request; for an AsyncAPI (channel) source the same kinds describe the broker credential presented at connect (ADR 0051): 'bearer' = one opaque secret presented at connection (a NATS token, an Azure Service Bus SAS); 'basic' = username + password (NATS user/pass, Kafka SASL/PLAIN or SCRAM, with the mechanism as non-secret config); 'oauth2ClientCredentials' = a client-credential exchange (Kafka OAUTHBEARER, Entra); 'mtls' = a client certificate at the TLS handshake. A channel binding also carries the environment's broker URL as non-secret config ('serverUrl', the channel analogue of the HTTP 'baseUrl' override); the transport protocol comes from the source document's servers[].protocol, never from the binding. 'mtls' — and EVERY kind on a channel binding — is connection-scoped (the credential authenticates the deployment's connection, not a run) and so cannot be usage-scoped to an individual run.",
         "enum": ["apiKey", "bearer", "basic", "oauth2ClientCredentials", "mtls"]
       },
       "CredentialStatus": {

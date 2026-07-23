@@ -43,13 +43,16 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan expiringWindow;
     private readonly ILogger? auditLogger;
+    private readonly Sources.ISourceStore? sources;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
     /// <param name="store">The persistent source credential store the endpoints delegate to.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane")
-        : this(store, new ControlPlaneAccess(), actor)
+    /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
+    /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
+    public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane", Sources.ISourceStore? sources = null)
+        : this(store, new ControlPlaneAccess(), actor, sources: sources)
     {
     }
 
@@ -63,7 +66,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <param name="expiringWindow">How far ahead of expiry a still-valid credential is reported as
     /// <see cref="CredentialStatus.ExpiringSoon"/> (defaults to 7 days).</param>
     /// <param name="auditLogger">The logger for the §850 credential-custody audit (who created/rotated/deleted which binding); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null)
+    /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
+    /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null, Sources.ISourceStore? sources = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -74,6 +79,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
         this.auditLogger = auditLogger;
+        this.sources = sources;
     }
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the deployment-configured
@@ -125,6 +131,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         UsageTagsState usageState;
         bool hasUsageTags;
         bool hasUsageGrantee;
+        SourceCredentialKind authKind;
         try
         {
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the owner keeps
@@ -168,7 +175,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 throw new ArgumentException("An 'environment' is required.");
             }
 
-            SourceCredentialKind authKind = ReadAuthKind(body.AuthKind);
+            authKind = ReadAuthKind(body.AuthKind);
 
             // mTLS (§13.1) authenticates the deployment to the source at the TLS handshake (connection-level), so it
             // cannot be scoped to an individual run: reject an explicit usage grantee, and never apply the default
@@ -186,6 +193,37 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         catch (ArgumentException ex)
         {
             return CreateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+        }
+
+        // A channel (AsyncAPI) source takes the channel-credential rules (ADR 0051): broker auth happens in the CONNECT
+        // handshake, so the binding is connection-scoped like mTLS — never usage-scoped — must carry the environment's
+        // broker URL as 'serverUrl' config, and cannot use the per-request apiKey kind.
+        if (await this.IsChannelSourceAsync((string)body.SourceName, cancellationToken).ConfigureAwait(false))
+        {
+            try
+            {
+                if (authKind == SourceCredentialKind.ApiKey)
+                {
+                    throw new ArgumentException("An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as 'bearer' (a token presented at connect), 'basic' (SASL username/password), 'oauth2ClientCredentials', or 'mtls'.");
+                }
+
+                if (hasUsageGrantee)
+                {
+                    throw new ArgumentException("A channel credential authenticates the runner's broker connection (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.");
+                }
+
+                if (!HasNonEmptyConfigValue((JsonElement)body.Config, "serverUrl"u8))
+                {
+                    throw new ArgumentException("A channel credential must carry the environment's broker URL as a 'serverUrl' config entry (ADR 0051); the transport protocol comes from the source document's servers[].protocol.");
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                return CreateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+            }
+
+            // Connection-scoped: never apply the default creator-identity usage scoping (the mtls rule, uniformly).
+            hasUsageTags = false;
         }
 
         try
@@ -268,13 +306,31 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
         Models.CredentialBindingUpdate body = parameters.Body;
+        SourceCredentialKind updateAuthKind;
         try
         {
-            _ = ReadAuthKind(body.AuthKind);
+            updateAuthKind = ReadAuthKind(body.AuthKind);
         }
         catch (ArgumentException ex)
         {
             return UpdateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+        }
+
+        // The channel-credential rules (ADR 0051) hold on update too: the kind must stay connection-capable, and a
+        // supplied config replacement must keep the environment's broker URL (an omitted config is carried forward).
+        if (await this.IsChannelSourceAsync(sourceName, cancellationToken).ConfigureAwait(false))
+        {
+            if (updateAuthKind == SourceCredentialKind.ApiKey)
+            {
+                return UpdateCredentialResult.BadRequest(
+                    Problem("invalid-credential", "Invalid credential binding", 400, "An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as 'bearer' (a token presented at connect), 'basic' (SASL username/password), 'oauth2ClientCredentials', or 'mtls'."), workspace);
+            }
+
+            if (body.Config.IsNotUndefined() && !HasNonEmptyConfigValue((JsonElement)body.Config, "serverUrl"u8))
+            {
+                return UpdateCredentialResult.BadRequest(
+                    Problem("invalid-credential", "Invalid credential binding", 400, "A channel credential must keep the environment's broker URL as a 'serverUrl' config entry (ADR 0051); include it in the replacement config."), workspace);
+            }
         }
 
         // A present managementTags re-tags who may MANAGE the binding (§14.2): the caller's non-internal labels replace the
@@ -366,6 +422,47 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         => authKind.IsNotUndefined()
             ? SourceCredentialKindExtensions.Parse((string)authKind)
             : throw new ArgumentException("An 'authKind' is required.");
+
+    // Whether the named source is registered as an AsyncAPI (channel) source under the caller's reach (ADR 0051). An
+    // unregistered or out-of-reach source classifies as not-a-channel: the binding surface does not require
+    // registration, and reach stays non-disclosing.
+    private async ValueTask<bool> IsChannelSourceAsync(string sourceName, CancellationToken cancellationToken)
+    {
+        if (this.sources is null)
+        {
+            return false;
+        }
+
+        using ParsedJsonDocument<Sources.RegisteredSource>? doc = await this.sources.GetAsync(sourceName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        return doc is { } d && ((JsonElement)d.RootElement.Type).ValueEquals("asyncapi"u8);
+    }
+
+    // Whether the KVP config array carries a non-empty string value for the given key — read bytes-to-bytes off the
+    // request body (no per-entry strings).
+    private static bool HasNonEmptyConfigValue(in JsonElement config, ReadOnlySpan<byte> key)
+    {
+        if (config.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        foreach (JsonElement entry in config.EnumerateArray())
+        {
+            if (entry.TryGetProperty("key"u8, out JsonElement entryKey)
+                && entryKey.ValueEquals(key)
+                && entry.TryGetProperty("value"u8, out JsonElement entryValue)
+                && entryValue.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString value = entryValue.GetUtf8String();
+                if (!value.Span.IsEmpty)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     // Writes the binding's management tags straight into the pooled buffer (the bytes-to-bytes write leaf, mirroring the
     // usage-grant BuildUsageGrants below): the deployment-internal tags first (string-sourced from the policy — the short

@@ -134,9 +134,13 @@ public static class ControlPlaneEndpointExtensions
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
 
+        // The sources registry store is resolved ahead of its handler because the credentials handler classifies each
+        // binding's source from it (an AsyncAPI source takes the channel-credential rules, ADR 0051).
+        ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
+
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger);
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger, sources: srcStore);
 
         // The environment administration service (§7.7) is shared by the environments/availability handlers below and
         // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
@@ -196,8 +200,7 @@ public static class ControlPlaneEndpointExtensions
 
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
-        // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
-        ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
+        // membership is the management gate. The store itself is resolved above (the credentials handler reads it).
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher, auditLogger: auditLogger);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
 

@@ -17,156 +17,102 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The credential SHAPE the resolved secret(s) build into a provider (non-sensitive metadata) — how a secret becomes an authenticator, not where it is applied. For an OpenAPI source the header kinds attach per request; for an AsyncAPI (channel) source the same kinds describe the broker credential presented at connect (ADR 0051): &#39;bearer&#39; = one opaque secret presented at connection (a NATS token, an Azure Service Bus SAS); &#39;basic&#39; = username + password (NATS user/pass, Kafka SASL/PLAIN or SCRAM, with the mechanism as non-secret config); &#39;oauth2ClientCredentials&#39; = a client-credential exchange (Kafka OAUTHBEARER, Entra); &#39;mtls&#39; = a client certificate at the TLS handshake. A channel binding also carries the environment&#39;s broker URL as non-secret config (&#39;serverUrl&#39;, the channel analogue of the HTTP &#39;baseUrl&#39; override); the transport protocol comes from the source document&#39;s servers[].protocol, never from the binding. &#39;mtls&#39; — and EVERY kind on a channel binding — is connection-scoped (the credential authenticates the deployment&#39;s connection, not a run) and so cannot be usage-scoped to an individual run.
+/// The decision the bootstrapped approval workflow enacts through settleAccessRequest: which terminal state to move the pending request to, plus the approver&#39;s optional note (design &#167;16.5.1).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct SourceCredentialKind
-    : IJsonElement<SourceCredentialKind>
+public readonly partial struct AccessRequestSettlement
+    : IJsonElement<AccessRequestSettlement>
 {
-    /// <summary>
-    /// Provides accesors for enumerated values
-    /// </summary>
-    private static class Constants
-    {
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum1 = "apiKey"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson1 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"apiKey\""u8]);
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum2 = "bearer"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson2 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"bearer\""u8]);
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum3 = "basic"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson3 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"basic\""u8]);
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum4 = "oauth2ClientCredentials"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson4 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"oauth2ClientCredentials\""u8]);
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum5 = "mtls"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly SourceCredentialKind EnumJson5 = ParsedJsonDocument<SourceCredentialKind>.StringConstant([.."\"mtls\""u8]);
-    }
-
-    /// <summary>
-    /// Provides named constants for enum values.
-    /// </summary>
-    public static class EnumValues
-    {
-        /// <summary>
-        /// Gets the string "apiKey"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind ApiKey { get; } = Constants.EnumJson1;
-        /// <summary>
-        /// Gets the string "apiKey"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> ApiKeyUtf8 => Constants.Enum1;
-
-        /// <summary>
-        /// Gets the string "bearer"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind Bearer { get; } = Constants.EnumJson2;
-        /// <summary>
-        /// Gets the string "bearer"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> BearerUtf8 => Constants.Enum2;
-
-        /// <summary>
-        /// Gets the string "basic"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind Basic { get; } = Constants.EnumJson3;
-        /// <summary>
-        /// Gets the string "basic"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> BasicUtf8 => Constants.Enum3;
-
-        /// <summary>
-        /// Gets the string "oauth2ClientCredentials"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind Oauth2ClientCredentials { get; } = Constants.EnumJson4;
-        /// <summary>
-        /// Gets the string "oauth2ClientCredentials"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> Oauth2ClientCredentialsUtf8 => Constants.Enum4;
-
-        /// <summary>
-        /// Gets the string "mtls"
-        /// as a <see cref="SourceCredentialKind"/>.
-        /// </summary>
-        public static SourceCredentialKind Mtls { get; } = Constants.EnumJson5;
-        /// <summary>
-        /// Gets the string "mtls"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> MtlsUtf8 => Constants.Enum5;
-    }
-
     public static partial class JsonSchema
     {
-        private static EnumStringSet BuildEnumStringSet()
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyOutcomePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("outcome"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyOutcomeNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("outcome"u8, buffer, out written);
+
+        private const int RequiredOffsetForOutcome = 0;
+        private const uint RequiredBitForOutcome = 0b00000000000000000000000000000001;
+
+        private const uint RequiredBitMask0 =
+            RequiredBitForOutcome;
+        private static readonly JsonSchemaPathProvider OutcomeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/outcome"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider ReasonSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/reason"u8, buffer, out written);
+
+        private static void MatchOutcome(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
-            return new EnumStringSet([
-                static () => "apiKey"u8,
-                static () => "bearer"u8,
-                static () => "basic"u8,
-                static () => "oauth2ClientCredentials"u8,
-                static () => "mtls"u8,
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.OutcomeEntity.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.OutcomeUtf8,
+                    evaluationPath: OutcomeSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.OutcomeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForOutcome] |= RequiredBitForOutcome;
+        }
+
+        private static void MatchReason(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.ReasonUtf8,
+                    evaluationPath: ReasonSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        {
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
+                (static () => JsonPropertyNames.OutcomeUtf8, MatchOutcome),
+                (static () => JsonPropertyNames.ReasonUtf8, MatchReason),
             ]);
         }
 
-        private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+
+        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
+#if NET
+        [NotNullWhen(true)]
+#endif
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        {
+            return Matchers.TryGetNamedMatcher(span, out matcher);
+        }
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/SourceCredentialKind"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/AccessRequestSettlement"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/SourceCredentialKind";
+        public const string SchemaLocation = "/components/schemas/AccessRequestSettlement";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/SourceCredentialKind"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AccessRequestSettlement"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -187,35 +133,60 @@ public readonly partial struct SourceCredentialKind
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
+            if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
                 }
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
             }
             else
             {
-                using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
+                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
+                int objectValidation_propertyCount = 0;
 
-                if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
+                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
+                while (objectValidation_enumerator.MoveNext())
                 {
-                    goto enumShortCircuitSuccess;
+                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
+                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
+
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    {
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
+
+                        if (!context.HasCollector && !context.IsMatch)
+                        {
+                            return;
+                        }
+                    }
+
+                    objectValidation_propertyCount++;
                 }
 
-                context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                if (!context.HasCollector)
+                // Do a quick test to see if we have all of the required bits set in each element
+                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
                 {
+                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyOutcomePresent, "outcome"u8, "required"u8);
+                }
+                else if (!context.HasCollector)
+                {
+                    context.EvaluatedBooleanSchema(false);
                     return;
                 }
-
-                goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
+                else
+                {
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForOutcome] & RequiredBitForOutcome) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyOutcomeNotPresent, "outcome"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyOutcomePresent, "outcome"u8, "required"u8);
+                    }
+                }
             }
         }
 

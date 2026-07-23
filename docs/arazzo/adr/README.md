@@ -103,6 +103,7 @@ The template to follow for a full, fork-bearing ADR is
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0048](0048-source-credentials-are-references.md) | Source credentials are references, resolved runner-side | Accepted |
+| [0051](0051-channel-sources-bind-per-environment.md) | Channel sources bind per environment, like HTTP sources | Accepted |
 
 ### Web kit and designer
 

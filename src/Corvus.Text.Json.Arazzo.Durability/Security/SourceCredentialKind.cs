@@ -5,9 +5,13 @@
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
 /// <summary>
-/// The HTTP auth scheme a <see cref="SourceCredentialBinding"/> resolves its secret material into (design §13).
-/// This is non-sensitive metadata: it tells the runner how to build an <c>IHttpAuthenticationProvider</c> from the
-/// dereferenced secret(s), without the binding itself carrying any secret.
+/// The credential SHAPE a <see cref="SourceCredentialBinding"/> resolves its secret material into (design §13) —
+/// how a secret becomes an authenticator, not where it is applied. This is non-sensitive metadata: for an OpenAPI
+/// source it tells the runner how to build an <c>IHttpAuthenticationProvider</c> from the dereferenced secret(s);
+/// for an AsyncAPI (channel) source the same kinds describe the broker credential presented at connect (ADR 0051:
+/// <see cref="Bearer"/> = a token/SAS presented at connection, <see cref="Basic"/> = SASL user/password,
+/// <see cref="OAuth2ClientCredentials"/> = OAUTHBEARER/Entra, <see cref="Mtls"/> = an SSL client certificate),
+/// with the broker URL as non-secret <c>serverUrl</c> config and the protocol coming from the source document.
 /// </summary>
 public enum SourceCredentialKind
 {

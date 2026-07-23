@@ -105,6 +105,14 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         {
             Url = options.Url,
             Name = options.Name ?? string.Empty,
+            AuthOpts = new NatsAuthOpts
+            {
+                Token = options.Token,
+                Username = options.Username,
+                Password = options.Password,
+                Jwt = options.Jwt,
+                Seed = options.NKeySeed,
+            },
         };
 
         NatsConnection connection = new(natsOpts);
