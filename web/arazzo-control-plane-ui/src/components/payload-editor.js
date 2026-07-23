@@ -150,7 +150,8 @@ class ArazzoPayloadEditor extends ArazzoElement {
         (type === 'boolean' && text !== 'true' && text !== 'false')
         || ((type === 'number' || type === 'integer') && !Number.isFinite(Number(text))));
       input.classList.toggle('invalid', impossible);
-      input.title = impossible ? `neither a ${type} nor a runtime expression — the schema requires a ${type}` : '';
+      const anType = type === 'integer' ? `an ${type}` : `a ${type}`;
+      input.title = impossible ? `neither ${anType} nor a runtime expression — the schema requires ${anType}` : '';
     });
 
     // An enum leaf gains a picker: the declared values as a listbox (the current one marked), each

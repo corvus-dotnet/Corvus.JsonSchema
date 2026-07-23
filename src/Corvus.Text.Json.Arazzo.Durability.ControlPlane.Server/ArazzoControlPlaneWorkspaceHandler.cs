@@ -2691,6 +2691,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     private static bool IsExpressionShaped(string text)
         => text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal);
 
+    /// <summary>"an integer", "a boolean" — the indefinite article by the type's first sound.</summary>
+    private static string An(string type)
+        => type is "integer" or "object" or "array" ? $"an {type}" : $"a {type}";
+
     /// <summary>The schema at a JSON Pointer WITHIN a request schema (a replacement's target): each token
     /// descends <c>properties</c> for an object schema or <c>items</c> for an array index/append token,
     /// following local <c>$ref</c>s. Default when the pointer does not resolve — no finding, the
@@ -3031,13 +3035,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         // different scalar can never satisfy the API either.
         if (value.ValueKind == JsonValueKind.Number && type is "string" or "boolean")
         {
-            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a number — the operation's schema requires a {type} here.", null));
+            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a number — the operation's schema requires {An(type!)} here.", null));
             return;
         }
 
         if (value.ValueKind is JsonValueKind.True or JsonValueKind.False && type is "string" or "number" or "integer")
         {
-            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a boolean — the operation's schema requires a {type} here.", null));
+            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a boolean — the operation's schema requires {An(type!)} here.", null));
             return;
         }
 
@@ -3048,7 +3052,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 if (type is "boolean" or "number" or "integer")
                 {
-                    findings.Add(new("error", "payload-typing", pointer, $"'{text}' is neither a {type} nor a runtime expression — the operation's schema requires a {type} here.", null));
+                    findings.Add(new("error", "payload-typing", pointer, $"'{text}' is neither {An(type!)} nor a runtime expression — the operation's schema requires {An(type!)} here.", null));
                 }
 
                 return;
@@ -3061,7 +3065,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 && typing.ResolveType(text) is { } expressionType
                 && !ScalarTypesCompatible(expressionType, type))
             {
-                findings.Add(new("error", "payload-typing", pointer, $"'{text}' resolves to a {expressionType} — the operation's schema requires a {type} here.", null));
+                findings.Add(new("error", "payload-typing", pointer, $"'{text}' resolves to {An(expressionType)} — the operation's schema requires {An(type!)} here.", null));
             }
 
             return;

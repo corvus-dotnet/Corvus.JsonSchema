@@ -989,7 +989,7 @@ public sealed class ControlPlaneWorkspaceApiTests
             .ToList();
 
         // A string literal can never satisfy the path-level INTEGER parameter.
-        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/0/value" && t.Message.Contains("neither a integer nor a runtime expression"));
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/0/value" && t.Message.Contains("neither an integer nor a runtime expression"));
 
         // A statically-typed expression must match the op-level BOOLEAN parameter.
         typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/1/value" && t.Message.Contains("resolves to a string"));
@@ -1001,7 +1001,7 @@ public sealed class ControlPlaneWorkspaceApiTests
         typing.ShouldNotContain(t => t.Path == "/workflows/0/steps/0/parameters/3/value");
 
         // A replacement's value checks against the schema AT its target pointer.
-        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/0/value" && t.Message.Contains("neither a integer nor a runtime expression"));
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/0/value" && t.Message.Contains("neither an integer nor a runtime expression"));
         typing.ShouldNotContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/1/value");
     }
 
