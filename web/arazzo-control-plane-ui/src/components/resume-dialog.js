@@ -15,6 +15,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-step-picker.js';
 import './value-editor.js';
+import './text-editor.js';
 
 class ArazzoResumeDialog extends ArazzoElement {
   constructor() {
@@ -139,6 +140,7 @@ class ArazzoResumeDialog extends ArazzoElement {
           border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
         }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+        arazzo-text-editor.json-ed { display: block; height: 150px; min-height: 0; }
         label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0; }
         label.check input { width: auto; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
@@ -173,7 +175,7 @@ class ArazzoResumeDialog extends ArazzoElement {
 
             <div class="mode-fields" data-mode="StatePatch" hidden>
               <div class="fields">
-                <div><label for="patch">RFC 6902 JSON Patch over { inputs, stepOutputs }</label><textarea id="patch" rows="7"></textarea></div>
+                <div><label for="patch">RFC 6902 JSON Patch over { inputs, stepOutputs }</label><arazzo-text-editor id="patch" standalone class="json-ed"></arazzo-text-editor></div>
               </div>
             </div>
 

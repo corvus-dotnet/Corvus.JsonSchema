@@ -23,6 +23,7 @@ function scheduleStatusLabel(status) {
   return status && status.toLowerCase() === 'suspended' ? 'Waiting' : status;
 }
 import './pager.js';
+import './text-editor.js';
 
 class ArazzoSchedules extends ArazzoElement {
   static get observedAttributes() {
@@ -323,6 +324,7 @@ class ArazzoSchedules extends ArazzoElement {
         .field label { font-size: 12px; color: var(--_muted); font-weight: 600; }
         .field input[type=text], .field input[type=number], .field textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); color: var(--_text); }
         .field textarea { min-height: 64px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+        .field arazzo-text-editor.json-ed { display: block; height: 120px; min-height: 0; }
         .row2 { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
         .row3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
         .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
@@ -441,7 +443,7 @@ class ArazzoSchedules extends ArazzoElement {
               <div class="field"><label for="f-tz">Time zone</label><input id="f-tz" type="text" placeholder="UTC" autocomplete="off"></div>
               <label class="check"><input id="f-seconds" type="checkbox"> seconds field</label>
             </div>
-            <div class="field"><label for="f-inputs">Target inputs (JSON, optional)</label><textarea id="f-inputs" placeholder='{"date":"2026-07-20"}'></textarea></div>
+            <div class="field"><label for="f-inputs">Target inputs (JSON, optional)</label><arazzo-text-editor id="f-inputs" standalone class="json-ed"></arazzo-text-editor></div>
           </div>
           ${errHtml}
           <div class="mfoot">

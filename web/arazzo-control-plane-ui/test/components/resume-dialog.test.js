@@ -47,7 +47,7 @@ describe('<arazzo-resume-dialog>', () => {
     // Use the raw-JSON builder for a simple value, and stub the client to fail validation + track resume.
     const builder = el.shadowRoot.querySelector('.skip-builder');
     builder.descriptor = null;
-    const textarea = await waitFor(() => builder.shadowRoot.querySelector('textarea'));
+    const textarea = await waitFor(() => builder.shadowRoot.querySelector('arazzo-text-editor'));
     textarea.value = '{ "score": 5 }';
 
     let resumed = false;

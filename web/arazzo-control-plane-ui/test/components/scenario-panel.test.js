@@ -116,7 +116,7 @@ describe('<arazzo-scenario-panel>', () => {
 
     // Toggle to JSON and back: the working object is the same one the form edits.
     editor.shadowRoot.querySelector('.toggle').click();
-    const area = await waitFor(() => editor.shadowRoot.querySelector('textarea.json'));
+    const area = await waitFor(() => editor.shadowRoot.querySelector('arazzo-text-editor.json'));
     ok(area.value.includes('x-note'), 'the JSON view shows the unknown field');
     editor.shadowRoot.querySelector('.toggle').click();
     await waitFor(() => editor.shadowRoot.querySelector('.f-desc'));

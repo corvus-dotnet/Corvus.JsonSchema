@@ -10,7 +10,7 @@
 // demo/designer-fixture.js ("Order processing": place-order with validate-order → authorize-payment
 // → await-confirmation → capture-payment + manual-review, two attached sources).
 import { test, expect } from '@playwright/test';
-import { watchErrors, assertClean, openDesigner } from './ux-helpers.js';
+import { watchErrors, assertClean, openDesigner, fillJsonEditor, jsonEditorValue } from './ux-helpers.js';
 
 const SCHEMA_EDITOR = 'arazzo-workflow-inspector arazzo-schema-editor';
 
@@ -360,7 +360,7 @@ test('the inputs schema editor authors a property of every primitive type and a 
 
   // The JSON tier shows exactly what the form authored — the document IS the model.
   await editor.locator('.t-json').click();
-  const schema = JSON.parse(await editor.locator('textarea.json').inputValue());
+  const schema = JSON.parse(await jsonEditorValue(editor.locator('arazzo-text-editor.json-ed')));
   expect(schema.properties.age.type).toBe('integer');
   expect(schema.properties.score.type).toBe('number');
   expect(schema.properties.active.type).toBe('boolean');
@@ -542,7 +542,7 @@ test('a dangling schemas/<name> $ref surfaces a positioned external-schema error
   // JSON tier commits the moment it parses (schema-changed → autosave → validate).
   const editor = page.locator(SCHEMA_EDITOR);
   await editor.locator('.t-json').click();
-  await editor.locator('textarea.json').fill('{"$ref": "schemas/missing#/$defs/Customer"}');
+  await fillJsonEditor(editor.locator('arazzo-text-editor.json-ed'), '{"$ref": "schemas/missing#/$defs/Customer"}');
 
   // The mirror of the server's pass-4 walk finds it: an ERROR, positioned at the workflow's inputs.
   const badge = page.locator('#problems-badge');

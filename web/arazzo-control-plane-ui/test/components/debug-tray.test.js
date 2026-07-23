@@ -178,7 +178,7 @@ describe('<arazzo-debug-tray>', () => {
     // was fed). Invalid JSON refuses locally; nothing escapes the tray.
     const payloadEditor = el.shadowRoot.querySelector('.inj-payload');
     equal(payloadEditor.tagName.toLowerCase(), 'arazzo-value-editor', 'the inject payload is the standard typed editor');
-    const jsonArea = payloadEditor.shadowRoot.querySelector('textarea');
+    const jsonArea = payloadEditor.shadowRoot.querySelector('arazzo-text-editor');
     jsonArea.value = '{nope';
     jsonArea.dispatchEvent(new Event('input'));
     let leaked = false;

@@ -5,7 +5,7 @@
 // outputs, the expression console's ⏎ semantics, §18 debug-run lifecycle verbs (Stop / ✕ Clear /
 // fault-only Retry), and the virtual clock riding a retryAfter.
 import { test, expect } from '@playwright/test';
-import { watchErrors, assertClean, openDesigner, runAgainstMocks, runInDevelopment } from './ux-helpers.js';
+import { watchErrors, assertClean, openDesigner, runAgainstMocks, runInDevelopment, fillJsonEditor, jsonEditorValue } from './ux-helpers.js';
 
 test('the run dialog offers only draft-run environments beside the mock target, with per-source readiness', async ({ page }) => {
   const errors = watchErrors(page);
@@ -67,13 +67,13 @@ test('invalid JSON inputs keep the run dialog open until they parse', async ({ p
   await expect(editor.locator('.empty')).toContainText('No typed schema available');
 
   // Unparseable JSON: ▶ Run must NOT start a session — the dialog stays open, the dock stays shut.
-  await editor.locator('textarea').fill('{ this is not json');
+  await fillJsonEditor(editor.locator('arazzo-text-editor'), '{ this is not json');
   await dlg.locator('.ri-run').click();
   await expect(dlg).toBeVisible();
   await expect(page.locator('#debug-dock')).toBeHidden();
 
   // Once it parses, the same button runs (the sub-workflow bubbles its message wait → suspended).
-  await editor.locator('textarea').fill('{}');
+  await fillJsonEditor(editor.locator('arazzo-text-editor'), '{}');
   await dlg.locator('.ri-run').click();
   await expect(dlg).not.toBeVisible();
   await expect(page.locator('#debug-dock')).toBeVisible();
@@ -259,11 +259,11 @@ test('step over provides outputs in the context pane and the replay marks the st
   await expect(form.locator('.why')).toContainText("typed by authorize-payment's declared outputs");
   const field = form.locator('.ovr-editor .field', { hasText: 'authorizationId' });
   await expect(field).toBeVisible();
-  const valueIn = field.locator('textarea');
-  await expect(valueIn).toHaveValue('""'); // seeded from the observed outputs
+  const valueIn = field.locator('arazzo-text-editor');
+  expect(await jsonEditorValue(valueIn)).toBe('""'); // seeded from the observed outputs
 
   // Provide outputs and replay: the step must NOT execute this time.
-  await valueIn.fill('"auth-override-1"');
+  await fillJsonEditor(valueIn, '"auth-override-1"');
   await form.locator('.ovr-apply').click();
 
   // The replay lands (suspended at the wait again) with authorize-payment SKIPPED: the row wears
@@ -398,7 +398,7 @@ test('the virtual clock advances past a retryAfter and the tray narrates it', as
   const editor = panel.locator('arazzo-scenario-editor');
   await expect(editor).toBeVisible();
   await editor.locator('.toggle:not([disabled])').click(); // the JSON tier, one toggle away
-  await editor.locator('textarea.json').fill(JSON.stringify({
+  await fillJsonEditor(editor.locator('arazzo-text-editor.json'), JSON.stringify({
     name: 'happy-path',
     description: 'Authorize throttled once, then confirmed and captured.',
     inputs: { orderId: 'o-1001', amount: 42.5 },

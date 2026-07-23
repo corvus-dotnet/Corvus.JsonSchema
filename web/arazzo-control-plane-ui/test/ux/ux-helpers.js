@@ -63,3 +63,18 @@ export async function runInDevelopment(page, { transientFault = false } = {}) {
   await dlg.locator('.ri-run').click();
   await expect(page.locator('#debug-dock')).toBeVisible();
 }
+
+/** Set a syntax-highlighted JSON editor's (<arazzo-text-editor>) content and trigger its guarded parse,
+ *  bypassing the CM contenteditable + debounce: it sets the value and dispatches text-changed, as a real
+ *  keystroke ultimately would. `editorLocator` addresses the <arazzo-text-editor> element. */
+export async function fillJsonEditor(editorLocator, text) {
+  await editorLocator.evaluate((el, v) => {
+    el.value = v;
+    el.dispatchEvent(new CustomEvent('text-changed', { detail: { text: v }, bubbles: true, composed: true }));
+  }, text);
+}
+
+/** Read a syntax-highlighted JSON editor's current buffer (the textarea `.value` equivalent). */
+export function jsonEditorValue(editorLocator) {
+  return editorLocator.evaluate((el) => el.value);
+}

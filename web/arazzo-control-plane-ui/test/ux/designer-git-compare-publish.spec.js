@@ -402,9 +402,10 @@ test('publish refuses an invalid document with 422 and routes to the Problems pa
   await page.evaluate(() => {
     const se = document.querySelector('arazzo-workflow-inspector').shadowRoot.querySelector('arazzo-schema-editor');
     se.shadowRoot.querySelector('.t-json').click();
-    const ta = se.shadowRoot.querySelector('textarea.json');
-    ta.value = '{"type": 123}';
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    const ta = se.shadowRoot.querySelector('arazzo-text-editor.json-ed');
+    const v = '{"type": 123}';
+    ta.value = v;
+    ta.dispatchEvent(new CustomEvent('text-changed', { detail: { text: v }, bubbles: true, composed: true }));
   });
   // Wait for the autosave + validate cycle so publish acts on the STORED (invalid) document and
   // no autosave races the publish's own flush.

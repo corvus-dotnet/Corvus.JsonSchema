@@ -17,6 +17,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './value-editor.js';
+import './text-editor.js';
 
 const OUTCOMES = ['completed', 'faulted', 'suspended', 'paused', 'budgetExhausted'];
 
@@ -96,7 +97,7 @@ class ArazzoScenarioEditor extends ArazzoElement {
         section { display: grid; gap: 4px; }
         label.inline { display: grid; gap: 3px; font-size: 11px; color: var(--_muted); }
         input, select, textarea { font: inherit; font-size: 11px; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: var(--arazzo-text, inherit); min-width: 0; max-width: 100%; box-sizing: border-box; }
-        textarea.json { width: 100%; box-sizing: border-box; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 220px; }
+        arazzo-text-editor.json { display: block; height: 260px; min-height: 0; }
         .row { border: 1px solid var(--_border); border-radius: 6px; padding: 5px 6px; display: grid; gap: 5px; }
         .row-head { display: flex; gap: 5px; align-items: center; }
         .row-head select, .row-head input { flex: 1; min-width: 0; }
@@ -136,7 +137,11 @@ class ArazzoScenarioEditor extends ArazzoElement {
     this.$('.save').addEventListener('click', () => this.save());
     this.$('.cancel').addEventListener('click', () => this.emit('cancel'));
     this.$('.toggle').addEventListener('click', () => this.toggleView());
-    if (this._json) return;
+    if (this._json) {
+      // The editor takes its value as a property (not textContent), so seed it after the shell exists.
+      this.$('.json').value = JSON.stringify(this._working, null, 2);
+      return;
+    }
 
     // Typed sub-editors get their seeds THEN descriptors after the shell exists (the descriptor
     // setter renders, consuming the seed).
@@ -209,7 +214,7 @@ class ArazzoScenarioEditor extends ArazzoElement {
   renderJson() {
     return `<section>
       <h5>Scenario (JSON)</h5>
-      <textarea class="json" spellcheck="false">${escapeHtml(JSON.stringify(this._working, null, 2))}</textarea>
+      <arazzo-text-editor class="json" standalone></arazzo-text-editor>
     </section>`;
   }
 

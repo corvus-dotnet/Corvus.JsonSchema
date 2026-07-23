@@ -1,7 +1,7 @@
 // UX suite — the Runs area of the control-plane app shell: list filtering, the bounded count
 // footer, run detail, and the remediation verbs (resume modes, cancel, delete, purge).
 import { test, expect } from '@playwright/test';
-import { watchErrors, assertClean, openApp } from './ux-helpers.js';
+import { watchErrors, assertClean, openApp, fillJsonEditor } from './ux-helpers.js';
 
 test('the status chips filter the list and exactly one chip is pressed at a time', async ({ page }) => {
   const errors = watchErrors(page);
@@ -66,9 +66,9 @@ test('resume offers all four modes and StatePatch takes an RFC 6902 document', a
   }
 
   await dialog.locator('input[name="mode"][value="StatePatch"]').check();
-  const patch = dialog.locator('textarea').first();
+  const patch = dialog.locator('#patch');
   await expect(patch).toBeVisible();
-  await patch.fill('[{"op":"replace","path":"/inputs/petId","value":"p-2"}]');
+  await fillJsonEditor(patch, '[{"op":"replace","path":"/inputs/petId","value":"p-2"}]');
   await dialog.getByRole('button', { name: /resume/i }).click();
   await expect(dialog.locator('dialog')).not.toBeVisible();
   assertClean(errors);
