@@ -920,7 +920,11 @@
     })();
 
     const logEvent = (type, detail) => {
-      log.textContent = `${type} ${JSON.stringify(detail)}\n${log.textContent}`.slice(0, 4000);
+      // Newest first, bounded by WHOLE lines (each event is one line — JSON.stringify has no newlines),
+      // so the oldest entry is never cut mid-text the way a raw character cap did (the "…count:" stub).
+      const lines = log.textContent ? log.textContent.split('\n') : [];
+      lines.unshift(`${type} ${JSON.stringify(detail)}`);
+      log.textContent = lines.slice(0, 200).join('\n');
     };
     for (const type of ['selection-changed', 'layout-changed', 'edge-created', 'breakpoint-toggled', 'node-activated', 'delete-requested']) {
       surface.addEventListener(type, (e) => logEvent(type, e.detail));
