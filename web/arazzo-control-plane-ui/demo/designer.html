@@ -253,7 +253,7 @@
     import { projectWorkflow, listWorkflows } from '/ui/src/workflow-graph.js';
     import { EXPRESSION_ROOTS, resolveAgainstFrame, stepCompletionContext } from '/ui/src/expression-language.js';
     import { templatesFromResponses, payloadSkeletonFromSchema } from '/ui/src/operation-templates.js';
-    import { WorkflowDocumentModel } from '/ui/src/workflow-document-model.js';
+    import { WorkflowDocumentModel, inlineRequestBodyReplacements } from '/ui/src/workflow-document-model.js';
     import '/ui/src/components/design-surface.js';
     import '/ui/src/components/splitbar.js';
     import '/ui/src/components/expression-input.js';
@@ -508,6 +508,11 @@
       scheduleValidate(); // the Problems badge is live from the first look
       shell.conflicted = false;
       setSaveUi('all changes saved');
+      // Normalize-on-load: fold any placeholder-payload + replacements idiom into inline runtime
+      // expressions. Through the model like every edit, so a fold marks the copy dirty (autosave
+      // persists the normalized form) and sits on the undo stack; an already-clean document
+      // produces zero ops and nothing happens.
+      model.update((d) => { inlineRequestBodyReplacements(d); }, { origin: 'normalize', label: 'inline request-body expressions' });
     }
 
     async function saveWorkingCopy() {

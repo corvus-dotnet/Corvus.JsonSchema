@@ -3,7 +3,7 @@
 // and two-model convergence through a server-ordered relay.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WorkflowDocumentModel, diff } from '../src/workflow-document-model.js';
+import { WorkflowDocumentModel, diff, inlineRequestBodyReplacements } from '../src/workflow-document-model.js';
 import { designerFixture } from '../demo/designer-fixture.js';
 
 const makeModel = (actor = 'a') => new WorkflowDocumentModel(designerFixture, { actor });
@@ -210,4 +210,78 @@ test('reset opens a new document in place: references survive, history clears, n
   assert.ok(!model.canUndo && !model.canRedo, 'a load is not an edit');
   assert.equal(broadcast, 0, 'a load does not ride the transport seam');
   assert.equal(loadEvent.origin, 'load');
+});
+
+// ── inlineRequestBodyReplacements — the normalize-on-load fold ────────────────────────────────────
+
+test('the placeholder-payload + replacements idiom folds to inline expressions', () => {
+  const doc = {
+    arazzo: '1.1.0',
+    workflows: [{
+      workflowId: 'wf',
+      steps: [{
+        stepId: 'createAccount',
+        operationId: 'createAccount',
+        requestBody: {
+          contentType: 'application/json',
+          payload: { email: 'customer@example.com', plan: 'free', nested: { note: 'keep' } },
+          replacements: [
+            { target: '/email', value: '$inputs.email' },
+            { target: '/nested/note', value: '$inputs.note' },
+          ],
+        },
+      }],
+    }],
+  };
+  assert.equal(inlineRequestBodyReplacements(doc), 1);
+  const body = doc.workflows[0].steps[0].requestBody;
+  assert.deepEqual(body.payload, { email: '$inputs.email', plan: 'free', nested: { note: '$inputs.note' } });
+  assert.ok(!('replacements' in body), 'the replacements are dropped');
+});
+
+test('the intended replacements shape — an expression payload re-targeted from elsewhere — stays untouched', () => {
+  const body = {
+    contentType: 'application/json',
+    payload: '$steps.fetchProfile.outputs.profile',
+    replacements: [{ target: '/card/number', value: '$inputs.cardNumber' }],
+  };
+  const doc = { workflows: [{ workflowId: 'wf', steps: [{ stepId: 'a', requestBody: structuredClone(body) }] }] };
+  assert.equal(inlineRequestBodyReplacements(doc), 0);
+  assert.deepEqual(doc.workflows[0].steps[0].requestBody, body, 'a whole-body expression keeps its replacements');
+});
+
+test('a body with any unfoldable target is left whole — never half-folded', () => {
+  const body = {
+    payload: { email: 'x', items: ['a'] },
+    replacements: [
+      { target: '/email', value: '$inputs.email' },
+      { target: '/missing/child', value: '$inputs.other' }, // parent does not exist
+    ],
+  };
+  const outOfBounds = {
+    payload: { items: ['a'] },
+    replacements: [{ target: '/items/3', value: '$inputs.x' }],
+  };
+  const doc = { workflows: [{ workflowId: 'wf', steps: [
+    { stepId: 'a', requestBody: structuredClone(body) },
+    { stepId: 'b', requestBody: structuredClone(outOfBounds) },
+  ] }] };
+  assert.equal(inlineRequestBodyReplacements(doc), 0);
+  assert.deepEqual(doc.workflows[0].steps[0].requestBody, body);
+  assert.deepEqual(doc.workflows[0].steps[1].requestBody, outOfBounds);
+});
+
+test('an in-bounds array target folds; escaped pointer segments resolve', () => {
+  const doc = { workflows: [{ workflowId: 'wf', steps: [{
+    stepId: 'a',
+    requestBody: {
+      payload: { items: ['old'], 'a/b': { 'c~d': 1 } },
+      replacements: [
+        { target: '/items/0', value: '$inputs.first' },
+        { target: '/a~1b/c~0d', value: '$inputs.second' },
+      ],
+    },
+  }] }] };
+  assert.equal(inlineRequestBodyReplacements(doc), 1);
+  assert.deepEqual(doc.workflows[0].steps[0].requestBody.payload, { items: ['$inputs.first'], 'a/b': { 'c~d': '$inputs.second' } });
 });

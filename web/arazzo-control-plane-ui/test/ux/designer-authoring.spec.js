@@ -399,6 +399,43 @@ test('the text tab mirrors a canvas edit, and a typed text edit re-projects the 
   assertClean(errors);
 });
 
+test('opening a working copy normalizes the placeholder-payload + replacements idiom to inline expressions', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+
+  // Author the legacy idiom through the Text tab (a real model edit): a literal placeholder payload
+  // with replacements pulling expressions in.
+  await page.locator('#tab-text').click();
+  await expect(page.locator('#text .cm-editor')).toBeVisible();
+  const withReplacements = await page.evaluate(() => {
+    const doc = JSON.parse(document.getElementById('text').value);
+    doc.workflows[0].steps[0].requestBody = {
+      contentType: 'application/json',
+      payload: { email: 'customer@example.com', plan: 'free' },
+      replacements: [
+        { target: '/email', value: '$inputs.email' },
+        { target: '/plan', value: '$inputs.plan' },
+      ],
+    };
+    return JSON.stringify(doc, null, 2);
+  });
+  await fillJsonEditor(page.locator('#text'), withReplacements);
+  await expect(page.locator('#save-status')).toHaveText(/^saved \d/, { timeout: 5000 });
+
+  // Re-open the copy: normalize-on-load folds the idiom — the payload carries the expressions
+  // inline and the replacements are gone — and the fold autosaves like any edit.
+  await page.locator('#back').click();
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await expect(page.locator('#wc-name')).toHaveText('Order processing'); // the designer reopened (the Text tab stays active)
+  await page.locator('#tab-text').click();
+  await expect.poll(async () => page.evaluate(() => document.getElementById('text').value)).toContain('"email": "$inputs.email"');
+  const text = await page.evaluate(() => document.getElementById('text').value);
+  expect(text).toContain('"plan": "$inputs.plan"');
+  expect(text).not.toContain('"replacements"');
+  await expect(page.locator('#save-status')).toHaveText(/^saved \d|^all changes saved/, { timeout: 5000 });
+  assertClean(errors);
+});
+
 test('an invalid JSON text edit is guarded: the parse problem shows, the model survives, and re-entry restores the buffer', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);

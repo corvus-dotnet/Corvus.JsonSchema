@@ -48,6 +48,63 @@ export function serializeDocument(document) {
   return JSON.stringify(document, null, 2);
 }
 
+/**
+ * Folds the placeholder-payload + replacements idiom into inline runtime expressions: a LITERAL
+ * object/array payload whose replacements each target a resolvable JSON Pointer is rewritten with
+ * each replacement's value set at its target, and the replacements dropped — the engine evaluates
+ * expressions inline in a payload template, so `{"email": "$inputs.email"}` says directly what
+ * `{"email": "placeholder"}` + a `/email` replacement said around a corner.
+ *
+ * Replacements' INTENDED shape is preserved untouched: a payload that is itself a runtime
+ * expression (pull a complex value as the whole body, then re-target one element from elsewhere)
+ * keeps its replacements. A body with any unfoldable target (a pointer whose parent does not
+ * exist in the literal payload, or an out-of-bounds array index) is also left whole — never
+ * half-folded.
+ *
+ * Mutates the document in place; returns the number of request bodies folded.
+ * @param {object} document The Arazzo document.
+ * @returns {number} How many request bodies were folded.
+ */
+export function inlineRequestBodyReplacements(document) {
+  let folded = 0;
+  for (const workflow of Array.isArray(document?.workflows) ? document.workflows : []) {
+    for (const step of Array.isArray(workflow?.steps) ? workflow.steps : []) {
+      const body = step?.requestBody;
+      if (!body || typeof body !== 'object') continue;
+      const { payload, replacements } = body;
+      if (!Array.isArray(replacements) || !replacements.length) continue;
+      if (!payload || typeof payload !== 'object') continue; // a string payload = the intended pull-then-retarget shape
+      const next = structuredClone(payload);
+      if (!replacements.every((r) => r && typeof r.target === 'string' && trySetAtPointer(next, r.target, structuredClone(r.value)))) continue;
+      body.payload = next;
+      delete body.replacements;
+      folded++;
+    }
+  }
+  return folded;
+}
+
+/** Sets `value` at a JSON Pointer in `root` with the engine's replacement semantics (create-or-replace
+ *  at an existing parent; an array leaf must be an in-bounds index). @returns {boolean} whether it applied. */
+function trySetAtPointer(root, pointer, value) {
+  if (!pointer.startsWith('/')) return false;
+  const segments = pointer.slice(1).split('/').map((s) => s.replace(/~1/g, '/').replace(/~0/g, '~'));
+  let node = root;
+  for (const key of segments.slice(0, -1)) {
+    node = Array.isArray(node) ? node[Number(key)] : (node && typeof node === 'object' ? node[key] : undefined);
+    if (!node || typeof node !== 'object') return false;
+  }
+  const leaf = segments[segments.length - 1];
+  if (Array.isArray(node)) {
+    const i = Number(leaf);
+    if (!Number.isInteger(i) || i < 0 || i >= node.length) return false;
+    node[i] = value;
+    return true;
+  }
+  node[leaf] = value;
+  return true;
+}
+
 export class WorkflowDocumentModel extends EventTarget {
   /**
    * @param {object} document  The Arazzo document (cloned in).
