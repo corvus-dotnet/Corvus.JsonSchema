@@ -52,19 +52,9 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "email": "customer@example.com",
-              "plan": "free"
-            },
-            "replacements": [
-              {
-                "target": "/email",
-                "value": "$inputs.email"
-              },
-              {
-                "target": "/plan",
-                "value": "$inputs.plan"
-              }
-            ]
+              "email": "$inputs.email",
+              "plan": "$inputs.plan"
+            }
           },
           "outputs": {
             "accountId": "$response.body#/accountId"
@@ -77,24 +67,10 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "accountId": "placeholder",
-              "email": "customer@example.com",
-              "fullName": "Applicant"
-            },
-            "replacements": [
-              {
-                "target": "/accountId",
-                "value": "$steps.createAccount.outputs.accountId"
-              },
-              {
-                "target": "/email",
-                "value": "$inputs.email"
-              },
-              {
-                "target": "/fullName",
-                "value": "$inputs.fullName"
-              }
-            ]
+              "accountId": "$steps.createAccount.outputs.accountId",
+              "email": "$inputs.email",
+              "fullName": "$inputs.fullName"
+            }
           }
         },
         {

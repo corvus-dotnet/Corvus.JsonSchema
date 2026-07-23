@@ -52,19 +52,9 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "email": "customer@example.com",
-              "plan": "free"
-            },
-            "replacements": [
-              {
-                "target": "/email",
-                "value": "$inputs.email"
-              },
-              {
-                "target": "/plan",
-                "value": "$inputs.plan"
-              }
-            ]
+              "email": "$inputs.email",
+              "plan": "$inputs.plan"
+            }
           },
           "outputs": {
             "accountId": "$response.body#/accountId"
@@ -83,15 +73,9 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "fullName": "Applicant",
+              "fullName": "$inputs.fullName",
               "documentNumber": "X1234567"
-            },
-            "replacements": [
-              {
-                "target": "/fullName",
-                "value": "$inputs.fullName"
-              }
-            ]
+            }
           },
           "successCriteria": [
             {

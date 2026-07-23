@@ -34,16 +34,11 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "requestId": "placeholder",
+              "requestId": "$inputs.requestId",
               "kind": "approval-required",
-              "baseWorkflowId": "placeholder",
-              "requester": "placeholder"
-            },
-            "replacements": [
-              { "target": "/requestId", "value": "$inputs.requestId" },
-              { "target": "/baseWorkflowId", "value": "$inputs.baseWorkflowId" },
-              { "target": "/requester", "value": "$inputs.requester" }
-            ]
+              "baseWorkflowId": "$inputs.baseWorkflowId",
+              "requester": "$inputs.requester"
+            }
           }
         },
         {
@@ -87,11 +82,7 @@
           ],
           "requestBody": {
             "contentType": "application/json",
-            "payload": { "outcome": "placeholder", "reason": "placeholder" },
-            "replacements": [
-              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
-              { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
-            ]
+            "payload": { "outcome": "$steps.awaitDecision.outputs.outcome", "reason": "$steps.awaitDecision.outputs.reason" }
           },
           "outputs": {
             "status": "$response.body#/status"
@@ -105,14 +96,10 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "requestId": "placeholder",
+              "requestId": "$inputs.requestId",
               "kind": "granted",
-              "decidedBy": "placeholder"
-            },
-            "replacements": [
-              { "target": "/requestId", "value": "$inputs.requestId" },
-              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
-            ]
+              "decidedBy": "$steps.awaitDecision.outputs.decidedBy"
+            }
           },
           "onSuccess": [
             { "name": "done", "type": "end" }
@@ -127,11 +114,7 @@
           ],
           "requestBody": {
             "contentType": "application/json",
-            "payload": { "outcome": "placeholder", "reason": "placeholder" },
-            "replacements": [
-              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
-              { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
-            ]
+            "payload": { "outcome": "$steps.awaitDecision.outputs.outcome", "reason": "$steps.awaitDecision.outputs.reason" }
           },
           "outputs": {
             "status": "$response.body#/status"
@@ -145,14 +128,10 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "requestId": "placeholder",
+              "requestId": "$inputs.requestId",
               "kind": "eligible",
-              "decidedBy": "placeholder"
-            },
-            "replacements": [
-              { "target": "/requestId", "value": "$inputs.requestId" },
-              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
-            ]
+              "decidedBy": "$steps.awaitDecision.outputs.decidedBy"
+            }
           },
           "onSuccess": [
             { "name": "done", "type": "end" }
@@ -167,11 +146,7 @@
           ],
           "requestBody": {
             "contentType": "application/json",
-            "payload": { "outcome": "placeholder", "reason": "placeholder" },
-            "replacements": [
-              { "target": "/outcome", "value": "$steps.awaitDecision.outputs.outcome" },
-              { "target": "/reason", "value": "$steps.awaitDecision.outputs.reason" }
-            ]
+            "payload": { "outcome": "$steps.awaitDecision.outputs.outcome", "reason": "$steps.awaitDecision.outputs.reason" }
           },
           "outputs": {
             "status": "$response.body#/status"
@@ -185,14 +160,10 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "requestId": "placeholder",
+              "requestId": "$inputs.requestId",
               "kind": "denied",
-              "decidedBy": "placeholder"
-            },
-            "replacements": [
-              { "target": "/requestId", "value": "$inputs.requestId" },
-              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
-            ]
+              "decidedBy": "$steps.awaitDecision.outputs.decidedBy"
+            }
           },
           "onSuccess": [
             { "name": "done", "type": "end" }
@@ -206,14 +177,10 @@
           "requestBody": {
             "contentType": "application/json",
             "payload": {
-              "requestId": "placeholder",
+              "requestId": "$inputs.requestId",
               "kind": "withdrawn",
-              "decidedBy": "placeholder"
-            },
-            "replacements": [
-              { "target": "/requestId", "value": "$inputs.requestId" },
-              { "target": "/decidedBy", "value": "$steps.awaitDecision.outputs.decidedBy" }
-            ]
+              "decidedBy": "$steps.awaitDecision.outputs.decidedBy"
+            }
           }
         }
       ]
