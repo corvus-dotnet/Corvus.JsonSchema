@@ -5,6 +5,7 @@
 using System.Security.Cryptography;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.Arazzo.Testing;
@@ -113,6 +114,10 @@ public sealed class WorkflowSimulator : IDisposable
             transports[name] = transport;
         }
 
+        // Channel SENDS need a message transport (the executor null-checks it); the simulator's
+        // records each publish into the SAME exchange stream, attributed to the step in flight.
+        var messageTransport = new SimulationMessageTransport(transport);
+
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
         var subWorkflowStepIds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -139,7 +144,7 @@ public sealed class WorkflowSimulator : IDisposable
         {
             using var wallClock = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             wallClock.CancelAfter(budget.WallClock);
-            outcome = await this.RunToOutcomeAsync(loaded, transports, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
+            outcome = await this.RunToOutcomeAsync(loaded, transports, messageTransport, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
         }
 
         var result = new SimulationResult(new CompositeDisposable(owned))
@@ -165,6 +170,7 @@ public sealed class WorkflowSimulator : IDisposable
     private async ValueTask<SimulationOutcome> RunToOutcomeAsync(
         LoadedWorkflow loaded,
         IReadOnlyDictionary<string, IApiTransport> transports,
+        IMessageTransport messageTransport,
         JsonWorkspace workspace,
         SimulationScenario scenario,
         TracingWorkflowRun run,
@@ -193,7 +199,7 @@ public sealed class WorkflowSimulator : IDisposable
                 // Skip protocol replayed).
                 run.SkipOverriddenSteps();
                 run.BeginInvocation();
-                kind = await loaded.Workflow.RunAsync(transports, null, workspace, scenario.Inputs, run, wallClock.Token).ConfigureAwait(false);
+                kind = await loaded.Workflow.RunAsync(transports, messageTransport, workspace, scenario.Inputs, run, wallClock.Token).ConfigureAwait(false);
             }
             catch (SimulationSkipException)
             {

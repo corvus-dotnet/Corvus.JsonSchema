@@ -1259,7 +1259,14 @@ public static class WorkflowExecutorEmitter
             .Append("> ExecuteAsync(").Append(transportParameter).Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
             .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
         writer.AppendLine("    {");
-        writer.Append("        ArgumentNullException.ThrowIfNull(").Append(selection.ParameterName).AppendLine(");");
+
+        // A workflow with no API source gets no transport (the host adapter passes default — its
+        // steps make no API calls), so the null check applies only when an API source exists.
+        if ((options.Sources?.Count ?? 0) > 0)
+        {
+            writer.Append("        ArgumentNullException.ThrowIfNull(").Append(selection.ParameterName).AppendLine(");");
+        }
+
         if (needsMessageTransport)
         {
             writer.AppendLine("        ArgumentNullException.ThrowIfNull(messageTransport);");

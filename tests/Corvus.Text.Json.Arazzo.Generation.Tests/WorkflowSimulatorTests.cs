@@ -7,6 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Testing;
+using Corvus.Text.Json.OpenApi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -1148,6 +1149,90 @@ public sealed class WorkflowSimulatorTests
 
         result.Outcome.ShouldBe(SimulationOutcome.Completed);
         result.Exchanges.ShouldContain(x => x.Path == "/accounts/acc-7/identity");
+    }
+
+    // The access-approval shape: a fire-and-forget SEND (which faulted with "Value cannot be null
+    // (Parameter 'messageTransport')" before the simulator wired one), then a receive released by a
+    // scenario trigger, then a send reading the received message.
+    private const string ChannelSendWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Approval", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "notifications", "url": "./n.asyncapi.json", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "approval",
+              "inputs": { "type": "object", "properties": { "requestId": { "type": "string" } } },
+              "steps": [
+                {
+                  "stepId": "notify",
+                  "channelPath": "access.notify",
+                  "action": "send",
+                  "requestBody": { "contentType": "application/json", "payload": { "requestId": "$inputs.requestId", "kind": "approval-required" } }
+                },
+                {
+                  "stepId": "await",
+                  "channelPath": "access.decision",
+                  "action": "receive",
+                  "outputs": { "outcome": "$message.payload#/outcome" }
+                },
+                {
+                  "stepId": "confirm",
+                  "channelPath": "access.notify",
+                  "action": "send",
+                  "requestBody": { "contentType": "application/json", "payload": { "requestId": "$inputs.requestId", "kind": "$steps.await.outputs.outcome" } }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    private const string NotificationsAsyncApi = """
+        {
+          "asyncapi": "3.0.0",
+          "info": { "title": "Notifications", "version": "1.0.0" },
+          "channels": {
+            "accessNotify": { "address": "access.notify", "messages": { "note": { "payload": { "type": "object", "properties": { "requestId": { "type": "string" }, "kind": { "type": "string" } } } } } },
+            "accessDecisions": { "address": "access.decision", "messages": { "decision": { "payload": { "type": "object", "properties": { "outcome": { "type": "string" } } } } } }
+          },
+          "operations": {
+            "publishNote": { "action": "send", "channel": { "$ref": "#/channels/accessNotify" }, "messages": [ { "$ref": "#/channels/accessNotify/messages/note" } ] },
+            "receiveDecision": { "action": "receive", "channel": { "$ref": "#/channels/accessDecisions" }, "messages": [ { "$ref": "#/channels/accessDecisions/messages/decision" } ] }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public async Task Channel_sends_simulate_as_recorded_publishes_and_triggers_release_the_receive()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"requestId":"r-1"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> decision = ParsedJsonDocument<JsonElement>.Parse("""{"outcome":"approved"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Triggers = [new("access.decision", decision.RootElement, CorrelationId: null)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(ChannelSendWorkflowJson), [new("notifications", Encoding.UTF8.GetBytes(NotificationsAsyncApi))], scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, $"{result.Fault?.StepId}: {result.Fault?.Error}");
+        result.Steps.Count.ShouldBe(3);
+        result.Steps[0].Faulted.ShouldBeFalse("the send must not fault for want of a message transport");
+
+        // The first send is a recorded publish attributed to its step, carrying the payload AS SENT.
+        SimulatedStepRecord notify = result.Steps[0];
+        notify.ExchangeCount.ShouldBe(1);
+        MockApiExchange published = result.Exchanges[notify.FirstExchange];
+        published.Method.ShouldBe(OperationMethod.Publish);
+        published.Path.ShouldBe("access.notify");
+        Encoding.UTF8.GetString(published.RequestBody.Span).ShouldContain("\"requestId\":\"r-1\"");
+
+        // The receive released by the trigger feeds the third step's send.
+        SimulatedStepRecord confirm = result.Steps[2];
+        Encoding.UTF8.GetString(result.Exchanges[confirm.FirstExchange].RequestBody.Span).ShouldContain("\"kind\":\"approved\"");
     }
 
     private sealed class CountingProvider(IWorkflowExecutorProvider inner) : IWorkflowExecutorProvider

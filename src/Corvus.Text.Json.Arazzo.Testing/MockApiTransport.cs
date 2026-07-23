@@ -156,6 +156,22 @@ public sealed class MockApiTransport : IApiTransport
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
+    /// <summary>
+    /// Records a channel SEND in the exchange stream — the simulation message transport's seam. The
+    /// publish appears exactly where an HTTP exchange would (attributed to the step in flight), with
+    /// the channel address as the path and the serialized payload as the request body; 202 says
+    /// "accepted, fire-and-forget" (nothing scripted a broker response).
+    /// </summary>
+    /// <param name="channelAddress">The channel address the message was published to.</param>
+    /// <param name="payloadBytes">The message payload as sent (the exchange owns the bytes).</param>
+    public void RecordMessagePublish(string channelAddress, byte[] payloadBytes)
+    {
+        ArgumentNullException.ThrowIfNull(channelAddress);
+        ArgumentNullException.ThrowIfNull(payloadBytes);
+        this.requests.Add(new MockApiRequest(OperationMethod.Publish, channelAddress));
+        this.exchanges.Add(new MockApiExchange(OperationMethod.Publish, channelAddress, 202, default, "application/json", payloadBytes));
+    }
+
     private static byte[] SerializeBody<TBody>(in TBody body)
         where TBody : struct, IJsonElement<TBody>
     {
