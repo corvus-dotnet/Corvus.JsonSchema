@@ -2263,6 +2263,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         var operations = new HashSet<string>(StringComparer.Ordinal);
         var channels = new HashSet<string>(StringComparer.Ordinal);
         var operationNodes = new Dictionary<string, (JsonElement Root, JsonElement Operation)>(StringComparer.Ordinal);
+        var operationPathItems = new Dictionary<string, JsonElement>(StringComparer.Ordinal); // opId → its path item (path-level parameters)
         var rentedSourceDocs = new List<IDisposable>();
         bool anySurfaceResolved = false;
         try
@@ -2310,7 +2311,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 if (attachment.TryGetProperty("document"u8, out JsonElement inline) && inline.ValueKind == JsonValueKind.Object)
                 {
                     CollectOperationIdentities(inline, operations, channels);
-                    CollectOperationNodes(inline, operationNodes);
+                    CollectOperationNodes(inline, operationNodes, operationPathItems);
                     anySurfaceResolved = true;
                 }
                 else if (this.sources is not null
@@ -2324,7 +2325,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     {
                         rentedSourceDocs.Add(r);
                         CollectOperationIdentities((JsonElement)r.RootElement.Document, operations, channels);
-                        CollectOperationNodes((JsonElement)r.RootElement.Document, operationNodes);
+                        CollectOperationNodes((JsonElement)r.RootElement.Document, operationNodes, operationPathItems);
                         anySurfaceResolved = true;
                     }
                 }
@@ -2377,9 +2378,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     continue; // no surface to check against; the declared-but-unattached warnings already fired
                 }
 
-                if (bindsOperation)
+                string? op = bindsOperation ? operationId.GetString() : null;
+                if (op is not null)
                 {
-                    string op = operationId.GetString()!;
                     if (!op.StartsWith("$sourceDescriptions.", StringComparison.Ordinal) && !operations.Contains(op))
                     {
                         findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/operationId", $"Operation '{op}' is not found in any attached source — did its source description get removed?", null));
@@ -2395,21 +2396,71 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     }
                 }
 
-                // Payload typing: literals AND statically-typed expressions in the step's request
-                // payload checked against the bound operation's schema. A plain "tru" on a boolean
-                // leaf can never be valid; neither can "$inputs.orderId" (a string, per the
-                // workflow's own inputs schema) — only expressions whose type cannot be resolved
-                // get the benefit of the doubt.
-                if (bindsOperation
-                    && step.TryGetProperty("requestBody"u8, out JsonElement requestBody)
-                    && requestBody.TryGetProperty("payload"u8, out JsonElement payload)
-                    && operationNodes.TryGetValue(operationId.GetString()!, out (JsonElement Root, JsonElement Operation) node))
+                // Request-shape typing: literals AND statically-typed expressions checked against the
+                // bound operation's schemas. A plain "tru" on a boolean leaf can never be valid; neither
+                // can "$inputs.orderId" (a string, per the workflow's own inputs schema) — only
+                // expressions whose type cannot be resolved get the benefit of the doubt. Three surfaces
+                // share the walk: the request payload, each replacement's value (against the schema AT
+                // its target pointer), and each step parameter (against the operation's parameter schema).
+                if (op is not null && operationNodes.TryGetValue(op, out (JsonElement Root, JsonElement Operation) node))
                 {
-                    JsonElement schema = ResolveRequestSchema(node.Operation, node.Root);
-                    if (schema.ValueKind == JsonValueKind.Object)
+                    var typing = new ExpressionTypingContext(workflow, operationNodes);
+
+                    if (step.TryGetProperty("requestBody"u8, out JsonElement requestBody) && requestBody.ValueKind == JsonValueKind.Object)
                     {
-                        var typing = new ExpressionTypingContext(workflow, operationNodes);
-                        CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0, typing);
+                        JsonElement schema = ResolveRequestSchema(node.Operation, node.Root);
+                        if (schema.ValueKind == JsonValueKind.Object)
+                        {
+                            if (requestBody.TryGetProperty("payload"u8, out JsonElement payload))
+                            {
+                                CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0, typing);
+                            }
+
+                            if (requestBody.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
+                            {
+                                int replacementIndex = -1;
+                                foreach (JsonElement replacement in replacements.EnumerateArray())
+                                {
+                                    replacementIndex++;
+                                    if (replacement.ValueKind == JsonValueKind.Object
+                                        && replacement.TryGetProperty("target"u8, out JsonElement target)
+                                        && target.ValueKind == JsonValueKind.String
+                                        && replacement.TryGetProperty("value"u8, out JsonElement replacementValue))
+                                    {
+                                        using UnescapedUtf8JsonString targetUtf8 = target.GetUtf8String();
+                                        JsonElement targetSchema = SchemaAtPointer(schema, node.Root, targetUtf8.Span);
+                                        if (targetSchema.ValueKind == JsonValueKind.Object)
+                                        {
+                                            CheckPayloadAgainstSchema(replacementValue, targetSchema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/replacements/{replacementIndex}/value", findings, 0, typing);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (step.TryGetProperty("parameters"u8, out JsonElement stepParameters) && stepParameters.ValueKind == JsonValueKind.Array)
+                    {
+                        operationPathItems.TryGetValue(op, out JsonElement pathItem);
+                        int parameterIndex = -1;
+                        foreach (JsonElement parameter in stepParameters.EnumerateArray())
+                        {
+                            parameterIndex++;
+                            if (parameter.ValueKind != JsonValueKind.Object
+                                || !parameter.TryGetProperty("name"u8, out JsonElement parameterName)
+                                || parameterName.ValueKind != JsonValueKind.String
+                                || !parameter.TryGetProperty("value"u8, out JsonElement parameterValue))
+                            {
+                                continue;
+                            }
+
+                            parameter.TryGetProperty("in"u8, out JsonElement parameterLocation);
+                            JsonElement parameterSchema = FindOperationParameterSchema(node.Operation, pathItem, node.Root, parameterName, parameterLocation);
+                            if (parameterSchema.ValueKind == JsonValueKind.Object)
+                            {
+                                CheckPayloadAgainstSchema(parameterValue, parameterSchema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/parameters/{parameterIndex}/value", findings, 0, typing);
+                            }
+                        }
                     }
                 }
             }
@@ -2426,8 +2477,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
     }
 
-    /// <summary>Maps each OpenAPI operationId to its operation node (with the doc root for $ref walks).</summary>
-    private static void CollectOperationNodes(JsonElement doc, Dictionary<string, (JsonElement Root, JsonElement Operation)> nodes)
+    /// <summary>Maps each OpenAPI operationId to its operation node (with the doc root for $ref walks) and its
+    /// path item (path-level parameters apply to every operation under the path).</summary>
+    private static void CollectOperationNodes(JsonElement doc, Dictionary<string, (JsonElement Root, JsonElement Operation)> nodes, Dictionary<string, JsonElement> pathItems)
     {
         if (!doc.TryGetProperty("paths"u8, out JsonElement paths) || paths.ValueKind != JsonValueKind.Object)
         {
@@ -2448,6 +2500,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     && id.GetString() is { Length: > 0 } operationId)
                 {
                     nodes.TryAdd(operationId, (doc, method.Value));
+                    pathItems.TryAdd(operationId, path.Value);
                 }
             }
         }
@@ -2504,6 +2557,120 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
     private static bool IsExpressionShaped(string text)
         => text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal);
+
+    /// <summary>The schema at a JSON Pointer WITHIN a request schema (a replacement's target): each token
+    /// descends <c>properties</c> for an object schema or <c>items</c> for an array index/append token,
+    /// following local <c>$ref</c>s. Default when the pointer does not resolve — no finding, the
+    /// goto-target-style pointer checks own that. The pointer is walked as UTF-8 through
+    /// <see cref="Utf8JsonPointer"/> (tokens decode into a stack buffer; nothing materializes).</summary>
+    private static JsonElement SchemaAtPointer(JsonElement schema, JsonElement root, ReadOnlySpan<byte> pointerUtf8)
+    {
+        if (!Utf8JsonPointer.TryCreateJsonPointer(pointerUtf8, out Utf8JsonPointer pointer))
+        {
+            return default;
+        }
+
+        JsonElement current = Deref(schema, root);
+        Span<byte> decoded = stackalloc byte[256];
+        foreach (ReadOnlySpan<byte> encoded in pointer.EnumerateEncodedSegments())
+        {
+            if (current.ValueKind != JsonValueKind.Object || encoded.Length > decoded.Length)
+            {
+                return default; // a >256-byte property token names nothing a request schema declares
+            }
+
+            int length = Utf8JsonPointer.DecodeSegment(encoded, decoded);
+            ReadOnlySpan<byte> token = decoded[..length];
+            if (current.TryGetProperty("properties"u8, out JsonElement properties)
+                && properties.ValueKind == JsonValueKind.Object
+                && properties.TryGetProperty(token, out JsonElement propertySchema))
+            {
+                current = Deref(propertySchema, root);
+                continue;
+            }
+
+            if (IsArrayIndexToken(token) && current.TryGetProperty("items"u8, out JsonElement items))
+            {
+                current = Deref(items, root);
+                continue;
+            }
+
+            return default;
+        }
+
+        return current;
+    }
+
+    /// <summary>An RFC 6901 array reference token: the append marker <c>-</c> or a digit run.</summary>
+    private static bool IsArrayIndexToken(ReadOnlySpan<byte> token)
+    {
+        if (token.Length == 1 && token[0] == (byte)'-')
+        {
+            return true;
+        }
+
+        if (token.IsEmpty)
+        {
+            return false;
+        }
+
+        foreach (byte b in token)
+        {
+            if (b is < (byte)'0' or > (byte)'9')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Finds the schema of the operation parameter a step parameter binds: matched by name (and
+    /// location, when the step declares <c>in</c>) over the operation's parameters first, then the path
+    /// item's (path-level parameters apply to every operation under the path). Default when unmatched —
+    /// an unknown parameter name is not this pass's finding. Names compare as UTF-8 spans; no strings.</summary>
+    private static JsonElement FindOperationParameterSchema(JsonElement operation, JsonElement pathItem, JsonElement root, in JsonElement name, in JsonElement location)
+    {
+        using UnescapedUtf8JsonString nameUtf8 = name.GetUtf8String();
+        bool hasLocation = location.ValueKind == JsonValueKind.String;
+        using UnescapedUtf8JsonString locationUtf8 = hasLocation ? location.GetUtf8String() : default;
+
+        Span<JsonElement> owners = [operation, pathItem];
+        foreach (JsonElement owner in owners)
+        {
+            if (owner.ValueKind != JsonValueKind.Object
+                || !owner.TryGetProperty("parameters"u8, out JsonElement parameters)
+                || parameters.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (JsonElement candidate in parameters.EnumerateArray())
+            {
+                JsonElement resolved = Deref(candidate, root);
+                if (resolved.ValueKind != JsonValueKind.Object
+                    || !resolved.TryGetProperty("name"u8, out JsonElement candidateName)
+                    || !candidateName.ValueEquals(nameUtf8.Span))
+                {
+                    continue;
+                }
+
+                if (hasLocation
+                    && resolved.TryGetProperty("in"u8, out JsonElement candidateLocation)
+                    && candidateLocation.ValueKind == JsonValueKind.String
+                    && !candidateLocation.ValueEquals(locationUtf8.Span))
+                {
+                    continue;
+                }
+
+                return resolved.TryGetProperty("schema"u8, out JsonElement parameterSchema)
+                    ? Deref(parameterSchema, root)
+                    : default;
+            }
+        }
+
+        return default;
+    }
 
     /// <summary>
     /// Walks payload literals against the operation's schema: a non-expression string on a
@@ -2707,6 +2874,20 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         string? type = schema.TryGetProperty("type"u8, out JsonElement typeElement) && typeElement.ValueKind == JsonValueKind.String
             ? typeElement.GetString()
             : null;
+
+        // The reverse literal mismatches: a number/boolean literal on a leaf whose schema wants a
+        // different scalar can never satisfy the API either.
+        if (value.ValueKind == JsonValueKind.Number && type is "string" or "boolean")
+        {
+            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a number — the operation's schema requires a {type} here.", null));
+            return;
+        }
+
+        if (value.ValueKind is JsonValueKind.True or JsonValueKind.False && type is "string" or "number" or "integer")
+        {
+            findings.Add(new("error", "payload-typing", pointer, $"{value.GetRawText()} is a boolean — the operation's schema requires a {type} here.", null));
+            return;
+        }
 
         if (value.ValueKind == JsonValueKind.String)
         {

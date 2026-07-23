@@ -922,6 +922,90 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Validate_types_step_parameters_and_replacement_values_against_the_operation_schemas()
+    {
+        await using Scoped host = await StartAsync();
+
+        // getPet: petId is an INTEGER path parameter declared at the PATH level; verbose a BOOLEAN
+        // query parameter at the operation level; tag a STRING query parameter. The request schema
+        // types note (string) and count (integer).
+        const string doc = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "orderId": { "type": "string" } } },
+            "steps": [{
+              "stepId": "get",
+              "operationId": "getPet",
+              "parameters": [
+                { "name": "petId", "in": "path", "value": "abc" },
+                { "name": "verbose", "in": "query", "value": "$inputs.orderId" },
+                { "name": "tag", "in": "query", "value": 7 },
+                { "name": "petId", "in": "path", "value": "$inputs.petCount" }
+              ],
+              "requestBody": {
+                "payload": { "note": "fine" },
+                "replacements": [
+                  { "target": "/count", "value": "nope" },
+                  { "target": "/note", "value": "$inputs.orderId" }
+                ]
+              }
+            }]
+          }]
+        }
+        """;
+        string id = await CreateWithDocumentAsync(host, doc);
+        const string petsDoc = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Pets", "version": "1.0.0" },
+          "paths": {
+            "/pets/{petId}": {
+              "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+              "post": {
+                "operationId": "getPet",
+                "parameters": [
+                  { "name": "verbose", "in": "query", "schema": { "type": "boolean" } },
+                  { "name": "tag", "in": "query", "schema": { "type": "string" } }
+                ],
+                "requestBody": { "content": { "application/json": { "schema": {
+                  "type": "object",
+                  "properties": { "note": { "type": "string" }, "count": { "type": "integer" } } } } } },
+                "responses": { "200": { "description": "ok" } }
+              }
+            }
+          }
+        }
+        """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{petsDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", "{}", Read));
+        var typing = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Where(d => d.GetProperty("category").GetString() == "payload-typing")
+            .Select(d => (Path: d.GetProperty("instancePath").GetString()!, Message: d.GetProperty("message").GetString()!))
+            .ToList();
+
+        // A string literal can never satisfy the path-level INTEGER parameter.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/0/value" && t.Message.Contains("neither a integer nor a runtime expression"));
+
+        // A statically-typed expression must match the op-level BOOLEAN parameter.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/1/value" && t.Message.Contains("resolves to a string"));
+
+        // The reverse mismatch: a number literal on the STRING parameter.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/parameters/2/value" && t.Message.Contains("7 is a number"));
+
+        // An expression whose type does NOT resolve ($inputs.petCount is undeclared) gets the benefit of the doubt.
+        typing.ShouldNotContain(t => t.Path == "/workflows/0/steps/0/parameters/3/value");
+
+        // A replacement's value checks against the schema AT its target pointer.
+        typing.ShouldContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/0/value" && t.Message.Contains("neither a integer nor a runtime expression"));
+        typing.ShouldNotContain(t => t.Path == "/workflows/0/steps/0/requestBody/replacements/1/value");
+    }
+
+    [TestMethod]
     public async Task Validate_resolves_a_channelPath_step_against_the_channel_address_not_only_its_key()
     {
         await using Scoped host = await StartAsync();
