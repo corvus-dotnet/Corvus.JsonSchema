@@ -701,9 +701,11 @@
       logEvent('source-detached', { name: e.detail.name });
     });
 
-    // Step creation (design §3.2): DRAG an operation onto the surface (the drop point pins the
-    // node); keyboard activation in the rail creates at the auto-layout position. Both paths make
-    // a step bound to the operation, required parameters pre-populated, model-routed and selected.
+    // Step creation (design §3.2): DRAG an operation onto the surface, or activate it from the rail —
+    // both create the step at the AUTO-LAYOUT position, so a fresh step flows START -> step -> END
+    // cleanly rather than being pinned wherever it was dropped (which left START/END stranded in a
+    // different column). Drag an EXISTING node to pin/reposition it. Both paths make a step bound to
+    // the operation, required parameters pre-populated, model-routed and selected.
     function createStepFromOperation(operation, position, sourceName) {
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       if (!wf) return;
@@ -748,12 +750,10 @@
         const w = d.workflows.find((x) => x.workflowId === select.value);
         w.steps.push(step);
       }, { origin: 'canvas', label: `add step ${stepId}` });
-      if (position) {
-        model.updateDesignerState((st) => {
-          st.nodes ??= {};
-          st.nodes[stepId] = { x: Math.round(position.x), y: Math.round(position.y) };
-        }, { origin: 'canvas', label: `add step ${stepId}`, coalesce: true });
-      }
+      // Deliberately NOT pinning the drop point: a new step takes its auto-layout position so the
+      // graph stays a clean START -> step -> END flow. Repositioning is a separate, explicit gesture
+      // (drag an existing node), so `position` no longer drives placement here.
+      void position;
 
       surface.selection = { type: 'node', id: stepId };
       showSelection(surface.selection);
