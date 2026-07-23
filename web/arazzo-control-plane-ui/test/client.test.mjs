@@ -1496,6 +1496,45 @@ test('validate flags payload literals that can never satisfy the operation schem
   assert.ok(!clean.diagnostics.some((d) => d.category === 'payload-typing'), 'expressions + literals of the right type pass');
 });
 
+test('validate types step parameters and replacement values (mirror of the server pass)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'typed-params',
+    document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'pets', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [{
+        stepId: 'get', operationId: 'getPet',
+        parameters: [
+          { name: 'petId', in: 'path', value: 'abc' },
+          { name: 'tag', in: 'query', value: 7 },
+        ],
+        requestBody: { payload: { note: 'fine' }, replacements: [{ target: '/count', value: 'nope' }] },
+      }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'pets', { document: {
+    openapi: '3.1.0', info: { title: 'Pets', version: '1' },
+    paths: { '/pets/{petId}': {
+      parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'integer' } }],
+      post: {
+        operationId: 'getPet',
+        parameters: [{ name: 'tag', in: 'query', schema: { type: 'string' } }],
+        requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { note: { type: 'string' }, count: { type: 'integer' } } } } } },
+        responses: { 200: { description: 'ok' } },
+      },
+    } },
+  } });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  const typing = report.diagnostics.filter((d) => d.category === 'payload-typing');
+  const at = (p) => typing.find((d) => d.instancePath === p);
+  assert.match(at('/workflows/0/steps/0/parameters/0/value').message, /neither an integer nor a runtime expression/);
+  assert.match(at('/workflows/0/steps/0/parameters/1/value').message, /7 is a number — the operation's schema requires a string/);
+  assert.match(at('/workflows/0/steps/0/requestBody/replacements/0/value').message, /neither an integer/);
+  assert.ok(!at('/workflows/0/steps/0/requestBody/payload/note'), 'the well-typed payload leaf is clean');
+});
+
 test('validate types a channel step\'s payload against its message schema; multi-message channels get the benefit of the doubt', async () => {
   const c = makeClient();
   const wc = await c.createWorkingCopy({

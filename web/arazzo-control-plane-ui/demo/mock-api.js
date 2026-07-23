@@ -3731,20 +3731,31 @@ export function createMockControlPlane(options = {}) {
     };
     const compatible = (a, b) => a === b || (a === 'integer' && b === 'number') || (a === 'number' && b === 'integer');
 
+    // "an integer", "a boolean" — the indefinite article by the type's first sound (mirrors the server).
+    const an = (t) => (t === 'integer' || t === 'object' || t === 'array' ? `an ${t}` : `a ${t}`);
     const check = (value, schema, root, pointer, depth = 0, typing = null) => {
       schema = deref(schema, root);
       if (depth > 12 || !schema || typeof schema !== 'object') return;
+      // The reverse literal mismatches: a number/boolean literal on a leaf wanting a different scalar.
+      if (typeof value === 'number' && ['string', 'boolean'].includes(schema.type)) {
+        findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `${JSON.stringify(value)} is a number — the operation's schema requires ${an(schema.type)} here.` });
+        return;
+      }
+      if (typeof value === 'boolean' && ['string', 'number', 'integer'].includes(schema.type)) {
+        findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `${JSON.stringify(value)} is a boolean — the operation's schema requires ${an(schema.type)} here.` });
+        return;
+      }
       if (typeof value === 'string') {
         if (!isExpr(value)) {
           if (['boolean', 'number', 'integer'].includes(schema.type)) {
-            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither a ${schema.type} nor a runtime expression — the operation's schema requires a ${schema.type} here.` });
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither ${an(schema.type)} nor a runtime expression — the operation's schema requires ${an(schema.type)} here.` });
           }
           return;
         }
         if (typing && ['boolean', 'number', 'integer', 'string'].includes(schema.type)) {
           const exprType = typeOfExpression(value, typing.workflow, root);
           if (exprType && !compatible(exprType, schema.type)) {
-            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' resolves to a ${exprType} — the operation's schema requires a ${schema.type} here.` });
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' resolves to ${an(exprType)} — the operation's schema requires ${an(schema.type)} here.` });
           }
         }
         return;
@@ -3762,16 +3773,66 @@ export function createMockControlPlane(options = {}) {
         value.forEach((v, i) => check(v, schema.items, root, `${pointer}/${i}`, depth + 1, typing));
       }
     };
+    // The schema of the operation parameter a step parameter binds (op-level first, then path-level).
+    const opParamSchema = (operationId, name, loc) => {
+      for (const root of attachedDocs) {
+        for (const item of Object.values(root.paths ?? {})) {
+          for (const op of Object.values(item ?? {})) {
+            if (!op || typeof op !== 'object' || op.operationId !== operationId) continue;
+            for (const owner of [op.parameters, item.parameters]) {
+              for (const raw of owner ?? []) {
+                const cand = deref(raw, root);
+                if (cand?.name !== name) continue;
+                if (loc && cand.in && cand.in !== loc) continue;
+                const schema = deref(cand.schema, root);
+                return schema ? { schema, root } : null;
+              }
+            }
+            return null;
+          }
+        }
+      }
+      return null;
+    };
+    // The schema AT a replacement's JSON Pointer target within a request/message schema.
+    const schemaAtPointer = (schema, root, ptr) => {
+      if (typeof ptr !== 'string' || (ptr !== '' && !ptr.startsWith('/'))) return null;
+      let node = deref(schema, root);
+      for (const raw of ptr === '' ? [] : ptr.slice(1).split('/')) {
+        if (!node || typeof node !== 'object') return null;
+        const tok = raw.replace(/~1/g, '/').replace(/~0/g, '~');
+        if (node.properties?.[tok]) { node = deref(node.properties[tok], root); continue; }
+        if ((tok === '-' || /^\d+$/.test(tok)) && node.items) { node = deref(node.items, root); continue; }
+        return null;
+      }
+      return node;
+    };
     for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
       for (const [si, step] of (Array.isArray(workflow?.steps) ? workflow.steps : []).entries()) {
-        const payload = step?.requestBody?.payload;
-        if (payload === undefined) continue;
+        const base = `/workflows/${wi}/steps/${si}`;
         // An operation step types against the request-body schema; a channel step against the
         // channel's one message payload schema (mirror of the server's pass).
         const resolved = step?.operationId ? opSchema(step.operationId)
           : step?.channelPath ? channelSchema(step.channelPath)
           : null;
-        if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`, 0, { workflow });
+        if (resolved) {
+          const payload = step?.requestBody?.payload;
+          if (payload !== undefined) check(payload, resolved.schema, resolved.root, `${base}/requestBody/payload`, 0, { workflow });
+          // Each replacement's value checks against the schema AT its target pointer.
+          (step?.requestBody?.replacements ?? []).forEach((r, ri) => {
+            if (!r || typeof r.target !== 'string' || r.value === undefined) return;
+            const target = schemaAtPointer(resolved.schema, resolved.root, r.target);
+            if (target) check(r.value, target, resolved.root, `${base}/requestBody/replacements/${ri}/value`, 0, { workflow });
+          });
+        }
+        // Step parameters check against the operation's parameter schemas.
+        if (step?.operationId) {
+          (step.parameters ?? []).forEach((prm, pi) => {
+            if (!prm || typeof prm.name !== 'string' || prm.value === undefined || prm.reference) return;
+            const ps = opParamSchema(step.operationId, prm.name, prm.in);
+            if (ps) check(prm.value, ps.schema, ps.root, `${base}/parameters/${pi}/value`, 0, { workflow });
+          });
+        }
       }
     }
 
