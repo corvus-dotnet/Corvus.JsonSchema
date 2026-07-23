@@ -172,6 +172,111 @@ public class WorkflowDocumentAnalyzerTests
     }
 
     [TestMethod]
+    public void A_path_parameter_bound_to_an_undeclared_step_output_is_an_error()
+    {
+        // The double-slash reproduction: verifyIdentity binds accountId to $steps.listVerifications.outputs.accountId,
+        // but listVerifications declares only "items". The reference resolves to nothing, so the {accountId} path
+        // segment renders empty (/accounts//identity) at run time. The step EXISTS, so this is not implicit-dependency.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "listVerifications", "operationId": "list", "outputs": { "items": "$response.body" } },
+                {
+                  "stepId": "verifyIdentity",
+                  "operationId": "verify",
+                  "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.listVerifications.outputs.accountId" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """);
+
+        WorkflowDocumentDiagnostic d = diagnostics.ShouldHaveSingleItem();
+        d.Severity.ShouldBe(WorkflowDocumentDiagnosticSeverity.Error);
+        d.Category.ShouldBe("output-reference");
+        d.InstancePath.ShouldBe("/workflows/0/steps/1/parameters/0/value");
+        d.Message.ShouldContain("accountId");
+    }
+
+    [TestMethod]
+    public void An_undeclared_output_reference_reports_on_every_expression_surface()
+    {
+        // parameters, requestBody payload, replacements, step outputs and workflow outputs all flow through the
+        // same check — an undeclared $steps.a.outputs.missing is caught wherever it appears.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "a", "operationId": "x", "outputs": { "known": "$response.body" } },
+                {
+                  "stepId": "b",
+                  "operationId": "y",
+                  "parameters": [ { "name": "p", "in": "query", "value": "$steps.a.outputs.missing" } ],
+                  "requestBody": {
+                    "payload": "{\"id\": \"{$steps.a.outputs.missing}\"}",
+                    "replacements": [ { "target": "/id", "value": "$steps.a.outputs.missing" } ]
+                  },
+                  "outputs": { "echo": "$steps.a.outputs.missing" }
+                }
+              ],
+              "outputs": { "wf": "$steps.a.outputs.missing" }
+            }
+          ]
+        }
+        """);
+
+        diagnostics.Where(d => d.Category == "output-reference").Select(d => d.InstancePath).ShouldBe(
+            [
+                "/workflows/0/outputs/wf",
+                "/workflows/0/steps/1/parameters/0/value",
+                "/workflows/0/steps/1/requestBody/payload",
+                "/workflows/0/steps/1/requestBody/replacements/0/value",
+                "/workflows/0/steps/1/outputs/echo",
+            ],
+            ignoreOrder: true);
+    }
+
+    [TestMethod]
+    public void A_declared_output_reference_and_navigation_into_it_are_clean()
+    {
+        // Exact name, navigation into the value, a JSON-pointer tail, and a dotted output name all resolve.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "s", "url": "./s.json", "type": "openapi" }],
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "a", "operationId": "x", "successCriteria": [{ "condition": "$statusCode == 200" }], "outputs": { "applicant": "$response.body", "kyc.results": "$response.body#/kyc" } },
+                {
+                  "stepId": "b",
+                  "operationId": "y",
+                  "successCriteria": [{ "condition": "$statusCode == 200" }],
+                  "parameters": [
+                    { "name": "p", "in": "query", "value": "$steps.a.outputs.applicant" },
+                    { "name": "q", "in": "query", "value": "$steps.a.outputs.applicant.name" },
+                    { "name": "r", "in": "query", "value": "$steps.a.outputs.applicant#/name" },
+                    { "name": "t", "in": "query", "value": "$steps.a.outputs.kyc.results" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        """);
+
+        diagnostics.ShouldNotContain(d => d.Category == "output-reference");
+    }
+
+    [TestMethod]
     public void Combined_explicit_and_implicit_dependency_cycle_is_an_error()
     {
         // stepX dependsOn stepY (explicit stepY->stepX); stepY reads $steps.stepX.outputs (implicit stepX->stepY). The
