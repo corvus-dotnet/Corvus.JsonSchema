@@ -85,6 +85,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         IEnvironmentStore environments,
         IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(catalogStore);
@@ -108,7 +109,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         // credential, and the administrator store records the §15 administrator (established when v1 is added), so the
         // genesis administrator can later approve the requests the workflow governs.
         var catalog = new SecuredWorkflowCatalog(catalogStore, runs, "bootstrap", credentials, administrators);
-        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, environmentAdministrators);
+        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, environmentAdministrators, executorProvider);
         await installer.InstallAsync(
             new SystemWorkflowInstallOptions
             {

@@ -70,5 +70,6 @@ public interface IDeploymentBootstrap
         IEnvironmentStore environments,
         IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
+        IWorkflowExecutorProvider? executorProvider = null,
         CancellationToken cancellationToken = default);
 }

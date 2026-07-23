@@ -77,6 +77,41 @@ public sealed class SystemWorkflowInstallerTests
     }
 
     [TestMethod]
+    public async Task An_unbakeable_system_workflow_fails_the_install_loudly()
+    {
+        // The deferred half of "surface system-workflow bake failures": a null build is the provider's
+        // degraded mode for USER workflows, but a non-runnable SYSTEM workflow crash-loops its runner
+        // with no visible cause — the deployment must refuse to come up instead.
+        var provider = new StubExecutorProvider(bakes: false);
+        Fixture fixture = Fixture.Create(provider);
+
+        InvalidOperationException refused = await Should.ThrowAsync<InvalidOperationException>(
+            async () => await fixture.Installer.InstallAsync(Options(), default));
+        refused.Message.ShouldContain("failed to bake");
+        refused.Message.ShouldContain("access-approval");
+        provider.Builds.ShouldBe(1);
+
+        // Nothing was catalogued: the refusal fired before any install step.
+        using ParsedJsonDocument<CatalogVersion>? version = await fixture.Catalog.GetAsync("access-approval", 1, AccessContext.System, default);
+        version.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_bakeable_system_workflow_installs_with_the_probe_satisfied()
+    {
+        var provider = new StubExecutorProvider(bakes: true);
+        Fixture fixture = Fixture.Create(provider);
+
+        await fixture.Installer.InstallAsync(Options(), default);
+
+        provider.Builds.ShouldBe(1);
+        provider.LastWorkflow.Length.ShouldBeGreaterThan(0, "the probe bakes the real embedded workflow");
+        provider.LastSourceCount.ShouldBe(2, "notifications + controlplane ride along");
+        using ParsedJsonDocument<CatalogVersion>? version = await fixture.Catalog.GetAsync("access-approval", 1, AccessContext.System, default);
+        version.ShouldNotBeNull();
+    }
+
+    [TestMethod]
     public async Task The_runner_credential_admits_only_the_approval_workflow_identity()
     {
         Fixture f = Fixture.Create();
@@ -108,7 +143,7 @@ public sealed class SystemWorkflowInstallerTests
 
         public required SystemWorkflowInstaller Installer { get; init; }
 
-        public static Fixture Create()
+        public static Fixture Create(Corvus.Text.Json.Arazzo.IWorkflowExecutorProvider? executorProvider = null)
         {
             var credentials = new InMemorySourceCredentialStore();
             var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "system", credentials);
@@ -121,8 +156,29 @@ public sealed class SystemWorkflowInstallerTests
                 Availability = availability,
                 Credentials = credentials,
                 Environments = environments,
-                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, administrators),
+                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, administrators, executorProvider),
             };
+        }
+    }
+
+    /// <summary>A bake probe stub: scripted success or failure, recording what it was asked to build.</summary>
+    private sealed class StubExecutorProvider(bool bakes) : Corvus.Text.Json.Arazzo.IWorkflowExecutorProvider
+    {
+        public int Builds { get; private set; }
+
+        public ReadOnlyMemory<byte> LastWorkflow { get; private set; }
+
+        public int LastSourceCount { get; private set; }
+
+        public Corvus.Text.Json.Arazzo.WorkflowExecutorArtifact? BuildExecutor(
+            ReadOnlyMemory<byte> workflowUtf8,
+            IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+            string packageHash)
+        {
+            this.Builds++;
+            this.LastWorkflow = workflowUtf8;
+            this.LastSourceCount = sources.Count;
+            return bakes ? new Corvus.Text.Json.Arazzo.WorkflowExecutorArtifact(new byte[] { 1 }, new byte[] { 2 }) : null;
         }
     }
 }

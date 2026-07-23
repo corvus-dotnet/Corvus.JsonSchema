@@ -252,7 +252,10 @@ if (enableSystemApprovalWorkflow)
         availabilityStore,
         environmentStore,
         environmentAdministratorStore,
-        bootstrapOptions);
+        bootstrapOptions,
+        // The bake probe (§16.5.1 hard-fail): an un-bakeable SYSTEM workflow refuses the deployment
+        // instead of cataloguing a non-runnable version whose runner then crash-loops causelessly.
+        new WorkflowExecutorProvider(progress: msg => Console.Error.WriteLine($"[system-workflow-bake] {msg}")));
 }
 PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);
 

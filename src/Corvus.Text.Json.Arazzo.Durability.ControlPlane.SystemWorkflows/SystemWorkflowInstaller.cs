@@ -51,6 +51,7 @@ public sealed class SystemWorkflowInstaller
     private readonly ISourceCredentialStore credentials;
     private readonly IEnvironmentStore environments;
     private readonly IEnvironmentAdministratorStore environmentAdministrators;
+    private readonly IWorkflowExecutorProvider? executorProvider;
 
     /// <summary>Initializes a new instance of the <see cref="SystemWorkflowInstaller"/> class.</summary>
     /// <param name="catalog">The catalog the approval version is published to. Must be configured with the same credential
@@ -60,12 +61,17 @@ public sealed class SystemWorkflowInstaller
     /// <param name="environments">The environment store the internal environment is created in.</param>
     /// <param name="environmentAdministrators">The environment-administrator store, so the internal environment is granted
     /// its administration (the genesis administrator) just as a normally-created environment is (§7.7).</param>
+    /// <param name="executorProvider">When supplied, the install PROBES the executor bake and throws if the
+    /// workflow cannot be generated and compiled. A null build is the provider's degraded mode for USER
+    /// workflows (catalogued, just not runnable — a diagnosable state); a non-runnable SYSTEM workflow
+    /// instead crash-loops its runner with no visible cause, so the deployment must refuse to come up.</param>
     public SystemWorkflowInstaller(
         ISecuredWorkflowCatalog catalog,
         IAvailabilityStore availability,
         ISourceCredentialStore credentials,
         IEnvironmentStore environments,
-        IEnvironmentAdministratorStore environmentAdministrators)
+        IEnvironmentAdministratorStore environmentAdministrators,
+        IWorkflowExecutorProvider? executorProvider = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(availability);
@@ -78,6 +84,7 @@ public sealed class SystemWorkflowInstaller
         this.credentials = credentials;
         this.environments = environments;
         this.environmentAdministrators = environmentAdministrators;
+        this.executorProvider = executorProvider;
     }
 
     /// <summary>Installs the access-approval workflow and its supporting environment and credential, idempotently.</summary>
@@ -91,6 +98,8 @@ public sealed class SystemWorkflowInstaller
         // The management/reach tags default to the administrator identity, so the system surfaces are administrator-scoped
         // rather than visible to everyone when the deployment does not scope them explicitly.
         SecurityTagSet management = options.ManagementTags.IsEmpty ? options.AdministratorIdentity : options.ManagementTags;
+
+        this.ProbeExecutorBake();
 
         await this.EnsureEnvironmentAsync(options, management, cancellationToken).ConfigureAwait(false);
         await this.EnsureCredentialAsync(options, management, cancellationToken).ConfigureAwait(false);
@@ -115,12 +124,35 @@ public sealed class SystemWorkflowInstaller
 
     /// <summary>Builds the deterministic workflow package from the three embedded specs.</summary>
     private static ReadOnlyMemory<byte> BuildPackage()
-        => WorkflowPackage.Pack(
-            ReadSpec("access-approval.arazzo.json"),
-            [
-                new KeyValuePair<string, byte[]>("notifications", ReadSpec("access-approval.asyncapi.json")),
-                new KeyValuePair<string, byte[]>(ControlPlaneSourceName, ReadSpec("access-approval.controlplane.openapi.json")),
-            ]);
+        => WorkflowPackage.Pack(ReadSpec("access-approval.arazzo.json"), ReadSources());
+
+    /// <summary>The workflow's referenced source documents, keyed by their <c>sourceDescriptions</c> names.</summary>
+    private static KeyValuePair<string, byte[]>[] ReadSources()
+        =>
+        [
+            new KeyValuePair<string, byte[]>("notifications", ReadSpec("access-approval.asyncapi.json")),
+            new KeyValuePair<string, byte[]>(ControlPlaneSourceName, ReadSpec("access-approval.controlplane.openapi.json")),
+        ];
+
+    /// <summary>
+    /// Fails the install loudly when the SYSTEM workflow cannot bake (the deferred half of "surface
+    /// system-workflow bake failures"): a deployment must refuse to come up with a non-runnable
+    /// critical workflow rather than catalogue it and let its runner crash-loop causelessly.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The executor could not be generated and compiled.</exception>
+    private void ProbeExecutorBake()
+    {
+        if (this.executorProvider is null)
+        {
+            return;
+        }
+
+        if (this.executorProvider.BuildExecutor(ReadSpec("access-approval.arazzo.json"), ReadSources(), "system-install-probe") is null)
+        {
+            throw new InvalidOperationException(
+                $"The '{BaseWorkflowId}' system workflow failed to bake: its executor could not be generated and compiled, and the deployment refuses to come up with a non-runnable critical workflow. The executor build log (\"Executor build skipped: …\") carries the generation/compile diagnostics.");
+        }
+    }
 
     private async ValueTask EnsureEnvironmentAsync(SystemWorkflowInstallOptions options, SecurityTagSet management, CancellationToken cancellationToken)
     {
