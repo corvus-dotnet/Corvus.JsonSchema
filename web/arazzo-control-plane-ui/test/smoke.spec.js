@@ -3,6 +3,24 @@
 // caught a bad cross-module import).
 import { test, expect } from '@playwright/test';
 
+// Selecting the workflow's START node scopes the inspector to the inputs schema. The node sits off-canvas
+// until fit, so drive the surface's own selection event — but only AFTER the designer has finished opening:
+// showSelection mounts the inputs editor only once the workflow selector (#workflow) carries a real
+// workflow, and that population races the canvas projection under parallel load. Wait for it, dispatch
+// once, then poll for the editor (re-dispatching would churn the inspector's remount and race the caller).
+async function selectStartInputs(page) {
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+  await page.waitForFunction(() => !!document.getElementById('workflow')?.value, null, { timeout: 8000 });
+  await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+  });
+  await expect.poll(async () => page.evaluate(() =>
+    !!document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor'),
+  ), { timeout: 8000 }).toBe(true);
+}
+
 test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted run', async ({ page }) => {
   const errors = [];
   // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
@@ -400,14 +418,10 @@ test('the workflow inputs are authored with the typed schema editor, not a texta
 
   await page.goto('/demo/designer.html');
   await page.locator('arazzo-workspace-table').getByText('Order processing').click();
-  await page.locator('#surface .node').first().waitFor({ state: 'attached' }); // canvas projected
-  // Selecting the workflow's START node scopes the inspector to the inputs schema (the node sits off-canvas
-  // until fit, so drive the surface's own selection event). The nested schema editor lives two shadow roots
+  // Scope the inspector to the inputs schema (START node). The nested schema editor lives two shadow roots
   // deep; traverse it directly in one evaluate rather than through Playwright's cross-shadow locator.
+  await selectStartInputs(page);
   const seen = await page.evaluate(() => {
-    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
-      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
-    }));
     const wi = document.querySelector('arazzo-workflow-inspector');
     const se = wi?.shadowRoot?.querySelector('arazzo-schema-editor');
     return {
@@ -431,11 +445,8 @@ test('the inputs schema editor offers the library $ref picker (§6)', async ({ p
 
   await page.goto('/demo/designer.html');
   await page.locator('arazzo-workspace-table').getByText('Order processing').click();
-  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+  await selectStartInputs(page);
   const seen = await page.evaluate(() => {
-    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
-      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
-    }));
     const se = document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor');
     if (!se) return { ok: false };
     se.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } }; // a library → shared types lead the type menu
@@ -456,17 +467,9 @@ test('a nonsense inputs schema authored in the JSON tier surfaces a positioned P
 
   await page.goto('/demo/designer.html');
   await page.locator('arazzo-workspace-table').getByText('Order processing').click();
-  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
 
-  // Scope the inspector to the workflow inputs (START node), then wait for the schema editor to mount.
-  await page.evaluate(() => {
-    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
-      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
-    }));
-  });
-  await expect.poll(async () => page.evaluate(() =>
-    !!document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor'),
-  )).toBe(true);
+  // Scope the inspector to the workflow inputs (START node), retrying the selection until it mounts.
+  await selectStartInputs(page);
 
   // Author a nonsense schema ("type": 123 — type must be a string) in the JSON tier. The guarded JSON
   // editor commits on text-changed the moment it parses, so this emits schema-changed → autosave → validate.
