@@ -48,6 +48,18 @@ describe('<arazzo-schema-editor>', () => {
     ok(!members.hidden, 'clicking again expands');
   });
 
+  it('numeric format menus offer the full CTJ set (decimal/half for number, unsigned + 128-bit for integer)', () => {
+    make({ type: 'object', properties: { n: { type: 'number' }, i: { type: 'integer' } } });
+    const fmtOptions = (name) => {
+      const node = names().find((x) => x.value === name).closest('.node');
+      return [...node.querySelectorAll('.format-row select option')].map((o) => o.value);
+    };
+    const num = fmtOptions('n');
+    ok(num.includes('decimal') && num.includes('half') && num.includes('double') && num.includes('float'), 'number offers the real formats');
+    const int = fmtOptions('i');
+    ok(int.includes('uint128') && int.includes('byte') && int.includes('int64') && int.includes('sbyte'), 'integer offers unsigned + 128-bit + 8-bit');
+  });
+
   it('the root form has no fill — it is delimited by its border, like the payload form', () => {
     make({ type: 'object', properties: { a: { type: 'string' } } });
     const root = el.shadowRoot.querySelector('.form > .node');
@@ -93,12 +105,13 @@ describe('<arazzo-schema-editor>', () => {
 
   it('the Form | JSON toggle round-trips the schema through the syntax-highlighted editor', async () => {
     make({ type: 'object', properties: { a: { type: 'string', 'x-keep': 1 } } });
-    el.shadowRoot.querySelector('.t-json').click();
+    const tier = el.shadowRoot.querySelector('.tier');
+    tier.shadowRoot.querySelector('button[data-value="json"]').click();
     const ed = el.shadowRoot.querySelector('.json-ed');
     equal(ed.tagName.toLowerCase(), 'arazzo-text-editor', 'the JSON tier is the syntax-highlighted editor, not a bare textarea');
     ok(ed && !el.shadowRoot.querySelector('.json').hidden, 'JSON tier shown');
     ok(ed.value.includes('x-keep'), 'raw JSON exposes the unrendered keyword');
-    el.shadowRoot.querySelector('.t-form').click();
+    tier.shadowRoot.querySelector('button[data-value="form"]').click();
     ok(!el.shadowRoot.querySelector('.form').hidden, 'back to Form');
     ok(names().some((n) => n.value === 'a'), 're-derives rows');
   });

@@ -17,6 +17,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './expression-input.js';
 import './text-editor.js';
+import './mode-toggle.js';
 
 class ArazzoPayloadEditor extends ArazzoElement {
   constructor() {
@@ -60,9 +61,7 @@ class ArazzoPayloadEditor extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .modes { display: flex; gap: 4px; margin-bottom: 6px; }
-        .modes button { font-size: 11px; padding: 2px 10px; opacity: 0.7; }
-        .modes button.active { opacity: 1; border-color: var(--_accent); font-weight: 600; }
+        .modes { display: block; margin-bottom: 6px; }
         /* The form seats in a delimited box mirroring the JSON text editor's bordered area, so Form
            and JSON modes read as the same panel in two views (compact: the editor's border + radius). */
         .fields { display: grid; gap: 10px; min-width: 0; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; }
@@ -76,22 +75,19 @@ class ArazzoPayloadEditor extends ArazzoElement {
         .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
               arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
       </style>
-      <div class="modes" hidden>
-        <button type="button" class="m-form">Form</button>
-        <button type="button" class="m-json">JSON</button>
-      </div>
+      <arazzo-mode-toggle class="modes" hidden></arazzo-mode-toggle>
       <div class="body"></div>
     `;
-    this.$('.m-form').addEventListener('click', () => { this._mode = 'form'; this.render(); });
-    this.$('.m-json').addEventListener('click', () => { this._mode = 'json'; this.render(); });
+    const modes = this.$('.modes');
+    modes.options = [{ value: 'form', label: 'Form' }, { value: 'json', label: 'JSON' }];
+    modes.addEventListener('mode-changed', (e) => { this._mode = e.detail.value; this.render(); });
   }
 
   /** @private */
   render() {
     const hasForm = isObjectSchema(this._schema);
     this.$('.modes').hidden = !hasForm;
-    this.$('.m-form').classList.toggle('active', this._mode === 'form' && hasForm);
-    this.$('.m-json').classList.toggle('active', this._mode === 'json' || !hasForm);
+    this.$('.modes').value = (this._mode === 'json' || !hasForm) ? 'json' : 'form';
     const body = this.$('.body');
     body.replaceChildren();
     if (hasForm && this._mode === 'form') body.append(this._buildFieldset(this._schema, [], null));

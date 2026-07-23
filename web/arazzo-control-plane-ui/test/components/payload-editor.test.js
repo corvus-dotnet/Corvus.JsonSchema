@@ -73,7 +73,7 @@ describe('<arazzo-payload-editor>', () => {
 
   it('JSON mode is a syntax-highlighted, guarded editor; schema-less editors are JSON-only', async () => {
     make();
-    el.shadowRoot.querySelector('.m-json').click();
+    el.shadowRoot.querySelector('.modes').shadowRoot.querySelector('button[data-value="json"]').click();
     const ed = el.shadowRoot.querySelector('.payload');
     equal(ed.tagName.toLowerCase(), 'arazzo-text-editor', 'JSON mode uses the syntax-highlighted editor');
     ok(ed.value.includes('"extra": "kept"'), 'JSON view shows everything');

@@ -26,6 +26,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import { wireGuardedJsonEditor } from './guarded-json.js';
 import './text-editor.js';
+import './mode-toggle.js';
 import {
   classifyNode, unrenderedKeywords, RENDERABLE_TYPES, COMBINER_KINDS,
   addProperty, renameProperty, reorderProperty, removeProperty, setRequired,
@@ -39,12 +40,16 @@ const TYPE_LABEL = { object: 'object', array: 'array', string: 'string', number:
 const COMBINER_LABEL = { oneOf: 'one of', anyOf: 'any of', allOf: 'all of' };
 // The `format` keyword is a constrained dropdown, not free text — the recognised JSON Schema string
 // formats (kept in step with value-editor.js's control map) and the OpenAPI numeric formats.
+// The numeric formats CTJ's WellKnownNumericFormatHandler recognises (kept in step with the generator).
+// `integer` offers every whole-number backing type — signed and unsigned, 8- to 128-bit; `number` offers
+// the real types (half/float/double and the 128-bit decimal). OpenAPI's int32/int64/float/double lead.
+const INTEGER_FORMATS = ['int32', 'int64', 'int16', 'sbyte', 'byte', 'uint16', 'uint32', 'uint64', 'int128', 'uint128'];
 const FORMATS = {
   string: ['date-time', 'date', 'time', 'duration', 'email', 'idn-email', 'hostname', 'idn-hostname',
     'ipv4', 'ipv6', 'uri', 'uri-reference', 'iri', 'iri-reference', 'uuid', 'uri-template',
     'json-pointer', 'relative-json-pointer', 'regex'],
-  number: ['float', 'double'],
-  integer: ['int32', 'int64'],
+  number: ['float', 'double', 'half', 'decimal'],
+  integer: INTEGER_FORMATS,
 };
 // Per-type "more…" constraints (title/enum/const/default are added for every type).
 const CONSTRAINTS = {
@@ -118,9 +123,6 @@ class ArazzoSchemaEditor extends ArazzoElement {
         :host { display: block; }
         .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
         .head .legend { font-weight: 600; font-size: 13px; margin-right: auto; }
-        .toggle { display: inline-flex; border: 1px solid var(--_border); border-radius: 6px; overflow: hidden; }
-        .toggle button { border: none; background: var(--_bg); color: inherit; font: 12px var(--_font); padding: 3px 10px; cursor: pointer; }
-        .toggle button[aria-pressed="true"] { background: var(--_surface); font-weight: 600; }
         .rows { display: flex; flex-direction: column; gap: 6px; }
         /* The root form is a delimited box (border + radius, no fill) matching the payload editor and the
            parameters/success-criteria sections; nested levels hang off an accent-tinted rail — depth you
@@ -179,10 +181,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
       </style>
       <div class="head">
         <span class="legend" part="editor"></span>
-        <div class="toggle" role="group" aria-label="Editing tier">
-          <button class="t-form" type="button" aria-pressed="true">Form</button>
-          <button class="t-json" type="button" aria-pressed="false">JSON</button>
-        </div>
+        <arazzo-mode-toggle class="tier" aria-label="Editing tier"></arazzo-mode-toggle>
       </div>
       <div class="form" part="editor"></div>
       <div class="json" part="json" hidden>
@@ -193,8 +192,11 @@ class ArazzoSchemaEditor extends ArazzoElement {
         <summary>Preview input form</summary>
         <div class="pv-body"><arazzo-value-editor></arazzo-value-editor></div>
       </details>`;
-    this.$('.t-form').addEventListener('click', () => this._setMode('form'));
-    this.$('.t-json').addEventListener('click', () => this._setMode('json'));
+    const tier = this.$('.tier');
+    tier.options = [{ value: 'form', label: 'Form' }, { value: 'json', label: 'JSON' }];
+    // _setMode can REFUSE a json→form switch (unparseable buffer); reflect the actual mode back so the
+    // toggle never shows a mode the form isn't in.
+    tier.addEventListener('mode-changed', (e) => { this._setMode(e.detail.value); tier.value = this._mode; });
     this.$('.preview').addEventListener('toggle', (e) => { this._previewOpen = e.target.open; if (this._previewOpen) this._updatePreview(); });
     this._built = true;
   }
@@ -214,8 +216,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
   _render() {
     if (!this._built) return;
     this.$('.legend').textContent = this._title || '';
-    this.$('.t-form').setAttribute('aria-pressed', String(this._mode === 'form'));
-    this.$('.t-json').setAttribute('aria-pressed', String(this._mode === 'json'));
+    this.$('.tier').value = this._mode;
     this.$('.form').hidden = this._mode !== 'form';
     this.$('.json').hidden = this._mode !== 'json';
     if (this._mode === 'json') this._renderJson();

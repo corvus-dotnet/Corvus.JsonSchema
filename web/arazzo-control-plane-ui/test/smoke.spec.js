@@ -414,7 +414,7 @@ test('the workflow inputs are authored with the typed schema editor, not a texta
       hasEditor: !!se,
       noTextarea: !wi?.shadowRoot?.querySelector('textarea.inputs'),
       hasRow: !!se?.shadowRoot?.querySelector('.rowline .name'),
-      hasToggle: !!se?.shadowRoot?.querySelector('.t-json'),
+      hasToggle: !!se?.shadowRoot?.querySelector('.tier'),
     };
   });
   expect(seen.hasEditor, 'the inputs are authored by the schema editor').toBe(true);
@@ -468,14 +468,15 @@ test('a nonsense inputs schema authored in the JSON tier surfaces a positioned P
     !!document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor'),
   )).toBe(true);
 
-  // Author a nonsense schema ("type": 123 — type must be a string) in the JSON tier. The guarded-json
-  // textarea commits on input the moment it parses, so this emits schema-changed → autosave → validate.
+  // Author a nonsense schema ("type": 123 — type must be a string) in the JSON tier. The guarded JSON
+  // editor commits on text-changed the moment it parses, so this emits schema-changed → autosave → validate.
   await page.evaluate(() => {
     const se = document.querySelector('arazzo-workflow-inspector').shadowRoot.querySelector('arazzo-schema-editor');
-    se.shadowRoot.querySelector('.t-json').click();
-    const ta = se.shadowRoot.querySelector('textarea.json');
-    ta.value = '{"type": 123}';
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    se.shadowRoot.querySelector('.tier').shadowRoot.querySelector('button[data-value="json"]').click();
+    const ed = se.shadowRoot.querySelector('arazzo-text-editor.json-ed');
+    const v = '{"type": 123}';
+    ed.value = v;
+    ed.dispatchEvent(new CustomEvent('text-changed', { detail: { text: v }, bubbles: true, composed: true }));
   });
 
   // The mock's inputs meta-validation (mirror of the server's pass 4) surfaces a positioned finding: the

@@ -401,7 +401,7 @@ test('publish refuses an invalid document with 422 and routes to the Problems pa
   )).toBe(true);
   await page.evaluate(() => {
     const se = document.querySelector('arazzo-workflow-inspector').shadowRoot.querySelector('arazzo-schema-editor');
-    se.shadowRoot.querySelector('.t-json').click();
+    se.shadowRoot.querySelector('.tier').shadowRoot.querySelector('button[data-value="json"]').click();
     const ta = se.shadowRoot.querySelector('arazzo-text-editor.json-ed');
     const v = '{"type": 123}';
     ta.value = v;

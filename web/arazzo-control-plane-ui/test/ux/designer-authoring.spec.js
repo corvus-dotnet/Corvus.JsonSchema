@@ -359,7 +359,7 @@ test('the inputs schema editor authors a property of every primitive type and a 
   await expect(page.locator('#surface .node[data-id="#start"]')).toContainText('⇥ 8 inputs');
 
   // The JSON tier shows exactly what the form authored — the document IS the model.
-  await editor.locator('.t-json').click();
+  await editor.locator('.tier').locator('button[data-value="json"]').click();
   const schema = JSON.parse(await jsonEditorValue(editor.locator('arazzo-text-editor.json-ed')));
   expect(schema.properties.age.type).toBe('integer');
   expect(schema.properties.score.type).toBe('number');
@@ -541,7 +541,7 @@ test('a dangling schemas/<name> $ref surfaces a positioned external-schema error
   // Author an inputs schema referencing an external schema document that is NOT attached — the
   // JSON tier commits the moment it parses (schema-changed → autosave → validate).
   const editor = page.locator(SCHEMA_EDITOR);
-  await editor.locator('.t-json').click();
+  await editor.locator('.tier').locator('button[data-value="json"]').click();
   await fillJsonEditor(editor.locator('arazzo-text-editor.json-ed'), '{"$ref": "schemas/missing#/$defs/Customer"}');
 
   // The mirror of the server's pass-4 walk finds it: an ERROR, positioned at the workflow's inputs.
