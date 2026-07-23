@@ -1235,6 +1235,98 @@ public sealed class WorkflowSimulatorTests
         Encoding.UTF8.GetString(result.Exchanges[confirm.FirstExchange].RequestBody.Span).ShouldContain("\"kind\":\"approved\"");
     }
 
+    // Request/reply: the send's reply is scripted as a scenario TRIGGER on the REPLY channel; the
+    // reply gates the step's success criteria and projects its outputs.
+    private const string RequestReplyWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Kyc", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "kyc", "url": "./kyc.asyncapi.json", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "screen",
+              "inputs": { "type": "object", "properties": { "docId": { "type": "string" } } },
+              "steps": [
+                {
+                  "stepId": "submit",
+                  "channelPath": "kyc.requests",
+                  "action": "send",
+                  "requestBody": { "contentType": "application/json", "payload": { "docId": "$inputs.docId" } },
+                  "successCriteria": [ { "condition": "$message.payload#/approved == true" } ],
+                  "outputs": { "score": "$message.payload#/score" }
+                }
+              ],
+              "outputs": { "score": "$steps.submit.outputs.score" }
+            }
+          ]
+        }
+        """;
+
+    private const string KycRequestReplyAsyncApi = """
+        {
+          "asyncapi": "3.0.0",
+          "info": { "title": "Kyc", "version": "1.0.0" },
+          "channels": {
+            "kycRequests": { "address": "kyc.requests", "messages": { "request": { "payload": { "type": "object", "properties": { "docId": { "type": "string" } } } } } },
+            "kycReplies": { "address": "kyc.replies", "messages": { "verdict": { "payload": { "type": "object", "properties": { "approved": { "type": "boolean" }, "score": { "type": "number" } } } } } }
+          },
+          "operations": {
+            "submitKyc": {
+              "action": "send",
+              "channel": { "$ref": "#/channels/kycRequests" },
+              "messages": [ { "$ref": "#/channels/kycRequests/messages/request" } ],
+              "reply": { "channel": { "$ref": "#/channels/kycReplies" }, "messages": [ { "$ref": "#/channels/kycReplies/messages/verdict" } ] }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public async Task A_request_reply_send_takes_its_reply_from_a_trigger_on_the_reply_channel()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"docId":"d-1"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> verdict = ParsedJsonDocument<JsonElement>.Parse("""{"approved":true,"score":0.97}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Triggers = [new("kyc.replies", verdict.RootElement, CorrelationId: null)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(RequestReplyWorkflowJson), [new("kyc", Encoding.UTF8.GetBytes(KycRequestReplyAsyncApi))], scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, $"{result.Fault?.StepId}: {result.Fault?.Error}");
+
+        // ONE exchange carries the pair: the request as sent, the scripted reply as the response.
+        SimulatedStepRecord submit = result.Steps[0];
+        submit.ExchangeCount.ShouldBe(1);
+        MockApiExchange exchange = result.Exchanges[submit.FirstExchange];
+        exchange.Method.ShouldBe(OperationMethod.Publish);
+        exchange.Path.ShouldBe("kyc.requests");
+        exchange.StatusCode.ShouldBe(200);
+        Encoding.UTF8.GetString(exchange.RequestBody.Span).ShouldContain("\"docId\":\"d-1\"");
+        Encoding.UTF8.GetString(exchange.ResponseBody.Span).ShouldContain("\"score\":0.97");
+
+        // The reply gated the criteria and projected the step's outputs into the workflow's.
+        Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(result.Outputs.ToString())).ShouldContain("0.97");
+    }
+
+    [TestMethod]
+    public async Task A_request_reply_send_with_no_scripted_reply_faults_with_instructions()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"docId":"d-1"}"""u8.ToArray());
+        var scenario = new SimulationScenario { Inputs = inputs.RootElement };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(RequestReplyWorkflowJson), [new("kyc", Encoding.UTF8.GetBytes(KycRequestReplyAsyncApi))], scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Faulted);
+        result.Fault!.Value.Error.ShouldContain("no scripted reply");
+        result.Fault!.Value.Error.ShouldContain("kyc.replies");
+    }
+
     private sealed class CountingProvider(IWorkflowExecutorProvider inner) : IWorkflowExecutorProvider
     {
         public int Builds { get; private set; }

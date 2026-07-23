@@ -165,11 +165,22 @@ public sealed class MockApiTransport : IApiTransport
     /// <param name="channelAddress">The channel address the message was published to.</param>
     /// <param name="payloadBytes">The message payload as sent (the exchange owns the bytes).</param>
     public void RecordMessagePublish(string channelAddress, byte[] payloadBytes)
+        => this.RecordMessagePublish(channelAddress, payloadBytes, replyBytes: null);
+
+    /// <summary>
+    /// Records a channel SEND that received a correlated REPLY (request/reply): one exchange carrying
+    /// the request as the body sent and the reply as the response — the same shape an HTTP exchange
+    /// takes, so the debugger reads a request/reply pair exactly like a call.
+    /// </summary>
+    /// <param name="channelAddress">The request channel address.</param>
+    /// <param name="payloadBytes">The request payload as sent (the exchange owns the bytes).</param>
+    /// <param name="replyBytes">The correlated reply payload, when one arrived (the exchange owns the bytes).</param>
+    public void RecordMessagePublish(string channelAddress, byte[] payloadBytes, byte[]? replyBytes)
     {
         ArgumentNullException.ThrowIfNull(channelAddress);
         ArgumentNullException.ThrowIfNull(payloadBytes);
         this.requests.Add(new MockApiRequest(OperationMethod.Publish, channelAddress));
-        this.exchanges.Add(new MockApiExchange(OperationMethod.Publish, channelAddress, 202, default, "application/json", payloadBytes));
+        this.exchanges.Add(new MockApiExchange(OperationMethod.Publish, channelAddress, replyBytes is null ? 202 : 200, replyBytes ?? default(ReadOnlyMemory<byte>), "application/json", payloadBytes));
     }
 
     private static byte[] SerializeBody<TBody>(in TBody body)

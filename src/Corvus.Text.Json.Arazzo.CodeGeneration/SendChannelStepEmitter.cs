@@ -264,8 +264,11 @@ internal static class SendChannelStepEmitter
                 throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' with no request/reply method.");
             }
 
+            // Re-wrap the JsonElement payload to the message's model type with From, exactly as the
+            // plain publish does (C# will not chain JsonElement → model → Source).
+            string requestPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, selected.PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
             statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-                .Append(requestMethod).Append('(').Append(payloadLocal).Append(HeadersArgFor(selected)).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+                .Append(requestMethod).Append('(').Append(requestPayload).Append(HeadersArgFor(selected)).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
         }
 
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");

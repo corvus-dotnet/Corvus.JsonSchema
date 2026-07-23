@@ -23,7 +23,9 @@ namespace Corvus.Text.Json.Arazzo.Testing;
 /// transport — the wait rides the run.
 /// </remarks>
 /// <param name="recorder">The transport whose exchange stream receives the publish records.</param>
-public sealed class SimulationMessageTransport(MockApiTransport recorder) : IMessageTransport
+/// <param name="triggers">The scenario's trigger queue — a request/reply send takes its scripted
+/// reply from the next trigger on the REPLY channel (cursor shared with the wait loop).</param>
+public sealed class SimulationMessageTransport(MockApiTransport recorder, SimulationTriggerQueue? triggers = null) : IMessageTransport
 {
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(
@@ -55,7 +57,41 @@ public sealed class SimulationMessageTransport(MockApiTransport recorder) : IMes
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
-        => throw new NotSupportedException("Request/reply channel sends are not simulated yet; model the reply as a receive step released by a scenario trigger.");
+    {
+        // The reply comes from the scenario: the next trigger scripted on the REPLY channel. The
+        // string conversions sit at the outermost boundary, per the transport contract.
+        string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
+        string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
+        if (triggers is null || !triggers.TryTake(replyChannel, correlationId: null, out SimulationTrigger reply))
+        {
+            throw new InvalidOperationException($"The request/reply send on '{requestChannel}' has no scripted reply — add a scenario trigger for its reply channel '{replyChannel}' carrying the reply payload.");
+        }
+
+        var requestBuffer = new ArrayBufferWriter<byte>(256);
+        using (var writer = new Utf8JsonWriter(requestBuffer))
+        {
+            request.WriteTo(writer);
+        }
+
+        var replyBuffer = new ArrayBufferWriter<byte>(256);
+        using (var writer = new Utf8JsonWriter(replyBuffer))
+        {
+            reply.Payload.WriteTo(writer);
+        }
+
+        recorder.RecordMessagePublish(requestChannel, requestBuffer.WrittenSpan.ToArray(), replyBuffer.WrittenSpan.ToArray());
+
+        // A free re-wrap of the trigger's own backing document (no parse, no copy); the scenario
+        // outlives the simulation, and the executor clones the reply into the run workspace.
+        return new((Rewrap<JsonElement, TReply>(reply.Payload), default));
+    }
+
+    /// <summary>Re-wraps an element as another type over the SAME backing document — the constrained-generic
+    /// route to <see cref="IJsonElement.ParentDocument"/> (the members are interface-visible only).</summary>
+    private static TTarget Rewrap<TSource, TTarget>(TSource source)
+        where TSource : struct, IJsonElement<TSource>
+        where TTarget : struct, IJsonElement<TTarget>
+        => TTarget.CreateInstance(source.ParentDocument, source.ParentDocumentIndex);
 
     /// <inheritdoc/>
     public ValueTask SubscribeAsync<TPayload>(

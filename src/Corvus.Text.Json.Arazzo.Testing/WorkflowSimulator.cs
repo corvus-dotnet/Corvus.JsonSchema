@@ -115,8 +115,10 @@ public sealed class WorkflowSimulator : IDisposable
         }
 
         // Channel SENDS need a message transport (the executor null-checks it); the simulator's
-        // records each publish into the SAME exchange stream, attributed to the step in flight.
-        var messageTransport = new SimulationMessageTransport(transport);
+        // records each publish into the SAME exchange stream, attributed to the step in flight, and
+        // serves request/reply sends from the scenario's triggers (shared cursor with the wait loop).
+        var triggerQueue = new SimulationTriggerQueue(scenario.Triggers);
+        var messageTransport = new SimulationMessageTransport(transport, triggerQueue);
 
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
@@ -144,7 +146,7 @@ public sealed class WorkflowSimulator : IDisposable
         {
             using var wallClock = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             wallClock.CancelAfter(budget.WallClock);
-            outcome = await this.RunToOutcomeAsync(loaded, transports, messageTransport, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
+            outcome = await this.RunToOutcomeAsync(loaded, transports, messageTransport, triggerQueue, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
         }
 
         var result = new SimulationResult(new CompositeDisposable(owned))
@@ -171,6 +173,7 @@ public sealed class WorkflowSimulator : IDisposable
         LoadedWorkflow loaded,
         IReadOnlyDictionary<string, IApiTransport> transports,
         IMessageTransport messageTransport,
+        SimulationTriggerQueue triggerQueue,
         JsonWorkspace workspace,
         SimulationScenario scenario,
         TracingWorkflowRun run,
@@ -188,7 +191,6 @@ public sealed class WorkflowSimulator : IDisposable
             return outcome;
         }
 
-        int nextTrigger = 0;
         while (true)
         {
             WorkflowRunResultKind kind;
@@ -250,25 +252,12 @@ public sealed class WorkflowSimulator : IDisposable
             }
 
             // A message wait: deliver the next matching trigger, or end suspended.
-            int found = -1;
-            for (int i = nextTrigger; i < scenario.Triggers.Count; i++)
-            {
-                SimulationTrigger candidate = scenario.Triggers[i];
-                if (candidate.Channel == wait.Channel
-                    && (wait.CorrelationId is null || candidate.CorrelationId is null || candidate.CorrelationId == wait.CorrelationId))
-                {
-                    found = i;
-                    break;
-                }
-            }
-
-            if (found < 0)
+            if (!triggerQueue.TryTake(wait.Channel, wait.CorrelationId, out SimulationTrigger trigger))
             {
                 return Finish(SimulationOutcome.Suspended);
             }
 
-            run.DeliverMessage(scenario.Triggers[found].Payload);
-            nextTrigger = found + 1;
+            run.DeliverMessage(trigger.Payload);
         }
     }
 

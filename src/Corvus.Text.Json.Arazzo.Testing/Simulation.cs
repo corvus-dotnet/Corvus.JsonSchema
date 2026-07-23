@@ -49,6 +49,41 @@ public readonly record struct SimulationMockRoute(string Method, string PathTemp
 public readonly record struct SimulationTrigger(string Channel, JsonElement Payload, string? CorrelationId);
 
 /// <summary>
+/// The scenario's triggers as an ordered, consume-once queue shared by the two consumers: the
+/// simulator's suspension loop (a message WAIT takes the next matching trigger) and the simulation
+/// message transport (a request/reply SEND takes the next trigger scripted on its REPLY channel).
+/// Sharing one cursor keeps trigger consumption strictly ordered however the messages arrive.
+/// </summary>
+/// <param name="triggers">The scenario's triggers, in scripted order.</param>
+public sealed class SimulationTriggerQueue(IReadOnlyList<SimulationTrigger> triggers)
+{
+    private int next;
+
+    /// <summary>Takes the next trigger matching the channel (and correlation, when both sides declare one).</summary>
+    /// <param name="channel">The channel the consumer waits on.</param>
+    /// <param name="correlationId">The wait's correlation token, when it has one.</param>
+    /// <param name="trigger">The consumed trigger.</param>
+    /// <returns>Whether a matching trigger was available.</returns>
+    public bool TryTake(string? channel, string? correlationId, out SimulationTrigger trigger)
+    {
+        for (int i = this.next; i < triggers.Count; i++)
+        {
+            SimulationTrigger candidate = triggers[i];
+            if (candidate.Channel == channel
+                && (correlationId is null || candidate.CorrelationId is null || candidate.CorrelationId == correlationId))
+            {
+                trigger = candidate;
+                this.next = i + 1;
+                return true;
+            }
+        }
+
+        trigger = default;
+        return false;
+    }
+}
+
+/// <summary>
 /// Where the replay stops (§8.2 stateless stepping): pause before a named step's Nth arrival, or
 /// before any breakpointed step. No condition = run to completion/fault/suspension/budget.
 /// </summary>
