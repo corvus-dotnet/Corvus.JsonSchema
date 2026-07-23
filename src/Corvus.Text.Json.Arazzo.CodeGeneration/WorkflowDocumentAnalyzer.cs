@@ -117,9 +117,11 @@ public static class WorkflowDocumentAnalyzer
         CheckDependsOn(workflow, pointers, workflowIds, hasArazzoSources, isWorkflow: true, diagnostics);
 
         // The workflow's step ids (goto stepId targets, step dependsOn, reachability), and — for
-        // resolving $steps.<id>.outputs.<name> references — the set of output NAMES each step declares.
+        // resolving $steps.<id>.outputs.<name> references — each step's element (its outputs are
+        // probed on demand; nothing materializes on a clean document). Keys reuse the stepId
+        // strings this loop already reads.
         var stepIds = new List<string>();
-        var declaredOutputsByStep = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        var stepsById = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         JsonElement steps = workflow.TryGetProperty("steps"u8, out JsonElement s) && s.ValueKind == JsonValueKind.Array ? s : default;
         if (steps.ValueKind == JsonValueKind.Array)
         {
@@ -142,7 +144,7 @@ public static class WorkflowDocumentAnalyzer
                     else
                     {
                         stepIds.Add(stepId);
-                        declaredOutputsByStep[stepId] = DeclaredOutputNames(step);
+                        stepsById[stepId] = step;
                     }
                 }
 
@@ -154,11 +156,11 @@ public static class WorkflowDocumentAnalyzer
         var flows = new Dictionary<int, StepFlow>(); // step index → reachability edges
 
         // Workflow-level success/failure action defaults.
-        CheckActions(workflow, "successActions"u8, "successActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: true, declaredOutputsByStep, diagnostics);
-        CheckActions(workflow, "failureActions"u8, "failureActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: false, declaredOutputsByStep, diagnostics);
+        CheckActions(workflow, "successActions"u8, "successActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: true, stepsById, diagnostics);
+        CheckActions(workflow, "failureActions"u8, "failureActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: false, stepsById, diagnostics);
 
         // Workflow outputs are runtime expressions.
-        CheckOutputs(workflow, pointers, declaredOutputsByStep, diagnostics);
+        CheckOutputs(workflow, pointers, stepsById, diagnostics);
 
         if (steps.ValueKind != JsonValueKind.Array)
         {
@@ -177,12 +179,12 @@ public static class WorkflowDocumentAnalyzer
                     flows[index] = flow;
 
                     CheckDependsOn(step, pointers, stepIdSet, hasArazzoSources: false, isWorkflow: false, diagnostics);
-                    CheckCriteria(step, "successCriteria"u8, "successCriteria", pointers, declaredOutputsByStep, diagnostics);
-                    CheckActions(step, "onSuccess"u8, "onSuccess", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: true, declaredOutputsByStep, diagnostics);
-                    CheckActions(step, "onFailure"u8, "onFailure", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: false, declaredOutputsByStep, diagnostics);
-                    CheckParameters(step, pointers, components, declaredOutputsByStep, diagnostics);
-                    CheckOutputs(step, pointers, declaredOutputsByStep, diagnostics);
-                    CheckRequestBody(step, pointers, declaredOutputsByStep, diagnostics);
+                    CheckCriteria(step, "successCriteria"u8, "successCriteria", pointers, stepsById, diagnostics);
+                    CheckActions(step, "onSuccess"u8, "onSuccess", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: true, stepsById, diagnostics);
+                    CheckActions(step, "onFailure"u8, "onFailure", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: false, stepsById, diagnostics);
+                    CheckParameters(step, pointers, components, stepsById, diagnostics);
+                    CheckOutputs(step, pointers, stepsById, diagnostics);
+                    CheckRequestBody(step, pointers, stepsById, diagnostics);
                 }
 
                 index++;
@@ -399,7 +401,7 @@ public static class WorkflowDocumentAnalyzer
         in JsonElement components,
         StepFlow? flow,
         bool successList,
-        IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep,
+        IReadOnlyDictionary<string, JsonElement> stepsById,
         List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!owner.TryGetProperty(property, out JsonElement actions) || actions.ValueKind != JsonValueKind.Array)
@@ -481,12 +483,12 @@ public static class WorkflowDocumentAnalyzer
                 }
             }
 
-            CheckCriteria(action, "criteria"u8, "criteria", pointers, declaredOutputsByStep, diagnostics);
+            CheckCriteria(action, "criteria"u8, "criteria", pointers, stepsById, diagnostics);
         }
     }
 
     // ── criteria (validated with the runtime's own compiler) ──────────────────────────────────────
-    private static void CheckCriteria(in JsonElement owner, ReadOnlySpan<byte> property, string segment, PointerBuilder pointers, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckCriteria(in JsonElement owner, ReadOnlySpan<byte> property, string segment, PointerBuilder pointers, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!owner.TryGetProperty(property, out JsonElement criteria) || criteria.ValueKind != JsonValueKind.Array)
         {
@@ -498,12 +500,12 @@ public static class WorkflowDocumentAnalyzer
         foreach (JsonElement criterion in criteria.EnumerateArray())
         {
             using PointerScope indexScope = pointers.Push(i);
-            CheckCriterion(criterion, pointers, declaredOutputsByStep, diagnostics);
+            CheckCriterion(criterion, pointers, stepsById, diagnostics);
             i++;
         }
     }
 
-    private static void CheckCriterion(in JsonElement criterion, PointerBuilder pointers, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckCriterion(in JsonElement criterion, PointerBuilder pointers, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (criterion.ValueKind != JsonValueKind.Object)
         {
@@ -522,7 +524,7 @@ public static class WorkflowDocumentAnalyzer
 
         if (context is { Length: > 0 })
         {
-            CheckExpression(context, pointers, "context", declaredOutputsByStep, diagnostics);
+            CheckExpression(context, pointers, "context", stepsById, diagnostics);
         }
 
         if (type == "xpath")
@@ -565,7 +567,7 @@ public static class WorkflowDocumentAnalyzer
     }
 
     // ── runtime expressions ───────────────────────────────────────────────────────────────────────
-    private static void CheckExpression(string value, PointerBuilder pointers, string segment, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckExpression(string value, PointerBuilder pointers, string segment, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         // ArazzoExpression.Parse never throws: anything malformed comes back as Literal. A value that
         // BEGINS with '$' is an expression by intent, so a Literal parse means it is malformed.
@@ -581,15 +583,18 @@ public static class WorkflowDocumentAnalyzer
         // Regardless of the bare-vs-interpolated form, a $steps.<id>.outputs.<name> navigation must name
         // an output the referenced step actually declares — an undeclared one resolves to nothing at run
         // time (a bound path parameter then renders as an empty segment, e.g. /accounts//identity).
-        CheckOutputReferences(value, pointers, segment, declaredOutputsByStep, diagnostics);
+        CheckOutputReferences(value, pointers, segment, stepsById, diagnostics);
     }
 
     // Reports every $steps.<id>.outputs.<name> reference in <paramref name="value"/> whose <id> is a
     // known step (an unknown one is already an implicit-dependency error) but does not declare <name>.
-    private static void CheckOutputReferences(string value, PointerBuilder pointers, string segment, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    // Span-walked end to end: nothing materializes on a clean document (the file's contract) — the
+    // step lookup compares key spans, and the name resolves by probing the step's own outputs object.
+    private static void CheckOutputReferences(string value, PointerBuilder pointers, string segment, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         const string prefix = "$steps.";
         const string mid = ".outputs.";
+        ReadOnlySpan<char> valueSpan = value.AsSpan();
         int i = 0;
         while ((i = value.IndexOf(prefix, i, StringComparison.Ordinal)) >= 0)
         {
@@ -601,20 +606,17 @@ public static class WorkflowDocumentAnalyzer
             }
 
             i = idEnd;
-            if (idEnd == idStart || idEnd + mid.Length > value.Length || !value.AsSpan(idEnd, mid.Length).SequenceEqual(mid))
+            if (idEnd == idStart || idEnd + mid.Length > value.Length || !valueSpan.Slice(idEnd, mid.Length).SequenceEqual(mid))
             {
                 continue; // not a "$steps.<id>.outputs.<...>" navigation
             }
 
-            string stepId = value[idStart..idEnd];
-            if (!declaredOutputsByStep.TryGetValue(stepId, out HashSet<string>? declared))
+            ReadOnlySpan<char> idSpan = valueSpan[idStart..idEnd];
+            if (!TryFindStep(stepsById, idSpan, out string? stepId, out JsonElement step))
             {
                 continue; // unknown step — CheckImplicitDependencies already reports it
             }
 
-            // The output name runs through the Arazzo name grammar [A-Za-z0-9._-]; a '.' inside is
-            // ambiguous (a dotted output name vs. navigation into the value), so DeclaresOutput clears
-            // the reference when ANY declared name is a boundary-prefix of the remainder.
             int nameStart = idEnd + mid.Length;
             int nameEnd = nameStart;
             while (nameEnd < value.Length && (char.IsAsciiLetterOrDigit(value[nameEnd]) || value[nameEnd] is '.' or '_' or '-'))
@@ -627,14 +629,18 @@ public static class WorkflowDocumentAnalyzer
                 continue; // "$steps.<id>.outputs." with no name — a whole-map reference, not ours to judge
             }
 
-            string remainder = value[nameStart..nameEnd];
-            if (DeclaresOutput(declared, remainder))
+            // The output name runs through the Arazzo name grammar [A-Za-z0-9._-]; a '.' inside is
+            // ambiguous (a dotted output name vs. navigation into the value), so the reference clears
+            // when ANY boundary-prefix of the remainder (the whole remainder, or a prefix ending at a
+            // '.') is a property of the step's outputs object — probed directly, no name set built.
+            ReadOnlySpan<char> remainder = valueSpan[nameStart..nameEnd];
+            if (DeclaresOutput(step, remainder))
             {
                 continue;
             }
 
             int dot = remainder.IndexOf('.');
-            string apparent = dot < 0 ? remainder : remainder[..dot];
+            ReadOnlySpan<char> apparent = dot < 0 ? remainder : remainder[..dot];
             diagnostics.Add(new(
                 WorkflowDocumentDiagnosticSeverity.Error,
                 "output-reference",
@@ -643,42 +649,50 @@ public static class WorkflowDocumentAnalyzer
         }
     }
 
-    // True when a declared output name is a boundary-prefix of the reference remainder: the whole name
-    // (an exact hit), or the name followed by '.' (navigation into that output's value).
-    private static bool DeclaresOutput(HashSet<string> declared, string remainder)
+    // Finds a step by id SPAN without materializing the id: the map is small (a workflow's steps), so a
+    // linear key-span comparison beats allocating a lookup string per reference.
+    private static bool TryFindStep(IReadOnlyDictionary<string, JsonElement> stepsById, ReadOnlySpan<char> id, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? stepId, out JsonElement step)
     {
-        foreach (string name in declared)
+        foreach (KeyValuePair<string, JsonElement> entry in stepsById)
         {
-            if (remainder.Length < name.Length || !remainder.AsSpan(0, name.Length).SequenceEqual(name))
+            if (entry.Key.AsSpan().SequenceEqual(id))
             {
-                continue;
-            }
-
-            if (remainder.Length == name.Length || remainder[name.Length] == '.')
-            {
+                stepId = entry.Key;
+                step = entry.Value;
                 return true;
+            }
+        }
+
+        stepId = null;
+        step = default;
+        return false;
+    }
+
+    // True when a boundary-prefix of the reference remainder — the whole remainder (an exact hit) or a
+    // prefix ending at a '.' (navigation into that output's value, or a dotted output name) — names a
+    // property of the step's outputs object. Probes TryGetProperty per boundary: no set, no strings.
+    private static bool DeclaresOutput(in JsonElement step, ReadOnlySpan<char> remainder)
+    {
+        if (!step.TryGetProperty("outputs"u8, out JsonElement outputs) || outputs.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        for (int end = 0; end <= remainder.Length; end++)
+        {
+            if (end == remainder.Length || remainder[end] == '.')
+            {
+                if (end > 0 && outputs.TryGetProperty(remainder[..end], out _))
+                {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    // The set of output NAMES an outputs-bearing object (a step or workflow) declares.
-    private static HashSet<string> DeclaredOutputNames(in JsonElement owner)
-    {
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        if (owner.TryGetProperty("outputs"u8, out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
-        {
-            foreach (JsonProperty<JsonElement> output in outputs.EnumerateObject())
-            {
-                names.Add(output.Name);
-            }
-        }
-
-        return names;
-    }
-
-    private static void CheckOutputs(in JsonElement owner, PointerBuilder pointers, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckOutputs(in JsonElement owner, PointerBuilder pointers, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!owner.TryGetProperty("outputs"u8, out JsonElement outputs) || outputs.ValueKind != JsonValueKind.Object)
         {
@@ -690,12 +704,12 @@ public static class WorkflowDocumentAnalyzer
         {
             if (output.Value.ValueKind == JsonValueKind.String && output.Value.GetString() is { Length: > 0 } value)
             {
-                CheckExpression(value, pointers, output.Name, declaredOutputsByStep, diagnostics);
+                CheckExpression(value, pointers, output.Name, stepsById, diagnostics);
             }
         }
     }
 
-    private static void CheckParameters(in JsonElement step, PointerBuilder pointers, in JsonElement components, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckParameters(in JsonElement step, PointerBuilder pointers, in JsonElement components, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!step.TryGetProperty("parameters"u8, out JsonElement parameters) || parameters.ValueKind != JsonValueKind.Array)
         {
@@ -729,12 +743,12 @@ public static class WorkflowDocumentAnalyzer
 
             if (ReadString(parameter, "value"u8) is { Length: > 0 } value)
             {
-                CheckExpression(value, pointers, "value", declaredOutputsByStep, diagnostics);
+                CheckExpression(value, pointers, "value", stepsById, diagnostics);
             }
         }
     }
 
-    private static void CheckRequestBody(in JsonElement step, PointerBuilder pointers, IReadOnlyDictionary<string, HashSet<string>> declaredOutputsByStep, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckRequestBody(in JsonElement step, PointerBuilder pointers, IReadOnlyDictionary<string, JsonElement> stepsById, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!step.TryGetProperty("requestBody"u8, out JsonElement requestBody) || requestBody.ValueKind != JsonValueKind.Object)
         {
@@ -746,7 +760,7 @@ public static class WorkflowDocumentAnalyzer
             && payload.ValueKind == JsonValueKind.String
             && payload.GetString() is { Length: > 0 } payloadValue)
         {
-            CheckExpression(payloadValue, pointers, "payload", declaredOutputsByStep, diagnostics);
+            CheckExpression(payloadValue, pointers, "payload", stepsById, diagnostics);
         }
 
         if (requestBody.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
@@ -759,7 +773,7 @@ public static class WorkflowDocumentAnalyzer
                     && ReadString(replacement, "value"u8) is { Length: > 0 } value)
                 {
                     using PointerScope indexScope = pointers.Push(i);
-                    CheckExpression(value, pointers, "value", declaredOutputsByStep, diagnostics);
+                    CheckExpression(value, pointers, "value", stepsById, diagnostics);
                 }
 
                 i++;
