@@ -56,8 +56,10 @@ describe('<arazzo-schema-editor>', () => {
     };
     const num = fmtOptions('n');
     ok(num.includes('decimal') && num.includes('half') && num.includes('double') && num.includes('float'), 'number offers the real formats');
+    ok(num.includes('int64') && num.includes('uint128') && num.includes('byte'), 'number offers the integer formats too (integral values are numbers)');
     const int = fmtOptions('i');
     ok(int.includes('uint128') && int.includes('byte') && int.includes('int64') && int.includes('sbyte'), 'integer offers unsigned + 128-bit + 8-bit');
+    ok(!int.includes('double') && !int.includes('decimal'), 'integer does not offer the real formats');
   });
 
   it('the root form has no fill — it is delimited by its border, like the payload form', () => {

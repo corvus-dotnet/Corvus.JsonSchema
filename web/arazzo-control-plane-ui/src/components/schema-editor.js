@@ -41,14 +41,16 @@ const COMBINER_LABEL = { oneOf: 'one of', anyOf: 'any of', allOf: 'all of' };
 // The `format` keyword is a constrained dropdown, not free text — the recognised JSON Schema string
 // formats (kept in step with value-editor.js's control map) and the OpenAPI numeric formats.
 // The numeric formats CTJ's WellKnownNumericFormatHandler recognises (kept in step with the generator).
-// `integer` offers every whole-number backing type — signed and unsigned, 8- to 128-bit; `number` offers
-// the real types (half/float/double and the 128-bit decimal). OpenAPI's int32/int64/float/double lead.
+// `integer` offers every whole-number backing type — signed and unsigned, 8- to 128-bit. `number` offers
+// the real types (half/float/double and the 128-bit decimal) AND the integer formats: a JSON Schema
+// number accepts integral values, so any whole-number format constrains it too. OpenAPI's
+// int32/int64/float/double lead their groups.
 const INTEGER_FORMATS = ['int32', 'int64', 'int16', 'sbyte', 'byte', 'uint16', 'uint32', 'uint64', 'int128', 'uint128'];
 const FORMATS = {
   string: ['date-time', 'date', 'time', 'duration', 'email', 'idn-email', 'hostname', 'idn-hostname',
     'ipv4', 'ipv6', 'uri', 'uri-reference', 'iri', 'iri-reference', 'uuid', 'uri-template',
     'json-pointer', 'relative-json-pointer', 'regex'],
-  number: ['float', 'double', 'half', 'decimal'],
+  number: ['float', 'double', 'half', 'decimal', ...INTEGER_FORMATS],
   integer: INTEGER_FORMATS,
 };
 // Per-type "more…" constraints (title/enum/const/default are added for every type).
