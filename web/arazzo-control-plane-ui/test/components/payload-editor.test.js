@@ -38,6 +38,14 @@ describe('<arazzo-payload-editor>', () => {
     equal(el.shadowRoot.querySelector('.modes').hidden, false, 'Form|JSON toggle');
   });
 
+  it('seats the Form area in a delimited box, mirroring the JSON text editor', () => {
+    make();
+    const fields = el.shadowRoot.querySelector('.fields');
+    ok(fields, 'the Form root container renders');
+    const border = getComputedStyle(fields).borderTopWidth;
+    ok(border && border !== '0px', `the form area is delimited by a border (got ${border})`);
+  });
+
   it('coerces literals to the schema type; expressions stay strings; empty unsets', async () => {
     make();
     let payload;

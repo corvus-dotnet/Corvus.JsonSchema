@@ -63,7 +63,10 @@ class ArazzoPayloadEditor extends ArazzoElement {
         .modes { display: flex; gap: 4px; margin-bottom: 6px; }
         .modes button { font-size: 11px; padding: 2px 10px; opacity: 0.7; }
         .modes button.active { opacity: 1; border-color: var(--_accent); font-weight: 600; }
-        .fields { display: grid; gap: 8px; min-width: 0; }
+        /* The form seats in a delimited box mirroring the JSON text editor's bordered area, so Form
+           and JSON modes read as the same panel in two views (compact: the editor's border + radius). */
+        .fields { display: grid; gap: 10px; min-width: 0; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; }
+        .fields:empty { display: none; }
         .fields .field, .fields .fieldset { min-width: 0; }
         label { font-size: 11px; color: var(--_muted); display: flex; gap: 6px; align-items: baseline; margin-bottom: 2px; }
         label .t { font-size: 10px; opacity: 0.8; }
