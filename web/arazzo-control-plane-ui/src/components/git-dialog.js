@@ -1,5 +1,5 @@
 // <arazzo-git-dialog> — bind a working copy to a branch and round-trip it (workflow-designer
-// design §4.7): pull refreshes the document (+ bound specs + scenarios) from the branch; commit
+// design §4.7): pull refreshes the document (+ bound sources + scenarios) from the branch; commit
 // writes them back — authored as the signed-in user's GitHub-held git identity — with an optional
 // draft pull request FROM the bound branch.
 //
@@ -182,8 +182,8 @@ class ArazzoGitDialog extends ArazzoElement {
             <div class="tree-slot tree-scenarios" hidden></div>
             <div class="specs">
               <span class="pathrow">
-                <span class="muted specs-head">Spec paths — where each attached source lives on the branch (blank = not tracked)</span>
-                <button class="browse-specs ghost" type="button" disabled title="Connect and pick a repository and branch first">specs dir…</button>
+                <span class="muted specs-head">Source paths — where each attached source lives on the branch (blank = not tracked)</span>
+                <button class="browse-specs ghost" type="button" disabled title="Connect and pick a repository and branch first">sources dir…</button>
               </span>
               <div class="tree-slot tree-specs" hidden></div>
               <div class="spec-rows"></div>
@@ -194,8 +194,8 @@ class ArazzoGitDialog extends ArazzoElement {
                  merge). The forward round-trip is Commit; going backward is the History's roll back. -->
             <div class="load-section" hidden>
               <div class="row-actions">
-                <button class="pull" type="button" disabled title="Load the bound branch's current contents into this working copy — replaces the document, bound specs, and scenarios (nothing partially applies)">⤓ Load from branch</button>
-                <span class="hint">Load replaces this working copy's document, bound specs, and scenarios with the branch's current contents. To go back to an earlier commit instead, use the History below.</span>
+                <button class="pull" type="button" disabled title="Load the bound branch's current contents into this working copy — replaces the document, bound sources, and scenarios (nothing partially applies)">⤓ Load from branch</button>
+                <span class="hint">Load replaces this working copy's document, bound sources, and scenarios with the branch's current contents. To go back to an earlier commit instead, use the History below.</span>
               </div>
               <div class="load-result" hidden></div>
             </div>
@@ -205,7 +205,7 @@ class ArazzoGitDialog extends ArazzoElement {
             <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
             <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <select class="c-base" disabled title="Pick a repository first"></select></label>
-            <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity">⤒ Commit</button></div>
+            <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound sources, and scenario files to the branch — authored as YOUR GitHub identity">⤒ Commit</button></div>
             <div class="result" hidden></div>
           </fieldset>
           <fieldset class="history-section" hidden>
@@ -235,11 +235,11 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderBinding());
     this.$('.save-binding').addEventListener('click', () => this.saveBinding());
     this.$('.pull').addEventListener('click', async () => {
-      // Load is a REPLACE, not a git merge (§4.7): the branch's document, bound specs, and scenario
+      // Load is a REPLACE, not a git merge (§4.7): the branch's document, bound sources, and scenario
       // set overwrite the working copy. Say so before doing it — and point at History for going back.
       const sure = await this.$('.ask').ask({
         title: 'Load replaces this working copy',
-        message: 'The branch’s document, bound specs, and scenario set replace what is here — local edits since the last save are lost. This is a load, not a merge. To go back to an earlier commit instead, use the History.',
+        message: 'The branch’s document, bound sources, and scenario set replace what is here — local edits since the last save are lost. This is a load, not a merge. To go back to an earlier commit instead, use the History.',
         confirmLabel: 'Load & replace',
         danger: true,
       });
@@ -473,7 +473,7 @@ class ArazzoGitDialog extends ArazzoElement {
     pull.disabled = !connected || !bound;
     pull.title = pull.disabled
       ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Load reads from the bound branch')
-      : 'Load the bound branch into this working copy — replaces the document, bound specs, and scenarios (nothing partially applies)';
+      : 'Load the bound branch into this working copy — replaces the document, bound sources, and scenarios (nothing partially applies)';
     for (const sel of ['.browse-path', '.browse-scenarios', '.browse-specs']) {
       const browse = this.$(sel);
       if (browse) {
@@ -486,7 +486,7 @@ class ArazzoGitDialog extends ArazzoElement {
     commit.disabled = !connected || !bound || !this.$('.c-message').value.trim();
     commit.title = commit.disabled
       ? (!connected ? 'Connect GitHub first' : !bound ? 'Save a binding first — Commit writes to the bound branch' : 'Enter a commit message')
-      : 'Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity';
+      : 'Write the document, bound sources, and scenario files to the branch — authored as YOUR GitHub identity';
   }
 
   // The form's gitBinding value (specPaths parsed from `name = path` lines).
@@ -800,7 +800,7 @@ class ArazzoGitDialog extends ArazzoElement {
   async rollbackTo(commit) {
     const sure = await this.$('.ask').ask({
       title: `Roll back to ${commit.sha.slice(0, 7)}?`,
-      message: `“${commit.message ?? commit.sha}” replaces the working copy's document${this._workingCopy?.gitBinding?.specPaths ? ', bound specs,' : ''} and scenario set — local edits since the last commit are lost. The branch itself is untouched until you commit the rollback.`,
+      message: `“${commit.message ?? commit.sha}” replaces the working copy's document${this._workingCopy?.gitBinding?.specPaths ? ', bound sources,' : ''} and scenario set — local edits since the last commit are lost. The branch itself is untouched until you commit the rollback.`,
       confirmLabel: 'Roll back & replace',
       danger: true,
     });
