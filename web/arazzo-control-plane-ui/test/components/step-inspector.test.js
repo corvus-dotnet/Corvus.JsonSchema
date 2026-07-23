@@ -197,6 +197,9 @@ describe('<arazzo-step-inspector>', () => {
     el.operationRequest = { schema: { type: 'object', properties: { card: { type: 'object', properties: { number: { type: 'string' } } } } } };
     el.shadowRoot.querySelector('.addr').click();
     const target = el.shadowRoot.querySelector('.rrow .rtarget');
+    // A replacement target is a JSON Pointer, not a runtime expression.
+    equal(target.validator('/card/number').valid, true, 'a JSON Pointer is a valid target');
+    equal(target.validator('$inputs.x').valid, false, 'a runtime expression is not a valid target');
     const changed = nextEvent(el, 'step-changed');
     target.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '/card/number' }, bubbles: true, composed: true }));
     const step = (await changed).detail.step;

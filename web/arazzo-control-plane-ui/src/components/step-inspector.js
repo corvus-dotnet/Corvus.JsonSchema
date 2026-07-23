@@ -631,6 +631,14 @@ class ArazzoStepInspector extends ArazzoElement {
         const type = Array.isArray(at?.type) ? at.type[0] : at?.type;
         return { label: path, ...(type ? { detail: type } : {}) };
       });
+      // A replacement target is a JSON Pointer into the payload (Arazzo `PayloadReplacement.target`), NOT a
+      // runtime expression — so reject a `$…` here. Empty is the whole body; otherwise it must start with `/`.
+      targetInput.validator = (value) => {
+        const v = (value ?? '').trim();
+        return v === '' || v.startsWith('/')
+          ? { valid: true }
+          : { valid: false, errors: [{ message: 'the target is a JSON Pointer into the payload (e.g. /card/number), not a runtime expression' }] };
+      };
       targetInput.value = r.target ?? '';
       row.querySelector('.rtarget-slot').replaceWith(targetInput);
 

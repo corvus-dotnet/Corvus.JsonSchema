@@ -77,6 +77,14 @@ describe('<arazzo-workflow-inspector>', () => {
     wf = (await changed).detail.workflow;
     equal(wf.parameters[0].in, 'header');
 
+    // The value takes runtime expressions, so it is the expression control (not a bare input).
+    const value = el.shadowRoot.querySelector('.wparams .wpvalue');
+    equal(value.tagName.toLowerCase(), 'arazzo-expression-input', 'the value is the expression control');
+    changed = nextEvent(el, 'workflow-changed');
+    value.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.tenant' }, bubbles: true, composed: true }));
+    wf = (await changed).detail.workflow;
+    equal(wf.parameters[0].value, '$inputs.tenant');
+
     changed = nextEvent(el, 'workflow-changed');
     el.shadowRoot.querySelector('.wparams .wpdel').click();
     wf = (await changed).detail.workflow;

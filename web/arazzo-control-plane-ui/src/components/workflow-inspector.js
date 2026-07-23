@@ -14,6 +14,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
 import './schema-editor.js';
 import './outputs-editor.js';
+import './expression-input.js';
 
 class ArazzoWorkflowInspector extends ArazzoElement {
   static get observedAttributes() { return ['focus-section']; }
@@ -248,7 +249,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     box.innerHTML = '';
     parameters.forEach((param, i) => {
       const row = document.createElement('div');
-      row.style.cssText = 'display:grid; grid-template-columns: 1fr auto auto auto; gap:6px; align-items:center; margin-bottom:6px;';
+      row.style.cssText = 'display:grid; grid-template-columns: 1fr auto 1.5fr auto; gap:6px; align-items:center; margin-bottom:6px;';
       if (param.reference != null) {
         row.style.gridTemplateColumns = '1fr auto';
         row.innerHTML = `<span class="hint">↺ ${escapeHtml(param.reference)} <em>reusable — edit in components</em></span>
@@ -259,7 +260,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
           <select class="wpin">
             ${['', 'path', 'query', 'header', 'cookie', 'querystring'].map((v) => `<option value="${v}" ${v === (param.in ?? '') ? 'selected' : ''}>${v || '(in)'}</option>`).join('')}
           </select>
-          <input class="wpvalue" type="text" placeholder="value or $expression" value="${escapeHtml(typeof param.value === 'string' ? param.value : JSON.stringify(param.value ?? ''))}">
+          <arazzo-expression-input class="wpvalue" style="display:block; min-width:0;" placeholder="value or $expression"></arazzo-expression-input>
           <button class="wpdel ghost" type="button" title="Remove">✕</button>`;
         row.querySelector('.wpname').addEventListener('input', (e) => { param.name = e.target.value; this._emit(); });
         row.querySelector('.wpin').addEventListener('change', (e) => {
@@ -267,7 +268,12 @@ class ArazzoWorkflowInspector extends ArazzoElement {
           else delete param.in;
           this._emit();
         });
-        row.querySelector('.wpvalue').addEventListener('input', (e) => { param.value = e.target.value; this._emit(); });
+        // The value takes runtime expressions, so it uses the same expression control as every other
+        // value field (highlighting + completion) rather than a bare text input.
+        const wpvalue = row.querySelector('.wpvalue');
+        wpvalue.completionContext = this._completionContext;
+        wpvalue.value = typeof param.value === 'string' ? param.value : JSON.stringify(param.value ?? '');
+        wpvalue.addEventListener('value-changed', (e) => { param.value = e.detail.value; this._emit(); });
       }
 
       row.querySelector('.wpdel').addEventListener('click', () => {
