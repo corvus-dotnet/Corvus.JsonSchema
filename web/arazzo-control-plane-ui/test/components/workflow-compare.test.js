@@ -40,6 +40,45 @@ describe('<arazzo-workflow-compare>', () => {
   const rowFor = (match) => rows().find((r) => match(r.querySelector('.cl-sel').textContent.trim()));
   const takeOf = (row) => row.querySelector('.cl-take');
 
+  it('a cross-document compare renders each side\'s own workflow, never an empty pane', () => {
+    // The bound file holds a DIFFERENT workflow than the working copy (the reported always-empty
+    // side): each side resolves to its own content, and the legend names the cross-compare.
+    const l = base();
+    const r = {
+      arazzo: '1.1.0',
+      workflows: [{ workflowId: 'other', steps: [{ stepId: 'x', operationId: 'op.x' }, { stepId: 'y', operationId: 'op.y' }] }],
+    };
+    open(l, r); // shared workflowId 'w' — absent from the right document
+    ok(surface('left').shadowRoot.querySelectorAll('.node[data-id]').length >= 3, 'the working copy renders its steps');
+    ok(surface('right').shadowRoot.querySelector('.node[data-id="x"]'), 'the commit side falls back to its own workflow');
+    ok(legend().includes("comparing 'w' with 'other'"), `the legend names the cross-compare (got: ${legend()})`);
+  });
+
+  it('a stepless first workflow never hides the real one: the side resolves to the workflow with steps', () => {
+    const doc = {
+      arazzo: '1.1.0',
+      workflows: [
+        { workflowId: 'stub' }, // no steps at all
+        { workflowId: 'real', steps: [{ stepId: 'a', operationId: 'op.a' }] },
+      ],
+    };
+    open(doc, structuredClone(doc), { workflowId: undefined });
+    ok(surface('left').shadowRoot.querySelector('.node[data-id="a"]'), 'left resolves to the workflow with steps');
+    ok(surface('right').shadowRoot.querySelector('.node[data-id="a"]'), 'right too');
+  });
+
+  it('selecting a change reveals the divider that balances list vs detail', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].description = 'changed';
+    open(l, r);
+    const split = el.shadowRoot.querySelector('.cl-split');
+    equal(getComputedStyle(split).display, 'none', 'no selection — no divider');
+    rowFor((t) => t.includes('a'))?.querySelector('.cl-sel').click();
+    ok(el.shadowRoot.querySelector('.cl-detail').textContent.length > 0, 'the detail renders');
+    ok(getComputedStyle(split).display !== 'none', 'the divider shows with the detail');
+  });
+
   it('paints a changed step on both sides and shows a legend count', () => {
     const l = base();
     const r = base();

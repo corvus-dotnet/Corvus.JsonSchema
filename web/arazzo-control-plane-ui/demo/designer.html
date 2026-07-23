@@ -1874,8 +1874,10 @@
     const gitDialog = document.getElementById('gitpanel');
     gitDialog.client = client;
     gitDialog.windowOpener = mockAuthOpener;
-    // The compare dialog's merge target reads the LIVE model, never the panel's stale snapshot (§6.4).
+    // The compare dialog's merge target reads the LIVE model, never the panel's stale snapshot (§6.4),
+    // and centres on the workflow being EDITED (the #workflow selector), not the document's first.
     gitDialog.documentSource = () => model.document;
+    gitDialog.workflowIdSource = () => select.value || undefined;
     // The Components tab shows the document's reusable library, refreshed on each visit (and
     // whenever the model changes while it is showing). Persisting merges exactly like settings.
     const componentsPanel = document.getElementById('componentspanel');

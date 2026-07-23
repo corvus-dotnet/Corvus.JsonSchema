@@ -37,6 +37,7 @@ import { diffWorkflowPair, buildGhostProjection } from '../workflow-diff.js';
 import { serializeDocument } from '../workflow-document-model.js';
 import { ArazzoExpressionInput } from './expression-input.js';
 import './design-surface.js';
+import './splitbar.js';
 
 const GROUPS = [['steps', 'Steps'], ['flow', 'Flow'], ['workflow', 'Workflow']];
 
@@ -112,9 +113,16 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     this.$('dialog')?.close();
   }
 
-  /** @private — per-side wins over the shared id, else the side's first workflow. */
+  /** @private — per-side wins over the shared id; the shared id applies only when THIS side's document
+   *  actually carries it (a cross-document compare — the working copy bound to a file holding different
+   *  workflows — must never pin a side to a workflow it does not have, which projected an empty pane);
+   *  else the side's first workflow with steps, else its first. */
   _resolveWorkflowId(side, sharedWorkflowId) {
-    return side?.workflowId ?? sharedWorkflowId ?? side?.document?.workflows?.[0]?.workflowId ?? '';
+    if (side?.workflowId) return side.workflowId;
+    const workflows = side?.document?.workflows || [];
+    if (sharedWorkflowId && workflows.some((w) => w.workflowId === sharedWorkflowId)) return sharedWorkflowId;
+    const withSteps = workflows.find((w) => Array.isArray(w.steps) && w.steps.length);
+    return withSteps?.workflowId ?? workflows[0]?.workflowId ?? sharedWorkflowId ?? '';
   }
 
   render() {
@@ -144,8 +152,15 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .tm-view { flex: 1; min-height: 0; overflow: auto; }
         .tm-view .cm-mergeView, .tm-view .cm-mergeViewEditors, .tm-view .cm-editor { height: 100%; }
         .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
-        .changelist { display: grid; grid-template-rows: auto minmax(0, 1.4fr) auto; min-height: 0; border-right: 1px solid var(--_border); }
-        .cl-detail { border-top: 1px solid var(--_border); background: var(--_bg); overflow: auto; max-height: 42%; padding: 8px 10px; font-size: 12px; }
+        /* head · list · divider · detail. The detail row is a FIXED height the divider drives
+           (--cl-detail-h, persisted), so the author balances list vs detail; without a selection the
+           divider+detail rows collapse and the list takes the whole column. */
+        .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; border-right: 1px solid var(--_border); }
+        .changelist:has(.cl-detail:not(:empty)) { grid-template-rows: auto minmax(0, 1fr) auto minmax(120px, var(--cl-detail-h, 240px)); }
+        .cl-split { display: none; }
+        .changelist:has(.cl-detail:not(:empty)) .cl-split { display: block; }
+        .grid.cl-collapsed .cl-split { display: none !important; }
+        .cl-detail { border-top: 1px solid var(--_border); background: var(--_bg); overflow: auto; padding: 8px 10px; font-size: 12px; }
         .cl-detail:empty, .grid.cl-collapsed .cl-detail { display: none; }
         .cl-detail .dh { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); margin: 0 0 6px; }
         .cl-detail .fd { margin: 0 0 9px; }
@@ -207,6 +222,9 @@ class ArazzoWorkflowCompare extends ArazzoElement {
               <button class="cl-next ghost" type="button" title="Next change">›</button>
             </div>
             <div class="cl-body"></div>
+            <arazzo-splitbar class="cl-split" orientation="horizontal" target=".changelist" prop="--cl-detail-h"
+                             min="120" max="640" invert storage-key="compare.split.detail"
+                             aria-label="Resize the change detail"></arazzo-splitbar>
             <div class="cl-detail"></div>
           </div>
           <div class="stage"></div>
@@ -405,6 +423,11 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     if (s.renamed) parts.push(`${s.renamed} renamed`);
     if (s.moved) parts.push(`${s.moved} moved`);
     legend.textContent = parts.length ? parts.join(' · ') : 'No differences in this workflow';
+    // A cross-document compare (each side resolved to a different workflow) reads very differently
+    // from a same-workflow diff — say so rather than leaving the wholesale add/remove unexplained.
+    if (this._workflowIds.left && this._workflowIds.right && this._workflowIds.left !== this._workflowIds.right) {
+      legend.textContent += ` — comparing '${this._workflowIds.left}' with '${this._workflowIds.right}'`;
+    }
     hl.hidden = false;
   }
 

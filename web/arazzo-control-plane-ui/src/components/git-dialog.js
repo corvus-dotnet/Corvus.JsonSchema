@@ -763,7 +763,9 @@ class ArazzoGitDialog extends ArazzoElement {
       this.$('.compare').open({
         left: { label: `Working copy (current) — ${this._workingCopy?.name ?? ''}`, document: live, mergeTarget: !!this.documentSource },
         right: { label: `${commit.sha.slice(0, 7)} — ${commit.message ?? ''}`, document: historic },
-        workflowId: live?.workflows?.[0]?.workflowId,
+        // Centre on the workflow the author is EDITING when the host says (workflowIdSource), not
+        // blindly the document's first; each side falls back to its own content when it lacks the id.
+        workflowId: this.workflowIdSource?.() ?? live?.workflows?.[0]?.workflowId,
       });
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
