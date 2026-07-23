@@ -66,14 +66,14 @@ describe('<arazzo-document-inspector>', () => {
 
   it('adds and removes workflows (empty skeleton, duplicate ids refused)', async () => {
     make();
-    const input = el.shadowRoot.querySelector('.newwf');
-    input.value = 'place-order'; // duplicate — refused silently
-    el.shadowRoot.querySelector('.addwf').click();
+    const wfadd = el.shadowRoot.querySelector('.wfadd');
+    const add = (workflowId) => wfadd.dispatchEvent(new CustomEvent('workflow-add', { detail: { workflowId }, bubbles: true, composed: true }));
+
+    add('place-order'); // duplicate — refused (no new workflow)
     equal(el.value.workflows.length, 2);
 
-    input.value = 'cancel-order';
     const changed = nextEvent(el, 'document-changed');
-    el.shadowRoot.querySelector('.addwf').click();
+    add('cancel-order');
     const doc = (await changed).detail.document;
     equal(doc.workflows.length, 3);
     equal(doc.workflows[2].workflowId, 'cancel-order');

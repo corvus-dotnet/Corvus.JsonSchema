@@ -155,7 +155,7 @@
         <div id="canvas-empty-noworkflows" hidden style="display: grid; gap: 8px; justify-items: center;">
           <div style="font-size: 15px; font-weight: 600;">No workflows yet</div>
           <div>A document holds one or more workflows. Create your first to start designing.</div>
-          <button id="canvas-empty-newwf" type="button" style="pointer-events: auto; font-size: 13px; padding: 4px 14px;">+ New workflow</button>
+          <arazzo-workflow-add id="canvas-empty-wfadd" style="pointer-events: auto; width: min(380px, 80vw); text-align: left;"></arazzo-workflow-add>
         </div>
       </div>
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
@@ -269,6 +269,7 @@
     import '/ui/src/components/input-dialog.js';
     import '/ui/src/components/value-editor.js';
     import '/ui/src/components/document-inspector.js';
+    import '/ui/src/components/workflow-add.js';
     import '/ui/src/components/debug-tray.js';
     import '/ui/src/components/resume-dialog.js';
     import '/ui/src/components/scenario-panel.js';
@@ -382,7 +383,22 @@
       refreshExpressionContext();
     }
     document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
-    document.getElementById('canvas-empty-newwf').addEventListener('click', () => { showDocumentInspector(); switchSideTab('inspect'); });
+    // The empty-canvas overlay reuses the document inspector's workflow-add widget: add the first
+    // workflow right here, then switch to it, rather than sending the author to the sidebar to do it.
+    document.getElementById('canvas-empty-wfadd').addEventListener('workflow-add', (e) => {
+      const id = e.detail.workflowId;
+      const widget = document.getElementById('canvas-empty-wfadd');
+      if ((doc.workflows ?? []).some((w) => w.workflowId === id)) {
+        widget.setError('a workflow with this id already exists');
+        return;
+      }
+      model.update((d) => { (d.workflows ??= []).push({ workflowId: id, steps: [] }); },
+        { origin: 'canvas-empty', label: `add workflow ${id}` });
+      widget.clear();
+      refreshWorkflowOptions();
+      select.value = id;
+      project();
+    });
 
     // The canvas key: notation must be learnable in the UI itself, not the design doc.
     const legendBtn = document.getElementById('legend-btn');

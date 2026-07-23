@@ -53,7 +53,9 @@ test('New working copy opens on the "no workflows" state; adding a workflow give
   await expect(page.locator('#canvas-empty')).toBeVisible();
   await expect(page.locator('#canvas-empty-noworkflows')).toBeVisible();
   await expect(page.locator('#canvas-empty-noworkflows')).toContainText('No workflows yet');
-  await expect(page.locator('#canvas-empty-newwf')).toBeVisible();
+  // The empty-canvas overlay carries the SAME workflow-add widget as the document inspector.
+  const overlayAdd = page.locator('#canvas-empty-wfadd');
+  await expect(overlayAdd).toBeVisible();
   await expect(page.locator('#canvas-empty-nosteps')).toBeHidden();
   await expect(page.locator('#surface .node')).toHaveCount(0);
 
@@ -61,14 +63,11 @@ test('New working copy opens on the "no workflows" state; adding a workflow give
   // sourceDescriptions/workflows), so the Problems badge lights without any button press.
   await expect(page.locator('#problems-badge')).toBeVisible({ timeout: 8000 });
 
-  // Create the first workflow from the empty-canvas CTA: it opens the document inspector, where a
-  // workflowId is added. The canvas then switches to the source/operation teaching state — and STILL
-  // draws no start/end, because the new workflow has no steps yet (the reported superimposition).
-  await page.locator('#canvas-empty-newwf').click();
-  const inspector = page.locator('arazzo-document-inspector[sections="document"]');
-  await expect(inspector).toBeVisible();
-  await inspector.locator('input.newwf').fill('sync-inventory');
-  await inspector.locator('button.addwf').click();
+  // Create the first workflow RIGHT FROM the overlay widget (no trip to the sidebar). The canvas then
+  // switches to the source/operation teaching state — and STILL draws no start/end, because the new
+  // workflow has no steps yet (the reported superimposition).
+  await overlayAdd.locator('input.newwf').fill('sync-inventory');
+  await overlayAdd.locator('button.addwf').click();
 
   await expect(page.locator('#canvas-empty-nosteps')).toBeVisible();
   await expect(page.locator('#canvas-empty-nosteps')).toContainText('An empty canvas');

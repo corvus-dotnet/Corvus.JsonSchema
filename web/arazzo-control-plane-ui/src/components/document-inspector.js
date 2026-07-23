@@ -18,6 +18,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { promptText } from './prompt.js';
 import './schema-editor.js';
 import './action-editor.js';
+import './workflow-add.js';
 
 const COMPONENT_KINDS = [
   ['parameters', 'parameter'],
@@ -142,10 +143,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
 
       <h3>workflows</h3>
       <div class="workflows"></div>
-      <div class="pair">
-        <input class="newwf" type="text" placeholder="new workflowId">
-        <button class="add addwf ghost" type="button">+ Add workflow</button>
-      </div>` : ''}
+      <arazzo-workflow-add class="wfadd"></arazzo-workflow-add>` : ''}
 
       ${this._wants('components') ? `
       <h3>components (reusable library)</h3>
@@ -169,6 +167,19 @@ class ArazzoDocumentInspector extends ArazzoElement {
 
       this._renderSources();
       this._renderWorkflows();
+      // Adding a workflow: the shared widget emits an id; dedup and creation are ours (we own the doc).
+      const wfadd = this.$('.wfadd');
+      wfadd?.addEventListener('workflow-add', (e) => {
+        const id = e.detail.workflowId;
+        if ((this._doc.workflows || []).some((w) => w.workflowId === id)) {
+          wfadd.setError('a workflow with this id already exists');
+          return;
+        }
+        (this._doc.workflows ??= []).push({ workflowId: id, steps: [] });
+        wfadd.clear();
+        this._renderWorkflows();
+        this._emit();
+      });
     }
 
     if (this._wants('components')) this._renderComponents();
@@ -210,15 +221,6 @@ class ArazzoDocumentInspector extends ArazzoElement {
       });
       box.append(row);
     });
-    this.$('.addwf').onclick = () => {
-      const input = this.$('.newwf');
-      const id = input.value.trim();
-      if (!id || (this._doc.workflows || []).some((w) => w.workflowId === id)) return;
-      (this._doc.workflows ??= []).push({ workflowId: id, steps: [] });
-      input.value = '';
-      this._renderWorkflows();
-      this._emit();
-    };
   }
 
   /** @private */
