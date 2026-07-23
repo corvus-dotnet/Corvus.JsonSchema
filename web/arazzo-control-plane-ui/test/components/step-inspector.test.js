@@ -59,14 +59,26 @@ describe('<arazzo-step-inspector>', () => {
     const payload = el.shadowRoot.querySelector('arazzo-payload-editor').shadowRoot.querySelector('.payload');
     let emitted = 0;
     el.addEventListener('step-changed', () => emitted++);
-    payload.value = '{ broken';
-    payload.dispatchEvent(new Event('input', { bubbles: true }));
+    payload.dispatchEvent(new CustomEvent('text-changed', { detail: { text: '{ broken' }, bubbles: true, composed: true }));
     equal(emitted, 0, 'no emit while unparseable');
-    ok(payload.classList.contains('invalid'));
-    payload.value = '{ "amount": 12 }';
-    payload.dispatchEvent(new Event('input', { bubbles: true }));
+    ok(!payload.shadowRoot.querySelector('.err').hidden, 'the parse problem shows under the editor');
+    payload.dispatchEvent(new CustomEvent('text-changed', { detail: { text: '{ "amount": 12 }' }, bubbles: true, composed: true }));
     equal(emitted, 1);
-    ok(!payload.classList.contains('invalid'));
+    ok(payload.shadowRoot.querySelector('.err').hidden, 'the problem clears once it parses');
+  });
+
+  it('hides the request body section when the operation takes no body (e.g. GET)', async () => {
+    // A step bound to a body-less operation, with no request body of its own.
+    make({ stepId: 'get-order', operationId: 'getOrder', parameters: [{ name: 'orderId', in: 'path', value: '$inputs.orderId' }] });
+    ok(!el.shadowRoot.querySelector('.ctype'), 'no contentType field');
+    ok(!el.shadowRoot.querySelector('.payload-slot'), 'no payload slot');
+    ok(![...el.shadowRoot.querySelectorAll('h3')].some((h) => h.textContent === 'request body'), 'no request body heading');
+
+    // Binding an operation that DOES take a body brings the section back.
+    el.operationRequest = { schema: { type: 'object', properties: { note: { type: 'string' } } } };
+    el.value = el.value; // rebuild with the request schema in place
+    ok(el.shadowRoot.querySelector('.payload-slot'), 'the section returns once the operation takes a body');
+    ok([...el.shadowRoot.querySelectorAll('h3')].some((h) => h.textContent === 'request body'), 'the heading returns');
   });
 
   it('with an operation schema the payload is a typed form (leaves are expression inputs)', async () => {
@@ -181,6 +193,8 @@ describe('<arazzo-step-inspector>', () => {
 
   it('replacements add, edit, and prune with the request body', async () => {
     make({ stepId: 'x', operationId: 'op' });
+    // The operation takes a body, so the request body section (with its replacements) shows.
+    el.operationRequest = { schema: { type: 'object', properties: { card: { type: 'object', properties: { number: { type: 'string' } } } } } };
     el.shadowRoot.querySelector('.addr').click();
     const target = el.shadowRoot.querySelector('.rrow .rtarget');
     const changed = nextEvent(el, 'step-changed');

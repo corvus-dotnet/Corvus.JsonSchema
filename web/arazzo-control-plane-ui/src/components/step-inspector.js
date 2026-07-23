@@ -77,7 +77,9 @@ class ArazzoStepInspector extends ArazzoElement {
 
   set operationRequest(request) {
     this._operationRequest = request;
-    if (this.isConnected && this._built) this._renderReplacements();
+    // A full re-render: the request presence decides whether the whole request body section shows, and
+    // its schema drives the replacement targets — so this is not just a replacements refresh.
+    if (this.isConnected && this._built) this.renderForm();
   }
   /** The workflow-level actions (for the localize-defaults affordance). */
   set workflowDefaults(d) { this._defaults = { successActions: [], failureActions: [], ...(d || {}) }; }
@@ -137,6 +139,11 @@ class ArazzoStepInspector extends ArazzoElement {
   renderForm() {
     const s = this._step;
     const kind = KINDS.find(([k]) => s[k] != null)?.[0] ?? 'operationId';
+    // The request body section appears only when the operation actually takes a body (its resolved
+    // request carries a schema) or the step already carries one; a GET-style operation with no request
+    // body must not prompt for one.
+    const showRequestBody = !!this._operationRequest?.schema
+      || !!(s.requestBody && Object.keys(s.requestBody).length);
     const form = this.$('.form');
     form.innerHTML = `
       <div>
@@ -163,6 +170,7 @@ class ArazzoStepInspector extends ArazzoElement {
         <select class="addpref" hidden style="font-size:12px;"></select>
       </div>
 
+      ${showRequestBody ? `
       <h3>request body</h3>
       <div class="pair">
         <div>
@@ -178,7 +186,7 @@ class ArazzoStepInspector extends ArazzoElement {
         <label>replacements (JSON Pointer → value)</label>
         <div class="repls"></div>
         <button class="addr ghost" type="button">+ Add replacement</button>
-      </div>
+      </div>` : ''}
 
       <h3>success criteria</h3>
       <div class="hint">the verdict: ALL must match for the step to succeed — failing them is what makes it fail</div>
@@ -199,7 +207,7 @@ class ArazzoStepInspector extends ArazzoElement {
     this._renderBinding(kind);
     this._renderDependsOn();
     this._renderParams();
-    this._renderReplacements();
+    if (showRequestBody) this._renderReplacements();
 
     // Success criteria (shared editor).
     const criteria = document.createElement('arazzo-criteria-editor');
@@ -239,30 +247,33 @@ class ArazzoStepInspector extends ArazzoElement {
     form.querySelector('.kind').addEventListener('change', (e) => {
       this._setKind(e.target.value);
     });
-    form.querySelector('.ctype').addEventListener('input', (e) => {
-      this._ensureRequestBody();
-      if (e.target.value) this._step.requestBody.contentType = e.target.value;
-      else delete this._step.requestBody.contentType;
-      this._pruneRequestBody();
-      this._emit();
-    });
-    // The strongly-typed payload editor: structure from the binding's schema, expression-capable
-    // leaves, JSON view for full fidelity (schema-less bindings get JSON only).
-    const payload = document.createElement('arazzo-payload-editor');
-    payload.schema = this._operationRequest?.schema || null;
-    payload.completionContext = this._completionContext;
-    payload.value = s.requestBody?.payload;
-    form.querySelector('.payload-slot').append(payload);
-    payload.addEventListener('payload-changed', (e) => {
-      e.stopPropagation();
-      if (e.detail.payload === undefined) {
-        if (this._step.requestBody) { delete this._step.requestBody.payload; this._pruneRequestBody(); }
-      } else {
+    // The request body controls exist only when the section is shown (an operation that takes a body).
+    if (showRequestBody) {
+      form.querySelector('.ctype').addEventListener('input', (e) => {
         this._ensureRequestBody();
-        this._step.requestBody.payload = e.detail.payload;
-      }
-      this._emit();
-    });
+        if (e.target.value) this._step.requestBody.contentType = e.target.value;
+        else delete this._step.requestBody.contentType;
+        this._pruneRequestBody();
+        this._emit();
+      });
+      // The strongly-typed payload editor: structure from the binding's schema, expression-capable
+      // leaves, JSON view for full fidelity (schema-less bindings get JSON only).
+      const payload = document.createElement('arazzo-payload-editor');
+      payload.schema = this._operationRequest?.schema || null;
+      payload.completionContext = this._completionContext;
+      payload.value = s.requestBody?.payload;
+      form.querySelector('.payload-slot').append(payload);
+      payload.addEventListener('payload-changed', (e) => {
+        e.stopPropagation();
+        if (e.detail.payload === undefined) {
+          if (this._step.requestBody) { delete this._step.requestBody.payload; this._pruneRequestBody(); }
+        } else {
+          this._ensureRequestBody();
+          this._step.requestBody.payload = e.detail.payload;
+        }
+        this._emit();
+      });
+    }
   }
 
   /** @private — binding fields per kind; switching prunes the other binding's fields. */
@@ -597,6 +608,7 @@ class ArazzoStepInspector extends ArazzoElement {
 
   _renderReplacements() {
     const box = this.$('.repls');
+    if (!box) return; // the request body section is hidden (a body-less operation) — nothing to render
     const replacements = this._step.requestBody?.replacements || [];
     box.innerHTML = '';
 

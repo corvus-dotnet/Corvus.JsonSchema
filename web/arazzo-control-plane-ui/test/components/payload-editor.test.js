@@ -63,22 +63,31 @@ describe('<arazzo-payload-editor>', () => {
     equal(payload.card.number, '$inputs.cardNumber');
   });
 
-  it('JSON mode is full fidelity and guarded; schema-less editors are JSON-only', async () => {
+  it('JSON mode is a syntax-highlighted, guarded editor; schema-less editors are JSON-only', async () => {
     make();
     el.shadowRoot.querySelector('.m-json').click();
-    const ta = el.shadowRoot.querySelector('.payload');
-    ok(ta.value.includes('"extra": "kept"'), 'JSON view shows everything');
+    const ed = el.shadowRoot.querySelector('.payload');
+    equal(ed.tagName.toLowerCase(), 'arazzo-text-editor', 'JSON mode uses the syntax-highlighted editor');
+    ok(ed.value.includes('"extra": "kept"'), 'JSON view shows everything');
+
     let emitted = 0;
-    el.addEventListener('payload-changed', () => emitted++);
-    ta.value = '{ broken';
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    let last;
+    el.addEventListener('payload-changed', (e) => { emitted++; last = e.detail.payload; });
+    // The editor's value/text-changed contract: an unparseable buffer is guarded (never emitted).
+    ed.dispatchEvent(new CustomEvent('text-changed', { detail: { text: '{ broken' }, bubbles: true, composed: true }));
     equal(emitted, 0, 'broken JSON never emits');
-    ok(ta.classList.contains('invalid'));
+    // A parseable buffer commits.
+    ed.dispatchEvent(new CustomEvent('text-changed', { detail: { text: '{"amount": 5}' }, bubbles: true, composed: true }));
+    equal(emitted, 1, 'valid JSON commits');
+    equal(last.amount, 5);
+    // A blank buffer clears the payload.
+    ed.dispatchEvent(new CustomEvent('text-changed', { detail: { text: '   ' }, bubbles: true, composed: true }));
+    equal(last, undefined, 'a blank buffer clears the payload');
 
     el.remove();
     make({ schema: null, value: { a: 1 } });
     ok(el.shadowRoot.querySelector('.modes').hidden, 'no toggle without a schema');
-    ok(el.shadowRoot.querySelector('.payload'), 'JSON editor serves');
+    equal(el.shadowRoot.querySelector('.payload')?.tagName.toLowerCase(), 'arazzo-text-editor', 'JSON editor serves');
   });
 
   it('marks a leaf invalid while its literal can never satisfy the schema type', async () => {

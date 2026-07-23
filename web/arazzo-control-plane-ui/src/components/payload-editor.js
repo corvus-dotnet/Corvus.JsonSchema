@@ -15,8 +15,8 @@
 // edited as guarded raw JSON (unparseable input never emits; the last valid payload stands).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import { wireGuardedJson } from './guarded-json.js';
 import './expression-input.js';
+import './text-editor.js';
 
 class ArazzoPayloadEditor extends ArazzoElement {
   constructor() {
@@ -69,12 +69,7 @@ class ArazzoPayloadEditor extends ArazzoElement {
         label .t { font-size: 10px; opacity: 0.8; }
         .fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 8px; background: var(--_surface); }
         .fieldset > .fname { font: 600 11px var(--_font); color: var(--_muted); }
-        textarea {
-          width: 100%; box-sizing: border-box; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
-          padding: 7px 9px; border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text); resize: vertical;
-        }
-        textarea.invalid { border-color: var(--_danger); }
+        arazzo-text-editor.payload { display: block; height: 180px; min-height: 0; }
         .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
               arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
       </style>
@@ -172,19 +167,37 @@ class ArazzoPayloadEditor extends ArazzoElement {
     this._emit();
   }
 
-  /** @private — the raw view: guarded JSON, full fidelity. */
+  /** @private — the raw view: a syntax-highlighted, guarded JSON editor (full fidelity). */
   _buildJson() {
     const wrap = document.createElement('div');
-    wrap.innerHTML = `
-      <textarea class="payload" rows="5" spellcheck="false">${this._value !== undefined ? escapeHtml(JSON.stringify(this._value, null, 2)) : ''}</textarea>
-      <div class="hint payload-hint">JSON; runtime expressions allowed in strings</div>
-    `;
-    const ta = wrap.querySelector('textarea');
-    wireGuardedJson(ta, {
-      hint: wrap.querySelector('.payload-hint'),
-      baseHint: 'JSON; runtime expressions allowed in strings',
-      emptyDeletes: true, // blank clears the payload (never emits a broken one)
-      onCommit: (value) => { this._value = value; this._emit(); },
+    const ed = document.createElement('arazzo-text-editor');
+    ed.standalone = true; // an inline editor with no document model — undo/redo stay local
+    ed.className = 'payload';
+    ed.value = this._value !== undefined ? JSON.stringify(this._value, null, 2) : '';
+    const hint = document.createElement('div');
+    hint.className = 'hint payload-hint';
+    hint.textContent = 'JSON; runtime expressions allowed in strings';
+    wrap.append(ed, hint);
+
+    // Guarded, last-valid-wins: a parseable buffer commits and clears the problem; an unparseable one
+    // shows the parse error under the editor while the last valid value stands (never emitted broken); a
+    // blank buffer clears the payload.
+    ed.addEventListener('text-changed', (e) => {
+      const text = e.detail.text;
+      if (!text.trim()) {
+        ed.setProblem(null);
+        this._value = undefined;
+        this._emit();
+        return;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        ed.setProblem(null);
+        this._value = parsed;
+        this._emit();
+      } catch (err) {
+        ed.setProblem(`not JSON yet: ${String(err.message).slice(0, 80)}`);
+      }
     });
     return wrap;
   }

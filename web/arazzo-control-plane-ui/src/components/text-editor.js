@@ -11,6 +11,10 @@
 // Uses the same vendored CM6 bundle as <arazzo-expression-input> (loadCm — one shared instance
 // set), with JSON highlighting and the kit-token chrome. Until the modules load (or if they never
 // do) a plain <textarea> serves the identical value/event contract.
+//
+// Set `standalone` for inline hosts that have no document model (e.g. the payload editor's JSON view):
+// the editor then keeps a LOCAL CM history so Ctrl-Z undoes typing, instead of delegating undo to the
+// host. The value/text-changed/setProblem contract is unchanged.
 
 import { ArazzoElement, SHARED_CSS, define } from './base.js';
 import { ArazzoExpressionInput } from './expression-input.js';
@@ -36,6 +40,12 @@ class ArazzoTextEditor extends ArazzoElement {
 
   /** True while the plain-textarea fallback is serving. */
   get usingFallback() { return !this._view; }
+
+  /** Standalone mode: the editor owns a LOCAL CM history (for inline hosts with no document model, e.g.
+   *  the payload editor), so Ctrl-Z undoes typing here. The default (false) has no CM history and
+   *  delegates undo/redo to the host's one document model (design §5.2). Set before connection. */
+  get standalone() { return this._standalone ?? this.hasAttribute('standalone'); }
+  set standalone(v) { this._standalone = !!v; }
 
   get value() {
     if (this._view) return this._view.state.doc.toString();
@@ -162,6 +172,19 @@ class ArazzoTextEditor extends ArazzoElement {
 
     const ta = this.$('textarea');
     const container = this.$('.ted');
+    const standalone = this.standalone;
+    // Default mode has NO CM6 history: undo/redo belong to the ONE document model (design §5.2) — a
+    // text-tab Ctrl-Z must unwind the same stack as a canvas edit. The bindings flush any pending
+    // debounced change first (so the very latest keystrokes are the top undo entry), then ask the host
+    // to drive the model; the model's change event refreshes this view. Standalone mode instead keeps a
+    // LOCAL CM history, for inline hosts (the payload editor) that have no document model to delegate to.
+    const historyKeys = standalone
+      ? [...commands.historyKeymap]
+      : [
+          { key: 'Mod-z', preventDefault: true, run: () => { this._requestHistory('undo'); return true; } },
+          { key: 'Mod-y', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
+          { key: 'Mod-Shift-z', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
+        ];
     this._view = new view.EditorView({
       root: this.shadowRoot,
       parent: container,
@@ -172,14 +195,9 @@ class ArazzoTextEditor extends ArazzoElement {
           highlight,
           chrome,
           view.lineNumbers(),
-          // NO CM6 history: undo/redo belong to the ONE document model (design §5.2) — a text-tab
-          // Ctrl-Z must unwind the same stack as a canvas edit. The bindings flush any pending
-          // debounced change first (so the very latest keystrokes are the top undo entry), then
-          // ask the host to drive the model; the model's change event refreshes this view.
+          ...(standalone ? [commands.history()] : []),
           view.keymap.of([
-            { key: 'Mod-z', preventDefault: true, run: () => { this._requestHistory('undo'); return true; } },
-            { key: 'Mod-y', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
-            { key: 'Mod-Shift-z', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
+            ...historyKeys,
             ...commands.defaultKeymap,
             commands.indentWithTab,
           ]),
