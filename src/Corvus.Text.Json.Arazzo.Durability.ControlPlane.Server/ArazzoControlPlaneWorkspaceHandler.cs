@@ -2189,6 +2189,18 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 using UnescapedUtf8JsonString name = channel.Utf8NameSpan;
                 channels.Add(Encoding.UTF8.GetString(name.Span));
+
+                // A step's channelPath binds by the channel ADDRESS (WorkflowOperationBinder matches
+                // channel.ChannelAddress, and SourceOperationSurface writes the address into channelPath),
+                // so collect the address too — otherwise an address-bound step (the common AsyncAPI 3.0
+                // shape, where the key and address differ) reads as "not found in any attached source".
+                if (channel.Value.ValueKind == JsonValueKind.Object
+                    && channel.Value.TryGetProperty("address"u8, out JsonElement address)
+                    && address.ValueKind == JsonValueKind.String
+                    && address.GetString() is { Length: > 0 } channelAddress)
+                {
+                    channels.Add(channelAddress);
+                }
             }
         }
 

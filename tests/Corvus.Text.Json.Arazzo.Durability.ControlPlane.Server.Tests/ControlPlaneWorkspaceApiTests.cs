@@ -921,6 +921,27 @@ public sealed class ControlPlaneWorkspaceApiTests
             .ShouldContain(d => d.GetProperty("category").GetString() == "workspace-sources" && d.GetProperty("severity").GetString() == "error");
     }
 
+    [TestMethod]
+    public async Task Validate_resolves_a_channelPath_step_against_the_channel_address_not_only_its_key()
+    {
+        await using Scoped host = await StartAsync();
+
+        // The AsyncAPI 3.0 channel is KEYED 'accessNotify' but ADDRESSED 'access.notify'. A step binds the
+        // ADDRESS — the shape the designer drops and the executor's binder resolves (channel.ChannelAddress).
+        // The source-integrity pass must resolve it, not report "Channel 'access.notify' is not found".
+        const string doc = """{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"sourceDescriptions":[{"name":"notifications","url":"./n.asyncapi.json","type":"asyncapi"}],"workflows":[{"workflowId":"wf","steps":[{"stepId":"notify","channelPath":"access.notify","action":"send"}]}]}""";
+        string id = await CreateWithDocumentAsync(host, doc);
+        const string asyncapi = """{"asyncapi":"3.0.0","info":{"title":"n","version":"1"},"channels":{"accessNotify":{"address":"access.notify","messages":{"note":{"payload":{"type":"object"}}}}},"operations":{"sendNote":{"action":"send","channel":{"$ref":"#/channels/accessNotify"},"messages":[{"$ref":"#/channels/accessNotify/messages/note"}]}}}""";
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/notifications", $$"""{"document":{{asyncapi}}}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument report = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", "{}", Read));
+        report.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .ShouldNotContain(d => d.GetProperty("category").GetString() == "workspace-sources"
+                && d.GetProperty("message").GetString()!.Contains("access.notify")
+                && d.GetProperty("message").GetString()!.Contains("not found"));
+    }
+
     private static async Task<(string Id, string Etag)> CreateAsync(Scoped host)
     {
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", CreateBody, Write));
