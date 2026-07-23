@@ -1368,12 +1368,22 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         // Gate 2 (§18): per-source credential readiness in the TARGET environment. The run dialog
         // surfaces the same coverage before the attempt; starting with gaps is a 409 naming them.
+        // Only HTTP (openapi) sources need a §13 binding — an asyncapi source's sends ride the
+        // draft runner's own message transport and never resolve a credential, so gating them made
+        // readiness depend on unrelated bindings happening to share the source's name.
         JsonElement document = (JsonElement)w.RootElement.Document;
         List<string>? missing = null;
         if (document.TryGetProperty("sourceDescriptions"u8, out JsonElement declared) && declared.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement source in declared.EnumerateArray())
             {
+                if (source.TryGetProperty("type"u8, out JsonElement sourceType)
+                    && sourceType.ValueKind == JsonValueKind.String
+                    && !sourceType.ValueEquals("openapi"u8))
+                {
+                    continue; // asyncapi (message transport), arazzo (no direct calls), jsonschema (no calls at all)
+                }
+
                 if (source.TryGetProperty("name"u8, out JsonElement sourceNameElement) && sourceNameElement.GetString() is { Length: > 0 } sourceName)
                 {
                     using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.credentials!.GetAsync(sourceName, environmentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
@@ -1388,7 +1398,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         if (missing is not null)
         {
             return StartDebugRunResult.Conflict(
-                Problem("credentials-not-ready", "Credentials not ready", 409, $"No credential bound in '{environmentName}' for: {string.Join(", ", missing)}."), workspace);
+                Problem("credentials-not-ready", "Credentials not ready", 409, $"No credential bound in '{environmentName}' for: {string.Join(", ", missing)}. Bind a credential for each named source in '{environmentName}' (Credentials → new binding), or exercise the workflow against mocks instead — Run without an environment simulates every call."), workspace);
         }
 
         string workflowId = (string)body.WorkflowId;

@@ -173,11 +173,15 @@ public sealed class ControlPlaneDebugRunApiTests
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // A development-class environment that allows drafts but has no credential bound for the declared source: 409.
+        // The refusal names only the HTTP source (an asyncapi source needs no §13 binding — its sends
+        // ride the runner's message transport) and says what to DO about it.
         await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
         HttpResponseMessage notReady = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development"}""", StartScopes);
         notReady.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await notReady.Content.ReadAsStringAsync()).ShouldContain("petstore");
+        string refusal = await notReady.Content.ReadAsStringAsync();
+        refusal.ShouldContain("petstore");
+        refusal.ShouldContain("against mocks");
 
         // With the credential bound, an unknown workflow id is the remaining 400.
         await host.BindCredentialAsync("petstore", "development");
@@ -547,7 +551,8 @@ public sealed class ControlPlaneDebugRunApiTests
             $$"""{"document":{{EventsDoc}}}""", "workspace:write")).StatusCode.ShouldBe(HttpStatusCode.OK);
         await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
         await host.BindCredentialAsync("petstore", "development");
-        await host.BindCredentialAsync("events", "development");
+        // Deliberately NO binding for 'events': an asyncapi source rides the runner's message
+        // transport and must not be credential-gated (it used to be — this start would 409).
 
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"await-verdict","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
