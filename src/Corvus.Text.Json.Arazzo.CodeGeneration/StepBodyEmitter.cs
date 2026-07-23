@@ -91,7 +91,7 @@ public static class StepBodyEmitter
         string clientVar = $"{camel}Client";
         string responseVar = $"{camel}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, inputsVariable, inputAccessors, requestBody);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, inputsVariable, inputAccessors, stepId, requestBody);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);

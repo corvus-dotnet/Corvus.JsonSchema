@@ -183,7 +183,7 @@ internal static class ControlFlowEmitter
             operation.Operation.Method.ToString().ToUpperInvariant(), step.Arguments, step.RequestBody, referencesUrl ? urlLocal : null);
 
         RequestBindingCode request = RequestBindingEmitter.Emit(
-            operation, step.Arguments, "context", prefix, stepOutputLocals, "inputs", options.InputAccessors, step.RequestBody);
+            operation, step.Arguments, "context", prefix, stepOutputLocals, "inputs", options.InputAccessors, step.StepId, step.RequestBody);
         fields.Append(request.Fields);
 
         // Build the success gate + action dispatch first, so we can tell whether anything still resolves

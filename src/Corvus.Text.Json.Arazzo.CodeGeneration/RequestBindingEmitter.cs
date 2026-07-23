@@ -32,6 +32,7 @@ public static class RequestBindingEmitter
     /// <param name="fieldPrefix">A unique prefix (e.g. the step id) for the emitted static fields.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
+    /// <param name="stepId">The step id, used to fault the step (via <c>WorkflowStepFailedException</c>) when a required path parameter resolves to no value.</param>
     /// <param name="requestBody">The step's request body, or <see langword="null"/> when there is none (or one not yet supported).</param>
     /// <returns>The emitted static field declarations, the in-method resolution statements, and the named-argument fragments.</returns>
     /// <exception cref="InvalidOperationException">A required parameter has no argument.</exception>
@@ -43,6 +44,7 @@ public static class RequestBindingEmitter
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
         IReadOnlyDictionary<string, string>? inputAccessors,
+        string stepId,
         StepBody? requestBody = null)
     {
         ArgumentNullException.ThrowIfNull(arguments);
@@ -75,9 +77,20 @@ public static class RequestBindingEmitter
                 continue;
             }
 
+            // A required path parameter must resolve to a value: an unresolved one silently becomes an empty
+            // URL segment. When the value is a runtime expression, arm EmitValue to fault the step if it
+            // resolves to Undefined (the request is never sent). Non-path/optional parameters are unaffected.
+            string? faultStepId = null;
+            string? faultMessage = null;
+            if (parameter.Location == ParameterLocation.Path && parameter.IsRequired && argument.Kind == ArgumentValueKind.Expression)
+            {
+                faultStepId = stepId;
+                faultMessage = $"Step '{stepId}' did not send its request: the required path parameter '{parameter.Name}' ({argument.Value}) resolved to no value.";
+            }
+
             string source = EmitValue(
                 fields, statements, cleanup, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
-                $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName);
+                $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName, faultStepId, faultMessage);
             namedArguments.Add($"{parameter.ParameterName}: {source}");
             parameterBindings.Add(new RequestParameterBinding(parameter.Location, parameter.PropertyName, parameter.TypeName, source));
         }
@@ -125,7 +138,9 @@ public static class RequestBindingEmitter
         IReadOnlyDictionary<string, string>? inputAccessors,
         string fieldName,
         string propertyName,
-        string typeName)
+        string typeName,
+        string? faultStepId = null,
+        string? faultMessage = null)
     {
         // Derive the value local from the step-unique field name (which embeds the step id), not the bare
         // property name — otherwise two straight-line steps that bind the same request property (e.g. both
@@ -139,6 +154,18 @@ public static class RequestBindingEmitter
                 // Re-wrap to the parameter's model type with From so the single model → {Type}.Source implicit
                 // conversion applies at the call site (C# will not chain JsonElement → model → Source itself).
                 ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName, inputsVariable, inputAccessors);
+
+                // A required path parameter that resolves to nothing would render as an empty URL segment
+                // (/accounts//identity) — a malformed request sent silently. Fault the step BEFORE the send
+                // instead, naming the parameter and the expression that produced no value.
+                if (faultStepId is not null && faultMessage is not null)
+                {
+                    statements.Append("if (").Append(local).AppendLine(".ValueKind == JsonValueKind.Undefined)");
+                    statements.AppendLine("{");
+                    statements.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(faultStepId)).Append(", ").Append(EmitText.Quote(faultMessage)).AppendLine(");");
+                    statements.AppendLine("}");
+                }
+
                 return ConvertToSourceType(local, typeName);
 
             case ArgumentValueKind.Interpolation:

@@ -1039,6 +1039,117 @@ public sealed class WorkflowSimulatorTests
         result.Steps.Count.ShouldBe(0);
     }
 
+    // A required path parameter bound to a prior step's output that resolves to nothing (the /accounts//identity
+    // reproduction): listVerifications reads accountId from $response.body#/verifications/0/accountId, verifyIdentity
+    // binds it into the {accountId} path segment.
+    private const string UnresolvedPathParamWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Verify", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "kyc", "url": "./kyc.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "verify-first-account",
+              "steps": [
+                {
+                  "stepId": "listVerifications",
+                  "operationId": "listVerifications",
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "accountId": "$response.body#/verifications/0/accountId" }
+                },
+                {
+                  "stepId": "verifyIdentity",
+                  "operationId": "verifyIdentity",
+                  "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.listVerifications.outputs.accountId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    private const string KycOpenApi = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "KYC", "version": "1.0.0" },
+          "paths": {
+            "/verifications": {
+              "get": {
+                "operationId": "listVerifications",
+                "responses": {
+                  "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "verifications": { "type": "array", "items": { "type": "object", "properties": { "accountId": { "type": "string" } } } } } } } } }
+                }
+              }
+            },
+            "/accounts/{accountId}/identity": {
+              "get": {
+                "operationId": "verifyIdentity",
+                "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                "responses": { "200": { "description": "ok" } }
+              }
+            }
+          }
+        }
+        """;
+
+    private static readonly IReadOnlyList<KeyValuePair<string, byte[]>> KycSources =
+        [new("kyc", Encoding.UTF8.GetBytes(KycOpenApi))];
+
+    [TestMethod]
+    public async Task An_unresolved_required_path_parameter_faults_the_step_before_the_request_is_sent()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        // listVerifications returns an EMPTY list, so $response.body#/verifications/0/accountId resolves to nothing.
+        using ParsedJsonDocument<JsonElement> emptyList = ParsedJsonDocument<JsonElement>.Parse("""{"verifications":[]}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/verifications", 200, emptyList.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(UnresolvedPathParamWorkflowJson), KycSources, scenario);
+
+        // The step faults with a message that names the parameter and the expression — no silent /accounts//identity.
+        result.Outcome.ShouldBe(SimulationOutcome.Faulted);
+        result.Fault.ShouldNotBeNull();
+        result.Fault!.Value.StepId.ShouldBe("verifyIdentity");
+        result.Fault!.Value.Error.ShouldContain("accountId");
+        result.Fault!.Value.Error.ShouldContain("resolved to no value");
+
+        // The malformed request was NEVER sent: listVerifications is the only exchange, none has an empty segment.
+        result.Exchanges.ShouldNotContain(x => x.Path.Contains("//"));
+        result.Exchanges.ShouldNotContain(x => x.Path.StartsWith("/accounts/"));
+    }
+
+    [TestMethod]
+    public async Task A_resolved_required_path_parameter_sends_the_request_normally()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+
+        // The list carries an accountId this time — the guard must not fire, and the request goes to the real path.
+        using ParsedJsonDocument<JsonElement> withAccount = ParsedJsonDocument<JsonElement>.Parse("""{"verifications":[{"accountId":"acc-7"}]}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks =
+            [
+                new("get", "/verifications", 200, withAccount.RootElement),
+                new("get", "/accounts/{accountId}/identity", 200, default),
+            ],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(UnresolvedPathParamWorkflowJson), KycSources, scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed);
+        result.Exchanges.ShouldContain(x => x.Path == "/accounts/acc-7/identity");
+    }
+
     private sealed class CountingProvider(IWorkflowExecutorProvider inner) : IWorkflowExecutorProvider
     {
         public int Builds { get; private set; }
