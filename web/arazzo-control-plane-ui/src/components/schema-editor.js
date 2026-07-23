@@ -66,6 +66,9 @@ class ArazzoSchemaEditor extends ArazzoElement {
     /** @private */ this._title = '';
     /** @private */ this._previewTimer = null;
     /** @private */ this._previewOpen = false;
+    /** @private — objects whose properties section is rolled up, keyed by the (in-place, stable) schema
+     *  object so the collapsed state survives the form's re-render on every edit. */
+    this._collapsed = new WeakSet();
   }
 
   get value() { return this._schema; }
@@ -119,15 +122,23 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .toggle button { border: none; background: var(--_bg); color: inherit; font: 12px var(--_font); padding: 3px 10px; cursor: pointer; }
         .toggle button[aria-pressed="true"] { background: var(--_surface); font-weight: 600; }
         .rows { display: flex; flex-direction: column; gap: 6px; }
-        /* Rows sit on the surface tone (inputs inside stay on bg) so each property reads as its own card,
-           and nested levels hang off an accent-tinted rail — depth you can see at a glance (#858). */
-        .node { border: 1px solid var(--_border); border-radius: 8px; padding: 6px 8px; background: var(--_surface); }
+        /* The root form is a delimited box (border + radius, no fill) matching the payload editor and the
+           parameters/success-criteria sections; nested levels hang off an accent-tinted rail — depth you
+           can see at a glance (#858). */
+        .node { border: 1px solid var(--_border); border-radius: 8px; padding: 8px 10px; background: transparent; }
         /* A child property is NOT a boxed card: it hangs off the parent's accent rail as an indented list
            row (the rail is the depth cue, #858), so drop the box border/radius/fill the base .node gives. */
         .node.child { margin-left: 4px; border: none; border-radius: 0; background: none; border-left: 2px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 30%, var(--_border)); padding: 2px 0 2px 10px; }
-        /* The label that heads a container's members ("properties" / "items"), sitting at the parent's own
-           level with the members indented beneath it. */
+        /* The label that heads an array's items, sitting at the parent's own level with the item indented. */
         .body-label { font: 11px var(--_font); color: var(--_muted); margin: 6px 0 3px; }
+        /* An object's "properties" section rolls up: the label is a toggle carrying a caret + a count; its
+           members sit in their own container, spaced so each property reads as a distinct row. */
+        .body-toggle { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--_muted); font: 11px var(--_font); cursor: pointer; padding: 2px 0; margin: 6px 0 4px; }
+        .body-toggle:hover { color: inherit; }
+        .body-toggle .caret { font-size: 9px; width: 1ch; display: inline-block; }
+        .body-toggle .count { opacity: 0.7; font-variant-numeric: tabular-nums; }
+        .members { display: grid; gap: 10px; }
+        .members[hidden] { display: none; }
         .rowline { display: flex; align-items: center; gap: 6px; }
         .rowline .name { flex: 1; min-width: 60px; font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .rowline .name.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
@@ -599,14 +610,31 @@ class ArazzoSchemaEditor extends ArazzoElement {
     const props = (schema.properties && typeof schema.properties === 'object') ? schema.properties : {};
     const required = new Set(Array.isArray(schema.required) ? schema.required : []);
     const names = Object.keys(props);
-    // A "properties" label heads the member list, at this object's own level; the members indent beneath it.
-    const label = document.createElement('div'); label.className = 'body-label'; label.textContent = 'properties';
-    wrap.appendChild(label);
+    const collapsed = this._collapsed.has(schema);
+
+    // The "properties" label is a roll-up toggle: a caret + a count, clicking it hides/shows the member
+    // list. Collapse state keys off the (stable, in-place) schema object so it survives the form re-render.
+    const toggle = document.createElement('button');
+    toggle.type = 'button'; toggle.className = 'body-toggle';
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+    toggle.innerHTML = `<span class="caret">${collapsed ? '▸' : '▾'}</span>properties${names.length ? ` <span class="count">(${names.length})</span>` : ''}`;
+    const members = document.createElement('div');
+    members.className = 'members';
+    members.hidden = collapsed;
+    toggle.addEventListener('click', () => {
+      const nowCollapsed = !this._collapsed.has(schema);
+      if (nowCollapsed) this._collapsed.add(schema); else this._collapsed.delete(schema);
+      members.hidden = nowCollapsed;
+      toggle.setAttribute('aria-expanded', String(!nowCollapsed));
+      toggle.querySelector('.caret').textContent = nowCollapsed ? '▸' : '▾';
+    });
+    wrap.append(toggle, members);
+
     // ghost rows: required names with no property (§3.2).
-    for (const r of required) if (!(r in props)) wrap.appendChild(this._ghostRow(schema, r));
-    if (!names.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No properties.'; wrap.appendChild(e); }
+    for (const r of required) if (!(r in props)) members.appendChild(this._ghostRow(schema, r));
+    if (!names.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No properties.'; members.appendChild(e); }
     for (const name of names) {
-      wrap.appendChild(this._renderNode(props[name], { name, parent: schema, isRequired: required.has(name) }));
+      members.appendChild(this._renderNode(props[name], { name, parent: schema, isRequired: required.has(name) }));
     }
     const add = document.createElement('button');
     add.className = 'add'; add.type = 'button'; add.textContent = '+ Add property'; add.disabled = this.readonly;
@@ -614,11 +642,12 @@ class ArazzoSchemaEditor extends ArazzoElement {
       let n = 'newProperty'; let i = 1;
       while (n in (schema.properties || {})) n = `newProperty${++i}`;
       addProperty(schema, n, { type: 'string' });
+      this._collapsed.delete(schema); // a freshly added property must be visible
       this._renderForm(); this._commit();
       const input = [...this.$$('.name')].find((x) => x.value === n);
       input?.focus(); input?.select();
     });
-    wrap.appendChild(add);
+    members.appendChild(add);
     return wrap;
   }
 

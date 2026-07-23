@@ -34,6 +34,27 @@ describe('<arazzo-schema-editor>', () => {
     equal(amountRow.querySelector('.req').getAttribute('aria-pressed'), 'true', 'amount is required');
   });
 
+  it('rolls up an object\'s properties section and expands it again', () => {
+    make({ type: 'object', properties: { a: { type: 'string' }, b: { type: 'string' } } });
+    const toggle = el.shadowRoot.querySelector('.body-toggle');
+    ok(toggle, 'the properties section carries a roll-up toggle');
+    ok(toggle.textContent.includes('(2)'), 'the toggle shows the property count');
+    const members = el.shadowRoot.querySelector('.members');
+    ok(!members.hidden, 'expanded by default');
+    toggle.click();
+    ok(members.hidden, 'clicking the toggle rolls the members up');
+    equal(toggle.getAttribute('aria-expanded'), 'false', 'aria reflects the collapsed state');
+    toggle.click();
+    ok(!members.hidden, 'clicking again expands');
+  });
+
+  it('the root form has no fill — it is delimited by its border, like the payload form', () => {
+    make({ type: 'object', properties: { a: { type: 'string' } } });
+    const root = el.shadowRoot.querySelector('.form > .node');
+    const bg = getComputedStyle(root).backgroundColor;
+    ok(bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent', `the root form is transparent (got ${bg})`);
+  });
+
   it('renaming a property emits schema-changed preserving position + requiredness', async () => {
     make({ type: 'object', properties: { a: { type: 'string' }, b: { type: 'integer' } }, required: ['a'] });
     const changed = nextEvent(el, 'schema-changed');
@@ -82,10 +103,10 @@ describe('<arazzo-schema-editor>', () => {
     ok(names().some((n) => n.value === 'a'), 're-derives rows');
   });
 
-  it('object members are an indented list under a "properties" label, not boxed cards', () => {
+  it('object members are an indented list under a "properties" toggle, not boxed cards', () => {
     make({ type: 'object', properties: { a: { type: 'string' }, b: { type: 'integer' } } });
-    const labels = [...el.shadowRoot.querySelectorAll('.body-label')].map((l) => l.textContent);
-    ok(labels.includes('properties'), 'a "properties" label heads the member list');
+    const toggle = el.shadowRoot.querySelector('.body-toggle');
+    ok(toggle && toggle.textContent.includes('properties'), 'a "properties" toggle heads the member list');
     const child = el.shadowRoot.querySelector('.node.child');
     ok(child, 'members render as child rows');
     const cs = getComputedStyle(child);
