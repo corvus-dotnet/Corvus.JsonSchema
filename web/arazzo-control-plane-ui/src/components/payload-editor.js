@@ -72,6 +72,16 @@ class ArazzoPayloadEditor extends ArazzoElement {
         .fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 8px; background: var(--_surface); }
         .fieldset > .fname { font: 600 11px var(--_font); color: var(--_muted); }
         arazzo-text-editor.payload { display: block; height: 180px; min-height: 0; }
+        /* An enum leaf is a combo: the expression input plus a picker popping the declared values.
+           Expressions stay first-class — the picker only offers the literal choices. */
+        .leaf-combo { display: flex; gap: 4px; align-items: center; position: relative; }
+        .leaf-combo arazzo-expression-input { flex: 1; min-width: 0; }
+        .enum-pick { flex: none; font-size: 11px; padding: 4px 8px; }
+        .enum-menu { position: absolute; top: 100%; right: 0; z-index: 30; margin-top: 4px; min-width: 160px; max-height: 220px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 4px; display: grid; }
+        .enum-menu[hidden] { display: none; }
+        .enum-opt { display: block; width: 100%; text-align: left; border: none; background: none; color: inherit; padding: 4px 8px; border-radius: 4px; cursor: pointer; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .enum-opt:hover { background: var(--_surface); }
+        .enum-opt[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 14%, transparent); font-weight: 600; }
         .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
               arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
       </style>
@@ -81,6 +91,9 @@ class ArazzoPayloadEditor extends ArazzoElement {
     const modes = this.$('.modes');
     modes.options = [{ value: 'form', label: 'Form' }, { value: 'json', label: 'JSON' }];
     modes.addEventListener('mode-changed', (e) => { this._mode = e.detail.value; this.render(); });
+    // Component-scoped dismissal for the enum pickers: any click outside a combo, or Escape, closes.
+    this.shadowRoot.addEventListener('click', () => this._closeEnumMenus());
+    this.shadowRoot.addEventListener('keydown', (e) => { if (e.key === 'Escape') this._closeEnumMenus(); });
   }
 
   /** @private */
@@ -139,8 +152,62 @@ class ArazzoPayloadEditor extends ArazzoElement {
       input.classList.toggle('invalid', impossible);
       input.title = impossible ? `neither a ${type} nor a runtime expression — the schema requires a ${type}` : '';
     });
+
+    // An enum leaf gains a picker: the declared values as a listbox (the current one marked), each
+    // choice routing through the SAME coercion as typing, so a picked 3 lands as the number 3.
+    // Expressions stay first-class — the input types them exactly as before.
+    if (Array.isArray(schema?.enum) && schema.enum.length) {
+      const combo = document.createElement('div');
+      combo.className = 'leaf-combo';
+      const pick = document.createElement('button');
+      pick.type = 'button';
+      pick.className = 'enum-pick ghost';
+      pick.textContent = '▾';
+      pick.title = `Choose one of the ${schema.enum.length} declared values`;
+      pick.setAttribute('aria-haspopup', 'listbox');
+      pick.setAttribute('aria-expanded', 'false');
+      const menu = document.createElement('div');
+      menu.className = 'enum-menu';
+      menu.setAttribute('role', 'listbox');
+      menu.hidden = true;
+      const asText = (v) => (typeof v === 'string' ? v : JSON.stringify(v));
+      pick.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = menu.hidden;
+        this._closeEnumMenus();
+        if (!open) return;
+        menu.replaceChildren(...schema.enum.map((v) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'enum-opt';
+          option.setAttribute('role', 'option');
+          option.setAttribute('aria-selected', String(input.value === asText(v)));
+          option.textContent = asText(v);
+          option.addEventListener('click', () => {
+            input.value = asText(v);
+            this._setLeaf(path, asText(v), type);
+            input.classList.remove('invalid');
+            input.title = '';
+            this._closeEnumMenus();
+          });
+          return option;
+        }));
+        menu.hidden = false;
+        pick.setAttribute('aria-expanded', 'true');
+      });
+      combo.append(input, pick, menu);
+      field.append(combo);
+      return field;
+    }
+
     field.append(input);
     return field;
+  }
+
+  /** @private — one enum menu open at a time; any outside interaction closes it (wired once in renderShell). */
+  _closeEnumMenus() {
+    for (const menu of this.$$('.enum-menu:not([hidden])')) menu.hidden = true;
+    for (const pick of this.$$('.enum-pick[aria-expanded="true"]')) pick.setAttribute('aria-expanded', 'false');
   }
 
   /** @private — coercion: expressions stay strings; literals adopt the schema's type when they parse. */

@@ -116,3 +116,72 @@ describe('<arazzo-payload-editor>', () => {
     ok(amount.classList.contains('invalid'), 'a non-number literal on a number leaf shows invalid');
   });
 });
+
+describe('<arazzo-payload-editor> enum leaves', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  const ENUM_SCHEMA = {
+    type: 'object',
+    properties: {
+      plan: { type: 'string', enum: ['free', 'pro', 'enterprise'] },
+      count: { type: 'integer', enum: [1, 2, 3] },
+      note: { type: 'string' },
+    },
+  };
+
+  function make(value = { plan: 'free' }) {
+    el = document.createElement('arazzo-payload-editor');
+    el.schema = ENUM_SCHEMA;
+    mount(el);
+    el.value = value;
+    return el;
+  }
+  const comboFor = (name) => [...el.shadowRoot.querySelectorAll('.field')]
+    .find((f) => f.querySelector('label').textContent.startsWith(name))
+    ?.querySelector('.leaf-combo');
+
+  it('an enum leaf offers the picker; picking commits through the typed coercion and closes', async () => {
+    make();
+    const plan = comboFor('plan');
+    ok(plan, 'the enum leaf renders as a combo');
+    ok(!comboFor('note'), 'a plain leaf has no picker');
+
+    plan.querySelector('.enum-pick').click();
+    const menu = plan.querySelector('.enum-menu');
+    ok(!menu.hidden, 'the picker opens');
+    const options = [...menu.querySelectorAll('.enum-opt')];
+    equal(options.map((o) => o.textContent).join(','), 'free,pro,enterprise', 'every declared value is offered');
+    equal(options[0].getAttribute('aria-selected'), 'true', 'the current value is marked');
+
+    let payload;
+    el.addEventListener('payload-changed', (e) => { payload = e.detail.payload; });
+    options[1].click();
+    equal(payload.plan, 'pro', 'picking commits the value');
+    equal(plan.querySelector('arazzo-expression-input').value, 'pro', 'the input shows the pick');
+    ok(menu.hidden, 'the picker closes after the pick');
+
+    // A non-string enum coerces through the schema type: picking 3 lands the NUMBER 3.
+    const count = comboFor('count');
+    count.querySelector('.enum-pick').click();
+    [...count.querySelectorAll('.enum-opt')].find((o) => o.textContent === '3').click();
+    equal(payload.count, 3, 'a picked integer enum value is typed');
+  });
+
+  it('one menu at a time; expressions remain typable on an enum leaf', async () => {
+    make();
+    const plan = comboFor('plan');
+    const count = comboFor('count');
+    plan.querySelector('.enum-pick').click();
+    ok(!plan.querySelector('.enum-menu').hidden);
+    count.querySelector('.enum-pick').click();
+    ok(plan.querySelector('.enum-menu').hidden, 'opening another closes the first');
+    ok(!count.querySelector('.enum-menu').hidden);
+
+    let payload;
+    el.addEventListener('payload-changed', (e) => { payload = e.detail.payload; });
+    plan.querySelector('arazzo-expression-input')
+      .dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.plan' } }));
+    equal(payload.plan, '$inputs.plan', 'an expression still types freely on an enum leaf');
+  });
+});
