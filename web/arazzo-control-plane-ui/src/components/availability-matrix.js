@@ -91,18 +91,25 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
         client.listCatalogVersions(base, { limit: 200 }).then((r) => r.versions),
         this.drainEnvironments(),
       ]);
-      // Per-version availability (a small fan-out — a base workflow has few versions) + the usable-credential map.
-      const [availPairs, credByEnv] = await Promise.all([
+      // Per-version availability + evidence (small fan-outs — a base workflow has few versions; the
+      // evidence summary rides only the version DETAIL, and evidence-gated environments need it for
+      // the readiness reason) + the usable-credential map.
+      const [availPairs, evidencePairs, credByEnv] = await Promise.all([
         Promise.all(versions.map((v) => client
           .listVersionAvailability(base, v.versionNumber, { limit: 200 })
           .then((r) => [v.versionNumber, new Set(r.availability.map((a) => a.environment))])
           .catch(() => [v.versionNumber, new Set()]))),
+        Promise.all(versions.map((v) => client
+          .getCatalogVersion(base, v.versionNumber)
+          .then((d) => [v.versionNumber, d.evidence ?? null])
+          .catch(() => [v.versionNumber, null]))),
         this.loadCredByEnv(base).catch(() => null),
       ]);
       if (seq !== this._reqSeq) return;
       this._versions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
       this._environments = environments.sort((a, b) => a.name.localeCompare(b.name));
       this._availability = new Map(availPairs);
+      this._evidence = new Map(evidencePairs);
       this._credByEnv = credByEnv;
       this._loading = false;
       this.renderBody();
@@ -139,12 +146,31 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     return this._availability.get(versionNumber)?.has(env) === true;
   }
 
-  /** A version is ready in an environment when every source it references has a usable credential there (§7.7). */
-  isReady(version, env) {
-    if (!this._credByEnv) return false; // credentials unreadable → readiness unknown, offer no promote action
-    const needed = (Array.isArray(version.sources) ? version.sources : []).map((s) => s.name);
-    const have = this._credByEnv.get(env);
-    return needed.every((n) => have?.has(n));
+  /**
+   * Readiness in an environment with the REASONS it fails — the server gates promotion on
+   * credentials (§7.7) AND publish evidence where the environment requires it (§4.6:
+   * readiness = credentials ∧ (suiteGreen ∨ ¬requireEvidence)), so "not ready" must say WHICH
+   * gate refused, not always blame credentials.
+   * @returns {{ready: boolean, reasons: string[]}}
+   */
+  readiness(version, env) {
+    const reasons = [];
+    if (!this._credByEnv) {
+      reasons.push('credentials are unreadable here — readiness unknown');
+    } else {
+      const needed = (Array.isArray(version.sources) ? version.sources : []).map((s) => s.name);
+      const have = this._credByEnv.get(env.name);
+      const missing = needed.filter((n) => !have?.has(n));
+      if (missing.length) reasons.push(`no usable credential for ${missing.join(', ')}`);
+    }
+
+    if (env.requireEvidence) {
+      const suite = this._evidence?.get(version.versionNumber)?.suite;
+      const green = !!suite && suite.total > 0 && !suite.failed && suite.passed === suite.total;
+      if (!green) reasons.push(suite ? 'the publish suite did not pass — this environment requires green evidence' : 'no publish evidence — this environment requires it');
+    }
+
+    return { ready: reasons.length === 0, reasons };
   }
 
   // ---- actions ----------------------------------------------------------------------------------
@@ -222,6 +248,7 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
         .badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--_border); }
         .badge.available { color: #1a7f37; border-color: currentColor; }
         .badge.notready { color: var(--_muted); }
+        .cell .why { font-size: 10.5px; color: var(--_muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cell button { font-size: 12px; padding: 3px 9px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
@@ -269,7 +296,7 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     }
     const head = `<thead><tr><th>Version</th>${this._environments.map((e) => `<th class="env">${escapeHtml(e.displayName || e.name)}</th>`).join('')}</tr></thead>`;
     const rows = shown.map((v) => {
-      const cells = this._environments.map((e) => `<td>${this.cellHtml(v, e.name)}</td>`).join('');
+      const cells = this._environments.map((e) => `<td>${this.cellHtml(v, e)}</td>`).join('');
       const status = v.status && v.status !== 'Active' ? `<span class="vstatus">${escapeHtml(v.status)}</span>` : '';
       return `<tr part="row"${selected === v.versionNumber ? ' class="selected"' : ''}><td class="ver">v${escapeHtml(v.versionNumber)}${status}</td>${cells}</tr>`;
     }).join('');
@@ -289,17 +316,22 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
 
   cellHtml(version, env) {
     const n = version.versionNumber;
-    const data = `data-version="${escapeHtml(n)}" data-env="${escapeHtml(env)}"`;
-    if (this.isAvailable(n, env)) {
+    const data = `data-version="${escapeHtml(n)}" data-env="${escapeHtml(env.name)}"`;
+    if (this.isAvailable(n, env.name)) {
       return `<div class="cell"><span class="badge available" part="cell">✓ Available</span>${this.canWrite ? `<button class="ghost" type="button" data-action="withdraw" ${data}>Withdraw</button>` : ''}</div>`;
     }
-    if (this.isReady(version, env)) {
+    const { ready, reasons } = this.readiness(version, env);
+    if (ready) {
       const action = this.canWrite
         ? `<button class="primary" type="button" data-action="make" ${data}>Make available</button>`
         : `<button class="ghost" type="button" data-action="request" ${data}>Request…</button>`;
       return `<div class="cell" part="cell"><span class="badge">Ready</span>${action}</div>`;
     }
-    return `<div class="cell" part="cell"><span class="badge notready" title="No usable credential set for this version's sources in ${escapeHtml(env)}.">— not ready</span></div>`;
+    // The reason is VISIBLE in the cell, not buried in a tooltip — unreadiness has more than one
+    // cause (credentials, evidence) and the operator must see which gate refused at a glance. One
+    // compact ellipsized line keeps the grid's rhythm; the tooltip carries the full sentences.
+    const joined = reasons.join(' · ');
+    return `<div class="cell" part="cell"><span class="badge notready" title="${escapeHtml(joined)}">— not ready</span><span class="why" title="${escapeHtml(joined)}">${escapeHtml(joined)}</span></div>`;
   }
 }
 

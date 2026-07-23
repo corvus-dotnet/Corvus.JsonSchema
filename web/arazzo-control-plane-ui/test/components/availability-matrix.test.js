@@ -34,6 +34,19 @@ describe('<arazzo-availability-matrix>', () => {
     ok(q(el, '.badge.notready').length > 0, 'the credential-less qa column is not ready');
   });
 
+  it('a not-ready cell states WHICH gate refused — credentials, evidence, or both (visible, not tooltip-only)', async () => {
+    // qa has no credentials (credential gate); uat requires publish evidence (mock seed) and
+    // nightly-reconcile v1/v2 predate evidence (evidence gate); v3 carries a green suite.
+    el = await matrix({ 'base-workflow-id': 'nightly-reconcile', scopes: FULL }, (c) => c.createEnvironment({ name: 'qa' }));
+    await nextEvent(el, 'loaded');
+    const whys = [...q(el, '.cell .why')].map((w) => w.textContent);
+    ok(whys.some((t) => t.includes('no usable credential for')), 'a missing credential is named in the cell');
+    ok(whys.some((t) => t.includes('publish evidence')), 'the evidence requirement is named in the cell');
+    // v3 (rows sort newest first) satisfied the evidence gate — its row never blames evidence.
+    const v3row = q(el, 'tbody tr')[0];
+    ok(!v3row.textContent.includes('publish evidence'), "a green-suite version's cells never claim an evidence problem");
+  });
+
   it('shows only the selected version row in single-version mode (embedded in the detail)', async () => {
     // nightly-reconcile has 3 versions; single-version scopes the grid to just the selected one's row.
     el = await matrix({ 'base-workflow-id': 'nightly-reconcile', 'selected-version': '2', 'single-version': '', scopes: FULL });
