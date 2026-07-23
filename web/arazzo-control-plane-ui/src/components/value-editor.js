@@ -23,6 +23,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { normalizeDescriptor } from '../schema-descriptor.js';
+import './text-editor.js';
 
 const VALIDATE_DEBOUNCE_MS = 350;
 
@@ -833,14 +834,15 @@ function scalarStr(v) {
 
 function unknownField(d, ctx) {
   void d;
-  const textarea = document.createElement('textarea');
-  textarea.rows = 3;
-  textarea.placeholder = 'JSON value';
-  if (ctx.seed !== undefined) textarea.value = JSON.stringify(ctx.seed, null, 2);
+  // A free-form JSON value gets the syntax-highlighted editor, like every other JSON field.
+  const editor = document.createElement('arazzo-text-editor');
+  editor.standalone = true;
+  editor.style.cssText = 'display:block; height:120px; min-height:0;';
+  if (ctx.seed !== undefined) editor.value = JSON.stringify(ctx.seed, null, 2);
   return {
-    node: textarea,
+    node: editor,
     read: () => {
-      const raw = textarea.value.trim();
+      const raw = (editor.value ?? '').trim();
       if (raw === '') return undefined;
       // The one local check that must stay: there's nothing to schema-validate until the text is valid JSON.
       try {

@@ -245,7 +245,7 @@ describe('<arazzo-value-editor>', () => {
     el = document.createElement('arazzo-value-editor');
     el.descriptor = { type: 'object', properties: {} };
     mount(el);
-    const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
+    const ta = await waitFor(() => el.shadowRoot.querySelector('arazzo-text-editor'));
     ta.value = '{ "manual": true }';
     equal(el.value.manual, true);
   });
@@ -254,7 +254,7 @@ describe('<arazzo-value-editor>', () => {
     el = document.createElement('arazzo-value-editor');
     el.descriptor = null;
     mount(el);
-    const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
+    const ta = await waitFor(() => el.shadowRoot.querySelector('arazzo-text-editor'));
     ta.value = '{ not json';
     let threw = false;
     try { void el.value; } catch { threw = true; }
@@ -282,7 +282,7 @@ describe('<arazzo-value-editor>', () => {
     await waitFor(() => el.shadowRoot.querySelector('input[type="text"]'));
     ok(el.shadowRoot.querySelector('input[type="text"]'), 'property a renders');
     ok(el.shadowRoot.querySelector('input[type="number"]'), 'property b renders (merged from both branches)');
-    ok(!el.shadowRoot.querySelector('textarea'), 'not the raw-JSON fallback');
+    ok(!el.shadowRoot.querySelector('arazzo-text-editor'), 'not the raw-JSON fallback');
   });
 
   it('renders {type:object, allOf:[…]} merged rather than swallowing it to raw (guard uses the normalized descriptor)', async () => {
@@ -297,7 +297,7 @@ describe('<arazzo-value-editor>', () => {
     el = document.createElement('arazzo-value-editor');
     el.descriptor = { allOf: [{ type: 'object', properties: { id: { type: 'string' } } }, { type: 'string' }] };
     mount(el);
-    const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
+    const ta = await waitFor(() => el.shadowRoot.querySelector('arazzo-text-editor'));
     ok(ta, 'a non-object branch degrades to the raw-JSON editor');
   });
 });
