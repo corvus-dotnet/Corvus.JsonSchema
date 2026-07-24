@@ -87,7 +87,7 @@ class ArazzoGitDialog extends ArazzoElement {
            refuse to shrink below — the classic horizontal-overflow trap. Force fields to fill and shrink. */
         :host { display: block; min-width: 0; }
         .panel, .body, fieldset, label, .two, .pathrow, .new-branch, .specs, .spec-row { min-width: 0; }
-        input, select, textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+        input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
         .panel { background: var(--_bg); color: inherit; }
         .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
         .head h2 { margin: 0; font-size: 14px; }
@@ -103,7 +103,8 @@ class ArazzoGitDialog extends ArazzoElement {
         label.check input { width: auto; }
         input, select, textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; min-height: 44px; }
-        .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* minmax(0, …): a combo holding a long branch name must shrink below its content, never widen the panel. */
+        .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
         .row-actions { display: flex; gap: 8px; align-items: center; }
         .hint { font-size: 11px; color: var(--_muted); }
         .new-branch { display: flex; gap: 6px; align-items: center; }
@@ -116,7 +117,7 @@ class ArazzoGitDialog extends ArazzoElement {
         .specs { display: grid; gap: 4px; }
         .specs-head { font-size: 11px; }
         .spec-rows { display: grid; gap: 4px; }
-        .spec-row { display: grid; grid-template-columns: minmax(9ch, auto) 1fr; gap: 8px; align-items: center; }
+        .spec-row { display: grid; grid-template-columns: minmax(9ch, auto) minmax(0, 1fr); gap: 8px; align-items: center; }
         .spec-row .sname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
         .spec-row .stale { color: var(--_muted); font-size: 10.5px; }
         .result, .load-result { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }

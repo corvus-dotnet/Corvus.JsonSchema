@@ -106,6 +106,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .head h2 { margin: 0; font-size: 14px; }
         .body { padding: 12px 14px; display: grid; gap: 10px; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; }
         .body > * { min-width: 0; }
+        input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
         label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
         input, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
         .tabs { display: flex; gap: 4px; }
