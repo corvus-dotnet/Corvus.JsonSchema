@@ -1,0 +1,10 @@
+{
+  "//": "Copy this file to 'github-oauth.local.json' (gitignored) and fill in your own GitHub OAuth App's credentials",
+  "//1": "to enable the designer's Git integration. See the AppHost README ('GitHub OAuth App') for how to register it.",
+  "//2": "ClientSecret is a real secret — it stays in the local (uncommitted) copy only; the AppHost injects it into",
+  "//3": "the control plane as an environment variable the broker resolves via env://GITHUB_OAUTH_CLIENT_SECRET.",
+  "GitHubOAuth": {
+    "ClientId": "Ov23liXXXXXXXXXXXXXX",
+    "ClientSecret": "your-github-oauth-app-client-secret"
+  }
+}

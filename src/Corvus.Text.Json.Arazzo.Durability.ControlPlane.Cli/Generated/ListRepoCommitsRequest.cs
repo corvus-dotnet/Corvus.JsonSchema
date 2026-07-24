@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ListRepoCommits operation.
 /// </summary>
-/// <remarks>One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
+/// <remarks>One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
 public readonly struct ListRepoCommitsRequest : IApiRequest<ListRepoCommitsRequest>
 {
 

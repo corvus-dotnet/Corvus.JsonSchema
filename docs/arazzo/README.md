@@ -47,6 +47,7 @@ does not, and links them for the rest.
 | [`web-ui-kit.md`](guides/web-ui-kit.md) | Adopting, theming, and composing the web component kit, and the UI design decisions (governance-hub IA, typed authoring, correct-by-construction). **(done)** |
 | [`ux-component-catalog.md`](guides/ux-component-catalog.md) | Every `arazzo-*` component: purpose, attributes, events, composition. **(done)** |
 | [`workflow-designer.md`](guides/workflow-designer.md) | The designer: authoring on the surface, scenarios, debug runs, diff, git, the CI scenario runner. **(done)** |
+| [`github-oauth-app.md`](guides/github-oauth-app.md) | The designer's Git integration: registering your own GitHub OAuth App, testing locally, deploying in the cloud. **(done)** |
 
 ### Cross-cutting
 

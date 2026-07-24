@@ -244,7 +244,7 @@ public interface IApiGithubClient : IAsyncDisposable
     /// The caller's GitHub session
     /// </summary>
     /// <remarks>
-    /// The signed-in GitHub identity, App installations, and accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no GitHub App.
+    /// The signed-in GitHub identity and a first page of accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no OAuth App.
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetGitHubStatusResponse> GetGitHubStatusAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
@@ -262,7 +262,7 @@ public interface IApiGithubClient : IAsyncDisposable
     /// List a repository's branches
     /// </summary>
     /// <remarks>
-    /// The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.
+    /// The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.
     /// </remarks>
     /// <param name="owner">The owner parameter.</param>
     /// <param name="repo">The repo parameter.</param>
@@ -285,7 +285,7 @@ public interface IApiGithubClient : IAsyncDisposable
     /// Browse a repository's contents
     /// </summary>
     /// <remarks>
-    /// Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is the user ∩ installation ∩ App-permission intersection — a repo the App is not installed on, or the user cannot read, is not found. 409 (github-not-connected) when the caller has no GitHub session.
+    /// Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is whatever the signed-in user can see — a repo the user cannot read is not found. 409 (github-not-connected) when the caller has no GitHub session.
     /// </remarks>
     /// <param name="owner">The owner parameter.</param>
     /// <param name="repo">The repo parameter.</param>
@@ -298,7 +298,7 @@ public interface IApiGithubClient : IAsyncDisposable
     /// List a repository's commit history
     /// </summary>
     /// <remarks>
-    /// One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.
+    /// One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.
     /// </remarks>
     /// <param name="owner">The owner parameter.</param>
     /// <param name="repo">The repo parameter.</param>

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the BrowseRepo operation (GET /github/repos/{owner}/{repo}/contents).
 /// </summary>
-/// <remarks>Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is the user ∩ installation ∩ App-permission intersection — a repo the App is not installed on, or the user cannot read, is not found. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
+/// <remarks>Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is whatever the signed-in user can see — a repo the user cannot read is not found. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
 public readonly struct BrowseRepoParams
 {
 

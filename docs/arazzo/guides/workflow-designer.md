@@ -326,13 +326,15 @@ problem.
 ### 4.7 GitHub integration, brokered; `workspace:write` + host-configured
 
 GitHub's OAuth token exchange has no CORS support, so the browser cannot complete an auth flow
-alone; the control plane brokers a **GitHub App** (fine-grained, repo-scoped, short-lived
-user-to-server tokens):
+alone; the control plane brokers a classic **OAuth App** (the VS Code / `gh` CLI model — user
+authorization only, no installation; ADR-noted 2026-07-24, replacing the earlier GitHub App +
+installation model because sources may live in any repository the user can see, not one they
+control):
 
 | Operation | HTTP | Purpose |
 |-----------|------|---------|
 | `beginGitHubAuth` / `completeGitHubAuth` | `GET /github/auth` → redirect; callback exchanges the code server-side | Standard web-application flow; the control plane holds the App credentials and the user token (server-side session or encrypted at rest with a KMS ref, never in the browser). |
-| `getGitHubStatus` | `GET /github/session` | Signed-in identity + installations + accessible repos. |
+| `getGitHubStatus` | `GET /github/session` | Signed-in identity + a first page of accessible repos (a picker seed; any visible repo stays addressable by owner/repo). |
 | `browseRepo` | `GET /github/repos/{owner}/{repo}/contents?ref&path` | Proxied browse for the open/import dialogs. |
 | `bind` (on the working copy) | part of `PUT /workspace/workflows/{id}` | `gitBinding: {owner, repo, branch, path, specPaths?, scenariosDir?}`, a working copy may be **Git-bound**; `specPaths` maps sourceDescriptions names to spec file paths, and scenarios round-trip as individual `<name>.scenario.json` files under `scenariosDir` (the §4.5 CI layout). |
 | `pullWorkingCopy` / `commitWorkingCopy` | `POST /workspace/workflows/{id}/git/{pull,commit}` | Pull: refresh document (+ bound source docs + scenarios) from the branch (etag/merge guard). Commit: write document (+ scenario files) to the branch with a message; optionally open a PR (`draft` → review flow for workflow development). |
@@ -345,26 +347,29 @@ the control plane.
 
 **Identity rules (ratified).** Authorship is the signed-in user's GitHub-held git identity,
 stamped by GitHub rather than composed by us; token custody is server-side per control-plane
-principal; unattended actions use the App's bot identity or don't happen. Concretely:
+principal; there are no unattended actions. Concretely:
 
-- **Attribution, the user's.** Every user-initiated pull/commit/PR runs on that user's
-  user-to-server token, so commits are authored by the human (with the "via App" badge and
-  GitHub's web-flow signature on contents-endpoint commits). Never a shared service account.
+- **Attribution, the user's.** Every user-initiated pull/commit/PR runs on that user's own
+  OAuth token, so commits are authored by the human (with GitHub's web-flow signature on
+  contents-endpoint commits). Never a shared service account.
 - **Git identity is GitHub-held, never composed.** Commit-writing API calls **omit
   `author`/`committer`** so GitHub stamps the account's display name and configured commit email,
   respecting commit-email privacy (the `noreply` address still links to the account). The control
   plane never sets an email itself (a composed address either leaks a private one or breaks
   attribution), and the designer never offers a free-form git-identity field (self-asserted
   identity is forgeable; identity comes resolved from the authenticated principal).
-- **Reach is the intersection** of the user's own repo access ∧ the App installation's repo
-  selection ∧ the App's fine-grained permissions (contents, pull requests, nothing more).
+- **Reach is the user's own.** The OAuth `repo` scope reaches whatever the signed-in user can
+  see — which is what source browsing needs (documents live anywhere) — at the cost of scope
+  coarseness. Organisations govern it through OAuth App access restrictions (org approval),
+  the OAuth model's counterpart of an installation.
 - **Custody, the server's, keyed by principal.** GitHub's token exchange has no CORS, so the
   exchange must happen server-side; the user token is held per control-plane principal (session,
   or encrypted at rest with a KMS ref), unreachable from any other principal's session, and never
   sent to the browser.
-- **No impersonation in either direction.** Machine work never wears a human's git identity: any
-  future unattended path (e.g. pushing the published package + evidence to a release branch)
-  commits as the App's own bot identity via an installation token, clearly machine-attributed.
+- **No impersonation in either direction.** Machine work never wears a human's git identity: an
+  OAuth App has no app identity of its own, so any future unattended path (e.g. pushing the
+  published package + evidence to a release branch) must arrive as its own deliberately-designed
+  machine identity — it never rides a user's token.
 
 ## 5. Kit architecture (Layer 0 / 0.5 / 1 / 2)
 

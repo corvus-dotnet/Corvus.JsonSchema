@@ -20,18 +20,23 @@ using global::Corvus.Text.Json.Internal;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
-/// GitHubInstallation
+/// GitHubStatus
 /// </summary>
 /// <remarks>
 /// <para>
-/// One App installation the signed-in user can act through, with the repositories it grants that the user can also reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
-public readonly partial struct GitHubInstallation
+public readonly partial struct GitHubStatus
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A first page of the user&#39;s reachable repositories (a picker seed, not the full reach).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct GitHubRepositoryArray
     {
@@ -744,7 +749,7 @@ public readonly partial struct GitHubInstallation
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubInstallation.GitHubRepositoryArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubStatus.GitHubRepositoryArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(GitHubRepositoryArray instance) => new(JsonElement.From(instance));
 
@@ -865,7 +870,7 @@ public readonly partial struct GitHubInstallation
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubInstallation.GitHubRepositoryArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubStatus.GitHubRepositoryArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {

@@ -41,31 +41,39 @@ So the *mechanism* (AppRole, response-wrapping, unwrap-then-login, least privile
 **delivery of the workload's identity** is simulated by the orchestrator rather than a real service
 principal / attestation. The dev root token on the provisioner is likewise a stand-in for a CI/IaC identity.
 
-## GitHub App — the designer's Git integration (workflow-designer §4.7)
+## GitHub OAuth App — the designer's Git integration (workflow-designer §4.7)
 
 The workflow designer can bind a working copy to a Git branch and commit/pull **as the signed-in
-user's own GitHub identity** — a real GitHub App *user-to-server* OAuth flow (each user authorizes
-themselves in a popup; the token is exchanged server-side and never reaches the browser). It is
-**off by default**; enable it for your own instance by registering a GitHub App and dropping its
-credentials into a local, **uncommitted** file.
+user's own GitHub identity** — a classic OAuth App flow, the same model VS Code and the `gh` CLI
+use (each user authorizes in a popup; the token is exchanged server-side and never reaches the
+browser). The OAuth model means **no installation step**: the signed-in user reaches whatever they
+can see on GitHub — the right shape for browsing sources that may live in any repository, not one
+the user controls. It is **off by default**; enable it for your own instance by registering an
+OAuth App and dropping its credentials into a local, **uncommitted** file.
 
-1. **Register a GitHub App** — GitHub → Settings → Developer settings → **GitHub Apps** → *New GitHub App*:
-   - **User authorization callback URL**: `http://localhost:8090/arazzo/v1/github/auth/callback`
+1. **Register an OAuth App** — GitHub → Settings → Developer settings → **OAuth Apps** → *New OAuth App*:
+   - **Authorization callback URL**: `http://localhost:8090/arazzo/v1/github/auth/callback`
      (the control plane is pinned to port **8090** precisely so this callback is stable across runs).
-   - **Permissions → Repository**: **Contents = Read & write**, **Pull requests = Read & write**.
-   - Webhooks can be disabled. Then **Install** the App on the repo(s) you want to sync.
+   - Homepage URL can be `http://localhost:8090/`. No installation exists for OAuth Apps — the
+     broker requests the `repo read:user user:email` scopes at sign-in.
 2. **Generate a client secret** on the App, and note its **Client ID**.
 3. **Copy the credentials into a local file** (never committed — it is `.gitignore`d):
    ```bash
-   cp github-app.local.json.example github-app.local.json
-   # then edit github-app.local.json with your App's ClientId + ClientSecret
+   cp github-oauth.local.json.example github-oauth.local.json
+   # then edit github-oauth.local.json with your App's ClientId + ClientSecret
    ```
    The client id is public (it rides the authorize URL); the secret stays in this local file only.
    The AppHost injects the secret into the control plane as an environment variable it resolves via
-   `env://GITHUB_APP_CLIENT_SECRET` — it is never written to the repo, Vault, or a container image.
+   `env://GITHUB_OAUTH_CLIENT_SECRET` — it is never written to the repo, Vault, or a container image.
 
-Without `github-app.local.json` the control plane brokers no App and the designer's **Git** panel
-reports that Git is unavailable — everything else works unchanged.
+Note for organisation-owned repos: orgs that enable **OAuth App access restrictions** must approve
+the App before members' tokens can reach org-private repositories (GitHub → org → Settings →
+Third-party access) — the OAuth model's counterpart of an App installation.
+
+Without `github-oauth.local.json` the control plane brokers no OAuth App and the designer's **Git**
+panel reports that Git is unavailable — everything else works unchanged. The full walkthrough
+(registration, local testing, troubleshooting, cloud deployment) is the
+[GitHub OAuth App guide](../../../docs/arazzo/guides/github-oauth-app.md).
 
 ## Prerequisites
 

@@ -1736,7 +1736,7 @@ export function createMockControlPlane(options = {}) {
             login: 'octo',
             name: 'Octo Cat',
             avatarUrl: 'https://avatars.example/octo.png',
-            installations: [{ id: 7, account: 'acme-org', repositories: [{ owner: 'acme-org', name: 'specs', fullName: 'acme-org/specs', defaultBranch: 'main', private: true }] }],
+            repositories: [{ owner: 'acme-org', name: 'specs', fullName: 'acme-org/specs', defaultBranch: 'main', private: true }],
           })
         : json({ connected: false });
     }
@@ -1751,7 +1751,7 @@ export function createMockControlPlane(options = {}) {
       const owner = decodeURIComponent(m[2]);
       const repo = decodeURIComponent(m[3]);
       if (owner !== 'acme-org' || repo !== 'specs') {
-        return problem(404, 'Not found', `'${owner}/${repo}' does not exist, or is outside the user ∩ installation intersection.`);
+        return problem(404, 'Not found', `'${owner}/${repo}' does not exist, or is not visible to the signed-in user.`);
       }
 
       if (route.endsWith('/branches') && method === 'GET') {

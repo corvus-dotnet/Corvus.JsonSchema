@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ListRepoBranches operation.
 /// </summary>
-/// <remarks>The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
+/// <remarks>The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.</remarks>
 public readonly struct ListRepoBranchesRequest : IApiRequest<ListRepoBranchesRequest>
 {
 

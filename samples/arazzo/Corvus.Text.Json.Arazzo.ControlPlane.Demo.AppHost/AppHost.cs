@@ -26,17 +26,17 @@ string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptogr
 // Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
 // the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
 // Read directly (not via Configuration.AddJsonFile — that extension is not in the AppHost's assembly set) into two
-// locals the controlplane resource injects below as GitHubApp__ClientId (config) + GITHUB_APP_CLIENT_SECRET (env).
+// locals the controlplane resource injects below as GitHubOAuth__ClientId (config) + GITHUB_OAUTH_CLIENT_SECRET (env).
 string? githubClientId = null;
 string? githubClientSecret = null;
-string githubAppConfigPath = Path.Combine(builder.AppHostDirectory, "github-app.local.json");
-if (File.Exists(githubAppConfigPath))
+string githubOAuthConfigPath = Path.Combine(builder.AppHostDirectory, "github-oauth.local.json");
+if (File.Exists(githubOAuthConfigPath))
 {
-    using System.Text.Json.JsonDocument githubAppConfig = System.Text.Json.JsonDocument.Parse(File.ReadAllText(githubAppConfigPath));
-    if (githubAppConfig.RootElement.TryGetProperty("GitHubApp", out System.Text.Json.JsonElement githubAppSection))
+    using System.Text.Json.JsonDocument githubOAuthConfig = System.Text.Json.JsonDocument.Parse(File.ReadAllText(githubOAuthConfigPath));
+    if (githubOAuthConfig.RootElement.TryGetProperty("GitHubOAuth", out System.Text.Json.JsonElement githubOAuthSection))
     {
-        githubClientId = githubAppSection.TryGetProperty("ClientId", out System.Text.Json.JsonElement idElement) ? idElement.GetString() : null;
-        githubClientSecret = githubAppSection.TryGetProperty("ClientSecret", out System.Text.Json.JsonElement secretElement) ? secretElement.GetString() : null;
+        githubClientId = githubOAuthSection.TryGetProperty("ClientId", out System.Text.Json.JsonElement idElement) ? idElement.GetString() : null;
+        githubClientSecret = githubOAuthSection.TryGetProperty("ClientSecret", out System.Text.Json.JsonElement secretElement) ? secretElement.GetString() : null;
     }
 }
 
@@ -392,14 +392,15 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
-// Enable the designer's GitHub App broker (§4.7 / D3) when local credentials are present (read at the top). The client
-// id is public (it rides the authorize URL) so it goes in as config; the secret is injected as an env var the control
-// plane resolves through env://GITHUB_APP_CLIENT_SECRET — never committed. Absent → "brokers no App" (Git panel off).
+// Enable the designer's GitHub OAuth broker (§4.7 / D3) when local credentials are present (read at the top). The
+// client id is public (it rides the authorize URL) so it goes in as config; the secret is injected as an env var the
+// control plane resolves through env://GITHUB_OAUTH_CLIENT_SECRET — never committed. Absent → "brokers no OAuth App"
+// (Git panel off).
 if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
 {
     controlplane
-        .WithEnvironment("GitHubApp__ClientId", githubClientId)
-        .WithEnvironment("GITHUB_APP_CLIENT_SECRET", githubClientSecret);
+        .WithEnvironment("GitHubOAuth__ClientId", githubClientId)
+        .WithEnvironment("GITHUB_OAUTH_CLIENT_SECRET", githubClientSecret);
 }
 
 // The runner ("execution-host") — the second process in the topology. It shares the store, registers in the

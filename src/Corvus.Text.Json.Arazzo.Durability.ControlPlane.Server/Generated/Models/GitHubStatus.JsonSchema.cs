@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -42,9 +42,9 @@ public readonly partial struct GitHubStatus
             RequiredBitForConnected;
         private static readonly JsonSchemaPathProvider AvatarUrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/avatarUrl"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ConnectedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/connected"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider InstallationsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/installations"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LoginSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/login"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RepositoriesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/repositories"u8, buffer, out written);
 
         private static void MatchAvatarUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -83,25 +83,10 @@ public readonly partial struct GitHubStatus
             requiredBitBuffer[RequiredOffsetForConnected] |= RequiredBitForConnected;
         }
 
-        private static void MatchInstallations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.InstallationsUtf8,
-                    evaluationPath: InstallationsSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
-        }
-
         private static void MatchLogin(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext3 =
+            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -109,14 +94,14 @@ public readonly partial struct GitHubStatus
                     JsonPropertyNames.LoginUtf8,
                     evaluationPath: LoginSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
         private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext4 =
+            JsonSchemaContext childContext3 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -124,7 +109,22 @@ public readonly partial struct GitHubStatus
                     JsonPropertyNames.NameUtf8,
                     evaluationPath: NameSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+        }
+
+        private static void MatchRepositories(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext4 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RepositoriesUtf8,
+                    evaluationPath: RepositoriesSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
@@ -133,9 +133,9 @@ public readonly partial struct GitHubStatus
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.AvatarUrlUtf8, MatchAvatarUrl),
                 (static () => JsonPropertyNames.ConnectedUtf8, MatchConnected),
-                (static () => JsonPropertyNames.InstallationsUtf8, MatchInstallations),
                 (static () => JsonPropertyNames.LoginUtf8, MatchLogin),
                 (static () => JsonPropertyNames.NameUtf8, MatchName),
+                (static () => JsonPropertyNames.RepositoriesUtf8, MatchRepositories),
             ]);
         }
 

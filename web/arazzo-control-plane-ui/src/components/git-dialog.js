@@ -296,7 +296,7 @@ class ArazzoGitDialog extends ArazzoElement {
   renderBinding() {
     const binding = this._workingCopy?.gitBinding;
     const session = this.$('.gh-connect').session;
-    const repos = session?.connected ? (session.installations ?? []).flatMap((i) => i.repositories ?? []) : [];
+    const repos = session?.connected ? (session.repositories ?? []) : [];
     const sel = this.$('.b-repo');
     const current = binding ? `${binding.owner}/${binding.repo}` : '';
     const options = new Map(repos.map((r) => [`${r.owner}/${r.name}`, r.fullName]));

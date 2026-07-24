@@ -580,10 +580,10 @@ if (File.Exists(designerPage))
 // The GitHub App broker (workflow-designer §4.7): the per-user user-to-server OAuth flow that binds a working copy to
 // a branch and commits AS the signed-in user (their token, never in the browser). Enabled only when the deployment
 // supplies a GitHub App — the client id (public, so plain config) plus the secret resolved from
-// env://GITHUB_APP_CLIENT_SECRET (the AppHost injects it from the uncommitted github-app.local.json). Absent →
-// gitHubBroker stays null and the Git panel reports "brokers no App". The callback is the pinned control-plane URL.
+// env://GITHUB_OAUTH_CLIENT_SECRET (the AppHost injects it from the uncommitted github-oauth.local.json). Absent →
+// gitHubBroker stays null and the Git panel reports "brokers no OAuth App". The callback is the pinned control-plane URL.
 GitHubBroker? gitHubBroker = null;
-string? gitHubClientId = builder.Configuration["GitHubApp:ClientId"];
+string? gitHubClientId = builder.Configuration["GitHubOAuth:ClientId"];
 if (!string.IsNullOrWhiteSpace(gitHubClientId))
 {
     ISecretResolver gitHubSecrets = new SecretResolverBuilder().AddEnvironment().Build();
@@ -592,7 +592,7 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
         new GitHubBrokerOptions
         {
             ClientId = gitHubClientId,
-            ClientSecretRef = "env://GITHUB_APP_CLIENT_SECRET",
+            ClientSecretRef = "env://GITHUB_OAUTH_CLIENT_SECRET",
             CallbackUrl = "http://localhost:8090/arazzo/v1/github/auth/callback",
         },
         gitHubSecrets);

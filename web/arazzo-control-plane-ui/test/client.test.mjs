@@ -1307,8 +1307,8 @@ test('the brokered GitHub flow: begin → callback (single-use state) → sessio
   const session = await c.getGitHubStatus();
   assert.equal(session.connected, true);
   assert.equal(session.login, 'octo');
-  assert.equal(session.installations[0].account, 'acme-org');
-  assert.equal(session.installations[0].repositories[0].fullName, 'acme-org/specs');
+  assert.equal(session.repositories[0].fullName, 'acme-org/specs');
+  assert.equal(session.repositories[0].defaultBranch, 'main');
 
   const root = await c.browseRepo('acme-org', 'specs');
   assert.equal(root.kind, 'dir');

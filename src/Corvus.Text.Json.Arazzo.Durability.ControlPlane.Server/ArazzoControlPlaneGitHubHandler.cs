@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
 /// The brokered GitHub API (workflow-designer design §4.7): begin/complete the App's
-/// user-to-server sign-in, the caller's session status (identity + installations + reachable
+/// user sign-in, the caller's session status (identity + a first page of reachable
 /// repositories), and proxied contents reads for the open/import dialogs. Fails closed when the
 /// deployment brokers no GitHub App. Token custody is the broker's, keyed by control-plane
 /// principal; the callback authenticates by its single-use state (a top-level navigation carries
@@ -22,9 +22,9 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
-    // Session-status caps: at most this many installations, each listing at most one page of
-    // repositories. The import dialog is a picker, not a mirror; deep listings go through browse.
-    private const int MaxInstallations = 10;
+    // Session-status cap: one page of repositories seeds the pickers, most recently pushed first; any
+    // visible repository stays addressable by owner/repo. Deep listings go through browse.
+    private const int RepositoryPageSize = 50;
 
     private readonly GitHubBroker? broker;
     private readonly ControlPlaneAccess access;
@@ -126,45 +126,15 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             return Disconnected(workspace);
         }
 
-        // The user's installations and, per installation, the repositories the user ∩ installation
-        // intersection grants. Every payload document stays alive through the single pooled write.
-        var installations = new List<(ParsedJsonDocument<JsonElement> Installation, ParsedJsonDocument<JsonElement>? Repositories)>();
-        try
+        // One page of the user's reachable repositories (the OAuth model), alive through the single
+        // pooled write; a listing failure degrades to an empty picker seed rather than a disconnect.
+        using (userDoc)
         {
-            using (userDoc)
-            {
-                (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? installationsDoc) = await github.GetInstallationsAsync(principal, cancellationToken).ConfigureAwait(false);
-                using ParsedJsonDocument<JsonElement>? heldInstallations = installationsDoc;
-                if (outcome == GitHubBroker.ReadOutcome.Success && installationsDoc is not null
-                    && installationsDoc.RootElement.TryGetProperty("installations"u8, out JsonElement list) && list.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (JsonElement installation in list.EnumerateArray())
-                    {
-                        if (installations.Count >= MaxInstallations
-                            || !installation.TryGetProperty("id"u8, out JsonElement id) || id.ValueKind != JsonValueKind.Number)
-                        {
-                            continue;
-                        }
-
-                        // An owned copy: the parent installations document disposes before the write.
-                        var owned = ParsedJsonDocument<JsonElement>.Parse(PersistedJson.ToArray(installation, static (Utf8JsonWriter writer, in JsonElement i) => i.WriteTo(writer)));
-                        (GitHubBroker.ReadOutcome repoOutcome, ParsedJsonDocument<JsonElement>? repositories) = await github.GetInstallationRepositoriesAsync(principal, id.GetInt64(), cancellationToken).ConfigureAwait(false);
-                        installations.Add((owned, repoOutcome == GitHubBroker.ReadOutcome.Success ? repositories : null));
-                    }
-                }
-
-                ParsedJsonDocument<Models.GitHubStatus> body = WriteStatus(userDoc.RootElement, installations);
-                workspace.TakeOwnership(body);
-                return GetGitHubStatusResult.Ok(Models.GitHubStatus.From(body.RootElement), workspace);
-            }
-        }
-        finally
-        {
-            foreach ((ParsedJsonDocument<JsonElement> installation, ParsedJsonDocument<JsonElement>? repositories) in installations)
-            {
-                installation.Dispose();
-                repositories?.Dispose();
-            }
+            (GitHubBroker.ReadOutcome repoOutcome, ParsedJsonDocument<JsonElement>? repositoriesDoc) = await github.GetUserRepositoriesAsync(principal, RepositoryPageSize, cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<JsonElement>? heldRepositories = repositoriesDoc;
+            ParsedJsonDocument<Models.GitHubStatus> body = WriteStatus(userDoc.RootElement, repoOutcome == GitHubBroker.ReadOutcome.Success ? repositoriesDoc : null);
+            workspace.TakeOwnership(body);
+            return GetGitHubStatusResult.Ok(Models.GitHubStatus.From(body.RootElement), workspace);
         }
     }
 
@@ -647,46 +617,25 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
     // Projects GET /user (+ installations + per-installation repositories) into the contract's
     // GitHubStatus in one pooled write, field-selecting from the GitHub payloads bytes-native.
-    private static ParsedJsonDocument<Models.GitHubStatus> WriteStatus(
-        in JsonElement user, List<(ParsedJsonDocument<JsonElement> Installation, ParsedJsonDocument<JsonElement>? Repositories)> installations)
+    private static ParsedJsonDocument<Models.GitHubStatus> WriteStatus(in JsonElement user, ParsedJsonDocument<JsonElement>? repositories)
     {
-        return PersistedJson.ToPooledDocument<Models.GitHubStatus, (JsonElement User, List<(ParsedJsonDocument<JsonElement> Installation, ParsedJsonDocument<JsonElement>? Repositories)> Installations)>(
-            (user, installations),
-            static (Utf8JsonWriter writer, in (JsonElement User, List<(ParsedJsonDocument<JsonElement> Installation, ParsedJsonDocument<JsonElement>? Repositories)> Installations) s) =>
+        // GET /user/repos returns a bare array; a null document (listing failed) writes an empty seed.
+        return PersistedJson.ToPooledDocument<Models.GitHubStatus, (JsonElement User, JsonElement Repositories)>(
+            (user, repositories is { } r ? r.RootElement : default),
+            static (Utf8JsonWriter writer, in (JsonElement User, JsonElement Repositories) s) =>
             {
                 writer.WriteStartObject();
                 writer.WriteBoolean("connected"u8, true);
                 WriteStringIfPresent(writer, "login"u8, s.User, "login"u8);
                 WriteStringIfPresent(writer, "name"u8, s.User, "name"u8);
                 WriteStringIfPresent(writer, "avatarUrl"u8, s.User, "avatar_url"u8);
-                writer.WriteStartArray("installations"u8);
-                foreach ((ParsedJsonDocument<JsonElement> installationDoc, ParsedJsonDocument<JsonElement>? repositoriesDoc) in s.Installations)
+                writer.WriteStartArray("repositories"u8);
+                if (s.Repositories.ValueKind == JsonValueKind.Array)
                 {
-                    JsonElement installation = installationDoc.RootElement;
-                    writer.WriteStartObject();
-                    if (installation.TryGetProperty("id"u8, out JsonElement id))
+                    foreach (JsonElement repository in s.Repositories.EnumerateArray())
                     {
-                        writer.WritePropertyName("id"u8);
-                        id.WriteTo(writer);
+                        WriteRepository(writer, repository);
                     }
-
-                    if (installation.TryGetProperty("account"u8, out JsonElement account) && account.ValueKind == JsonValueKind.Object)
-                    {
-                        WriteStringIfPresent(writer, "account"u8, account, "login"u8);
-                    }
-
-                    writer.WriteStartArray("repositories"u8);
-                    if (repositoriesDoc is not null
-                        && repositoriesDoc.RootElement.TryGetProperty("repositories"u8, out JsonElement repositories) && repositories.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (JsonElement repository in repositories.EnumerateArray())
-                        {
-                            WriteRepository(writer, repository);
-                        }
-                    }
-
-                    writer.WriteEndArray();
-                    writer.WriteEndObject();
                 }
 
                 writer.WriteEndArray();

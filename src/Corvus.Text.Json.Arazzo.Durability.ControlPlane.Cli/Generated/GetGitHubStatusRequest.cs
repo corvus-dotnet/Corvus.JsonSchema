@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the GetGitHubStatus operation.
 /// </summary>
-/// <remarks>The signed-in GitHub identity, App installations, and accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no GitHub App.</remarks>
+/// <remarks>The signed-in GitHub identity and a first page of accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no OAuth App.</remarks>
 public readonly struct GetGitHubStatusRequest : IApiRequest<GetGitHubStatusRequest>
 {
 

@@ -53,14 +53,14 @@ public sealed class ControlPlaneGitHubApiTests
         (await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}"))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // Status: the signed-in identity, installations, and the user ∩ installation repositories.
+        // Status: the signed-in identity and a first page of the repositories the user can reach.
         using (Stj.JsonDocument session = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/session", "workspace:read", "ada")))
         {
             session.RootElement.GetProperty("connected").GetBoolean().ShouldBeTrue();
             session.RootElement.GetProperty("login").GetString().ShouldBe("octo");
-            Stj.JsonElement installation = session.RootElement.GetProperty("installations")[0];
-            installation.GetProperty("account").GetString().ShouldBe("acme-org");
-            installation.GetProperty("repositories")[0].GetProperty("fullName").GetString().ShouldBe("acme-org/specs");
+            Stj.JsonElement repository = session.RootElement.GetProperty("repositories")[0];
+            repository.GetProperty("fullName").GetString().ShouldBe("acme-org/specs");
+            repository.GetProperty("defaultBranch").GetString().ShouldBe("main");
         }
 
         // Browse: a directory lists entries; a file carries base64 content.
@@ -475,7 +475,7 @@ public sealed class ControlPlaneGitHubApiTests
         }
     }
 
-    /// <summary>A loopback stub GitHub: the token exchange, the user/installations reads, and a mutable
+    /// <summary>A loopback stub GitHub: the token exchange, the user/repos reads, and a mutable
     /// repository (contents read/write + pulls) whose write bodies are captured verbatim — the §4.7
     /// author/committer-omission rule is asserted on the wire.</summary>
     private sealed class StubGitHub : IAsyncDisposable
@@ -542,12 +542,8 @@ public sealed class ControlPlaneGitHubApiTests
                 ? Results.Json(new { login = "octo", name = "Octo Cat", avatar_url = "https://example.test/octo.png" })
                 : Results.Unauthorized());
 
-            app.MapGet("/user/installations", (HttpContext context) => Authorized(context)
-                ? Results.Json(new { installations = new[] { new { id = 7, account = new { login = "acme-org" } } } })
-                : Results.Unauthorized());
-
-            app.MapGet("/user/installations/7/repositories", (HttpContext context) => Authorized(context)
-                ? Results.Json(new { repositories = new[] { new { name = "specs", full_name = "acme-org/specs", owner = new { login = "acme-org" }, default_branch = "main", @private = true } } })
+            app.MapGet("/user/repos", (HttpContext context) => Authorized(context)
+                ? Results.Json(new[] { new { name = "specs", full_name = "acme-org/specs", owner = new { login = "acme-org" }, default_branch = "main", @private = true } })
                 : Results.Unauthorized());
 
             app.MapGet("/repos/acme-org/specs", (HttpContext context) => Authorized(context)

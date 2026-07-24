@@ -20,18 +20,23 @@ using global::Corvus.Text.Json.Internal;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 /// <summary>
-/// GitHubInstallation
+/// GitHubStatus
 /// </summary>
 /// <remarks>
 /// <para>
-/// One App installation the signed-in user can act through, with the repositories it grants that the user can also reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
-public readonly partial struct GitHubInstallation
+public readonly partial struct GitHubStatus
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A first page of the user&#39;s reachable repositories (a picker seed, not the full reach).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct GitHubRepositoryArray
         : IJsonElement<GitHubRepositoryArray>
@@ -43,17 +48,17 @@ public readonly partial struct GitHubInstallation
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/GitHubInstallation/properties/repositories"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/GitHubStatus/properties/repositories"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/GitHubInstallation/properties/repositories";
+            public const string SchemaLocation = "/components/schemas/GitHubStatus/properties/repositories";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/GitHubInstallation/properties/repositories"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/GitHubStatus/properties/repositories"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

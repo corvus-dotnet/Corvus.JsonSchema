@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -303,22 +303,6 @@ public readonly partial struct GitHubStatus
         }
 
         /// <summary>
-        /// Gets the (optional) <c>installations</c> property.
-        /// </summary>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Mutable Installations
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InstallationsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
         /// Gets the (optional) <c>login</c> property.
         /// </summary>
         /// <remarks>
@@ -352,6 +336,27 @@ public readonly partial struct GitHubStatus
             get
             {
                 if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>repositories</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A first page of the user&#39;s reachable repositories (a picker seed, not the full reach).
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Mutable Repositories
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RepositoriesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Mutable value))
                 {
                     return value;
                 }
@@ -476,87 +481,6 @@ public readonly partial struct GitHubStatus
         }
 
         /// <summary>
-        /// Set the <c>installations</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetInstallations(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.InstallationsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InstallationsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Installations, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>installations</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetInstallations<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.InstallationsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InstallationsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Installations, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>installations</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveInstallations()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.InstallationsUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
         /// Set the <c>login</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
@@ -642,6 +566,87 @@ public readonly partial struct GitHubStatus
         {
             CheckValidInstance();
             bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.NameUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>repositories</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetRepositories(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RepositoriesUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RepositoriesUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Repositories, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>repositories</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetRepositories<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RepositoriesUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RepositoriesUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Repositories, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>repositories</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveRepositories()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RepositoriesUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -978,9 +983,9 @@ public readonly partial struct GitHubStatus
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -995,7 +1000,7 @@ public readonly partial struct GitHubStatus
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1152,9 +1157,9 @@ public readonly partial struct GitHubStatus
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1167,7 +1172,7 @@ public readonly partial struct GitHubStatus
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1329,15 +1334,15 @@ public readonly partial struct GitHubStatus
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source installations = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source repositories = default)
         {
             connected.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Connected, ref builder);
             avatarUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AvatarUrl, ref builder);
-            installations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Installations, ref builder);
             login.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Login, ref builder);
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            repositories.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Repositories, ref builder);
         }
 
         /// <summary>
@@ -1346,11 +1351,11 @@ public readonly partial struct GitHubStatus
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source installations = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source repositories = default)
         {
-            Create(ref _builder, connected, avatarUrl, installations, login, name);
+            Create(ref _builder, connected, avatarUrl, login, name, repositories);
         }
 
         /// <summary>
@@ -1361,18 +1366,18 @@ public readonly partial struct GitHubStatus
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> installations = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> repositories = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
             connected.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Connected, ref builder);
             avatarUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AvatarUrl, ref builder);
-            installations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Installations, ref builder);
             login.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Login, ref builder);
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            repositories.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Repositories, ref builder);
         }
 
         /// <summary>
@@ -1382,14 +1387,14 @@ public readonly partial struct GitHubStatus
             in TContext context,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> installations = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> repositories = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, connected, avatarUrl, installations, login, name);
+            Create(context, ref _builder, connected, avatarUrl, login, name, repositories);
         }
 
         /// <summary>
@@ -1493,7 +1498,7 @@ public readonly partial struct GitHubStatus
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1511,7 +1516,7 @@ public readonly partial struct GitHubStatus
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1556,13 +1561,13 @@ public readonly partial struct GitHubStatus
     /// </summary>
     /// <param name="connected">The value of the <c>"connected"</c> property.</param>
     /// <param name="avatarUrl">The value of the <c>"avatarUrl"</c> property.</param>
-    /// <param name="installations">The value of the <c>"installations"</c> property.</param>
     /// <param name="login">The value of the <c>"login"</c> property.</param>
     /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="repositories">The value of the <c>"repositories"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source installations = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source repositories = default)
     {
-        return new Source(connected, avatarUrl, installations, login, name);
+        return new Source(connected, avatarUrl, login, name, repositories);
     }
 
     /// <summary>
@@ -1572,16 +1577,16 @@ public readonly partial struct GitHubStatus
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="connected">The value of the <c>"connected"</c> property.</param>
     /// <param name="avatarUrl">The value of the <c>"avatarUrl"</c> property.</param>
-    /// <param name="installations">The value of the <c>"installations"</c> property.</param>
     /// <param name="login">The value of the <c>"login"</c> property.</param>
     /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="repositories">The value of the <c>"repositories"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> installations = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> repositories = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, connected, avatarUrl, installations, login, name);
+        return new Source<TContext>(context, connected, avatarUrl, login, name, repositories);
     }
 
     /// <summary>
@@ -1679,18 +1684,18 @@ public readonly partial struct GitHubStatus
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="connected">The value of the property.</param>
     /// <param name="avatarUrl">The value of the property.</param>
-    /// <param name="installations">The value of the property.</param>
     /// <param name="login">The value of the property.</param>
     /// <param name="name">The value of the property.</param>
+    /// <param name="repositories">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source installations = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source repositories = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(connected, avatarUrl, installations, login, name);
+        ovb.Create(connected, avatarUrl, login, name, repositories);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1705,12 +1710,12 @@ public readonly partial struct GitHubStatus
     /// <param name="context">The value of the property.</param>
     /// <param name="connected">The value of the property.</param>
     /// <param name="avatarUrl">The value of the property.</param>
-    /// <param name="installations">The value of the property.</param>
     /// <param name="login">The value of the property.</param>
     /// <param name="name">The value of the property.</param>
+    /// <param name="repositories">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> installations = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> repositories = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1719,7 +1724,7 @@ public readonly partial struct GitHubStatus
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, connected, avatarUrl, installations, login, name);
+        ovb.Create(context, connected, avatarUrl, login, name, repositories);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1822,12 +1827,12 @@ public readonly partial struct GitHubStatus
     /// </summary>
     /// <param name="connected">The value of the property.</param>
     /// <param name="avatarUrl">The value of the property.</param>
-    /// <param name="installations">The value of the property.</param>
     /// <param name="login">The value of the property.</param>
     /// <param name="name">The value of the property.</param>
+    /// <param name="repositories">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<GitHubStatus> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source installations = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<GitHubStatus> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source repositories = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1835,7 +1840,7 @@ public readonly partial struct GitHubStatus
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(connected, avatarUrl, installations, login, name);
+            ovb.Create(connected, avatarUrl, login, name, repositories);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1854,12 +1859,12 @@ public readonly partial struct GitHubStatus
     /// <param name="context">The value of the property.</param>
     /// <param name="connected">The value of the property.</param>
     /// <param name="avatarUrl">The value of the property.</param>
-    /// <param name="installations">The value of the property.</param>
     /// <param name="login">The value of the property.</param>
     /// <param name="name">The value of the property.</param>
+    /// <param name="repositories">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<GitHubStatus> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Source<TContext> installations = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<GitHubStatus> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source connected, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source avatarUrl = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source login = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Source<TContext> repositories = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1870,7 +1875,7 @@ public readonly partial struct GitHubStatus
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, connected, avatarUrl, installations, login, name);
+            ovb.Create(context, connected, avatarUrl, login, name, repositories);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

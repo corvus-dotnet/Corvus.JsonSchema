@@ -446,7 +446,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
   renderGitHubRepos() {
     const session = this.$('.gh-connect').session;
-    const repos = session?.connected ? (session.installations ?? []).flatMap((i) => i.repositories ?? []) : [];
+    const repos = session?.connected ? (session.repositories ?? []) : [];
     const label = this.$('.gh-repo-label');
     // The repo list is (re)built here, which resets the selection — so collapse the branch picker
     // and browser until a repo is chosen (again).

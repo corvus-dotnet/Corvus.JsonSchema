@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -196,22 +196,6 @@ public readonly partial struct GitHubStatus
     }
 
     /// <summary>
-    /// Gets the (optional) <c>installations</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray Installations
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InstallationsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the (optional) <c>login</c> property.
     /// </summary>
     /// <remarks>
@@ -245,6 +229,27 @@ public readonly partial struct GitHubStatus
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>repositories</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A first page of the user&#39;s reachable repositories (a picker seed, not the full reach).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray Repositories
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RepositoriesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray value))
             {
                 return value;
             }
@@ -707,11 +712,6 @@ public readonly partial struct GitHubStatus
         public const string Connected = "connected";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Installations"/>.
-        /// </summary>
-        public const string Installations = "installations";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Login"/>.
         /// </summary>
         public const string Login = "login";
@@ -720,6 +720,11 @@ public readonly partial struct GitHubStatus
         /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
         public const string Name = "name";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Repositories"/>.
+        /// </summary>
+        public const string Repositories = "repositories";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="AvatarUrl"/>.
@@ -732,11 +737,6 @@ public readonly partial struct GitHubStatus
         public static ReadOnlySpan<byte> ConnectedUtf8 => "connected"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Installations"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> InstallationsUtf8 => "installations"u8;
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Login"/>.
         /// </summary>
         public static ReadOnlySpan<byte> LoginUtf8 => "login"u8;
@@ -745,6 +745,11 @@ public readonly partial struct GitHubStatus
         /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Repositories"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RepositoriesUtf8 => "repositories"u8;
     }
 
     /// <summary>
@@ -763,11 +768,6 @@ public readonly partial struct GitHubStatus
         public static ReadOnlySpan<byte> Connected => "connected"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Installations"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Installations => "installations"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Login"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Login => "login"u8;
@@ -776,6 +776,11 @@ public readonly partial struct GitHubStatus
         /// Gets the escaped UTF-8 JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => "name"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Repositories"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Repositories => "repositories"u8;
     }
 
     /// <summary>
@@ -795,11 +800,6 @@ public readonly partial struct GitHubStatus
         public static ReadOnlySpan<byte> Connected => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x65, 0x64, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Installations"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Installations => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x73, 0x74, 0x61, 0x6C, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
-
-        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Login"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Login => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x67, 0x69, 0x6E, 0x22];
@@ -808,5 +808,10 @@ public readonly partial struct GitHubStatus
         /// Gets the pre-baked property name blob for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Repositories"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Repositories => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x70, 0x6F, 0x73, 0x69, 0x74, 0x6F, 0x72, 0x69, 0x65, 0x73, 0x22];
     }
 }

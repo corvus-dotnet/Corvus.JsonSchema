@@ -1420,7 +1420,7 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `getGitHubStatus` — the CALLER's GitHub session: connected flag, signed-in identity, App
-   * installations, and the repositories the user ∩ installation intersection can reach (§4.7).
+   * and a first page of the repositories the user can reach (§4.7; any visible repo stays addressable by owner/repo).
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} `{connected:false}` when not signed in.
    */

@@ -11,10 +11,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
 /// Brokers a GitHub App's user-to-server flow for the designer (workflow-designer design §4.7):
-/// the control plane holds the App credentials and each principal's short-lived user token — the
+/// the control plane holds the OAuth App credentials and each principal's user token — the
 /// kit never sees a GitHub credential, and every user-initiated GitHub action runs AS the
-/// signed-in user (their GitHub-held git identity; reach is the user ∩ installation ∩
-/// App-permission intersection).
+/// signed-in user (their GitHub-held git identity; reach is whatever the signed-in user can see,
+/// the OAuth model — so a source document anywhere the user can read is reachable).
 /// </summary>
 /// <remarks>
 /// <para><strong>Custody.</strong> Tokens are keyed by control-plane principal and unreachable
@@ -79,7 +79,7 @@ public sealed class GitHubBroker
         /// <summary>The principal has no (valid) GitHub session.</summary>
         NotConnected,
 
-        /// <summary>The resource is not reachable through the user ∩ installation intersection (non-disclosing).</summary>
+        /// <summary>The resource is not reachable by the signed-in user (non-disclosing).</summary>
         NotFound,
     }
 
@@ -92,7 +92,7 @@ public sealed class GitHubBroker
         /// <summary>The principal has no (valid) GitHub session.</summary>
         NotConnected,
 
-        /// <summary>The target is not reachable through the user ∩ installation intersection (non-disclosing).</summary>
+        /// <summary>The target is not reachable by the signed-in user (non-disclosing).</summary>
         NotFound,
 
         /// <summary>GitHub refused the write (a stale sha, a validation error, or an already-existing pull request).</summary>
@@ -115,6 +115,7 @@ public sealed class GitHubBroker
         string authorizeUrl = $"{this.options.BaseUrl!.TrimEnd('/')}/login/oauth/authorize" +
             $"?client_id={Uri.EscapeDataString(this.options.ClientId!)}" +
             $"&redirect_uri={Uri.EscapeDataString(this.options.CallbackUrl!)}" +
+            $"&scope={Uri.EscapeDataString("repo read:user user:email")}" +
             $"&state={Uri.EscapeDataString(state)}";
         return (authorizeUrl, state);
     }
@@ -161,20 +162,15 @@ public sealed class GitHubBroker
     public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetUserAsync(string principalKey, CancellationToken cancellationToken)
         => this.GetAsync(principalKey, "/user", cancellationToken);
 
-    /// <summary>Reads the user's App installations (<c>GET /user/installations</c>).</summary>
+    /// <summary>Reads a first page of the repositories the signed-in user can reach (<c>GET /user/repos</c>, most
+    /// recently pushed first) — the OAuth model's session listing, a picker seed rather than the full reach: any
+    /// visible repository stays addressable directly by owner/repo whether listed here or not.</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="pageSize">The page size (GitHub caps at 100).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome and, on success, the GitHub payload (caller disposes).</returns>
-    public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetInstallationsAsync(string principalKey, CancellationToken cancellationToken)
-        => this.GetAsync(principalKey, "/user/installations", cancellationToken);
-
-    /// <summary>Reads the repositories one installation grants the user (<c>GET /user/installations/{id}/repositories</c>).</summary>
-    /// <param name="principalKey">The calling principal's stable key.</param>
-    /// <param name="installationId">The installation.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The outcome and, on success, the GitHub payload (caller disposes).</returns>
-    public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetInstallationRepositoriesAsync(string principalKey, long installationId, CancellationToken cancellationToken)
-        => this.GetAsync(principalKey, $"/user/installations/{installationId}/repositories", cancellationToken);
+    public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetUserRepositoriesAsync(string principalKey, int pageSize, CancellationToken cancellationToken)
+        => this.GetAsync(principalKey, $"/user/repos?per_page={pageSize}&sort=pushed", cancellationToken);
 
     /// <summary>Proxies a contents read (<c>GET /repos/{owner}/{repo}/contents/{path}?ref=</c>) on the principal's token.</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>

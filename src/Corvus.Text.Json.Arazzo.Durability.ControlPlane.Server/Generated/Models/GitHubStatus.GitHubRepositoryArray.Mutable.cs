@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.
+/// The calling principal&#39;s GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model&#39;s: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.
 /// </para>
 /// </remarks>
 public readonly partial struct GitHubStatus
@@ -32,8 +32,13 @@ public readonly partial struct GitHubStatus
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A first page of the user&#39;s reachable repositories (a picker seed, not the full reach).
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct GitHubInstallationArray
+    public readonly partial struct GitHubRepositoryArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -138,7 +143,7 @@ public readonly partial struct GitHubStatus
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(GitHubInstallationArray instance)
+            public static explicit operator Mutable(GitHubRepositoryArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -153,9 +158,9 @@ public readonly partial struct GitHubStatus
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="GitHubInstallationArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="GitHubRepositoryArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator GitHubInstallationArray(Mutable instance)
+            public static implicit operator GitHubRepositoryArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -179,12 +184,12 @@ public readonly partial struct GitHubStatus
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Mutable>(_idx, index);
                 }
             }
 
@@ -202,17 +207,17 @@ public readonly partial struct GitHubStatus
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new GitHubInstallationArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new GitHubRepositoryArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -311,7 +316,7 @@ public readonly partial struct GitHubStatus
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"GitHubInstallationArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"GitHubRepositoryArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -334,7 +339,7 @@ public readonly partial struct GitHubStatus
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source value)
             {
                 CheckValidInstance();
 
@@ -381,7 +386,7 @@ public readonly partial struct GitHubStatus
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +412,7 @@ public readonly partial struct GitHubStatus
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -577,10 +582,10 @@ public readonly partial struct GitHubStatus
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository>(this, in item))
                 {
                     return false;
                 }
@@ -614,10 +619,10 @@ public readonly partial struct GitHubStatus
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -634,7 +639,7 @@ public readonly partial struct GitHubStatus
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source newItem)
             {
                 CheckValidInstance();
 
@@ -643,11 +648,11 @@ public readonly partial struct GitHubStatus
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -678,11 +683,11 @@ public readonly partial struct GitHubStatus
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="GitHubInstallationArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="GitHubRepositoryArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="GitHubInstallationArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="GitHubRepositoryArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -691,10 +696,10 @@ public readonly partial struct GitHubStatus
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly GitHubInstallationArray Clone()
+            public readonly GitHubRepositoryArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<GitHubInstallationArray>(_idx);
+                return _parent.CloneElement<GitHubRepositoryArray>(_idx);
             }
 
             /// <summary>
@@ -702,7 +707,7 @@ public readonly partial struct GitHubStatus
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="GitHubInstallationArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="GitHubRepositoryArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -713,10 +718,10 @@ public readonly partial struct GitHubStatus
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly GitHubInstallationArray Freeze()
+            public readonly GitHubRepositoryArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<GitHubInstallationArray>(_idx);
+                return _parent.FreezeElement<GitHubRepositoryArray>(_idx);
             }
         }
 
@@ -744,9 +749,9 @@ public readonly partial struct GitHubStatus
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(GitHubInstallationArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(GitHubRepositoryArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -865,7 +870,7 @@ public readonly partial struct GitHubStatus
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubInstallationArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubStatus.GitHubRepositoryArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -979,7 +984,7 @@ public readonly partial struct GitHubStatus
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -987,7 +992,7 @@ public readonly partial struct GitHubStatus
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubInstallation.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubRepository.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1162,7 +1167,7 @@ public readonly partial struct GitHubStatus
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<GitHubInstallationArray, Mutable>(this);
+            return workspace.CreateBuilder<GitHubRepositoryArray, Mutable>(this);
         }
 
         /// <summary>
@@ -1171,7 +1176,7 @@ public readonly partial struct GitHubStatus
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<GitHubInstallationArray> Create(
+        public static ParsedJsonDocument<GitHubRepositoryArray> Create(
             scoped in Source value, int initialCapacity = 30)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1181,7 +1186,7 @@ public readonly partial struct GitHubStatus
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<GitHubInstallationArray>();
+                return documentBuilder.ToParsedJsonDocument<GitHubRepositoryArray>();
             }
             finally
             {
@@ -1195,7 +1200,7 @@ public readonly partial struct GitHubStatus
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<GitHubInstallationArray> Create(
+        public static ParsedJsonDocument<GitHubRepositoryArray> Create(
             int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1205,7 +1210,7 @@ public readonly partial struct GitHubStatus
                 cvb.StartArray();
                 cvb.EndArray();
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<GitHubInstallationArray>();
+                return documentBuilder.ToParsedJsonDocument<GitHubRepositoryArray>();
             }
             finally
             {
@@ -1220,7 +1225,7 @@ public readonly partial struct GitHubStatus
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<GitHubInstallationArray> Create(
+        public static ParsedJsonDocument<GitHubRepositoryArray> Create(
             scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1231,7 +1236,7 @@ public readonly partial struct GitHubStatus
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<GitHubInstallationArray>();
+                return documentBuilder.ToParsedJsonDocument<GitHubRepositoryArray>();
             }
             finally
             {
@@ -1248,7 +1253,7 @@ public readonly partial struct GitHubStatus
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<GitHubInstallationArray> Create<TContext>(
+        public static ParsedJsonDocument<GitHubRepositoryArray> Create<TContext>(
             scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1262,7 +1267,7 @@ public readonly partial struct GitHubStatus
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<GitHubInstallationArray>();
+                return documentBuilder.ToParsedJsonDocument<GitHubRepositoryArray>();
             }
             finally
             {

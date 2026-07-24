@@ -67,7 +67,7 @@
   },
   {
     "name": "github",
-    "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds a GitHub App's credentials and each principal's short-lived user-to-server token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the user ∩ installation ∩ App-permission intersection; token custody is server-side, keyed by control-plane principal; unattended actions use the App's bot identity or don't happen. Deployment-configured (a deployment that brokers no App refuses these operations)."
+    "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds an OAuth App's credentials and each principal's user token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the OAuth model's — whatever the signed-in user can see (the repo scope), so a source document anywhere the user can read is reachable; token custody is server-side, keyed by control-plane principal; there are no unattended actions. Deployment-configured (a deployment that brokers no OAuth App refuses these operations)."
   },
   {
     "name": "availability",
@@ -3785,7 +3785,7 @@
         ],
         "tags": ["github"],
         "summary": "The caller's GitHub session",
-        "description": "The signed-in GitHub identity, App installations, and accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no GitHub App.",
+        "description": "The signed-in GitHub identity and a first page of accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no OAuth App.",
         "responses": {
           "200": {
             "description": "The session status.",
@@ -3820,7 +3820,7 @@
         ],
         "tags": ["github"],
         "summary": "List a repository's branches",
-        "description": "The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "description": "The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.",
         "parameters": [
           { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
           { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." }
@@ -3874,7 +3874,7 @@
         ],
         "tags": ["github"],
         "summary": "Browse a repository's contents",
-        "description": "Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is the user ∩ installation ∩ App-permission intersection — a repo the App is not installed on, or the user cannot read, is not found. 409 (github-not-connected) when the caller has no GitHub session.",
+        "description": "Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is whatever the signed-in user can see — a repo the user cannot read is not found. 409 (github-not-connected) when the caller has no GitHub session.",
         "parameters": [
           { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
           { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
@@ -3902,7 +3902,7 @@
         ],
         "tags": ["github"],
         "summary": "List a repository's commit history",
-        "description": "One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "description": "One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is whatever the signed-in user can see. 409 (github-not-connected) when the caller has no GitHub session.",
         "parameters": [
           { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
           { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
@@ -6574,26 +6574,15 @@
       "GitHubStatus": {
         "type": "object",
         "title": "GitHubStatus",
-        "description": "The calling principal's GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.",
+        "description": "The calling principal's GitHub session: the signed-in identity and, when connected, a first page of the repositories the user can reach (most recently pushed first), seeding pickers. Reach is the OAuth model's: whatever the signed-in user can see — any visible repository stays addressable directly by owner/repo, listed here or not.",
         "properties": {
           "connected": { "type": "boolean" },
           "login": { "type": "string", "description": "The signed-in GitHub login." },
           "name": { "type": "string", "description": "The signed-in account's display name." },
           "avatarUrl": { "type": "string" },
-          "installations": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubInstallation" } }
+          "repositories": { "type": "array", "description": "A first page of the user's reachable repositories (a picker seed, not the full reach).", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
         },
         "required": ["connected"]
-      },
-      "GitHubInstallation": {
-        "type": "object",
-        "title": "GitHubInstallation",
-        "description": "One App installation the signed-in user can act through, with the repositories it grants that the user can also reach.",
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "account": { "type": "string", "description": "The user or organisation the App is installed on." },
-          "repositories": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
-        },
-        "required": ["id", "account"]
       },
       "GitHubRepository": {
         "type": "object",
