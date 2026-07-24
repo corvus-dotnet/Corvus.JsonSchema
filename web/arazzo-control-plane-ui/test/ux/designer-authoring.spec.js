@@ -493,6 +493,46 @@ test('the acquisition dialog attaches a REGISTERED source by name (no re-upload)
   assertClean(errors);
 });
 
+test('dragging an operation from the Sources rail creates each step AT its drop point, in view', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+  await page.locator('[data-tab="sources"]').click();
+  const browser = page.locator('arazzo-operation-browser');
+  await browser.locator('.group-head[data-name="payments"]').click();
+  const row = browser.locator('button.op[data-source="payments"]').first();
+  await expect(row).toBeVisible();
+  await expect(row).toHaveAttribute('draggable', 'true');
+
+  const surface = page.locator('#surface');
+  const nodeIds = () => page.evaluate(() =>
+    [...document.querySelector('#surface').shadowRoot.querySelectorAll('.node')].map((n) => n.dataset.id));
+
+  // Two native drops at two different points: each step lands AT its drop point (the gesture says
+  // where it goes) — not at a shared auto-layout spot that stacks newcomers outside the view.
+  const placed = [];
+  for (const at of [{ x: 220, y: 180 }, { x: 480, y: 320 }]) {
+    const prior = await nodeIds();
+    await row.dragTo(surface, { targetPosition: at });
+    await expect.poll(async () => (await nodeIds()).length).toBe(prior.length + 1);
+    const fresh = (await nodeIds()).find((id) => !prior.includes(id));
+    const rect = await page.evaluate((id) => {
+      const host = document.querySelector('#surface');
+      const el = host.shadowRoot.querySelector(`.node[data-id="${CSS.escape(id)}"]`);
+      const r = el.getBoundingClientRect();
+      const h = host.getBoundingClientRect();
+      return { cx: r.x + r.width / 2 - h.x, cy: r.y + r.height / 2 - h.y, w: h.width, h: h.height };
+    }, fresh);
+    expect(rect.cx).toBeGreaterThan(0);
+    expect(rect.cx).toBeLessThan(rect.w);
+    expect(rect.cy).toBeGreaterThan(0);
+    expect(rect.cy).toBeLessThan(rect.h);
+    expect(Math.hypot(rect.cx - at.x, rect.cy - at.y)).toBeLessThan(160);
+    placed.push(rect);
+  }
+  expect(Math.hypot(placed[0].cx - placed[1].cx, placed[0].cy - placed[1].cy)).toBeGreaterThan(80);
+  assertClean(errors);
+});
+
 test('attaching a source declares it in sourceDescriptions, so leaving and returning raises no undeclared-source finding', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);
