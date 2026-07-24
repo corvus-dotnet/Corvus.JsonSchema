@@ -47,8 +47,8 @@ public (it rides the authorize URL). The secret is a real secret and never goes 
 
 1. In `samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/`:
 
-   ```bash
-   cp github-oauth.local.json.example github-oauth.local.json
+   ```powershell
+   Copy-Item github-oauth.local.json.example github-oauth.local.json
    ```
 
 2. Edit `github-oauth.local.json` with your app's values:
@@ -71,9 +71,9 @@ public (it rides the authorize URL). The secret is a real secret and never goes 
 
 4. Verify. Before sign-in, the session endpoint reports disconnected:
 
-   ```bash
-   curl -H "X-Api-Key: demo-admin-key" http://localhost:8090/arazzo/v1/github/session
-   # {"connected":false}
+   ```powershell
+   (Invoke-RestMethod 'http://localhost:8090/arazzo/v1/github/session' -Headers @{ 'X-Api-Key' = 'demo-admin-key' }).connected
+   # False
    ```
 
    In the designer, open a working copy's **Git** panel and click **Connect GitHub**. Approve the

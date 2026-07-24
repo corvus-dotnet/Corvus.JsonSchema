@@ -58,8 +58,8 @@ OAuth App and dropping its credentials into a local, **uncommitted** file.
      broker requests the `repo read:user user:email` scopes at sign-in.
 2. **Generate a client secret** on the App, and note its **Client ID**.
 3. **Copy the credentials into a local file** (never committed — it is `.gitignore`d):
-   ```bash
-   cp github-oauth.local.json.example github-oauth.local.json
+   ```powershell
+   Copy-Item github-oauth.local.json.example github-oauth.local.json
    # then edit github-oauth.local.json with your App's ClientId + ClientSecret
    ```
    The client id is public (it rides the authorize URL); the secret stays in this local file only.
