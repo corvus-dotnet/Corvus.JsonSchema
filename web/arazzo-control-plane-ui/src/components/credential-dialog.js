@@ -255,6 +255,11 @@ class ArazzoCredentialDialog extends ArazzoElement {
     // The per-environment server endpoint, derived from the source doc's servers on create (carried from the binding's
     // config on edit/duplicate, handled in fill()).
     this._derivedServer = sourceDoc ? deriveServerFromSource(sourceDoc) : null;
+    // A channel (AsyncAPI) source takes the channel-credential rules (ADR 0051): connection-time auth only (no
+    // apiKey), the broker URL required, and never usage-scoped. Known from the doc when one is supplied, else from
+    // an existing binding's serverUrl config.
+    this._isChannelSource = sourceDoc ? !!sourceDoc.asyncapi
+      : !!((binding?.config || []).some((c) => c.key === 'serverUrl'));
     this._prefillSource = this._editing ? null : (sourceName || (dup ? binding.sourceName : null));
     this._lockSource = !this._editing && !!this._prefillSource && (lockSource || dup);
     this._lockAuth = !this._editing && !!this._derivedAuth;
@@ -352,7 +357,8 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const note = this.$('.authkind-note');
     note.textContent = (!ro && derived?.schemeName)
       ? `Derived from ${this._prefillSource || 'the source'}’s “${derived.schemeName}” security scheme.`
-      : (!ro && dup) ? 'Carried over from the source you’re duplicating.' : '';
+      : (!ro && dup) ? 'Carried over from the source you’re duplicating.'
+      : this._isChannelSource ? 'Channel source: the credential is presented at connection — bearer (a token), basic (SASL user/password), oauth2ClientCredentials, or mtls; an API key attaches per HTTP request and does not apply.' : '';
     note.hidden = !note.textContent;
 
     this.$('#description').value = b?.description || dup?.description || '';
@@ -364,7 +370,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const server = this._derivedServer
       ? { ...this._derivedServer, value: existingServer?.value ?? this._derivedServer.value }
       : existingServer
-        ? { key: existingServer.key, label: existingServer.key === 'serverHost' ? 'Server host' : 'Server base URL', placeholder: '', value: existingServer.value }
+        ? { key: existingServer.key, label: existingServer.key === 'serverUrl' ? 'Broker URL' : 'Server base URL', placeholder: '', value: existingServer.value }
         : { key: 'baseUrl', label: 'Server base URL', placeholder: 'https://api.example.com', value: '' };
     this._serverConfigKey = server.key;
     this.$('.server-label').textContent = server.label;
@@ -648,6 +654,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     if (!sourceName || !environment) throw new Error('A source name and environment are required.');
     const authKind = this.authKind;
     if (!SLOTS[authKind]) throw new Error(`Choose a supported auth kind: ${AUTH_KINDS.join(', ')}.`);
+    if (this._isChannelSource && authKind === 'apiKey') {
+      throw new Error('An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as bearer (a token presented at connect), basic (SASL username/password), oauth2ClientCredentials, or mtls.');
+    }
 
     const secretRefs = this.collectRefs();
     if (secretRefs.length === 0) throw new Error('At least one secret reference is required.');
@@ -656,6 +665,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     // The per-environment server endpoint override lives in the binding's config under its reserved key.
     const serverValue = this.$('#serverBaseUrl')?.value.trim();
     if (serverValue) config.push({ key: this._serverConfigKey || 'baseUrl', value: serverValue });
+    if (this._isChannelSource && !config.some((c) => c.key === 'serverUrl' && c.value)) {
+      throw new Error("A channel credential must carry the environment's broker URL (the Broker URL field, ADR 0051).");
+    }
     const description = this.$('#description').value.trim() || undefined;
     const expiresAtDate = this.$('#expiresAt').value;
     const expiresAt = expiresAtDate ? new Date(`${expiresAtDate}T00:00:00Z`).toISOString() : undefined;

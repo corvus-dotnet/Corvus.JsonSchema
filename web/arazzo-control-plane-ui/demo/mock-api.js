@@ -888,7 +888,9 @@ function seedCredentials() {
     b('petstore', 'production', 'apiKey', [{ name: 'value', ref: 'keyvault://petstore-key#3' }], { config: [{ key: 'parameterName', value: 'X-Api-Key' }], expiresAt: iso(20 * day), description: 'Petstore API key.' }),
     b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'workflow', value: 'nightly-reconcile' }], kind: 'workflow', label: 'nightly-reconcile' }, expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
-    b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
+    // 'events' is an asyncapi source, so its seeded binding is a CHANNEL credential (ADR 0051): the broker URL
+    // rides the binding as serverUrl config, and the bearer token is presented in the CONNECT handshake.
+    b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], { config: [{ key: 'serverUrl', value: 'nats://events-broker.staging.example.com:4222' }] }),
     b('accounts', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'keyvault://accounts-staging#1' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'onboarding-client' }], description: 'Accounts API for onboarding.' }),
     b('billing', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing-staging#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'sys:sub', value: 'u-1042' }], kind: 'person', label: 'Ada Lovelace' } }),
   
@@ -2331,6 +2333,22 @@ export function createMockControlPlane(options = {}) {
     return json({ credentials: pageItems.map(toCredentialSummary), nextPageToken });
   }
 
+  // The channel-credential rules (ADR 0051), keyed on the registered source's type — the same classification the
+  // server performs against the sources registry.
+  function channelCredentialError(sourceName, authKind, usageGrantee, config) {
+    if (SOURCE_TYPES[sourceName] !== 'asyncapi') return null;
+    if (authKind === 'apiKey') {
+      return "An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as 'bearer' (a token presented at connect), 'basic' (SASL username/password), 'oauth2ClientCredentials', or 'mtls'.";
+    }
+    if (usageGrantee) {
+      return "A channel credential authenticates the runner's broker connection (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.";
+    }
+    if (!(config || []).some((c) => c?.key === 'serverUrl' && c?.value)) {
+      return "A channel credential must carry the environment's broker URL as a 'serverUrl' config entry (ADR 0051).";
+    }
+    return null;
+  }
+
   // A secretRef must be a reference, never inline secret material — the boundary that keeps secrets out.
   function refError(refs) {
     if (!Array.isArray(refs) || refs.length === 0) return 'At least one secretRef is required.';
@@ -2356,6 +2374,10 @@ export function createMockControlPlane(options = {}) {
         return problem(400, 'Invalid credential binding', 'An mTLS credential is connection-level and cannot be usage-scoped.');
       }
     }
+    // A channel (AsyncAPI) source takes the channel-credential rules (ADR 0051) — mirror the server: broker auth is
+    // connection-time, so no per-request apiKey, never usage-scoped, and the environment's broker URL is required.
+    const channelErr = channelCredentialError(body.sourceName, body.authKind, body.usageGrantee, body.config);
+    if (channelErr) return problem(400, 'Invalid credential binding', channelErr);
     if (findCredential(body.sourceName, body.environment)) {
       return problem(409, 'Credential already exists', `A binding for '${body.sourceName}@${body.environment}' already exists.`);
     }
@@ -2374,6 +2396,8 @@ export function createMockControlPlane(options = {}) {
   function updateCredential(b, body) {
     const err = refError(body?.secretRefs);
     if (err) return problem(400, 'Invalid credential binding', err);
+    const channelErr = channelCredentialError(b.sourceName, body?.authKind ?? b.authKind, null, body?.config ?? b.config);
+    if (channelErr) return problem(400, 'Invalid credential binding', channelErr);
     // Management tags (who may MANAGE the binding, §14.2) are admin-editable: a present managementTags replaces them
     // (reserved prefix rejected), absent leaves them unchanged. Usage grant/tags stay immutable.
     if (Array.isArray(body?.managementTags)) {

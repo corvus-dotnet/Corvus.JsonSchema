@@ -419,6 +419,25 @@ test('createCredential adds a binding, rejects an inline secret (400) and a dupl
     (e) => e.status === 409);
 });
 
+test('channel credentials (ADR 0051): an asyncapi source refuses apiKey and usage scoping and requires the broker URL — mirror of the server rules', async () => {
+  const c = makeClient();
+  // 'events' is the mock's asyncapi source; apiKey attaches per HTTP request, so it does not apply.
+  await assert.rejects(
+    () => c.createCredential({ sourceName: 'events', environment: 'channel-lab', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'vault://kv/events#token' }] }),
+    (e) => e instanceof ProblemError && e.status === 400 && /authenticates at connection/.test(e.detail ?? e.message));
+  // The environment's broker URL is required as serverUrl config.
+  await assert.rejects(
+    () => c.createCredential({ sourceName: 'events', environment: 'channel-lab', authKind: 'bearer', secretRefs: [{ name: 'value', ref: 'vault://kv/events#token' }] }),
+    (e) => e.status === 400 && /serverUrl/.test(e.detail ?? e.message));
+  // Connection-scoped: never usage-scoped to a run.
+  await assert.rejects(
+    () => c.createCredential({ sourceName: 'events', environment: 'channel-lab', authKind: 'bearer', secretRefs: [{ name: 'value', ref: 'vault://kv/events#token' }], config: [{ key: 'serverUrl', value: 'nats://broker:4222' }], usageGrantee: { kind: 'team', identity: [{ dimension: 'group', value: 'ops' }] } }),
+    (e) => e.status === 400 && /usage grantee/.test(e.detail ?? e.message));
+  // The compliant channel credential: a bearer token presented at connect plus the broker URL.
+  const ok = await c.createCredential({ sourceName: 'events', environment: 'channel-lab', authKind: 'bearer', secretRefs: [{ name: 'value', ref: 'vault://kv/events#token' }], config: [{ key: 'serverUrl', value: 'nats://broker:4222' }] });
+  assert.equal(ok.authKind, 'bearer');
+});
+
 test('updateCredential re-points the reference (rotation) and 404s for an unknown key', async () => {
   const c = makeClient();
   const updated = await c.updateCredential('petstore', 'production', {
@@ -1813,7 +1832,9 @@ test('debug runs (§18): a suspended receive takes an injected message and resum
   await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
   await c.attachWorkingCopySource(wc.id, 'events', { sourceName: 'events' });
   await c.createCredential({ sourceName: 'petstore', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/petstore#token' }] });
-  await c.createCredential({ sourceName: 'events', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/events#token' }] });
+  // 'events' is an asyncapi source, so its binding is a CHANNEL credential (ADR 0051): a connection-time kind
+  // plus the environment's broker URL as serverUrl config.
+  await c.createCredential({ sourceName: 'events', environment: 'development', authKind: 'bearer', secretRefs: [{ name: 'value', ref: 'vault://kv/dev/events#token' }], config: [{ key: 'serverUrl', value: 'nats://broker:4222' }] });
 
   const SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
   const pump = async (runId) => {
