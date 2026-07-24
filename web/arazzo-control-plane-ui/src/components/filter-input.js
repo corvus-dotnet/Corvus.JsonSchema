@@ -52,7 +52,13 @@ class ArazzoFilterInput extends ArazzoElement {
 
   set items(value) {
     this._items = Array.isArray(value) ? value : [];
-    if (this.$('.results') && !this.$('.results').hidden) this.open();
+    // Re-render IN THE CURRENT MODE while the list is open OR the input is focused: items arriving
+    // after a focus-open must not collapse the full list to a filter on the committed value (which
+    // hides non-matching entries like the create sentinel) — and when the focus-open found nothing
+    // to show (the async load had not landed), the arrival itself opens the list.
+    const list = this.$('.results');
+    const focused = this.shadowRoot?.activeElement === this.$('input');
+    if ((list && !list.hidden) || focused) this.open({ showAll: this._showAll });
   }
 
   get value() { return this.$('input')?.value ?? this.getAttribute('value') ?? ''; }
@@ -127,6 +133,7 @@ class ArazzoFilterInput extends ArazzoElement {
     const input = this.$('input');
     const list = this.$('.results');
     if (!input || !list || input.readOnly || input.disabled || this._selecting) return;
+    this._showAll = showAll;
     const q = showAll ? '' : input.value.trim().toLowerCase();
     const matches = this._items.filter((i) => `${i.value} ${i.label ?? ''} ${i.sub ?? ''}`.toLowerCase().includes(q));
     this.renderList(matches);

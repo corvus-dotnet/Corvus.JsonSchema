@@ -240,7 +240,9 @@ the GitHub repository and branch pickers, whose lists can be very long. Properti
 (`[{value, label?, sub?}]`), an optional async `lookup` that deepens the list while typing (debounced,
 stale-guarded — the repo pickers use it so an owner-qualified query reaches repositories the session's seed
 never contains), `value`, `readOnly`, `disabled`. Focus shows the full list; typing filters; a value outside
-the list stays free-typable. Source: `filter-input.js`.
+the list stays free-typable. Items assigned while the input is focused or the list is open re-render in the
+current mode (a late async load opens show-all rather than collapsing to a filter on the committed value).
+Source: `filter-input.js`.
 
 ### `<arazzo-environment-input>`
 

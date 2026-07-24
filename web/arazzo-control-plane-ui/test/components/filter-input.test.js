@@ -25,6 +25,15 @@ describe('<arazzo-filter-input>', () => {
     ok(el.shadowRoot.querySelector('li').textContent.includes('release/9.0'));
   });
 
+  it('items arriving while the list is focus-opened keep the FULL list, not a filter on the committed value', async () => {
+    combo([]);
+    el.value = 'main';
+    const input = el.shadowRoot.querySelector('input');
+    input.focus(); // opens empty — the async load has not landed yet
+    el.items = [{ value: 'main', sub: 'default' }, { value: 'release/9.0' }, { value: '__new__', label: '＋ New branch…' }];
+    await waitFor(() => el.shadowRoot.querySelectorAll('li').length === 3, 'late items render show-all, the create sentinel included');
+  });
+
   it('a typed value committed by blur reaches host listeners exactly once (a native change is not composed)', async () => {
     combo([{ value: 'acme/specs' }]);
     let commits = 0;
