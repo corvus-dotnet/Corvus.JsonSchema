@@ -371,6 +371,10 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
     .WithEnvironment("ControlPlane__Directory__ClientId", "arazzo-directory")
     .WithEnvironment("ARAZZO_DIRECTORY_CLIENT_SECRET", "arazzo-directory-dev-secret")
+    // The connected-provider demo (ADR 0052): the realm import registers the arazzo-portal OAuth client, and the
+    // control plane folds this Keycloak in as a connected provider over it — the fetch pane's interactive sign-in is
+    // then live-testable with the seeded realm users, no external account. The secret must equal the realm import's.
+    .WithEnvironment("ARAZZO_PORTAL_CLIENT_SECRET", "arazzo-portal-dev-secret")
     // Onboarding, ledger, and kyc are real external sources: inject their endpoints so the control plane's live-
     // execution transports route those sources there (its startup live runs call them), and wait for them to be healthy.
     .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))

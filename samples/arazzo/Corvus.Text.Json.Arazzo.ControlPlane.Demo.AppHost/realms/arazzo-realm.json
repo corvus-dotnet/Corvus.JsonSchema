@@ -46,6 +46,20 @@
       ]
     },
     {
+      "clientId": "arazzo-portal",
+      "name": "Arazzo connected-provider demo (source-fetch sign-in, ADR 0052)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-portal-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:*", "https://localhost:*"],
+      "webOrigins": ["+"],
+      "defaultClientScopes": ["profile"]
+    },
+    {
       "clientId": "arazzo-cli",
       "name": "Arazzo CLI",
       "enabled": true,

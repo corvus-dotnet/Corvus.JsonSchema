@@ -565,6 +565,37 @@ if (File.Exists(designerPage))
     app.MapGet("/designer", () => Results.File(designerPage, "text/html"));
 }
 
+// The connected-provider demo's secured spec endpoint (ADR 0052): an OpenAPI document behind the deployment's
+// own auth — 401 anonymous, readable by any signed-in realm user. "Fetch URL" against this host then exercises
+// the whole interactive path live: the pane offers Connect (the Demo Keycloak provider covers localhost), the
+// popup signs the user in, and the fetch runs AS them. Secured composition only (there is no auth stack to sit
+// behind otherwise).
+if (requireAuthorization)
+{
+    const string portalSampleSpec = /*lang=json,strict*/ """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Portal Petstore", "version": "1.0.0", "description": "A sample spec served behind the demo deployment's own sign-in, so the fetch pane's connected-provider path is live-testable." },
+          "paths": {
+            "/pets": {
+              "get": {
+                "operationId": "listPets",
+                "summary": "List pets",
+                "responses": { "200": { "description": "A page of pets." } }
+              },
+              "post": {
+                "operationId": "createPet",
+                "summary": "Create a pet",
+                "responses": { "201": { "description": "The pet was created." } }
+              }
+            }
+          }
+        }
+        """;
+    app.MapGet("/portal/specs/petstore.json", () => Results.Text(portalSampleSpec, "application/json"))
+        .RequireAuthorization();
+}
+
 // The connected-provider registry (ADR 0052) and the GitHub App broker (workflow-designer §4.7). GitHub folds in as
 // provider #1: its OAuth registration becomes the registry's 'github' entry, the shared ProviderBroker owns the
 // sign-in/custody machinery, and the GitHubBroker keeps the repos/browse surface over that shared custody — so one
@@ -586,6 +617,27 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
         CallbackUrl = "http://localhost:8090/arazzo/v1/github/auth/callback",
     };
     providerEntries.Add(gitHubOptions.ToProviderEntry());
+}
+
+// The demo Keycloak folds in as a connected provider (ADR 0052) covering the demo's own host: the secured
+// sample spec endpoint below sits behind the deployment's auth, so the fetch pane's interactive sign-in is
+// live-testable with the seeded realm users — no external account. The arazzo-portal client is registered by
+// the realm import; its dev secret is injected by the AppHost as ARAZZO_PORTAL_CLIENT_SECRET. Secured
+// composition only: with authorization off there is no secured host to authenticate against.
+string? providerKeycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
+if (requireAuthorization && !string.IsNullOrWhiteSpace(providerKeycloakBaseUrl))
+{
+    providerEntries.Add(new ConnectedProviderOptions
+    {
+        Name = "keycloak",
+        DisplayName = "Demo Keycloak",
+        Issuer = $"{providerKeycloakBaseUrl.TrimEnd('/')}/realms/arazzo",
+        ClientId = "arazzo-portal",
+        ClientSecretRef = "env://ARAZZO_PORTAL_CLIENT_SECRET",
+        Scopes = "openid profile",
+        CallbackUrl = "http://localhost:8090/arazzo/v1/providers/keycloak/auth/callback",
+        Hosts = ["localhost", "127.0.0.1"],
+    });
 }
 
 if (providerEntries.Count > 0)
@@ -670,6 +722,16 @@ if (!string.IsNullOrWhiteSpace(keycloakBaseUrl))
 // whose pointer misses an absent field is omitted, not fatal (OutputExtractionEmitter / AppendWorkflowOutputs guard).
 var workflowSimulator = new Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
 
+// The server-side spec-document fetcher (§4.4/ADR 0052) behind the fetch pane: no browser CORS, one fetch
+// implementation, authenticated as a provider connection, a one-shot secret, or a §13 binding (resolved through
+// the env secret scheme, the same reference pattern the composition's other secrets use). The demo composition
+// serves http on localhost, so the insecure opt-in is on.
+var sourceFetcher = new SourceDocumentFetcher(
+    new HttpClient(),
+    sourceCredentials,
+    new Corvus.Text.Json.Arazzo.SourceCredentials.Http.SourceCredentialProviderFactory(new SecretResolverBuilder().AddEnvironment().Build()),
+    allowInsecureHttp: true);
+
 // Captured from the endpoint mapping so the demo can seed its pending access request through the SAME submission path a
 // real caller uses (starting the approval run), rather than writing it straight to the store with no run to enact it.
 IAccessRequestApprovalService? seedApprovalService = null;
@@ -681,6 +743,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     rowSecurity: requireAuthorization ? entitlements : null,
     securityPolicyStore: securityPolicy,
     sourceCredentialStore: sourceCredentials,
+    sourceFetcher: sourceFetcher,
     accessRequestStore: accessRequests,
     accessRequestSubjectClaimType: "preferred_username",
     selfElevationEligibility: eligibleForSelfElevation,
