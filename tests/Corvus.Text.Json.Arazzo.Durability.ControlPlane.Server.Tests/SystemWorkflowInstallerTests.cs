@@ -106,9 +106,64 @@ public sealed class SystemWorkflowInstallerTests
 
         provider.Builds.ShouldBe(1);
         provider.LastWorkflow.Length.ShouldBeGreaterThan(0, "the probe bakes the real embedded workflow");
-        provider.LastSourceCount.ShouldBe(2, "notifications + controlplane ride along");
+        provider.LastSourceCount.ShouldBe(2, "access-notifications + controlplane ride along");
         using ParsedJsonDocument<CatalogVersion>? version = await fixture.Catalog.GetAsync("access-approval", 1, AccessContext.System, default);
         version.ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Broker_options_seed_the_channel_credential_and_the_registry_registers_both_sources()
+    {
+        var sources = new Sources.InMemorySourceStore();
+        Fixture f = Fixture.Create(sources: sources);
+        await f.Installer.InstallAsync(
+            new SystemWorkflowInstallOptions
+            {
+                AdministratorIdentity = Admins,
+                Owner = new CatalogOwner("Control Plane", "controlplane@example.com", null, null),
+                CredentialTokenUrl = "https://keycloak.example/realms/arazzo/protocol/openid-connect/token",
+                CredentialClientId = "arazzo-access-approval",
+                CredentialClientSecretRef = "vault://secret/arazzo/controlplane#client-secret",
+                WorkflowTags = ["system", "approval"],
+                BrokerServerUrl = "nats://nats:4222",
+                BrokerTokenRef = "vault://secret/arazzo/access-notifications#token",
+            },
+            default);
+
+        // The channel credential (ADR 0051): the broker URL as serverUrl config, the bearer token, and NO usage
+        // scoping — connection-scoped, unlike the workflow-scoped OAuth2 credential.
+        using ParsedJsonDocument<SourceCredentialBinding>? channel = await f.Credentials.GetAsync("access-notifications", "system", AccessContext.System, default);
+        channel.ShouldNotBeNull();
+        SourceCredentialBinding binding = channel!.RootElement;
+        binding.AuthKindValue.ShouldBe(SourceCredentialKind.Bearer);
+        binding.TryGetConfigValue("serverUrl", out string? serverUrl).ShouldBeTrue();
+        serverUrl.ShouldBe("nats://nats:4222");
+        (binding.UsageTags.IsNotUndefined() && binding.UsageTags.GetArrayLength() > 0).ShouldBeFalse("connection-scoped: never usage-scoped");
+
+        // Both system sources registered, so the credentials surface classifies their bindings.
+        using ParsedJsonDocument<Sources.RegisteredSource>? controlplane = await sources.GetAsync("controlplane", AccessContext.System, default);
+        controlplane.ShouldNotBeNull();
+        using ParsedJsonDocument<Sources.RegisteredSource>? notifications = await sources.GetAsync("access-notifications", AccessContext.System, default);
+        notifications.ShouldNotBeNull();
+        ((JsonElement)notifications!.RootElement.Type).ValueEquals("asyncapi"u8).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Broker_url_without_a_token_ref_is_refused()
+    {
+        Fixture f = Fixture.Create();
+        SystemWorkflowInstallOptions options = new()
+        {
+            AdministratorIdentity = Admins,
+            Owner = new CatalogOwner("Control Plane", "controlplane@example.com", null, null),
+            CredentialTokenUrl = "https://keycloak.example/realms/arazzo/protocol/openid-connect/token",
+            CredentialClientId = "arazzo-access-approval",
+            CredentialClientSecretRef = "vault://secret/arazzo/controlplane#client-secret",
+            BrokerServerUrl = "nats://nats:4222",
+        };
+
+        (await Should.ThrowAsync<ArgumentException>(async () => await f.Installer.InstallAsync(options, default)))
+            .Message.ShouldContain("BrokerTokenRef");
     }
 
     [TestMethod]
@@ -143,7 +198,7 @@ public sealed class SystemWorkflowInstallerTests
 
         public required SystemWorkflowInstaller Installer { get; init; }
 
-        public static Fixture Create(Corvus.Text.Json.Arazzo.IWorkflowExecutorProvider? executorProvider = null)
+        public static Fixture Create(Corvus.Text.Json.Arazzo.IWorkflowExecutorProvider? executorProvider = null, Sources.ISourceStore? sources = null)
         {
             var credentials = new InMemorySourceCredentialStore();
             var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "system", credentials);
@@ -156,7 +211,7 @@ public sealed class SystemWorkflowInstallerTests
                 Availability = availability,
                 Credentials = credentials,
                 Environments = environments,
-                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, administrators, executorProvider),
+                Installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, administrators, executorProvider, sources),
             };
         }
     }

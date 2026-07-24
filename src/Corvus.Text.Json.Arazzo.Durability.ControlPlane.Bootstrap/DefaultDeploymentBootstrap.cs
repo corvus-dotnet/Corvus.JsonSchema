@@ -86,6 +86,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
         IWorkflowExecutorProvider? executorProvider = null,
+        Sources.ISourceStore? sources = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(catalogStore);
@@ -109,7 +110,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         // credential, and the administrator store records the §15 administrator (established when v1 is added), so the
         // genesis administrator can later approve the requests the workflow governs.
         var catalog = new SecuredWorkflowCatalog(catalogStore, runs, "bootstrap", credentials, administrators);
-        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, environmentAdministrators, executorProvider);
+        var installer = new SystemWorkflowInstaller(catalog, availability, credentials, environments, environmentAdministrators, executorProvider, sources);
         await installer.InstallAsync(
             new SystemWorkflowInstallOptions
             {
@@ -120,6 +121,8 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
                 CredentialTokenUrl = (string)config.TokenUrl,
                 CredentialClientId = config.ClientId.IsNotUndefined() ? (string)config.ClientId : "arazzo-access-approval",
                 CredentialClientSecretRef = (string)config.ClientSecretRef,
+                BrokerServerUrl = config.BrokerUrl.IsNotUndefined() ? (string)config.BrokerUrl : null,
+                BrokerTokenRef = config.BrokerTokenRef.IsNotUndefined() ? (string)config.BrokerTokenRef : null,
                 Environment = config.Environment.IsNotUndefined() ? (string)config.Environment : "system",
                 WorkflowTags = ["system", "approval"],
                 Actor = "bootstrap",

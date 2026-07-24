@@ -41,6 +41,12 @@ public sealed class SystemWorkflowInstaller
     /// step calls. Matches the <c>sourceDescriptions</c> entry in the embedded workflow document.</summary>
     private const string ControlPlaneSourceName = "controlplane";
 
+    /// <summary>The Arazzo source name of the approval workflow's own notifications channel API (its
+    /// <c>accessNotify</c>/<c>accessDecisions</c> channels) — a control-plane API, deliberately distinct from any
+    /// application notifications source (ADR 0051). Matches the <c>sourceDescriptions</c> entry in the embedded
+    /// workflow document.</summary>
+    private const string AccessNotificationsSourceName = "access-notifications";
+
     /// <summary>The OAuth2 scope the runner's issued token must carry to call <c>grantAccessRequest</c>. Mirrors
     /// <c>ControlPlaneScopes.AccessRequestsGrant</c> in the server project, which this project cannot reference without a
     /// dependency cycle; kept in sync by the live-verify pass.</summary>
@@ -52,6 +58,7 @@ public sealed class SystemWorkflowInstaller
     private readonly IEnvironmentStore environments;
     private readonly IEnvironmentAdministratorStore environmentAdministrators;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly Sources.ISourceStore? sources;
 
     /// <summary>Initializes a new instance of the <see cref="SystemWorkflowInstaller"/> class.</summary>
     /// <param name="catalog">The catalog the approval version is published to. Must be configured with the same credential
@@ -65,13 +72,18 @@ public sealed class SystemWorkflowInstaller
     /// workflow cannot be generated and compiled. A null build is the provider's degraded mode for USER
     /// workflows (catalogued, just not runnable — a diagnosable state); a non-runnable SYSTEM workflow
     /// instead crash-loops its runner with no visible cause, so the deployment must refuse to come up.</param>
+    /// <param name="sources">When supplied, the install registers the system workflow's two sources
+    /// (<c>controlplane</c>, <c>access-notifications</c>) in the sources registry, so the credentials surface can
+    /// classify their bindings (an AsyncAPI source takes the channel-credential rules, ADR 0051) and operators see
+    /// them alongside the application's sources.</param>
     public SystemWorkflowInstaller(
         ISecuredWorkflowCatalog catalog,
         IAvailabilityStore availability,
         ISourceCredentialStore credentials,
         IEnvironmentStore environments,
         IEnvironmentAdministratorStore environmentAdministrators,
-        IWorkflowExecutorProvider? executorProvider = null)
+        IWorkflowExecutorProvider? executorProvider = null,
+        Sources.ISourceStore? sources = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(availability);
@@ -85,6 +97,7 @@ public sealed class SystemWorkflowInstaller
         this.environments = environments;
         this.environmentAdministrators = environmentAdministrators;
         this.executorProvider = executorProvider;
+        this.sources = sources;
     }
 
     /// <summary>Installs the access-approval workflow and its supporting environment and credential, idempotently.</summary>
@@ -102,7 +115,9 @@ public sealed class SystemWorkflowInstaller
         this.ProbeExecutorBake();
 
         await this.EnsureEnvironmentAsync(options, management, cancellationToken).ConfigureAwait(false);
+        await this.EnsureSourcesRegisteredAsync(options, management, cancellationToken).ConfigureAwait(false);
         await this.EnsureCredentialAsync(options, management, cancellationToken).ConfigureAwait(false);
+        await this.EnsureChannelCredentialAsync(options, management, cancellationToken).ConfigureAwait(false);
         await this.EnsureCatalogVersionAsync(options, cancellationToken).ConfigureAwait(false);
         await this.EnsureAvailabilityAsync(options, cancellationToken).ConfigureAwait(false);
     }
@@ -130,7 +145,7 @@ public sealed class SystemWorkflowInstaller
     private static KeyValuePair<string, byte[]>[] ReadSources()
         =>
         [
-            new KeyValuePair<string, byte[]>("notifications", ReadSpec("access-approval.asyncapi.json")),
+            new KeyValuePair<string, byte[]>(AccessNotificationsSourceName, ReadSpec("access-approval.asyncapi.json")),
             new KeyValuePair<string, byte[]>(ControlPlaneSourceName, ReadSpec("access-approval.controlplane.openapi.json")),
         ];
 
@@ -179,6 +194,86 @@ public sealed class SystemWorkflowInstaller
         // no-op), so it also repairs a deployment whose system environment predates this fix.
         var administration = new SecuredEnvironmentAdministration(this.environmentAdministrators, options.Actor);
         await administration.EstablishAsync(options.Environment, options.AdministratorIdentity, default, hasKind: false, default, hasLabel: false, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Registers the system workflow's two sources in the sources registry (idempotently), so the credentials
+    // surface classifies their bindings (an AsyncAPI source takes the channel-credential rules, ADR 0051) and
+    // operators see them alongside the application's sources. Skipped when the deployment wires no registry.
+    private async ValueTask EnsureSourcesRegisteredAsync(SystemWorkflowInstallOptions options, SecurityTagSet management, CancellationToken cancellationToken)
+    {
+        if (this.sources is null)
+        {
+            return;
+        }
+
+        await this.EnsureSourceRegisteredAsync(
+            ControlPlaneSourceName,
+            "openapi",
+            "Control Plane API",
+            "The control plane's own REST API the system approval workflow calls (grantAccessRequest, design §16.5.1).",
+            options,
+            management,
+            "access-approval.controlplane.openapi.json",
+            cancellationToken).ConfigureAwait(false);
+        await this.EnsureSourceRegisteredAsync(
+            AccessNotificationsSourceName,
+            "asyncapi",
+            "Access Approval Notifications",
+            "The control plane's own approval notification channels (accessNotify / accessDecisions) — a system API, distinct from any application notifications source (ADR 0051).",
+            options,
+            management,
+            "access-approval.asyncapi.json",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask EnsureSourceRegisteredAsync(string name, string type, string displayName, string description, SystemWorkflowInstallOptions options, SecurityTagSet management, string specFileName, CancellationToken cancellationToken)
+    {
+        ParsedJsonDocument<Sources.RegisteredSource>? existing =
+            await this.sources!.GetAsync(name, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            existing.Dispose();
+            return;
+        }
+
+        using ParsedJsonDocument<Sources.RegisteredSource> draft =
+            Sources.RegisteredSource.Draft(name, type, ReadSpec(specFileName), displayName, description, management);
+        (await this.sources.AddAsync(draft.RootElement, options.Actor, cancellationToken).ConfigureAwait(false)).Dispose();
+    }
+
+    // Seeds the approval workflow's channel credential (ADR 0051): the internal environment's broker endpoint as
+    // 'serverUrl' config plus the connection token (the 'bearer' shape, presented in the CONNECT handshake).
+    // Connection-scoped by rule — the binding carries no usage tags, unlike the workflow-scoped OAuth2 credential.
+    private async ValueTask EnsureChannelCredentialAsync(SystemWorkflowInstallOptions options, SecurityTagSet management, CancellationToken cancellationToken)
+    {
+        if (options.BrokerServerUrl is not { Length: > 0 } brokerServerUrl)
+        {
+            return;
+        }
+
+        if (options.BrokerTokenRef is not { Length: > 0 } brokerTokenRef)
+        {
+            throw new ArgumentException("BrokerServerUrl is set but BrokerTokenRef is not; the channel credential needs the broker connection token's secret reference (ADR 0051).", nameof(options));
+        }
+
+        ParsedJsonDocument<SourceCredentialBinding>? existing =
+            await this.credentials.GetAsync(AccessNotificationsSourceName, options.Environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            existing.Dispose();
+            return;
+        }
+
+        var definition = new SourceCredentialDefinition(
+            AccessNotificationsSourceName,
+            options.Environment,
+            SourceCredentialKind.Bearer,
+            [new SecretReferenceDefinition("value", brokerTokenRef)],
+            Config: [new CredentialConfigDefinition("serverUrl", brokerServerUrl)],
+            Description: "The system runner's broker connection for the approval notification channels (ADR 0051): the environment's broker endpoint plus the connection token presented in the CONNECT handshake. Connection-scoped, so never usage-scoped to a run.",
+            ManagementTags: management);
+
+        (await this.credentials.AddAsync(definition, options.Actor, cancellationToken).ConfigureAwait(false)).Dispose();
     }
 
     private async ValueTask EnsureCredentialAsync(SystemWorkflowInstallOptions options, SecurityTagSet management, CancellationToken cancellationToken)

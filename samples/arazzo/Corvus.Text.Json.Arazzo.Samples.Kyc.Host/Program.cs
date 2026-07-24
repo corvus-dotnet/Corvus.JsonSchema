@@ -31,6 +31,7 @@ string natsUrl = builder.Configuration["Nats:Url"]
 NatsMessageTransport requestsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "kyc-requests-in",
     UseJetStream = true,
     StreamName = "kyc-requests",
@@ -41,6 +42,7 @@ NatsMessageTransport requestsTransport = await NatsMessageTransport.CreateAsync(
 NatsMessageTransport verdictsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "kyc-verdicts-out",
     UseJetStream = true,
     StreamName = "kyc-verdicts",

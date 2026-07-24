@@ -6,7 +6,7 @@
     "description": "The system access-approval workflow (design section 16.5.1). It notifies the approver that an access request needs a decision, suspends durably awaiting that decision on the access.decision channel, and on approval writes the capped, time-boxed grant through the control plane's bounded grant operation. The notify steps are the editable part: approvals administrators may enrich them (for example a Slack or email notification) without changing the decision correlation or the grant. The two load-bearing steps are the awaitDecision receive (the human decision point) and the grantAccess operation (the platform-capped grant)."
   },
   "sourceDescriptions": [
-    { "name": "notifications", "url": "./access-approval.asyncapi.json", "type": "asyncapi" },
+    { "name": "access-notifications", "url": "./access-approval.asyncapi.json", "type": "asyncapi" },
     { "name": "controlplane", "url": "./access-approval.controlplane.openapi.json", "type": "openapi" }
   ],
   "workflows": [

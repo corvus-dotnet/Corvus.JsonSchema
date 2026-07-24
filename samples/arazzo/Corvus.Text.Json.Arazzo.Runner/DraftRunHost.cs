@@ -20,7 +20,9 @@ public static class DraftRunHost
     /// un-credentialed sibling of <c>SourceCredentialTransports.CreateBinder</c>, used on the standalone (no-Vault)
     /// path so the same client map (each source's real service) routes both the credentialed and un-credentialed paths.</summary>
     /// <param name="clients">The source-name → client map (must contain every source a run declares).</param>
-    /// <param name="messageTransport">The message transport for an AsyncAPI receive step, or <see langword="null"/>.</param>
+    /// <param name="messageTransport">The message transport every channel source binds to, or <see langword="null"/>
+    /// when the host binds no message workflows (the un-credentialed path serves one broker; the credentialed path
+    /// binds per channel source through the channel-transport cache, ADR 0051).</param>
     /// <returns>The transport binder.</returns>
     public static WorkflowTransportBinder CreateBinder(IReadOnlyDictionary<string, HttpClient> clients, IMessageTransport? messageTransport = null)
     {
@@ -30,7 +32,9 @@ public static class DraftRunHost
                 source => source,
                 source => (IApiTransport)new HttpClientApiTransportFactory(clients[source]).CreateTransport(),
                 StringComparer.Ordinal),
-            descriptor.NeedsMessageTransport ? messageTransport : null);
+            descriptor.MessageSources.Count > 0 && messageTransport is { } transport
+                ? descriptor.MessageSources.ToDictionary(source => source.Name, _ => transport, StringComparer.Ordinal)
+                : WorkflowTransports.NoMessageTransports);
     }
 }
 

@@ -12,8 +12,8 @@
       "type": "openapi"
     },
     {
-      "name": "notifications",
-      "url": "./notifications.asyncapi.json",
+      "name": "kyc-notifications",
+      "url": "./kyc-notifications.asyncapi.json",
       "type": "asyncapi"
     }
   ],

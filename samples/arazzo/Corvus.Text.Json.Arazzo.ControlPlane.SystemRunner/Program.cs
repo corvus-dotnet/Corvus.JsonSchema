@@ -99,6 +99,7 @@ string natsUrl = builder.Configuration["Nats:Url"]
 NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "system-runner-notify-out",
     UseJetStream = true,
     StreamName = "access-notify",
@@ -138,7 +139,12 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     // Keycloak is served over http; a production deployment uses an https token endpoint and drops the flag.
     var providerFactory = new SourceCredentialProviderFactory(secretResolver, new HttpClient(), allowInsecureOAuthTokenEndpoint: true);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
-    binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, messageTransport);
+
+    // Channel sources bind per (source, environment) from their §13 channel credential (ADR 0051): the cache
+    // resolves the binding's serverUrl + broker token as this runner's read-only Vault identity and builds one
+    // shared, lazily-connected NATS transport per channel source — replacing the host-configured shared transport.
+    var channelTransports = new ChannelTransportCache(credentials, secretResolver, runnerEnvironment, [new NatsChannelTransportFactory()]);
+    binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, channelTransports);
 }
 else
 {
@@ -165,6 +171,7 @@ builder.Services.AddSingleton(catalogResumer);
 NatsMessageTransport decisionsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "system-runner-decisions-in",
     UseJetStream = true,
     StreamName = "access-decisions",

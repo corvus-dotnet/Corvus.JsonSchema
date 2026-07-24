@@ -38,6 +38,14 @@ label-ordering taxonomy, the identity claim type, self-elevation eligibility, th
 and the optional access-approval system workflow. A configurable deployment (a ZeroFailed task, appsettings, or an
 environment-injected blob) binds the options and calls `ProvisionAsync`.
 
+The `systemWorkflows` options carry the system runner's OAuth2 identity (`tokenUrl`, `clientId`,
+`clientSecretRef`) and — [ADR 0051](../adr/0051-channel-sources-bind-per-environment.md) — the approval
+workflow's channel infrastructure: `brokerUrl` (the internal environment's broker endpoint) plus
+`brokerTokenRef` (the secret reference to the broker connection token). With those set, the installer seeds the
+`access-notifications` channel credential in the `system` environment alongside the `controlplane` credential,
+and registers both system sources in the sources registry — the workflow's notifications API is its own source,
+deliberately distinct from any application notifications source.
+
 ## The example seed
 
 A sample runs the real bootstrap **and** the example seed, gated by one switch. The composition root runs

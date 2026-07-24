@@ -29,6 +29,8 @@ namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 /// <param name="AvailabilityRequests">The availability (promotion) request store (§7.6) the demo seeds a pending request into.</param>
 /// <param name="SecurityPolicy">The §14.2 rule/binding store the demo's persona reach rules + grants are written to.</param>
 /// <param name="SpecsDir">The directory holding the demo's Arazzo + OpenAPI specification packages.</param>
+/// <param name="BrokerUrl">The message broker (NATS) endpoint the kyc-notifications channel credential binds as its
+/// per-environment <c>serverUrl</c> (ADR 0051); the demo's single broker serves every seeded environment.</param>
 public sealed record ExampleSeedContext(
     SecuredWorkflowCatalog Catalog,
     ISourceCredentialStore SourceCredentials,
@@ -39,7 +41,8 @@ public sealed record ExampleSeedContext(
     IAccessRequestStore AccessRequests,
     IAvailabilityRequestStore AvailabilityRequests,
     ISecurityPolicyStore SecurityPolicy,
-    string SpecsDir);
+    string SpecsDir,
+    string BrokerUrl);
 
 /// <summary>
 /// Seeds the sample's <em>example</em> content — the demo fiction: catalogued workflow versions, source-credential
@@ -125,11 +128,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                 _ => SecurityTagSet.Empty,
             };
 
-            // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
-            // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
-            // for EVERY referenced source — so it is seeded here too (its Vault #api-key is provisioned but never resolved
-            // for the channel). Without it, a debug run of the async workflow fails 409 "No credential bound for: notifications".
-            foreach (string source in new[] { "onboarding", "ledger", "kyc", "notifications" })
+            foreach (string source in new[] { "onboarding", "ledger", "kyc" })
             {
                 // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
                 using ParsedJsonDocument<SourceCredentialBinding> seeded = await context.SourceCredentials.AddAsync(
@@ -144,6 +143,25 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                         UsageTags: usage),
                     "demo",
                     cancellationToken);
+            }
+
+            // 'kyc-notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests /
+            // kyc.verdict). Its binding is a CHANNEL credential (ADR 0051): the environment's broker endpoint as
+            // 'serverUrl' config plus the connection token the broker requires (the 'bearer' shape, presented in
+            // the CONNECT handshake). Connection-scoped by rule, so it never carries usage tags — even in
+            // production, where the HTTP credentials above are usage-scoped to the admin group.
+            using (ParsedJsonDocument<SourceCredentialBinding> seededChannel = await context.SourceCredentials.AddAsync(
+                new SourceCredentialDefinition(
+                    "kyc-notifications",
+                    environment,
+                    SourceCredentialKind.Bearer,
+                    [new SecretReferenceDefinition("value", "vault://secret/arazzo/kyc-notifications#token")],
+                    Config: [new CredentialConfigDefinition("serverUrl", context.BrokerUrl)],
+                    Description: "The runner's broker connection for the KYC notification channels (ADR 0051).",
+                    ManagementTags: management),
+                "demo",
+                cancellationToken))
+            {
             }
         }
 
@@ -226,7 +244,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             ("onboarding", "onboarding.openapi.json", "openapi", "Onboarding API", "Customer onboarding service."),
             ("ledger", "ledger.openapi.json", "openapi", "Ledger API", "Reconciliation and ledger service."),
             ("kyc", "kyc.openapi.json", "openapi", "KYC API", "Identity-verification service."),
-            ("notifications", "notifications.asyncapi.json", "asyncapi", "Notifications", "KYC review request/verdict channel (NATS)."),
+            ("kyc-notifications", "kyc-notifications.asyncapi.json", "asyncapi", "KYC Notifications", "KYC review request/verdict channel (NATS)."),
         })
         {
             ReadOnlyMemory<byte> documentUtf8 = File.ReadAllBytes(Path.Combine(context.SpecsDir, file));

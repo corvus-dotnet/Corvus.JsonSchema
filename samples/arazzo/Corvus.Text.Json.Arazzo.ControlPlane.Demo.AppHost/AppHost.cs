@@ -154,8 +154,12 @@ var signingVault = builder.AddContainer("signing-vault", "hashicorp/vault", "1.1
 // publishes a review request to kyc.requests and suspends awaiting a verdict on kyc.verdict; the KYC service is the
 // manual-recovery inbox (consumes requests) + verdict publisher, and the runner subscribes to kyc.verdict to resume
 // the suspended run. Owned by the application, NOT the control plane. Ephemeral (no volume), like the rest of the demo.
+// Broker authentication is ON (ADR 0051): every connection presents the deployment token in its CONNECT
+// handshake — the hosts get it as Nats__Token config, and the runners' channel credentials reference the same
+// value through Vault (secret/arazzo/<source>#token), so the §13 channel bindings are real, not theater.
+const string natsToken = "demo-nats-token";
 var nats = builder.AddContainer("nats", "nats", "2.10")
-    .WithArgs("-js")
+    .WithArgs("-js", "--auth", natsToken)
     .WithEndpoint(targetPort: 4222, scheme: "nats", name: "nats");
 
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
@@ -192,18 +196,25 @@ const string approleTrustScript =
 
 // EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
 // credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
-// its own real secrets. 'notifications' is a NATS source (no per-source api-key), so it is not seeded here.
+// its own real secrets. 'kyc-notifications' is a NATS channel source: its secret is the broker connection token,
+// seeded below with the other example secrets (ADR 0051).
 const string exampleSecretSeedScript =
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
-    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; ";
+    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; " +
+    // The kyc-notifications CHANNEL credential's broker token (ADR 0051): the runner resolves it and presents
+    // it in the CONNECT handshake; the value is the broker's deployment token above.
+    $"vault kv put secret/arazzo/kyc-notifications token={natsToken}; ";
 
 // NOT example-only: the control plane's system approval workflow (design §16.5.1) is a product feature, so its runner's
 // OAuth2 client secret is seeded unconditionally at the Vault path the installed 'controlplane' credential references
 // (vault://secret/arazzo/controlplane#client-secret). It equals the realm's arazzo-access-approval client secret; the
 // system runner resolves it as its read-only Vault identity to fetch an accessRequests:grant token for grantAccessRequest.
 const string systemWorkflowSecretSeedScript =
-    "vault kv put secret/arazzo/controlplane client-secret=arazzo-access-approval-dev-secret; ";
+    "vault kv put secret/arazzo/controlplane client-secret=arazzo-access-approval-dev-secret; " +
+    // The access-notifications CHANNEL credential's broker token (ADR 0051) — the system workflow's own
+    // notification channels, distinct from the application's kyc-notifications source.
+    $"vault kv put secret/arazzo/access-notifications token={natsToken}; ";
 
 // Completion tail (infra): announce done, then linger briefly so the orchestrator observes the container reach
 // 'Running' before it exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the
@@ -312,6 +323,7 @@ var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>(
     // The KYC service is both sides of the async exchange: it consumes review requests (kyc.requests) and publishes
     // verdicts (kyc.verdict) on the application bus.
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WithEnvironment("Nats__Token", natsToken)
     .WaitFor(nats)
     .WithHttpEndpoint()
     .WithExternalHttpEndpoints()
@@ -366,6 +378,7 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__Sources__Kyc", kyc.GetEndpoint("http"))
     // The control plane's live resumer executes the seeded async run, whose send step publishes to the bus.
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WithEnvironment("Nats__Token", natsToken)
     .WaitFor(onboarding)
     .WaitFor(ledger)
     .WaitFor(kyc)
@@ -422,6 +435,7 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // The runner subscribes to kyc.verdict to resume suspended async runs, and publishes review requests when it
     // executes an async run's send step.
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WithEnvironment("Nats__Token", natsToken)
     .WithReference(controlplane)
     .WaitFor(controlplane)
     // Authenticated registration (design §5.5/§16.4): the runner registers through the control plane's authenticated HTTP
@@ -478,6 +492,7 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("
     // The message bus: the approval run's notify SEND publishes to access.notify; the decision consumer subscribes to
     // access.decision (the approver's decision, published by the control plane).
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WithEnvironment("Nats__Token", natsToken)
     // The control-plane API the approval workflow calls (grantAccessRequest), and the runner registers through.
     .WithReference(controlplane)
     .WaitFor(controlplane)

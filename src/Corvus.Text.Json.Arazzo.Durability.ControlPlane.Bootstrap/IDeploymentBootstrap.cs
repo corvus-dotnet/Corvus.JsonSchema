@@ -71,5 +71,6 @@ public interface IDeploymentBootstrap
         IEnvironmentAdministratorStore environmentAdministrators,
         DeploymentBootstrapOptions options,
         IWorkflowExecutorProvider? executorProvider = null,
+        Sources.ISourceStore? sources = null,
         CancellationToken cancellationToken = default);
 }

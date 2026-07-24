@@ -35,6 +35,15 @@ public sealed class SystemWorkflowInstallOptions
     /// pointer into the external secret store, never the secret itself.</summary>
     public required string CredentialClientSecretRef { get; init; }
 
+    /// <summary>Gets the broker endpoint the approval workflow's notifications channel rides in the internal
+    /// environment (the channel credential's <c>serverUrl</c> config, ADR 0051), or <see langword="null"/> to skip
+    /// seeding the channel credential (the deployment binds it itself).</summary>
+    public string? BrokerServerUrl { get; init; }
+
+    /// <summary>Gets the secret reference resolving the broker connection token (presented at connect — the
+    /// <c>bearer</c> channel-credential shape, ADR 0051); required when <see cref="BrokerServerUrl"/> is set.</summary>
+    public string? BrokerTokenRef { get; init; }
+
     /// <summary>Gets the control-plane internal environment the approval workflow executes and is made available in.
     /// Created if absent. Defaults to <c>system</c>.</summary>
     public string Environment { get; init; } = "system";

@@ -110,6 +110,7 @@ string natsUrl = builder.Configuration["Nats:Url"]
 NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "runner-requests-out",
     UseJetStream = true,
     StreamName = "kyc-requests",
@@ -119,7 +120,7 @@ NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(n
 // Both HTTP sources are now real external services (their own hosts + databases) — there is no /svc mock left. The
 // SAME client map drives both binders below: the Vault-credentialed production binder (the runner resolves each
 // source's secret as its own read-only Vault identity and applies it — the service ignores the unused header) and the
-// standalone fallback. (notifications is an AsyncAPI message source, handled by the message transport, not here.)
+// standalone fallback. (kyc-notifications is an AsyncAPI channel source, bound through the channel-transport cache, not here.)
 var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
 {
     ["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) },
@@ -166,7 +167,12 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
-    binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, messageTransport);
+
+    // Channel sources bind per (source, environment) from their §13 channel credential (ADR 0051): the cache
+    // resolves the binding's serverUrl + broker token as this runner's read-only Vault identity and builds one
+    // shared, lazily-connected NATS transport per channel source — replacing the host-configured shared transport.
+    var channelTransports = new ChannelTransportCache(credentials, secretResolver, runnerEnvironment, [new NatsChannelTransportFactory()]);
+    binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, channelTransports);
 }
 else
 {
@@ -233,6 +239,7 @@ builder.Services.AddSingleton(catalogResumer);
 NatsMessageTransport verdictsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "runner-verdicts-in",
     UseJetStream = true,
     StreamName = "kyc-verdicts",

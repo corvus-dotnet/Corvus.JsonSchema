@@ -60,7 +60,7 @@ public static class DemoData
     /// <summary>Builds the live-execution transport binder shared by the catalog resumer (<see cref="CreateLiveResumer"/>)
     /// and the §18 in-process draft runner. The <c>onboarding</c>, <c>ledger</c>, and <c>kyc</c> sources are real
     /// external services (their own hosts + databases), so their clients are rooted directly at those services. The
-    /// demo has no control-plane <c>/svc</c> mock left (notifications is an AsyncAPI message source, not an HTTP one),
+    /// demo has no control-plane <c>/svc</c> mock left (kyc-notifications is an AsyncAPI message source, not an HTTP one),
     /// so that branch is a defensive fallback. In production every source is a real endpoint and this is
     /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault).</summary>
     /// <param name="baseUrlProvider">Yields this host's base URL (the defensive /svc fallback root).</param>
@@ -103,7 +103,9 @@ public static class DemoData
                 source => source,
                 source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
                 StringComparer.Ordinal),
-            descriptor.NeedsMessageTransport ? messageTransport : null);
+            descriptor.MessageSources.Count > 0
+                ? descriptor.MessageSources.ToDictionary(source => source.Name, _ => messageTransport, StringComparer.Ordinal)
+                : WorkflowTransports.NoMessageTransports);
     }
 
     /// <summary>Executes fresh onboarding runs live, to demonstrate real execution: each creates a Pending run with
@@ -284,7 +286,7 @@ public static class DemoData
 
         ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
         ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
-        ReadOnlyMemory<byte> onboardingAsync = Package(specsDir, "onboard-customer.async.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("notifications", "notifications.asyncapi.json"));
+        ReadOnlyMemory<byte> onboardingAsync = Package(specsDir, "onboard-customer.async.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc-notifications", "kyc-notifications.asyncapi.json"));
         ReadOnlyMemory<byte> onboardingRetry = Package(specsDir, "onboard-customer.retry.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 

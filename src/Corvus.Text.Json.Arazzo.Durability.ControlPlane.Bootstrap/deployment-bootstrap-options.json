@@ -83,7 +83,17 @@
           "description": "The OAuth2 client id the system runner presents — the IdP client whose issued token carries the accessRequests:grant scope.",
           "default": "arazzo-access-approval"
         },
-        "clientSecretRef": {
+        "brokerUrl": {
+     "type": "string",
+     "minLength": 1,
+     "description": "The message broker endpoint the system approval workflow's notification channels ride in the internal environment (the access-notifications channel credential's serverUrl config, ADR 0051). Optional: absent means the deployment binds the channel credential itself."
+    },
+    "brokerTokenRef": {
+     "type": "string",
+     "minLength": 1,
+     "description": "The secret reference (scheme://locator[#field]) resolving the broker connection token (the bearer channel-credential shape, presented in the CONNECT handshake); required when brokerUrl is set."
+    },
+    "clientSecretRef": {
           "type": "string",
           "minLength": 1,
           "description": "The secret reference (scheme://locator[#field]) resolving the runner client's secret; a pointer into the external secret store, never the secret itself."

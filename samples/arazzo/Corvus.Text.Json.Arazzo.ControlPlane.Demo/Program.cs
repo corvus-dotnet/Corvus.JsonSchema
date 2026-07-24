@@ -73,7 +73,7 @@ string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => 
 string? systemApprovalKeycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
 bool enableSystemApprovalWorkflow = !string.IsNullOrWhiteSpace(systemApprovalKeycloakBaseUrl);
 string systemWorkflowsOptionJson = enableSystemApprovalWorkflow
-    ? $$""" ,"systemWorkflows": { "tokenUrl": "{{systemApprovalKeycloakBaseUrl!.TrimEnd('/')}}/realms/arazzo/protocol/openid-connect/token", "clientSecretRef": "vault://secret/arazzo/controlplane#client-secret" }"""
+    ? $$""" ,"systemWorkflows": { "tokenUrl": "{{systemApprovalKeycloakBaseUrl!.TrimEnd('/')}}/realms/arazzo/protocol/openid-connect/token", "clientSecretRef": "vault://secret/arazzo/controlplane#client-secret", "brokerUrl": "{{builder.Configuration["Nats:Url"]}}", "brokerTokenRef": "vault://secret/arazzo/access-notifications#token" }"""
     : string.Empty;
 
 using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
@@ -169,6 +169,7 @@ string natsUrl = builder.Configuration["Nats:Url"]
 NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
 {
     Url = natsUrl,
+    Token = builder.Configuration["Nats:Token"],
     Name = "controlplane-requests-out",
     UseJetStream = true,
     StreamName = "kyc-requests",
@@ -184,6 +185,7 @@ if (enableSystemApprovalWorkflow)
     decisionTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
     {
         Url = natsUrl,
+        Token = builder.Configuration["Nats:Token"],
         Name = "controlplane-decisions-out",
         UseJetStream = true,
         StreamName = "access-decisions",
@@ -255,7 +257,10 @@ if (enableSystemApprovalWorkflow)
         bootstrapOptions,
         // The bake probe (§16.5.1 hard-fail): an un-bakeable SYSTEM workflow refuses the deployment
         // instead of cataloguing a non-runnable version whose runner then crash-loops causelessly.
-        new WorkflowExecutorProvider(progress: msg => Console.Error.WriteLine($"[system-workflow-bake] {msg}")));
+        new WorkflowExecutorProvider(progress: msg => Console.Error.WriteLine($"[system-workflow-bake] {msg}")),
+        // The sources registry: the install registers controlplane + access-notifications so the credentials
+        // surface classifies their bindings (ADR 0051) and operators see the system sources.
+        sourceStore);
 }
 PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);
 
@@ -431,7 +436,7 @@ if (seedExampleData)
     string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
     await exampleSeed.SeedAsync(new ExampleSeedContext(
         catalog, sourceCredentials, environmentStore, environmentAdministratorStore, sourceStore,
-        availabilityStore, accessRequests, availabilityRequestStore, securityPolicy, specsDir));
+        availabilityStore, accessRequests, availabilityRequestStore, securityPolicy, specsDir, natsUrl));
 
     // The persona rules/bindings the seed just wrote must take effect for THIS process's resolver (capability scopes
     // + row reach) without waiting for a write-triggered refresh.
@@ -702,7 +707,7 @@ if (seedExampleData && seedApprovalService is { } approvalForSeed)
 }
 
 // The source backends the workflows call — onboarding, ledger, and kyc — are all real external services (their own
-// processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP). This
+// processes + databases); no inline /svc mock remains (kyc-notifications is an AsyncAPI message source, not HTTP). This
 // host serves ONLY the control-plane API (/arazzo/v1), its auth BFF, and the console — never any example-service API.
 
 // Once the server is listening, resolve its own base URL (the live resumer's never-hit /svc fallback root) and execute
