@@ -82,6 +82,13 @@ store queryable JSON it is a single native server-side partial update rather tha
 ([ADR 0029](../adr/0029-native-heartbeat-partial-update.md)). A runner whose heartbeat lapses is treated as
 stale, and its in-flight runs become claimable by another runner when their lease expires.
 
+Every runner background loop treats a transient fault inside one iteration as survivable: it is logged as a
+warning and the next tick retries, because the host's default `BackgroundServiceExceptionBehavior` is
+`StopHost` and an escaped exception would terminate the whole runner. A store outage therefore costs at
+worst a stale lease, and the heartbeat's unknown-to-the-registry path re-registers the runner once the store
+answers again. Permanent misconfiguration (a state store missing a required index interface) still fails
+fast at startup — only per-iteration faults are absorbed.
+
 ## Isolation
 
 Today a runner executes a run in-process, in a collectible load context

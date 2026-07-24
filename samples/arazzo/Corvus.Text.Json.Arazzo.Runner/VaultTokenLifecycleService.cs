@@ -25,7 +25,7 @@ namespace Corvus.Text.Json.Arazzo.Runner;
 /// <see cref="RefreshInterval"/> is deliberately shorter than the role's <c>token_ttl</c> so a token never expires
 /// between refreshes.
 /// </remarks>
-public sealed class VaultTokenLifecycleService(IVaultClient client, ILogger<VaultTokenLifecycleService> logger) : BackgroundService
+public sealed class VaultTokenLifecycleService(IVaultClient client, ILogger<VaultTokenLifecycleService> logger, TimeSpan? refreshInterval = null) : BackgroundService
 {
     // Comfortably inside the demo role's 20m token_ttl: a token is always well under its TTL when the next refresh
     // mints a replacement, and never lives long enough to approach token_max_ttl.
@@ -34,7 +34,7 @@ public sealed class VaultTokenLifecycleService(IVaultClient client, ILogger<Vaul
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(RefreshInterval);
+        using var timer = new PeriodicTimer(refreshInterval ?? RefreshInterval);
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
         {
             try

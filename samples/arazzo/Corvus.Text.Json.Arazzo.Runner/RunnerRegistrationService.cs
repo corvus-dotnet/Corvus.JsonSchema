@@ -27,7 +27,8 @@ public sealed class RunnerRegistrationService(
     SecuredWorkflowCatalog catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger,
-    ControlPlaneRunnerRegistrar? registrar = null) : BackgroundService
+    ControlPlaneRunnerRegistrar? registrar = null,
+    TimeSpan? heartbeatInterval = null) : BackgroundService
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
 
@@ -43,17 +44,33 @@ public sealed class RunnerRegistrationService(
             // not take the runner down.
             await this.TryRegisterAsync(startedAt, stoppingToken).ConfigureAwait(false);
 
-            using var timer = new PeriodicTimer(HeartbeatInterval);
+            using var timer = new PeriodicTimer(heartbeatInterval ?? HeartbeatInterval);
             while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
             {
-                // Heartbeat stays store-direct (the store-as-queue residual, §5.5): liveness only bumps the registry row's
-                // lastSeenAt; the identity binding happened at registration.
-                bool known = await registry.HeartbeatAsync(options.RunnerId, DateTimeOffset.UtcNow, stoppingToken).ConfigureAwait(false);
-                if (!known)
+                // A failed heartbeat is as non-fatal as a failed registration: a transient store fault (a Postgres read
+                // timeout, a paused container) is logged and the next tick retries — the worst case is a stale lease,
+                // and the !known path below re-establishes the registration once the store answers again. The host's
+                // default BackgroundServiceExceptionBehavior is StopHost, so letting the exception escape here would
+                // terminate the whole runner.
+                try
                 {
-                    // Unknown to the registry — pruned for going stale (e.g. a long GC pause), or an initial registration
-                    // that has not yet succeeded. Re-establish it through the same path.
-                    await this.TryRegisterAsync(startedAt, stoppingToken).ConfigureAwait(false);
+                    // Heartbeat stays store-direct (the store-as-queue residual, §5.5): liveness only bumps the registry row's
+                    // lastSeenAt; the identity binding happened at registration.
+                    bool known = await registry.HeartbeatAsync(options.RunnerId, DateTimeOffset.UtcNow, stoppingToken).ConfigureAwait(false);
+                    if (!known)
+                    {
+                        // Unknown to the registry — pruned for going stale (e.g. a long GC pause), or an initial registration
+                        // that has not yet succeeded. Re-establish it through the same path.
+                        await this.TryRegisterAsync(startedAt, stoppingToken).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Runner {RunnerId} heartbeat failed; the runner stays alive and retries on the next tick.", options.RunnerId);
                 }
             }
         }
