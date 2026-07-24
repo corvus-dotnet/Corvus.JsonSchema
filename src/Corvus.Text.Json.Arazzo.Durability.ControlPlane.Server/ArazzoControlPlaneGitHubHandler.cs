@@ -101,7 +101,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             GitHubBroker.CompleteOutcome.InvalidState => CompleteGitHubAuthResult.BadRequest(
                 Problem("github-invalid-state", "Invalid state", 400, "The state is unknown, expired, or already used; begin the sign-in again."), workspace),
             _ => CompleteGitHubAuthResult.BadRequest(
-                Problem("github-exchange-failed", "Exchange failed", 400, "GitHub refused the code exchange; begin the sign-in again."), workspace),
+                Problem("github-exchange-failed", "Exchange failed", 400, "GitHub refused the code exchange, or github.com could not be reached from the control plane (check outbound TLS/proxy); begin the sign-in again."), workspace),
         };
     }
 

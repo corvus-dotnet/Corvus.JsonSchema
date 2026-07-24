@@ -327,6 +327,22 @@ public sealed class ControlPlaneGitHubApiTests
     }
 
     [TestMethod]
+    public async Task A_transport_failure_reaching_github_reports_exchange_failed_not_500()
+    {
+        // GitHub unreachable from the control plane (DNS, proxy, TLS — e.g. an overridden CA store that cannot
+        // chain github.com's certificate): the callback must map to the typed github-exchange-failed problem,
+        // not escape as an unhandled 500 whose only follow-up is a doomed invalid-state refresh.
+        await using Scoped host = await StartAsync("http://127.0.0.1:1");
+        string state = await host.BeginAsync("ada");
+
+        HttpResponseMessage callback = await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}");
+        callback.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        string body = await callback.Content.ReadAsStringAsync();
+        body.ShouldContain("github-exchange-failed");
+        body.ShouldContain("could not be reached");
+    }
+
+    [TestMethod]
     public async Task A_deployment_without_a_broker_fails_closed_and_scopes_are_enforced()
     {
         await using Scoped host = await StartAsync(gitHubUrl: null);

@@ -553,8 +553,8 @@ public sealed class GitHubBroker
         };
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
-        using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
+        using HttpResponseMessage? response = await this.SendExchangeAsync(request, cancellationToken).ConfigureAwait(false);
+        if (response?.IsSuccessStatusCode != true)
         {
             return null;
         }
@@ -576,6 +576,21 @@ public sealed class GitHubBroker
             ? now + TimeSpan.FromSeconds(refreshIn.GetInt32())
             : null;
         return new GitHubToken(access, expiresAt, refresh, refreshExpiresAt);
+    }
+
+    // A transport-level failure reaching github.com (DNS, proxy, TLS — e.g. a CA store that cannot chain
+    // github.com's certificate) is an exchange FAILURE, not an unhandled 500: the caller maps a null to the
+    // typed github-exchange-failed problem, so the operator sees an actionable message instead of a blank error.
+    private async ValueTask<HttpResponseMessage?> SendExchangeAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
     }
 
     private static void AddGitHubHeaders(HttpRequestMessage request, string token)
