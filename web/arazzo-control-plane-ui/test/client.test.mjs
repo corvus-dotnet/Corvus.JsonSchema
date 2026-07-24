@@ -1150,6 +1150,49 @@ test('fetchSourceDocument returns the validated document with detected type and 
   assert.throws(() => c.fetchSourceDocument({}), TypeError);
 });
 
+test('connected providers: listing, popup sign-in, and connection-aware fetch auth (ADR 0052)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  const { providers } = await c.listProviders();
+  const portal = providers.find((p) => p.name === 'portal');
+  assert.ok(portal, 'the mock registers the portal provider');
+  assert.equal(portal.connected, false);
+  assert.ok(portal.hosts.includes('specs.example'), 'hosts patterns ride the listing for the pane host-match');
+
+  // Not connected yet: a provider fetch refuses; so does an unknown provider.
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal' } }), (e) => e.status === 400);
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'nope' } }), (e) => e.status === 400);
+
+  // The popup flow: the mock's authorizeUrl is its own callback; "navigating" it completes the
+  // sign-in, and the state is single-use.
+  const { authorizeUrl, state } = await c.beginProviderAuth('portal');
+  assert.ok(authorizeUrl.includes('/providers/portal/auth/callback'));
+  assert.ok(state);
+  assert.equal((await mock.fetch(authorizeUrl)).status, 200);
+  assert.equal((await mock.fetch(authorizeUrl)).status, 400, 'the state is single-use');
+  assert.equal((await c.listProviders()).providers.find((p) => p.name === 'portal').connected, true);
+
+  // Connected: the provider fetch succeeds inside coverage and still refuses outside it — the
+  // user token never rides to an uncovered host.
+  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal' } })).document);
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://other.example/x.json', auth: { provider: 'portal' } }), (e) => e.status === 400);
+
+  // EXACTLY ONE auth mode; the one-shot secret and binding shapes ride through.
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal', secret: 'x' } }), (e) => e.status === 400);
+  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { secret: 'pat-123' } })).document);
+  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { binding: { sourceName: 'petstore', environment: 'production' } } })).document);
+
+  // Disconnect: idempotent; a provider fetch refuses again.
+  await c.deleteProviderSession('portal');
+  await c.deleteProviderSession('portal');
+  assert.equal((await c.listProviders()).providers.find((p) => p.name === 'portal').connected, false);
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal' } }), (e) => e.status === 400);
+
+  assert.throws(() => c.beginProviderAuth(''), TypeError);
+  await assert.rejects(() => c.deleteProviderSession(''), TypeError);
+});
+
 test('every seeded registry source projects a non-empty operation surface', async () => {
   const c = makeClient();
   const { sources } = await c.listSources({ limit: 50 });

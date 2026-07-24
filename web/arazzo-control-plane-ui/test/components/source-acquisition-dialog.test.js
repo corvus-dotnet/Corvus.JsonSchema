@@ -81,6 +81,62 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     equal(e.detail.attachment.type, 'asyncapi');
   });
 
+  it('fetch mode resolves the host against the provider registry and authenticates per the identity order (ADR 0052)', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+
+    // Spy the fetch calls so each mode's wire shape is asserted precisely.
+    const calls = [];
+    const realFetch = ctx.client.fetchSourceDocument.bind(ctx.client);
+    ctx.client.fetchSourceDocument = (req) => { calls.push(req); return realFetch(req); };
+
+    el.windowOpener = (u) => { ctx.mock.fetch(u); return { closed: false, close() { this.closed = true; } }; };
+    el.open({ workingCopyId: ctx.wc.id });
+    el.shadowRoot.querySelector('.tabs button[data-mode="fetch"]').click();
+
+    // A covered host surfaces the provider line; the hint offers Connect while disconnected.
+    const url = el.shadowRoot.querySelector('.url-in');
+    url.value = 'https://specs.example/payments.openapi.json';
+    url.dispatchEvent(new Event('input'));
+    await waitFor(() => !el.shadowRoot.querySelector('.provider-line').hidden, 'the provider line appears for a covered host');
+    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('connect Dev Portal'), 'the hint offers Connect while disconnected');
+
+    // Connect through the popup flow; the effective mode flips to fetch-as-you.
+    const pc = el.shadowRoot.querySelector('.provider-connect');
+    pc.pollIntervalMs = 10;
+    (await waitFor(() => pc.shadowRoot.querySelector('.connect'))).click();
+    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('as you via Dev Portal'), 'the hint names the provider identity');
+
+    el.shadowRoot.querySelector('button.fetch').click();
+    await waitFor(() => !el.shadowRoot.querySelector('.fetch-preview').hidden
+      && el.shadowRoot.querySelector('.fetch-preview').textContent.includes('openapi'), 'the provider-authenticated fetch previews');
+    equal(calls.at(-1).auth?.provider, 'portal', 'the fetch rode the provider connection');
+
+    // Off-coverage the provider line hides; a typed one-shot secret is the next rung, and it is
+    // spent by its single fetch (the input clears).
+    url.value = 'https://other.example/spec.json';
+    url.dispatchEvent(new Event('input'));
+    await waitFor(() => el.shadowRoot.querySelector('.provider-line').hidden, 'the provider line hides off-coverage');
+    const secret = el.shadowRoot.querySelector('.secret-in');
+    secret.value = 'pat-123';
+    secret.dispatchEvent(new Event('input'));
+    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('one-shot secret'), 'the hint names the one-shot mode');
+    el.shadowRoot.querySelector('button.fetch').click();
+    await waitFor(() => calls.length === 2, 'the second fetch went out');
+    equal(calls.at(-1).auth?.secret, 'pat-123', 'the fetch rode the one-shot secret');
+    await waitFor(() => el.shadowRoot.querySelector('.secret-in').value === '', 'the one-shot secret is spent by its fetch');
+
+    // The workload binding is the third rung, picked through the kit's filter combo.
+    await waitFor(() => (el.shadowRoot.querySelector('.cred-binding-in').items ?? []).length > 0, 'the bindings load');
+    const picker = el.shadowRoot.querySelector('.cred-binding-in');
+    picker.value = picker.items[0].value;
+    picker.dispatchEvent(new Event('change'));
+    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('workload binding'), 'the hint names the binding mode');
+    el.shadowRoot.querySelector('button.fetch').click();
+    await waitFor(() => calls.length === 3, 'the third fetch went out');
+    ok(calls.at(-1).auth?.binding?.sourceName, 'the fetch rode the (sourceName, environment) binding');
+  });
+
   it('requires a name and a chosen source before attach enables, and surfaces fetch failures', async () => {
     const ctx = await dialogWithMock();
     el = ctx.el;

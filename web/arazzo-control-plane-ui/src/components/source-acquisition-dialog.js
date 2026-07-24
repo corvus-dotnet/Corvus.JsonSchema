@@ -1,5 +1,6 @@
 // <arazzo-source-acquisition-dialog> — attach a source to a working copy (design §3.2/§5.3):
-// pick a registered source · fetch from a URL (server-side, optionally credentialed) · upload JSON.
+// pick a registered source · fetch from a URL (server-side; authenticated as YOU via a connected
+// provider, a one-shot secret, or a workload binding — ADR 0052) · upload JSON.
 //
 //   const dlg = document.createElement('arazzo-source-acquisition-dialog');
 //   dlg.client = client;                      // an ArazzoControlPlaneClient
@@ -22,9 +23,16 @@
 // before attaching; upload accepts a JSON document file (YAML endpoints go through Fetch, where the
 // server parses YAML); GitHub (§4.7) browses a repository through the caller's brokered session and
 // imports a JSON spec as an inline document.
+//
+// Fetch authentication (ADR 0052) — the pane's order states the identity model: when the pasted
+// URL's host is covered by a connected provider, the fetch runs AS the signed-in user (a Connect
+// affordance appears when not yet connected); otherwise a one-shot secret (this fetch only, never
+// stored) or a workload credential binding (the filterable §13 picker) applies; otherwise the
+// fetch is anonymous. The effective mode is always named under the pickers.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
+import './provider-connect.js';
 import './filter-input.js';
 import './git-tree.js';
 import './catalog-table.js';
@@ -57,6 +65,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._fetched = null;
     this._uploaded = null;
     this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
+    this._providersLoaded = false;
+    this._providers = [];
     this._github = { picked: null, path: '' };
     this.render();
     this.$('.name-in').value = suggestedName;
@@ -80,6 +90,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._fetched = null;
     this._uploaded = null;
     this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
+    this._providersLoaded = false;
+    this._providers = [];
     this._github = { picked: null, path: '' };
     this.render();
     this.$('.name-in').value = suggestedName;
@@ -150,11 +162,16 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
               <input class="url-in" type="url" placeholder="https://api.example.com/openapi.json">
             </label>
             <div class="cred">
-              <label>Authenticate the fetch <span class="muted">(optional)</span>
-                <select class="cred-binding-in"><option value="">(none — fetch anonymously)</option></select>
+              <div class="provider-line" hidden>
+                <arazzo-provider-connect class="provider-connect"></arazzo-provider-connect>
+              </div>
+              <label>One-shot secret <span class="muted">(optional — this fetch only, never stored)</span>
+                <input class="secret-in" type="password" placeholder="bearer token / PAT" autocomplete="off">
               </label>
-              <span class="hint">A registered credential binding (source · environment) authenticates the
-                server-side fetch — for spec endpoints that need auth. Leave unset for a public URL.</span>
+              <label>Workload credential binding <span class="muted">(optional)</span>
+                <arazzo-filter-input class="cred-binding-in" aria-label="Workload credential binding" placeholder="type to filter (source · environment)"></arazzo-filter-input>
+              </label>
+              <span class="hint auth-hint">Fetches anonymously.</span>
             </div>
             <div><button class="fetch" type="button">Fetch &amp; preview</button></div>
             <div class="preview fetch-preview" hidden></div>
@@ -211,6 +228,11 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.name-in').addEventListener('input', () => this.updateAttachState());
     this.$('.registry-in').addEventListener('change', () => this.updateAttachState());
     this.$('button.fetch').addEventListener('click', () => this.fetchPreview());
+    this.$('.url-in').addEventListener('input', () => this.updateFetchAuthUi());
+    this.$('.secret-in').addEventListener('input', () => this.updateAuthHint());
+    this.$('.cred-binding-in').addEventListener('change', () => this.updateAuthHint());
+    this.$('.provider-connect').addEventListener('provider-connected', () => this.refreshProviders());
+    this.$('.provider-connect').addEventListener('provider-disconnected', () => this.refreshProviders());
     this.$('.file-in').addEventListener('change', () => this.readUpload());
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderGitHubRepos());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderGitHubRepos());
@@ -228,28 +250,122 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.mode-catalog').hidden = mode !== 'catalog';
     if (mode === 'github') this.renderGitHubRepos();
     if (mode === 'catalog') this.loadCatalog();
-    if (mode === 'fetch') this.loadCredentialBindings();
+    if (mode === 'fetch') { this.loadCredentialBindings(); this.loadProviders(); }
     this.updateAttachState();
   }
 
-  /** @private — populates the fetch-auth picker with the registered credential bindings (source ·
-   *  environment pairs, non-secret metadata only). Loaded once per open; a deployment without the
-   *  credentials surface just keeps the anonymous option. */
+  /** @private — populates the workload-binding picker (the kit's filter combo — a deployment can
+   *  hold very many bindings) with the registered credential bindings (source · environment pairs,
+   *  non-secret metadata only). Loaded once per open; a deployment without the credentials surface
+   *  just leaves the provider/secret options standing alone. */
   async loadCredentialBindings() {
     if (this._credsLoaded) return;
     this._credsLoaded = true;
-    const select = this.$('.cred-binding-in');
+    const picker = this.$('.cred-binding-in');
+    this._bindingByLabel = new Map();
     try {
       const { credentials } = await this._client.listCredentials({ limit: 200 });
-      for (const c of credentials) {
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify({ sourceName: c.sourceName, environment: c.environment });
-        opt.textContent = `${c.sourceName} · ${c.environment}${c.authKind ? ` (${c.authKind})` : ''}`;
-        select.appendChild(opt);
-      }
+      picker.items = credentials.map((c) => {
+        const label = `${c.sourceName} · ${c.environment}`;
+        this._bindingByLabel.set(label, { sourceName: c.sourceName, environment: c.environment });
+        return { value: label, sub: c.authKind ?? '' };
+      });
     } catch {
-      // No credentials surface (or no reach): the anonymous option stands alone.
+      // No credentials surface (or no reach): the provider/secret options stand alone.
     }
+  }
+
+  /** @private — the connected-provider registry (ADR 0052), loaded once per open; the pasted URL's
+   *  host resolves against each provider's hosts patterns to offer Connect / fetch-as-you. */
+  async loadProviders() {
+    if (this._providersLoaded) {
+      this.updateFetchAuthUi();
+      return;
+    }
+
+    this._providersLoaded = true;
+    try {
+      const { providers } = await this._client.listProviders();
+      this._providers = providers ?? [];
+    } catch {
+      this._providers = []; // no providers surface (or no reach): the fallbacks stand alone
+    }
+
+    this.updateFetchAuthUi();
+  }
+
+  /** @private — re-reads the registry's connection state (after a connect/disconnect). */
+  async refreshProviders() {
+    try {
+      this._providers = (await this._client.listProviders()).providers ?? [];
+    } catch {
+      // Keep the last known state; the next open re-reads.
+    }
+
+    this.updateFetchAuthUi();
+  }
+
+  /** @private — the provider (a listProviders entry) covering the URL's host, or null. Mirrors the
+   *  server's gate (exact or `*.suffix`, case-insensitive) so the pane only OFFERS what the server
+   *  would accept. */
+  matchProvider(url) {
+    if (!this._providers?.length || !url) return null;
+    let host;
+    try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
+    const matches = (pattern) => (pattern.startsWith('*.')
+      ? host.length > pattern.length - 1 && host.endsWith(pattern.slice(1).toLowerCase())
+      : host === pattern.toLowerCase());
+    return this._providers.find((p) => (p.hosts ?? []).some(matches)) ?? null;
+  }
+
+  /** @private — the fetch's effective authentication, in the pane's identity order (ADR 0052):
+   *  a covered + connected provider fetches as the user; else a typed one-shot secret; else a
+   *  picked workload binding; else anonymous. */
+  effectiveAuth() {
+    const provider = this.matchProvider(this.$('.url-in').value.trim());
+    if (provider?.connected) {
+      return { auth: { provider: provider.name }, describe: `Fetches as you via ${provider.displayName || provider.name}.` };
+    }
+
+    const secret = this.$('.secret-in').value;
+    if (secret) {
+      return { auth: { secret }, describe: 'Fetches with the one-shot secret (this fetch only, never stored).' };
+    }
+
+    const label = this.$('.cred-binding-in').value;
+    const binding = this._bindingByLabel?.get(label);
+    if (binding) {
+      return { auth: { binding }, describe: `Fetches with the workload binding ${label}.` };
+    }
+
+    return {
+      auth: null,
+      describe: provider
+        ? `Fetches anonymously — connect ${provider.displayName || provider.name} to fetch as yourself.`
+        : 'Fetches anonymously.',
+    };
+  }
+
+  /** @private — shows/hides the provider line for the current URL and refreshes the mode hint. */
+  updateFetchAuthUi() {
+    const line = this.$('.provider-line');
+    if (!line) return;
+    const provider = this.matchProvider(this.$('.url-in').value.trim());
+    line.hidden = !provider;
+    if (provider) {
+      const connect = this.$('.provider-connect');
+      connect.client = this._client;
+      if (this.windowOpener) connect.windowOpener = this.windowOpener;
+      connect.provider = provider;
+    }
+
+    this.updateAuthHint();
+  }
+
+  /** @private */
+  updateAuthHint() {
+    const hint = this.$('.auth-hint');
+    if (hint) hint.textContent = this.effectiveAuth().describe;
   }
 
   showError(message) {
@@ -365,8 +481,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       return;
     }
 
-    const binding = this.$('.cred-binding-in').value;
-    const credential = binding ? JSON.parse(binding) : null;
+    const { auth } = this.effectiveAuth();
     const preview = this.$('.fetch-preview');
     preview.hidden = false;
     preview.textContent = 'Fetching…';
@@ -376,10 +491,17 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     try {
       const fetched = await this._client.fetchSourceDocument({
         url,
-        ...(credential ? { credential } : {}),
+        ...(auth ? { auth } : {}),
       });
       if (seq !== this._seq) return;
       this._fetched = fetched;
+
+      // The one-shot secret authenticated its single fetch; it is not kept for another.
+      if (auth?.secret) {
+        this.$('.secret-in').value = '';
+        this.updateAuthHint();
+      }
+
       preview.innerHTML = `
         <span><strong>${escapeHtml(fetched.type)}</strong>${fetched.version ? ` ${escapeHtml(fetched.version)}` : ''}${fetched.contentType ? ` · ${escapeHtml(fetched.contentType)}` : ''}</span>
         <span class="digest">sha256: ${escapeHtml(fetched.digest)}</span>`;

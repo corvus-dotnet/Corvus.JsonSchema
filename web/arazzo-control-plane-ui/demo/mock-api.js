@@ -1366,6 +1366,8 @@ export function createMockControlPlane(options = {}) {
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/simulate\/?$/.test(path)) return null; // simulation mutates nothing (§4.3)
     if (path.includes('/github/auth/callback')) return null; // the browser callback authenticates by its single-use state (§4.7)
     if (path.includes('/github')) return 'workspace:write'; // begin sign-in / disconnect (§4.7)
+    if (/\/providers\/[^/]+\/auth\/callback\/?$/.test(path)) return null; // the browser callback authenticates by its single-use state (ADR 0052)
+    if (path.includes('/providers')) return 'workspace:write'; // begin a provider sign-in / disconnect (ADR 0052)
     if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
     if (path.includes('/credentials')) return 'credentials:write';
     if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
@@ -1481,6 +1483,18 @@ export function createMockControlPlane(options = {}) {
   let gitHubConnected = false;
   let gitHubStateCounter = 0;
   const gitHubStates = new Set();
+
+  // ---- connected providers (ADR 0052) ----------------------------------------------------------
+  // The same both-halves trick as GitHub: beginProviderAuth returns an authorizeUrl pointing
+  // straight at the mock's own provider callback, so a popup opened to it completes the sign-in
+  // immediately and the pane's listProviders poll flips to connected. The registry covers the
+  // canned spec host, so pasting a specs.example URL into Fetch offers Connect.
+  const providerRegistry = [
+    { name: 'portal', displayName: 'Dev Portal', hosts: ['specs.example', '*.specs.example'] },
+  ];
+  const providerConnections = new Set();
+  const providerStates = new Map(); // state → provider name (single-use, provider-bound)
+  let providerStateCounter = 0;
   // btoa is Latin1-only: route the UTF-8 bytes through a binary string (the GitHub contents shape).
   const utf8ToBase64 = (s) => {
     const bytes = new TextEncoder().encode(s);
@@ -1708,6 +1722,47 @@ export function createMockControlPlane(options = {}) {
     return json(structuredClone(wc));
   }
 
+  function handleProviders(path, method, params, origin) {
+    const m = path.match(/\/providers(?:\/([^/]+)(\/auth\/callback|\/auth|\/session))?\/?$/);
+    if (!m) return null;
+    const name = m[1] ? decodeURIComponent(m[1]) : null;
+    const route = m[2] ?? null;
+
+    if (!name && method === 'GET') {
+      return json({ providers: providerRegistry.map((p) => ({ ...p, hosts: [...p.hosts], connected: providerConnections.has(p.name) })) });
+    }
+
+    if (route === '/auth' && method === 'POST') {
+      if (!providerRegistry.some((p) => p.name === name)) {
+        return problem(400, 'Unknown provider', `No connected provider named '${name}' is registered.`);
+      }
+
+      const state = `mock-provider-state-${++providerStateCounter}`;
+      providerStates.set(state, name);
+      const prefix = path.slice(0, path.indexOf('/providers'));
+      return json({ authorizeUrl: `${origin}${prefix}/providers/${encodeURIComponent(name)}/auth/callback?code=mock&state=${encodeURIComponent(state)}`, state });
+    }
+
+    if (route === '/auth/callback' && method === 'GET') {
+      const state = params.get('state');
+      const bound = state ? providerStates.get(state) : null;
+      providerStates.delete(state); // single-use: any attempt consumes it
+      if (!bound || bound !== name) {
+        return problem(400, 'Invalid state', 'The state is unknown, expired, already used, or bound to a different provider; begin the sign-in again.');
+      }
+
+      providerConnections.add(name);
+      return new Response(null, { status: 200 });
+    }
+
+    if (route === '/session' && method === 'DELETE') {
+      providerConnections.delete(name);
+      return new Response(null, { status: 204 });
+    }
+
+    return null;
+  }
+
   function handleGitHub(path, method, params, origin, body) {
     const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/search|repos\/([^/]+)\/([^/]+)\/(?:contents|branches|commits))\/?$/);
     if (!m) return null;
@@ -1880,6 +1935,9 @@ export function createMockControlPlane(options = {}) {
 
     const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin, body);
     if (gitHubResponse) return gitHubResponse;
+
+    const providersResponse = handleProviders(path, method, u.searchParams, u.origin);
+    if (providersResponse) return providersResponse;
 
     const workingCopyGitResponse = handleWorkingCopyGit(path, method, body);
     if (workingCopyGitResponse) return workingCopyGitResponse;
@@ -2928,6 +2986,27 @@ export function createMockControlPlane(options = {}) {
       if (method !== 'POST') return problem(405, 'Method not allowed');
       if (!body?.url) return problem(400, 'Invalid fetch', "A 'url' is required.");
       if (!/^https:/.test(body.url)) return problem(400, 'Invalid fetch', 'Only https URLs are permitted.');
+
+      // The fetch's authentication (ADR 0052): EXACTLY ONE of provider | secret | binding, mirroring
+      // the real handler's refusals (unknown provider, host coverage, connection state).
+      if (body.auth) {
+        const modes = ['provider', 'secret', 'binding'].filter((k) => body.auth[k] !== undefined);
+        if (modes.length !== 1) {
+          return problem(400, 'Invalid fetch auth', "Authenticate with exactly one of 'provider', 'secret', or 'binding' (or omit 'auth' for an anonymous fetch).");
+        }
+
+        if (body.auth.provider !== undefined) {
+          const provider = providerRegistry.find((p) => p.name === body.auth.provider);
+          if (!provider) return problem(400, 'Unknown provider', `No connected provider named '${body.auth.provider}' is registered.`);
+          const host = new URL(body.url).hostname.toLowerCase();
+          const covered = provider.hosts.some((pattern) => (pattern.startsWith('*.')
+            ? host.length > pattern.length - 1 && host.endsWith(pattern.slice(1).toLowerCase())
+            : host === pattern.toLowerCase()));
+          if (!covered) return problem(400, 'Host not covered', `Provider '${provider.name}' does not cover host '${host}'; use a one-shot secret or a workload binding for this URL.`);
+          if (!providerConnections.has(provider.name)) return problem(400, 'Provider not connected', `You are not connected to provider '${provider.name}' (or the session is no longer valid); connect first.`);
+        }
+      }
+
       // The demo mock serves a canned petstore for any https URL (a real deployment fetches server-side).
       const document = structuredClone(sourceRegistry[0]?.document ?? { openapi: '3.1.0', info: { title: 'Fetched', version: '1.0' }, paths: {} });
       return json({

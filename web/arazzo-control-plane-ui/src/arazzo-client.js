@@ -1434,6 +1434,39 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listProviders` — the deployment's connected providers (ADR 0052) with the CALLER's
+   * per-provider connection state. Each entry's `hosts` patterns (exact names or `*.suffix`) say
+   * which URLs the provider's user identity covers — the fetch pane resolves a pasted URL's host
+   * against them to offer Connect. Empty when the deployment registers none.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{providers: Array<{name: string, displayName?: string, hosts: string[], connected: boolean}>}>}
+   */
+  listProviders(opts = {}) {
+    return this._request('GET', '/providers', { signal: opts.signal });
+  }
+
+  /**
+   * `beginProviderAuth` — mint a single-use, provider-bound state and get the provider's authorize
+   * URL (ADR 0052). Open it in a POPUP; when the provider redirects the popup to the control
+   * plane's callback, poll {@link listProviders} until the provider reads connected, then close
+   * the popup. The kit never sees a provider credential — the token exchanges and stays
+   * server-side, keyed by (principal, provider).
+   * @param {string} provider
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{authorizeUrl: string, state: string}>} Throws {@link ProblemError} `400` when the provider is unknown or the deployment registers none.
+   */
+  beginProviderAuth(provider, opts = {}) {
+    if (!provider) throw new TypeError('beginProviderAuth requires a provider name.');
+    return this._request('POST', `/providers/${encodeURIComponent(provider)}/auth`, { signal: opts.signal });
+  }
+
+  /** `deleteProviderSession` — drop the caller's brokered token for one provider. Idempotent. */
+  async deleteProviderSession(provider, opts = {}) {
+    if (!provider) throw new TypeError('deleteProviderSession requires a provider name.');
+    await this._request('DELETE', `/providers/${encodeURIComponent(provider)}/session`, { signal: opts.signal });
+  }
+
+  /**
    * `browseRepo` — a proxied contents read for the open/import dialogs (§4.7): a directory lists
    * entries; a file returns base64 content. 409 (github-not-connected) without a session.
    * @param {string} owner
@@ -1579,16 +1612,20 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
-   * endpoint (no browser CORS), optionally authenticated with a registered source credential
-   * referenced by `(sourceName, environment)`. Returns the validated document plus its detected
-   * `type`/`version` and canonical `digest`; attach or register the result yourself.
-   * @param {{ url: string, credential?: { sourceName: string, environment: string }, signal?: AbortSignal }} fetchRequest
+   * endpoint (no browser CORS), authenticated (ADR 0052) with EXACTLY ONE of: a connected-provider
+   * name (`auth.provider` — the fetch runs AS the signed-in user, and the server only attaches the
+   * token to a host the provider covers), a one-shot secret (`auth.secret` — this single fetch,
+   * never stored or logged), or a workload credential binding (`auth.binding` —
+   * `{sourceName, environment}`, the §13 reference). Omit `auth` for an anonymous fetch. Returns
+   * the validated document plus its detected `type`/`version` and canonical `digest`; attach or
+   * register the result yourself.
+   * @param {{ url: string, auth?: ({provider: string} | {secret: string} | {binding: {sourceName: string, environment: string}}), signal?: AbortSignal }} fetchRequest
    * @returns {Promise<{ url: string, type: string, version?: string, digest: string, contentType?: string, document: object }>}
    */
   fetchSourceDocument(fetchRequest) {
     if (!fetchRequest || !fetchRequest.url) throw new TypeError('fetchSourceDocument requires a url.');
     const body = { url: fetchRequest.url };
-    if (fetchRequest.credential) body.credential = fetchRequest.credential;
+    if (fetchRequest.auth) body.auth = fetchRequest.auth;
     return this._request('POST', '/sources/fetch', { body, signal: fetchRequest.signal });
   }
 
