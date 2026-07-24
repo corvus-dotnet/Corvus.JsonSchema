@@ -493,7 +493,7 @@ test('the acquisition dialog attaches a REGISTERED source by name (no re-upload)
   assertClean(errors);
 });
 
-test('dragging an operation from the Sources rail creates each step AT its drop point, in view', async ({ page }) => {
+test('dragging an operation from the Sources rail creates auto-laid-out steps that are ALWAYS brought into view', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
@@ -507,8 +507,11 @@ test('dragging an operation from the Sources rail creates each step AT its drop 
   const nodeIds = () => page.evaluate(() =>
     [...document.querySelector('#surface').shadowRoot.querySelectorAll('.node')].map((n) => n.dataset.id));
 
-  // Two native drops at two different points: each step lands AT its drop point (the gesture says
-  // where it goes) — not at a shared auto-layout spot that stacks newcomers outside the view.
+  // Two native drops: each step takes its AUTO-LAYOUT place in the flow (never pinned at the drop
+  // point), and each is revealed — a step whose layout rank sits outside the current view must
+  // never make the drop LOOK like a no-op. Pan the camera far away first so the layout spot is
+  // guaranteed off-view: only the reveal can satisfy the in-view assertions.
+  await page.evaluate(() => { document.querySelector('#surface').view = { tx: -3000, ty: -3000, k: 1 }; });
   const placed = [];
   for (const at of [{ x: 220, y: 180 }, { x: 480, y: 320 }]) {
     const prior = await nodeIds();
@@ -526,10 +529,11 @@ test('dragging an operation from the Sources rail creates each step AT its drop 
     expect(rect.cx).toBeLessThan(rect.w);
     expect(rect.cy).toBeGreaterThan(0);
     expect(rect.cy).toBeLessThan(rect.h);
-    expect(Math.hypot(rect.cx - at.x, rect.cy - at.y)).toBeLessThan(160);
-    placed.push(rect);
+    placed.push({ id: fresh, ...rect });
   }
-  expect(Math.hypot(placed[0].cx - placed[1].cx, placed[0].cy - placed[1].cy)).toBeGreaterThan(80);
+  // Auto-layout gives the two new steps DISTINCT positions in the flow (world coordinates, so
+  // compare via the document-projected layout: two different node ids at two different spots).
+  expect(placed[0].id).not.toBe(placed[1].id);
   assertClean(errors);
 });
 

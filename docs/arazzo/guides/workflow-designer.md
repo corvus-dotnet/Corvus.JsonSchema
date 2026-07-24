@@ -97,11 +97,12 @@ flowchart TB
 - **Steps from operations.** Drag an operation from the source browser onto the surface (or click
   "+ Step") to create a step bound to it, pre-populated with required parameters from the operation
   descriptor. Steps render as cards: method/channel badge, `stepId`, source name, a one-line
-  operation summary, and status chips (breakpoint, problems, outputs count). Placement: the first
-  step of a workflow takes its auto-layout position (a pinned first step left START/END stranded in
-  another column); every later drop pins at the drop point — unpinned newcomers would all take the
-  same auto-layout spot, stacking on top of each other and often outside the current view, which
-  reads as the drop doing nothing.
+  operation summary, and status chips (breakpoint, problems, outputs count). Placement: every new
+  step takes its auto-layout position (never pinned at the drop point), so the graph stays a clean
+  flow whichever way the step was added; repositioning is the explicit gesture of dragging an
+  existing node. Because a long chain's next rank can sit below the fitted view, the host reveals a
+  new step that landed outside the viewport (`centerOn`, preserving zoom) — a drop must never look
+  like a no-op.
 - **Edges are semantics, not decoration, one grammar: an action is an edge to a target.**
   **Start and end render as pseudo-nodes** (projection-only, reserved ids `#start`/`#end`, never
   written into the document): the entry edge leaves start; every `end` action *and* the implicit

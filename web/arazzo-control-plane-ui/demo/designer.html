@@ -733,7 +733,6 @@
     function createStepFromOperation(operation, position, sourceName) {
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       if (!wf) return;
-      const hadSteps = (wf.steps?.length ?? 0) > 0;
       const base = (operation.operationId ?? operation.channelPath ?? 'step')
         .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'step';
       let stepId = base;
@@ -775,19 +774,21 @@
         const w = d.workflows.find((x) => x.workflowId === select.value);
         w.steps.push(step);
       }, { origin: 'canvas', label: `add step ${stepId}` });
-      // Placement: the FIRST step of a workflow takes its auto-layout position (pinning it left
-      // START/END stranded in a different column), but every later drop pins at the DROP POINT —
-      // unpinned newcomers all take the same auto-layout spot, stacking on top of each other and
-      // often outside the current view, which reads as the drop doing nothing.
-      if (position && hadSteps) {
-        model.updateDesignerState((st) => {
-          st.nodes ??= {};
-          st.nodes[stepId] = { x: Math.round(position.x), y: Math.round(position.y) };
-        }, { origin: 'canvas', label: `add step ${stepId}`, coalesce: true });
-      }
-
+      // Placement: every new step takes its AUTO-LAYOUT position (never pinned at the drop point),
+      // so the graph stays a clean flow whichever way the step was added. On a long chain that
+      // position sits below the fitted view — and a drop must never LOOK like a no-op — so when the
+      // new node landed outside the viewport, pan to it (centerOn keeps the user's zoom).
+      void position;
       surface.selection = { type: 'node', id: stepId };
       showSelection(surface.selection);
+      const nodeEl = surface.shadowRoot?.querySelector(`.node[data-id="${CSS.escape(stepId)}"]`);
+      if (nodeEl) {
+        const host = surface.getBoundingClientRect();
+        const r = nodeEl.getBoundingClientRect();
+        const inView = r.left >= host.left && r.right <= host.right && r.top >= host.top && r.bottom <= host.bottom;
+        if (!inView) surface.centerOn(stepId);
+      }
+
       logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath, dropped: !!position });
     }
 
