@@ -20,25 +20,25 @@ using global::Corvus.Text.Json.Internal;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 /// <summary>
-/// Generated from JSON Schema.
+/// ProviderSummary
 /// </summary>
 /// <remarks>
 /// <para>
-/// A server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web endpoint (workflow-designer design &#167;4.4): avoids browser CORS entirely, and an optional credential REFERENCE reuses the source-credential machinery for authenticated spec endpoints (the control plane resolves the reference; secret material never rides this API). The fetch validates and returns the document — it does not register or attach it; the caller does that with the result. Deployments restrict the scheme to https (an explicit deployment opt-in permits http) and should fence outbound destinations per their network policy.
+/// A configured connected provider (ADR 0052) and the calling principal&#39;s connection state.
 /// </para>
 /// </remarks>
-public readonly partial struct FetchSourceRequest
+public readonly partial struct ProviderSummary
 {
     /// <summary>
-    /// FetchCredentialReference
+    /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Authenticate the fetch with a registered source credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing (404 when absent or outside the caller&#39;s reach).
+    /// The host patterns this provider covers (exact hosts or *.suffix wildcards) — the fetch pane resolves a pasted URL&#39;s host against these.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct FetchCredentialReference
+    public readonly partial struct JsonStringArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -143,7 +143,7 @@ public readonly partial struct FetchSourceRequest
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(FetchCredentialReference instance)
+            public static explicit operator Mutable(JsonStringArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -158,9 +158,9 @@ public readonly partial struct FetchSourceRequest
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="FetchCredentialReference"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="JsonStringArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator FetchCredentialReference(Mutable instance)
+            public static implicit operator JsonStringArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -178,171 +178,46 @@ public readonly partial struct FetchSourceRequest
             }
 
             /// <summary>
-            /// Gets the value of the property with the given name.
+            /// Gets the item at the given index.
             /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <returns>The value of the property with the given name.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public JsonElement.Mutable this[ReadOnlySpan<byte> propertyName]
+            /// <param name="index">The index at which to retrieve the item.</param>
+            /// <returns>The item at the given index.</returns>
+            /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                    {
-                        return default;
-                    }
-
-                    return value;
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable>(_idx, index);
                 }
             }
 
             /// <summary>
-            /// Gets the value of the property with the given name.
+            /// Gets the array length.
             /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <returns>The value of the property with the given name.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public JsonElement.Mutable this[ReadOnlySpan<char> propertyName]
-            {
-                get
-                {
-                    CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                    {
-                        return default;
-                    }
-
-                    return value;
-                }
-            }
-
-            /// <summary>
-            /// Gets the value of the property with the given name.
-            /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <returns>The value of the property with the given name.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public JsonElement.Mutable this[string propertyName]
-            {
-                get
-                {
-                    CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement.Mutable value))
-                    {
-                        return default;
-                    }
-
-                    return value;
-                }
-            }
-
-            /// <summary>
-            /// Tries to get the value of the property with the given name.
-            /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <param name="value">The value of the property, if present.</param>
-            /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+            public int GetArrayLength()
             {
                 CheckValidInstance();
-                return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+                return _parent.GetArrayLength(_idx);
             }
 
             /// <summary>
-            /// Tries to get the value of the property with the given name.
+            /// Enumerates the array.
             /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <param name="value">The value of the property, if present.</param>
-            /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-            }
-
-            /// <summary>
-            /// Tries to get the value of the property with the given name.
-            /// </summary>
-            /// <param name="propertyName">The name of the property.</param>
-            /// <param name="value">The value of the property, if present.</param>
-            /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
-            {
-                CheckValidInstance();
-                return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-            }
-
-            /// <summary>
-            /// Gets the <c>environment</c> property.
-            /// </summary>
-            /// <remarks>
-            /// <para>
-            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-            /// </para>
-            /// </remarks>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Environment
-            {
-                get
-                {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
-                    {
-                        return value;
-                    }
-
-                    return default;
-                }
-            }
-
-            /// <summary>
-            /// Gets the <c>sourceName</c> property.
-            /// </summary>
-            /// <remarks>
-            /// <para>
-            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-            /// </para>
-            /// </remarks>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable SourceName
-            {
-                get
-                {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
-                    {
-                        return value;
-                    }
-
-                    return default;
-                }
-            }
-
-            /// <summary>
-            /// Gets the number of properties in the object.
-            /// </summary>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public int GetPropertyCount()
-            {
-                CheckValidInstance();
-                return _parent.GetPropertyCount(_idx);
-            }
-
-            /// <summary>
-            /// Enumerates the object.
-            /// </summary>
-            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public ObjectEnumerator<JsonElement.Mutable> EnumerateObject()
-            {
-                CheckValidInstance();
-                return EnumeratorCreator.CreateObjectEnumerator<JsonElement.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new FetchCredentialReference(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new JsonStringArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -355,68 +230,6 @@ public readonly partial struct FetchSourceRequest
                 where T : struct, IJsonElement
             {
                 return JsonElementHelpers.DeepEquals(this, other);
-            }
-
-            /// <summary>
-            /// Set the <c>environment</c> property.
-            /// </summary>
-            /// <param name="value">The value of the property to add.</param>
-            public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
-            {
-                CheckValidInstance();
-
-                if (value.IsUndefined)
-                {
-                    CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("environment");
-                }
-
-                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out IJsonDocument? elementParent, out int elementIdx))
-                {
-                    // We are going to replace just the value
-                    value.AddAsItem(ref cvb);
-                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                }
-                else
-                {
-                    // We are going to insert the new value
-                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref cvb);
-                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                }
-
-                _documentVersion = _parent.Version;
-            }
-
-            /// <summary>
-            /// Set the <c>sourceName</c> property.
-            /// </summary>
-            /// <param name="value">The value of the property to add.</param>
-            public void SetSourceName(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
-            {
-                CheckValidInstance();
-
-                if (value.IsUndefined)
-                {
-                    CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("sourceName");
-                }
-
-                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceNameUtf8, out IJsonDocument? elementParent, out int elementIdx))
-                {
-                    // We are going to replace just the value
-                    value.AddAsItem(ref cvb);
-                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                }
-                else
-                {
-                    // We are going to insert the new value
-                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceName, ref cvb);
-                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                }
-
-                _documentVersion = _parent.Version;
             }
 
             /// <inheritdoc/>
@@ -503,182 +316,358 @@ public readonly partial struct FetchSourceRequest
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"FetchCredentialReference.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
-
+            private string DebuggerDisplay => $"JsonStringArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
-            ///   Sets a property on this JSON object element.
+            ///   Sets the value of an array element at the specified index.
             /// </summary>
-            /// <param name="propertyName">The name of the property to set.</param>
-            /// <param name="value">The value of the property to set.</param>
+            /// <param name="itemIndex">The zero-based index of the array element to set.</param>
+            /// <param name="value">The item value to set.</param>
             /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
             ///   or the element reference is stale due to document mutations.
             /// </exception>
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+            /// </exception>
             /// <remarks>
             ///   <para>
-            ///     If the property already exists, its value will be replaced.
-            ///     If the property doesn't exist, it will be added to the object.
+            ///     This method allows replacing existing array elements or appending new elements
+            ///     when <paramref name="itemIndex"/> equals the current array length.
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
-            {
-                SetProperty(propertyName.AsSpan(), value);
-            }
-
-            /// <summary>
-            ///   Sets a property on this JSON object element.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to set.</param>
-            /// <param name="value">The value of the property to set.</param>
-            /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
-            ///   or the element reference is stale due to document mutations.
-            /// </exception>
-            /// <exception cref="ObjectDisposedException">
-            ///   The parent <see cref="JsonDocument"/> has been disposed.
-            /// </exception>
-            /// <remarks>
-            ///   <para>
-            ///     If the property already exists, its value will be replaced.
-            ///     If the property doesn't exist, it will be added to the object.
-            ///   </para>
-            /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-                    _documentVersion = _parent.Version;
+                    RemoveAt(itemIndex);
                     return;
                 }
 
-                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out IJsonDocument? elementParent, out int elementIdx))
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                value.AddAsItem(ref cvb);
+                int arrayLength = GetArrayLength();
+                if (itemIndex == arrayLength)
                 {
-                    // We are going to replace just the value
-                    value.AddAsItem(ref cvb);
-                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+                    _parent.InsertAndDispose(_idx, _idx + _parent.GetDbSize(_idx, false), ref cvb);
                 }
                 else
                 {
-                    // We are going to insert the new value
-                    value.AddAsProperty(propertyName, ref cvb);
-                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                    _parent.GetArrayIndexElement(_idx, itemIndex, out IMutableJsonDocument elementParent, out int elementIdx);
+                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
                 }
 
                 _documentVersion = _parent.Version;
             }
-
             /// <summary>
-            ///   Sets a property on this JSON object element.
+            ///   Inserts an item into the array at the specified index.
             /// </summary>
-            /// <param name="propertyName">The UTF-8 encoded name of the property to set.</param>
-            /// <param name="value">The value of the property to set.</param>
+            /// <param name="itemIndex">The zero-based index of the array element at which to insert.</param>
+            /// <param name="value">The item value to insert.</param>
             /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
             ///   or the element reference is stale due to document mutations.
             /// </exception>
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+            /// </exception>
             /// <remarks>
             ///   <para>
-            ///     If the property already exists, its value will be replaced.
-            ///     If the property doesn't exist, it will be added to the object.
+            ///     This method allows inserting array elements or appending new elements
+            ///     when <paramref name="itemIndex"/> equals the current array length.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
-                    _documentVersion = _parent.Version;
                     return;
                 }
 
-                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out IJsonDocument? elementParent, out int elementIdx))
-                {
-                    // We are going to replace just the value
-                    value.AddAsItem(ref cvb);
-                    _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-                }
-                else
-                {
-                    // We are going to insert the new value
-                    value.AddAsProperty(propertyName, ref cvb);
-                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-                }
-
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                value.AddAsItem(ref cvb);
+                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
                 _documentVersion = _parent.Version;
             }
-
             /// <summary>
-            ///   Removes the property with the given name, if present.
+            ///   Adds an item to the end of the array.
             /// </summary>
-            /// <param name="propertyName">The property name to remove.</param>
-            /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+            /// <param name="value">The item value to add.</param>
             /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
             ///   or the element reference is stale due to document mutations.
             /// </exception>
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool RemoveProperty(string propertyName)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
-                return RemoveProperty(propertyName.AsSpan());
+                InsertItem(GetArrayLength(), in value);
             }
-
             /// <summary>
-            ///   Removes the property with the given name, if present.
+            ///   Inserts multiple items into the array at the specified index,
+            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
             /// </summary>
-            /// <param name="propertyName">The property name to remove.</param>
-            /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+            /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
             /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
             ///   or the element reference is stale due to document mutations.
             /// </exception>
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool RemoveProperty(ReadOnlySpan<char> propertyName)
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+            /// </exception>
+            /// <remarks>
+            ///   <para>
+            ///     Only the items built by the delegate are inserted — no array wrapper is added.
+            ///   </para>
+            /// </remarks>
+            public void InsertRange(int itemIndex, JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                JsonElement.ArrayBuilder.BuildItems(rangeBuilder, ref cvb);
+                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
                 _documentVersion = _parent.Version;
-                return result;
             }
 
             /// <summary>
-            ///   Removes the property with the given name, if present.
+            ///   Inserts multiple items into the array at the specified index,
+            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
             /// </summary>
-            /// <param name="propertyName">The UTF-8 encoded property name to remove.</param>
-            /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="itemIndex">The zero-based index at which to insert the items.</param>
+            /// <param name="context">The context to pass to the builder delegate.</param>
+            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
             /// <exception cref="InvalidOperationException">
-            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Object"/>,
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
             ///   or the element reference is stale due to document mutations.
             /// </exception>
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool RemoveProperty(ReadOnlySpan<byte> propertyName)
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="itemIndex"/> is negative or greater than the array length.
+            /// </exception>
+            /// <remarks>
+            ///   <para>
+            ///     Only the items built by the delegate are inserted — no array wrapper is added.
+            ///   </para>
+            /// </remarks>
+            public void InsertRange<TContext>(int itemIndex, in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+            #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+            #endif
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, propertyName);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                JsonElement.ArrayBuilder.BuildItems(context, rangeBuilder, ref cvb);
+                _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
                 _documentVersion = _parent.Version;
-                return result;
+            }
+            /// <summary>
+            ///   Appends multiple items to the end of the array,
+            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate to build the items.
+            /// </summary>
+            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddRange(JsonElement.ArrayBuilder.Build rangeBuilder, int estimatedMemberCount = 30)
+            {
+                InsertRange(GetArrayLength(), rangeBuilder, estimatedMemberCount);
+            }
+
+            /// <summary>
+            ///   Appends multiple items to the end of the array,
+            ///   using an <see cref="JsonElement.ArrayBuilder"/> delegate with a context parameter.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder delegate.</param>
+            /// <param name="rangeBuilder">A delegate that adds items to an <see cref="JsonElement.ArrayBuilder"/>.</param>
+            /// <param name="estimatedMemberCount">The estimated total number of elements for capacity optimization.</param>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddRange<TContext>(in TContext context, JsonElement.ArrayBuilder.Build<TContext> rangeBuilder, int estimatedMemberCount = 30)
+            #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+            #endif
+            {
+                InsertRange(GetArrayLength(), context, rangeBuilder, estimatedMemberCount);
+            }
+
+            /// <summary>
+            ///   Removes a range of items from the array starting at the specified index.
+            /// </summary>
+            /// <param name="startIndex">The zero-based index at which to begin removing items.</param>
+            /// <param name="count">The number of items to remove.</param>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="startIndex"/> is negative or greater than the current array length.
+            /// </exception>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RemoveRange(int startIndex, int count)
+            {
+                CheckValidInstance();
+                JsonElementHelpers.RemoveRangeUnsafe(this, startIndex, count);
+                _documentVersion = _parent.Version;
+            }
+
+            /// <summary>
+            ///   Removes a single item from the array at the specified index.
+            /// </summary>
+            /// <param name="index">The zero-based index of the item to remove.</param>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            ///   <paramref name="index"/> is negative or greater than or equal to the current array length.
+            /// </exception>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RemoveAt(int index)
+            {
+                CheckValidInstance();
+                JsonElementHelpers.RemoveRangeUnsafe(this, index, 1);
+                _documentVersion = _parent.Version;
+            }
+
+            /// <summary>
+            ///   Removes the first array element that equals the specified item.
+            /// </summary>
+            /// <param name="item">The item to find and remove.</param>
+            /// <returns><see langword="true"/> if an element was found and removed; otherwise, <see langword="false"/>.</returns>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString item)
+            {
+                CheckValidInstance();
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(this, in item))
+                {
+                    return false;
+                }
+
+                _documentVersion = _parent.Version;
+                return true;
+            }
+
+            /// <summary>
+            ///   Removes all array elements that match the specified predicate.
+            /// </summary>
+            /// <param name="predicate">The predicate function that determines which elements to remove.</param>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            /// <exception cref="ArgumentNullException">
+            ///   <paramref name="predicate"/> is <see langword="null"/>.
+            /// </exception>
+            /// <remarks>
+            ///   <para>
+            ///     This method efficiently removes elements in a single pass by iterating backwards
+            ///     through the array and removing consecutive blocks of matching elements.
+            ///   </para>
+            ///   <para>
+            ///     The predicate function is called for each element in the array. If the predicate
+            ///     returns <see langword="true"/>, the element will be removed from the array.
+            ///   </para>
+            /// </remarks>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString> predicate)
+            {
+                CheckValidInstance();
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(this, predicate);
+                _documentVersion = _parent.Version;
+            }
+
+            /// <summary>
+            ///   Replaces the first array element that equals the specified item with a new value.
+            /// </summary>
+            /// <param name="oldItem">The item to find.</param>
+            /// <param name="newItem">The value to replace it with.</param>
+            /// <returns><see langword="true"/> if an element was found and replaced; otherwise, <see langword="false"/>.</returns>
+            /// <exception cref="InvalidOperationException">
+            ///   This element's <see cref="ValueKind"/> is not <see cref="JsonValueKind.Array"/>,
+            ///   or the element reference is stale due to document mutations.
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            ///   The parent <see cref="JsonDocument"/> has been disposed.
+            /// </exception>
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source newItem)
+            {
+                CheckValidInstance();
+
+                if (newItem.IsUndefined)
+                {
+                    return Remove(in oldItem);
+                }
+
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(_parent, _idx);
+
+                while (enumerator.MoveNext())
+                {
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString current = enumerator.Current;
+                    if (JsonElementHelpers.DeepEquals(in current, in oldItem))
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
+                        newItem.AddAsItem(ref cvb);
+
+                        int elementStart = ((IJsonElement)current).ParentDocumentIndex;
+                        int elementEnd = elementStart + ((IJsonElement)current).ParentDocument.GetDbSize(elementStart, true);
+                        _parent.OverwriteAndDispose(_idx, elementStart, elementEnd, 1, ref cvb);
+
+                        _documentVersion = _parent.Version;
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -694,11 +683,11 @@ public readonly partial struct FetchSourceRequest
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="FetchCredentialReference"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="FetchCredentialReference"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -707,10 +696,10 @@ public readonly partial struct FetchSourceRequest
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly FetchCredentialReference Clone()
+            public readonly JsonStringArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<FetchCredentialReference>(_idx);
+                return _parent.CloneElement<JsonStringArray>(_idx);
             }
 
             /// <summary>
@@ -718,7 +707,7 @@ public readonly partial struct FetchSourceRequest
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="FetchCredentialReference"/> that lives for the lifetime of its
+            /// An immutable <see cref="JsonStringArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -729,10 +718,10 @@ public readonly partial struct FetchSourceRequest
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly FetchCredentialReference Freeze()
+            public readonly JsonStringArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<FetchCredentialReference>(_idx);
+                return _parent.FreezeElement<JsonStringArray>(_idx);
             }
         }
 
@@ -742,15 +731,12 @@ public readonly partial struct FetchSourceRequest
             {
                 Unknown,
                 JsonElement,
-                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
-            private readonly Builder.Build? _objectBuilder;
-            private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-            private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+            private readonly Builder.Build? _arrayBuilder;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -763,16 +749,9 @@ public readonly partial struct FetchSourceRequest
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchCredentialReference.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderSummary.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
-            {
-                _createArg1 = arg1;
-                _createArg2 = arg2;
-                _kind = Kind.Create;
-            }
-
-            public static implicit operator Source(FetchCredentialReference instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(JsonStringArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -784,15 +763,8 @@ public readonly partial struct FetchSourceRequest
                         valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
-                    case Kind.Create:
-                        {
-                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                            Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
-                            valueBuilder.EndProperty(handle);
-                            break;
-                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -809,15 +781,8 @@ public readonly partial struct FetchSourceRequest
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
-                    case Kind.Create:
-                        {
-                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                            Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
-                            valueBuilder.EndProperty(handle);
-                            break;
-                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -834,15 +799,8 @@ public readonly partial struct FetchSourceRequest
                         valueBuilder.AddProperty(name, _jsonElement);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
-                    case Kind.Create:
-                        {
-                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                            Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
-                            valueBuilder.EndProperty(handle);
-                            break;
-                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -859,15 +817,8 @@ public readonly partial struct FetchSourceRequest
                         valueBuilder.AddProperty(name, _jsonElement);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
-                    case Kind.Create:
-                        {
-                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                            Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
-                            valueBuilder.EndProperty(handle);
-                            break;
-                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -884,15 +835,8 @@ public readonly partial struct FetchSourceRequest
                         valueBuilder.AddItem(_jsonElement);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
-                    case Kind.Create:
-                        {
-                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                            Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
-                            valueBuilder.EndItem(handle);
-                            break;
-                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -915,7 +859,7 @@ public readonly partial struct FetchSourceRequest
             private readonly Kind _kind;
             TContext _context;
             Source _source;
-            private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Builder.Build<TContext>? _arrayBuilder;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -926,7 +870,7 @@ public readonly partial struct FetchSourceRequest
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchCredentialReference.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderSummary.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -938,7 +882,7 @@ public readonly partial struct FetchSourceRequest
                         _source.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -956,7 +900,7 @@ public readonly partial struct FetchSourceRequest
                         _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -974,7 +918,7 @@ public readonly partial struct FetchSourceRequest
                         _source.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -992,7 +936,7 @@ public readonly partial struct FetchSourceRequest
                         _source.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1010,7 +954,7 @@ public readonly partial struct FetchSourceRequest
                         _source.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.Builder:
-                        valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        valueBuilder.AddItem(BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1038,102 +982,21 @@ public readonly partial struct FetchSourceRequest
             }
 
             /// <summary>
-            /// Creates an instance of a <see cref="FetchCredentialReference"/>.
+            /// Add an item to the array.
             /// </summary>
-            internal static void Create(
-                ref ComplexValueBuilder builder,
-                in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
-                in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
             {
-                environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
-                sourceName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceName, ref builder);
-            }
-
-            /// <summary>
-            /// Creates an instance of a <see cref="FetchCredentialReference"/>.
-            /// </summary>
-            public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
-            {
-                Create(ref _builder, environment, sourceName);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
-            {
-                value.AddAsProperty(propertyName, ref _builder);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-                where TContext : allows ref struct
-#endif
-            {
-                value.AddAsProperty(propertyName, ref _builder);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
-            {
-                value.AddAsProperty(propertyName, ref _builder);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-                where TContext : allows ref struct
-#endif
-            {
-                value.AddAsProperty(propertyName, ref _builder);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(string propertyName, in JsonElement.Source value)
-            {
-                value.AddAsProperty(propertyName, ref _builder);
-            }
-
-            /// <summary>
-            /// Add a property to the object.
-            /// </summary>
-            /// <param name="propertyName">The name of the property to add.</param>
-            /// <param name="value">The value of the property to add.</param>
-            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
-#if NET9_0_OR_GREATER
-                where TContext : allows ref struct
-#endif
-            {
-                value.AddAsProperty(propertyName, ref _builder);
+                value.AddAsItem(ref _builder);
             }
 
             internal static void BuildValue(Build value, ref ComplexValueBuilder o)
             {
-                o.StartObject();
+                o.StartArray();
 
                 Builder ovb = new(o);
                 value(ref ovb);
                 o = ovb._builder;
-                o.EndObject();
+                o.EndArray();
             }
 
             internal static void BuildValue<TContext>(in TContext context, Build<TContext> value, ref ComplexValueBuilder o)
@@ -1141,25 +1004,12 @@ public readonly partial struct FetchSourceRequest
                 where TContext : allows ref struct
 #endif
             {
-                o.StartObject();
+                o.StartArray();
 
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
-                o.EndObject();
-            }
-
-            /// <summary>
-            /// Builds the object value directly from its captured property values into the given complex value builder.
-            /// </summary>
-            /// <param name="arg1">The value of the property.</param>
-            /// <param name="arg2">The value of the property.</param>
-            /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
-            {
-                o.StartObject();
-                Create(ref o, arg1, arg2);
-                o.EndObject();
+                o.EndArray();
             }
         }
 
@@ -1190,17 +1040,6 @@ public readonly partial struct FetchSourceRequest
             #endif
         {
             return new Source<TContext>(context, buildValue);
-        }
-
-        /// <summary>
-        /// Build an instance of the value directly from its property values.
-        /// </summary>
-        /// <param name="environment">The value of the <c>"environment"</c> property.</param>
-        /// <param name="sourceName">The value of the <c>"sourceName"</c> property.</param>
-        /// <returns>The source from which to build the value.</returns>
-        public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
-        {
-            return new Source(environment, sourceName);
         }
 
         /// <summary>
@@ -1241,6 +1080,24 @@ public readonly partial struct FetchSourceRequest
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             value.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder;
+        }
+
+        /// <summary>
+        /// Creates an empty mutable document builder.
+        /// </summary>
+        /// <param name="workspace">The JSON workspace.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>An empty mutable document builder.</returns>
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(
+            JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartArray();
+            cvb.EndArray();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
             return documentBuilder;
         }
@@ -1293,34 +1150,13 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Creates and initializes a mutable document from the given property values.
-        /// </summary>
-        /// <param name="workspace">The JSON workspace.</param>
-        /// <param name="environment">The value of the property.</param>
-        /// <param name="sourceName">The value of the property.</param>
-        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-        /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
-        {
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-            cvb.StartObject();
-            Builder ovb = new(cvb);
-            ovb.Create(environment, sourceName);
-            cvb = ovb._builder;
-            cvb.EndObject();
-            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder;
-        }
-
-        /// <summary>
         /// Creates and initializes a mutable document from this instance.
         /// </summary>
         /// <param name="workspace">The JSON workspace.</param>
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<FetchCredentialReference, Mutable>(this);
+            return workspace.CreateBuilder<JsonStringArray, Mutable>(this);
         }
 
         /// <summary>
@@ -1329,7 +1165,7 @@ public readonly partial struct FetchSourceRequest
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<FetchCredentialReference> Create(
+        public static ParsedJsonDocument<JsonStringArray> Create(
             scoped in Source value, int initialCapacity = 30)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1339,7 +1175,31 @@ public readonly partial struct FetchSourceRequest
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<FetchCredentialReference>();
+                return documentBuilder.ToParsedJsonDocument<JsonStringArray>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+        /// </summary>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonStringArray> Create(
+            int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartArray();
+                cvb.EndArray();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonStringArray>();
             }
             finally
             {
@@ -1354,7 +1214,7 @@ public readonly partial struct FetchSourceRequest
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<FetchCredentialReference> Create(
+        public static ParsedJsonDocument<JsonStringArray> Create(
             scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1365,7 +1225,7 @@ public readonly partial struct FetchSourceRequest
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<FetchCredentialReference>();
+                return documentBuilder.ToParsedJsonDocument<JsonStringArray>();
             }
             finally
             {
@@ -1382,7 +1242,7 @@ public readonly partial struct FetchSourceRequest
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<FetchCredentialReference> Create<TContext>(
+        public static ParsedJsonDocument<JsonStringArray> Create<TContext>(
             scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1396,34 +1256,7 @@ public readonly partial struct FetchSourceRequest
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<FetchCredentialReference>();
-            }
-            finally
-            {
-                documentBuilder.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
-        /// </summary>
-        /// <param name="environment">The value of the property.</param>
-        /// <param name="sourceName">The value of the property.</param>
-        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<FetchCredentialReference> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
-        {
-            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-            try
-            {
-                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-                cvb.StartObject();
-                Builder ovb = new(cvb);
-                ovb.Create(environment, sourceName);
-                cvb = ovb._builder;
-                cvb.EndObject();
-                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<FetchCredentialReference>();
+                return documentBuilder.ToParsedJsonDocument<JsonStringArray>();
             }
             finally
             {

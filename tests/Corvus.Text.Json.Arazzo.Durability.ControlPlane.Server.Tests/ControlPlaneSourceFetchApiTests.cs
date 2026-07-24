@@ -150,14 +150,14 @@ public sealed class ControlPlaneSourceFetchApiTests
 
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/sources/fetch",
-                """{"url":"https://specs.example/private.json","credential":{"sourceName":"petstore","environment":"production"}}""",
+                """{"url":"https://specs.example/private.json","auth":{"binding":{"sourceName":"petstore","environment":"production"}}}""",
                 Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
             stubRef!.LastAuthorization.ShouldBe("Bearer sekret-token");
 
             // An unknown reference is non-disclosing.
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/sources/fetch",
-                """{"url":"https://specs.example/private.json","credential":{"sourceName":"nope","environment":"production"}}""",
+                """{"url":"https://specs.example/private.json","auth":{"binding":{"sourceName":"nope","environment":"production"}}}""",
                 Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
         finally

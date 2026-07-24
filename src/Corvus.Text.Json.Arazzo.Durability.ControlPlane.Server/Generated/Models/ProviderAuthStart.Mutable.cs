@@ -19,15 +19,15 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// ProviderAuthStart
 /// </summary>
 /// <remarks>
 /// <para>
-/// A server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web endpoint (workflow-designer design &#167;4.4): avoids browser CORS entirely, and an optional credential REFERENCE reuses the source-credential machinery for authenticated spec endpoints (the control plane resolves the reference; secret material never rides this API). The fetch validates and returns the document — it does not register or attach it; the caller does that with the result. Deployments restrict the scheme to https (an explicit deployment opt-in permits http) and should fence outbound destinations per their network policy.
+/// The begin-auth handshake for a connected provider (ADR 0052): navigate the browser to authorizeUrl; the state round-trips through the provider to the callback, where it identifies the principal.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct FetchSourceRequest
+public readonly partial struct ProviderAuthStart
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -132,7 +132,7 @@ public readonly partial struct FetchSourceRequest
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(FetchSourceRequest instance)
+        public static explicit operator Mutable(ProviderAuthStart instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -147,9 +147,9 @@ public readonly partial struct FetchSourceRequest
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="FetchSourceRequest"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="ProviderAuthStart"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator FetchSourceRequest(Mutable instance)
+        public static implicit operator ProviderAuthStart(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -266,19 +266,21 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Gets the (optional) <c>auth</c> property.
-        /// FetchAuth
+        /// Gets the <c>authorizeUrl</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller&#39;s connection to a configured connected provider — user identity), secret (a one-shot bearer/PAT, used for this single fetch, never stored or logged), or binding (a registered &#167;13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller&#39;s reach). Omit for an anonymous fetch.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+        /// </para>
+        /// <para>
+        /// The provider authorize URL to navigate to.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Mutable Auth
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable AuthorizeUrl
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizeUrlUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -288,21 +290,21 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Gets the <c>url</c> property.
+        /// Gets the <c>state</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The document URL (https; http only when the deployment opts in).
+        /// The single-use, principal-bound state embedded in authorizeUrl.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Mutable Url
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable State
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StateUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +337,7 @@ public readonly partial struct FetchSourceRequest
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new FetchSourceRequest(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new ProviderAuthStart(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -351,22 +353,20 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Set the <c>auth</c> property.
+        /// Set the <c>authorizeUrl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuth(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source value)
+        public void SetAuthorizeUrl(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AuthUtf8);
-                _documentVersion = _parent.Version;
-                return;
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("authorizeUrl");
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizeUrlUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -375,7 +375,7 @@ public readonly partial struct FetchSourceRequest
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Auth, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorizeUrl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -384,25 +384,20 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Set the <c>auth</c> property.
+        /// Set the <c>state</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuth<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
+        public void SetState(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AuthUtf8);
-                _documentVersion = _parent.Version;
-                return;
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("state");
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StateUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -411,50 +406,7 @@ public readonly partial struct FetchSourceRequest
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Auth, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>auth</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveAuth()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AuthUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>url</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetUrl(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("url");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Url, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.State, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -546,7 +498,7 @@ public readonly partial struct FetchSourceRequest
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"FetchSourceRequest.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"ProviderAuthStart.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         ///   Sets a property on this JSON object element.
@@ -737,11 +689,11 @@ public readonly partial struct FetchSourceRequest
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="FetchSourceRequest"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="ProviderAuthStart"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="FetchSourceRequest"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="ProviderAuthStart"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -750,10 +702,10 @@ public readonly partial struct FetchSourceRequest
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly FetchSourceRequest Clone()
+        public readonly ProviderAuthStart Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<FetchSourceRequest>(_idx);
+            return _parent.CloneElement<ProviderAuthStart>(_idx);
         }
 
         /// <summary>
@@ -761,7 +713,7 @@ public readonly partial struct FetchSourceRequest
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="FetchSourceRequest"/> that lives for the lifetime of its
+        /// An immutable <see cref="ProviderAuthStart"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -772,10 +724,10 @@ public readonly partial struct FetchSourceRequest
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly FetchSourceRequest Freeze()
+        public readonly ProviderAuthStart Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<FetchSourceRequest>(_idx);
+            return _parent.FreezeElement<ProviderAuthStart>(_idx);
         }
     }
 
@@ -792,8 +744,8 @@ public readonly partial struct FetchSourceRequest
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -806,16 +758,16 @@ public readonly partial struct FetchSourceRequest
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderAuthStart.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source arg2)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
-        public static implicit operator Source(FetchSourceRequest instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(ProviderAuthStart instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -953,15 +905,12 @@ public readonly partial struct FetchSourceRequest
             Unknown,
             Source,
             Builder,
-            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -972,15 +921,7 @@ public readonly partial struct FetchSourceRequest
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
-
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> arg2)
-        {
-            _context = context;
-            _createArg1 = arg1;
-            _createArg2 = arg2;
-            _kind = Kind.Create;
-        }
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderAuthStart.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -994,13 +935,6 @@ public readonly partial struct FetchSourceRequest
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1019,13 +953,6 @@ public readonly partial struct FetchSourceRequest
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1044,13 +971,6 @@ public readonly partial struct FetchSourceRequest
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1069,13 +989,6 @@ public readonly partial struct FetchSourceRequest
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1094,13 +1007,6 @@ public readonly partial struct FetchSourceRequest
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
-                        valueBuilder.EndItem(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1127,53 +1033,23 @@ public readonly partial struct FetchSourceRequest
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="FetchSourceRequest"/>.
+        /// Creates an instance of a <see cref="ProviderAuthStart"/>.
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source auth = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source authorizeUrl,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source state)
         {
-            url.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Url, ref builder);
-            auth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Auth, ref builder);
+            authorizeUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorizeUrl, ref builder);
+            state.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.State, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="FetchSourceRequest"/>.
+        /// Creates an instance of a <see cref="ProviderAuthStart"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source auth = default)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source authorizeUrl, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source state)
         {
-            Create(ref _builder, url, auth);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="FetchSourceRequest"/>.
-        /// </summary>
-        internal static void Create<TContext>(
-            in TContext context,
-            ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> auth = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            url.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Url, ref builder);
-            auth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Auth, ref builder);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="FetchSourceRequest"/>.
-        /// </summary>
-        public void Create<TContext>(
-            in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> auth = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            Create(context, ref _builder, url, auth);
+            Create(ref _builder, authorizeUrl, state);
         }
 
         /// <summary>
@@ -1274,28 +1150,10 @@ public readonly partial struct FetchSourceRequest
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
-            o.EndObject();
-        }
-
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-        /// <param name="context">The context to pass to the builder.</param>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> arg2, ref ComplexValueBuilder o)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            o.StartObject();
-            Create(context, ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1332,28 +1190,12 @@ public readonly partial struct FetchSourceRequest
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="url">The value of the <c>"url"</c> property.</param>
-    /// <param name="auth">The value of the <c>"auth"</c> property.</param>
+    /// <param name="authorizeUrl">The value of the <c>"authorizeUrl"</c> property.</param>
+    /// <param name="state">The value of the <c>"state"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source auth = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source authorizeUrl, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source state)
     {
-        return new Source(url, auth);
-    }
-
-    /// <summary>
-    /// Build an instance of the value directly from its property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="context">The context to pass to the builder.</param>
-    /// <param name="url">The value of the <c>"url"</c> property.</param>
-    /// <param name="auth">The value of the <c>"auth"</c> property.</param>
-    /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> auth = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        return new Source<TContext>(context, url, auth);
+        return new Source(authorizeUrl, state);
     }
 
     /// <summary>
@@ -1449,43 +1291,17 @@ public readonly partial struct FetchSourceRequest
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="url">The value of the property.</param>
-    /// <param name="auth">The value of the property.</param>
+    /// <param name="authorizeUrl">The value of the property.</param>
+    /// <param name="state">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source auth = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source authorizeUrl, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source state, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(url, auth);
-        cvb = ovb._builder;
-        cvb.EndObject();
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from the given property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="context">The value of the property.</param>
-    /// <param name="url">The value of the property.</param>
-    /// <param name="auth">The value of the property.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> auth = default, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        Builder ovb = new(cvb);
-        ovb.Create(context, url, auth);
+        ovb.Create(authorizeUrl, state);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1499,7 +1315,7 @@ public readonly partial struct FetchSourceRequest
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<FetchSourceRequest, Mutable>(this);
+        return workspace.CreateBuilder<ProviderAuthStart, Mutable>(this);
     }
 
     /// <summary>
@@ -1508,7 +1324,7 @@ public readonly partial struct FetchSourceRequest
     /// <param name="value">The value with which to initialize the document.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<FetchSourceRequest> Create(
+    public static ParsedJsonDocument<ProviderAuthStart> Create(
         scoped in Source value, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1518,7 +1334,7 @@ public readonly partial struct FetchSourceRequest
             value.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<FetchSourceRequest>();
+            return documentBuilder.ToParsedJsonDocument<ProviderAuthStart>();
         }
         finally
         {
@@ -1533,7 +1349,7 @@ public readonly partial struct FetchSourceRequest
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<FetchSourceRequest> Create(
+    public static ParsedJsonDocument<ProviderAuthStart> Create(
         scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1544,7 +1360,7 @@ public readonly partial struct FetchSourceRequest
             source.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<FetchSourceRequest>();
+            return documentBuilder.ToParsedJsonDocument<ProviderAuthStart>();
         }
         finally
         {
@@ -1561,7 +1377,7 @@ public readonly partial struct FetchSourceRequest
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<FetchSourceRequest> Create<TContext>(
+    public static ParsedJsonDocument<ProviderAuthStart> Create<TContext>(
         scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1575,7 +1391,7 @@ public readonly partial struct FetchSourceRequest
             source.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<FetchSourceRequest>();
+            return documentBuilder.ToParsedJsonDocument<ProviderAuthStart>();
         }
         finally
         {
@@ -1586,11 +1402,11 @@ public readonly partial struct FetchSourceRequest
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
-    /// <param name="url">The value of the property.</param>
-    /// <param name="auth">The value of the property.</param>
+    /// <param name="authorizeUrl">The value of the property.</param>
+    /// <param name="state">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<FetchSourceRequest> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source auth = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<ProviderAuthStart> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source authorizeUrl, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source state, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1598,43 +1414,11 @@ public readonly partial struct FetchSourceRequest
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(url, auth);
+            ovb.Create(authorizeUrl, state);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<FetchSourceRequest>();
-        }
-        finally
-        {
-            documentBuilder.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="context">The value of the property.</param>
-    /// <param name="url">The value of the property.</param>
-    /// <param name="auth">The value of the property.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<FetchSourceRequest> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.Source url, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.Source<TContext> auth = default, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-        try
-        {
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-            cvb.StartObject();
-            Builder ovb = new(cvb);
-            ovb.Create(context, url, auth);
-            cvb = ovb._builder;
-            cvb.EndObject();
-            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<FetchSourceRequest>();
+            return documentBuilder.ToParsedJsonDocument<ProviderAuthStart>();
         }
         finally
         {

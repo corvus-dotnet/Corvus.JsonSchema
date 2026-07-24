@@ -43,6 +43,9 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     private readonly SourceDocumentFetcher? fetcher;
     private readonly string actor;
     private readonly ILogger? auditLogger;
+    private readonly ProviderBroker? providers;
+    private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext;
+    private readonly string subjectClaimType;
 
     // The audited resource kind for a source mutation (design §850, worklist item 8).
     private const string TargetKind = "source";
@@ -63,16 +66,33 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     /// <param name="fetcher">The server-side document fetcher for <c>fetchSourceDocument</c> (§4.4);
     /// fetching fails closed (400) when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneSourcesHandler(ISourceStore store, ControlPlaneAccess access, SourceDocumentFetcher? fetcher = null, string actor = "control-plane", ILogger? auditLogger = null)
+    /// <param name="auditLogger">The §850 governance audit sink.</param>
+    /// <param name="providers">The connected-provider broker (ADR 0052) the fetch's <c>provider</c>
+    /// auth mode reads its user token from; <see langword="null"/> refuses that mode.</param>
+    /// <param name="httpContext">Reads the authenticated principal in the modes whose access binding carries none (ScopesOnly).</param>
+    /// <param name="subjectClaimType">The claim naming the authenticated subject (the custody key's fallback dimension).</param>
+    internal ArazzoControlPlaneSourcesHandler(
+        ISourceStore store,
+        ControlPlaneAccess access,
+        SourceDocumentFetcher? fetcher = null,
+        string actor = "control-plane",
+        ILogger? auditLogger = null,
+        ProviderBroker? providers = null,
+        Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext = null,
+        string subjectClaimType = "sub")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(subjectClaimType);
         this.store = store;
         this.access = access;
         this.fetcher = fetcher;
         this.actor = actor;
         this.auditLogger = auditLogger;
+        this.providers = providers;
+        this.httpContext = httpContext;
+        this.subjectClaimType = subjectClaimType;
     }
 
     // The §850 audit subject for a source mutation: the authenticated caller, falling back to the configured actor.
@@ -301,16 +321,80 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             return FetchSourceDocumentResult.BadRequest(Problem("invalid-fetch", "Invalid fetch", 400, "A 'url' is required."), workspace);
         }
 
+        // The fetch's authentication (ADR 0052): EXACTLY ONE of a provider connection (the caller's
+        // user identity), a one-shot secret (this single fetch, never stored or logged), or a §13
+        // workload binding; absent auth fetches anonymously.
         string? credentialSourceName = null;
         string? credentialEnvironment = null;
-        if (body.Credential.IsNotUndefined())
+        string? bearerToken = null;
+        if (body.Auth.IsNotUndefined())
         {
-            credentialSourceName = (string)body.Credential.SourceName;
-            credentialEnvironment = (string)body.Credential.Environment;
+            Models.FetchSourceRequest.FetchAuth auth = body.Auth;
+            bool hasProvider = auth.Provider.IsNotUndefined();
+            bool hasSecret = auth.Secret.IsNotUndefined();
+            bool hasBinding = auth.Binding.IsNotUndefined();
+            if ((hasProvider ? 1 : 0) + (hasSecret ? 1 : 0) + (hasBinding ? 1 : 0) != 1)
+            {
+                return FetchSourceDocumentResult.BadRequest(
+                    Problem("invalid-fetch-auth", "Invalid fetch auth", 400, "Authenticate with exactly one of 'provider', 'secret', or 'binding' (or omit 'auth' for an anonymous fetch)."), workspace);
+            }
+
+            if (hasProvider)
+            {
+                string providerName = (string)auth.Provider;
+                if (this.providers is not { } registry)
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("providers-not-configured", "No connected providers", 400, "This deployment registers no connected providers."), workspace);
+                }
+
+                if (!registry.TryGetProvider(providerName, out _))
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("provider-unknown", "Unknown provider", 400, $"No connected provider named '{providerName}' is registered."), workspace);
+                }
+
+                if (PrincipalCustodyKey.Resolve(this.access, this.httpContext, this.subjectClaimType) is not { } principal)
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("provider-identity-unresolvable", "Identity unresolvable", 400, "A provider connection binds to the calling principal, but no stable principal identity resolves for this caller."), workspace);
+                }
+
+                // The host gate: a principal's provider token only rides to a host the provider
+                // declares coverage for — never to an arbitrary URL. The fetcher re-validates the
+                // URL's scheme; this parse exists only to name the host.
+                if (!Uri.TryCreate((string)body.Url, UriKind.Absolute, out Uri? target))
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("invalid-fetch", "Invalid fetch", 400, $"'{(string)body.Url}' is not an absolute URL."), workspace);
+                }
+
+                if (!registry.CoversHost(providerName, target.Host))
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("provider-host-not-covered", "Host not covered", 400, $"Provider '{providerName}' does not cover host '{target.Host}'; use a one-shot secret or a workload binding for this URL."), workspace);
+                }
+
+                bearerToken = await registry.CurrentAccessTokenAsync(principal, providerName, cancellationToken).ConfigureAwait(false);
+                if (bearerToken is null)
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("provider-not-connected", "Provider not connected", 400, $"You are not connected to provider '{providerName}' (or the session is no longer valid); connect first."), workspace);
+                }
+            }
+            else if (hasSecret)
+            {
+                bearerToken = (string)auth.Secret;
+            }
+            else
+            {
+                credentialSourceName = (string)auth.Binding.SourceName;
+                credentialEnvironment = (string)auth.Binding.Environment;
+            }
         }
 
         (SourceDocumentFetcher.FetchOutcome outcome, string? detail, SourceDocumentFetcher.FetchedDocument? fetched) =
-            await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, cancellationToken).ConfigureAwait(false);
+            await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, bearerToken, cancellationToken).ConfigureAwait(false);
         switch (outcome)
         {
             case SourceDocumentFetcher.FetchOutcome.Success:

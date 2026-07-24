@@ -39,13 +39,14 @@ public static class ApiEndpointRegistration
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
     /// <param name="schedulesHandler">The handler for ApiSchedules operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
+    /// <param name="providersHandler">The handler for ApiProviders operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
     {
-        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, schedulesHandler, administratorsHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, schedulesHandler, administratorsHandler, providersHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -66,12 +67,13 @@ public static class ApiEndpointRegistration
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
     /// <param name="schedulesHandler">The handler for ApiSchedules operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
+    /// <param name="providersHandler">The handler for ApiProviders operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __GetAccessGrantsEndpoint = app.MapGet("/access/grants", async (HttpContext context) =>
@@ -12728,6 +12730,342 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RemoveAdministratorEndpoint);
 
+        IEndpointConventionBuilder __ListProvidersEndpoint = app.MapGet("/providers", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                ListProvidersParams parameters = new();
+
+                ListProvidersResult result = await providersHandler.HandleListProvidersAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listProviders",
+                methodName: "ListProviders",
+                httpMethod: "GET",
+                routeTemplate: "/providers",
+                tags: new[] { "providers" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListProvidersEndpoint);
+
+        IEndpointConventionBuilder __BeginProviderAuthEndpoint = app.MapPost("/providers/{provider}/auth", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ProviderValue = default;
+                if (context.Request.RouteValues.TryGetValue("provider", out object? ProviderRouteVal) && ProviderRouteVal is string ProviderRaw)
+                {
+                    ProviderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(ProviderRaw, workspace);
+                }
+
+                if (ProviderValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'provider' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ProviderValue.IsUndefined() && !ProviderValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'provider' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                BeginProviderAuthParams parameters = new()
+                {
+                    Provider = ProviderValue,
+                }
+                ;
+
+                BeginProviderAuthResult result = await providersHandler.HandleBeginProviderAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "beginProviderAuth",
+                methodName: "BeginProviderAuth",
+                httpMethod: "POST",
+                routeTemplate: "/providers/{provider}/auth",
+                tags: new[] { "providers" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __BeginProviderAuthEndpoint);
+
+        IEndpointConventionBuilder __CompleteProviderAuthEndpoint = app.MapGet("/providers/{provider}/auth/callback", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ProviderValue = default;
+                if (context.Request.RouteValues.TryGetValue("provider", out object? ProviderRouteVal) && ProviderRouteVal is string ProviderRaw)
+                {
+                    ProviderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(ProviderRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CodeValue = default;
+                if (context.Request.Query.TryGetValue("code", out var CodeQueryVal) && CodeQueryVal.Count > 0)
+                {
+                    string CodeRaw = CodeQueryVal[0]!;
+                    CodeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(CodeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString StateValue = default;
+                if (context.Request.Query.TryGetValue("state", out var StateQueryVal) && StateQueryVal.Count > 0)
+                {
+                    string StateRaw = StateQueryVal[0]!;
+                    StateValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(StateRaw, workspace);
+                }
+
+                if (ProviderValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'provider' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (CodeValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'code' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (StateValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'state' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ProviderValue.IsUndefined() && !ProviderValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'provider' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CodeValue.IsUndefined() && !CodeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'code' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!StateValue.IsUndefined() && !StateValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'state' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CompleteProviderAuthParams parameters = new()
+                {
+                    Provider = ProviderValue,
+                    Code = CodeValue,
+                    State = StateValue,
+                }
+                ;
+
+                CompleteProviderAuthResult result = await providersHandler.HandleCompleteProviderAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "completeProviderAuth",
+                methodName: "CompleteProviderAuth",
+                httpMethod: "GET",
+                routeTemplate: "/providers/{provider}/auth/callback",
+                tags: new[] { "providers" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(System.Array.Empty<EndpointSecurityRequirement>(), true) }),
+            __CompleteProviderAuthEndpoint);
+
+        IEndpointConventionBuilder __DeleteProviderSessionEndpoint = app.MapDelete("/providers/{provider}/session", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ProviderValue = default;
+                if (context.Request.RouteValues.TryGetValue("provider", out object? ProviderRouteVal) && ProviderRouteVal is string ProviderRaw)
+                {
+                    ProviderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(ProviderRaw, workspace);
+                }
+
+                if (ProviderValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'provider' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ProviderValue.IsUndefined() && !ProviderValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'provider' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                DeleteProviderSessionParams parameters = new()
+                {
+                    Provider = ProviderValue,
+                }
+                ;
+
+                DeleteProviderSessionResult result = await providersHandler.HandleDeleteProviderSessionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "deleteProviderSession",
+                methodName: "DeleteProviderSession",
+                httpMethod: "DELETE",
+                routeTemplate: "/providers/{provider}/session",
+                tags: new[] { "providers" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __DeleteProviderSessionEndpoint);
+
         IEndpointConventionBuilder __ListAccessRequestsEndpoint = app.MapGet("/accessRequests", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -16083,6 +16421,36 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>RemoveAdministrator</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] RemoveAdministratorOpenIdConnectScopes = ["administrators:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListProviders</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListProvidersOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListProviders</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListProvidersOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>BeginProviderAuth</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] BeginProviderAuthOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>BeginProviderAuth</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] BeginProviderAuthOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DeleteProviderSession</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] DeleteProviderSessionOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DeleteProviderSession</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] DeleteProviderSessionOpenIdConnectScopes = ["workspace:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>BeginGitHubAuth</c> for the <c>Oauth2</c> scheme.

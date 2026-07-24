@@ -2,75 +2,54 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Concurrent;
-using System.Security.Cryptography;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo.Durability.Security;
-using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Brokers a GitHub App's user-to-server flow for the designer (workflow-designer design §4.7):
-/// the control plane holds the OAuth App credentials and each principal's user token — the
-/// kit never sees a GitHub credential, and every user-initiated GitHub action runs AS the
+/// The GitHub API surface of the designer's Git round-trip (workflow-designer design §4.7):
+/// proxied contents reads, commits, branches, and pull requests, every one running AS the
 /// signed-in user (their GitHub-held git identity; reach is whatever the signed-in user can see,
-/// the OAuth model — so a source document anywhere the user can read is reachable).
+/// the OAuth model — so a source document anywhere the user can read is reachable). The
+/// authorize/callback/custody machinery is the shared connected-provider broker (ADR 0052):
+/// GitHub is provider #1 (<see cref="GitHubBrokerOptions.ToProviderEntry"/>) under
+/// <see cref="ProviderBroker"/>, so one GitHub sign-in serves the Git panel and the source-fetch
+/// pane alike, and the kit never sees a GitHub credential.
 /// </summary>
 /// <remarks>
-/// <para><strong>Custody.</strong> Tokens are keyed by control-plane principal and unreachable
-/// from any other principal's session (<see cref="IGitHubTokenStore"/>; in-memory by default, a
-/// deployment may substitute an encrypted-at-rest store). The OAuth <c>state</c> is single-use,
-/// short-lived, and principal-bound: the callback is a top-level browser navigation that carries
-/// no bearer token, so the state IS the authentication of that request.</para>
 /// <para><strong>Enterprise.</strong> GitHub Enterprise Server is configuration
 /// (<see cref="GitHubBrokerOptions.BaseUrl"/>/<see cref="GitHubBrokerOptions.ApiBaseUrl"/>), not
 /// new design.</para>
 /// </remarks>
 public sealed class GitHubBroker
 {
-    private static readonly TimeSpan StateLifetime = TimeSpan.FromMinutes(10);
-    private static readonly TimeSpan TokenRefreshSkew = TimeSpan.FromSeconds(60);
+    // The folded provider entry's name (ADR 0052): the shared broker's custody/state rows for
+    // GitHub key on this, whichever surface (Git panel or fetch pane) began the sign-in.
+    private const string ProviderName = "github";
 
     private readonly HttpClient client;
     private readonly GitHubBrokerOptions options;
-    private readonly ISecretResolver secrets;
-    private readonly TimeProvider timeProvider;
-    private readonly ILogger? logger;
-    private readonly IGitHubTokenStore tokens;
-    private readonly ConcurrentDictionary<string, PendingAuth> pending = new();
+    private readonly ProviderBroker providers;
 
     /// <summary>Initializes a new instance of the <see cref="GitHubBroker"/> class.</summary>
     /// <param name="client">The outbound HTTP client (a deployment configures its handler/egress policy).</param>
     /// <param name="options">The App registration and endpoints.</param>
-    /// <param name="secrets">Resolves the App client secret reference at exchange time (never held).</param>
-    /// <param name="tokens">The per-principal token store; <see langword="null"/> uses the in-memory (session-lifetime) store.</param>
-    /// <param name="timeProvider">The clock (tests inject a fake).</param>
-    public GitHubBroker(HttpClient client, GitHubBrokerOptions options, ISecretResolver secrets, IGitHubTokenStore? tokens = null, TimeProvider? timeProvider = null, ILogger? logger = null)
+    /// <param name="providers">The shared provider broker; it must carry the folded <c>github</c>
+    /// entry (<see cref="GitHubBrokerOptions.ToProviderEntry"/>), which owns the sign-in and custody.</param>
+    public GitHubBroker(HttpClient client, GitHubBrokerOptions options, ProviderBroker providers)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(secrets);
+        ArgumentNullException.ThrowIfNull(providers);
         options.Validate();
+        if (!providers.TryGetProvider(ProviderName, out _))
+        {
+            throw new ArgumentException($"The provider broker carries no '{ProviderName}' entry; register GitHubBrokerOptions.ToProviderEntry() with it.", nameof(providers));
+        }
+
         this.client = client;
         this.options = options;
-        this.secrets = secrets;
-        this.tokens = tokens ?? new InMemoryGitHubTokenStore();
-        this.timeProvider = timeProvider ?? TimeProvider.System;
-        this.logger = logger;
-    }
-
-    /// <summary>The outcome kinds completing an authorization can report.</summary>
-    public enum CompleteOutcome
-    {
-        /// <summary>The token exchanged and stored for the state's principal.</summary>
-        Success,
-
-        /// <summary>The state is unknown, expired, or already used.</summary>
-        InvalidState,
-
-        /// <summary>GitHub refused the code exchange.</summary>
-        ExchangeFailed,
+        this.providers = providers;
     }
 
     /// <summary>The outcome kinds a proxied GitHub read can report.</summary>
@@ -103,60 +82,43 @@ public sealed class GitHubBroker
     }
 
     /// <summary>
-    /// Mints a single-use, principal-bound state and composes the authorize URL the kit opens in a
-    /// popup. The state authenticates the callback (a top-level navigation carries no bearer
-    /// token), so it is unguessable (256-bit) and short-lived.
+    /// Begins the sign-in through the shared provider broker's folded <c>github</c> entry: a
+    /// single-use, principal-bound state and the authorize URL the kit opens in a popup.
     /// </summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The authorize URL and the embedded state.</returns>
-    public (string AuthorizeUrl, string State) BeginAuth(string principalKey)
+    public async ValueTask<(string AuthorizeUrl, string State)> BeginAuthAsync(string principalKey, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(principalKey);
-        this.PrunePending();
-        string state = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        this.pending[state] = new PendingAuth(principalKey, this.timeProvider.GetUtcNow() + StateLifetime);
-        string authorizeUrl = $"{this.options.BaseUrl!.TrimEnd('/')}/login/oauth/authorize" +
-            $"?client_id={Uri.EscapeDataString(this.options.ClientId!)}" +
-            $"&redirect_uri={Uri.EscapeDataString(this.options.CallbackUrl!)}" +
-            $"&scope={Uri.EscapeDataString("repo read:user user:email")}" +
-            $"&state={Uri.EscapeDataString(state)}";
-        return (authorizeUrl, state);
+        (ProviderBroker.BeginOutcome outcome, string? authorizeUrl, string? state) = await this.providers.BeginAuthAsync(ProviderName, principalKey, cancellationToken).ConfigureAwait(false);
+
+        // The ctor proved the github entry is registered, and it carries explicit endpoints (no
+        // discovery), so begin cannot fail here.
+        return outcome == ProviderBroker.BeginOutcome.Success
+            ? (authorizeUrl!, state!)
+            : throw new InvalidOperationException($"Beginning the GitHub sign-in reported {outcome}.");
     }
 
     /// <summary>
-    /// Completes the flow: validates and consumes the state (single-use), exchanges the code
-    /// server-side (resolving the App client secret only for the exchange), and stores the user
-    /// token for the state's principal.
+    /// Completes the flow through the shared provider broker: validates and consumes the state
+    /// (single-use), exchanges the code server-side (resolving the App client secret only for the
+    /// exchange), and stores the user token for the state's principal.
     /// </summary>
     /// <param name="state">The state from the callback query.</param>
     /// <param name="code">The authorization code from the callback query.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome.</returns>
-    public async ValueTask<CompleteOutcome> CompleteAuthAsync(string state, string code, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(state) || !this.pending.TryRemove(state, out PendingAuth auth) || auth.ExpiresAt < this.timeProvider.GetUtcNow())
-        {
-            return CompleteOutcome.InvalidState;
-        }
-
-        GitHubToken? token = await this.ExchangeAsync(("code", code), cancellationToken).ConfigureAwait(false);
-        if (token is not { } t)
-        {
-            return CompleteOutcome.ExchangeFailed;
-        }
-
-        this.tokens.Set(auth.PrincipalKey, t);
-        return CompleteOutcome.Success;
-    }
+    public ValueTask<ProviderBroker.CompleteOutcome> CompleteAuthAsync(string state, string code, CancellationToken cancellationToken)
+        => this.providers.CompleteAuthAsync(ProviderName, state, code, cancellationToken);
 
     /// <summary>Whether the principal currently holds a token (without touching GitHub).</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
     /// <returns><see langword="true"/> if a token is stored.</returns>
-    public bool IsConnected(string principalKey) => this.tokens.Get(principalKey) is not null;
+    public bool IsConnected(string principalKey) => this.providers.IsConnected(principalKey, ProviderName);
 
     /// <summary>Drops the principal's token. Idempotent.</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
-    public void Disconnect(string principalKey) => this.tokens.Remove(principalKey);
+    public void Disconnect(string principalKey) => this.providers.Disconnect(principalKey, ProviderName);
 
     /// <summary>Reads the signed-in user (<c>GET /user</c>) on the principal's token.</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
@@ -260,7 +222,7 @@ public sealed class GitHubBroker
         using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            this.tokens.Remove(principalKey);
+            this.providers.Disconnect(principalKey, ProviderName);
             return (WriteOutcome.NotConnected, null);
         }
 
@@ -321,7 +283,7 @@ public sealed class GitHubBroker
         using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            this.tokens.Remove(principalKey);
+            this.providers.Disconnect(principalKey, ProviderName);
             return (WriteOutcome.NotConnected, 0, null);
         }
 
@@ -471,7 +433,7 @@ public sealed class GitHubBroker
         using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            this.tokens.Remove(principalKey);
+            this.providers.Disconnect(principalKey, ProviderName);
             return (WriteOutcome.NotConnected, null);
         }
 
@@ -503,7 +465,7 @@ public sealed class GitHubBroker
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             // The token no longer works (revoked, App uninstalled): drop it so status reads disconnected.
-            this.tokens.Remove(principalKey);
+            this.providers.Disconnect(principalKey, ProviderName);
             return (ReadOutcome.NotConnected, null);
         }
 
@@ -517,113 +479,11 @@ public sealed class GitHubBroker
         return (ReadOutcome.Success, ParsedJsonDocument<JsonElement>.Parse(payload));
     }
 
-    // The valid access token for the principal, refreshing an expiring one when a refresh token is
-    // held. Null when the principal has no session (or the refresh fails — the session is dropped).
-    private async ValueTask<string?> CurrentTokenAsync(string principalKey, CancellationToken cancellationToken)
-    {
-        GitHubToken? stored = this.tokens.Get(principalKey);
-        if (stored is not { } current)
-        {
-            return null;
-        }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        if (current.ExpiresAt is not { } expires || expires - TokenRefreshSkew > now)
-        {
-            return current.AccessToken;
-        }
-
-        if (current.RefreshToken is null || (current.RefreshExpiresAt is { } refreshExpires && refreshExpires <= now))
-        {
-            this.tokens.Remove(principalKey);
-            return null;
-        }
-
-        GitHubToken? refreshed = await this.ExchangeAsync(("refresh_token", current.RefreshToken), cancellationToken).ConfigureAwait(false);
-        if (refreshed is not { } fresh)
-        {
-            this.tokens.Remove(principalKey);
-            return null;
-        }
-
-        this.tokens.Set(principalKey, fresh);
-        return fresh.AccessToken;
-    }
-
-    // One exchange against /login/oauth/access_token: an authorization code (code) or a refresh
-    // grant (refresh_token). The App client secret resolves here and is scrubbed after the call.
-    private async ValueTask<GitHubToken?> ExchangeAsync((string Name, string Value) grant, CancellationToken cancellationToken)
-    {
-        using SecretMaterial secret = await this.secrets.ResolveAsync(SecretRef.Parse(this.options.ClientSecretRef!), cancellationToken).ConfigureAwait(false);
-        var form = new List<KeyValuePair<string, string>>
-        {
-            new("client_id", this.options.ClientId!),
-            new("client_secret", secret.Reveal()),
-            new(grant.Name, grant.Value),
-        };
-        if (grant.Name == "refresh_token")
-        {
-            form.Add(new("grant_type", "refresh_token"));
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{this.options.BaseUrl!.TrimEnd('/')}/login/oauth/access_token")
-        {
-            Content = new FormUrlEncodedContent(form),
-        };
-        request.Headers.TryAddWithoutValidation("Accept", "application/json");
-        request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
-        using HttpResponseMessage? response = await this.SendExchangeAsync(request, cancellationToken).ConfigureAwait(false);
-        if (response is null)
-        {
-            return null;
-        }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            this.logger?.LogWarning("GitHub token exchange returned {StatusCode}.", (int)response.StatusCode);
-            return null;
-        }
-
-        byte[] payload = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        using var document = ParsedJsonDocument<JsonElement>.Parse(payload);
-        JsonElement root = document.RootElement;
-        if (!root.TryGetProperty("access_token"u8, out JsonElement accessToken) || accessToken.GetString() is not { Length: > 0 } access)
-        {
-            // GitHub reports a refused exchange as 200 with an error body (incorrect_client_credentials,
-            // bad_verification_code, redirect_uri_mismatch); name it, or the operator diagnoses blind. The
-            // error fields are codes and doc links — never secret material (a success body is never logged).
-            string error = root.TryGetProperty("error"u8, out JsonElement e) ? e.GetString() ?? "(none)" : "(none)";
-            string description = root.TryGetProperty("error_description"u8, out JsonElement ed) ? ed.GetString() ?? string.Empty : string.Empty;
-            this.logger?.LogWarning("GitHub refused the token exchange: {Error} {Description}", error, description);
-            return null;
-        }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        DateTimeOffset? expiresAt = root.TryGetProperty("expires_in"u8, out JsonElement expiresIn) && expiresIn.ValueKind == JsonValueKind.Number
-            ? now + TimeSpan.FromSeconds(expiresIn.GetInt32())
-            : null;
-        string? refresh = root.TryGetProperty("refresh_token"u8, out JsonElement refreshToken) ? refreshToken.GetString() : null;
-        DateTimeOffset? refreshExpiresAt = root.TryGetProperty("refresh_token_expires_in"u8, out JsonElement refreshIn) && refreshIn.ValueKind == JsonValueKind.Number
-            ? now + TimeSpan.FromSeconds(refreshIn.GetInt32())
-            : null;
-        return new GitHubToken(access, expiresAt, refresh, refreshExpiresAt);
-    }
-
-    // A transport-level failure reaching github.com (DNS, proxy, TLS — e.g. a CA store that cannot chain
-    // github.com's certificate) is an exchange FAILURE, not an unhandled 500: the caller maps a null to the
-    // typed github-exchange-failed problem, so the operator sees an actionable message instead of a blank error.
-    private async ValueTask<HttpResponseMessage?> SendExchangeAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        }
-        catch (HttpRequestException ex)
-        {
-            this.logger?.LogWarning(ex, "GitHub token exchange could not reach {Endpoint}.", request.RequestUri);
-            return null;
-        }
-    }
+    // The valid access token for the principal, from the shared provider broker's custody
+    // (refresh-aware). Null when the principal has no session (or the refresh fails — the shared
+    // broker drops the session).
+    private ValueTask<string?> CurrentTokenAsync(string principalKey, CancellationToken cancellationToken)
+        => this.providers.CurrentAccessTokenAsync(principalKey, ProviderName, cancellationToken);
 
     private static void AddGitHubHeaders(HttpRequestMessage request, string token)
     {
@@ -632,20 +492,6 @@ public sealed class GitHubBroker
         request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
     }
-
-    private void PrunePending()
-    {
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        foreach (KeyValuePair<string, PendingAuth> entry in this.pending)
-        {
-            if (entry.Value.ExpiresAt < now)
-            {
-                this.pending.TryRemove(entry.Key, out _);
-            }
-        }
-    }
-
-    private readonly record struct PendingAuth(string PrincipalKey, DateTimeOffset ExpiresAt);
 }
 
 /// <summary>The GitHub App registration a deployment brokers (workflow-designer design §4.7).</summary>
@@ -677,48 +523,38 @@ public sealed class GitHubBrokerOptions
             throw new ArgumentException("A GitHub broker requires BaseUrl, ApiBaseUrl, ClientId, ClientSecretRef, and CallbackUrl.");
         }
     }
-}
 
-/// <summary>One principal's brokered user-to-server token.</summary>
-/// <param name="AccessToken">The access token.</param>
-/// <param name="ExpiresAt">When the access token expires (absent: non-expiring).</param>
-/// <param name="RefreshToken">The refresh token, when the App issues expiring tokens.</param>
-/// <param name="RefreshExpiresAt">When the refresh token expires.</param>
-public readonly record struct GitHubToken(string AccessToken, DateTimeOffset? ExpiresAt, string? RefreshToken, DateTimeOffset? RefreshExpiresAt);
+    /// <summary>
+    /// Folds this App registration into the connected-provider registry as the <c>github</c> entry
+    /// (ADR 0052): explicit authorize/token endpoints (GitHub has no OIDC discovery), the App's
+    /// client registration, and host coverage derived from <see cref="BaseUrl"/> (plus
+    /// <c>*.githubusercontent.com</c> for github.com, where raw content is served). Register the
+    /// result with the deployment's <see cref="ProviderBroker"/> and hand that broker to
+    /// <see cref="GitHubBroker"/> — one GitHub sign-in then serves the Git panel and the fetch pane.
+    /// </summary>
+    /// <returns>The provider entry.</returns>
+    public ConnectedProviderOptions ToProviderEntry()
+    {
+        this.Validate();
+        string baseUrl = this.BaseUrl!.TrimEnd('/');
+        string host = new Uri(baseUrl).Host;
+        var hosts = new List<string> { host, "*." + host };
+        if (string.Equals(host, "github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            hosts.Add("*.githubusercontent.com");
+        }
 
-/// <summary>
-/// Per-principal custody for brokered GitHub tokens (workflow-designer design §4.7): one
-/// principal's token is unreachable from any other principal's session. The default is in-memory
-/// (session-lifetime); a deployment may substitute an encrypted-at-rest store (KMS ref).
-/// </summary>
-public interface IGitHubTokenStore
-{
-    /// <summary>Gets the principal's token, if any.</summary>
-    /// <param name="principalKey">The principal's stable key.</param>
-    /// <returns>The token, or <see langword="null"/>.</returns>
-    GitHubToken? Get(string principalKey);
-
-    /// <summary>Stores (replaces) the principal's token.</summary>
-    /// <param name="principalKey">The principal's stable key.</param>
-    /// <param name="token">The token.</param>
-    void Set(string principalKey, GitHubToken token);
-
-    /// <summary>Removes the principal's token. Idempotent.</summary>
-    /// <param name="principalKey">The principal's stable key.</param>
-    void Remove(string principalKey);
-}
-
-/// <summary>The in-memory (session-lifetime) <see cref="IGitHubTokenStore"/>.</summary>
-public sealed class InMemoryGitHubTokenStore : IGitHubTokenStore
-{
-    private readonly ConcurrentDictionary<string, GitHubToken> tokens = new();
-
-    /// <inheritdoc/>
-    public GitHubToken? Get(string principalKey) => this.tokens.TryGetValue(principalKey, out GitHubToken token) ? token : null;
-
-    /// <inheritdoc/>
-    public void Set(string principalKey, GitHubToken token) => this.tokens[principalKey] = token;
-
-    /// <inheritdoc/>
-    public void Remove(string principalKey) => this.tokens.TryRemove(principalKey, out _);
+        return new ConnectedProviderOptions
+        {
+            Name = "github",
+            DisplayName = "GitHub",
+            AuthorizeEndpoint = $"{baseUrl}/login/oauth/authorize",
+            TokenEndpoint = $"{baseUrl}/login/oauth/access_token",
+            ClientId = this.ClientId,
+            ClientSecretRef = this.ClientSecretRef,
+            Scopes = "repo read:user user:email",
+            CallbackUrl = this.CallbackUrl,
+            Hosts = hosts,
+        };
+    }
 }

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Security.Claims;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -71,22 +70,22 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     }
 
     /// <inheritdoc/>
-    public ValueTask<BeginGitHubAuthResult> HandleBeginGitHubAuthAsync(BeginGitHubAuthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<BeginGitHubAuthResult> HandleBeginGitHubAuthAsync(BeginGitHubAuthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         if (this.broker is not { } github)
         {
-            return ValueTask.FromResult(BeginGitHubAuthResult.BadRequest(NotBrokeredProblem(), workspace));
+            return BeginGitHubAuthResult.BadRequest(NotBrokeredProblem(), workspace);
         }
 
         if (this.PrincipalKey() is not { } principal)
         {
-            return ValueTask.FromResult(BeginGitHubAuthResult.BadRequest(
-                Problem("github-identity-unresolvable", "Identity unresolvable", 400, "A GitHub session binds to the calling principal, but no stable principal identity resolves for this caller."), workspace));
+            return BeginGitHubAuthResult.BadRequest(
+                Problem("github-identity-unresolvable", "Identity unresolvable", 400, "A GitHub session binds to the calling principal, but no stable principal identity resolves for this caller."), workspace);
         }
 
-        (string authorizeUrl, string state) = github.BeginAuth(principal);
-        return ValueTask.FromResult(BeginGitHubAuthResult.Ok(
-            new((ref Models.GitHubAuthStart.Builder b) => b.Create(authorizeUrl: authorizeUrl, state: state)), workspace));
+        (string authorizeUrl, string state) = await github.BeginAuthAsync(principal, cancellationToken).ConfigureAwait(false);
+        return BeginGitHubAuthResult.Ok(
+            new((ref Models.GitHubAuthStart.Builder b) => b.Create(authorizeUrl: authorizeUrl, state: state)), workspace);
     }
 
     /// <inheritdoc/>
@@ -97,11 +96,11 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             return CompleteGitHubAuthResult.BadRequest(NotBrokeredProblem(), workspace);
         }
 
-        GitHubBroker.CompleteOutcome outcome = await github.CompleteAuthAsync((string)parameters.State, (string)parameters.Code, cancellationToken).ConfigureAwait(false);
+        ProviderBroker.CompleteOutcome outcome = await github.CompleteAuthAsync((string)parameters.State, (string)parameters.Code, cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
-            GitHubBroker.CompleteOutcome.Success => CompleteGitHubAuthResult.Ok(),
-            GitHubBroker.CompleteOutcome.InvalidState => CompleteGitHubAuthResult.BadRequest(
+            ProviderBroker.CompleteOutcome.Success => CompleteGitHubAuthResult.Ok(),
+            ProviderBroker.CompleteOutcome.InvalidState => CompleteGitHubAuthResult.BadRequest(
                 Problem("github-invalid-state", "Invalid state", 400, "The state is unknown, expired, or already used; begin the sign-in again."), workspace),
             _ => CompleteGitHubAuthResult.BadRequest(
                 Problem("github-exchange-failed", "Exchange failed", 400, "GitHub refused the code exchange, or github.com could not be reached from the control plane (check outbound TLS/proxy); begin the sign-in again."), workspace),
@@ -1058,30 +1057,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             title: title,
             type: ProblemBase + type));
 
-    // The token-custody key (§4.7): the deployment-stamped identity dimensions first (stable across
-    // sessions), composed with the authenticated subject; null when neither resolves — a GitHub
-    // session cannot bind without a principal to bind to.
-    private string? PrincipalKey()
-    {
-        ClaimsPrincipal? principal = this.access.CurrentPrincipal ?? this.httpContext?.HttpContext?.User;
-        string? subject = principal?.FindFirst(this.subjectClaimType)?.Value ?? principal?.Identity?.Name;
-        IReadOnlyList<SecurityTag> tags = this.access.InternalTags();
-        if (tags.Count == 0 && string.IsNullOrEmpty(subject))
-        {
-            return null;
-        }
-
-        var key = new System.Text.StringBuilder();
-        foreach (SecurityTag tag in tags)
-        {
-            key.Append(tag.Key).Append('=').Append(tag.Value).Append(';');
-        }
-
-        if (!string.IsNullOrEmpty(subject))
-        {
-            key.Append("sub=").Append(subject);
-        }
-
-        return key.ToString();
-    }
+    // The token-custody key (§4.7): shared with the connected-provider surface, so one signed-in
+    // principal keys one custody row per provider whichever surface began the sign-in.
+    private string? PrincipalKey() => PrincipalCustodyKey.Resolve(this.access, this.httpContext, this.subjectClaimType);
 }

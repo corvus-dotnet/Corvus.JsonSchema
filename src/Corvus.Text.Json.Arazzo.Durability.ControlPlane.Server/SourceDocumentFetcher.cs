@@ -100,8 +100,11 @@ public sealed class SourceDocumentFetcher
     /// <summary>Fetches, parses, and detects the document.</summary>
     /// <param name="url">The document URL.</param>
     /// <param name="reach">The caller's row-access grant (gates the credential reference lookup).</param>
-    /// <param name="credentialSourceName">The credential reference's source name, when authenticating.</param>
-    /// <param name="credentialEnvironment">The credential reference's environment, when authenticating.</param>
+    /// <param name="credentialSourceName">The credential reference's source name, when authenticating with a §13 binding.</param>
+    /// <param name="credentialEnvironment">The credential reference's environment, when authenticating with a §13 binding.</param>
+    /// <param name="bearerToken">A bearer token for this single fetch (ADR 0052: a connected
+    /// provider's user token, or a one-shot secret) — attached to the one outbound request, never
+    /// stored, never logged. Exclusive with the credential reference (the handler enforces it).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome, a human-readable detail for failures, and — on success — the fetched document (the caller owns it).</returns>
     public async ValueTask<(FetchOutcome Outcome, string? Detail, FetchedDocument? Document)> FetchAsync(
@@ -109,6 +112,7 @@ public sealed class SourceDocumentFetcher
         AccessContext reach,
         string? credentialSourceName,
         string? credentialEnvironment,
+        string? bearerToken,
         CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
@@ -122,6 +126,11 @@ public sealed class SourceDocumentFetcher
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        if (bearerToken is not null)
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
+        }
+
         if (credentialSourceName is not null)
         {
             if (this.credentials is null || this.credentialProviders is null)

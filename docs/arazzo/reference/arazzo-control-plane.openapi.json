@@ -66,6 +66,10 @@
     "description": "DEBUG a working copy (workflow-designer design §18): start, step/resume, inspect, inject a message into, cancel, and purge a durable debug run in a development-class environment. These are debugging affordances — a driven, forward-only run under governed dev credentials with no production analogue; message injection stands in for the real publisher (capability scopes workspace:write + runs:write; read is workspace:read)."
   },
   {
+    "name": "providers",
+    "description": "Connected providers (ADR 0052): the deployment-registered OAuth/OIDC providers through which user-identity acts — above all the source fetch — authenticate AS THE USER. A provider entry is configuration (an OIDC issuer or explicit authorize/token endpoints, a client id + secret reference, scopes, and the host patterns it covers); connecting runs the brokered popup flow, and the user token is held server-side per (principal, provider) — the kit never sees it. GitHub is provider #1: its repos/browse surface stays under the github tag, but its auth machinery is this machinery. A deployment that registers no providers serves an empty list and refuses the auth operations."
+  },
+  {
     "name": "github",
     "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds an OAuth App's credentials and each principal's user token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the OAuth model's — whatever the signed-in user can see (the repo scope), so a source document anywhere the user can read is reachable; token custody is server-side, keyed by control-plane principal; there are no unattended actions. Deployment-configured (a deployment that brokers no OAuth App refuses these operations)."
   },
@@ -3738,6 +3742,86 @@
         }
       }
     },
+    "/providers": {
+      "get": {
+        "operationId": "listProviders",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["providers"],
+        "summary": "The connected providers and the caller's connection state",
+        "description": "The deployment's connected-provider registry (ADR 0052): each provider's name, display name, and the host patterns it covers, plus whether the CALLING principal holds a live connection (each principal's connections are private). The registry is deployment configuration; an empty list means this deployment brokers no providers.",
+        "responses": {
+          "200": {
+            "description": "The registered providers.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProviderList" } } }
+          }
+        }
+      }
+    },
+    "/providers/{provider}/auth": {
+      "post": {
+        "operationId": "beginProviderAuth",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["providers"],
+        "summary": "Begin a provider sign-in",
+        "description": "Mints a single-use, principal-bound state and returns the provider's authorize URL (ADR 0052). The response is JSON rather than a redirect because a bearer-authenticated SPA cannot carry its token on a top-level navigation: the kit opens authorizeUrl in a popup, and when the provider redirects the popup to the callback, the opener polls listProviders and closes it. 400 when this deployment registers no such provider.",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The configured provider name." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Navigate the browser to authorizeUrl to continue at the provider.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProviderAuthStart" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/providers/{provider}/auth/callback": {
+      "get": {
+        "operationId": "completeProviderAuth",
+        "security": [{}],
+        "tags": ["providers"],
+        "summary": "Complete a provider sign-in (browser callback)",
+        "description": "The provider redirects the browser (the kit's popup) here with ?code&state. The state — single-use, short-lived, minted by beginProviderAuth — identifies and authenticates the principal (a top-level navigation carries no bearer token), and the code exchanges server-side; the user token never reaches the browser (ADR 0052).",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The configured provider name." },
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The authorization code from the provider." },
+          { "name": "state", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The single-use state minted by beginProviderAuth." }
+        ],
+        "responses": {
+          "200": { "description": "Connected — the popup may close (the opener polls listProviders)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/providers/{provider}/session": {
+      "delete": {
+        "operationId": "deleteProviderSession",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["providers"],
+        "summary": "Disconnect the caller from a provider",
+        "description": "Drops the CALLING principal's connection to the provider (the server-side token custody is cleared). Idempotent: disconnecting an unconnected provider succeeds.",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The configured provider name." }
+        ],
+        "responses": {
+          "204": { "description": "Disconnected (or already unconnected)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
     "/github/auth": {
       "post": {
         "operationId": "beginGitHubAuth",
@@ -6585,6 +6669,37 @@
         },
         "required": ["files"]
       },
+      "ProviderAuthStart": {
+        "type": "object",
+        "title": "ProviderAuthStart",
+        "description": "The begin-auth handshake for a connected provider (ADR 0052): navigate the browser to authorizeUrl; the state round-trips through the provider to the callback, where it identifies the principal.",
+        "properties": {
+          "authorizeUrl": { "type": "string", "description": "The provider authorize URL to navigate to." },
+          "state": { "type": "string", "description": "The single-use, principal-bound state embedded in authorizeUrl." }
+        },
+        "required": ["authorizeUrl", "state"]
+      },
+      "ProviderSummary": {
+        "type": "object",
+        "title": "ProviderSummary",
+        "description": "A configured connected provider (ADR 0052) and the calling principal's connection state.",
+        "properties": {
+          "name": { "type": "string", "description": "The provider's configured name (the path key for auth operations)." },
+          "displayName": { "type": "string", "description": "A human-readable name for UI copy; falls back to name." },
+          "hosts": { "type": "array", "items": { "type": "string" }, "description": "The host patterns this provider covers (exact hosts or *.suffix wildcards) — the fetch pane resolves a pasted URL's host against these." },
+          "connected": { "type": "boolean", "description": "Whether the CALLING principal holds a live connection." }
+        },
+        "required": ["name", "hosts", "connected"]
+      },
+      "ProviderList": {
+        "type": "object",
+        "title": "ProviderList",
+        "description": "The deployment's connected-provider registry with the caller's connection state.",
+        "properties": {
+          "providers": { "type": "array", "items": { "$ref": "#/components/schemas/ProviderSummary" } }
+        },
+        "required": ["providers"]
+      },
       "GitHubAuthStart": {
         "type": "object",
         "title": "GitHubAuthStart",
@@ -7629,22 +7744,37 @@
             "format": "uri",
             "description": "The document URL (https; http only when the deployment opts in)."
           },
-          "credential": {
+          "auth": {
             "type": "object",
-            "title": "FetchCredentialReference",
-            "description": "Authenticate the fetch with a registered source credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing (404 when absent or outside the caller's reach).",
+            "title": "FetchAuth",
+            "description": "Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller's connection to a configured connected provider — user identity), secret (a one-shot bearer/PAT, used for this single fetch, never stored or logged), or binding (a registered §13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller's reach). Omit for an anonymous fetch.",
             "properties": {
-              "sourceName": {
-                "type": "string"
+              "provider": {
+                "type": "string",
+                "description": "A configured connected-provider name; the fetch presents the CALLING principal's connection token (400 provider-not-connected when the caller holds none)."
               },
-              "environment": {
-                "type": "string"
+              "secret": {
+                "type": "string",
+                "description": "A one-shot bearer/PAT presented as Authorization: Bearer for this single fetch; never stored, never logged."
+              },
+              "binding": {
+                "type": "object",
+                "title": "FetchCredentialReference",
+                "description": "A registered source credential, referenced by its (sourceName, environment) key.",
+                "properties": {
+                  "sourceName": {
+                    "type": "string"
+                  },
+                  "environment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sourceName",
+                  "environment"
+                ]
               }
-            },
-            "required": [
-              "sourceName",
-              "environment"
-            ]
+            }
           }
         },
         "required": [

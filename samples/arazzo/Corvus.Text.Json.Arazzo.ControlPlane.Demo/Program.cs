@@ -565,30 +565,46 @@ if (File.Exists(designerPage))
     app.MapGet("/designer", () => Results.File(designerPage, "text/html"));
 }
 
-// The GitHub App broker (workflow-designer §4.7): the per-user user-to-server OAuth flow that binds a working copy to
-// a branch and commits AS the signed-in user (their token, never in the browser). Enabled only when the deployment
-// supplies a GitHub App — the client id (public, so plain config) plus the secret resolved from
-// env://GITHUB_OAUTH_CLIENT_SECRET (the AppHost injects it from the uncommitted github-oauth.local.json). Absent →
-// gitHubBroker stays null and the Git panel reports "brokers no OAuth App". The callback is the pinned control-plane URL.
+// The connected-provider registry (ADR 0052) and the GitHub App broker (workflow-designer §4.7). GitHub folds in as
+// provider #1: its OAuth registration becomes the registry's 'github' entry, the shared ProviderBroker owns the
+// sign-in/custody machinery, and the GitHubBroker keeps the repos/browse surface over that shared custody — so one
+// GitHub sign-in serves the Git panel and the fetch pane alike. Enabled only when the deployment supplies a GitHub
+// App — the client id (public, so plain config) plus the secret resolved from env://GITHUB_OAUTH_CLIENT_SECRET (the
+// AppHost injects it from the uncommitted github-oauth.local.json). Absent → both stay null and the Git panel reports
+// "brokers no OAuth App". The callback is the pinned control-plane URL.
 GitHubBroker? gitHubBroker = null;
+ProviderBroker? providerBroker = null;
+var providerEntries = new List<ConnectedProviderOptions>();
+GitHubBrokerOptions? gitHubOptions = null;
 string? gitHubClientId = builder.Configuration["GitHubOAuth:ClientId"];
 if (!string.IsNullOrWhiteSpace(gitHubClientId))
 {
-    ISecretResolver gitHubSecrets = new SecretResolverBuilder().AddEnvironment().Build();
+    gitHubOptions = new GitHubBrokerOptions
+    {
+        ClientId = gitHubClientId,
+        ClientSecretRef = "env://GITHUB_OAUTH_CLIENT_SECRET",
+        CallbackUrl = "http://localhost:8090/arazzo/v1/github/auth/callback",
+    };
+    providerEntries.Add(gitHubOptions.ToProviderEntry());
+}
 
-    // A console logger so an exchange refusal names GitHub's error code in the composition logs —
-    // the difference between "incorrect_client_credentials" and an unreachable github.com matters.
-    Microsoft.Extensions.Logging.ILoggerFactory gitHubLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(logging => logging.AddConsole());
-    gitHubBroker = new GitHubBroker(
-        new HttpClient(),
-        new GitHubBrokerOptions
-        {
-            ClientId = gitHubClientId,
-            ClientSecretRef = "env://GITHUB_OAUTH_CLIENT_SECRET",
-            CallbackUrl = "http://localhost:8090/arazzo/v1/github/auth/callback",
-        },
-        gitHubSecrets,
-        logger: Microsoft.Extensions.Logging.LoggerFactoryExtensions.CreateLogger<GitHubBroker>(gitHubLoggerFactory));
+if (providerEntries.Count > 0)
+{
+    ISecretResolver providerSecrets = new SecretResolverBuilder().AddEnvironment().Build();
+
+    // A console logger so an exchange refusal names the provider's error code in the composition logs —
+    // the difference between "incorrect_client_credentials" and an unreachable endpoint matters.
+    Microsoft.Extensions.Logging.ILoggerFactory providerLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(logging => logging.AddConsole());
+    var providerHttpClient = new HttpClient();
+    providerBroker = new ProviderBroker(
+        providerHttpClient,
+        providerEntries,
+        providerSecrets,
+        logger: Microsoft.Extensions.Logging.LoggerFactoryExtensions.CreateLogger<ProviderBroker>(providerLoggerFactory));
+    if (gitHubOptions is not null)
+    {
+        gitHubBroker = new GitHubBroker(providerHttpClient, gitHubOptions, providerBroker);
+    }
 }
 
 // The grantee directory (§16.5.4): resolve REAL Keycloak users/groups/roles for the view/operate/administer grant
@@ -685,6 +701,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore,
     gitHubBroker: gitHubBroker,
+    providerBroker: providerBroker,
     workflowSimulator: workflowSimulator,
     // §16.5.1: route access-request approvals through the bootstrapped access-approval workflow when it is enabled —
     // approve/reject/withdraw publish the decision on access.decision (the system runner resumes the run and grants),

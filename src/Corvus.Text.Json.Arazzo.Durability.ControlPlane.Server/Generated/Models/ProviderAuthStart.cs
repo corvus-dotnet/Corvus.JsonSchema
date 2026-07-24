@@ -19,22 +19,22 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// ProviderAuthStart
 /// </summary>
 /// <remarks>
 /// <para>
-/// A server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web endpoint (workflow-designer design &#167;4.4): avoids browser CORS entirely, and an optional credential REFERENCE reuses the source-credential machinery for authenticated spec endpoints (the control plane resolves the reference; secret material never rides this API). The fetch validates and returns the document — it does not register or attach it; the caller does that with the result. Deployments restrict the scheme to https (an explicit deployment opt-in permits http) and should fence outbound destinations per their network policy.
+/// The begin-auth handshake for a connected provider (ADR 0052): navigate the browser to authorizeUrl; the state round-trips through the provider to the callback, where it identifies the principal.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct FetchSourceRequest
+public readonly partial struct ProviderAuthStart
 #if NET8_0_OR_GREATER
-    : IJsonElement<FetchSourceRequest>,
+    : IJsonElement<ProviderAuthStart>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<FetchSourceRequest>,
+    : IJsonElement<ProviderAuthStart>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct FetchSourceRequest
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="FetchSourceRequest"/> struct.
+    /// Initializes a new instance of the <see cref="ProviderAuthStart"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal FetchSourceRequest(IJsonDocument parent, int idx)
+    internal ProviderAuthStart(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct FetchSourceRequest
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static FetchSourceRequest DefaultInstance { get; }
+    public static ProviderAuthStart DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,19 +159,21 @@ public readonly partial struct FetchSourceRequest
     }
 
     /// <summary>
-    /// Gets the (optional) <c>auth</c> property.
-    /// FetchAuth
+    /// Gets the <c>authorizeUrl</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller&#39;s connection to a configured connected provider — user identity), secret (a one-shot bearer/PAT, used for this single fetch, never stored or logged), or binding (a registered &#167;13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller&#39;s reach). Omit for an anonymous fetch.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// <para>
+    /// The provider authorize URL to navigate to.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth Auth
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString AuthorizeUrl
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizeUrlUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -181,21 +183,21 @@ public readonly partial struct FetchSourceRequest
     }
 
     /// <summary>
-    /// Gets the <c>url</c> property.
+    /// Gets the <c>state</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The document URL (https; http only when the deployment opts in).
+    /// The single-use, principal-bound state embedded in authorizeUrl.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri Url
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString State
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StateUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -238,7 +240,7 @@ public readonly partial struct FetchSourceRequest
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in FetchSourceRequest left, in FetchSourceRequest right)
+    public static bool operator ==(in ProviderAuthStart left, in ProviderAuthStart right)
     {
         return left.Equals(right);
     }
@@ -251,7 +253,7 @@ public readonly partial struct FetchSourceRequest
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in FetchSourceRequest left, in FetchSourceRequest right)
+    public static bool operator !=(in ProviderAuthStart left, in ProviderAuthStart right)
     {
         return !left.Equals(right);
     }
@@ -264,7 +266,7 @@ public readonly partial struct FetchSourceRequest
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in FetchSourceRequest left, in JsonElement right)
+    public static bool operator ==(in ProviderAuthStart left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -277,7 +279,7 @@ public readonly partial struct FetchSourceRequest
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in FetchSourceRequest left, in JsonElement right)
+    public static bool operator !=(in ProviderAuthStart left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -288,7 +290,7 @@ public readonly partial struct FetchSourceRequest
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(FetchSourceRequest instance)
+    public static implicit operator JsonElement(ProviderAuthStart instance)
     {
         return JsonElement.From(instance);
     }
@@ -299,9 +301,9 @@ public readonly partial struct FetchSourceRequest
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator FetchSourceRequest(JsonElement instance)
+    public static implicit operator ProviderAuthStart(JsonElement instance)
     {
-        return FetchSourceRequest.From(instance);
+        return ProviderAuthStart.From(instance);
     }
 
     /// <summary>
@@ -310,7 +312,7 @@ public readonly partial struct FetchSourceRequest
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FetchSourceRequest From<T>(in T instance)
+    public static ProviderAuthStart From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -335,10 +337,10 @@ public readonly partial struct FetchSourceRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FetchSourceRequest ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static ProviderAuthStart ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<FetchSourceRequest>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<ProviderAuthStart>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -361,10 +363,10 @@ public readonly partial struct FetchSourceRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FetchSourceRequest ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static ProviderAuthStart ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<FetchSourceRequest>(json, options);
+        return JsonElementHelpers.ParseValue<ProviderAuthStart>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -387,10 +389,10 @@ public readonly partial struct FetchSourceRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static FetchSourceRequest ParseValue(string json, JsonDocumentOptions options = default)
+    public static ProviderAuthStart ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<FetchSourceRequest>(json, options);
+        return JsonElementHelpers.ParseValue<ProviderAuthStart>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -430,10 +432,10 @@ public readonly partial struct FetchSourceRequest
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static FetchSourceRequest ParseValue(ref Utf8JsonReader reader)
+    public static ProviderAuthStart ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<FetchSourceRequest>(ref reader);
+        return JsonElementHelpers.ParseValue<ProviderAuthStart>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -475,16 +477,16 @@ public readonly partial struct FetchSourceRequest
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out FetchSourceRequest? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out ProviderAuthStart? result)
     {
-        return JsonElementHelpers.TryParseValue<FetchSourceRequest>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<ProviderAuthStart>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new FetchSourceRequest(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new ProviderAuthStart(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -574,11 +576,11 @@ public readonly partial struct FetchSourceRequest
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static FetchSourceRequest IJsonElement<FetchSourceRequest>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static ProviderAuthStart IJsonElement<ProviderAuthStart>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"FetchSourceRequest: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"ProviderAuthStart: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -593,11 +595,11 @@ public readonly partial struct FetchSourceRequest
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="FetchSourceRequest"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="ProviderAuthStart"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="FetchSourceRequest"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="ProviderAuthStart"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -606,10 +608,10 @@ public readonly partial struct FetchSourceRequest
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public FetchSourceRequest Clone()
+    public ProviderAuthStart Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<FetchSourceRequest>(_idx);
+        return _parent.CloneElement<ProviderAuthStart>(_idx);
     }
 
     /// <summary>
@@ -617,7 +619,7 @@ public readonly partial struct FetchSourceRequest
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="FetchSourceRequest"/> that lives for the lifetime of its
+    /// An immutable <see cref="ProviderAuthStart"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -631,12 +633,12 @@ public readonly partial struct FetchSourceRequest
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public FetchSourceRequest Freeze()
+    public ProviderAuthStart Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<FetchSourceRequest>(_idx);
+            return mutable.FreezeElement<ProviderAuthStart>(_idx);
         }
 
         return this;
@@ -648,24 +650,24 @@ public readonly partial struct FetchSourceRequest
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Auth"/>.
+        /// Gets the JSON property name for <see cref="AuthorizeUrl"/>.
         /// </summary>
-        public const string Auth = "auth";
+        public const string AuthorizeUrl = "authorizeUrl";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Url"/>.
+        /// Gets the JSON property name for <see cref="State"/>.
         /// </summary>
-        public const string Url = "url";
+        public const string State = "state";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Auth"/>.
+        /// Gets the JSON property name for <see cref="AuthorizeUrl"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AuthUtf8 => "auth"u8;
+        public static ReadOnlySpan<byte> AuthorizeUrlUtf8 => "authorizeUrl"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Url"/>.
+        /// Gets the JSON property name for <see cref="State"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> UrlUtf8 => "url"u8;
+        public static ReadOnlySpan<byte> StateUtf8 => "state"u8;
     }
 
     /// <summary>
@@ -674,14 +676,14 @@ public readonly partial struct FetchSourceRequest
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Auth"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AuthorizeUrl"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Auth => "auth"u8;
+        public static ReadOnlySpan<byte> AuthorizeUrl => "authorizeUrl"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Url"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="State"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Url => "url"u8;
+        public static ReadOnlySpan<byte> State => "state"u8;
     }
 
     /// <summary>
@@ -691,13 +693,13 @@ public readonly partial struct FetchSourceRequest
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Auth"/>.
+        /// Gets the pre-baked property name blob for <see cref="AuthorizeUrl"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Auth => [0x65, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x22];
+        public static ReadOnlySpan<byte> AuthorizeUrl => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x69, 0x7A, 0x65, 0x55, 0x72, 0x6C, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Url"/>.
+        /// Gets the pre-baked property name blob for <see cref="State"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Url => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x6C, 0x22];
+        public static ReadOnlySpan<byte> State => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22];
     }
 }

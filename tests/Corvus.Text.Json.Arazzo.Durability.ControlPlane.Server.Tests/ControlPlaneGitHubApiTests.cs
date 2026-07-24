@@ -390,17 +390,20 @@ public sealed class ControlPlaneGitHubApiTests
         if (gitHubUrl is not null)
         {
             Environment.SetEnvironmentVariable("GITHUB_TEST_APP_SECRET", "app-secret");
-            broker = new GitHubBroker(
-                new HttpClient(),
-                new GitHubBrokerOptions
-                {
-                    BaseUrl = gitHubUrl,
-                    ApiBaseUrl = gitHubUrl,
-                    ClientId = "app-client-id",
-                    ClientSecretRef = "env://GITHUB_TEST_APP_SECRET",
-                    CallbackUrl = "http://localhost/github/auth/callback",
-                },
-                new SecretResolverBuilder().AddEnvironment().Build());
+            var gitHubOptions = new GitHubBrokerOptions
+            {
+                BaseUrl = gitHubUrl,
+                ApiBaseUrl = gitHubUrl,
+                ClientId = "app-client-id",
+                ClientSecretRef = "env://GITHUB_TEST_APP_SECRET",
+                CallbackUrl = "http://localhost/github/auth/callback",
+            };
+
+            // GitHub folds in as provider #1 (ADR 0052): the shared ProviderBroker owns the
+            // sign-in/custody machinery, and the GitHubBroker keeps the API surface over it.
+            var oauthClient = new HttpClient();
+            var providers = new ProviderBroker(oauthClient, [gitHubOptions.ToProviderEntry()], new SecretResolverBuilder().AddEnvironment().Build());
+            broker = new GitHubBroker(oauthClient, gitHubOptions, providers);
         }
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();

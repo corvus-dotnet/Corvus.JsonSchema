@@ -83,6 +83,7 @@ public static class ControlPlaneEndpointExtensions
     public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null, SourceDocumentFetcher? sourceFetcher = null,
         Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? workflowSimulator = null,
         GitHubBroker? gitHubBroker = null,
+        ProviderBroker? providerBroker = null,
         IWorkflowStateStore? workflowStateStore = null,
         IDraftRunStore? draftRunStore = null,
         InProcessDraftRunner? draftRunner = null,
@@ -198,10 +199,17 @@ public static class ControlPlaneEndpointExtensions
         // creator administration.
         var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger);
 
+        // The kit surfaces that key token custody by principal read the authenticated principal through the
+        // accessor in the modes whose access binding carries none (ScopesOnly).
+        IHttpContextAccessor? httpContextAccessor = endpoints.ServiceProvider.GetService<IHttpContextAccessor>();
+
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
         // membership is the management gate. The store itself is resolved above (the credentials handler reads it).
-        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher, auditLogger: auditLogger);
+        // The fetch's provider auth mode (ADR 0052) reads the caller's connected-provider token from the broker.
+        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(
+            srcStore, access, sourceFetcher, auditLogger: auditLogger,
+            providers: providerBroker, httpContext: httpContextAccessor, subjectClaimType: accessRequestSubjectClaimType);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
 
         // §18 debug runs on the durable host (workflow-designer design §18 slice 3e-2c): a debug run IS a durable
@@ -245,8 +253,13 @@ public static class ControlPlaneEndpointExtensions
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
         // wired. Token custody keys by the same subject claim the request surfaces use.
         var gitHubHandler = new ArazzoControlPlaneGitHubHandler(
-            gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
+            gitHubBroker, access, httpContextAccessor, accessRequestSubjectClaimType,
             workspaceStore: wcStore, sources: srcStore);
+
+        // The connected-providers API (ADR 0052): the registry with the caller's connection state,
+        // the brokered per-provider sign-in, and disconnect. Deployment-configured; an absent
+        // broker lists an empty registry and refuses the auth operations.
+        var providersHandler = new ArazzoControlPlaneProvidersHandler(providerBroker, access, httpContextAccessor, accessRequestSubjectClaimType);
 
         var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, auditLogger: auditLogger);
 
@@ -265,6 +278,7 @@ public static class ControlPlaneEndpointExtensions
             runnerAuthorizationsHandler,
             schedulesHandler,
             administratorsHandler,
+            providersHandler,
             accessRequestsHandler,
             availabilityRequestsHandler,
             identityHandler,

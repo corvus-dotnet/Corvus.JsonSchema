@@ -19,76 +19,50 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// ProviderList
 /// </summary>
 /// <remarks>
 /// <para>
-/// A server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web endpoint (workflow-designer design &#167;4.4): avoids browser CORS entirely, and an optional credential REFERENCE reuses the source-credential machinery for authenticated spec endpoints (the control plane resolves the reference; secret material never rides this API). The fetch validates and returns the document — it does not register or attach it; the caller does that with the result. Deployments restrict the scheme to https (an explicit deployment opt-in permits http) and should fence outbound destinations per their network policy.
+/// The deployment&#39;s connected-provider registry with the caller&#39;s connection state.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct FetchSourceRequest
-    : IJsonElement<FetchSourceRequest>
+public readonly partial struct ProviderList
+    : IJsonElement<ProviderList>
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyUrlPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("url"u8, buffer, out written);
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyUrlNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("url"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyProvidersPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("providers"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyProvidersNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("providers"u8, buffer, out written);
 
-        private const int RequiredOffsetForUrl = 0;
-        private const uint RequiredBitForUrl = 0b00000000000000000000000000000001;
+        private const int RequiredOffsetForProviders = 0;
+        private const uint RequiredBitForProviders = 0b00000000000000000000000000000001;
 
         private const uint RequiredBitMask0 =
-            RequiredBitForUrl;
-        private static readonly JsonSchemaPathProvider AuthSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/auth"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider UrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/url"u8, buffer, out written);
+            RequiredBitForProviders;
+        private static readonly JsonSchemaPathProvider ProvidersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/providers"u8, buffer, out written);
 
-        private static void MatchAuth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchProviders(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderList.ProviderSummaryArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.AuthUtf8,
-                    evaluationPath: AuthSchemaEvaluationPath);
+                    JsonPropertyNames.ProvidersUtf8,
+                    evaluationPath: ProvidersSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProviderList.ProviderSummaryArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
-        }
-
-        private static void MatchUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.UrlUtf8,
-                    evaluationPath: UrlSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
             {
                 return;
             }
 
-            requiredBitBuffer[RequiredOffsetForUrl] |= RequiredBitForUrl;
+            requiredBitBuffer[RequiredOffsetForProviders] |= RequiredBitForProviders;
         }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.AuthUtf8, MatchAuth),
-                (static () => JsonPropertyNames.UrlUtf8, MatchUrl),
-            ]);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
@@ -96,23 +70,30 @@ public readonly partial struct FetchSourceRequest
 #endif
         out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
-            return Matchers.TryGetNamedMatcher(span, out matcher);
+            if (span.SequenceEqual(JsonPropertyNames.ProvidersUtf8))
+            {
+                matcher = MatchProviders;
+                return true;
+            }
+
+            matcher = default;
+            return false;
         }
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/FetchSourceRequest"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/ProviderList"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/FetchSourceRequest";
+        public const string SchemaLocation = "/components/schemas/ProviderList";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/FetchSourceRequest"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/ProviderList"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -169,7 +150,7 @@ public readonly partial struct FetchSourceRequest
                 // Do a quick test to see if we have all of the required bits set in each element
                 if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
                 {
-                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyUrlPresent, "url"u8, "required"u8);
+                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyProvidersPresent, "providers"u8, "required"u8);
                 }
                 else if (!context.HasCollector)
                 {
@@ -178,13 +159,13 @@ public readonly partial struct FetchSourceRequest
                 }
                 else
                 {
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForUrl] & RequiredBitForUrl) == 0)
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForProviders] & RequiredBitForProviders) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyUrlNotPresent, "url"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyProvidersNotPresent, "providers"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyUrlPresent, "url"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyProvidersPresent, "providers"u8, "required"u8);
                     }
                 }
             }
