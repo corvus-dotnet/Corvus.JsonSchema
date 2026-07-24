@@ -67,6 +67,10 @@ class ArazzoEnvironmentInput extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${PICKER_CSS}
+        /* The listbox rides the top layer (popover) so a scrolling dialog or sidebar never clips it;
+           position is set per open from the input's rect. The popover UA defaults are neutralized. */
+        .results { position: fixed; inset: auto; margin: 0; }
+        .results[popover]:not(:popover-open) { display: none; }
         :host { display: block; position: relative; }
         input {
           width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border);
@@ -79,7 +83,7 @@ class ArazzoEnvironmentInput extends ArazzoElement {
       </style>
       <input type="text" part="input" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"
              placeholder="${escapeHtml(placeholder)}" aria-label="Environment" value="${escapeHtml(this.getAttribute('value') || '')}">
-      <ul class="results" role="listbox" hidden></ul>
+      <ul class="results" role="listbox" popover="manual" hidden></ul>
     `;
     const input = this.$('input');
     input.addEventListener('input', () => this.open());
@@ -133,13 +137,12 @@ class ArazzoEnvironmentInput extends ArazzoElement {
       .join('');
     // mousedown (not click) so selection runs before the input's blur closes the list.
     list.querySelectorAll('li').forEach((li) => li.addEventListener('mousedown', (e) => { e.preventDefault(); this.select(li.dataset.name); }));
-    list.hidden = false;
+    this.showList();
     input.setAttribute('aria-expanded', 'true');
   }
 
   close() {
-    const list = this.$('.results');
-    if (list) list.hidden = true;
+    this.hideList();
     this.$('input')?.setAttribute('aria-expanded', 'false');
     this._active = -1;
   }
@@ -151,6 +154,39 @@ class ArazzoEnvironmentInput extends ArazzoElement {
     this.$('input').dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     this._selecting = false;
     this.close();
+  }
+
+  
+  /** @private Place the top-layer list at the input (fixed coordinates; flips above when cramped). */
+  positionList() {
+    const input = this.$('input');
+    const list = this.$('.results');
+    if (!input || !list) return;
+    const r = input.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - 8;
+    const above = r.top - 8;
+    const placeAbove = below < 160 && above > below;
+    list.style.left = `${r.left}px`;
+    list.style.width = `${r.width}px`;
+    list.style.maxHeight = `${Math.min(280, Math.max(placeAbove ? above : below, 120))}px`;
+    if (placeAbove) { list.style.top = 'auto'; list.style.bottom = `${window.innerHeight - r.top + 4}px`; }
+    else { list.style.bottom = 'auto'; list.style.top = `${r.bottom + 4}px`; }
+  }
+
+  /** @private Show the list in the top layer (escapes dialog/sidebar clipping); no-op when already open. */
+  showList() {
+    const list = this.$('.results');
+    list.hidden = false;
+    this.positionList();
+    if (list.showPopover && !list.matches(':popover-open')) list.showPopover();
+  }
+
+  /** @private */
+  hideList() {
+    const list = this.$('.results');
+    if (!list) return;
+    list.hidden = true;
+    if (list.hidePopover && list.matches(':popover-open')) list.hidePopover();
   }
 
   onKey(e) {
