@@ -42,6 +42,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
     /** @private */ this._error = null;
     /** @private */ this._filter = '';
     /** @private */ this._expanded = new Set(); // source names whose operations are rendered
+    /** @private */ this._registryNames = new Set(); // registered source names — an inline attachment already registered offers no promote
     /** @private */ this._reqSeq = 0;
   }
 
@@ -89,6 +90,16 @@ class ArazzoOperationBrowser extends ArazzoElement {
       this._sources = sources;
       this._operations.clear();
       this._errors.clear();
+
+      // The registered source names, so the promote affordance only offers what registering could still do:
+      // a name that already exists in the registry hides "↗ register" (registering it again would conflict).
+      // A registry-read failure is non-fatal — without the knowledge the rail keeps its previous behavior.
+      try {
+        const { sources: registered } = await client.listSources({ limit: 200 });
+        if (seq === this._reqSeq) this._registryNames = new Set(registered.map((s) => s.name));
+      } catch {
+        if (seq === this._reqSeq) this._registryNames = new Set();
+      }
 
       // Load every source's surface concurrently; a single source failing (e.g. a dangling registry
       // reference) reports on ITS group without wiping the rail.
@@ -293,7 +304,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
           ${source.type ? `<span class="type">${escapeHtml(source.type)}</span>` : ''}
           <span class="count">${operations.length} op${operations.length === 1 ? '' : 's'}</span>
           <span class="spacer"></span>
-          ${source.kind !== 'registry' ? `<button class="register" type="button" data-name="${escapeHtml(source.name)}" title="Register this source in the Sources registry — publish only packages a workflow-scoped copy; registering makes it reusable and governed">↗ register</button>` : ''}
+          ${source.kind !== 'registry' && !this._registryNames.has(source.name) ? `<button class="register" type="button" data-name="${escapeHtml(source.name)}" title="Register this source in the Sources registry — publish only packages a workflow-scoped copy; registering makes it reusable and governed">↗ register</button>` : ''}
           <button class="detach" type="button" data-name="${escapeHtml(source.name)}" title="Detach this source">✕</button>
         </div>
         ${rows}

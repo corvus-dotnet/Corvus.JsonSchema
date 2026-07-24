@@ -211,6 +211,14 @@ describe('<arazzo-operation-browser> registry promotion (§7.6)', () => {
     await waitFor(() => !el.shadowRoot.querySelector('button.register[data-name="pets"]'), 'the affordance disappears once registered');
   });
 
+  it('an inline attachment whose NAME is already registered offers no ↗ register', async () => {
+    ({ el } = await browserWithSources());
+    // 'events' collides with the registry's seeded source of the same name — registering it again would
+    // conflict, so the affordance must not be offered; a fresh name keeps it.
+    ok(!el.shadowRoot.querySelector('button.register[data-name="events"]'), 'no register affordance for an already-registered name');
+    ok(el.shadowRoot.querySelector('button.register[data-name="pets"]'), 'a fresh name still offers it');
+  });
+
   it('a registry attachment never offers register', async () => {
     const mock = createMockControlPlane({ latencyMs: 0 });
     const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
