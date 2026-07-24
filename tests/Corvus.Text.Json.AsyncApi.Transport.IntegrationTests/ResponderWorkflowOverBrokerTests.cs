@@ -133,7 +133,7 @@ public class ResponderWorkflowOverBrokerTests
             Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
             ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
         using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ResponderDocument));
         ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
         return WorkflowExecutorEmitter.Emit(

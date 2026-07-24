@@ -56,7 +56,6 @@ public static class WorkflowExecutorEmitter
         // Durable mode always uses the labelled-loop state machine: the cursor (__state) is the resume point,
         // so the executor must be the loop form even for an otherwise straight-line workflow.
         bool usesControlFlow = options.Durable;
-        bool hasChannelStep = false;
 
         // Workflow-level success/failure actions apply to every step as defaults (a step's own action
         // with the same name overrides). Both these and a step's actions may be reusable $ref entries.
@@ -109,7 +108,6 @@ public static class WorkflowExecutorEmitter
                 // request/reply send is gated by its reply there (its success criteria set the step's
                 // success flag rather than throwing), so its actions dispatch like any other step's.
                 usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
-                hasChannelStep = true;
 
                 // A receive step may declare a correlationId (1.1) naming an AsyncAPI Correlation ID, so it
                 // only accepts a message carrying the token a prior send registered under that name. The
@@ -198,6 +196,24 @@ public static class WorkflowExecutorEmitter
             }
         }
 
+        // The channel (AsyncAPI) sources THIS workflow's channel steps use, with the protocol each source
+        // document declares (ADR 0051) — baked into the emitted descriptor so the host binds one broker
+        // transport per channel source from that environment's channel credential.
+        var usedMessageSources = new List<MessageSourceInfo>();
+        var seenMessageSources = new HashSet<string>(StringComparer.Ordinal);
+        foreach (ControlFlowStep boundStep in boundSteps)
+        {
+            if (boundStep.Channel is { } boundChannel && seenMessageSources.Add(boundChannel.SourceName))
+            {
+                string protocol = binder.ChannelSourceProtocol(boundChannel.SourceName)
+                    ?? throw new InvalidOperationException(
+                        $"Channel source '{boundChannel.SourceName}' declares no servers[].protocol; a channel source document must name its transport protocol (ADR 0051) so the host can bind the broker transport.");
+                usedMessageSources.Add(new MessageSourceInfo(boundChannel.SourceName, protocol));
+            }
+        }
+
+        var messaging = new MessageTransportSelection(usedMessageSources.Count > 1);
+
         // When a receive step correlates (1.1 correlationId), a per-execution register links the token a
         // prior send published to the response this receive waits for; it is keyed by correlation id name.
         bool usesCorrelation = false;
@@ -222,7 +238,7 @@ public static class WorkflowExecutorEmitter
 
         if (usesControlFlow)
         {
-            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, selection, usesCorrelation);
+            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, selection, messaging, usesCorrelation);
         }
         else
         {
@@ -235,7 +251,7 @@ public static class WorkflowExecutorEmitter
                     if (channelStep.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive)
                     {
                         string receiveStatements = ReceiveChannelStepEmitter.Emit(
-                            step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
+                            step.StepId, channelStep, messaging.ForSource(channelStep.SourceName), step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
                             stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, step.CorrelationName, step.CorrelationLocation, step.CorrelationInHeader);
                         AppendIndented(body, receiveStatements, 12);
                         stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
@@ -244,7 +260,7 @@ public static class WorkflowExecutorEmitter
                     }
 
                     string sendStatements = SendChannelStepEmitter.Emit(
-                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
+                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, messaging.ForSource(channelStep.SourceName), "workspace",
                         stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, captureCorrelation: usesCorrelation);
                     AppendIndented(body, sendStatements, 12);
 
@@ -307,7 +323,7 @@ public static class WorkflowExecutorEmitter
         // inlined and every value resolves statically, the context leaves the value path entirely.
         bool needsContext = bodyText.Contains("context", StringComparison.Ordinal);
 
-        return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), hasChannelStep, selection, usedApiSources);
+        return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), selection, usedApiSources, usedMessageSources, messaging);
     }
 
     private static List<StepArgument> ReadArguments(in JsonElement parameters, in JsonElement components)
@@ -1186,7 +1202,7 @@ public static class WorkflowExecutorEmitter
         }
     }
 
-    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body, string auxiliaryTypes, bool needsContext, IReadOnlyList<string> workflowDependsOn, bool needsMessageTransport, TransportSelection selection, IReadOnlyList<string> usedApiSources)
+    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body, string auxiliaryTypes, bool needsContext, IReadOnlyList<string> workflowDependsOn, TransportSelection selection, IReadOnlyList<string> usedApiSources, IReadOnlyList<MessageSourceInfo> usedMessageSources, MessageTransportSelection messaging)
     {
         var writer = new StringBuilder();
         writer.AppendLine("// <auto-generated>");
@@ -1239,8 +1255,15 @@ public static class WorkflowExecutorEmitter
         }
 
         // A channel step publishes through an IMessageTransport, so that transport is added to the
-        // signature only when the workflow has a channel step (HTTP-only workflows are unchanged).
-        string messageTransportParameter = needsMessageTransport ? "IMessageTransport messageTransport, " : string.Empty;
+        // signature only when the workflow has a channel step (HTTP-only workflows are unchanged). Multiple
+        // channel sources take a source-name → transport map with a hoisted local per source (ADR 0051),
+        // mirroring the multi-API-source shape.
+        bool needsMessageTransport = usedMessageSources.Count > 0;
+        string messageTransportParameter = needsMessageTransport
+            ? messaging.MultiSource
+                ? "System.Collections.Generic.IReadOnlyDictionary<string, IMessageTransport> messageTransports, "
+                : "IMessageTransport messageTransport, "
+            : string.Empty;
 
         // The durable shape threads an optional run that carries the resumable state and persists checkpoints;
         // a null run makes the executor behave exactly like the non-durable form. It returns the tri-state
@@ -1269,7 +1292,7 @@ public static class WorkflowExecutorEmitter
 
         if (needsMessageTransport)
         {
-            writer.AppendLine("        ArgumentNullException.ThrowIfNull(messageTransport);");
+            writer.Append("        ArgumentNullException.ThrowIfNull(").Append(messaging.ParameterName).AppendLine(");");
         }
 
         writer.AppendLine("        ArgumentNullException.ThrowIfNull(workspace);");
@@ -1282,6 +1305,17 @@ public static class WorkflowExecutorEmitter
             {
                 writer.Append("        IApiTransport ").Append(TransportSelection.TransportLocal(apiSource))
                     .Append(" = transports[").Append(EmitText.Quote(apiSource)).AppendLine("];");
+            }
+        }
+
+        // Hoist one message-transport local per channel source this workflow's channel steps use
+        // (multi-channel-source only), selected from the map; each channel step then uses its source's transport.
+        if (messaging.MultiSource)
+        {
+            foreach (MessageSourceInfo messageSource in usedMessageSources)
+            {
+                writer.Append("        IMessageTransport ").Append(MessageTransportSelection.TransportLocal(messageSource.Name))
+                    .Append(" = messageTransports[").Append(EmitText.Quote(messageSource.Name)).AppendLine("];");
             }
         }
 
@@ -1355,7 +1389,7 @@ public static class WorkflowExecutorEmitter
         // execution host can load and run the workflow without referencing its generated input/output types.
         if (options.Durable)
         {
-            AppendHostAdapter(writer, options, workflowId, needsMessageTransport, selection);
+            AppendHostAdapter(writer, options, workflowId, usedMessageSources, messaging, selection);
         }
 
         // Sibling types (ahead-of-time-compiled jsonpath query classes) live after the executor class
@@ -1375,11 +1409,20 @@ public static class WorkflowExecutorEmitter
     /// generated input/output types: it advertises a <see cref="WorkflowDescriptor"/>, parses the run's
     /// inputs, delegates to the static durable <c>ExecuteAsync</c>, and returns the tri-state outcome.
     /// </summary>
-    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, bool needsMessageTransport, TransportSelection selection)
+    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, IReadOnlyList<MessageSourceInfo> usedMessageSources, MessageTransportSelection messaging, TransportSelection selection)
     {
         IReadOnlyList<string> sources = options.Sources ?? [];
         string sourcesList = string.Join(", ", sources.Select(EmitText.Quote));
-        string messageTransportArgument = needsMessageTransport ? "messageTransport!, " : string.Empty;
+        string messageSourcesList = string.Join(", ", usedMessageSources.Select(s => $"new MessageSourceDescriptor({EmitText.Quote(s.Name)}, {EmitText.Quote(s.Protocol)})"));
+
+        // The uniform host contract supplies one IMessageTransport per channel-source name (ADR 0051); a
+        // single-channel-source executor picks its sole source from the map, a multi-source executor forwards
+        // the whole map, and a workflow with no channel step gets none.
+        string messageTransportArgument = usedMessageSources.Count == 0
+            ? string.Empty
+            : messaging.MultiSource
+                ? "messageTransports, "
+                : $"messageTransports[{EmitText.Quote(usedMessageSources[0].Name)}], ";
         bool typedInputs = !string.Equals(options.InputsTypeName, "Corvus.Text.Json.JsonElement", StringComparison.Ordinal);
         string inputsArgument = typedInputs ? "typedInputs" : "inputs";
 
@@ -1396,11 +1439,12 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine("{");
         writer.AppendLine("    /// <inheritdoc/>");
         writer.Append("    public WorkflowDescriptor Descriptor { get; } = new(")
-            .Append(EmitText.Quote(workflowId)).Append(", ").Append(needsMessageTransport ? "true" : "false")
-            .Append(", [").Append(sourcesList).AppendLine("]);");
+            .Append(EmitText.Quote(workflowId))
+            .Append(", [").Append(sourcesList).Append(']')
+            .Append(", [").Append(messageSourcesList).AppendLine("]);");
         writer.AppendLine();
         writer.AppendLine("    /// <inheritdoc/>");
-        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> apiTransports, IMessageTransport? messageTransport, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
+        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> apiTransports, System.Collections.Generic.IReadOnlyDictionary<string, IMessageTransport> messageTransports, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
         writer.AppendLine("    {");
         if (typedInputs)
         {

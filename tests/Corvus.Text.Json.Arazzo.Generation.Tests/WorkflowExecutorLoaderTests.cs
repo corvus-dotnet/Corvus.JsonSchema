@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Testing;
@@ -85,7 +86,7 @@ public class WorkflowExecutorLoaderTests
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         var run = new FakeWorkflowRun();
 
-        WorkflowRunResultKind kind = await loaded.Workflow.RunAsync(loaded.Workflow.Descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null, workspace, inputs.RootElement, run, default);
+        WorkflowRunResultKind kind = await loaded.Workflow.RunAsync(loaded.Workflow.Descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports, workspace, inputs.RootElement, run, default);
 
         kind.ShouldBe(WorkflowRunResultKind.Completed);
         run.Completed.ShouldBeTrue();

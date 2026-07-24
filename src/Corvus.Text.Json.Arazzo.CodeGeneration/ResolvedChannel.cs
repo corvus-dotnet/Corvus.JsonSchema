@@ -25,6 +25,9 @@ public readonly record struct ResolvedChannel(
 /// </summary>
 /// <param name="Name">The source description name (must match the Arazzo <c>sourceDescriptions</c> name).</param>
 /// <param name="Channels">The channel operations the source exposes.</param>
+/// <param name="Protocol">The transport protocol the source document's <c>servers</c> declare
+/// (<c>servers[].protocol</c>, ADR 0051), or <see langword="null"/> when the document declares none.</param>
 public readonly record struct SourceDescriptionChannels(
     string Name,
-    IReadOnlyList<AsyncApiChannelDescriptor> Channels);
+    IReadOnlyList<AsyncApiChannelDescriptor> Channels,
+    string? Protocol = null);

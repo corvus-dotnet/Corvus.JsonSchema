@@ -232,7 +232,7 @@ public sealed class DraftRunMetadataTraceTests
         var resumer = new HostedWorkflowResumer(
             catalog,
             loader,
-            (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)recorder, StringComparer.Ordinal), null));
+            (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)recorder, StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"email":"ada@example.com"}"""));
         using (WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-paused", versionId, inputs.RootElement, "development"))
@@ -319,7 +319,7 @@ public sealed class DraftRunMetadataTraceTests
                 apiTransports[source] = new RecordingApiTransport(new HttpClientTransport(client, disposeClient: false), recording);
             }
 
-            return new WorkflowTransports(apiTransports, null);
+            return new WorkflowTransports(apiTransports, WorkflowTransports.NoMessageTransports);
         };
 
     private static async Task<(InMemoryWorkflowCatalogStore Catalog, string VersionId)> CatalogAsync()

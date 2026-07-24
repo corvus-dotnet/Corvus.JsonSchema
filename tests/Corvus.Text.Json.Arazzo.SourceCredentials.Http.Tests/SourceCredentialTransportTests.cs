@@ -160,7 +160,7 @@ public sealed class SourceCredentialTransportTests
         var sourceClients = new Dictionary<string, HttpClient> { ["petstore"] = petsClient, ["billing"] = billingClient };
 
         WorkflowTransportBinder binder = SourceCredentialTransports.CreateBinder(sourceClients, "production", f.Cache);
-        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"]), default);
+        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", ["petstore", "billing"], MessageSources: []), default);
 
         transports.ApiTransports.Keys.OrderBy(k => k).ShouldBe(["billing", "petstore"]);
         foreach (IApiTransport transport in transports.ApiTransports.Values)

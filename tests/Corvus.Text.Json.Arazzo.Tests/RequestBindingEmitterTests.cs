@@ -189,7 +189,7 @@ public class RequestBindingEmitterTests
     public void Expression_request_body_is_re_wrapped_as_the_body_source()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
-            CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null,
+            CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null, "createPet",
             new StepBody("$inputs.pet", ArgumentValueKind.Expression));
 
         code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"pet\"u8, out JsonElement createPet_BodyValue);");
@@ -200,7 +200,7 @@ public class RequestBindingEmitterTests
     public void Literal_string_request_body_is_passed_as_a_utf8_content_span()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
-            CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null,
+            CreatePet, [], "context", "CreatePet_", NoSteps, "inputs", null, "createPet",
             new StepBody("electronic", ArgumentValueKind.LiteralString));
 
         code.NamedArguments.ShouldContain("body: \"electronic\"u8");
@@ -210,12 +210,12 @@ public class RequestBindingEmitterTests
     public void No_body_is_bound_when_the_operation_has_no_body_type()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
-            GetPet, [new StepArgument("petId", "$inputs.petId")], "context", "GetPet_", NoSteps, "inputs", null,
+            GetPet, [new StepArgument("petId", "$inputs.petId")], "context", "GetPet_", NoSteps, "inputs", null, "getPet",
             new StepBody("$inputs.pet", ArgumentValueKind.Expression));
 
         code.NamedArguments.ShouldNotContain(a => a.StartsWith("body:", StringComparison.Ordinal));
     }
 
     private static RequestBindingCode Emit(IReadOnlyList<StepArgument> arguments)
-        => RequestBindingEmitter.Emit(GetPet, arguments, "context", "GetPet_", NoSteps, "inputs", null);
+        => RequestBindingEmitter.Emit(GetPet, arguments, "context", "GetPet_", NoSteps, "inputs", null, "getPet");
 }

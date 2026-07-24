@@ -34,7 +34,7 @@ public class Coverage_GeneratorEmitterTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("order", "Gen.Events.Order", null, null, "PublishOrderAsync")]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         Should.Throw<NotSupportedException>(() => Emit(binder, """
             {

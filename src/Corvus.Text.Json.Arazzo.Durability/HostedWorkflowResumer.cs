@@ -12,8 +12,12 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>The transports a run executes through, resolved per run from its workflow's descriptor.</summary>
 /// <param name="ApiTransports">The API transports the workflow's OpenAPI operation steps call through, keyed by source-description name (<see cref="WorkflowDescriptor.Sources"/>) — one per API source the version uses. The resumer disposes them after the run.</param>
-/// <param name="MessageTransport">The message transport for AsyncAPI channel steps, or <see langword="null"/> when the workflow needs none. Its lifetime is owned by the binder (typically shared/long-lived), not the resumer.</param>
-public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IApiTransport> ApiTransports, IMessageTransport? MessageTransport);
+/// <param name="MessageTransports">The message transports the workflow's AsyncAPI channel steps send/receive on, keyed by channel-source name (<see cref="WorkflowDescriptor.MessageSources"/>, ADR 0051) — empty when the workflow needs none. Their lifetimes are owned by the binder (shared per source × environment, connection-scoped), not the resumer.</param>
+public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IApiTransport> ApiTransports, IReadOnlyDictionary<string, IMessageTransport> MessageTransports)
+{
+    /// <summary>An empty message-transport map for workflows with no channel steps.</summary>
+    public static readonly IReadOnlyDictionary<string, IMessageTransport> NoMessageTransports = System.Collections.Immutable.ImmutableDictionary<string, IMessageTransport>.Empty;
+}
 
 /// <summary>
 /// Binds a workflow's <see cref="WorkflowDescriptor"/> (its source names + transport needs) to the concrete
@@ -81,7 +85,7 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
         if (this.scheduleWorkflow is { } scheduler && string.Equals(run.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
         {
             using JsonWorkspace scheduleWorkspace = JsonWorkspace.CreateUnrented();
-            return await scheduler.RunAsync(ImmutableDictionary<string, IApiTransport>.Empty, null, scheduleWorkspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
+            return await scheduler.RunAsync(ImmutableDictionary<string, IApiTransport>.Empty, WorkflowTransports.NoMessageTransports, scheduleWorkspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
 
         IHostedWorkflow hosted = await this.resolver.ResolveAsync(run, cancellationToken).ConfigureAwait(false);

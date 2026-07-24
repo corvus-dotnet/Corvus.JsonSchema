@@ -22,13 +22,13 @@ public sealed class WorkflowTransportRegistryTests
         var factory = new CountingFactory();
         var registry = new WorkflowTransportRegistry(
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = factory },
-            new InMemoryMessageTransport());
+            new Dictionary<string, IMessageTransport> { ["events"] = new InMemoryMessageTransport() });
 
-        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]));
+        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore"], MessageSources: []));
 
         transports.ApiTransports.Count.ShouldBe(1);
         transports.ApiTransports["petstore"].ShouldNotBeNull();
-        transports.MessageTransport.ShouldBeNull();
+        transports.MessageTransports.ShouldBeEmpty();
         factory.Created.ShouldBe(1);
     }
 
@@ -38,11 +38,11 @@ public sealed class WorkflowTransportRegistryTests
         var message = new InMemoryMessageTransport();
         var registry = new WorkflowTransportRegistry(
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() },
-            message);
+            new Dictionary<string, IMessageTransport> { ["events"] = message });
 
-        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: true, ["petstore"]));
+        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore"], [new MessageSourceDescriptor("events", "nats")]));
 
-        transports.MessageTransport.ShouldBeSameAs(message);
+        transports.MessageTransports["events"].ShouldBeSameAs(message);
     }
 
     [TestMethod]
@@ -51,7 +51,7 @@ public sealed class WorkflowTransportRegistryTests
         var registry = new WorkflowTransportRegistry(new Dictionary<string, IApiTransportFactory>());
 
         Should.Throw<WorkflowTransportBindingException>(
-            () => registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"])))
+            () => registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore"], MessageSources: [])))
             .Message.ShouldContain("petstore");
     }
 
@@ -62,8 +62,8 @@ public sealed class WorkflowTransportRegistryTests
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() });
 
         Should.Throw<WorkflowTransportBindingException>(
-            () => registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: true, ["petstore"])))
-            .Message.ShouldContain("message transport");
+            () => registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore"], [new MessageSourceDescriptor("events", "nats")])))
+            .Message.ShouldContain("events");
     }
 
     [TestMethod]
@@ -78,7 +78,7 @@ public sealed class WorkflowTransportRegistryTests
                 ["billing"] = billing,
             });
 
-        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"]));
+        WorkflowTransports transports = registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore", "billing"], MessageSources: []));
 
         transports.ApiTransports.Count.ShouldBe(2);
         transports.ApiTransports["petstore"].ShouldNotBeNull();
@@ -94,7 +94,7 @@ public sealed class WorkflowTransportRegistryTests
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() });
 
         Should.Throw<WorkflowTransportBindingException>(
-            () => registry.Bind(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore", "billing"])))
+            () => registry.Bind(new WorkflowDescriptor("orders-v1", ["petstore", "billing"], MessageSources: [])))
             .Message.ShouldContain("billing");
     }
 
@@ -105,7 +105,7 @@ public sealed class WorkflowTransportRegistryTests
         var registry = new WorkflowTransportRegistry(new Dictionary<string, IApiTransportFactory> { ["petstore"] = factory });
 
         Should.Throw<WorkflowTransportBindingException>(
-            () => registry.Validate(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["unconfigured"])));
+            () => registry.Validate(new WorkflowDescriptor("orders-v1", ["unconfigured"], MessageSources: [])));
         factory.Created.ShouldBe(0);
     }
 
@@ -116,7 +116,7 @@ public sealed class WorkflowTransportRegistryTests
             new Dictionary<string, IApiTransportFactory> { ["petstore"] = new CountingFactory() });
 
         WorkflowTransportBinder binder = registry.AsBinder();
-        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", NeedsMessageTransport: false, ["petstore"]), default);
+        WorkflowTransports transports = binder(new WorkflowDescriptor("orders-v1", ["petstore"], MessageSources: []), default);
 
         transports.ApiTransports["petstore"].ShouldNotBeNull();
     }

@@ -242,7 +242,10 @@ public static class ArazzoGenerationDriver
                             .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, cancellationToken, progress)
                             .ConfigureAwait(false);
 
-                        channelSources.Add(new SourceDescriptionChannels(name, channels));
+                        // The document's servers[].protocol names the broker transport family (ADR 0051); it is
+                        // baked into the executor's descriptor so the host binds the matching transport factory
+                        // per channel source. Absent servers surface at emit time for workflows that use the source.
+                        channelSources.Add(new SourceDescriptionChannels(name, channels, ReadServerProtocol(documentLoader(specUri))));
                     }
                     else if (sourceType == "arazzo")
                     {
@@ -442,6 +445,29 @@ public static class ArazzoGenerationDriver
         string ext = Path.GetExtension(path);
         return ext.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
             || ext.Equals(".yml", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Reads the first servers[].protocol an AsyncAPI document declares (ADR 0051), or null when it has none.
+    private static string? ReadServerProtocol(byte[]? documentBytes)
+    {
+        if (documentBytes is null)
+        {
+            return null;
+        }
+
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(documentBytes);
+        if (document.RootElement.TryGetProperty("servers"u8, out JsonElement servers) && servers.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> server in servers.EnumerateObject())
+            {
+                if (server.Value.TryGetProperty("protocol"u8, out JsonElement protocol) && protocol.ValueKind == JsonValueKind.String)
+                {
+                    return protocol.GetString();
+                }
+            }
+        }
+
+        return null;
     }
 }
 

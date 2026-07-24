@@ -318,7 +318,7 @@ public class DurableRunPauseTests
         var resumer = new HostedWorkflowResumer(
             catalog,
             loader,
-            (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+            (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
         return resumer.AsResumer();
     }
 

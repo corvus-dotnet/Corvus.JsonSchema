@@ -418,7 +418,7 @@ public sealed class InProcessDraftRunnerTests
                 source => source,
                 _ => (IApiTransport)new HttpClientTransport(client, disposeClient: false),
                 StringComparer.Ordinal);
-            return new WorkflowTransports(apiTransports, null);
+            return new WorkflowTransports(apiTransports, WorkflowTransports.NoMessageTransports);
         };
 
     private static JsonElement At(JsonElement array, int index)

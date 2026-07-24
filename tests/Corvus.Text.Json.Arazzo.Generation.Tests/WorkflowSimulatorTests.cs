@@ -1192,6 +1192,7 @@ public sealed class WorkflowSimulatorTests
         {
           "asyncapi": "3.0.0",
           "info": { "title": "Notifications", "version": "1.0.0" },
+          "servers": { "broker": { "host": "nats:4222", "protocol": "nats" } },
           "channels": {
             "accessNotify": { "address": "access.notify", "messages": { "note": { "payload": { "type": "object", "properties": { "requestId": { "type": "string" }, "kind": { "type": "string" } } } } } },
             "accessDecisions": { "address": "access.decision", "messages": { "decision": { "payload": { "type": "object", "properties": { "outcome": { "type": "string" } } } } } }
@@ -1266,6 +1267,7 @@ public sealed class WorkflowSimulatorTests
         {
           "asyncapi": "3.0.0",
           "info": { "title": "Kyc", "version": "1.0.0" },
+          "servers": { "broker": { "host": "nats:4222", "protocol": "nats" } },
           "channels": {
             "kycRequests": { "address": "kyc.requests", "messages": { "request": { "payload": { "type": "object", "properties": { "docId": { "type": "string" } } } } } },
             "kycReplies": { "address": "kyc.replies", "messages": { "verdict": { "payload": { "type": "object", "properties": { "approved": { "type": "boolean" }, "score": { "type": "number" } } } } } }

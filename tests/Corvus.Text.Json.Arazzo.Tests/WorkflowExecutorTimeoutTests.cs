@@ -199,7 +199,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         string source;
         using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveTimeoutDocument)))

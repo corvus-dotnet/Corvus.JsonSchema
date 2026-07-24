@@ -31,3 +31,36 @@ internal readonly record struct TransportSelection(bool MultiSource)
     public static string TransportLocal(string sourceName)
         => EmitText.ToCamelCase(EmitText.ToPascalCase(sourceName)) + "Transport";
 }
+
+/// <summary>
+/// Whether the emitted executor takes one <c>IMessageTransport</c> (a single channel source) or a
+/// source-name → transport map with a hoisted local per channel source (ADR 0051) — the message analogue of
+/// <see cref="TransportSelection"/>.
+/// </summary>
+/// <param name="MultiSource">Whether the workflow's channel steps span more than one AsyncAPI source.</param>
+internal readonly record struct MessageTransportSelection(bool MultiSource)
+{
+    /// <summary>The parameter name carrying the message transport(s) on the emitted <c>ExecuteAsync</c>.</summary>
+    public string ParameterName => this.MultiSource ? "messageTransports" : "messageTransport";
+
+    /// <summary>The transport expression a channel step belonging to <paramref name="sourceName"/> uses (the hoisted local in multi-source mode, else the single parameter).</summary>
+    /// <param name="sourceName">The channel source description name the step belongs to.</param>
+    /// <returns>The in-scope transport expression.</returns>
+    public string ForSource(string sourceName)
+        => this.MultiSource ? TransportLocal(sourceName) : "messageTransport";
+
+    /// <summary>The hoisted local name for a channel source's transport in multi-source mode.</summary>
+    /// <param name="sourceName">The channel source description name.</param>
+    /// <returns>A camelCase local identifier, e.g. <c>notificationsMessageTransport</c>.</returns>
+    public static string TransportLocal(string sourceName)
+        => EmitText.ToCamelCase(EmitText.ToPascalCase(sourceName)) + "MessageTransport";
+}
+
+/// <summary>
+/// One channel (AsyncAPI) source a workflow's channel steps use: its <c>sourceDescriptions</c> name and the
+/// transport protocol its source document declares (<c>servers[].protocol</c>, ADR 0051) — baked into the
+/// emitted descriptor so the host binds a broker transport per channel source.
+/// </summary>
+/// <param name="Name">The channel source description name.</param>
+/// <param name="Protocol">The declared transport protocol (e.g. <c>nats</c>).</param>
+internal readonly record struct MessageSourceInfo(string Name, string Protocol);

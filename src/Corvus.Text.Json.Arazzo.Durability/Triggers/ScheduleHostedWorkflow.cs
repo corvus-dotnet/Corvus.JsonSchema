@@ -52,12 +52,12 @@ public sealed class ScheduleHostedWorkflow : IHostedWorkflow
     }
 
     /// <inheritdoc/>
-    public WorkflowDescriptor Descriptor => new(ScheduleWorkflowId, NeedsMessageTransport: false, Sources: []);
+    public WorkflowDescriptor Descriptor => new(ScheduleWorkflowId, Sources: [], MessageSources: []);
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunResultKind> RunAsync(
         IReadOnlyDictionary<string, IApiTransport> apiTransports,
-        IMessageTransport? messageTransport,
+        IReadOnlyDictionary<string, IMessageTransport> messageTransports,
         JsonWorkspace workspace,
         JsonElement inputs,
         IWorkflowRun run,

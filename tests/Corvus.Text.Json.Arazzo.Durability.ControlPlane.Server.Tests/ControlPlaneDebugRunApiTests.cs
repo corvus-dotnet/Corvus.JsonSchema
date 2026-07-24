@@ -119,6 +119,7 @@ public sealed class ControlPlaneDebugRunApiTests
         {
           "asyncapi": "3.0.0",
           "info": { "title": "Events", "version": "1.0.0" },
+          "servers": { "broker": { "host": "nats:4222", "protocol": "nats" } },
           "channels": {
             "kycResults": {
               "address": "kyc.verdict",
@@ -551,8 +552,10 @@ public sealed class ControlPlaneDebugRunApiTests
             $$"""{"document":{{EventsDoc}}}""", "workspace:write")).StatusCode.ShouldBe(HttpStatusCode.OK);
         await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
         await host.BindCredentialAsync("petstore", "development");
-        // Deliberately NO binding for 'events': an asyncapi source rides the runner's message
-        // transport and must not be credential-gated (it used to be — this start would 409).
+
+        // The 'events' channel source needs its binding too (ADR 0051): readiness is uniform across source
+        // kinds — an asyncapi source binds the environment's broker through its channel credential.
+        await host.BindCredentialAsync("events", "development");
 
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"await-verdict","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
@@ -637,7 +640,9 @@ public sealed class ControlPlaneDebugRunApiTests
             WorkflowTransportBinder binder = (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
                 new WorkflowTransports(
                     descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)mock, StringComparer.Ordinal),
-                    messageTransport);
+                    messageTransport is { } sharedTransport
+                        ? descriptor.MessageSources.ToDictionary(source => source.Name, _ => sharedTransport, StringComparer.Ordinal)
+                        : WorkflowTransports.NoMessageTransports);
             runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, traceStore, SharedProvider, binder);
         }
 

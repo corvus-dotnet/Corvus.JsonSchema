@@ -120,6 +120,14 @@ public sealed class WorkflowSimulator : IDisposable
         var triggerQueue = new SimulationTriggerQueue(scenario.Triggers);
         var messageTransport = new SimulationMessageTransport(transport, triggerQueue);
 
+        // Per-source message transports (ADR 0051): the simulator serves every channel source with the same
+        // recording transport — protocol and broker credentials are live-run concerns the mock stands in for.
+        var messageTransports = new Dictionary<string, IMessageTransport>(StringComparer.Ordinal);
+        foreach (MessageSourceDescriptor messageSource in loaded.Workflow.Descriptor.MessageSources)
+        {
+            messageTransports[messageSource.Name] = messageTransport;
+        }
+
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
         var subWorkflowStepIds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -146,7 +154,7 @@ public sealed class WorkflowSimulator : IDisposable
         {
             using var wallClock = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             wallClock.CancelAfter(budget.WallClock);
-            outcome = await this.RunToOutcomeAsync(loaded, transports, messageTransport, triggerQueue, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
+            outcome = await this.RunToOutcomeAsync(loaded, transports, messageTransports, triggerQueue, workspace, scenario, run, clock, clockAdvances, wallClock, cancellationToken).ConfigureAwait(false);
         }
 
         var result = new SimulationResult(new CompositeDisposable(owned))
@@ -172,7 +180,7 @@ public sealed class WorkflowSimulator : IDisposable
     private async ValueTask<SimulationOutcome> RunToOutcomeAsync(
         LoadedWorkflow loaded,
         IReadOnlyDictionary<string, IApiTransport> transports,
-        IMessageTransport messageTransport,
+        IReadOnlyDictionary<string, IMessageTransport> messageTransports,
         SimulationTriggerQueue triggerQueue,
         JsonWorkspace workspace,
         SimulationScenario scenario,
@@ -201,7 +209,7 @@ public sealed class WorkflowSimulator : IDisposable
                 // Skip protocol replayed).
                 run.SkipOverriddenSteps();
                 run.BeginInvocation();
-                kind = await loaded.Workflow.RunAsync(transports, messageTransport, workspace, scenario.Inputs, run, wallClock.Token).ConfigureAwait(false);
+                kind = await loaded.Workflow.RunAsync(transports, messageTransports, workspace, scenario.Inputs, run, wallClock.Token).ConfigureAwait(false);
             }
             catch (SimulationSkipException)
             {

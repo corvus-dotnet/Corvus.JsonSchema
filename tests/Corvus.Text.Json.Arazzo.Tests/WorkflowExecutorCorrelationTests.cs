@@ -318,7 +318,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("reply", "Corvus.Text.Json.JsonElement", null, null, null, null, "corr", correlationLocation)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive], "nats")]);
 
         using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
         ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
@@ -350,7 +350,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("reply", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, null, null, "corr", "$message.header#/correlationId")]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive], "nats")]);
 
         using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
         ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();

@@ -160,7 +160,7 @@ public sealed class DraftRunHostEndToEndTests
                 source => source,
                 _ => (IApiTransport)new HttpClientTransport(client, disposeClient: false),
                 StringComparer.Ordinal);
-            return new WorkflowTransports(apiTransports, null);
+            return new WorkflowTransports(apiTransports, WorkflowTransports.NoMessageTransports);
         };
 
     // A real HTTP server on a loopback port: it accepts requests over a real socket, records each one, and returns a

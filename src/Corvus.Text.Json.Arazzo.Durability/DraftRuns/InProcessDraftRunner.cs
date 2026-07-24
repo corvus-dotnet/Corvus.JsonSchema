@@ -435,7 +435,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
             recordingTransports[pair.Key] = new RecordingApiTransport(pair.Value, recording);
         }
 
-        return new WorkflowTransports(recordingTransports, bound.MessageTransport);
+        return new WorkflowTransports(recordingTransports, bound.MessageTransports);
     }
 
     private async ValueTask AssembleTraceAsync(WorkflowRun run, DraftRunRecording recording, CancellationToken cancellationToken)

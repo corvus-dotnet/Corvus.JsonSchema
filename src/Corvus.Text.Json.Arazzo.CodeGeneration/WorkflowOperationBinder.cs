@@ -236,6 +236,24 @@ public sealed class WorkflowOperationBinder
         throw new InvalidOperationException(
             $"operationPath '{operationPath}' does not resolve to any source description operation.");
     }
+
+    /// <summary>Gets the transport protocol the named AsyncAPI source description declares (its document's
+    /// <c>servers[].protocol</c>, ADR 0051), or <see langword="null"/> when the source is unknown or its
+    /// document declares no servers.</summary>
+    /// <param name="sourceName">The channel source description name.</param>
+    /// <returns>The protocol (e.g. <c>nats</c>), or <see langword="null"/>.</returns>
+    public string? ChannelSourceProtocol(string sourceName)
+    {
+        foreach (SourceDescriptionChannels source in this.channelSources)
+        {
+            if (string.Equals(source.Name, sourceName, StringComparison.Ordinal))
+            {
+                return source.Protocol;
+            }
+        }
+
+        return null;
+    }
 }
 
 /// <summary>

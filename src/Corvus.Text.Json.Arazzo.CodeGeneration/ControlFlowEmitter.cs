@@ -40,6 +40,7 @@ internal static class ControlFlowEmitter
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
         TransportSelection selection,
+        MessageTransportSelection messaging = default,
         bool usesCorrelation = false)
     {
         // A goto targets a step by id; build the id→state-index map and pre-register every step's
@@ -136,7 +137,7 @@ internal static class ControlFlowEmitter
             }
             else if (steps[i].Channel is not null)
             {
-                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection, usesCorrelation);
+                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, selection, messaging, usesCorrelation);
             }
             else
             {
@@ -693,10 +694,12 @@ internal static class ControlFlowEmitter
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
         TransportSelection selection,
+        MessageTransportSelection messaging,
         bool usesCorrelation)
     {
         ResolvedChannel channel = step.Channel!.Value;
         AsyncApiChannelDescriptor descriptor = channel.Channel;
+        string messageTransportVariable = messaging.ForSource(channel.SourceName);
         bool isReceive = descriptor.Action == OperationAction.Receive;
         string identifier = EmitText.SanitizeIdentifier(step.StepId);
         string prefix = $"{identifier}_";
@@ -732,7 +735,7 @@ internal static class ControlFlowEmitter
 
         if (isReceive)
         {
-            EmitReceiveBody(work, step, index, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options, channelToken);
+            EmitReceiveBody(work, step, index, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options, channelToken, messageTransportVariable);
         }
         else
         {
@@ -741,7 +744,7 @@ internal static class ControlFlowEmitter
             // actions dispatch on the reply), projecting the reply as the step's outputs on success.
             bool isRequestReply = descriptor.ReplyPayloadTypeName is not null;
             string send = SendChannelStepEmitter.Emit(
-                step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
+                step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, messageTransportVariable, "workspace",
                 stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken,
                 captureCorrelation: usesCorrelation, successFlagLocal: isRequestReply ? $"{camel}Success" : null);
             WorkflowExecutorEmitter.AppendIndented(work, send, 4);
@@ -793,7 +796,8 @@ internal static class ControlFlowEmitter
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
         in WorkflowExecutorOptions options,
-        string cancellationTokenExpression)
+        string cancellationTokenExpression,
+        string messageTransportVariable)
     {
         ReceiveChannelStepEmitter.ValidateCriteria(step.StepId, step.SuccessCriteria);
 
@@ -866,7 +870,7 @@ internal static class ControlFlowEmitter
                 step.StepId, step.RequestBody, replyType, payloadLocal, "workspace", $"{prefix}reply", "inputs", stepOutputLocals, options.InputAccessors, fields, lambdaBody);
             lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
 
-            c.Append("    await messageTransport.ReceiveOneAndReplyAsync<").Append(payloadType).Append(", ").Append(replyType).Append(">(")
+            c.Append("    await ").Append(messageTransportVariable).Append(".ReceiveOneAndReplyAsync<").Append(payloadType).Append(", ").Append(replyType).Append(">(")
                 .Append(address).AppendLine(", (message, messageHeaders) =>");
             c.AppendLine("    {");
             WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
@@ -891,7 +895,7 @@ internal static class ControlFlowEmitter
             {
                 t.Append("    if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
                 t.AppendLine("    {");
-                t.Append("        await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+                t.Append("        await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType).Append(">(")
                     .Append(address).AppendLine(", (message, messageHeaders) =>");
                 t.AppendLine("        {");
                 WorkflowExecutorEmitter.AppendIndented(t, lambdaBody.ToString(), 12);
@@ -902,7 +906,7 @@ internal static class ControlFlowEmitter
             }
             else
             {
-                t.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+                t.Append("    await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType).Append(">(")
                     .Append(address).AppendLine(", (message, messageHeaders) =>");
                 t.AppendLine("    {");
                 WorkflowExecutorEmitter.AppendIndented(t, lambdaBody.ToString(), 8);

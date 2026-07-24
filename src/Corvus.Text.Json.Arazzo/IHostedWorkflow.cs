@@ -29,7 +29,7 @@ public interface IHostedWorkflow
     /// Starts or resumes a durable run of the workflow, returning the tri-state outcome.
     /// </summary>
     /// <param name="apiTransports">The API transports the workflow's OpenAPI operation steps call through, keyed by source-description name (see <see cref="WorkflowDescriptor.Sources"/>). A single-source workflow's adapter reads its sole source from this map; a multi-source workflow selects per source.</param>
-    /// <param name="messageTransport">The message transport for AsyncAPI channel steps, or <see langword="null"/> when <see cref="WorkflowDescriptor.NeedsMessageTransport"/> is <see langword="false"/>.</param>
+    /// <param name="messageTransports">The message transports the workflow's AsyncAPI channel steps send/receive on, keyed by channel-source name (see <see cref="WorkflowDescriptor.MessageSources"/>, ADR 0051) — each bound from that environment's channel credential. Empty when <see cref="WorkflowDescriptor.NeedsMessageTransport"/> is <see langword="false"/>.</param>
     /// <param name="workspace">The JSON workspace the run builds its values in.</param>
     /// <param name="inputs">The run's inputs as a <see cref="JsonElement"/> (the host reads these from the run record); the adapter parses them into the workflow's generated inputs type.</param>
     /// <param name="run">The durable run to start (a freshly created run) or resume (a restored checkpoint).</param>
@@ -37,7 +37,7 @@ public interface IHostedWorkflow
     /// <returns>The run outcome: completed, faulted, or suspended.</returns>
     ValueTask<WorkflowRunResultKind> RunAsync(
         IReadOnlyDictionary<string, IApiTransport> apiTransports,
-        IMessageTransport? messageTransport,
+        IReadOnlyDictionary<string, IMessageTransport> messageTransports,
         JsonWorkspace workspace,
         JsonElement inputs,
         IWorkflowRun run,

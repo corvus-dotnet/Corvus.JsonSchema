@@ -36,7 +36,7 @@ public sealed class ScheduleHostedWorkflowTests
         using JsonWorkspace workspace = JsonWorkspace.Create();
         var run = new FakeSchedulerRun(restoredWatermark: null);
 
-        WorkflowRunResultKind kind = await scheduler.RunAsync(NoTransports, null, workspace, inputs.RootElement, run, default);
+        WorkflowRunResultKind kind = await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, workspace, inputs.RootElement, run, default);
 
         // Fresh run: the watermark is seeded to now (08:00), so the 09:00 occurrence is not yet due — nothing fires,
         // and it suspends the one hour until 09:00.
@@ -62,7 +62,7 @@ public sealed class ScheduleHostedWorkflowTests
         using ParsedJsonDocument<JsonElement> watermark = Instant(new DateTimeOffset(2026, 6, 12, 8, 0, 0, TimeSpan.Zero));
         var run = new FakeSchedulerRun(watermark.RootElement);
 
-        WorkflowRunResultKind kind = await scheduler.RunAsync(NoTransports, null, workspace, inputs.RootElement, run, default);
+        WorkflowRunResultKind kind = await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, workspace, inputs.RootElement, run, default);
 
         kind.ShouldBe(WorkflowRunResultKind.Suspended);
         run.SuspendDelay.ShouldBe(TimeSpan.FromHours(1));
@@ -83,8 +83,8 @@ public sealed class ScheduleHostedWorkflowTests
 
         // Two entries over the same due window (the 14th's 09:00) — as if a lease expired and another runner
         // re-entered — resolve to the same idempotent target run, not two.
-        await scheduler.RunAsync(NoTransports, null, workspace, inputs.RootElement, new FakeSchedulerRun(watermark.RootElement), default);
-        await scheduler.RunAsync(NoTransports, null, workspace, inputs.RootElement, new FakeSchedulerRun(watermark.RootElement), default);
+        await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, workspace, inputs.RootElement, new FakeSchedulerRun(watermark.RootElement), default);
+        await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, workspace, inputs.RootElement, new FakeSchedulerRun(watermark.RootElement), default);
 
         (await CountPending(management)).ShouldBe(1);
     }
@@ -102,7 +102,7 @@ public sealed class ScheduleHostedWorkflowTests
         WorkflowResumer resume = async (r, ct) =>
         {
             using JsonWorkspace ws = JsonWorkspace.CreateUnrented();
-            return await scheduler.RunAsync(NoTransports, null, ws, r.Inputs, r, ct);
+            return await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, ws, r.Inputs, r, ct);
         };
 
         // Register the schedule as a durable "$schedule" run and run it fresh: nothing is due yet, so it suspends
@@ -111,7 +111,7 @@ public sealed class ScheduleHostedWorkflowTests
         using (JsonWorkspace ws = JsonWorkspace.CreateUnrented())
         using (WorkflowRun run = WorkflowRun.CreateNew(store, "sched-1", ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time))
         {
-            (await scheduler.RunAsync(NoTransports, null, ws, run.Inputs, run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
+            (await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, ws, run.Inputs, run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
         }
 
         (await CountPending(management)).ShouldBe(0);
@@ -144,7 +144,7 @@ public sealed class ScheduleHostedWorkflowTests
         WorkflowResumer resume = async (r, ct) =>
         {
             using JsonWorkspace ws = JsonWorkspace.CreateUnrented();
-            return await scheduler.RunAsync(NoTransports, null, ws, r.Inputs, r, ct);
+            return await scheduler.RunAsync(NoTransports, WorkflowTransports.NoMessageTransports, ws, r.Inputs, r, ct);
         };
 
         using ParsedJsonDocument<JsonElement> inputs = Inputs("s1", "0 9 * * *", "adopt-v1");

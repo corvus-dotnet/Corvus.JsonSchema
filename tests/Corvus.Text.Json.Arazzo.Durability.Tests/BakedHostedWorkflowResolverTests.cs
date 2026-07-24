@@ -72,11 +72,11 @@ public class BakedHostedWorkflowResolverTests
     // RunAsync is never reached by a resolver test (the resolver hands the instance back; the host runs it).
     private sealed class FakeHostedWorkflow(string workflowId) : IHostedWorkflow
     {
-        public WorkflowDescriptor Descriptor { get; } = new(workflowId, false, []);
+        public WorkflowDescriptor Descriptor { get; } = new(workflowId, [], []);
 
         public ValueTask<WorkflowRunResultKind> RunAsync(
             IReadOnlyDictionary<string, IApiTransport> apiTransports,
-            IMessageTransport? messageTransport,
+            IReadOnlyDictionary<string, IMessageTransport> messageTransports,
             JsonWorkspace workspace,
             JsonElement inputs,
             IWorkflowRun run,

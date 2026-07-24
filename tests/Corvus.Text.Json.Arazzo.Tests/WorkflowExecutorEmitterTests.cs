@@ -402,7 +402,7 @@ public class WorkflowExecutorEmitterTests
             return WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs", inputAccessors, SubWorkflowSourceNamespaces: subWorkflowSourceNamespaces));
+                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs", inputAccessors, Sources: ["petstore"], SubWorkflowSourceNamespaces: subWorkflowSourceNamespaces));
         }
 
         throw new InvalidOperationException("No workflow.");

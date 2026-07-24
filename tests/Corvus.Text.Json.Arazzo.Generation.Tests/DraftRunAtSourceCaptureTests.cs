@@ -218,7 +218,7 @@ public sealed class DraftRunAtSourceCaptureTests
                 source => source,
                 _ => (IApiTransport)new HttpClientTransport(client, disposeClient: false),
                 StringComparer.Ordinal);
-            return new WorkflowTransports(apiTransports, null);
+            return new WorkflowTransports(apiTransports, WorkflowTransports.NoMessageTransports);
         };
 
     // The same fixed-response loopback endpoint the other runner tests use (each keeps its own copy).

@@ -367,7 +367,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: ["sensorId"],
             Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         string source;
         using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveParameterisedDocument)))
@@ -416,7 +416,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         string source;
         using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveHeaderDocument)))
@@ -446,7 +446,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         string source;
         using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveDocument)))
@@ -564,7 +564,7 @@ public partial class WorkflowExecutorEndToEndTests
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
 
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
 
         string source;
         using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveDocument)))

@@ -81,7 +81,7 @@ public class HostedWorkflowResumerTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         // Drive it through the WorkflowResumer delegate the durable worker would call.
         WorkflowResumer resume = resumer.AsResumer();
@@ -102,7 +102,7 @@ public class HostedWorkflowResumerTests
         ((bool)versionDoc.RootElement.Runnable).ShouldBeTrue();
 
         using var loader = new WorkflowExecutorLoader();
-        IRunExecutionBackend backend = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        IRunExecutionBackend backend = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         // The in-process backend advertises its isolation model, and pre-warming loads + caches the executor with no
         // run executed — so a later AdvanceAsync of the version skips the fetch + verify + load.
@@ -131,7 +131,7 @@ public class HostedWorkflowResumerTests
         var transport = new ThrowingApiTransport(new SourceCredentialExpiredException("petstore"));
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         WorkflowResumer resume = resumer.AsResumer();
         WorkflowRunResultKind kind = await resume(run, default);
@@ -157,7 +157,7 @@ public class HostedWorkflowResumerTests
         using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.AdvanceAsync(run, default));
     }
@@ -224,7 +224,7 @@ public class HostedWorkflowResumerTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","profile":{"breed":"Labrador","tags":["good-boy","house-trained"]}}""");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         WorkflowRunResultKind kind = await resumer.AsResumer()(run, default);
 
@@ -314,7 +314,7 @@ public class HostedWorkflowResumerTests
         transport.SetResponse(OperationMethod.Post, "/accounts/{accountId}/identity", 200, """{"score":0.92,"applicant":{"fullName":"Ada Lovelace","country":"GB"}}""");
 
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         WorkflowRunResultKind kind = await resumer.AsResumer()(run, default);
 
@@ -394,7 +394,7 @@ public class HostedWorkflowResumerTests
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Post, "/submit", 200, """{"ok":true}""");
         using var loader = new WorkflowExecutorLoader();
-        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _t) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _t) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
         (await resumer.AsResumer()(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
     }

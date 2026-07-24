@@ -28,7 +28,7 @@ public class Coverage_GeneratorChannelTests
 
     private static string Emit(AsyncApiChannelDescriptor descriptor, string action, string stepJson)
     {
-        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor], "nats")]);
         string doc = $$"""
             {
               "arazzo": "1.1.0",

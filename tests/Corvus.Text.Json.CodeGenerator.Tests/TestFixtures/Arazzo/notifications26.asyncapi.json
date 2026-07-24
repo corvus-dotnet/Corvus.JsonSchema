@@ -1,5 +1,11 @@
 {
   "asyncapi": "2.6.0",
+  "servers": {
+    "broker": {
+      "url": "nats://nats:4222",
+      "protocol": "nats"
+    }
+  },
   "info": { "title": "Notifications 2.6", "version": "1.0.0" },
   "defaultContentType": "application/json",
   "channels": {

@@ -42,7 +42,7 @@ public static class HostedWorkflowExecution
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         try
         {
-            return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
+            return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransports, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
         catch (WorkflowPauseException)
         {
