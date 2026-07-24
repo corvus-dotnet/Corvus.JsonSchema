@@ -40,37 +40,33 @@ public readonly partial struct FetchSourceRequest
     public readonly partial struct FetchAuth
     {
         /// <summary>
-        /// FetchCredentialReference
+        /// FetchOneShotSecret
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A registered source credential, referenced by its (sourceName, environment) key.
+        /// A one-shot header credential presented for this single fetch; never stored, never logged. scheme selects how value is applied: bearer -&gt; Authorization: Bearer {value}; apiKey -&gt; {header}: {value}; basic -&gt; Authorization: Basic base64({username}:{value}). Defaults to bearer.
         /// </para>
         /// </remarks>
         [DebuggerDisplay("{DebuggerDisplay,nq}")]
-        public readonly partial struct FetchCredentialReference
-            : IJsonElement<FetchCredentialReference>
+        public readonly partial struct FetchOneShotSecret
+            : IJsonElement<FetchOneShotSecret>
         {
             public static partial class JsonSchema
             {
-                private static readonly JsonSchemaMessageProvider<int> RequiredPropertyEnvironmentPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("environment"u8, buffer, out written);
-                private static readonly JsonSchemaMessageProvider<int> RequiredPropertyEnvironmentNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("environment"u8, buffer, out written);
+                private static readonly JsonSchemaMessageProvider<int> RequiredPropertyValuePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("value"u8, buffer, out written);
+                private static readonly JsonSchemaMessageProvider<int> RequiredPropertyValueNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("value"u8, buffer, out written);
 
-                private const int RequiredOffsetForEnvironment = 0;
-                private const uint RequiredBitForEnvironment = 0b00000000000000000000000000000001;
-
-                private static readonly JsonSchemaMessageProvider<int> RequiredPropertySourceNamePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("sourceName"u8, buffer, out written);
-                private static readonly JsonSchemaMessageProvider<int> RequiredPropertySourceNameNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("sourceName"u8, buffer, out written);
-
-                private const int RequiredOffsetForSourceName = 0;
-                private const uint RequiredBitForSourceName = 0b00000000000000000000000000000010;
+                private const int RequiredOffsetForValue = 0;
+                private const uint RequiredBitForValue = 0b00000000000000000000000000000001;
 
                 private const uint RequiredBitMask0 =
-                    RequiredBitForEnvironment | RequiredBitForSourceName;
-                private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
-                private static readonly JsonSchemaPathProvider SourceNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sourceName"u8, buffer, out written);
+                    RequiredBitForValue;
+                private static readonly JsonSchemaPathProvider HeaderSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/header"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider SchemeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/scheme"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider UsernameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/username"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider ValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/value"u8, buffer, out written);
 
-                private static void MatchEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                private static void MatchHeader(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -78,47 +74,72 @@ public readonly partial struct FetchSourceRequest
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
-                            JsonPropertyNames.EnvironmentUtf8,
-                            evaluationPath: EnvironmentSchemaEvaluationPath);
+                            JsonPropertyNames.HeaderUtf8,
+                            evaluationPath: HeaderSchemaEvaluationPath);
 
                     Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
-
-                    if (!context.HasCollector && !context.IsMatch)
-                    {
-                        return;
-                    }
-
-                    requiredBitBuffer[RequiredOffsetForEnvironment] |= RequiredBitForEnvironment;
                 }
 
-                private static void MatchSourceName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                private static void MatchScheme(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret.HowTheSecretIsAppliedDefaultsToBearer.JsonSchema.PushChildContextUnescaped(
+                            parentDocument,
+                            parentDocumentIndex,
+                            ref context,
+                            JsonPropertyNames.SchemeUtf8,
+                            evaluationPath: SchemeSchemaEvaluationPath);
+
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret.HowTheSecretIsAppliedDefaultsToBearer.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                    context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+                }
+
+                private static void MatchUsername(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                {
+                    context.AddLocalEvaluatedProperty(propertyCount);
+                    JsonSchemaContext childContext2 =
                         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
-                            JsonPropertyNames.SourceNameUtf8,
-                            evaluationPath: SourceNameSchemaEvaluationPath);
+                            JsonPropertyNames.UsernameUtf8,
+                            evaluationPath: UsernameSchemaEvaluationPath);
 
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-                    context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                    context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+                }
+
+                private static void MatchValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                {
+                    context.AddLocalEvaluatedProperty(propertyCount);
+                    JsonSchemaContext childContext3 =
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                            parentDocument,
+                            parentDocumentIndex,
+                            ref context,
+                            JsonPropertyNames.ValueUtf8,
+                            evaluationPath: ValueSchemaEvaluationPath);
+
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+                    context.CommitChildContext(childContext3.IsMatch, ref childContext3);
 
                     if (!context.HasCollector && !context.IsMatch)
                     {
                         return;
                     }
 
-                    requiredBitBuffer[RequiredOffsetForSourceName] |= RequiredBitForSourceName;
+                    requiredBitBuffer[RequiredOffsetForValue] |= RequiredBitForValue;
                 }
 
                 private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
                 {
                     return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                        (static () => JsonPropertyNames.EnvironmentUtf8, MatchEnvironment),
-                        (static () => JsonPropertyNames.SourceNameUtf8, MatchSourceName),
+                        (static () => JsonPropertyNames.HeaderUtf8, MatchHeader),
+                        (static () => JsonPropertyNames.SchemeUtf8, MatchScheme),
+                        (static () => JsonPropertyNames.UsernameUtf8, MatchUsername),
+                        (static () => JsonPropertyNames.ValueUtf8, MatchValue),
                     ]);
                 }
 
@@ -136,17 +157,17 @@ public readonly partial struct FetchSourceRequest
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/FetchSourceRequest/properties/auth/properties/binding"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/FetchSourceRequest/properties/auth/properties/secret"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "/components/schemas/FetchSourceRequest/properties/auth/properties/binding";
+                public const string SchemaLocation = "/components/schemas/FetchSourceRequest/properties/auth/properties/secret";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/FetchSourceRequest/properties/auth/properties/binding"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/FetchSourceRequest/properties/auth/properties/secret"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -203,8 +224,7 @@ public readonly partial struct FetchSourceRequest
                         // Do a quick test to see if we have all of the required bits set in each element
                         if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
                         {
-                            context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyEnvironmentPresent, "environment"u8, "required"u8);
-                            context.EvaluatedKeywordForProperty(true, 1, RequiredPropertySourceNamePresent, "sourceName"u8, "required"u8);
+                            context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyValuePresent, "value"u8, "required"u8);
                         }
                         else if (!context.HasCollector)
                         {
@@ -213,22 +233,13 @@ public readonly partial struct FetchSourceRequest
                         }
                         else
                         {
-                            if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForEnvironment] & RequiredBitForEnvironment) == 0)
+                            if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForValue] & RequiredBitForValue) == 0)
                             {
-                                context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyEnvironmentNotPresent, "environment"u8, "required"u8);
+                                context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyValueNotPresent, "value"u8, "required"u8);
                             }
                             else
                             {
-                                context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyEnvironmentPresent, "environment"u8, "required"u8);
-                            }
-
-                            if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForSourceName] & RequiredBitForSourceName) == 0)
-                            {
-                                context.EvaluatedKeywordForProperty(false, 1, RequiredPropertySourceNameNotPresent, "sourceName"u8, "required"u8);
-                            }
-                            else
-                            {
-                                context.EvaluatedKeywordForProperty(true, 1, RequiredPropertySourceNamePresent, "sourceName"u8, "required"u8);
+                                context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyValuePresent, "value"u8, "required"u8);
                             }
                         }
                     }

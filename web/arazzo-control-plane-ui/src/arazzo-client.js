@@ -1614,12 +1614,13 @@ export class ArazzoControlPlaneClient {
    * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
    * endpoint (no browser CORS), authenticated (ADR 0052) with EXACTLY ONE of: a connected-provider
    * name (`auth.provider` — the fetch runs AS the signed-in user, and the server only attaches the
-   * token to a host the provider covers), a one-shot secret (`auth.secret` — this single fetch,
-   * never stored or logged), or a workload credential binding (`auth.binding` —
-   * `{sourceName, environment}`, the §13 reference). Omit `auth` for an anonymous fetch. Returns
-   * the validated document plus its detected `type`/`version` and canonical `digest`; attach or
-   * register the result yourself.
-   * @param {{ url: string, auth?: ({provider: string} | {secret: string} | {binding: {sourceName: string, environment: string}}), signal?: AbortSignal }} fetchRequest
+   * token to a host the provider covers), a one-shot header credential (`auth.secret` — a `{scheme,
+   * value, header?, username?}`: bearer/apiKey/basic, this single fetch, never stored or logged), or
+   * a workload credential binding (`auth.binding` — `{sourceName, environment}`, the §13 reference).
+   * Omit `auth` for an anonymous fetch. A document behind the author's own browser session is not
+   * fetchable here — bring it in by paste or upload instead. Returns the validated document plus its
+   * detected `type`/`version` and canonical `digest`; attach or register the result yourself.
+   * @param {{ url: string, auth?: ({provider: string} | {secret: {scheme?: 'bearer'|'apiKey'|'basic', value: string, header?: string, username?: string}} | {binding: {sourceName: string, environment: string}}), signal?: AbortSignal }} fetchRequest
    * @returns {Promise<{ url: string, type: string, version?: string, digest: string, contentType?: string, document: object }>}
    */
   fetchSourceDocument(fetchRequest) {

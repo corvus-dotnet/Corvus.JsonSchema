@@ -7747,15 +7747,36 @@
           "auth": {
             "type": "object",
             "title": "FetchAuth",
-            "description": "Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller's connection to a configured connected provider — user identity), secret (a one-shot bearer/PAT, used for this single fetch, never stored or logged), or binding (a registered §13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller's reach). Omit for an anonymous fetch.",
+            "description": "Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller's connection to a configured connected provider — user identity), secret (a one-shot header credential — bearer/PAT, API key, or Basic — used for this single fetch, never stored or logged), or binding (a registered §13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller's reach). Omit for an anonymous fetch.",
             "properties": {
               "provider": {
                 "type": "string",
                 "description": "A configured connected-provider name; the fetch presents the CALLING principal's connection token (400 provider-not-connected when the caller holds none)."
               },
               "secret": {
-                "type": "string",
-                "description": "A one-shot bearer/PAT presented as Authorization: Bearer for this single fetch; never stored, never logged."
+                "type": "object",
+                "title": "FetchOneShotSecret",
+                "description": "A one-shot header credential presented for this single fetch; never stored, never logged. scheme selects how value is applied: bearer -> Authorization: Bearer {value}; apiKey -> {header}: {value}; basic -> Authorization: Basic base64({username}:{value}). Defaults to bearer.",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "enum": ["bearer", "apiKey", "basic"],
+                    "description": "How the secret is applied. Defaults to bearer."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "The token (bearer), the key (apiKey), or the password (basic)."
+                  },
+                  "header": {
+                    "type": "string",
+                    "description": "apiKey only: the request header name (e.g. X-API-Key)."
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "basic only: the username."
+                  }
+                },
+                "required": ["value"]
               },
               "binding": {
                 "type": "object",

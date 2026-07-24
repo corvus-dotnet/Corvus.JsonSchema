@@ -322,11 +322,12 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         }
 
         // The fetch's authentication (ADR 0052): EXACTLY ONE of a provider connection (the caller's
-        // user identity), a one-shot secret (this single fetch, never stored or logged), or a §13
-        // workload binding; absent auth fetches anonymously.
+        // user identity), a one-shot header credential (this single fetch, never stored or logged),
+        // or a §13 workload binding; absent auth fetches anonymously. A provider or one-shot resolves
+        // to a single request header the fetcher applies; a binding resolves through the §13 provider.
         string? credentialSourceName = null;
         string? credentialEnvironment = null;
-        string? bearerToken = null;
+        (string Name, string Value)? authHeader = null;
         if (body.Auth.IsNotUndefined())
         {
             Models.FetchSourceRequest.FetchAuth auth = body.Auth;
@@ -375,16 +376,24 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                         Problem("provider-host-not-covered", "Host not covered", 400, $"Provider '{providerName}' does not cover host '{target.Host}'; use a one-shot secret or a workload binding for this URL."), workspace);
                 }
 
-                bearerToken = await registry.CurrentAccessTokenAsync(principal, providerName, cancellationToken).ConfigureAwait(false);
-                if (bearerToken is null)
+                string? token = await registry.CurrentAccessTokenAsync(principal, providerName, cancellationToken).ConfigureAwait(false);
+                if (token is null)
                 {
                     return FetchSourceDocumentResult.BadRequest(
                         Problem("provider-not-connected", "Provider not connected", 400, $"You are not connected to provider '{providerName}' (or the session is no longer valid); connect first."), workspace);
                 }
+
+                authHeader = ("Authorization", $"Bearer {token}");
             }
             else if (hasSecret)
             {
-                bearerToken = (string)auth.Secret;
+                if (TryComposeOneShotHeader(auth.Secret, out (string Name, string Value) header, out string? secretError) is false)
+                {
+                    return FetchSourceDocumentResult.BadRequest(
+                        Problem("invalid-fetch-auth", "Invalid fetch auth", 400, secretError!), workspace);
+                }
+
+                authHeader = header;
             }
             else
             {
@@ -394,7 +403,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         }
 
         (SourceDocumentFetcher.FetchOutcome outcome, string? detail, SourceDocumentFetcher.FetchedDocument? fetched) =
-            await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, bearerToken, cancellationToken).ConfigureAwait(false);
+            await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, authHeader, cancellationToken).ConfigureAwait(false);
         switch (outcome)
         {
             case SourceDocumentFetcher.FetchOutcome.Success:
@@ -422,6 +431,46 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                 version: f.Version is { } version ? (Models.JsonString.Source)version : default);
             workspace.TakeOwnership(response);
             return FetchSourceDocumentResult.Ok(response.RootElement, workspace);
+        }
+    }
+
+    // Composes the request header for a one-shot fetch secret (ADR 0052): bearer -> Authorization:
+    // Bearer {value}; apiKey -> {header}: {value}; basic -> Authorization: Basic base64({username}:{value}).
+    // Returns false with a caller-facing reason when the secret is unusable (missing value, or apiKey
+    // with no header). The secret material rides only into the composed header value, never logged.
+    private static bool TryComposeOneShotHeader(Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret secret, out (string Name, string Value) header, out string? error)
+    {
+        header = default;
+        error = null;
+        if (!secret.Value.IsNotUndefined() || (string)secret.Value is not { Length: > 0 } value)
+        {
+            error = "A one-shot secret requires a 'value'.";
+            return false;
+        }
+
+        string scheme = secret.Scheme.IsNotUndefined() ? (string)secret.Scheme : "bearer";
+        switch (scheme)
+        {
+            case "bearer":
+                header = ("Authorization", $"Bearer {value}");
+                return true;
+            case "apiKey":
+                if (!secret.Header.IsNotUndefined() || (string)secret.Header is not { Length: > 0 } headerName)
+                {
+                    error = "An apiKey one-shot secret requires a 'header' naming the request header (e.g. X-API-Key).";
+                    return false;
+                }
+
+                header = (headerName, value);
+                return true;
+            case "basic":
+                string user = secret.Username.IsNotUndefined() ? (string)secret.Username : string.Empty;
+                string token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user}:{value}"));
+                header = ("Authorization", $"Basic {token}");
+                return true;
+            default:
+                error = $"Unknown one-shot secret scheme '{scheme}'; use bearer, apiKey, or basic.";
+                return false;
         }
     }
 

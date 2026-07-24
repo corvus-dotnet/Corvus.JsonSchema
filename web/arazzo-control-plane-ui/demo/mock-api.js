@@ -3005,6 +3005,13 @@ export function createMockControlPlane(options = {}) {
           if (!covered) return problem(400, 'Host not covered', `Provider '${provider.name}' does not cover host '${host}'; use a one-shot secret or a workload binding for this URL.`);
           if (!providerConnections.has(provider.name)) return problem(400, 'Provider not connected', `You are not connected to provider '${provider.name}' (or the session is no longer valid); connect first.`);
         }
+
+        if (body.auth.secret !== undefined) {
+          // The one-shot header credential (ADR 0052): a {scheme, value, header?, username?} object.
+          const s = body.auth.secret;
+          if (typeof s !== 'object' || !s.value) return problem(400, 'Invalid fetch auth', "A one-shot secret requires a 'value'.");
+          if (s.scheme === 'apiKey' && !s.header) return problem(400, 'Invalid fetch auth', "An apiKey one-shot secret requires a 'header' naming the request header (e.g. X-API-Key).");
+        }
       }
 
       // The demo mock serves a canned petstore for any https URL (a real deployment fetches server-side).

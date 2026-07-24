@@ -40,22 +40,22 @@ public readonly partial struct FetchSourceRequest
     public readonly partial struct FetchAuth
     {
         /// <summary>
-        /// FetchCredentialReference
+        /// FetchOneShotSecret
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A registered source credential, referenced by its (sourceName, environment) key.
+        /// A one-shot header credential presented for this single fetch; never stored, never logged. scheme selects how value is applied: bearer -&gt; Authorization: Bearer {value}; apiKey -&gt; {header}: {value}; basic -&gt; Authorization: Basic base64({username}:{value}). Defaults to bearer.
         /// </para>
         /// </remarks>
         [DebuggerDisplay("{DebuggerDisplay,nq}")]
-        public readonly partial struct FetchCredentialReference
+        public readonly partial struct FetchOneShotSecret
 #if NET8_0_OR_GREATER
-            : IJsonElement<FetchCredentialReference>,
+            : IJsonElement<FetchOneShotSecret>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
-            : IJsonElement<FetchCredentialReference>,
+            : IJsonElement<FetchOneShotSecret>,
               IFormattable
 #endif
         {
@@ -65,10 +65,10 @@ public readonly partial struct FetchSourceRequest
 
             #pragma warning restore CS8618 // JsonDocument nullability
             /// <summary>
-            /// Initializes a new instance of the <see cref="FetchCredentialReference"/> struct.
+            /// Initializes a new instance of the <see cref="FetchOneShotSecret"/> struct.
             /// </summary>
             /// <param name="value">The value from which to construct the instance.</param>
-            internal FetchCredentialReference(IJsonDocument parent, int idx)
+            internal FetchOneShotSecret(IJsonDocument parent, int idx)
             {
                 Debug.Assert(idx >= 0);
                 _parent = parent;
@@ -78,7 +78,7 @@ public readonly partial struct FetchSourceRequest
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static FetchCredentialReference DefaultInstance { get; }
+            public static FetchOneShotSecret DefaultInstance { get; }
 
             /// <summary>
             /// Gets the value of the property with the given name.
@@ -180,18 +180,18 @@ public readonly partial struct FetchSourceRequest
             }
 
             /// <summary>
-            /// Gets the <c>environment</c> property.
+            /// Gets the (optional) <c>header</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+            /// apiKey only: the request header name (e.g. X-API-Key).
             /// </para>
             /// </remarks>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Header
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeaderUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
                     {
                         return value;
                     }
@@ -201,18 +201,63 @@ public readonly partial struct FetchSourceRequest
             }
 
             /// <summary>
-            /// Gets the <c>sourceName</c> property.
+            /// Gets the (optional) <c>scheme</c> property.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// How the secret is applied. Defaults to bearer.
+            /// </para>
+            /// </remarks>
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret.HowTheSecretIsAppliedDefaultsToBearer Scheme
+            {
+                get
+                {
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret.HowTheSecretIsAppliedDefaultsToBearer value))
+                    {
+                        return value;
+                    }
+
+                    return default;
+                }
+            }
+
+            /// <summary>
+            /// Gets the (optional) <c>username</c> property.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// basic only: the username.
+            /// </para>
+            /// </remarks>
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Username
+            {
+                get
+                {
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsernameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+                    {
+                        return value;
+                    }
+
+                    return default;
+                }
+            }
+
+            /// <summary>
+            /// Gets the <c>value</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
+            /// <para>
+            /// The token (bearer), the key (apiKey), or the password (basic).
+            /// </para>
             /// </remarks>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString SourceName
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Value
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
                     {
                         return value;
                     }
@@ -255,7 +300,7 @@ public readonly partial struct FetchSourceRequest
             /// <returns>
             /// <c>True</c> if the values are equal.
             /// </returns>
-            public static bool operator ==(in FetchCredentialReference left, in FetchCredentialReference right)
+            public static bool operator ==(in FetchOneShotSecret left, in FetchOneShotSecret right)
             {
                 return left.Equals(right);
             }
@@ -268,7 +313,7 @@ public readonly partial struct FetchSourceRequest
             /// <returns>
             /// <c>True</c> if the values are not equal.
             /// </returns>
-            public static bool operator !=(in FetchCredentialReference left, in FetchCredentialReference right)
+            public static bool operator !=(in FetchOneShotSecret left, in FetchOneShotSecret right)
             {
                 return !left.Equals(right);
             }
@@ -281,7 +326,7 @@ public readonly partial struct FetchSourceRequest
             /// <returns>
             /// <c>True</c> if the values are equal.
             /// </returns>
-            public static bool operator ==(in FetchCredentialReference left, in JsonElement right)
+            public static bool operator ==(in FetchOneShotSecret left, in JsonElement right)
             {
                 return left.Equals(right);
             }
@@ -294,7 +339,7 @@ public readonly partial struct FetchSourceRequest
             /// <returns>
             /// <c>True</c> if the values are not equal.
             /// </returns>
-            public static bool operator !=(in FetchCredentialReference left, in JsonElement right)
+            public static bool operator !=(in FetchOneShotSecret left, in JsonElement right)
             {
                 return !left.Equals(right);
             }
@@ -305,7 +350,7 @@ public readonly partial struct FetchSourceRequest
             /// <param name="value">The instance of this type.</param>
             /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator JsonElement(FetchCredentialReference instance)
+            public static implicit operator JsonElement(FetchOneShotSecret instance)
             {
                 return JsonElement.From(instance);
             }
@@ -316,9 +361,9 @@ public readonly partial struct FetchSourceRequest
             /// <param name="value">The instance of this type as a JsonElement.</param>
             /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator FetchCredentialReference(JsonElement instance)
+            public static implicit operator FetchOneShotSecret(JsonElement instance)
             {
-                return FetchCredentialReference.From(instance);
+                return FetchOneShotSecret.From(instance);
             }
 
             /// <summary>
@@ -327,7 +372,7 @@ public readonly partial struct FetchSourceRequest
             /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the JSON element.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static FetchCredentialReference From<T>(in T instance)
+            public static FetchOneShotSecret From<T>(in T instance)
                 where T : struct, IJsonElement<T>
             {
                 return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -352,10 +397,10 @@ public readonly partial struct FetchSourceRequest
             /// </exception>
             [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static FetchCredentialReference ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+            public static FetchOneShotSecret ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
                 #pragma warning disable CS0618 // Type or member is obsolete
-                return JsonElementHelpers.ParseValue<FetchCredentialReference>(utf8Json, options);
+                return JsonElementHelpers.ParseValue<FetchOneShotSecret>(utf8Json, options);
                 #pragma warning restore CS0618
             }
 
@@ -378,10 +423,10 @@ public readonly partial struct FetchSourceRequest
             /// </exception>
             [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static FetchCredentialReference ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+            public static FetchOneShotSecret ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
                 #pragma warning disable CS0618 // Type or member is obsolete
-                return JsonElementHelpers.ParseValue<FetchCredentialReference>(json, options);
+                return JsonElementHelpers.ParseValue<FetchOneShotSecret>(json, options);
                 #pragma warning restore CS0618
             }
 
@@ -404,10 +449,10 @@ public readonly partial struct FetchSourceRequest
             /// </exception>
             [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static FetchCredentialReference ParseValue(string json, JsonDocumentOptions options = default)
+            public static FetchOneShotSecret ParseValue(string json, JsonDocumentOptions options = default)
             {
                 #pragma warning disable CS0618 // Type or member is obsolete
-                return JsonElementHelpers.ParseValue<FetchCredentialReference>(json, options);
+                return JsonElementHelpers.ParseValue<FetchOneShotSecret>(json, options);
                 #pragma warning restore CS0618
             }
 
@@ -447,10 +492,10 @@ public readonly partial struct FetchSourceRequest
             ///   A value could not be read from the reader.
             /// </exception>
             [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-            public static FetchCredentialReference ParseValue(ref Utf8JsonReader reader)
+            public static FetchOneShotSecret ParseValue(ref Utf8JsonReader reader)
             {
                 #pragma warning disable CS0618 // Type or member is obsolete
-                return JsonElementHelpers.ParseValue<FetchCredentialReference>(ref reader);
+                return JsonElementHelpers.ParseValue<FetchOneShotSecret>(ref reader);
                 #pragma warning restore CS0618
             }
 
@@ -492,16 +537,16 @@ public readonly partial struct FetchSourceRequest
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
-            public static bool TryParseValue(ref Utf8JsonReader reader, out FetchCredentialReference? result)
+            public static bool TryParseValue(ref Utf8JsonReader reader, out FetchOneShotSecret? result)
             {
-                return JsonElementHelpers.TryParseValue<FetchCredentialReference>(ref reader, out result);
+                return JsonElementHelpers.TryParseValue<FetchOneShotSecret>(ref reader, out result);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new FetchCredentialReference(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new FetchOneShotSecret(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -591,11 +636,11 @@ public readonly partial struct FetchSourceRequest
             void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-            static FetchCredentialReference IJsonElement<FetchCredentialReference>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+            static FetchOneShotSecret IJsonElement<FetchOneShotSecret>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"FetchCredentialReference: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"FetchOneShotSecret: ValueKind = {ValueKind} : \"{ToString()}\"";
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -610,11 +655,11 @@ public readonly partial struct FetchSourceRequest
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="FetchCredentialReference"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="FetchOneShotSecret"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="FetchCredentialReference"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="FetchOneShotSecret"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -623,10 +668,10 @@ public readonly partial struct FetchSourceRequest
             /// this method returns the same instance without additional allocation.
             /// </para>
             /// </remarks>
-            public FetchCredentialReference Clone()
+            public FetchOneShotSecret Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<FetchCredentialReference>(_idx);
+                return _parent.CloneElement<FetchOneShotSecret>(_idx);
             }
 
             /// <summary>
@@ -634,7 +679,7 @@ public readonly partial struct FetchSourceRequest
             /// or returns this instance if it is already immutable.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="FetchCredentialReference"/> that lives for the lifetime of its
+            /// An immutable <see cref="FetchOneShotSecret"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -648,12 +693,12 @@ public readonly partial struct FetchSourceRequest
             /// If this instance is already backed by an immutable document, it is returned as-is.
             /// </para>
             /// </remarks>
-            public FetchCredentialReference Freeze()
+            public FetchOneShotSecret Freeze()
             {
                 CheckValidInstance();
                 if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
                 {
-                    return mutable.FreezeElement<FetchCredentialReference>(_idx);
+                    return mutable.FreezeElement<FetchOneShotSecret>(_idx);
                 }
 
                 return this;
@@ -665,24 +710,44 @@ public readonly partial struct FetchSourceRequest
             public static class JsonPropertyNames
             {
                 /// <summary>
-                /// Gets the JSON property name for <see cref="Environment"/>.
+                /// Gets the JSON property name for <see cref="Header"/>.
                 /// </summary>
-                public const string Environment = "environment";
+                public const string Header = "header";
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="SourceName"/>.
+                /// Gets the JSON property name for <see cref="Scheme"/>.
                 /// </summary>
-                public const string SourceName = "sourceName";
+                public const string Scheme = "scheme";
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="Environment"/>.
+                /// Gets the JSON property name for <see cref="Username"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
+                public const string Username = "username";
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="SourceName"/>.
+                /// Gets the JSON property name for <see cref="Value"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> SourceNameUtf8 => "sourceName"u8;
+                public const string Value = "value";
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="Header"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> HeaderUtf8 => "header"u8;
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="Scheme"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SchemeUtf8 => "scheme"u8;
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="Username"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> UsernameUtf8 => "username"u8;
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="Value"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ValueUtf8 => "value"u8;
             }
 
             /// <summary>
@@ -691,14 +756,24 @@ public readonly partial struct FetchSourceRequest
             private static class JsonPropertyNamesEscaped
             {
                 /// <summary>
-                /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Header"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> Environment => "environment"u8;
+                public static ReadOnlySpan<byte> Header => "header"u8;
 
                 /// <summary>
-                /// Gets the escaped UTF-8 JSON property name for <see cref="SourceName"/>.
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Scheme"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> SourceName => "sourceName"u8;
+                public static ReadOnlySpan<byte> Scheme => "scheme"u8;
+
+                /// <summary>
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Username"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Username => "username"u8;
+
+                /// <summary>
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Value"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Value => "value"u8;
             }
 
             /// <summary>
@@ -708,14 +783,24 @@ public readonly partial struct FetchSourceRequest
             private static class JsonPropertyNamesPrebaked
             {
                 /// <summary>
-                /// Gets the pre-baked property name blob for <see cref="Environment"/>.
+                /// Gets the pre-baked property name blob for <see cref="Header"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+                public static ReadOnlySpan<byte> Header => [0x85, 0x00, 0x00, 0x00, 0x22, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x22];
 
                 /// <summary>
-                /// Gets the pre-baked property name blob for <see cref="SourceName"/>.
+                /// Gets the pre-baked property name blob for <see cref="Scheme"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> SourceName => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+                public static ReadOnlySpan<byte> Scheme => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Username"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Username => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x72, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Value"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Value => [0x75, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
             }
         }
     }

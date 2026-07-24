@@ -34,7 +34,7 @@ public readonly partial struct FetchSourceRequest
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller&#39;s connection to a configured connected provider — user identity), secret (a one-shot bearer/PAT, used for this single fetch, never stored or logged), or binding (a registered &#167;13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller&#39;s reach). Omit for an anonymous fetch.
+    /// Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller&#39;s connection to a configured connected provider — user identity), secret (a one-shot header credential — bearer/PAT, API key, or Basic — used for this single fetch, never stored or logged), or binding (a registered &#167;13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller&#39;s reach). Omit for an anonymous fetch.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -214,17 +214,18 @@ public readonly partial struct FetchSourceRequest
 
         /// <summary>
         /// Gets the (optional) <c>secret</c> property.
+        /// FetchOneShotSecret
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A one-shot bearer/PAT presented as Authorization: Bearer for this single fetch; never stored, never logged.
+        /// A one-shot header credential presented for this single fetch; never stored, never logged. scheme selects how value is applied: bearer -&gt; Authorization: Bearer {value}; apiKey -&gt; {header}: {value}; basic -&gt; Authorization: Basic base64({username}:{value}). Defaults to bearer.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Secret
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret Secret
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecretUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest.FetchAuth.FetchOneShotSecret value))
                 {
                     return value;
                 }

@@ -34,6 +34,10 @@ public sealed class ControlPlaneProvidersApiTests
     private const string GoodCode = "good-code";
     private const string StubToken = "portal-user-token";
     private const string OneShotSecret = "pat-one-shot-123";
+    private const string ApiKeyHeader = "X-API-Key";
+    private const string ApiKeyValue = "portal-api-key-xyz";
+    private const string BasicUser = "spec-reader";
+    private const string BasicPassword = "spec-pass";
 
     private const string PetstoreJson =
         """{"openapi":"3.1.0","info":{"title":"Petstore","version":"1.0"},"paths":{}}""";
@@ -172,17 +176,39 @@ public sealed class ControlPlaneProvidersApiTests
         await using StubProvider portal = await StubProvider.StartAsync();
         await using Scoped host = await StartAsync(portal.Url);
 
+        // The nested {secret:{...}} bodies close on three braces, which collides with raw-string
+        // interpolation, so these are composed by concatenation over the spec URL.
+        string spec = $"{portal.Url}/specs/petstore.json";
+
+        // Bearer is the default scheme (the object may omit it).
         HttpResponseMessage fetched = await host.SendJsonAsync(
-            HttpMethod.Post, "/sources/fetch", $$$"""{"url":"{{{portal.Url}}}/specs/petstore.json","auth":{"secret":"{{{OneShotSecret}}}"}}""", "sources:read", "ada");
+            HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + spec + "\",\"auth\":{\"secret\":{\"value\":\"" + OneShotSecret + "\"}}}", "sources:read", "ada");
         fetched.StatusCode.ShouldBe(HttpStatusCode.OK);
         portal.LastSpecAuthorization.ShouldBe($"Bearer {OneShotSecret}");
         (await fetched.Content.ReadAsStringAsync()).ShouldNotContain(OneShotSecret);
 
+        // An API key rides its named header, not Authorization.
+        HttpResponseMessage byKey = await host.SendJsonAsync(
+            HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + spec + "\",\"auth\":{\"secret\":{\"scheme\":\"apiKey\",\"header\":\"" + ApiKeyHeader + "\",\"value\":\"" + ApiKeyValue + "\"}}}", "sources:read", "ada");
+        byKey.StatusCode.ShouldBe(HttpStatusCode.OK);
+        portal.LastSpecApiKey.ShouldBe(ApiKeyValue);
+
+        // apiKey with no header name is a typed refusal, not a silent bearer.
+        (await host.SendJsonAsync(HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + spec + "\",\"auth\":{\"secret\":{\"scheme\":\"apiKey\",\"value\":\"x\"}}}", "sources:read", "ada"))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // Basic composes Authorization: Basic base64(user:pass).
+        HttpResponseMessage byBasic = await host.SendJsonAsync(
+            HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + spec + "\",\"auth\":{\"secret\":{\"scheme\":\"basic\",\"username\":\"" + BasicUser + "\",\"value\":\"" + BasicPassword + "\"}}}", "sources:read", "ada");
+        byBasic.StatusCode.ShouldBe(HttpStatusCode.OK);
+        portal.LastSpecAuthorization.ShouldBe("Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{BasicUser}:{BasicPassword}")));
+
         // Nothing was stored: the next fetch without auth goes out anonymous and the secured
         // endpoint's 401 maps to the upstream failure.
-        (await host.SendJsonAsync(HttpMethod.Post, "/sources/fetch", $$$"""{"url":"{{{portal.Url}}}/specs/petstore.json"}""", "sources:read", "ada"))
+        (await host.SendJsonAsync(HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + spec + "\"}", "sources:read", "ada"))
             .StatusCode.ShouldBe(HttpStatusCode.BadGateway);
         portal.LastSpecAuthorization.ShouldBeNull();
+        portal.LastSpecApiKey.ShouldBeNull();
     }
 
     [TestMethod]
@@ -192,7 +218,7 @@ public sealed class ControlPlaneProvidersApiTests
         await using Scoped host = await StartAsync(portal.Url);
 
         HttpResponseMessage both = await host.SendJsonAsync(
-            HttpMethod.Post, "/sources/fetch", $$$"""{"url":"{{{portal.Url}}}/specs/petstore.json","auth":{"provider":"portal","secret":"x"}}""", "sources:read", "ada");
+            HttpMethod.Post, "/sources/fetch", "{\"url\":\"" + portal.Url + "/specs/petstore.json\",\"auth\":{\"provider\":\"portal\",\"secret\":{\"value\":\"x\"}}}", "sources:read", "ada");
         both.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await both.Content.ReadAsStringAsync()).ShouldContain("invalid-fetch-auth");
 
@@ -357,6 +383,8 @@ public sealed class ControlPlaneProvidersApiTests
 
         public string? LastSpecAuthorization { get; private set; }
 
+        public string? LastSpecApiKey { get; private set; }
+
         public static async Task<StubProvider> StartAsync()
         {
             var stub = new StubProvider();
@@ -400,9 +428,14 @@ public sealed class ControlPlaneProvidersApiTests
             {
                 string authorization = context.Request.Headers.Authorization.ToString();
                 stub.LastSpecAuthorization = authorization.Length == 0 ? null : authorization;
-                return authorization == $"Bearer {StubToken}" || authorization == $"Bearer {OneShotSecret}"
-                    ? Results.Text(PetstoreJson, "application/json")
-                    : Results.Unauthorized();
+                string apiKey = context.Request.Headers[ApiKeyHeader].ToString();
+                stub.LastSpecApiKey = apiKey.Length == 0 ? null : apiKey;
+                string basic = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{BasicUser}:{BasicPassword}"));
+                bool authorized = authorization == $"Bearer {StubToken}"
+                    || authorization == $"Bearer {OneShotSecret}"
+                    || authorization == basic
+                    || apiKey == ApiKeyValue;
+                return authorized ? Results.Text(PetstoreJson, "application/json") : Results.Unauthorized();
             });
 
             await app.StartAsync();

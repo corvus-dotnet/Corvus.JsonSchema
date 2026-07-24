@@ -64,6 +64,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._registry = [];
     this._fetched = null;
     this._uploaded = null;
+    this._pasted = null;
     this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
     this._providersLoaded = false;
     this._providers = [];
@@ -89,6 +90,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._registry = [];
     this._fetched = null;
     this._uploaded = null;
+    this._pasted = null;
     this._credsLoaded = false; // render() rebuilds the picker — reload the bindings on demand
     this._providersLoaded = false;
     this._providers = [];
@@ -129,6 +131,9 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .mode { display: grid; gap: 10px; }
         .cred { display: grid; gap: 4px; }
         .cred .hint { font-size: 11px; color: var(--_muted); }
+        .session-note { font-size: 11px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 6px; padding: 6px 8px; }
+        .link { font: inherit; font-size: 11px; padding: 0; background: none; border: none; color: var(--_accent); text-decoration: underline; cursor: pointer; }
+        textarea { font: inherit; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); resize: vertical; }
         .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
         .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
         .crumb button { font-size: 11px; padding: 0 8px; }
@@ -148,6 +153,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
           <div class="tabs" role="tablist">
             <button type="button" data-mode="registry" class="active" ${this._target === 'register' ? 'hidden' : ''}>Registry</button>
             <button type="button" data-mode="fetch" ${this._target === 'register' ? 'class="active"' : ''}>Fetch URL</button>
+            <button type="button" data-mode="paste">Paste</button>
             <button type="button" data-mode="upload">Upload</button>
             <button type="button" data-mode="catalog" ${this._target === 'register' ? 'hidden' : ''}>Catalog</button>
             <button type="button" data-mode="github">GitHub</button>
@@ -161,23 +167,48 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             <label>Document URL
               <input class="url-in" type="url" placeholder="https://api.example.com/openapi.json">
             </label>
+            <div class="session-note">
+              Behind a login you use in your browser? The server can't reuse your browser session, so
+              <button type="button" class="to-paste link">paste</button> or
+              <button type="button" class="to-upload link">upload</button> the document you can already open.
+            </div>
             <div class="cred">
               <div class="provider-line" hidden>
                 <arazzo-provider-connect class="provider-connect"></arazzo-provider-connect>
               </div>
-              <label>One-shot secret <span class="muted">(optional — this fetch only, never stored)</span>
-                <input class="secret-in" type="password" placeholder="bearer token / PAT" autocomplete="off">
+              <label>Credential <span class="muted">(only if the endpoint takes one in a header — a public URL needs none)</span>
+                <select class="secret-scheme">
+                  <option value="bearer">Bearer token / PAT</option>
+                  <option value="apiKey">API key (named header)</option>
+                  <option value="basic">Basic (username + password)</option>
+                </select>
               </label>
-              <label>Workload credential binding <span class="muted">(optional)</span>
-                <arazzo-filter-input class="cred-binding-in" aria-label="Workload credential binding" placeholder="type to filter (source · environment)"></arazzo-filter-input>
+              <label class="secret-header-label" hidden>Header name
+                <input class="secret-header" type="text" placeholder="X-API-Key" autocomplete="off">
+              </label>
+              <label class="secret-username-label" hidden>Username
+                <input class="secret-username" type="text" autocomplete="off">
+              </label>
+              <label>Secret value <span class="muted">(this fetch only, never stored)</span>
+                <input class="secret-in" type="password" placeholder="token / key / password" autocomplete="off">
+              </label>
+              <label>…or a saved credential binding <span class="muted">(optional)</span>
+                <arazzo-filter-input class="cred-binding-in" aria-label="Saved credential binding" placeholder="type to filter (source · environment)"></arazzo-filter-input>
               </label>
               <span class="hint auth-hint">Fetches anonymously.</span>
             </div>
             <div><button class="fetch" type="button">Fetch &amp; preview</button></div>
             <div class="preview fetch-preview" hidden></div>
           </div>
+          <div class="mode mode-paste" hidden>
+            <label>Document text — paste the OpenAPI/AsyncAPI/Arazzo JSON you opened in your browser
+              <textarea class="paste-in" rows="10" spellcheck="false" placeholder='{ "openapi": "3.1.0", … }'></textarea>
+            </label>
+            <span class="hint">The truest answer for a document behind your own browser login. YAML: save it and Upload, or convert to JSON.</span>
+            <div class="preview paste-preview" hidden></div>
+          </div>
           <div class="mode mode-upload" hidden>
-            <label>Document file (JSON — YAML endpoints go through Fetch)
+            <label>Document file (JSON — for YAML, convert first or paste as JSON)
               <input class="file-in" type="file" accept=".json,application/json">
             </label>
             <div class="preview upload-preview" hidden></div>
@@ -230,9 +261,15 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('button.fetch').addEventListener('click', () => this.fetchPreview());
     this.$('.url-in').addEventListener('input', () => this.updateFetchAuthUi());
     this.$('.secret-in').addEventListener('input', () => this.updateAuthHint());
+    this.$('.secret-scheme').addEventListener('change', () => this.updateSecretScheme());
+    this.$('.secret-header').addEventListener('input', () => this.updateAuthHint());
+    this.$('.secret-username').addEventListener('input', () => this.updateAuthHint());
     this.$('.cred-binding-in').addEventListener('change', () => this.updateAuthHint());
     this.$('.provider-connect').addEventListener('provider-connected', () => this.refreshProviders());
     this.$('.provider-connect').addEventListener('provider-disconnected', () => this.refreshProviders());
+    this.$('.to-paste').addEventListener('click', () => this.switchMode('paste'));
+    this.$('.to-upload').addEventListener('click', () => this.switchMode('upload'));
+    this.$('.paste-in').addEventListener('input', () => this.readPaste());
     this.$('.file-in').addEventListener('change', () => this.readUpload());
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderGitHubRepos());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderGitHubRepos());
@@ -245,12 +282,14 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$$('.tabs button').forEach((tab) => tab.classList.toggle('active', tab.dataset.mode === mode));
     this.$('.mode-registry').hidden = mode !== 'registry';
     this.$('.mode-fetch').hidden = mode !== 'fetch';
+    this.$('.mode-paste').hidden = mode !== 'paste';
     this.$('.mode-upload').hidden = mode !== 'upload';
     this.$('.mode-github').hidden = mode !== 'github';
     this.$('.mode-catalog').hidden = mode !== 'catalog';
     if (mode === 'github') this.renderGitHubRepos();
     if (mode === 'catalog') this.loadCatalog();
     if (mode === 'fetch') { this.loadCredentialBindings(); this.loadProviders(); }
+    if (mode === 'paste') this.$('.paste-in').focus();
     this.updateAttachState();
   }
 
@@ -327,9 +366,13 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       return { auth: { provider: provider.name }, describe: `Fetches as you via ${provider.displayName || provider.name}.` };
     }
 
-    const secret = this.$('.secret-in').value;
-    if (secret) {
-      return { auth: { secret }, describe: 'Fetches with the one-shot secret (this fetch only, never stored).' };
+    const value = this.$('.secret-in').value;
+    if (value) {
+      const scheme = this.$('.secret-scheme').value || 'bearer';
+      const secret = { scheme, value };
+      if (scheme === 'apiKey') secret.header = this.$('.secret-header').value.trim();
+      if (scheme === 'basic') secret.username = this.$('.secret-username').value;
+      return { auth: { secret }, describe: `Fetches with the one-shot ${scheme} credential (this fetch only, never stored).` };
     }
 
     const label = this.$('.cred-binding-in').value;
@@ -362,6 +405,14 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.updateAuthHint();
   }
 
+  /** @private — shows the header/username fields for the chosen one-shot scheme. */
+  updateSecretScheme() {
+    const scheme = this.$('.secret-scheme').value;
+    this.$('.secret-header-label').hidden = scheme !== 'apiKey';
+    this.$('.secret-username-label').hidden = scheme !== 'basic';
+    this.updateAuthHint();
+  }
+
   /** @private */
   updateAuthHint() {
     const hint = this.$('.auth-hint');
@@ -383,6 +434,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     const ready = name.length > 0 && (
       (this._mode === 'registry' && this.$('.registry-in').value)
       || (this._mode === 'fetch' && this._fetched)
+      || (this._mode === 'paste' && this._pasted)
       || (this._mode === 'upload' && this._uploaded)
       || (this._mode === 'github' && this._github?.picked)
       || (this._mode === 'catalog' && this._catalog?.picked));
@@ -534,18 +586,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
     try {
       const document = JSON.parse(await file.text());
-      // A JSON Schema document declares no openapi/asyncapi/arazzo marker — sniff its own shape ($schema, or
-      // schema-ish keywords) and attach it as a jsonschema document (#94: referenced by schemas/<name>#<pointer>
-      // from inputs schemas, never by sourceDescriptions).
-      const looksLikeSchema = typeof document.$schema === 'string'
-        || (document && typeof document === 'object' && !Array.isArray(document)
-          && ('$defs' in document || 'properties' in document || 'type' in document));
-      const type = document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : document.arazzo ? 'arazzo'
-        : looksLikeSchema ? 'jsonschema' : null;
-      if (!type) {
-        throw new Error('The document declares neither openapi, asyncapi, nor arazzo, and does not look like a JSON Schema.');
-      }
-
+      const type = ArazzoSourceAcquisitionDialog.classifyDocument(document);
       this._uploaded = { document, type };
       preview.hidden = false;
       preview.innerHTML = `<span><strong>${escapeHtml(type)}</strong> ${escapeHtml(document[type] ?? '')} · ${escapeHtml(file.name)}</span>`;
@@ -560,6 +601,50 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     }
 
     this.updateAttachState();
+  }
+
+  /** Paste mode (ADR 0052 tier 2): the author pastes the document they opened in their own
+   *  authenticated browser session. Parsed client-side like upload — the bytes never round-trip a
+   *  credential. Empty clears; a parse failure surfaces without disabling the pane. */
+  readPaste() {
+    this.clearError();
+    const text = this.$('.paste-in').value.trim();
+    const preview = this.$('.paste-preview');
+    this._pasted = null;
+    if (!text) {
+      preview.hidden = true;
+      this.updateAttachState();
+      return;
+    }
+
+    try {
+      const document = JSON.parse(text);
+      const type = ArazzoSourceAcquisitionDialog.classifyDocument(document);
+      this._pasted = { document, type };
+      preview.hidden = false;
+      preview.innerHTML = `<span><strong>${escapeHtml(type)}</strong> ${escapeHtml(document[type] ?? '')}</span>`;
+    } catch (err) {
+      preview.hidden = true;
+      this.showError(`Not a usable JSON document: ${err.message}`);
+    }
+
+    this.updateAttachState();
+  }
+
+  /** The document type from its own marker, or `jsonschema` when it sniffs as a JSON Schema
+   *  (#94: referenced by schemas/<name>#<pointer> from inputs schemas, never by sourceDescriptions).
+   *  Throws when it is none. Shared by upload and paste. */
+  static classifyDocument(document) {
+    const looksLikeSchema = typeof document.$schema === 'string'
+      || (document && typeof document === 'object' && !Array.isArray(document)
+        && ('$defs' in document || 'properties' in document || 'type' in document));
+    const type = document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : document.arazzo ? 'arazzo'
+      : looksLikeSchema ? 'jsonschema' : null;
+    if (!type) {
+      throw new Error('The document declares neither openapi, asyncapi, nor arazzo, and does not look like a JSON Schema.');
+    }
+
+    return type;
   }
 
   // ---- GitHub import (§4.7) ---------------------------------------------------------------------
@@ -714,6 +799,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       attachment = { sourceName: this.$('.registry-in').value };
     } else if (this._mode === 'fetch') {
       attachment = { document: this._fetched.document, type: this._fetched.type };
+    } else if (this._mode === 'paste') {
+      attachment = { document: this._pasted.document, type: this._pasted.type };
     } else if (this._mode === 'github') {
       attachment = { document: this._github.picked.document, type: this._github.picked.type };
     } else if (this._mode === 'catalog') {
@@ -739,6 +826,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     let type;
     let document;
     if (this._mode === 'fetch') { type = this._fetched.type; document = this._fetched.document; }
+    else if (this._mode === 'paste') { type = this._pasted.type; document = this._pasted.document; }
     else if (this._mode === 'github') { type = this._github.picked.type; document = this._github.picked.document; }
     else { type = this._uploaded.type; document = this._uploaded.document; }
 

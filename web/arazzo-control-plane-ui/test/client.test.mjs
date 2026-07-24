@@ -1179,8 +1179,10 @@ test('connected providers: listing, popup sign-in, and connection-aware fetch au
   await assert.rejects(() => c.fetchSourceDocument({ url: 'https://other.example/x.json', auth: { provider: 'portal' } }), (e) => e.status === 400);
 
   // EXACTLY ONE auth mode; the one-shot secret and binding shapes ride through.
-  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal', secret: 'x' } }), (e) => e.status === 400);
-  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { secret: 'pat-123' } })).document);
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { provider: 'portal', secret: { value: 'x' } } }), (e) => e.status === 400);
+  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { secret: { value: 'pat-123' } } })).document);
+  assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { secret: { scheme: 'apiKey', header: 'X-API-Key', value: 'k' } } })).document);
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { secret: { scheme: 'apiKey', value: 'k' } } }), (e) => e.status === 400);
   assert.ok((await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json', auth: { binding: { sourceName: 'petstore', environment: 'production' } } })).document);
 
   // Disconnect: idempotent; a provider fetch refuses again.

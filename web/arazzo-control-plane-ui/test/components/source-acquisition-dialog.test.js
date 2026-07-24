@@ -59,6 +59,33 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     equal(e.detail.attachment.name, 'payments');
   });
 
+  it('paste mode parses pasted document text and attaches it inline (ADR 0052 tier 2)', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+    el.open({ workingCopyId: ctx.wc.id });
+
+    // The Fetch pane nudges toward Paste for a browser-session URL: the link switches modes.
+    el.shadowRoot.querySelector('.tabs button[data-mode="fetch"]').click();
+    el.shadowRoot.querySelector('.session-note .to-paste').click();
+    equal(el.shadowRoot.querySelector('.tabs button[data-mode="paste"]').classList.contains('active'), true, 'the nudge switches to Paste');
+
+    const paste = el.shadowRoot.querySelector('.paste-in');
+    paste.value = JSON.stringify({ openapi: '3.1.0', info: { title: 'Pasted', version: '1.0' }, paths: {} });
+    paste.dispatchEvent(new Event('input'));
+    await waitFor(() => !el.shadowRoot.querySelector('.paste-preview').hidden, 'the preview shows the parsed document');
+
+    // Purely client-side: nothing rode a credential; the name is still required before attach.
+    ok(el.shadowRoot.querySelector('button.attach').disabled, 'attach waits on a name');
+    el.shadowRoot.querySelector('.name-in').value = 'pasted';
+    el.shadowRoot.querySelector('.name-in').dispatchEvent(new Event('input'));
+
+    const attached = nextEvent(el, 'source-attached');
+    el.shadowRoot.querySelector('button.attach').click();
+    const e = await attached;
+    equal(e.detail.attachment.kind, 'inline');
+    equal(e.detail.attachment.type, 'openapi');
+  });
+
   it('upload mode parses a JSON document file and attaches it inline', async () => {
     const ctx = await dialogWithMock();
     el = ctx.el;
@@ -120,10 +147,11 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     const secret = el.shadowRoot.querySelector('.secret-in');
     secret.value = 'pat-123';
     secret.dispatchEvent(new Event('input'));
-    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('one-shot secret'), 'the hint names the one-shot mode');
+    await waitFor(() => el.shadowRoot.querySelector('.auth-hint').textContent.includes('one-shot bearer'), 'the hint names the one-shot mode');
     el.shadowRoot.querySelector('button.fetch').click();
     await waitFor(() => calls.length === 2, 'the second fetch went out');
-    equal(calls.at(-1).auth?.secret, 'pat-123', 'the fetch rode the one-shot secret');
+    equal(calls.at(-1).auth?.secret?.value, 'pat-123', 'the fetch rode the one-shot secret');
+    equal(calls.at(-1).auth?.secret?.scheme, 'bearer', 'the default scheme is bearer');
     await waitFor(() => el.shadowRoot.querySelector('.secret-in').value === '', 'the one-shot secret is spent by its fetch');
 
     // The workload binding is the third rung, picked through the kit's filter combo.

@@ -102,9 +102,10 @@ public sealed class SourceDocumentFetcher
     /// <param name="reach">The caller's row-access grant (gates the credential reference lookup).</param>
     /// <param name="credentialSourceName">The credential reference's source name, when authenticating with a §13 binding.</param>
     /// <param name="credentialEnvironment">The credential reference's environment, when authenticating with a §13 binding.</param>
-    /// <param name="bearerToken">A bearer token for this single fetch (ADR 0052: a connected
-    /// provider's user token, or a one-shot secret) — attached to the one outbound request, never
-    /// stored, never logged. Exclusive with the credential reference (the handler enforces it).</param>
+    /// <param name="authHeader">A single request header for this fetch (ADR 0052: a connected
+    /// provider's user token as <c>Authorization: Bearer …</c>, or a one-shot header credential in
+    /// whatever scheme the endpoint takes). Attached to the one outbound request, never stored,
+    /// never logged. Exclusive with the credential reference (the handler enforces it).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome, a human-readable detail for failures, and — on success — the fetched document (the caller owns it).</returns>
     public async ValueTask<(FetchOutcome Outcome, string? Detail, FetchedDocument? Document)> FetchAsync(
@@ -112,7 +113,7 @@ public sealed class SourceDocumentFetcher
         AccessContext reach,
         string? credentialSourceName,
         string? credentialEnvironment,
-        string? bearerToken,
+        (string Name, string Value)? authHeader,
         CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
@@ -126,9 +127,9 @@ public sealed class SourceDocumentFetcher
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        if (bearerToken is not null)
+        if (authHeader is { } h)
         {
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
+            request.Headers.TryAddWithoutValidation(h.Name, h.Value);
         }
 
         if (credentialSourceName is not null)
