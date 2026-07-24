@@ -90,11 +90,14 @@ works unchanged.
 - **`github-invalid-state` (400).** The state is single-use and short-lived. A replayed or expired
   callback refuses. Begin the sign-in again from the Git panel.
 - **`github-exchange-failed` (400).** GitHub refused the code exchange, or github.com could not be
-  reached from the control plane. Check outbound TLS and any proxy. One known local cause: Aspire's
-  orchestrator hands each child process an `SSL_CERT_DIR` containing only its dev certificate, which
-  on Linux replaces the system CA store and breaks all outbound public TLS. The demo host repairs
-  this at startup by appending `/etc/ssl/certs`; a custom host composition needs the same repair or
-  its own CA configuration.
+  reached from the control plane. The control-plane log names the cause (GitHub's error code, the
+  HTTP status, or the transport exception). One known local cause: Aspire's orchestrator hands each
+  child process an `SSL_CERT_DIR` containing only its dev certificate, which on Linux replaces the
+  system CA store and breaks all outbound public TLS with `PartialChain`. The fix must be applied at
+  launch (the root store is read before in-process env changes can land): the demo AppHost sets
+  `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` on the control-plane resource, restoring the
+  public roots alongside the injected dev certificate. A custom composition needs the same setting
+  or its own CA configuration.
 - **Organisation repositories missing.** Organisations that enable OAuth App access restrictions
   must approve the app before members' tokens reach org-private repositories (GitHub → the org →
   Settings → Third-party access). This is the OAuth model's counterpart of an app installation.

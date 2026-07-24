@@ -29,18 +29,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.FileProviders;
 
-// Aspire's orchestrator hands each child an SSL_CERT_DIR holding ONLY the dev certificate (so services can
-// trust each other's https endpoints). On Linux, OpenSSL treats SSL_CERT_DIR as a REPLACEMENT for the system
-// store, which silently breaks every outbound public TLS call (the GitHub broker's token exchange fails
-// PartialChain). OpenSSL accepts a colon-separated list, so append the system store back — public roots are
-// restored and the dev-cert trust is kept. Must run before the first outbound TLS handshake.
-if (Environment.GetEnvironmentVariable("SSL_CERT_DIR") is { Length: > 0 } injectedCertDir
-    && !injectedCertDir.Contains("/etc/ssl/certs", StringComparison.Ordinal)
-    && Directory.Exists("/etc/ssl/certs"))
-{
-    Environment.SetEnvironmentVariable("SSL_CERT_DIR", $"{injectedCertDir}:/etc/ssl/certs");
-}
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Aspire service defaults: OpenTelemetry (incl. the Corvus.Arazzo workflow source/meter), health checks,

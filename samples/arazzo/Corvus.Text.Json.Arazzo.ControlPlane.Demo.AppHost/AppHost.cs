@@ -392,6 +392,16 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
+// Aspire's DCP hands each child an SSL_CERT_DIR holding only the dev certificate, which on Linux REPLACES the
+// system CA store — outbound public TLS (the GitHub token exchange) then fails PartialChain. Restore the system
+// bundle through the orthogonal SSL_CERT_FILE channel the DCP does not touch. This must happen at LAUNCH: the
+// process's root store is read before any in-process env repair can land (verified empirically — an in-process
+// append had no effect; a launch-level value works).
+if (File.Exists("/etc/ssl/certs/ca-certificates.crt"))
+{
+    controlplane.WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt");
+}
+
 // Enable the designer's GitHub OAuth broker (§4.7 / D3) when local credentials are present (read at the top). The
 // client id is public (it rides the authorize URL) so it goes in as config; the secret is injected as an env var the
 // control plane resolves through env://GITHUB_OAUTH_CLIENT_SECRET — never committed. Absent → "brokers no OAuth App"
