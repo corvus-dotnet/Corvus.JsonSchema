@@ -73,6 +73,12 @@ public static class SourceCredentialTransports
     {
         ArgumentNullException.ThrowIfNull(sourceClients);
         ArgumentNullException.ThrowIfNull(cache);
+
+        // Unlike the run-scoped API transports (rebuilt per bind so each run's entitled credential applies), the
+        // message-transport map is INVARIANT per workflow version — the transports are shared per channel source —
+        // so it is built once per workflow id and reused across every bind/resume (a resume-heavy message workflow
+        // binds on every wake; this keeps that path allocation-free for the message half).
+        var messageMaps = new System.Collections.Concurrent.ConcurrentDictionary<string, IReadOnlyDictionary<string, IMessageTransport>>(StringComparer.Ordinal);
         return (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
         {
             var apiTransports = new Dictionary<string, IApiTransport>(descriptor.Sources.Count, StringComparer.Ordinal);
@@ -98,11 +104,19 @@ public static class SourceCredentialTransports
                     $"Workflow '{descriptor.WorkflowId}' requires a message transport, but this host configures no channel-transport cache.");
             }
 
-            var messageTransports = new Dictionary<string, IMessageTransport>(descriptor.MessageSources.Count, StringComparer.Ordinal);
-            foreach (MessageSourceDescriptor source in descriptor.MessageSources)
-            {
-                messageTransports[source.Name] = channelTransports.GetTransport(source.Name, source.Protocol);
-            }
+            IReadOnlyDictionary<string, IMessageTransport> messageTransports = messageMaps.GetOrAdd(
+                descriptor.WorkflowId,
+                static (_, state) =>
+                {
+                    var map = new Dictionary<string, IMessageTransport>(state.Descriptor.MessageSources.Count, StringComparer.Ordinal);
+                    foreach (MessageSourceDescriptor source in state.Descriptor.MessageSources)
+                    {
+                        map[source.Name] = state.Cache.GetTransport(source.Name, source.Protocol);
+                    }
+
+                    return map;
+                },
+                (Descriptor: descriptor, Cache: channelTransports));
 
             return new WorkflowTransports(apiTransports, messageTransports);
         };

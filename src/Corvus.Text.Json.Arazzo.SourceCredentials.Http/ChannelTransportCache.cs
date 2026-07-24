@@ -113,20 +113,20 @@ public sealed class ChannelTransportCache : IAsyncDisposable
 
         // The revealed secret values live only in the settings handed to the factory and the connection it
         // builds — the OAuth client-credential posture; the scrubable material is disposed as it is revealed.
+        // One pass over the references: each role and ref is read exactly once (no per-role re-scan).
         var secrets = new Dictionary<string, string>(StringComparer.Ordinal);
         var config = new Dictionary<string, string>(StringComparer.Ordinal);
         if (binding.SecretRefs.IsNotUndefined())
         {
             foreach (SourceCredentialBinding.SecretReference reference in binding.SecretRefs.EnumerateArray())
             {
-                string role = (string)reference.Name;
-                if (!binding.TryGetSecretRef(role, out SecretRef secretRef))
+                if (!SecretRef.TryParse((string)reference.Ref, out SecretRef secretRef))
                 {
                     continue;
                 }
 
                 using SecretMaterial material = await this.resolver.ResolveAsync(secretRef, cancellationToken).ConfigureAwait(false);
-                secrets[role] = material.Reveal();
+                secrets[(string)reference.Name] = material.Reveal();
             }
         }
 
@@ -162,13 +162,22 @@ public sealed class ChannelTransportCache : IAsyncDisposable
 
         public async ValueTask DisposeAsync()
         {
-            if (this.inner is { } transport)
+            // Take the gate so a shutdown never disposes the semaphore out from under an in-flight first-use
+            // connect; the inner transport is detached and disposed under it.
+            await this.connectGate.WaitAsync().ConfigureAwait(false);
+            try
             {
-                this.inner = null;
-                await transport.DisposeAsync().ConfigureAwait(false);
+                if (this.inner is { } transport)
+                {
+                    this.inner = null;
+                    await transport.DisposeAsync().ConfigureAwait(false);
+                }
             }
-
-            this.connectGate.Dispose();
+            finally
+            {
+                this.connectGate.Release();
+                this.connectGate.Dispose();
+            }
         }
 
         public ValueTask PublishAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, in TPayload payload, in JsonElement headers = default, CancellationToken cancellationToken = default)
