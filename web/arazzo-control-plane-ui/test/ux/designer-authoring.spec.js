@@ -493,6 +493,34 @@ test('the acquisition dialog attaches a REGISTERED source by name (no re-upload)
   assertClean(errors);
 });
 
+test('attaching a source declares it in sourceDescriptions, so leaving and returning raises no undeclared-source finding', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+  await page.locator('[data-tab="sources"]').click();
+  const browser = page.locator('arazzo-operation-browser');
+  await browser.locator('button.add').click();
+  const dialog = page.locator('#acqdialog');
+  await expect(dialog.locator('dialog')).toBeVisible();
+  await dialog.locator('select.registry-in').selectOption('petstore');
+  await dialog.locator('button.attach').click();
+  await expect(dialog.locator('dialog')).not.toBeVisible();
+
+  // The attach also DECLARED the source through the document model (the same §4.1 rule the drop
+  // gesture applies), so the copy went dirty and autosaved the declaration.
+  await expect(page.locator('#save-status')).toContainText('saved', { timeout: 5000 });
+
+  // Leave and return — the reported regression loop. The declaration persisted with the stored
+  // document, so the automatic validate comes back without the attached-but-undeclared finding.
+  await page.locator('#back').click();
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await expect(page.locator('#surface')).toBeVisible();
+  await page.locator('[data-tab="problems"]').click();
+  const problems = page.locator('#problems');
+  await expect(problems).not.toContainText('(not validated yet)');
+  await expect(problems).not.toContainText('is not declared in sourceDescriptions');
+  assertClean(errors);
+});
+
 test('detaching a source that steps bind is confirm-gated with the consequence spelled out, and the toast restores it', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);

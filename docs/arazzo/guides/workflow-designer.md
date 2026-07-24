@@ -266,6 +266,14 @@ time-travel scrubbing needs no further calls.
 Upload (multipart) already exists on the wizard path; the working-copy attach (§4.1) accepts the
 same. Registry registration at publish follows the existing wizard readiness rules.
 
+Attach never edits the document server-side, so the **designer declares on attach**: when the
+acquisition dialog attaches an operation-surface source (openapi/asyncapi/arazzo — not
+jsonschema), the host adds the matching `sourceDescriptions` entry through the document model in
+the same gesture (autosaved, on the undo stack), exactly as dropping an operation auto-declares
+its source. Without this the workspace validation pass reports the attached-but-undeclared info
+finding on every subsequent open. Detach deliberately leaves the declaration in place (removing
+it is a document edit the author makes in the inspector).
+
 ### 4.5 Scenario runner CLI, the CI story
 
 The control-plane CLI gains **`scenarios run`**, CI-native and wrappable as a GitHub Action:

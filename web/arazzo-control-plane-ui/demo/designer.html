@@ -674,9 +674,20 @@
     opBrowser.addEventListener('add-source-requested', () => acqDialog.open({ workingCopyId: shell.id }));
     acqDialog.addEventListener('source-attached', (e) => {
       shell.etag = e.detail.attachment.etag; // the attach bumped the working copy's etag
+      // An attached source must be DECLARED for the document to reference its operations (§4.1) —
+      // the same rule the drop gesture applies. Declare it now, through the model so the
+      // declaration rides the normal autosave/undo flow. jsonschema attachments are schema
+      // surfaces, not sourceDescriptions.
+      const { name, type } = e.detail.attachment;
+      if (type !== 'jsonschema' && !(model.document.sourceDescriptions ?? []).some((x) => x.name === name)) {
+        model.update((d) => {
+          d.sourceDescriptions = [...(d.sourceDescriptions ?? []),
+            { name, url: `./sources/${name}.json`, ...(type ? { type } : {}) }];
+        }, { origin: 'sources', label: `declare source ${name}` });
+      }
       setSaveUi('source attached');
       opBrowser.refresh();
-      logEvent('source-attached', { name: e.detail.attachment.name, kind: e.detail.attachment.kind });
+      logEvent('source-attached', { name, kind: e.detail.attachment.kind });
     });
     // A detached source is recoverable for the life of this working-copy visit: the browser
     // stashed the full attachment before detaching; the toast's Restore re-attaches it verbatim
