@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -35,6 +36,7 @@ public sealed class GitHubBroker
     private readonly GitHubBrokerOptions options;
     private readonly ISecretResolver secrets;
     private readonly TimeProvider timeProvider;
+    private readonly ILogger? logger;
     private readonly IGitHubTokenStore tokens;
     private readonly ConcurrentDictionary<string, PendingAuth> pending = new();
 
@@ -44,7 +46,7 @@ public sealed class GitHubBroker
     /// <param name="secrets">Resolves the App client secret reference at exchange time (never held).</param>
     /// <param name="tokens">The per-principal token store; <see langword="null"/> uses the in-memory (session-lifetime) store.</param>
     /// <param name="timeProvider">The clock (tests inject a fake).</param>
-    public GitHubBroker(HttpClient client, GitHubBrokerOptions options, ISecretResolver secrets, IGitHubTokenStore? tokens = null, TimeProvider? timeProvider = null)
+    public GitHubBroker(HttpClient client, GitHubBrokerOptions options, ISecretResolver secrets, IGitHubTokenStore? tokens = null, TimeProvider? timeProvider = null, ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(options);
@@ -55,6 +57,7 @@ public sealed class GitHubBroker
         this.secrets = secrets;
         this.tokens = tokens ?? new InMemoryGitHubTokenStore();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.logger = logger;
     }
 
     /// <summary>The outcome kinds completing an authorization can report.</summary>
@@ -550,8 +553,14 @@ public sealed class GitHubBroker
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
         using HttpResponseMessage? response = await this.SendExchangeAsync(request, cancellationToken).ConfigureAwait(false);
-        if (response?.IsSuccessStatusCode != true)
+        if (response is null)
         {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            this.logger?.LogWarning("GitHub token exchange returned {StatusCode}.", (int)response.StatusCode);
             return null;
         }
 
@@ -560,6 +569,12 @@ public sealed class GitHubBroker
         JsonElement root = document.RootElement;
         if (!root.TryGetProperty("access_token"u8, out JsonElement accessToken) || accessToken.GetString() is not { Length: > 0 } access)
         {
+            // GitHub reports a refused exchange as 200 with an error body (incorrect_client_credentials,
+            // bad_verification_code, redirect_uri_mismatch); name it, or the operator diagnoses blind. The
+            // error fields are codes and doc links — never secret material (a success body is never logged).
+            string error = root.TryGetProperty("error"u8, out JsonElement e) ? e.GetString() ?? "(none)" : "(none)";
+            string description = root.TryGetProperty("error_description"u8, out JsonElement ed) ? ed.GetString() ?? string.Empty : string.Empty;
+            this.logger?.LogWarning("GitHub refused the token exchange: {Error} {Description}", error, description);
             return null;
         }
 
@@ -583,8 +598,9 @@ public sealed class GitHubBroker
         {
             return await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            this.logger?.LogWarning(ex, "GitHub token exchange could not reach {Endpoint}.", request.RequestUri);
             return null;
         }
     }

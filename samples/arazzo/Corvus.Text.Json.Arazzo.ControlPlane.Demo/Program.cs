@@ -587,6 +587,10 @@ string? gitHubClientId = builder.Configuration["GitHubOAuth:ClientId"];
 if (!string.IsNullOrWhiteSpace(gitHubClientId))
 {
     ISecretResolver gitHubSecrets = new SecretResolverBuilder().AddEnvironment().Build();
+
+    // A console logger so an exchange refusal names GitHub's error code in the composition logs —
+    // the difference between "incorrect_client_credentials" and an unreachable github.com matters.
+    Microsoft.Extensions.Logging.ILoggerFactory gitHubLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(logging => logging.AddConsole());
     gitHubBroker = new GitHubBroker(
         new HttpClient(),
         new GitHubBrokerOptions
@@ -595,7 +599,8 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
             ClientSecretRef = "env://GITHUB_OAUTH_CLIENT_SECRET",
             CallbackUrl = "http://localhost:8090/arazzo/v1/github/auth/callback",
         },
-        gitHubSecrets);
+        gitHubSecrets,
+        logger: Microsoft.Extensions.Logging.LoggerFactoryExtensions.CreateLogger<GitHubBroker>(gitHubLoggerFactory));
 }
 
 // The grantee directory (§16.5.4): resolve REAL Keycloak users/groups/roles for the view/operate/administer grant
