@@ -425,7 +425,86 @@ public sealed class ControlPlaneCredentialsApiTests
         public void Dispose() => this.listener.Dispose();
     }
 
-    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null)
+    [TestMethod]
+    public async Task A_channel_source_binding_takes_the_channel_credential_rules()
+    {
+        // A source registered as asyncapi classifies its bindings as CHANNEL credentials (ADR 0051).
+        var sources = new Sources.InMemorySourceStore();
+        using (ParsedJsonDocument<Sources.RegisteredSource> draft = Sources.RegisteredSource.Draft(
+            "events", "asyncapi", "{\"asyncapi\":\"3.0.0\"}"u8.ToArray().AsMemory(), "Events", null, default))
+        {
+            (await sources.AddAsync(draft.RootElement, "test", default)).Dispose();
+        }
+
+        await using Scoped host = await StartAsync(sourceStore: sources);
+
+        // An apiKey attaches per HTTP request — refused for a channel source.
+        HttpResponseMessage apiKey = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"events","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}]}""",
+            Write);
+        apiKey.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await apiKey.Content.ReadAsStringAsync()).ShouldContain("authenticates at connection");
+
+        // A channel credential without the environment's broker URL is refused.
+        HttpResponseMessage noServer = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"events","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}]}""",
+            Write);
+        noServer.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await noServer.Content.ReadAsStringAsync()).ShouldContain("serverUrl");
+
+        // Connection-scoped: a usage grantee is refused, whatever the kind.
+        HttpResponseMessage scoped = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"events","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}],"config":[{"key":"serverUrl","value":"nats://broker:4222"}],"usageGrantee":{"kind":"team","identity":[{"dimension":"group","value":"ops"}]}}""",
+            Write);
+        scoped.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await scoped.Content.ReadAsStringAsync()).ShouldContain("usage grantee");
+
+        // The well-formed channel credential: a bearer token presented at connect + the broker URL.
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"events","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}],"config":[{"key":"serverUrl","value":"nats://broker:4222"}]}""",
+            Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("authKind").GetString().ShouldBe("bearer");
+            doc.RootElement.TryGetProperty("usageTags", out _).ShouldBeFalse("connection-scoped: the default creator-identity usage scoping must not apply");
+        }
+
+        // The rules hold on update too: a config replacement must keep the broker URL.
+        HttpResponseMessage updated = await host.SendJsonAsync(
+            HttpMethod.Put,
+            "/credentials/events/production",
+            """{"authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token2"}],"config":[{"key":"foo","value":"bar"}]}""",
+            Write);
+        updated.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await updated.Content.ReadAsStringAsync()).ShouldContain("serverUrl");
+    }
+
+    [TestMethod]
+    public async Task An_unregistered_or_http_source_is_untouched_by_the_channel_rules()
+    {
+        // No sources registry entry → the binding surface stays permissive (non-disclosing reach, no registration
+        // requirement): an apiKey binding for an unknown source is created exactly as before ADR 0051.
+        var sources = new Sources.InMemorySourceStore();
+        await using Scoped host = await StartAsync(sourceStore: sources);
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"unregistered","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/unregistered#api-key"}]}""",
+            Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null, Sources.ISourceStore? sourceStore = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -443,7 +522,7 @@ public sealed class ControlPlaneCredentialsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore);
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());

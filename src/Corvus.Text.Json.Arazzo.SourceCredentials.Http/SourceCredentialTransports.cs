@@ -59,16 +59,17 @@ public static class SourceCredentialTransports
     }
 
     /// <summary>Builds a <see cref="WorkflowTransportBinder"/> that, per run, binds each of the workflow's declared API
-    /// sources to a transport authenticating from the credential cache for the run's tags. Install this as the host's
-    /// transport binder so source credential resolution is entitled per run.</summary>
+    /// sources to a transport authenticating from the credential cache for the run's tags, and each of its channel
+    /// sources to the shared transport the channel-transport cache builds from that source's §13 channel credential
+    /// (ADR 0051). Install this as the host's transport binder so source credential resolution is entitled per run.</summary>
     /// <param name="sourceClients">The host-owned clients, keyed by the source name the workflow declares; each client's
     /// <see cref="HttpClient.BaseAddress"/> is that source's base URL.</param>
     /// <param name="environment">The deployment environment all the sources bind for.</param>
     /// <param name="cache">The runner credential cache.</param>
-    /// <param name="messageTransport">The shared message transport for AsyncAPI channel steps, or <see langword="null"/>
-    /// if the host binds no message workflows.</param>
+    /// <param name="channelTransports">The channel-transport cache (one shared, lazily-connected transport per channel
+    /// source, built from its channel credential), or <see langword="null"/> if the host binds no message workflows.</param>
     /// <returns>The binder.</returns>
-    public static WorkflowTransportBinder CreateBinder(IReadOnlyDictionary<string, HttpClient> sourceClients, string environment, SourceCredentialCache cache, IMessageTransport? messageTransport = null)
+    public static WorkflowTransportBinder CreateBinder(IReadOnlyDictionary<string, HttpClient> sourceClients, string environment, SourceCredentialCache cache, ChannelTransportCache? channelTransports = null)
     {
         ArgumentNullException.ThrowIfNull(sourceClients);
         ArgumentNullException.ThrowIfNull(cache);
@@ -86,13 +87,24 @@ public static class SourceCredentialTransports
                 apiTransports[source] = CreateApiTransportFactory(client, source, environment, cache, runTags).CreateTransport();
             }
 
-            if (descriptor.NeedsMessageTransport && messageTransport is null)
+            if (descriptor.MessageSources.Count == 0)
             {
-                throw new WorkflowTransportBindingException(
-                    $"Workflow '{descriptor.WorkflowId}' requires a message transport, but none is configured.");
+                return new WorkflowTransports(apiTransports, WorkflowTransports.NoMessageTransports);
             }
 
-            return new WorkflowTransports(apiTransports, descriptor.NeedsMessageTransport ? messageTransport : null);
+            if (channelTransports is null)
+            {
+                throw new WorkflowTransportBindingException(
+                    $"Workflow '{descriptor.WorkflowId}' requires a message transport, but this host configures no channel-transport cache.");
+            }
+
+            var messageTransports = new Dictionary<string, IMessageTransport>(descriptor.MessageSources.Count, StringComparer.Ordinal);
+            foreach (MessageSourceDescriptor source in descriptor.MessageSources)
+            {
+                messageTransports[source.Name] = channelTransports.GetTransport(source.Name, source.Protocol);
+            }
+
+            return new WorkflowTransports(apiTransports, messageTransports);
         };
     }
 

@@ -69,6 +69,36 @@ A binding carries two independent tag sets, matching the two-plane model:
 The catalog-time gate `EvaluateSourceAccessAsync` returns `Granted`, `Denied`, or `Unconfigured` from the
 binding and its tags, so a run that a binding does not admit is refused before it starts.
 
+## Channel (AsyncAPI) sources
+
+A channel source binds per `(source, environment)` through the same store and the same auth kinds, read as
+credential *shapes* ([ADR 0051](../adr/0051-channel-sources-bind-per-environment.md)): `bearer` is one opaque
+secret presented at connect (a NATS token, an Azure Service Bus SAS), `basic` is a username + password (NATS
+user/pass, Kafka SASL/PLAIN or SCRAM — the mechanism is non-secret `config`), `oauth2ClientCredentials` covers
+OAUTHBEARER/Entra, and `mtls` covers SSL client certificates. `apiKey` does not apply (it attaches per HTTP
+request) and the create handler refuses it for a source registered as `asyncapi`.
+
+Two things distinguish a channel binding:
+
+- **The endpoint rides the binding.** The environment's broker URL is a required non-secret `config` entry,
+  `serverUrl` — the channel analogue of the HTTP `baseUrl` override, protocol-interpreted (a Kafka value may be
+  a bootstrap list). The transport *protocol* is never on the binding: the source document's
+  `servers[].protocol` declares it, and generation bakes it into the executor descriptor's message sources.
+- **Connection-scoped, always.** Broker auth happens in the CONNECT/SASL handshake — connection-time, like
+  mTLS — so a channel binding authenticates the runner's connection, not a run: it is shared per
+  `(source, environment)`, and it cannot be usage-scoped (the handler refuses a `usageGrantee`, whatever the
+  kind).
+
+**Resolution is runner-side, through the channel-transport cache.** `ChannelTransportCache` hands the binder
+one shared, lazily-connected `IMessageTransport` per channel source: on first use it reads the binding,
+dereferences the secrets through the same `ISecretResolver` set, and builds the connection through the
+`IChannelTransportFactory` registered for the source's protocol (`NatsChannelTransportFactory` today; a Kafka
+or Service Bus factory is its own package with its own SDK, mirroring the bring-your-own resolver
+composition). An unregistered protocol, a missing binding, or an unsupported (protocol, kind) combination
+fails closed as a transport-binding fault. Rotation is picked up on process restart (the shared connection
+holds the credential it connected with; live reconnect-on-rotation is deliberately not attempted while
+in-flight runs hold the transport).
+
 ## mTLS
 
 `mtls` is the one kind that uses more than one secret slot: a `certificate` (required) plus an optional

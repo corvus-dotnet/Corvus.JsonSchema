@@ -1368,9 +1368,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         // Gate 2 (§18): per-source credential readiness in the TARGET environment. The run dialog
         // surfaces the same coverage before the attempt; starting with gaps is a 409 naming them.
-        // Only HTTP (openapi) sources need a §13 binding — an asyncapi source's sends ride the
-        // draft runner's own message transport and never resolve a credential, so gating them made
-        // readiness depend on unrelated bindings happening to share the source's name.
+        // An openapi source needs an HTTP credential; an asyncapi source needs its CHANNEL credential
+        // (the environment's broker URL + broker credential, ADR 0051) — every calling source counts,
+        // uniformly. Only arazzo (no direct calls) and jsonschema (no calls at all) sources are exempt.
         JsonElement document = (JsonElement)w.RootElement.Document;
         List<string>? missing = null;
         if (document.TryGetProperty("sourceDescriptions"u8, out JsonElement declared) && declared.ValueKind == JsonValueKind.Array)
@@ -1379,9 +1379,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 if (source.TryGetProperty("type"u8, out JsonElement sourceType)
                     && sourceType.ValueKind == JsonValueKind.String
-                    && !sourceType.ValueEquals("openapi"u8))
+                    && !sourceType.ValueEquals("openapi"u8)
+                    && !sourceType.ValueEquals("asyncapi"u8))
                 {
-                    continue; // asyncapi (message transport), arazzo (no direct calls), jsonschema (no calls at all)
+                    continue; // arazzo (no direct calls), jsonschema (no calls at all)
                 }
 
                 if (source.TryGetProperty("name"u8, out JsonElement sourceNameElement) && sourceNameElement.GetString() is { Length: > 0 } sourceName)
