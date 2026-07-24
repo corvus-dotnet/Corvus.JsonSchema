@@ -160,26 +160,38 @@ secret lives in a real secret store, and you register a distinct OAuth App per e
 
 ## Beyond GitHub: connected providers (ADR 0052)
 
-Adding an SSO'd portal is configuration, not code: one `ConnectedProviderOptions` entry in the same
-registry the GitHub App folds into. The fetch pane resolves a pasted URL's host against each entry's
-`hosts` patterns to offer **Connect**, the sign-in is the same brokered popup, and the server only
-attaches a user's token to a host the provider covers.
+The broker generalizes to a specific class: **providers whose content API accepts a brokered user
+token.** That is the git-host and API-platform tier (GitHub, GitLab, Azure DevOps, and bearer-fronted
+API catalogs), where signing in as the user yields a token the document endpoint honours. Registering
+one is configuration: a `ConnectedProviderOptions` entry in the same registry the GitHub App folds
+into. The fetch pane resolves a pasted URL's host against each entry's `hosts` patterns to offer
+**Connect**, the sign-in is the same brokered popup, and the server only attaches a user's token to a
+host the provider covers.
+
+This is **not** the way to reach a portal you merely log into in a browser. If a portal's document
+endpoint is guarded by a session cookie rather than a bearer token (the common case for an SSO'd
+developer portal), an OAuth token minted here authenticates you to the identity provider but is not
+what that endpoint checks, so the fetch would still fail. A document behind a browser session is
+brought in by browser-mediated acquisition (paste or upload in the acquisition dialog), covered by
+[ADR 0052](../adr/0052-source-fetch-authenticates-as-the-user.md). Register a connected provider only
+when the target's content API genuinely accepts the token.
 
 ```csharp
 var providers = new ProviderBroker(
     httpClient,
     [
         gitHubOptions.ToProviderEntry(),
+        // GitLab: its repository-files API accepts the user's OAuth token as a bearer.
         new ConnectedProviderOptions
         {
-            Name = "portal",
-            DisplayName = "Developer Portal",
-            Issuer = "https://sso.example.com/realms/engineering",   // endpoints via OIDC discovery
-            ClientId = configuration["Portal:ClientId"],
-            ClientSecretRef = "keyvault://arazzo-kv/portal-oauth-client-secret",
-            Scopes = "openid profile",
-            CallbackUrl = "https://arazzo.example.com/arazzo/v1/providers/portal/auth/callback",
-            Hosts = ["portal.example.com", "*.docs.example.com"],
+            Name = "gitlab",
+            DisplayName = "GitLab",
+            Issuer = "https://gitlab.example.com",   // endpoints via OIDC discovery
+            ClientId = configuration["GitLab:ClientId"],
+            ClientSecretRef = "keyvault://arazzo-kv/gitlab-oauth-client-secret",
+            Scopes = "read_api",
+            CallbackUrl = "https://arazzo.example.com/arazzo/v1/providers/gitlab/auth/callback",
+            Hosts = ["gitlab.example.com"],
         },
     ],
     secretResolver);
@@ -201,8 +213,11 @@ var providers = new ProviderBroker(
   recycle.
 
 The demo composition registers its own Keycloak this way (`arazzo-portal` in the realm import) over
-a secured sample spec endpoint (`/portal/specs/petstore.json`), so the interactive flow is
-live-testable with the seeded realm users and no external account.
+a sample spec endpoint (`/portal/specs/petstore.json`) that accepts the realm's bearer token, so the
+interactive flow is live-testable with the seeded realm users and no external account. This
+demonstrates the mechanism (an endpoint that accepts the brokered token), not an independent
+third-party portal: the endpoint validates the deployment's own realm, so it is a mechanism demo
+rather than proof against a foreign provider.
 
 ## Options reference
 

@@ -266,10 +266,17 @@ time-travel scrubbing needs no further calls.
 
 | Operation | HTTP | Purpose |
 |-----------|------|---------|
-| `fetchSourceDocument` | `POST /sources/fetch` | `{url, auth?: {provider} \| {secret} \| {binding: {sourceName, environment}}}` → the fetched, validated document (+ detected type/version, content digest). **Server-side fetch**: avoids browser CORS entirely. Authentication is user-first (ADR 0052): a **connected-provider** connection (the pasted URL's host resolves against the deployment's provider registry; unconnected → the pane offers Connect via the brokered popup), a **one-shot secret** (used once, never stored) for hosts no provider covers, or — third, filterable — a §13 workload binding. Does not register; the caller attaches or registers the result. |
+| `fetchSourceDocument` | `POST /sources/fetch` | `{url, auth?: {provider} \| {secret} \| {binding: {sourceName, environment}}}` → the fetched, validated document (+ detected type/version, content digest). **Server-side fetch**: avoids browser CORS entirely. Its authentication is **matched to how the endpoint is protected** (ADR 0052): none for a public URL; a **one-shot secret** (a header credential — bearer/PAT, API key, or Basic — used once, never stored) or a filterable §13 workload **binding** for an endpoint that takes a header credential; or a **connected-provider** token where the endpoint's content API accepts one (the pasted URL's host resolves against the deployment's provider registry; unconnected → the pane offers Connect via the brokered popup, the git-host/API-platform tier). Does not register; the caller attaches or registers the result. |
 
+The acquisition dialog leads with the cases that carry no server-side credential: a **public** URL
+fetches anonymously, and a document behind the author's own **browser session** (an SSO'd portal the
+author can already open in a browser) comes in by **browser-mediated acquisition** — *paste* the
+document text or *upload* the saved file. The server cannot replay the author's browser session, so
+paste/upload is the honest answer there, not a fetch. Fetch-with-a-credential and the connected
+provider handle endpoints that genuinely present a header credential or a token-accepting content API.
 Upload (multipart) already exists on the wizard path; the working-copy attach (§4.1) accepts the
-same. Registry registration at publish follows the existing wizard readiness rules.
+same, and paste is its client-side sibling. Registry registration at publish follows the existing
+wizard readiness rules.
 
 Attach never edits the document server-side, so the **designer declares on attach**: when the
 acquisition dialog attaches an operation-surface source (openapi/asyncapi/arazzo — not

@@ -565,17 +565,20 @@ if (File.Exists(designerPage))
     app.MapGet("/designer", () => Results.File(designerPage, "text/html"));
 }
 
-// The connected-provider demo's secured spec endpoint (ADR 0052): an OpenAPI document behind the deployment's
-// own auth — 401 anonymous, readable by any signed-in realm user. "Fetch URL" against this host then exercises
-// the whole interactive path live: the pane offers Connect (the Demo Keycloak provider covers localhost), the
-// popup signs the user in, and the fetch runs AS them. Secured composition only (there is no auth stack to sit
-// behind otherwise).
+// The connected-provider MECHANISM demo's spec endpoint (ADR 0052 tier 4): an OpenAPI document whose endpoint
+// accepts the realm's bearer token — 401 anonymous, readable with a signed-in realm user's token. "Fetch URL"
+// against this host exercises the whole interactive path live: the pane offers Connect (the Demo Keycloak
+// provider covers localhost), the popup signs the user in, and the fetch runs AS them with a token this endpoint
+// accepts. This demonstrates the tier-4 mechanism (an endpoint that accepts the brokered token); it is NOT an
+// independent third-party portal (the endpoint validates this deployment's own realm), and a portal you merely
+// log into in a browser would instead use browser-mediated acquisition (paste/upload), not this. Secured
+// composition only (there is no auth stack to sit behind otherwise).
 if (requireAuthorization)
 {
     const string portalSampleSpec = /*lang=json,strict*/ """
         {
           "openapi": "3.1.0",
-          "info": { "title": "Portal Petstore", "version": "1.0.0", "description": "A sample spec served behind the demo deployment's own sign-in, so the fetch pane's connected-provider path is live-testable." },
+          "info": { "title": "Portal Petstore", "version": "1.0.0", "description": "A sample spec whose endpoint accepts the demo realm's bearer token, so the fetch pane's connected-provider (tier 4) mechanism is live-testable." },
           "paths": {
             "/pets": {
               "get": {
@@ -619,11 +622,12 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
     providerEntries.Add(gitHubOptions.ToProviderEntry());
 }
 
-// The demo Keycloak folds in as a connected provider (ADR 0052) covering the demo's own host: the secured
-// sample spec endpoint below sits behind the deployment's auth, so the fetch pane's interactive sign-in is
-// live-testable with the seeded realm users — no external account. The arazzo-portal client is registered by
-// the realm import; its dev secret is injected by the AppHost as ARAZZO_PORTAL_CLIENT_SECRET. Secured
-// composition only: with authorization off there is no secured host to authenticate against.
+// The demo Keycloak folds in as a connected provider (ADR 0052 tier 4) covering the demo's own host, purely to
+// demonstrate the mechanism: the sample spec endpoint below accepts the realm's bearer token, so the fetch
+// pane's interactive sign-in is live-testable with the seeded realm users and no external account. It is a
+// mechanism demo, not a foreign portal (the endpoint validates this same realm). The arazzo-portal client is
+// registered by the realm import; its dev secret is injected by the AppHost as ARAZZO_PORTAL_CLIENT_SECRET.
+// Secured composition only: with authorization off there is no token-checking host to authenticate against.
 string? providerKeycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
 if (requireAuthorization && !string.IsNullOrWhiteSpace(providerKeycloakBaseUrl))
 {
