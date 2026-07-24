@@ -113,9 +113,10 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     const sel = el.shadowRoot.querySelector('.gh-repo-in');
     sel.value = 'acme-org/specs';
     sel.dispatchEvent(new Event('change'));
-    await waitFor(() => el.shadowRoot.querySelectorAll('.gh-list button[data-path]').length >= 2, 'the root lists');
+    const tree = el.shadowRoot.querySelector('.gh-tree');
+    await waitFor(() => [...tree.shadowRoot.querySelectorAll('button.entry')].length >= 2, 'the root lists in the shared tree');
 
-    el.shadowRoot.querySelector('.gh-list button[data-path="petstore.openapi.json"]').click();
+    [...tree.shadowRoot.querySelectorAll('button.entry')].find((b) => b.textContent.includes('petstore.openapi.json')).click();
     await waitFor(() => !el.shadowRoot.querySelector('.gh-preview').hidden
       && el.shadowRoot.querySelector('.gh-preview').textContent.includes('openapi'), 'the picked spec previews');
     equal(el.shadowRoot.querySelector('.name-in').value, 'petstore', 'the name defaults from the file stem');

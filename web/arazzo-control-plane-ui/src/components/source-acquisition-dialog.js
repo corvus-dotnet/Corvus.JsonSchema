@@ -26,6 +26,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './filter-input.js';
+import './git-tree.js';
 import './catalog-table.js';
 import './tag-editor.js';
 
@@ -119,10 +120,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
         .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
         .crumb button { font-size: 11px; padding: 0 8px; }
-        .gh-list { display: grid; max-height: 200px; overflow: auto; border: 1px solid var(--_border); border-radius: 6px; }
-        .gh-list button { text-align: left; border: none; background: none; padding: 6px 10px; font-size: 12px; cursor: pointer; color: inherit; border-radius: 0; }
-        .gh-list button:hover:not(:disabled) { background: rgb(127 127 127 / 0.12); }
-        .gh-list button:disabled { opacity: 0.45; cursor: default; }
+        .gh-tree { display: block; }
         .gh-repo-label[hidden], .gh-branch-label[hidden], .gh-browser[hidden] { display: none; }
         .preview .digest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; overflow-wrap: anywhere; color: var(--_muted); }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
@@ -177,15 +175,14 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
           </div>
           <div class="mode mode-github" hidden>
             <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
-            <label class="gh-repo-label" hidden>Repository (the user ∩ installation intersection)
+            <label class="gh-repo-label" hidden>Repository
               <arazzo-filter-input class="gh-repo-in" aria-label="Repository" placeholder="type to filter, or any owner/repo"></arazzo-filter-input>
             </label>
             <label class="gh-branch-label" hidden>Branch
               <arazzo-filter-input class="gh-branch-in" aria-label="Branch" placeholder="type to filter branches"></arazzo-filter-input>
             </label>
             <div class="gh-browser" hidden>
-              <div class="crumb"><button class="gh-up ghost" type="button" title="Up" hidden>↑</button><span class="gh-path"></span></div>
-              <div class="gh-list"></div>
+              <arazzo-git-tree class="gh-tree"></arazzo-git-tree>
             </div>
             <div class="preview gh-preview" hidden></div>
           </div>
@@ -219,7 +216,6 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderGitHubRepos());
     this.$('.gh-repo-in').addEventListener('change', () => this.onRepoChosen());
     this.$('.gh-branch-in').addEventListener('change', () => this.browseGitHub(''));
-    this.$('.gh-up').addEventListener('click', () => this.browseGitHub(this._github.path.split('/').slice(0, -1).join('/')));
   }
 
   switchMode(mode) {
@@ -510,7 +506,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       branchSel.items = names.map((name) => ({ value: name, sub: name === list.defaultBranch ? 'default' : '' }));
       branchSel.value = picked;
       branchSel.disabled = names.length === 0;
-      this.browseGitHub('');
+      this.browseGitHub();
     } catch (err) {
       if (seq !== this._branchSeq) return;
       branchSel.items = [];
@@ -520,37 +516,32 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     }
   }
 
-  async browseGitHub(path) {
+  /** Mount the shared lazy tree (the same component the Git pane browses with) over the chosen
+   *  repo+branch: directories load as they expand, JSON files pick into the preview. */
+  browseGitHub() {
     const sel = this.$('.gh-repo-in');
     if (!sel.value) return;
     const [owner, repo] = [sel.value.slice(0, sel.value.indexOf('/')), sel.value.slice(sel.value.indexOf('/') + 1)];
     const branch = this.$('.gh-branch-in').value || undefined;
     this.clearError();
-    this._github = { owner, repo, branch, path, picked: null };
+    this._github = { owner, repo, branch, picked: null };
     this.$('.gh-preview').hidden = true;
     this.updateAttachState();
-    const seq = ++this._seq;
-    try {
-      const result = await this._client.browseRepo(owner, repo, { path: path || undefined, ref: branch });
-      if (seq !== this._seq || this._mode !== 'github') return;
-      const browser = this.$('.gh-browser');
-      browser.hidden = false;
-      this.$('.gh-path').textContent = `${owner}/${repo}/${path}`;
-      this.$('.gh-up').hidden = !path;
-      const list = this.$('.gh-list');
-      const entries = (result.entries ?? []).slice().sort((a, b) => (a.type === b.type ? (a.name < b.name ? -1 : 1) : a.type === 'dir' ? -1 : 1));
-      list.innerHTML = entries.length === 0
-        ? `<button type="button" disabled>(empty)</button>`
-        : entries.map((e) => {
-            const importable = e.type === 'dir' || e.name.toLowerCase().endsWith('.json');
-            return `<button type="button" data-type="${e.type}" data-path="${escapeHtml(e.path)}" data-name="${escapeHtml(e.name)}"${importable ? '' : ' disabled title="Only JSON imports directly; YAML goes through Fetch URL."'}>${e.type === 'dir' ? '📁' : '📄'} ${escapeHtml(e.name)}</button>`;
-          }).join('');
-      list.querySelectorAll('button[data-path]').forEach((entry) => entry.addEventListener('click', () =>
-        entry.dataset.type === 'dir' ? this.browseGitHub(entry.dataset.path) : this.pickGitHubFile(entry.dataset.path, entry.dataset.name)));
-    } catch (err) {
-      if (seq !== this._seq) return;
-      this.showError(err.problem?.detail || err.problem?.title || err.message);
+    const browser = this.$('.gh-browser');
+    browser.hidden = false;
+    const tree = this.$('.gh-tree');
+    tree.mode = 'file';
+    tree.pickableFile = (entry) => entry.name.toLowerCase().endsWith('.json');
+    tree.loader = async (path) => {
+      const node = await this._client.browseRepo(owner, repo, { path: path || undefined, ref: branch });
+      return node.kind === 'dir' ? node.entries : [];
+    };
+    if (!tree._picking) {
+      tree._picking = true;
+      tree.addEventListener('picked', (e) => this.pickGitHubFile(e.detail.path, e.detail.entry?.name ?? e.detail.path.split('/').pop()));
+      tree.addEventListener('error', (e) => this.showError(e.detail.error?.problem?.detail || e.detail.error?.message || 'The repository could not be browsed.'));
     }
+    tree.reload();
   }
 
   async pickGitHubFile(path, name) {

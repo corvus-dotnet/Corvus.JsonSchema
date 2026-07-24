@@ -647,17 +647,15 @@ test('GitHub source acquisition: after connecting, a branch is chosen and a file
   const branch = dlg.locator('.gh-branch-in input');
   await expect(dlg.locator('label.gh-branch-label')).toBeVisible();
   await expect(branch).toHaveValue('main');
-  const list = dlg.locator('.gh-list');
-  await expect(list).toBeVisible();
-  await expect(list.getByRole('button', { name: /petstore\.openapi\.json/ })).toBeVisible();
+  const tree = dlg.locator('.gh-tree');
+  await expect(tree).toBeVisible();
+  await expect(tree.getByRole('button', { name: /petstore\.openapi\.json/ })).toBeVisible();
 
-  // Browse into a folder and back out, then import the JSON spec — the preview confirms the type,
-  // and the file was read at the chosen branch (ref threaded through browseRepo).
-  await list.getByRole('button', { name: /flows/ }).click();
-  await expect(dlg.locator('.gh-path')).toHaveText('acme-org/specs/flows');
-  await dlg.locator('.gh-up').click();
-  await expect(dlg.locator('.gh-path')).toHaveText('acme-org/specs/');
-  await list.getByRole('button', { name: /petstore\.openapi\.json/ }).click();
+  // Expand a folder in place (the shared lazy tree — no crumbs, no up button), then import the
+  // JSON spec — the preview confirms the type, read at the chosen branch (ref through browseRepo).
+  await tree.getByRole('button', { name: /flows/ }).click();
+  await expect(tree.getByRole('button', { name: /adopt\.arazzo\.json|.*\.json/ }).first()).toBeVisible();
+  await tree.getByRole('button', { name: /petstore\.openapi\.json/ }).click();
   await expect(dlg.locator('.gh-preview')).toContainText('openapi');
   await expect(dlg.locator('button.attach')).toBeEnabled();
 
