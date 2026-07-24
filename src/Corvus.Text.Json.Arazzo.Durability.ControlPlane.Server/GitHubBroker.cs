@@ -555,6 +555,10 @@ public sealed class GitHubBrokerOptions
             Scopes = "repo read:user user:email",
             CallbackUrl = this.CallbackUrl,
             Hosts = hosts,
+
+            // A GitHub OAuth App does not support PKCE, so the folded entry keeps the flow exactly as
+            // GitHub expects; PKCE is for the OIDC providers whose authorization servers support it.
+            UsePkce = false,
         };
     }
 }

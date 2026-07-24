@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
@@ -172,18 +173,30 @@ public sealed class ProviderBroker
         }
 
         this.PrunePending();
-        string state = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        this.pending[state] = new PendingAuth(principalKey, provider.Name!, this.timeProvider.GetUtcNow() + StateLifetime);
+        string state = Base64Url(RandomNumberGenerator.GetBytes(32));
+
+        // PKCE (RFC 7636): a per-authorization verifier binds the code to this sign-in, so an
+        // intercepted code cannot be redeemed without it. The challenge rides the authorize URL; the
+        // verifier stays server-side with the state and is presented at the exchange. A provider that
+        // does not support PKCE ignores the extra parameters (OAuth 2.0 §3.1), so this is safe to send.
+        string? codeVerifier = provider.UsePkce ? Base64Url(RandomNumberGenerator.GetBytes(32)) : null;
+        this.pending[state] = new PendingAuth(principalKey, provider.Name!, codeVerifier, this.timeProvider.GetUtcNow() + StateLifetime);
         string scope = string.IsNullOrEmpty(provider.Scopes) ? string.Empty : $"&scope={Uri.EscapeDataString(provider.Scopes)}";
+        string pkce = codeVerifier is null
+            ? string.Empty
+            : $"&code_challenge={Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(codeVerifier)))}&code_challenge_method=S256";
         string authorizeUrl = resolved.AuthorizeEndpoint +
             (resolved.AuthorizeEndpoint.Contains('?') ? '&' : '?') +
             $"client_id={Uri.EscapeDataString(provider.ClientId!)}" +
             $"&redirect_uri={Uri.EscapeDataString(provider.CallbackUrl!)}" +
             "&response_type=code" +
             scope +
+            pkce +
             $"&state={Uri.EscapeDataString(state)}";
         return (BeginOutcome.Success, authorizeUrl, state);
     }
+
+    private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     /// <summary>
     /// Completes the flow: validates and consumes the state (single-use, provider-bound),
@@ -212,7 +225,7 @@ public sealed class ProviderBroker
             return CompleteOutcome.ExchangeFailed;
         }
 
-        ProviderToken? token = await this.ExchangeAsync(provider, resolved.TokenEndpoint, ("code", code), cancellationToken).ConfigureAwait(false);
+        ProviderToken? token = await this.ExchangeAsync(provider, resolved.TokenEndpoint, ("code", code), auth.CodeVerifier, cancellationToken).ConfigureAwait(false);
         if (token is not { } t)
         {
             return CompleteOutcome.ExchangeFailed;
@@ -269,7 +282,7 @@ public sealed class ProviderBroker
 
         ProviderEndpoints? endpoints = await this.ResolveEndpointsAsync(provider, cancellationToken).ConfigureAwait(false);
         ProviderToken? refreshed = endpoints is { } resolved
-            ? await this.ExchangeAsync(provider, resolved.TokenEndpoint, ("refresh_token", current.RefreshToken), cancellationToken).ConfigureAwait(false)
+            ? await this.ExchangeAsync(provider, resolved.TokenEndpoint, ("refresh_token", current.RefreshToken), codeVerifier: null, cancellationToken).ConfigureAwait(false)
             : null;
         if (refreshed is not { } fresh)
         {
@@ -327,6 +340,17 @@ public sealed class ProviderBroker
             byte[] payload = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
             using var document = ParsedJsonDocument<JsonElement>.Parse(payload);
             JsonElement root = document.RootElement;
+
+            // Issuer validation (OIDC Discovery / RFC 8414): the metadata's own issuer must match the
+            // issuer the discovery URL was built from, or the document is not this provider's — the
+            // mix-up-attack guard. Compared exactly, tolerating only a trailing-slash difference.
+            if (!root.TryGetProperty("issuer"u8, out JsonElement issuer) || issuer.GetString() is not { Length: > 0 } discoveredIssuer
+                || !string.Equals(discoveredIssuer.TrimEnd('/'), provider.Issuer.TrimEnd('/'), StringComparison.Ordinal))
+            {
+                this.logger?.LogWarning("Provider '{Provider}' discovery issuer does not match the configured issuer.", provider.Name);
+                return null;
+            }
+
             if (!root.TryGetProperty("authorization_endpoint"u8, out JsonElement authorize) || authorize.GetString() is not { Length: > 0 } authorizeEndpoint
                 || !root.TryGetProperty("token_endpoint"u8, out JsonElement token) || token.GetString() is not { Length: > 0 } tokenEndpoint)
             {
@@ -345,15 +369,24 @@ public sealed class ProviderBroker
     // scrubbed after the call. GitHub's endpoint accepts this exact shape (Accept: application/json
     // selects its JSON response; the extra grant_type/redirect_uri are tolerated), so the folded
     // github entry needs no special case.
-    private async ValueTask<ProviderToken?> ExchangeAsync(ConnectedProviderOptions provider, string tokenEndpoint, (string Name, string Value) grant, CancellationToken cancellationToken)
+    private async ValueTask<ProviderToken?> ExchangeAsync(ConnectedProviderOptions provider, string tokenEndpoint, (string Name, string Value) grant, string? codeVerifier, CancellationToken cancellationToken)
     {
         using SecretMaterial secret = await this.secrets.ResolveAsync(SecretRef.Parse(provider.ClientSecretRef!), cancellationToken).ConfigureAwait(false);
+        bool basic = provider.ClientAuthentication == ProviderClientAuthentication.ClientSecretBasic;
         var form = new List<KeyValuePair<string, string>>
         {
             new("client_id", provider.ClientId!),
-            new("client_secret", secret.Reveal()),
             new(grant.Name, grant.Value),
         };
+
+        // Client authentication (RFC 6749 §2.3.1): ClientSecretPost puts the secret in the body;
+        // ClientSecretBasic puts client_id:client_secret in the Authorization header (some IdPs
+        // require it) and keeps the secret out of the body.
+        if (!basic)
+        {
+            form.Add(new("client_secret", secret.Reveal()));
+        }
+
         if (grant.Name == "refresh_token")
         {
             form.Add(new("grant_type", "refresh_token"));
@@ -362,12 +395,22 @@ public sealed class ProviderBroker
         {
             form.Add(new("grant_type", "authorization_code"));
             form.Add(new("redirect_uri", provider.CallbackUrl!));
+            if (codeVerifier is not null)
+            {
+                form.Add(new("code_verifier", codeVerifier));
+            }
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
         {
             Content = new FormUrlEncodedContent(form),
         };
+        if (basic)
+        {
+            string credential = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Uri.EscapeDataString(provider.ClientId!)}:{Uri.EscapeDataString(secret.Reveal())}"));
+            request.Headers.TryAddWithoutValidation("Authorization", $"Basic {credential}");
+        }
+
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
         HttpResponseMessage? response;
@@ -400,6 +443,15 @@ public sealed class ProviderBroker
                 // GitHub reports a refused exchange as 200 with an error body; name the error
                 // fields (codes and doc links — never secret material; a success body is never logged).
                 LogExchangeRefusal(this.logger, provider.Name!, (int)response.StatusCode, payload);
+                return null;
+            }
+
+            // The token is only ever presented as a bearer. Reject a declared non-bearer type rather
+            // than mis-presenting it; an absent token_type is treated as bearer (GitHub's shape).
+            if (root.TryGetProperty("token_type"u8, out JsonElement tokenType) && tokenType.ValueKind == JsonValueKind.String
+                && tokenType.GetString() is { Length: > 0 } declaredType && !string.Equals(declaredType, "bearer", StringComparison.OrdinalIgnoreCase))
+            {
+                this.logger?.LogWarning("Provider '{Provider}' returned an unsupported token_type.", provider.Name);
                 return null;
             }
 
@@ -461,9 +513,19 @@ public sealed class ProviderBroker
         }
     }
 
-    private readonly record struct PendingAuth(string PrincipalKey, string Provider, DateTimeOffset ExpiresAt);
+    private readonly record struct PendingAuth(string PrincipalKey, string Provider, string? CodeVerifier, DateTimeOffset ExpiresAt);
 
     private readonly record struct ProviderEndpoints(string AuthorizeEndpoint, string TokenEndpoint);
+}
+
+/// <summary>How a provider's token endpoint authenticates the client (RFC 6749 §2.3.1).</summary>
+public enum ProviderClientAuthentication
+{
+    /// <summary>The client secret rides in the request body (<c>client_secret</c>). The default; GitHub uses it.</summary>
+    ClientSecretPost,
+
+    /// <summary>The client id and secret ride in an HTTP Basic <c>Authorization</c> header (some IdPs require it).</summary>
+    ClientSecretBasic,
 }
 
 /// <summary>
@@ -502,6 +564,16 @@ public sealed class ConnectedProviderOptions
     /// <summary>Gets the deployment's externally visible callback URL for this provider — it must
     /// exactly match a redirect URI in the provider-side client registration.</summary>
     public string? CallbackUrl { get; init; }
+
+    /// <summary>Gets a value indicating whether the sign-in uses PKCE (RFC 7636, S256). Defaults to
+    /// <see langword="true"/>. A provider that does not support PKCE ignores the parameters, so this
+    /// is safe to leave on; it is <see langword="false"/> only where a provider is known to reject
+    /// the extra parameters.</summary>
+    public bool UsePkce { get; init; } = true;
+
+    /// <summary>Gets how the token endpoint authenticates the client (RFC 6749 §2.3.1). Defaults to
+    /// <see cref="ProviderClientAuthentication.ClientSecretPost"/> (the body form; GitHub's shape).</summary>
+    public ProviderClientAuthentication ClientAuthentication { get; init; } = ProviderClientAuthentication.ClientSecretPost;
 
     /// <summary>Gets the hosts this provider's user identity covers: exact names or
     /// <c>*.suffix</c> patterns. The fetch path attaches the user's token only to a covered host.</summary>

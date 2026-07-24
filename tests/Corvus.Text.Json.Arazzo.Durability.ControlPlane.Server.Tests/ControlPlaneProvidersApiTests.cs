@@ -4,6 +4,7 @@
 
 using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -250,13 +251,100 @@ public sealed class ControlPlaneProvidersApiTests
         (await host.SendAsync(HttpMethod.Post, "/providers/portal/auth", "workspace:read", "ada")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task The_sign_in_uses_PKCE_and_binds_the_code_to_the_verifier()
+    {
+        await using StubProvider portal = await StubProvider.StartAsync();
+        await using Scoped host = await StartAsync(portal.Url);
+
+        // Begin carries a PKCE challenge (S256); the verifier stays server-side.
+        HttpResponseMessage begun = await host.SendAsync(HttpMethod.Post, "/providers/portal/auth", "workspace:write", "ada");
+        begun.StatusCode.ShouldBe(HttpStatusCode.OK);
+        string authorizeUrl, state;
+        using (Stj.JsonDocument doc = Stj.JsonDocument.Parse(await begun.Content.ReadAsStringAsync()))
+        {
+            authorizeUrl = doc.RootElement.GetProperty("authorizeUrl").GetString()!;
+            state = doc.RootElement.GetProperty("state").GetString()!;
+        }
+
+        authorizeUrl.ShouldContain("code_challenge_method=S256");
+        string challenge = QueryValue(new Uri(authorizeUrl).Query, "code_challenge");
+        challenge.ShouldNotBeNullOrEmpty();
+
+        (await host.SendAnonymousAsync($"/providers/portal/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The exchange presented the verifier, and it hashes (S256) to the challenge from the authorize URL.
+        string verifier = portal.LastTokenForm!["code_verifier"];
+        verifier.ShouldNotBeNullOrEmpty();
+        Base64UrlSha256(verifier).ShouldBe(challenge, "the verifier binds the code to the sign-in");
+    }
+
+    [TestMethod]
+    public async Task A_discovery_issuer_mismatch_refuses_the_sign_in()
+    {
+        await using StubProvider portal = await StubProvider.StartAsync(badIssuer: true);
+        await using Scoped host = await StartAsync(portal.Url);
+
+        // The metadata's issuer does not match the configured issuer (the mix-up guard): begin refuses.
+        HttpResponseMessage begun = await host.SendAsync(HttpMethod.Post, "/providers/portal/auth", "workspace:write", "ada");
+        begun.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await begun.Content.ReadAsStringAsync()).ShouldContain("provider-discovery-failed");
+    }
+
+    [TestMethod]
+    public async Task Basic_client_authentication_keeps_the_secret_out_of_the_body()
+    {
+        await using StubProvider portal = await StubProvider.StartAsync(requireBasicAuth: true);
+        await using Scoped host = await StartAsync(portal.Url, ProviderClientAuthentication.ClientSecretBasic);
+
+        string state = await host.BeginAsync("ada");
+        (await host.SendAnonymousAsync($"/providers/portal/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The client authenticated by the Basic header, and the secret never rode the body.
+        portal.LastTokenAuthorization.ShouldBe("Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("portal-client-id:portal-secret")));
+        portal.LastTokenForm!.ContainsKey("client_secret").ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_non_bearer_token_type_is_refused()
+    {
+        await using StubProvider portal = await StubProvider.StartAsync(tokenType: "mac");
+        await using Scoped host = await StartAsync(portal.Url);
+
+        string state = await host.BeginAsync("ada");
+
+        // The token exchanges, but its declared type is not bearer: the broker refuses rather than mis-present it.
+        (await host.SendAnonymousAsync($"/providers/portal/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}"))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using Stj.JsonDocument listing = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/providers", "workspace:read", "ada"));
+        listing.RootElement.GetProperty("providers")[0].GetProperty("connected").GetBoolean().ShouldBeFalse();
+    }
+
+    private static string Base64UrlSha256(string value)
+        => Convert.ToBase64String(SHA256.HashData(Encoding.ASCII.GetBytes(value))).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    private static string QueryValue(string query, string key)
+    {
+        int at = query.IndexOf(key + "=", StringComparison.Ordinal);
+        if (at < 0)
+        {
+            return string.Empty;
+        }
+
+        string rest = query[(at + key.Length + 1)..];
+        int amp = rest.IndexOf('&');
+        return Uri.UnescapeDataString(amp < 0 ? rest : rest[..amp]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadAsync(HttpResponseMessage response)
     {
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         return Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     }
 
-    private static async Task<Scoped> StartAsync(string? providerIssuerUrl)
+    private static async Task<Scoped> StartAsync(string? providerIssuerUrl, ProviderClientAuthentication clientAuth = ProviderClientAuthentication.ClientSecretPost)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -282,6 +370,7 @@ public sealed class ControlPlaneProvidersApiTests
                         Scopes = "openid profile",
                         CallbackUrl = "http://localhost/providers/portal/auth/callback",
                         Hosts = ["127.0.0.1"],
+                        ClientAuthentication = clientAuth,
                     },
                 ],
                 new SecretResolverBuilder().AddEnvironment().Build());
@@ -381,11 +470,13 @@ public sealed class ControlPlaneProvidersApiTests
 
         public Dictionary<string, string>? LastTokenForm { get; private set; }
 
+        public string? LastTokenAuthorization { get; private set; }
+
         public string? LastSpecAuthorization { get; private set; }
 
         public string? LastSpecApiKey { get; private set; }
 
-        public static async Task<StubProvider> StartAsync()
+        public static async Task<StubProvider> StartAsync(bool badIssuer = false, bool requireBasicAuth = false, string tokenType = "Bearer")
         {
             var stub = new StubProvider();
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
@@ -395,7 +486,8 @@ public sealed class ControlPlaneProvidersApiTests
 
             app.MapGet("/.well-known/openid-configuration", () => Results.Json(new
             {
-                issuer = stub.Url,
+                // A mismatched issuer models the mix-up guard: the metadata claims a different issuer.
+                issuer = badIssuer ? "http://issuer.evil.example" : stub.Url,
                 authorization_endpoint = $"{stub.Url}/oauth/authorize",
                 token_endpoint = $"{stub.Url}/oauth/token",
             }));
@@ -404,7 +496,15 @@ public sealed class ControlPlaneProvidersApiTests
             {
                 IFormCollection form = await context.Request.ReadFormAsync();
                 stub.LastTokenForm = form.ToDictionary(f => f.Key, f => f.Value.ToString());
-                if (form["client_id"] != "portal-client-id" || form["client_secret"] != "portal-secret")
+                string authorization = context.Request.Headers.Authorization.ToString();
+                stub.LastTokenAuthorization = authorization.Length == 0 ? null : authorization;
+
+                // Client authentication: Basic in the header, or client_secret in the body.
+                string basic = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("portal-client-id:portal-secret"));
+                bool clientOk = requireBasicAuth
+                    ? authorization == basic
+                    : form["client_id"] == "portal-client-id" && form["client_secret"] == "portal-secret";
+                if (!clientOk)
                 {
                     return Results.Json(new { error = "invalid_client" }, statusCode: 401);
                 }
@@ -417,7 +517,7 @@ public sealed class ControlPlaneProvidersApiTests
                 return Results.Json(new
                 {
                     access_token = StubToken,
-                    token_type = "Bearer",
+                    token_type = tokenType,
                     expires_in = 300,
                     refresh_token = "refresh-1",
                     refresh_expires_in = 1800,

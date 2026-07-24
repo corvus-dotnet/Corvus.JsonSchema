@@ -139,6 +139,10 @@ provider follow, for the endpoints that genuinely present those protections.
   the current implementation to widen.
 - The broker's custody posture is unchanged: in-process per `(principal, provider)`, so a multi-node
   deployment needs sticky sessions or a shared custody store before horizontal scale.
+- The broker's OAuth client is hardened: PKCE (S256) on the sign-in, OIDC discovery issuer
+  validation (the mix-up guard), configurable token-endpoint client authentication (body or Basic),
+  and a bearer-only `token_type` check. PKCE is off only for the GitHub entry, whose OAuth App does
+  not support it.
 - A live broker test needs a provider whose content endpoint actually accepts the brokered token (a
   git host, or an API whose gateway checks the token). A demo endpoint that validates the
   deployment's own session or realm token is not, on its own, a faithful test of the broker against

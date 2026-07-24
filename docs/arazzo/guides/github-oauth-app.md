@@ -207,6 +207,12 @@ var providers = new ProviderBroker(
 - **Host coverage** (`Hosts`, exact names or `*.suffix`) is the gate that keeps a principal's
   token from riding to an arbitrary URL; a fetch against an uncovered host refuses with
   `provider-host-not-covered` and the pane falls back to a one-shot secret or a workload binding.
+- **Hardening.** The sign-in uses PKCE (`UsePkce`, S256, default on; a provider that does not
+  support it ignores the parameters, and it is off for the GitHub entry, whose OAuth App has no
+  PKCE). OIDC discovery validates that the metadata's `issuer` matches the configured issuer (the
+  mix-up guard). The token endpoint's client authentication is configurable (`ClientAuthentication`:
+  `ClientSecretPost`, the default and GitHub's shape, or `ClientSecretBasic` for an IdP that
+  requires the Basic header). A token whose declared `token_type` is not bearer is refused.
 - **Registration, custody, and rotation** follow this guide's GitHub guidance unchanged: the
   client id is public configuration, the secret is a reference resolved only at exchange time,
   custody is in-process per `(principal, provider)`, and rotation is a store update plus a host
