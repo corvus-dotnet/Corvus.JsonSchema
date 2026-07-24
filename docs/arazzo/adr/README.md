@@ -104,6 +104,7 @@ The template to follow for a full, fork-bearing ADR is
 |-----|-------|--------|
 | [0048](0048-source-credentials-are-references.md) | Source credentials are references, resolved runner-side | Accepted |
 | [0051](0051-channel-sources-bind-per-environment.md) | Channel sources bind per environment, like HTTP sources | Accepted |
+| [0052](0052-source-fetch-authenticates-as-the-user.md) | Source fetch authenticates as the user, through connected providers | Accepted |
 
 ### Web kit and designer
 

@@ -266,7 +266,7 @@ time-travel scrubbing needs no further calls.
 
 | Operation | HTTP | Purpose |
 |-----------|------|---------|
-| `fetchSourceDocument` | `POST /sources/fetch` | `{url, credential?: {sourceName, environment} | inline authKind+secretRef}` → the fetched, validated document (+ detected type/version, content digest). **Server-side fetch**: avoids browser CORS entirely and reuses the §13 credential machinery (`SourceCredentials.Http`) for authenticated spec endpoints. Does not register; the caller attaches or registers the result. |
+| `fetchSourceDocument` | `POST /sources/fetch` | `{url, auth?: {provider} \| {secret} \| {binding: {sourceName, environment}}}` → the fetched, validated document (+ detected type/version, content digest). **Server-side fetch**: avoids browser CORS entirely. Authentication is user-first (ADR 0052): a **connected-provider** connection (the pasted URL's host resolves against the deployment's provider registry; unconnected → the pane offers Connect via the brokered popup), a **one-shot secret** (used once, never stored) for hosts no provider covers, or — third, filterable — a §13 workload binding. Does not register; the caller attaches or registers the result. |
 
 Upload (multipart) already exists on the wizard path; the working-copy attach (§4.1) accepts the
 same. Registry registration at publish follows the existing wizard readiness rules.
