@@ -9,6 +9,15 @@ all it needs. There is no installation step, and the signed-in user reaches what
 GitHub. That is the right shape for this product: sources may live in any repository the user can
 read, not one they control.
 
+GitHub is provider #1 of the control plane's **connected providers**
+([ADR 0052](../adr/0052-source-fetch-authenticates-as-the-user.md)): the
+authorize/callback/custody machinery described here is the shared `ProviderBroker`, and the same
+registration, custody, and rotation guidance applies to every provider a deployment registers — an
+SSO'd internal portal, the demo's own Keycloak, a partner's OIDC issuer. The
+[connected-providers section below](#beyond-github-connected-providers-adr-0052) covers registering
+the others; the GitHub-specific parts of this guide are the app registration on GitHub's side and
+the Git panel's repos/browse surface.
+
 ## How the flow works
 
 1. The designer's Git panel calls `POST /arazzo/v1/github/auth`. The control plane mints a single-use,
@@ -113,34 +122,87 @@ secret lives in a real secret store, and you register a distinct OAuth App per e
 1. **Register one app per environment** (the callback URL must match exactly, and you do not want a
    staging consent page authorizing production). Callback:
    `https://<your-control-plane-host>/arazzo/v1/github/auth/callback`.
-2. **Configure the broker** in your host composition:
+2. **Configure the brokers** in your host composition. The GitHub App registration folds into the
+   shared connected-provider registry as its `github` entry, and the `GitHubBroker` (the Git
+   panel's repos/browse surface) rides that shared machinery:
 
    ```csharp
-   var broker = new GitHubBroker(
-       new HttpClient(),
-       new GitHubBrokerOptions
-       {
-           ClientId = configuration["GitHubOAuth:ClientId"],
-           ClientSecretRef = "keyvault://arazzo-kv/github-oauth-client-secret",
-           CallbackUrl = "https://arazzo.example.com/arazzo/v1/github/auth/callback",
-       },
+   var gitHubOptions = new GitHubBrokerOptions
+   {
+       ClientId = configuration["GitHubOAuth:ClientId"],
+       ClientSecretRef = "keyvault://arazzo-kv/github-oauth-client-secret",
+       CallbackUrl = "https://arazzo.example.com/arazzo/v1/github/auth/callback",
+   };
+   var httpClient = new HttpClient();
+   var providers = new ProviderBroker(
+       httpClient,
+       [gitHubOptions.ToProviderEntry() /*, …any other connected providers (ADR 0052) */],
        secretResolver);
-   app.MapArazzoControlPlane(..., gitHubBroker: broker);
+   var broker = new GitHubBroker(httpClient, gitHubOptions, providers);
+   app.MapArazzoControlPlane(..., gitHubBroker: broker, providerBroker: providers);
    ```
 
    `ClientSecretRef` is a secret REFERENCE in the same scheme set as source credentials
    (`keyvault://`, `awssm://`, `vault://`, `env://`, `file://`; see the
    [source credentials guide](source-credentials.md)). The deployment's `ISecretResolver` composes
    the stores it uses, and the secret is dereferenced only at exchange time.
-3. **Token custody is in-process.** The broker holds each principal's user token in memory. A
-   multi-instance deployment therefore needs session affinity for the `/github/*` surface, or a
-   deployment-provided custody store; treat that as part of your scale-out design.
+3. **Token custody is in-process.** The shared provider broker holds each principal's user token in
+   memory, keyed by `(principal, provider)` — one GitHub sign-in serves the Git panel and the
+   source-fetch pane alike. A multi-instance deployment therefore needs session affinity for the
+   `/github/*` and `/providers/*` surfaces, or a deployment-provided `IProviderTokenStore`; treat
+   that as part of your scale-out design.
 4. **Rotation.** Generate a new client secret on the app, update the secret in the store the
    reference points at, and recycle the host. Users' existing sessions are unaffected; new sign-ins
    exchange with the new secret. GitHub allows two active client secrets, so rotation needs no
    downtime window.
 5. **GitHub Enterprise Server** is configuration, not new design: set
    `BaseUrl = "https://github.example.com"` and `ApiBaseUrl = "https://github.example.com/api/v3"`.
+
+## Beyond GitHub: connected providers (ADR 0052)
+
+Adding an SSO'd portal is configuration, not code: one `ConnectedProviderOptions` entry in the same
+registry the GitHub App folds into. The fetch pane resolves a pasted URL's host against each entry's
+`hosts` patterns to offer **Connect**, the sign-in is the same brokered popup, and the server only
+attaches a user's token to a host the provider covers.
+
+```csharp
+var providers = new ProviderBroker(
+    httpClient,
+    [
+        gitHubOptions.ToProviderEntry(),
+        new ConnectedProviderOptions
+        {
+            Name = "portal",
+            DisplayName = "Developer Portal",
+            Issuer = "https://sso.example.com/realms/engineering",   // endpoints via OIDC discovery
+            ClientId = configuration["Portal:ClientId"],
+            ClientSecretRef = "keyvault://arazzo-kv/portal-oauth-client-secret",
+            Scopes = "openid profile",
+            CallbackUrl = "https://arazzo.example.com/arazzo/v1/providers/portal/auth/callback",
+            Hosts = ["portal.example.com", "*.docs.example.com"],
+        },
+    ],
+    secretResolver);
+```
+
+- **Endpoints.** An OIDC `Issuer` resolves the authorize/token endpoints from its discovery
+  document (cached). A provider without discovery configures `AuthorizeEndpoint` + `TokenEndpoint`
+  explicitly instead — exactly one of the two forms.
+- **The callback is per provider**: `/arazzo/v1/providers/{name}/auth/callback`, registered
+  verbatim as a redirect URI on the provider-side client. The exchange is a standard
+  authorization-code grant (`grant_type` + `redirect_uri`), which Keycloak and every
+  spec-compliant issuer require and GitHub tolerates.
+- **Host coverage** (`Hosts`, exact names or `*.suffix`) is the gate that keeps a principal's
+  token from riding to an arbitrary URL; a fetch against an uncovered host refuses with
+  `provider-host-not-covered` and the pane falls back to a one-shot secret or a workload binding.
+- **Registration, custody, and rotation** follow this guide's GitHub guidance unchanged: the
+  client id is public configuration, the secret is a reference resolved only at exchange time,
+  custody is in-process per `(principal, provider)`, and rotation is a store update plus a host
+  recycle.
+
+The demo composition registers its own Keycloak this way (`arazzo-portal` in the realm import) over
+a secured sample spec endpoint (`/portal/specs/petstore.json`), so the interactive flow is
+live-testable with the seeded realm users and no external account.
 
 ## Options reference
 

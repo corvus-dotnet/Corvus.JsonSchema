@@ -18,7 +18,7 @@ Every element is a custom element registered through `define('arazzo-...', ...)`
 | [Environments and sources](#environments-and-sources) | `environments`, `environment-input`, `environment-picker`, `filter-input`, `sources`, `source-operations`, `source-acquisition-dialog` |
 | [Credentials](#credentials) | `credentials`, `credentials-table`, `credential-detail`, `credential-dialog` |
 | [Security and access](#security-and-access) | `access-overview`, `access-requests`, `access-request-dialog`, `grants-panel`, `rules-panel`, `administrators-panel`, `grantee-picker`, `auth-status` |
-| [Designer](#designer) | `design-surface`, `text-editor`, `workflow-inspector`, `step-inspector`, `document-inspector`, `criteria-editor`, `action-editor`, `outputs-editor`, `payload-editor`, `expression-input`, `schema-editor`, `value-editor`, `scenario-panel`, `scenario-editor`, `debug-tray`, `operation-browser`, `workspace-table`, `git-dialog`, `git-tree`, `github-connect` |
+| [Designer](#designer) | `design-surface`, `text-editor`, `workflow-inspector`, `step-inspector`, `document-inspector`, `criteria-editor`, `action-editor`, `outputs-editor`, `payload-editor`, `expression-input`, `schema-editor`, `value-editor`, `scenario-panel`, `scenario-editor`, `debug-tray`, `operation-browser`, `workspace-table`, `git-dialog`, `git-tree`, `github-connect`, `provider-connect` |
 | [Shared primitives](#shared-primitives) | `pager`, `status-badge`, `splitbar`, `input-dialog`, `json-view`, `tag-editor`, and the picker family |
 
 ## Shared conventions
@@ -552,6 +552,17 @@ Reusable lazy tree browser. Source: `git-tree.js`.
 Brokered GitHub session control (popup OAuth, polls to connected). Source: `github-connect.js`.
 
 - **Events:** `github-connected`, `github-disconnected`, `error`
+
+### `<arazzo-provider-connect>`
+
+One connected provider's session control ([ADR 0052](../adr/0052-source-fetch-authenticates-as-the-user.md)):
+the same popup flow as the GitHub control over the shared provider broker — `beginProviderAuth`,
+the callback authenticated by its single-use state, `listProviders` polled to connected. The fetch
+pane shows it when the pasted URL's host is covered by a registered provider.
+Source: `provider-connect.js`.
+
+- **Properties:** `.client`, `.provider` (a `listProviders` entry), `.windowOpener`, `.pollIntervalMs`
+- **Events:** `provider-connected`, `provider-disconnected`, `error`
 
 ---
 
