@@ -8472,6 +8472,86 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __CreateRepoBranchEndpoint);
 
+        IEndpointConventionBuilder __SearchRepositoriesEndpoint = app.MapGet("/github/repos/search", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetGithubReposSearchQuery QueryValue = default;
+                if (context.Request.Query.TryGetValue("query", out var QueryQueryVal) && QueryQueryVal.Count > 0)
+                {
+                    string QueryRaw = QueryQueryVal[0]!;
+                    QueryValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetGithubReposSearchQuery>(QueryRaw, workspace);
+                }
+
+                if (QueryValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'query' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!QueryValue.IsUndefined() && !QueryValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'query' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                SearchRepositoriesParams parameters = new()
+                {
+                    Query = QueryValue,
+                }
+                ;
+
+                SearchRepositoriesResult result = await githubHandler.HandleSearchRepositoriesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "searchRepositories",
+                methodName: "SearchRepositories",
+                httpMethod: "GET",
+                routeTemplate: "/github/repos/search",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __SearchRepositoriesEndpoint);
+
         IEndpointConventionBuilder __BrowseRepoEndpoint = app.MapGet("/github/repos/{owner}/{repo}/contents", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -16053,6 +16133,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>CreateRepoBranch</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] CreateRepoBranchOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SearchRepositories</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SearchRepositoriesOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SearchRepositories</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SearchRepositoriesOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>BrowseRepo</c> for the <c>Oauth2</c> scheme.

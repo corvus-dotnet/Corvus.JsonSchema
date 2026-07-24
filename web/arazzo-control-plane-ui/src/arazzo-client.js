@@ -1465,6 +1465,19 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`, { body: command, signal });
   }
 
+  /**
+   * `searchRepositories` — the repository pickers' typeahead through the caller's brokered session
+   * (§4.7): an owner-qualified query ('dotnet/run') searches that owner's repositories by name —
+   * reaching public repositories the session's own listing never contains; a bare term searches by
+   * name across what the user can see. A pickers-sized page, most relevant first.
+   * @param {string} query
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{repositories: Array<object>}>}
+   */
+  searchRepositories(query, { signal } = {}) {
+    return this._request('GET', `/github/repos/search?query=${encodeURIComponent(query)}`, { signal });
+  }
+
   browseRepo(owner, repo, { path, ref, signal } = {}) {
     const query = new URLSearchParams();
     if (path) query.set('path', path);

@@ -1310,6 +1310,11 @@ test('the brokered GitHub flow: begin → callback (single-use state) → sessio
   assert.equal(session.repositories[0].fullName, 'acme-org/specs');
   assert.equal(session.repositories[0].defaultBranch, 'main');
 
+  // The pickers' typeahead: an owner-qualified query reaches repositories the session seed never
+  // contains (the mock's canned public catalog).
+  const found = await c.searchRepositories('dotnet/run');
+  assert.equal(found.repositories[0].fullName, 'dotnet/runtime');
+
   const root = await c.browseRepo('acme-org', 'specs');
   assert.equal(root.kind, 'dir');
   assert.ok(root.entries.some((e) => e.name === 'petstore.openapi.json' && e.type === 'file'), 'the root lists the spec');

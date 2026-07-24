@@ -15,7 +15,7 @@ Every element is a custom element registered through `define('arazzo-...', ...)`
 | [Runs](#runs) | `control-plane`, `runs-table`, `run-detail`, `cancel-button`, `resume-dialog`, `purge-dialog`, `workflow-step-picker`, `schedules` |
 | [Runners](#runners) | `runners`, `runner-authorizations` |
 | [Catalog](#catalog) | `catalog`, `catalog-table`, `catalog-detail`, `catalog-add-dialog`, `availability-matrix`, `availability-request-dialog`, `availability-requests`, `workflow-compare` |
-| [Environments and sources](#environments-and-sources) | `environments`, `environment-input`, `environment-picker`, `sources`, `source-operations`, `source-acquisition-dialog` |
+| [Environments and sources](#environments-and-sources) | `environments`, `environment-input`, `environment-picker`, `filter-input`, `sources`, `source-operations`, `source-acquisition-dialog` |
 | [Credentials](#credentials) | `credentials`, `credentials-table`, `credential-detail`, `credential-dialog` |
 | [Security and access](#security-and-access) | `access-overview`, `access-requests`, `access-request-dialog`, `grants-panel`, `rules-panel`, `administrators-panel`, `grantee-picker`, `auth-status` |
 | [Designer](#designer) | `design-surface`, `text-editor`, `workflow-inspector`, `step-inspector`, `document-inspector`, `criteria-editor`, `action-editor`, `outputs-editor`, `payload-editor`, `expression-input`, `schema-editor`, `value-editor`, `scenario-panel`, `scenario-editor`, `debug-tray`, `operation-browser`, `workspace-table`, `git-dialog`, `git-tree`, `github-connect` |
@@ -232,6 +232,15 @@ Master-detail over the environment registry (§7.7). Source: `environments-panel
 - **Attributes:** `base-url`, `scopes`
 - **Events:** `environment-selected/created/changed/deleted`, `loaded`, `error`
 - **Hosts:** `arazzo-administrators-panel`, `arazzo-tag-editor`, `arazzo-splitbar`, `arazzo-pager`
+
+### `<arazzo-filter-input>`
+
+Text input with the kit's themed, filtered dropdown over caller-supplied items — the generic combo behind
+the GitHub repository and branch pickers, whose lists can be very long. Properties: `items`
+(`[{value, label?, sub?}]`), an optional async `lookup` that deepens the list while typing (debounced,
+stale-guarded — the repo pickers use it so an owner-qualified query reaches repositories the session's seed
+never contains), `value`, `readOnly`, `disabled`. Focus shows the full list; typing filters; a value outside
+the list stays free-typable. Source: `filter-input.js`.
 
 ### `<arazzo-environment-input>`
 

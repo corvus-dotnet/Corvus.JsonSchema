@@ -641,10 +641,11 @@ test('GitHub source acquisition: after connecting, a branch is chosen and a file
 
   // Picking the seeded repo now reveals a BRANCH picker (previously missing entirely) with the
   // default branch pre-selected, and lists the repo tree for browsing.
-  await dlg.locator('select.gh-repo-in').selectOption('acme-org/specs');
-  const branch = dlg.locator('select.gh-branch-in');
+  const repoIn = dlg.locator('.gh-repo-in input');
+  await repoIn.fill('acme-org/specs');
+  await repoIn.dispatchEvent('change');
+  const branch = dlg.locator('.gh-branch-in input');
   await expect(dlg.locator('label.gh-branch-label')).toBeVisible();
-  await expect(branch.locator('option')).toHaveText([/main \(default\)/]);
   await expect(branch).toHaveValue('main');
   const list = dlg.locator('.gh-list');
   await expect(list).toBeVisible();

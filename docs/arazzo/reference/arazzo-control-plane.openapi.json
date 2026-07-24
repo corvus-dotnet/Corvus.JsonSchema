@@ -3864,6 +3864,30 @@
         }
       }
     },
+    "/github/repos/search": {
+      "get": {
+        "operationId": "searchRepositories",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Search repositories for the pickers' typeahead",
+        "description": "Proxies a repository search through the calling principal's brokered token, for the repository pickers' typeahead. An owner-qualified query ('dotnet/run') searches that user or organisation's repositories by name prefix — reaching public repositories the session's own listing never contains; an unqualified query searches by name across what the user can see. Returns at most a pickers-sized page. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "query", "in": "query", "required": true, "schema": { "type": "string", "minLength": 1 }, "description": "The typed query: 'owner/name-prefix' scopes to an owner; a bare term searches by name." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The matching repositories, most relevant first.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubRepositoryList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/github/repos/{owner}/{repo}/contents": {
       "get": {
         "operationId": "browseRepo",
@@ -6583,6 +6607,15 @@
           "repositories": { "type": "array", "description": "A first page of the user's reachable repositories (a picker seed, not the full reach).", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
         },
         "required": ["connected"]
+      },
+      "GitHubRepositoryList": {
+        "type": "object",
+        "title": "GitHubRepositoryList",
+        "description": "A pickers-sized page of repositories matching a typeahead query.",
+        "properties": {
+          "repositories": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
+        },
+        "required": ["repositories"]
       },
       "GitHubRepository": {
         "type": "object",

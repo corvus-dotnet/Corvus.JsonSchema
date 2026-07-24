@@ -175,6 +175,26 @@ public sealed class GitHubBroker
     public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetUserRepositoriesAsync(string principalKey, int pageSize, CancellationToken cancellationToken)
         => this.GetAsync(principalKey, $"/user/repos?per_page={pageSize}&sort=pushed", cancellationToken);
 
+    /// <summary>Searches repositories for the pickers' typeahead (<c>GET /search/repositories</c>) on the
+    /// principal's token. An owner-qualified query (<c>owner/prefix</c>) scopes to that user or organisation's
+    /// repositories by name — including public repositories the session's own listing never contains; a bare
+    /// term searches by name across what the user can see.</summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="query">The typed query (<c>owner/prefix</c> or a bare term).</param>
+    /// <param name="pageSize">The maximum matches to return (a pickers-sized page).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome and, on success, the GitHub search payload (caller disposes).</returns>
+    public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> SearchRepositoriesAsync(string principalKey, string query, int pageSize, CancellationToken cancellationToken)
+    {
+        int slash = query.IndexOf('/');
+        string composed = slash < 0
+            ? $"{query} in:name"
+            : slash + 1 < query.Length
+                ? $"{query[(slash + 1)..]} in:name user:{query[..slash]}"
+                : $"user:{query[..slash]}";
+        return this.GetAsync(principalKey, $"/search/repositories?q={Uri.EscapeDataString(composed)}&per_page={pageSize}", cancellationToken);
+    }
+
     /// <summary>Proxies a contents read (<c>GET /repos/{owner}/{repo}/contents/{path}?ref=</c>) on the principal's token.</summary>
     /// <param name="principalKey">The calling principal's stable key.</param>
     /// <param name="owner">The repository owner.</param>

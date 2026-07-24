@@ -93,6 +93,15 @@ public interface IApiGithubHandler
     ValueTask<CreateRepoBranchResult> HandleCreateRepoBranchAsync(CreateRepoBranchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /github/repos/search — Search repositories for the pickers' typeahead
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<SearchRepositoriesResult> HandleSearchRepositoriesAsync(SearchRepositoriesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /github/repos/{owner}/{repo}/contents — Browse a repository's contents
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

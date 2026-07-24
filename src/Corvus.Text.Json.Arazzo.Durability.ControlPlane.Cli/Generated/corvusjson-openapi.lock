@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-24T08:06:07.5911910\u002B00:00",
+  "generatedAt": "2026-07-24T09:30:11.6038332\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -238,6 +238,8 @@
     "ListRepoBranchesResponse.cs",
     "CreateRepoBranchRequest.cs",
     "CreateRepoBranchResponse.cs",
+    "SearchRepositoriesRequest.cs",
+    "SearchRepositoriesResponse.cs",
     "BrowseRepoRequest.cs",
     "BrowseRepoResponse.cs",
     "ListRepoCommitsRequest.cs",
@@ -786,6 +788,12 @@
     "Models/GitHubRepository.cs",
     "Models/GitHubRepository.Mutable.cs",
     "Models/GitHubRepository.JsonSchema.cs",
+    "Models/GitHubRepositoryList.cs",
+    "Models/GitHubRepositoryList.Mutable.cs",
+    "Models/GitHubRepositoryList.JsonSchema.cs",
+    "Models/GitHubRepositoryList.GitHubRepositoryArray.cs",
+    "Models/GitHubRepositoryList.GitHubRepositoryArray.Mutable.cs",
+    "Models/GitHubRepositoryList.GitHubRepositoryArray.JsonSchema.cs",
     "Models/GitHubStatus.cs",
     "Models/GitHubStatus.Mutable.cs",
     "Models/GitHubStatus.JsonSchema.cs",
@@ -1380,6 +1388,9 @@
     "Models/GetEnvironmentsByNameRunnersCountStatus.cs",
     "Models/GetEnvironmentsByNameRunnersCountStatus.Mutable.cs",
     "Models/GetEnvironmentsByNameRunnersCountStatus.JsonSchema.cs",
+    "Models/GetGithubReposSearchQuery.cs",
+    "Models/GetGithubReposSearchQuery.Mutable.cs",
+    "Models/GetGithubReposSearchQuery.JsonSchema.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.Mutable.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.JsonSchema.cs",
@@ -1442,6 +1453,6 @@
   "generatorVersion": "1.0.0\u002B412e0e74343fcecad7f97dfaa5a5aa68b7fc6411",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "3181612553c82f20597c55e7c1277a43b4a511836317b1cf873cde4834955f90",
+  "specFileHash": "d38e0cfcbd0c50e348f17ffa5285c93f60970dafb572e204b54a76ce36e0daa4",
   "specVersion": "3.2"
 }

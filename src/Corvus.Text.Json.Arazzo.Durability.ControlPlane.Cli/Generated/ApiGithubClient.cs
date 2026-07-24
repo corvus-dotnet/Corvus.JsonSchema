@@ -228,6 +228,25 @@ public sealed class ApiGithubClient : IApiGithubClient
     }
 
     /// <summary>
+    /// Search repositories for the pickers' typeahead
+    /// </summary>
+    /// <remarks>
+    /// Proxies a repository search through the calling principal's brokered token, for the repository pickers' typeahead. An owner-qualified query ('dotnet/run') searches that user or organisation's repositories by name prefix — reaching public repositories the session's own listing never contains; an unqualified query searches by name across what the user can see. Returns at most a pickers-sized page. 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="query">The query parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SearchRepositoriesResponse> SearchRepositoriesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposSearchQuery.Source query, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposSearchQuery QueryValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposSearchQuery.CreateBuilder(workspace, query, 30).RootElement;
+        SearchRepositoriesRequest request = new(QueryValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<SearchRepositoriesRequest, SearchRepositoriesResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Browse a repository's contents
     /// </summary>
     /// <remarks>

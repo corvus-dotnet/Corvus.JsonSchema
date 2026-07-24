@@ -28,8 +28,10 @@ async function connectGitHub(page) {
 
 // Bind to acme-org/specs@main + flows/adopt.arazzo.json (the mock's seeded repo/branch/history).
 async function bindToBranch(page, { scenariosDir } = {}) {
-  await page.locator('#gitpanel .b-repo').selectOption('acme-org/specs');
-  const branch = page.locator('#gitpanel .b-branch');
+  const repo = page.locator('#gitpanel .b-repo input');
+  await repo.fill('acme-org/specs');
+  await repo.dispatchEvent('change');
+  const branch = page.locator('#gitpanel .b-branch input');
   await expect(branch).toBeEnabled();
   await expect(branch).toHaveValue('main'); // the repo's default branch preselects
   await page.locator('#gitpanel .b-path').fill('flows/adopt.arazzo.json');
@@ -77,17 +79,24 @@ test('the Git tab connects a GitHub identity through the brokered popup and bind
   await connectGitHub(page);
   await expect(page.locator('#gitpanel .gh-connect .chip')).toContainText('Connected as');
 
-  // The binding form seeds from the session: the installation's repository lists.
+  // The binding form seeds from the session: the connected user's repository lists in the combo.
   await expect(page.locator('#gitpanel .binding-section')).toBeVisible();
-  await expect(page.locator('#gitpanel .b-repo option', { hasText: 'acme-org/specs' })).toHaveCount(1);
+  await page.locator('#gitpanel .b-repo input').click();
+  await expect(page.locator('#gitpanel .b-repo li', { hasText: 'acme-org/specs' })).toHaveCount(1);
+  await page.keyboard.press('Escape');
 
   // Repo picked → the branch picker browses the repo's REAL branches (default preselected) and
   // offers the create sentinel; the paths stage reveals; save gates on the document path.
-  await page.locator('#gitpanel .b-repo').selectOption('acme-org/specs');
-  const branch = page.locator('#gitpanel .b-branch');
+  const bindRepo = page.locator('#gitpanel .b-repo input');
+  await bindRepo.fill('acme-org/specs');
+  await bindRepo.dispatchEvent('change');
+  const branch = page.locator('#gitpanel .b-branch input');
   await expect(branch).toBeEnabled();
   await expect(branch).toHaveValue('main');
-  await expect(branch.locator('option', { hasText: '＋ New branch…' })).toHaveCount(1);
+  // The create sentinel lists in the combo's dropdown when opened.
+  await branch.click();
+  await expect(page.locator('#gitpanel .b-branch li', { hasText: '＋ New branch…' })).toHaveCount(1);
+  await page.keyboard.press('Escape');
   await expect(page.locator('#gitpanel .paths-section')).toBeVisible();
   await expect(page.locator('#gitpanel .save-binding')).toBeDisabled();
 
@@ -244,7 +253,7 @@ test('commit writes the document and scenario files to the branch as the signed-
   await page.locator('#gitpanel .c-message').fill('sync the order flow from the designer');
   await expect(commit).toBeEnabled();
   await page.locator('#gitpanel .c-pr').check();
-  await expect(page.locator('#gitpanel .c-base')).toHaveValue('main');
+  await expect(page.locator('#gitpanel .c-base input')).toHaveValue('main');
   await commit.click();
 
   // The result names the signed-in identity (§4.7 — authored as YOUR GitHub identity), lists the
@@ -320,7 +329,7 @@ test('roll back replaces the working copy at the commit and never rebinds', asyn
 
   // A rollback never rebinds: the branch label is intact and the result narrates that the NEXT
   // commit records the rollback on the branch.
-  await expect(page.locator('#gitpanel .b-branch')).toHaveValue('main');
+  await expect(page.locator('#gitpanel .b-branch input')).toHaveValue('main');
   await expect(page.locator('#gitpanel .result')).toContainText('Rolled back to c1d9e5b');
   await expect(page.locator('#gitpanel .result')).toContainText('main');
   await expect(page.locator('#save-status')).toHaveText('pulled from GitHub');

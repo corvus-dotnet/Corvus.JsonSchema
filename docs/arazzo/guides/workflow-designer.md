@@ -335,6 +335,7 @@ control):
 |-----------|------|---------|
 | `beginGitHubAuth` / `completeGitHubAuth` | `GET /github/auth` → redirect; callback exchanges the code server-side | Standard web-application flow; the control plane holds the App credentials and the user token (server-side session or encrypted at rest with a KMS ref, never in the browser). |
 | `getGitHubStatus` | `GET /github/session` | Signed-in identity + a first page of accessible repos (a picker seed; any visible repo stays addressable by owner/repo). |
+| `searchRepositories` | `GET /github/repos/search?query` | The repository pickers' typeahead: an owner-qualified query ('dotnet/run') searches that owner's repositories — reaching public repos the session's seed never contains. |
 | `browseRepo` | `GET /github/repos/{owner}/{repo}/contents?ref&path` | Proxied browse for the open/import dialogs. |
 | `bind` (on the working copy) | part of `PUT /workspace/workflows/{id}` | `gitBinding: {owner, repo, branch, path, specPaths?, scenariosDir?}`, a working copy may be **Git-bound**; `specPaths` maps sourceDescriptions names to spec file paths, and scenarios round-trip as individual `<name>.scenario.json` files under `scenariosDir` (the §4.5 CI layout). |
 | `pullWorkingCopy` / `commitWorkingCopy` | `POST /workspace/workflows/{id}/git/{pull,commit}` | Pull: refresh document (+ bound source docs + scenarios) from the branch (etag/merge guard). Commit: write document (+ scenario files) to the branch with a message; optionally open a PR (`draft` → review flow for workflow development). |

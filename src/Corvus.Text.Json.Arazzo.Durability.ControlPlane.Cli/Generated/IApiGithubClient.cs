@@ -168,6 +168,16 @@ public interface IApiGithubClient : IAsyncDisposable
         public static readonly string[] CreateRepoBranchOpenIdConnectScopes = ["workspace:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>SearchRepositories</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SearchRepositoriesOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SearchRepositories</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SearchRepositoriesOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>BrowseRepo</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] BrowseRepoOauth2Scopes = ["workspace:read"];
@@ -280,6 +290,16 @@ public interface IApiGithubClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<CreateRepoBranchResponse> CreateRepoBranchAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Search repositories for the pickers' typeahead
+    /// </summary>
+    /// <remarks>
+    /// Proxies a repository search through the calling principal's brokered token, for the repository pickers' typeahead. An owner-qualified query ('dotnet/run') searches that user or organisation's repositories by name prefix — reaching public repositories the session's own listing never contains; an unqualified query searches by name across what the user can see. Returns at most a pickers-sized page. 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="query">The query parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SearchRepositoriesResponse> SearchRepositoriesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposSearchQuery.Source query, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Browse a repository's contents

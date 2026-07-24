@@ -25,6 +25,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
+import './filter-input.js';
 import './catalog-table.js';
 import './tag-editor.js';
 
@@ -176,10 +177,10 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
           <div class="mode mode-github" hidden>
             <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
             <label class="gh-repo-label" hidden>Repository (the user ∩ installation intersection)
-              <select class="gh-repo-in"></select>
+              <arazzo-filter-input class="gh-repo-in" aria-label="Repository" placeholder="type to filter, or any owner/repo"></arazzo-filter-input>
             </label>
             <label class="gh-branch-label" hidden>Branch
-              <select class="gh-branch-in"></select>
+              <arazzo-filter-input class="gh-branch-in" aria-label="Branch" placeholder="type to filter branches"></arazzo-filter-input>
             </label>
             <div class="gh-browser" hidden>
               <div class="crumb"><button class="gh-up ghost" type="button" title="Up" hidden>↑</button><span class="gh-path"></span></div>
@@ -461,9 +462,16 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       return;
     }
 
-    const sel = this.$('.gh-repo-in');
-    sel.innerHTML = `<option value="">Choose a repository…</option>` + repos.map((r) =>
-      `<option value="${escapeHtml(`${r.owner}/${r.name}`)}">${escapeHtml(r.fullName)}</option>`).join('');
+    // The kit's filter combo (the shared picker design): the session's seed narrows as you type, an
+    // owner-qualified query deepens through the server-side typeahead (reaching public repos the seed
+    // never contains), and any visible owner/repo stays free-typable (the OAuth model).
+    const repoItem = (r) => ({ value: r.fullName || `${r.owner}/${r.name}`, sub: [r.defaultBranch, r.private ? 'private' : ''].filter(Boolean).join(' · ') });
+    const repoInput = this.$('.gh-repo-in');
+    repoInput.items = repos.map(repoItem);
+    repoInput.lookup = (q) => (q.includes('/') && this._client
+      ? this._client.searchRepositories(q).then((r) => (r.repositories ?? []).map(repoItem)).catch(() => [])
+      : []);
+    repoInput.value = '';
     this.updateAttachState();
   }
 
@@ -489,7 +497,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     const branchLabel = this.$('.gh-branch-label');
     branchLabel.hidden = false;
     branchSel.disabled = true;
-    branchSel.innerHTML = `<option value="">Loading…</option>`;
+    branchSel.items = [];
+    branchSel.value = '';
     this.$('.gh-browser').hidden = true;
     const seq = ++this._branchSeq;
     try {
@@ -497,13 +506,14 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       if (seq !== this._branchSeq || this._mode !== 'github') return; // a newer repo choice superseded this
       const names = (list.branches ?? []).map((b) => b.name);
       const picked = list.defaultBranch ?? names[0] ?? '';
-      branchSel.innerHTML = names.map((name) =>
-        `<option value="${escapeHtml(name)}"${name === picked ? ' selected' : ''}>${escapeHtml(name)}${name === list.defaultBranch ? ' (default)' : ''}</option>`).join('');
+      branchSel.items = names.map((name) => ({ value: name, sub: name === list.defaultBranch ? 'default' : '' }));
+      branchSel.value = picked;
       branchSel.disabled = names.length === 0;
       this.browseGitHub('');
     } catch (err) {
       if (seq !== this._branchSeq) return;
-      branchSel.innerHTML = `<option value="">Branches could not be loaded</option>`;
+      branchSel.items = [];
+      branchSel.value = '';
       branchSel.disabled = true;
       this.showError(err.problem?.detail || err.problem?.title || err.message);
     }

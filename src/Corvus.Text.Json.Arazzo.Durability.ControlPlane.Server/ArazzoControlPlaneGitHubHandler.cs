@@ -24,7 +24,10 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
     // Session-status cap: one page of repositories seeds the pickers, most recently pushed first; any
     // visible repository stays addressable by owner/repo. Deep listings go through browse.
-    private const int RepositoryPageSize = 50;
+    private const int RepositoryPageSize = 100;
+
+    // The typeahead page: enough to pick from, small enough to render instantly.
+    private const int SearchPageSize = 20;
 
     private readonly GitHubBroker? broker;
     private readonly ControlPlaneAccess access;
@@ -155,6 +158,39 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SearchRepositoriesResult> HandleSearchRepositoriesAsync(SearchRepositoriesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.broker is not { } github)
+        {
+            return SearchRepositoriesResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        if (this.PrincipalKey() is not { } principal || !github.IsConnected(principal))
+        {
+            return SearchRepositoriesResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The caller has no GitHub session; begin the sign-in first."), workspace);
+        }
+
+        (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? payload) = await github.SearchRepositoriesAsync(principal, (string)parameters.Query, SearchPageSize, cancellationToken).ConfigureAwait(false);
+        if (outcome == GitHubBroker.ReadOutcome.NotConnected)
+        {
+            payload?.Dispose();
+            return SearchRepositoriesResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The GitHub session is no longer valid; begin the sign-in again."), workspace);
+        }
+
+        // A failed search (rate limit, transient) degrades to an empty page — a typeahead stays quiet.
+        using ParsedJsonDocument<JsonElement>? held = payload;
+        JsonElement items = outcome == GitHubBroker.ReadOutcome.Success && payload is not null
+            && payload.RootElement.TryGetProperty("items"u8, out JsonElement found) && found.ValueKind == JsonValueKind.Array
+            ? found
+            : default;
+        ParsedJsonDocument<Models.GitHubRepositoryList> body = WriteRepositoryList(items);
+        workspace.TakeOwnership(body);
+        return SearchRepositoriesResult.Ok(Models.GitHubRepositoryList.From(body.RootElement), workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<BrowseRepoResult> HandleBrowseRepoAsync(BrowseRepoParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         if (this.broker is not { } github)
@@ -184,7 +220,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         {
             payload?.Dispose();
             return BrowseRepoResult.NotFound(
-                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}{(string.IsNullOrEmpty(path) ? string.Empty : "/" + path)}' does not exist, or is outside the user ∩ installation intersection."), workspace);
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}{(string.IsNullOrEmpty(path) ? string.Empty : "/" + path)}' does not exist, or is not visible to the signed-in user."), workspace);
         }
 
         using (payload)
@@ -223,7 +259,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         {
             payload?.Dispose();
             return ListRepoBranchesResult.NotFound(
-                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is outside the user ∩ installation intersection."), workspace);
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is not visible to the signed-in user."), workspace);
         }
 
         using (payload)
@@ -266,7 +302,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         {
             payload?.Dispose();
             return ListRepoCommitsResult.NotFound(
-                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is outside the user ∩ installation intersection."), workspace);
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is not visible to the signed-in user."), workspace);
         }
 
         using (payload)
@@ -309,7 +345,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                     Problem("github-not-connected", "GitHub not connected", 409, "The GitHub session is no longer valid; begin the sign-in again."), workspace);
             case GitHubBroker.WriteOutcome.NotFound:
                 return CreateRepoBranchResult.NotFound(
-                    Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}'{(from is null ? string.Empty : $" or its branch '{from}'")} does not exist, or is outside the user ∩ installation intersection."), workspace);
+                    Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}'{(from is null ? string.Empty : $" or its branch '{from}'")} does not exist, or is not visible to the signed-in user."), workspace);
             case GitHubBroker.WriteOutcome.Refused:
                 return CreateRepoBranchResult.Conflict(
                     Problem("github-branch-exists", "Branch not created", 409, $"GitHub refused creating '{name}' — most often the name is already taken."), workspace);
@@ -617,6 +653,27 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
     // Projects GET /user (+ installations + per-installation repositories) into the contract's
     // GitHubStatus in one pooled write, field-selecting from the GitHub payloads bytes-native.
+    private static ParsedJsonDocument<Models.GitHubRepositoryList> WriteRepositoryList(in JsonElement items)
+    {
+        return PersistedJson.ToPooledDocument<Models.GitHubRepositoryList, JsonElement>(
+            items,
+            static (Utf8JsonWriter writer, in JsonElement repositories) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteStartArray("repositories"u8);
+                if (repositories.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement repository in repositories.EnumerateArray())
+                    {
+                        WriteRepository(writer, repository);
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+    }
+
     private static ParsedJsonDocument<Models.GitHubStatus> WriteStatus(in JsonElement user, ParsedJsonDocument<JsonElement>? repositories)
     {
         // GET /user/repos returns a bare array; a null document (listing failed) writes an empty seed.

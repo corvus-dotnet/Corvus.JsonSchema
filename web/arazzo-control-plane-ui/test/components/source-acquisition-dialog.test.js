@@ -107,7 +107,7 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
     const connectButton = await waitFor(() => gh.shadowRoot.querySelector('.connect'));
     connectButton.click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('.gh-repo-in option')].length > 1, 'the repositories load once connected');
+    await waitFor(() => (el.shadowRoot.querySelector('.gh-repo-in').items ?? []).length > 0, 'the repositories load once connected');
     ok(gh.shadowRoot.querySelector('.chip')?.textContent.includes('octo'), 'the chip shows the signed-in login');
 
     const sel = el.shadowRoot.querySelector('.gh-repo-in');

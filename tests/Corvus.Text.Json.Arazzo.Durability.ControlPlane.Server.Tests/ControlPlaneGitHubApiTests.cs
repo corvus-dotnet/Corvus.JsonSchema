@@ -327,6 +327,25 @@ public sealed class ControlPlaneGitHubApiTests
     }
 
     [TestMethod]
+    public async Task The_repository_typeahead_searches_on_the_callers_token_and_requires_a_session()
+    {
+        await using StubGitHub github = await StubGitHub.StartAsync();
+        await using Scoped host = await StartAsync(github.Url);
+
+        // No session yet: the typeahead refuses rather than searching anonymously.
+        (await host.SendAsync(HttpMethod.Get, "/github/repos/search?query=dotnet%2Frun", "workspace:read", "ada"))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        string state = await host.BeginAsync("ada");
+        (await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument results = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/search?query=dotnet%2Frun", "workspace:read", "ada"));
+        Stj.JsonElement repository = results.RootElement.GetProperty("repositories")[0];
+        repository.GetProperty("fullName").GetString().ShouldBe("dotnet/runtime");
+        repository.GetProperty("defaultBranch").GetString().ShouldBe("main");
+    }
+
+    [TestMethod]
     public async Task A_transport_failure_reaching_github_reports_exchange_failed_not_500()
     {
         // GitHub unreachable from the control plane (DNS, proxy, TLS — e.g. an overridden CA store that cannot
@@ -540,6 +559,10 @@ public sealed class ControlPlaneGitHubApiTests
 
             app.MapGet("/user", (HttpContext context) => Authorized(context)
                 ? Results.Json(new { login = "octo", name = "Octo Cat", avatar_url = "https://example.test/octo.png" })
+                : Results.Unauthorized());
+
+            app.MapGet("/search/repositories", (HttpContext context) => Authorized(context)
+                ? Results.Json(new { total_count = 1, items = new[] { new { name = "runtime", full_name = "dotnet/runtime", owner = new { login = "dotnet" }, default_branch = "main", @private = false } } })
                 : Results.Unauthorized());
 
             app.MapGet("/user/repos", (HttpContext context) => Authorized(context)

@@ -1709,9 +1709,27 @@ export function createMockControlPlane(options = {}) {
   }
 
   function handleGitHub(path, method, params, origin, body) {
-    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/(?:contents|branches|commits))\/?$/);
+    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/search|repos\/([^/]+)\/([^/]+)\/(?:contents|branches|commits))\/?$/);
     if (!m) return null;
     const route = m[1];
+
+    if (route === 'repos/search' && method === 'GET') {
+      if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
+      // The typeahead (§4.7): an owner-qualified query searches that owner's repositories — including
+      // public repositories the session's own listing never contains (the mock's canned public catalog).
+      const q = (params.get('query') || '').toLowerCase();
+      const catalog = [
+        { owner: 'acme-org', name: 'specs', fullName: 'acme-org/specs', defaultBranch: 'main', private: true },
+        { owner: 'dotnet', name: 'runtime', fullName: 'dotnet/runtime', defaultBranch: 'main', private: false },
+        { owner: 'dotnet', name: 'sdk', fullName: 'dotnet/sdk', defaultBranch: 'main', private: false },
+        { owner: 'dotnet', name: 'aspnetcore', fullName: 'dotnet/aspnetcore', defaultBranch: 'main', private: false },
+      ];
+      const slash = q.indexOf('/');
+      const matches = slash >= 0
+        ? catalog.filter((r) => r.owner.toLowerCase() === q.slice(0, slash) && r.name.toLowerCase().startsWith(q.slice(slash + 1)))
+        : catalog.filter((r) => r.name.toLowerCase().includes(q));
+      return json({ repositories: matches.slice(0, 20) });
+    }
     if (route === 'auth' && method === 'POST') {
       const state = `mock-state-${++gitHubStateCounter}`;
       gitHubStates.add(state);

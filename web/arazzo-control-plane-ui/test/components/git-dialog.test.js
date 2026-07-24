@@ -33,7 +33,7 @@ describe('<arazzo-git-dialog>', () => {
     gh.pollIntervalMs = 10;
     gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
     (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1, 'the repositories seed the binding form');
+    await waitFor(() => (el.shadowRoot.querySelector('.b-repo').items ?? []).length > 0, 'the repositories seed the binding form');
 
     // Bind: repo from the session; the branch picker browses the repo's REAL branches.
     const sel = el.shadowRoot.querySelector('.b-repo');
@@ -41,9 +41,20 @@ describe('<arazzo-git-dialog>', () => {
     sel.dispatchEvent(new Event('change'));
     const branchSel = await waitFor(() => {
       const b = el.shadowRoot.querySelector('.b-branch');
-      return b.disabled || !b.options.length ? null : b;
+      return b.disabled || !(b.items ?? []).length ? null : b;
     }, 'the branch picker loads the repository branches');
-    ok([...branchSel.options].some((o) => o.value === 'main'), 'the default branch lists');
+    ok(branchSel.items.some((i) => i.value === 'main'), 'the default branch lists');
+
+    // The typeahead deepens the combo: an owner-qualified query lists repositories the session's
+    // seed never contains (the mock's canned public catalog), after the debounce.
+    const repoBox = el.shadowRoot.querySelector('.b-repo');
+    const repoField = repoBox.shadowRoot.querySelector('input');
+    repoField.value = 'dotnet/';
+    repoField.dispatchEvent(new Event('input'));
+    await waitFor(() => [...repoBox.shadowRoot.querySelectorAll('li')].some((li) => li.textContent.includes('dotnet/runtime')), 'the lookup lists the owner-qualified match');
+    repoField.value = 'acme-org/specs';
+    repoField.dispatchEvent(new Event('input'));
+    repoField.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
 
     // ＋ New branch…: create feature/adopt from main — a ref only, then it selects itself.
     branchSel.value = '__new__';
@@ -101,7 +112,7 @@ describe('<arazzo-git-dialog>', () => {
     gh.pollIntervalMs = 10;
     gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
     (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1);
+    await waitFor(() => (el.shadowRoot.querySelector('.b-repo').items ?? []).length > 0);
 
     // Bind to main at the seeded document — the branch that carries the seeded history.
     const sel = el.shadowRoot.querySelector('.b-repo');
@@ -109,7 +120,7 @@ describe('<arazzo-git-dialog>', () => {
     sel.dispatchEvent(new Event('change'));
     await waitFor(() => {
       const b = el.shadowRoot.querySelector('.b-branch');
-      return b.disabled || !b.options.length ? null : b;
+      return b.disabled || !(b.items ?? []).length ? null : b;
     });
     el.shadowRoot.querySelector('.b-path').value = 'flows/adopt.arazzo.json';
     el.shadowRoot.querySelector('.b-path').dispatchEvent(new Event('input'));
@@ -171,13 +182,13 @@ describe('<arazzo-git-dialog>', () => {
     gh.pollIntervalMs = 10;
     gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
     (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1);
+    await waitFor(() => (el.shadowRoot.querySelector('.b-repo').items ?? []).length > 0);
     const sel = el.shadowRoot.querySelector('.b-repo');
     sel.value = 'acme-org/specs';
     sel.dispatchEvent(new Event('change'));
     await waitFor(() => {
       const b = el.shadowRoot.querySelector('.b-branch');
-      return b.disabled || !b.options.length ? null : b;
+      return b.disabled || !(b.items ?? []).length ? null : b;
     });
     el.shadowRoot.querySelector('.b-path').value = 'flows/adopt.arazzo.json';
     el.shadowRoot.querySelector('.b-path').dispatchEvent(new Event('input'));

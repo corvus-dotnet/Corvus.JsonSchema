@@ -19,6 +19,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './git-tree.js';
 import './input-dialog.js';
+import './filter-input.js';
 import './workflow-compare.js';
 
 /** Decodes a brokered contents read's base64 file into a parsed JSON document. */
@@ -153,15 +154,15 @@ class ArazzoGitDialog extends ArazzoElement {
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
           <div class="stage-hint connect-hint">Connect your GitHub identity to bind this working copy to a branch.</div>
           <fieldset class="binding-section" hidden>
-            <legend>Binding — one branch per working copy is the natural multi-author flow</legend>
+            <legend>Binding — the repository, branch, and document this working copy syncs with</legend>
             <div class="two">
-              <label>Repository <select class="b-repo"></select></label>
-              <label>Branch <select class="b-branch" disabled title="Pick a repository first"></select></label>
+              <label>Repository <arazzo-filter-input class="b-repo" aria-label="Repository" placeholder="type to filter, or any owner/repo"></arazzo-filter-input></label>
+              <label>Branch <arazzo-filter-input class="b-branch" aria-label="Branch" placeholder="type to filter branches" title="Pick a repository first"></arazzo-filter-input></label>
             </div>
             <div class="new-branch" hidden>
               <input class="nb-name" type="text" placeholder="feature/my-flow" spellcheck="false">
               <span class="muted">from</span>
-              <select class="nb-base"></select>
+              <arazzo-filter-input class="nb-base" aria-label="Base branch" placeholder="type to filter branches"></arazzo-filter-input>
               <button class="nb-create" type="button" title="Create the branch from the base branch's head — a ref only, no commit">Create branch</button>
             </div>
             <div class="stage-hint paths-hint">Pick a repository and branch — the paths below browse it.</div>
@@ -204,7 +205,7 @@ class ArazzoGitDialog extends ArazzoElement {
           <fieldset class="roundtrip-section" hidden>
             <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
-            <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <select class="c-base" disabled title="Pick a repository first"></select></label>
+            <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <arazzo-filter-input class="c-base" aria-label="Pull request base branch" placeholder="type to filter branches" title="Pick a repository first"></arazzo-filter-input></label>
             <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound sources, and scenario files to the branch — authored as YOUR GitHub identity">⤒ Commit</button></div>
             <div class="result" hidden></div>
           </fieldset>
@@ -297,12 +298,19 @@ class ArazzoGitDialog extends ArazzoElement {
     const binding = this._workingCopy?.gitBinding;
     const session = this.$('.gh-connect').session;
     const repos = session?.connected ? (session.repositories ?? []) : [];
-    const sel = this.$('.b-repo');
+    const input = this.$('.b-repo');
     const current = binding ? `${binding.owner}/${binding.repo}` : '';
-    const options = new Map(repos.map((r) => [`${r.owner}/${r.name}`, r.fullName]));
-    if (current && !options.has(current)) options.set(current, current);
-    sel.innerHTML = `<option value="">Choose…</option>` + [...options].map(([value, label]) =>
-      `<option value="${escapeHtml(value)}"${value === current ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('');
+    // The kit's filter combo (the shared picker design): the session's seed narrows as you type, an
+    // owner-qualified query deepens through the server-side typeahead (reaching public repos the seed
+    // never contains), and any visible owner/repo stays free-typable (the OAuth model).
+    const repoItem = (r) => ({ value: r.fullName || `${r.owner}/${r.name}`, sub: [r.defaultBranch, r.private ? 'private' : ''].filter(Boolean).join(' · ') });
+    const items = repos.map(repoItem);
+    if (current && !items.some((i) => i.value === current)) items.push({ value: current });
+    input.items = items;
+    input.lookup = (q) => (q.includes('/') && this._client
+      ? this._client.searchRepositories(q).then((r) => (r.repositories ?? []).map(repoItem)).catch(() => [])
+      : []);
+    input.value = current;
     if (binding) {
       this.$('.b-path').value = binding.path ?? '';
       this.$('.b-scenarios').value = binding.scenariosDir ?? '';
@@ -373,7 +381,8 @@ class ArazzoGitDialog extends ArazzoElement {
     if (!repoValue || !connected) {
       sel.disabled = true;
       sel.title = connected ? 'Pick a repository first' : 'Connect GitHub first';
-      sel.innerHTML = '';
+      sel.items = [];
+      sel.value = '';
       this.updateActions();
       return;
     }
@@ -387,19 +396,23 @@ class ArazzoGitDialog extends ArazzoElement {
       const bound = this._workingCopy?.gitBinding?.branch;
       const names = list.branches.map((b) => b.name);
       const picked = bound ?? list.defaultBranch ?? names[0] ?? '';
-      sel.innerHTML = names.map((name) =>
-        `<option value="${escapeHtml(name)}"${name === picked ? ' selected' : ''}>${escapeHtml(name)}${name === list.defaultBranch ? ' (default)' : ''}</option>`).join('')
-        + (bound && !names.includes(bound) ? `<option value="${escapeHtml(bound)}" selected>${escapeHtml(bound)} (not on remote)</option>` : '')
-        + `<option value="${NEW_BRANCH}">＋ New branch…</option>`;
+      const branchItem = (name) => ({ value: name, sub: name === list.defaultBranch ? 'default' : '' });
+      sel.items = [
+        ...names.map(branchItem),
+        ...(bound && !names.includes(bound) ? [{ value: bound, sub: 'not on remote' }] : []),
+        { value: NEW_BRANCH, label: '＋ New branch…' },
+      ];
+      sel.value = picked;
       sel.disabled = false;
       sel.title = 'The branch this working copy binds to';
       const base = this.$('.nb-base');
-      base.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"${name === list.defaultBranch ? ' selected' : ''}>${escapeHtml(name)}</option>`).join('');
+      base.items = names.map(branchItem);
+      base.value = list.defaultBranch ?? names[0] ?? '';
       const prBase = this.$('.c-base');
       if (prBase) {
         const held = prBase.value;
-        prBase.innerHTML = names.map((name) =>
-          `<option value="${escapeHtml(name)}"${(held || list.defaultBranch) === name ? ' selected' : ''}>${escapeHtml(name)}${name === list.defaultBranch ? ' (default)' : ''}</option>`).join('');
+        prBase.items = names.map(branchItem);
+        prBase.value = names.includes(held) ? held : (list.defaultBranch ?? '');
         prBase.disabled = false;
         prBase.title = 'The branch the pull request targets';
       }
