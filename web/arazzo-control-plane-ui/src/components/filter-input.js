@@ -106,6 +106,13 @@ class ArazzoFilterInput extends ArazzoElement {
     // must offer its alternatives on click, not hide them behind the committed value.
     input.addEventListener('focus', () => this.open({ showAll: true }));
     input.addEventListener('keydown', (e) => this.onKey(e));
+    // A native 'change' is NOT composed, so a typed value committed by tab/click-away dies at the shadow
+    // boundary; re-dispatch it from the host so listeners see the commit exactly like a listbox pick.
+    input.addEventListener('change', (e) => {
+      if (this._selecting) return; // a pick already dispatched the composed pair
+      e.stopPropagation();
+      this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    });
     // A short delay so a click on a result (which blurs the input first) still registers before we close.
     input.addEventListener('blur', () => setTimeout(() => this.close(), 120));
   }
