@@ -200,6 +200,7 @@ internal static class TestCaseGenerator
         "jsonSchemaBuilderAdditional201909DriverSettings" => "CreateAdditionalDraft201909Driver",
         "jsonSchemaBuilderAdditional202012DriverSettings" => "CreateAdditionalDraft202012Driver",
         "jsonSchemaBuilderAdditionalOpenApi30DriverSettings" => "CreateAdditionalOpenApi30Driver",
+        "jsonSchemaBuilderOpenApi20DriverSettings" => "CreateOpenApi20Driver",
         "jsonSchemaBuilderAdditionalOpenApi20DriverSettings" => "CreateAdditionalOpenApi20Driver",
         _ => throw new InvalidOperationException($"Unknown driver settings key: {driverSettingsKey}"),
     };
