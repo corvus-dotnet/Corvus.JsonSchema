@@ -66,6 +66,72 @@ public class MultipartFormReaderTests
     }
 
     [TestMethod]
+    public void DeserializeToJson_UnquotedPartNames_ProducesCorrectJson()
+    {
+        // RFC 6266 permits token (unquoted) parameter values; .NET's
+        // MultipartFormDataContent emits token-safe names unquoted.
+        const string body = "--boundary\r\n" +
+            "Content-Disposition: form-data; name=notes\r\n" +
+            "\r\n" +
+            "hello world\r\n" +
+            "--boundary\r\n" +
+            "Content-Disposition: form-data; name=archive; filename=bundle.bin\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            "\r\n" +
+            "abc\r\n" +
+            "--boundary--\r\n";
+
+        ArrayBufferWriter<byte> buffer = new(body.Length);
+        using Utf8JsonWriter writer = new(buffer);
+
+        MultipartFormReader.DeserializeToJson(
+            Encoding.UTF8.GetBytes(body),
+            "boundary"u8,
+            writer);
+
+        writer.Flush();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        JsonElement root = doc.RootElement;
+
+        Assert.AreEqual("hello world", root.GetProperty("notes"u8).GetString());
+
+        // Binary parts (filename + binary content type) are hoisted to BinaryPart
+        // handling and correctly excluded from the JSON body.
+        Assert.IsFalse(root.TryGetProperty("archive"u8, out _));
+    }
+
+    [TestMethod]
+    public void DeserializeToJson_FilenameOnlyDisposition_DoesNotBleedIntoName()
+    {
+        // A disposition with filename= but no name= must not treat the filename
+        // parameter's "name=" suffix as the field name.
+        const string body = "--boundary\r\n" +
+            "Content-Disposition: form-data; filename=\"doc.pdf\"\r\n" +
+            "\r\n" +
+            "data\r\n" +
+            "--boundary\r\n" +
+            "Content-Disposition: form-data; name=\"ok\"\r\n" +
+            "\r\n" +
+            "yes\r\n" +
+            "--boundary--\r\n";
+
+        ArrayBufferWriter<byte> buffer = new(body.Length);
+        using Utf8JsonWriter writer = new(buffer);
+
+        MultipartFormReader.DeserializeToJson(
+            Encoding.UTF8.GetBytes(body),
+            "boundary"u8,
+            writer);
+
+        writer.Flush();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        JsonElement root = doc.RootElement;
+
+        Assert.IsFalse(root.TryGetProperty("doc.pdf"u8, out _));
+        Assert.AreEqual("yes", root.GetProperty("ok"u8).GetString());
+    }
+
+    [TestMethod]
     public void DeserializeToJson_SimpleTextParts_ProducesCorrectJson()
     {
         const string body = "--boundary\r\n" +

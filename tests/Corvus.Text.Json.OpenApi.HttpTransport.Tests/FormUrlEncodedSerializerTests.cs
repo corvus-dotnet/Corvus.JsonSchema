@@ -226,6 +226,98 @@ public class FormUrlEncodedSerializerTests
         Assert.AreEqual("q=hello/world", result);
     }
 
+    // ── Encodings-aware deserialization (OpenAPI 2.0 collectionFormat fields) ──
+    [TestMethod]
+    public void Deserialize_PipeDelimitedFieldSplitsIntoArray()
+    {
+        string json = DeserializeForm(
+            "flags=a%7Cb%7Cc",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["flags"] = new(Style: "pipeDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("""{"flags":["a","b","c"]}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_TabDelimitedFieldSplitsIntoArray()
+    {
+        string json = DeserializeForm(
+            "labels=x%09y",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["labels"] = new(Style: "tabDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("""{"labels":["x","y"]}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_SpaceDelimitedFieldSplitsIntoArray()
+    {
+        string json = DeserializeForm(
+            "tags=one%20two",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["tags"] = new(Style: "spaceDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("""{"tags":["one","two"]}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_FormNonExplodedFieldSplitsOnComma()
+    {
+        string json = DeserializeForm(
+            "ids=1,2,3",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["ids"] = new(Style: "form", Explode: false),
+            });
+
+        Assert.AreEqual("""{"ids":[1,2,3]}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_ExplodedEncodingEntryKeepsRepeatedKeyBehavior()
+    {
+        string json = DeserializeForm(
+            "tags=a&tags=b",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["tags"] = new(Style: "form", Explode: true),
+            });
+
+        Assert.AreEqual("""{"tags":["a","b"]}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_FieldWithoutEncodingEntryStaysScalar()
+    {
+        string json = DeserializeForm(
+            "note=a,b",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["other"] = new(Style: "pipeDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("""{"note":"a,b"}""", json);
+    }
+
+    [TestMethod]
+    public void Deserialize_SingleElementDelimitedFieldYieldsSingletonArray()
+    {
+        string json = DeserializeForm(
+            "flags=only",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["flags"] = new(Style: "pipeDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("""{"flags":["only"]}""", json);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
     private static string SerializeJson(
         string json,
@@ -237,5 +329,14 @@ public class FormUrlEncodedSerializerTests
         using MemoryStream ms = new();
         FormUrlEncodedSerializer.Serialize(doc.RootElement, ms, encodings);
         return Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    private static string DeserializeForm(
+        string formBody,
+        Dictionary<string, PropertyEncoding>? encodings = null)
+    {
+        using ParsedJsonDocument<JsonElement> doc = FormUrlEncodedSerializer.Deserialize<JsonElement>(
+            Encoding.UTF8.GetBytes(formBody), encodings);
+        return doc.RootElement.ToString();
     }
 }

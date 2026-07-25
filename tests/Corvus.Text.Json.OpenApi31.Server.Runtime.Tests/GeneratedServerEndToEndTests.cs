@@ -129,7 +129,7 @@ public class GeneratedServerEndToEndTests
         content.Add(new StringContent("A test file"), "description");
 
         HttpResponseMessage response = await Client.PostAsync("/items/item-42/upload", content);
-        await AssertJsonResponseAsync(response, HttpStatusCode.Created, """{"id":8,"name":"Uploaded"}""");
+        await AssertJsonResponseAsync(response, HttpStatusCode.Created, """{"id":8,"name":"A test file"}""");
     }
 
     [TestMethod]

@@ -161,6 +161,29 @@ public ref struct FormFieldReader
     /// <param name="writer">The JSON writer to write the resulting JSON object to.</param>
     public static void DeserializeToJson(ReadOnlySpan<byte> formBody, Utf8JsonWriter writer)
     {
+        DeserializeToJson(formBody, writer, null);
+    }
+
+    /// <summary>
+    /// Deserializes an <c>application/x-www-form-urlencoded</c> body into JSON, honoring
+    /// per-property encoding overrides for delimited array fields.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A single-occurrence field whose encoding declares a non-exploded delimited style
+    /// (<c>form</c> = comma, <c>spaceDelimited</c>, <c>pipeDelimited</c>, or
+    /// <c>tabDelimited</c>) is split on its delimiter into a JSON array. Repeated keys
+    /// (exploded arrays) are grouped into arrays as before.
+    /// </para>
+    /// </remarks>
+    /// <param name="formBody">The raw form body bytes.</param>
+    /// <param name="writer">The JSON writer.</param>
+    /// <param name="encodings">Optional per-property encoding overrides.</param>
+    public static void DeserializeToJson(
+        ReadOnlySpan<byte> formBody,
+        Utf8JsonWriter writer,
+        Dictionary<string, PropertyEncoding>? encodings)
+    {
         // Two-pass approach:
         // Pass 1: identify which keys appear multiple times (→ arrays).
         // Pass 2: write the JSON object.
@@ -245,6 +268,13 @@ public ref struct FormFieldReader
 
                     WriteJsonValue(writer, value);
                 }
+                else if (TryGetArrayDelimiter(encodings, key, out byte delimiter))
+                {
+                    writer.WritePropertyName(key);
+                    writer.WriteStartArray();
+                    WriteDelimitedElements(writer, value, delimiter);
+                    writer.WriteEndArray();
+                }
                 else
                 {
                     WriteJsonProperty(writer, key, value);
@@ -273,6 +303,89 @@ public ref struct FormFieldReader
             {
                 ArrayPool<byte>.Shared.Return(rentedValBuf);
             }
+        }
+    }
+
+    private static bool TryGetArrayDelimiter(
+        Dictionary<string, PropertyEncoding>? encodings,
+        ReadOnlySpan<byte> decodedKey,
+        out byte delimiter)
+    {
+        delimiter = 0;
+
+        if (encodings is null || encodings.Count == 0)
+        {
+            return false;
+        }
+
+        // AlternateLookup avoids allocating a string for each key lookup, matching the
+        // serializer's pattern. Form keys are short; stackalloc covers the transcode.
+        int maxChars = System.Text.Encoding.UTF8.GetMaxCharCount(decodedKey.Length);
+        char[]? rentedChars = null;
+        Span<char> chars = maxChars <= 128
+            ? stackalloc char[128]
+            : (rentedChars = System.Buffers.ArrayPool<char>.Shared.Rent(maxChars));
+
+        try
+        {
+            int charCount = System.Text.Encoding.UTF8.GetChars(decodedKey, chars);
+            Dictionary<string, PropertyEncoding>.AlternateLookup<ReadOnlySpan<char>> altLookup =
+                encodings.GetAlternateLookup<ReadOnlySpan<char>>();
+
+            if (!altLookup.TryGetValue(chars[..charCount], out PropertyEncoding encoding) || encoding.EffectiveExplode)
+            {
+                return false;
+            }
+
+            return TryGetDelimiterForStyle(encoding.Style, out delimiter);
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                System.Buffers.ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
+    }
+
+    private static bool TryGetDelimiterForStyle(string? style, out byte delimiter)
+    {
+        delimiter = 0;
+
+        switch (style)
+        {
+            case "spaceDelimited":
+                delimiter = (byte)' ';
+                return true;
+            case "pipeDelimited":
+                delimiter = (byte)'|';
+                return true;
+            case "tabDelimited":
+                delimiter = (byte)'\t';
+                return true;
+            case "form":
+            case null:
+                delimiter = (byte)',';
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static void WriteDelimitedElements(Utf8JsonWriter writer, ReadOnlySpan<byte> decodedValue, byte delimiter)
+    {
+        ReadOnlySpan<byte> remaining = decodedValue;
+        while (true)
+        {
+            int idx = remaining.IndexOf(delimiter);
+            if (idx < 0)
+            {
+                WriteJsonValue(writer, remaining);
+                return;
+            }
+
+            WriteJsonValue(writer, remaining[..idx]);
+            remaining = remaining[(idx + 1)..];
         }
     }
 

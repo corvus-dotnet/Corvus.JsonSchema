@@ -159,11 +159,26 @@ public static class FormUrlEncodedSerializer
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static ParsedJsonDocument<T> Deserialize<T>(ReadOnlyMemory<byte> formBody)
         where T : struct, IJsonElement<T>
+        => Deserialize<T>(formBody, null);
+
+    /// <summary>
+    /// Deserializes a <c>application/x-www-form-urlencoded</c> body into a
+    /// <see cref="ParsedJsonDocument{T}"/>, honoring per-property encoding overrides
+    /// for delimited array fields.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="formBody">The raw form body bytes.</param>
+    /// <param name="encodings">Optional per-property encoding overrides.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<T> Deserialize<T>(
+        ReadOnlyMemory<byte> formBody,
+        Dictionary<string, PropertyEncoding>? encodings)
+        where T : struct, IJsonElement<T>
     {
         using PooledBufferWriter jsonBuffer = new(formBody.Length * 2);
         using Utf8JsonWriter jsonWriter = new(jsonBuffer);
 
-        FormFieldReader.DeserializeToJson(formBody.Span, jsonWriter);
+        FormFieldReader.DeserializeToJson(formBody.Span, jsonWriter, encodings);
         jsonWriter.Flush();
 
         return ParsedJsonDocument<T>.Parse(jsonBuffer.WrittenMemory);
@@ -181,13 +196,30 @@ public static class FormUrlEncodedSerializer
         Stream stream,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
+        => await DeserializeAsync<T>(stream, null, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>
+    /// Deserializes a <c>application/x-www-form-urlencoded</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>, honoring per-property encoding overrides
+    /// for delimited array fields.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="encodings">Optional per-property encoding overrides.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static async ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        Dictionary<string, PropertyEncoding>? encodings,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
     {
         (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
             .ConfigureAwait(false);
 
         try
         {
-            return Deserialize<T>(buffer.AsMemory(0, length));
+            return Deserialize<T>(buffer.AsMemory(0, length), encodings);
         }
         finally
         {

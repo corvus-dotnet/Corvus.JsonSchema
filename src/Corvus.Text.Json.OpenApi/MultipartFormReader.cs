@@ -34,9 +34,9 @@ public ref struct MultipartFormReader
 
     private static ReadOnlySpan<byte> ContentTypePrefix => "content-type:"u8;
 
-    private static ReadOnlySpan<byte> NameEquals => "name=\""u8;
+    private static ReadOnlySpan<byte> NameEquals => "name="u8;
 
-    private static ReadOnlySpan<byte> FilenameEquals => "filename=\""u8;
+    private static ReadOnlySpan<byte> FilenameEquals => "filename="u8;
 
     private static ReadOnlySpan<byte> ApplicationJson => "application/json"u8;
 
@@ -301,8 +301,8 @@ public ref struct MultipartFormReader
             if (StartsWithIgnoreCase(line, ContentDispositionPrefix))
             {
                 ReadOnlySpan<byte> value = line[ContentDispositionPrefix.Length..].TrimStart((byte)' ');
-                name = ExtractQuotedParam(value, NameEquals);
-                fileName = ExtractQuotedParam(value, FilenameEquals);
+                name = ExtractParam(value, NameEquals);
+                fileName = ExtractParam(value, FilenameEquals);
             }
             else if (StartsWithIgnoreCase(line, ContentTypePrefix))
             {
@@ -318,12 +318,29 @@ public ref struct MultipartFormReader
         }
     }
 
-    private static ReadOnlySpan<byte> ExtractQuotedParam(
+    private static ReadOnlySpan<byte> ExtractParam(
         ReadOnlySpan<byte> headerValue,
         ReadOnlySpan<byte> paramPrefix)
     {
-        // Search case-insensitively for paramPrefix (e.g. name=")
+        // Search case-insensitively for paramPrefix (e.g. name=). RFC 6266 permits both
+        // quoted-string and token parameter values; .NET's MultipartFormDataContent
+        // emits token-safe names unquoted, while browsers always quote.
         int idx = IndexOfIgnoreCase(headerValue, paramPrefix);
+
+        // Guard against matching the "name=" suffix of "filename=": the match must be
+        // at the start or preceded by a delimiter.
+        while (idx > 0
+            && headerValue[idx - 1] is not ((byte)';' or (byte)' ' or (byte)'\t'))
+        {
+            int next = IndexOfIgnoreCase(headerValue[(idx + 1)..], paramPrefix);
+            if (next < 0)
+            {
+                return default;
+            }
+
+            idx = idx + 1 + next;
+        }
+
         if (idx < 0)
         {
             return default;
@@ -335,13 +352,27 @@ public ref struct MultipartFormReader
             return default;
         }
 
-        int closeQuote = headerValue[start..].IndexOf((byte)'"');
-        if (closeQuote < 0)
+        if (headerValue[start] == (byte)'"')
         {
-            return headerValue[start..];
+            start++;
+            int closeQuote = headerValue[start..].IndexOf((byte)'"');
+            if (closeQuote < 0)
+            {
+                return headerValue[start..];
+            }
+
+            return headerValue[start..(start + closeQuote)];
         }
 
-        return headerValue[start..(start + closeQuote)];
+        // Unquoted token: ends at the next ';' or whitespace.
+        int end = start;
+        while (end < headerValue.Length
+            && headerValue[end] is not ((byte)';' or (byte)' ' or (byte)'\t'))
+        {
+            end++;
+        }
+
+        return headerValue[start..end];
     }
 
     private static bool StartsWithIgnoreCase(ReadOnlySpan<byte> span, ReadOnlySpan<byte> prefix)

@@ -1509,7 +1509,12 @@ public sealed class OpenApi20CodeGenerator
             }
 
             // Per-field collectionFormat lowers into the encodings map consumed by the
-            // form serializers (csv is the comma-joined default, no entry needed).
+            // form serializers. Array fields with csv (or no) collectionFormat get an
+            // explicit non-exploded form entry: the client's comma join is unchanged,
+            // and the server-side deserializer needs the entry to split the value.
+            bool isArrayField = ((JsonElement)param).TryGetProperty("type"u8, out JsonElement fieldTypeEl)
+                && fieldTypeEl.ValueEquals("array"u8);
+
             if (((JsonElement)param).TryGetProperty("collectionFormat"u8, out JsonElement cf) && cf.ValueKind == JsonValueKind.String)
             {
                 if (cf.ValueEquals("multi"u8))
@@ -1528,6 +1533,14 @@ public sealed class OpenApi20CodeGenerator
                 {
                     encodings[name] = new EncodingInfo("pipeDelimited", false, false, null);
                 }
+                else if (isArrayField)
+                {
+                    encodings[name] = new EncodingInfo("form", false, false, null);
+                }
+            }
+            else if (isArrayField)
+            {
+                encodings[name] = new EncodingInfo("form", false, false, null);
             }
         }
 
@@ -5111,6 +5124,25 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine($"public static class {className}");
         w.OpenBrace();
 
+        // Emit per-operation form encodings statics so the urlencoded deserializer can
+        // split delimited array fields symmetrically with the client's serialization.
+        foreach (OperationInfo op in operations)
+        {
+            if (op.RequestBody is null || !IsFormUrlEncodedRequestBody(op.RequestBody.Value))
+            {
+                continue;
+            }
+
+            IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
+                GetRequestBodyEncodings(op.RequestBody.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+
+            if (formEncodings is { Count: > 0 })
+            {
+                EmitEncodingsField(w, $"{op.MethodName}FormEncodings", formEncodings);
+                w.WriteLine();
+            }
+        }
+
         List<string> handlerParams = [];
         List<string> handlerParamNames = [];
         foreach ((string tag, _) in groups)
@@ -5336,9 +5368,13 @@ public sealed class OpenApi20CodeGenerator
                     }
                     else if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
                     {
+                        IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
+                            GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+                        string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : string.Empty;
+
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);");
+                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, {encodingsArg}context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
                         w.WriteLine("catch");
                         w.OpenBrace();
