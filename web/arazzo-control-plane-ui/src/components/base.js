@@ -47,6 +47,21 @@ export const SHARED_CSS = `
      opt out — they stay outline-free until hover (the base hover rule still gives them an accent edge). */
   button.ghost { background: transparent; }
   button.copy, button.close { border-color: transparent; }
+  /* Busy affordance for a user-triggered async action (see {@link ArazzoElement#runAction}). Once the
+     work outlives the delay threshold the trigger gets aria-busy="true": its label is hidden (not
+     removed, so the control keeps its width and never shifts) and a spinner sits centred in its place.
+     pointer-events:none blocks a late click; the invisible 0ms re-entrancy guard in runAction covers
+     the window before the spinner appears. The spinner reads --_muted on plain buttons and white on the
+     filled primary/danger variants so it always contrasts with the button. */
+  button[aria-busy="true"] { position: relative; color: transparent !important; pointer-events: none; }
+  button[aria-busy="true"]::after {
+    content: ""; position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    border: 2px solid var(--_muted); border-right-color: transparent; border-radius: 50%;
+    animation: arazzo-spin 0.6s linear infinite;
+  }
+  button.primary[aria-busy="true"]::after, button.danger[aria-busy="true"]::after { border-color: #fff; border-right-color: transparent; }
+  @keyframes arazzo-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { button[aria-busy="true"]::after { animation-duration: 1.4s; } }
   a { color: var(--_accent); }
   .muted { color: var(--_muted); }
   /* Replace the native dropdown chevron (which ignores the kit theme and vanishes on dark surfaces)
@@ -396,6 +411,9 @@ function humanizeDelta(ms) {
   return `${Math.round(h / 24)}d`;
 }
 
+/** Per-trigger in-flight marker for {@link ArazzoElement#runAction} (a Symbol so it never leaks to the DOM). */
+const BUSY_ACTION = Symbol('arazzo-busy-action');
+
 /**
  * Base class: open Shadow DOM, a query helper, a bubbling+composed event emitter, and lazy client
  * resolution from an explicit `.client` property or a `base-url` attribute.
@@ -434,6 +452,43 @@ export class ArazzoElement extends HTMLElement {
   /** @param {string} selector */
   $$(selector) {
     return [...this.shadowRoot.querySelectorAll(selector)];
+  }
+
+  /**
+   * Run a user-triggered async action with re-entrancy protection and delayed busy feedback.
+   *
+   * The trigger is guarded the instant this is called: a second activation while the work is in flight
+   * is ignored (it resolves to `undefined` without re-running the work), so a double-click — which
+   * lands well inside the delay threshold — never double-submits. If the work outlives `delay` ms the
+   * trigger shows a spinner in place of its label (via `aria-busy`; see {@link SHARED_CSS}) and stops
+   * taking pointer input; work that settles sooner never flashes one. The trigger is always restored
+   * on settle, so a failed action can be retried. It deliberately does NOT touch the trigger's
+   * `disabled` — that stays owned by the component's own validation, so the two never fight.
+   *
+   * This is a UX courtesy against accidental re-submission, not a correctness guarantee: a
+   * non-idempotent server action must still defend itself (ADR 0047 — the client is never the authority).
+   *
+   * @template T
+   * @param {HTMLElement|null} trigger The activating control (usually the button); spun while busy.
+   * @param {() => Promise<T>} work The async operation. Its own errors should be handled by the caller.
+   * @param {{ delay?: number }} [opts] Milliseconds before the spinner shows (default 150).
+   * @returns {Promise<T|undefined>} The work's result, or `undefined` if a re-entrant call was blocked.
+   */
+  runAction(trigger, work, { delay = 150 } = {}) {
+    if (!trigger) return work();
+    if (trigger[BUSY_ACTION]) return Promise.resolve(undefined); // re-entrancy blocked, invisibly
+    const timer = setTimeout(() => trigger.setAttribute('aria-busy', 'true'), delay);
+    const promise = (async () => {
+      try {
+        return await work();
+      } finally {
+        clearTimeout(timer);
+        trigger.removeAttribute('aria-busy');
+        trigger[BUSY_ACTION] = undefined;
+      }
+    })();
+    trigger[BUSY_ACTION] = promise;
+    return promise;
   }
 }
 
