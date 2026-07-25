@@ -56,11 +56,16 @@ describe('<arazzo-git-dialog>', () => {
     repoField.dispatchEvent(new Event('input'));
     repoField.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
 
+    // ＋ New branch… is pinned at the TOP so it is findable among many branches.
+    equal(branchSel.items[0].value, '__new__', 'the New branch action is anchored at the top of the list');
+
     // ＋ New branch…: create feature/adopt from main — a ref only, then it selects itself.
     branchSel.value = '__new__';
     branchSel.dispatchEvent(new Event('change'));
     const nb = el.shadowRoot.querySelector('.new-branch');
     ok(!nb.hidden, 'the create form reveals');
+    // The sentinel is an action, not a value: its token never leaks into the branch field.
+    equal(el.shadowRoot.querySelector('.b-branch').value, '', 'the __new__ sentinel does not show in the branch field');
     el.shadowRoot.querySelector('.nb-name').value = 'feature/adopt';
     el.shadowRoot.querySelector('.nb-create').click();
     await waitFor(() => el.shadowRoot.querySelector('.b-branch').value === 'feature/adopt', 'the created branch selects itself');

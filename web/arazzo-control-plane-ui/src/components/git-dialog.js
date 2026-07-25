@@ -251,10 +251,13 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.c-message').addEventListener('input', () => this.updateActions());
     this.$('.b-repo').addEventListener('change', () => { void this.loadBranches(); });
     this.$('.b-branch').addEventListener('change', () => {
-      this.$('.new-branch').hidden = this.$('.b-branch').value !== NEW_BRANCH;
-      if (!this.$('.new-branch').hidden && !this.$('.nb-name').value) {
-        const slug = (this._workingCopy?.name ?? 'my-flow').toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '');
-        this.$('.nb-name').value = `feature/${slug || 'my-flow'}`;
+      if (this.$('.b-branch').value === NEW_BRANCH) {
+        // The sentinel is an ACTION, not a branch: enter create mode and clear the field so its
+        // token (`__new__`) never shows, then reveal + seed + focus the name input.
+        this.enterCreateBranch();
+      } else {
+        this._creatingBranch = false;
+        this.$('.new-branch').hidden = true;
       }
 
       this.updateActions();
@@ -399,9 +402,10 @@ class ArazzoGitDialog extends ArazzoElement {
       const picked = bound ?? list.defaultBranch ?? names[0] ?? '';
       const branchItem = (name) => ({ value: name, sub: name === list.defaultBranch ? 'default' : '' });
       sel.items = [
+        // Pinned at the TOP so it is findable when a repo has very many branches (dotnet/runtime).
+        { value: NEW_BRANCH, label: '＋ New branch…' },
         ...names.map(branchItem),
         ...(bound && !names.includes(bound) ? [{ value: bound, sub: 'not on remote' }] : []),
-        { value: NEW_BRANCH, label: '＋ New branch…' },
       ];
       sel.value = picked;
       sel.disabled = false;
@@ -424,8 +428,25 @@ class ArazzoGitDialog extends ArazzoElement {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
     }
 
-    this.$('.new-branch').hidden = this.$('.b-branch').value !== NEW_BRANCH;
+    this._creatingBranch = false;
+    this.$('.new-branch').hidden = true;
     this.updateActions();
+  }
+
+  // Enter "new branch" mode: the field is cleared (so the `__new__` sentinel token never shows), the
+  // name row is revealed, and the name is seeded from the working copy and focused for editing.
+  enterCreateBranch() {
+    this._creatingBranch = true;
+    this.$('.b-branch').value = '';
+    this.$('.new-branch').hidden = false;
+    if (!this.$('.nb-name').value) {
+      const slug = (this._workingCopy?.name ?? 'my-flow').toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '');
+      this.$('.nb-name').value = `feature/${slug || 'my-flow'}`;
+    }
+
+    const nbName = this.$('.nb-name');
+    nbName.focus();
+    nbName.select();
   }
 
   // Create the branch from the chosen base — a ref only, no commit (§4.7); re-browse, select it.
