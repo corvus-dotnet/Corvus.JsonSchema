@@ -113,6 +113,41 @@ test('the Git tab connects a GitHub identity through the brokered popup and bind
   assertClean(errors);
 });
 
+test('the browse tree and the new-branch form open as floating dropdowns, not inline', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+  await openGitTab(page);
+  await connectGitHub(page);
+  await bindToBranch(page);
+
+  // Browse the document path: the repo tree drops as a floating, fixed-position dropdown (a top-layer
+  // popover), not an inline block. A regression once left it popover-open but display:none, so the
+  // toggle state flipped yet nothing appeared — only a visibility assertion catches that.
+  const tree = page.locator('#gitpanel .tree-path');
+  await expect(tree).toBeHidden();
+  await page.locator('#gitpanel .browse-path').click();
+  await expect(tree).toBeVisible();
+  await expect(tree).toHaveCSS('position', 'fixed');
+  // Escape dismisses the dropdown without closing the binding surface behind it.
+  await page.keyboard.press('Escape');
+  await expect(tree).toBeHidden();
+  await expect(page.locator('#gitpanel .binding-section')).toBeVisible();
+
+  // ＋ New branch… opens the create form as the same kind of floating dropdown anchored to the Branch
+  // field, rather than appearing inline and shifting the dialog's content down.
+  const create = page.locator('#gitpanel .new-branch');
+  await expect(create).toBeHidden();
+  await page.locator('#gitpanel .b-branch input').click();
+  await page.locator('#gitpanel .b-branch li', { hasText: '＋ New branch…' }).click();
+  await expect(create).toBeVisible();
+  await expect(create).toHaveCSS('position', 'fixed');
+  await page.keyboard.press('Escape');
+  await expect(create).toBeHidden();
+  await expect(page.locator('#gitpanel .binding-section')).toBeVisible();
+
+  assertClean(errors);
+});
+
 test('the history renders as a headered list, newest first, and one selection arms Compare and Roll back', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);

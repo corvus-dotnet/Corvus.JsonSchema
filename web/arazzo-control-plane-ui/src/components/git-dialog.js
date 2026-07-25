@@ -109,7 +109,15 @@ class ArazzoGitDialog extends ArazzoElement {
         .hint { font-size: 11px; color: var(--_muted); }
         /* The name gets its own full-width row; "from <base>" and the button wrap onto the next line,
            so the name box is never squeezed and the button never has to wrap its label. */
-        .new-branch { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        /* The new-branch form floats as a dropdown anchored to the Branch field (like the browse trees
+           and the kit's pickers) instead of appearing inline and pushing the dialog's content around. */
+        .new-branch { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 10px;
+                      background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
+                      box-shadow: 0 8px 24px rgb(0 0 0 / 0.28);
+                      display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .new-branch[popover]:not(:popover-open) { display: none; }
+        .new-branch[hidden] { display: none; }
+        .new-branch .nb-title { flex: 1 1 100%; font-weight: 600; font-size: 12px; }
         .new-branch .nb-name { flex: 1 1 100%; min-width: 0; }
         .new-branch .nb-base { flex: 1 1 12ch; min-width: 0; }
         .new-branch .nb-create { flex: 0 0 auto; white-space: nowrap; }
@@ -173,7 +181,8 @@ class ArazzoGitDialog extends ArazzoElement {
               <label>Repository <arazzo-filter-input class="b-repo" aria-label="Repository" placeholder="type to filter, or any owner/repo"></arazzo-filter-input></label>
               <label>Branch <arazzo-filter-input class="b-branch" aria-label="Branch" placeholder="type to filter branches" title="Pick a repository first"></arazzo-filter-input></label>
             </div>
-            <div class="new-branch" hidden>
+            <div class="new-branch" popover="manual" hidden>
+              <div class="nb-title">New branch</div>
               <input class="nb-name" type="text" placeholder="feature/my-flow" spellcheck="false">
               <span class="muted">from</span>
               <arazzo-filter-input class="nb-base" aria-label="Base branch" placeholder="type to filter branches"></arazzo-filter-input>
@@ -269,8 +278,7 @@ class ArazzoGitDialog extends ArazzoElement {
         // token (`__new__`) never shows, then reveal + seed + focus the name input.
         this.enterCreateBranch();
       } else {
-        this._creatingBranch = false;
-        this.$('.new-branch').hidden = true;
+        this.closeNewBranch();
       }
 
       this.updateActions();
@@ -388,22 +396,31 @@ class ArazzoGitDialog extends ArazzoElement {
     return slot.matches?.(':popover-open') ?? !slot.hidden;
   }
 
+  /** @private Position a floating dropdown panel below its anchor row (flipping above when the space
+   *  below is tight), clamped to the viewport. Width tracks the anchor but honours a minimum. */
+  placeDropdown(slot, anchor, minWidth = 0) {
+    const r = anchor.getBoundingClientRect();
+    const width = Math.max(r.width, minWidth);
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
+    const below = window.innerHeight - r.bottom - 8;
+    const above = r.top - 8;
+    const placeAbove = below < 200 && above > below;
+    slot.style.left = `${left}px`;
+    slot.style.width = `${width}px`;
+    slot.style.maxHeight = `${Math.min(340, Math.max(placeAbove ? above : below, 160))}px`;
+    if (placeAbove) { slot.style.top = 'auto'; slot.style.bottom = `${window.innerHeight - r.top + 4}px`; }
+    else { slot.style.bottom = 'auto'; slot.style.top = `${r.bottom + 4}px`; }
+  }
+
   /** @private Show the browse tree as a floating dropdown in the top layer, anchored to its row so it
    *  overlays content rather than pushing it. Any other open browse tree is closed first. */
   openTree(slot, anchor) {
     this.$$('.tree-slot').forEach((s) => { if (s !== slot) this.closeTree(s); });
-    const row = anchor.closest('.pathrow') ?? anchor;
-    const r = row.getBoundingClientRect();
-    const below = window.innerHeight - r.bottom - 8;
-    const above = r.top - 8;
-    const placeAbove = below < 200 && above > below;
-    slot.style.left = `${r.left}px`;
-    slot.style.width = `${r.width}px`;
-    slot.style.maxHeight = `${Math.min(340, Math.max(placeAbove ? above : below, 160))}px`;
-    if (placeAbove) { slot.style.top = 'auto'; slot.style.bottom = `${window.innerHeight - r.top + 4}px`; }
-    else { slot.style.bottom = 'auto'; slot.style.top = `${r.bottom + 4}px`; }
+    this.placeDropdown(slot, anchor.closest('.pathrow') ?? anchor);
+    // Clear the plain-hidden attribute BEFORE showing: while it is set, `.tree-slot[hidden]` forces
+    // display:none even once the popover is open, so the tree would toggle state but never appear.
+    slot.hidden = false;
     if (slot.showPopover && !slot.matches(':popover-open')) slot.showPopover();
-    else slot.hidden = false;
     // Dismiss on Escape or a press outside the dropdown (a manual popover does not light-dismiss). The
     // listeners ride the shadow root so `e.target` is not retargeted to the host, and Escape closes the
     // dropdown WITHOUT bubbling to the modal dialog's own cancel.
@@ -433,6 +450,44 @@ class ArazzoGitDialog extends ArazzoElement {
       this.shadowRoot.removeEventListener('keydown', this._treeDismiss, true);
       this.shadowRoot.removeEventListener('pointerdown', this._treeDismiss, true);
       this._treeDismiss = null;
+    }
+  }
+
+  /** @private Show the new-branch form as a floating dropdown anchored to the Branch field, so it
+   *  overlays content rather than appearing inline and shifting the dialog around. Dismiss mirrors
+   *  the browse trees (Escape or a press outside, riding the shadow root so the modal stays open). */
+  openNewBranch() {
+    const slot = this.$('.new-branch');
+    const anchor = this.$('.b-branch');
+    this.placeDropdown(slot, anchor, 300);
+    slot.hidden = false;
+    if (slot.showPopover && !slot.matches(':popover-open')) slot.showPopover();
+    this._nbDismiss = (e) => {
+      if (e.type === 'keydown') {
+        if (e.key !== 'Escape') return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeNewBranch();
+        return;
+      }
+
+      if (slot.contains(e.target) || anchor.contains(e.target)) return;
+      this.closeNewBranch();
+    };
+    this.shadowRoot.addEventListener('keydown', this._nbDismiss, true);
+    this.shadowRoot.addEventListener('pointerdown', this._nbDismiss, true);
+  }
+
+  /** @private Hide the new-branch dropdown, leave create mode, and drop its dismiss listeners. */
+  closeNewBranch() {
+    const slot = this.$('.new-branch');
+    if (slot.hidePopover && slot.matches(':popover-open')) slot.hidePopover();
+    slot.hidden = true;
+    this._creatingBranch = false;
+    if (this._nbDismiss) {
+      this.shadowRoot.removeEventListener('keydown', this._nbDismiss, true);
+      this.shadowRoot.removeEventListener('pointerdown', this._nbDismiss, true);
+      this._nbDismiss = null;
     }
   }
 
@@ -493,22 +548,21 @@ class ArazzoGitDialog extends ArazzoElement {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
     }
 
-    this._creatingBranch = false;
-    this.$('.new-branch').hidden = true;
+    this.closeNewBranch();
     this.updateActions();
   }
 
   // Enter "new branch" mode: the field is cleared (so the `__new__` sentinel token never shows), the
-  // name row is revealed, and the name is seeded from the working copy and focused for editing.
+  // name is seeded from the working copy, the form drops as a dropdown, and the name is focused.
   enterCreateBranch() {
     this._creatingBranch = true;
     this.$('.b-branch').value = '';
-    this.$('.new-branch').hidden = false;
     if (!this.$('.nb-name').value) {
       const slug = (this._workingCopy?.name ?? 'my-flow').toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '');
       this.$('.nb-name').value = `feature/${slug || 'my-flow'}`;
     }
 
+    this.openNewBranch();
     const nbName = this.$('.nb-name');
     nbName.focus();
     nbName.select();
@@ -528,7 +582,7 @@ class ArazzoGitDialog extends ArazzoElement {
       });
       await this.loadBranches();
       this.$('.b-branch').value = name;
-      this.$('.new-branch').hidden = true;
+      this.closeNewBranch();
       this.updateActions();
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
