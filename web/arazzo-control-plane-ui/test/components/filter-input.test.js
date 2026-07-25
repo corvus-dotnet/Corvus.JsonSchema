@@ -25,6 +25,17 @@ describe('<arazzo-filter-input>', () => {
     ok(el.shadowRoot.querySelector('li').textContent.includes('release/9.0'));
   });
 
+  it('a lookup that resolves after disconnect must not throw (the list no-ops off-DOM)', () => {
+    combo([{ value: 'alpha' }, { value: 'alnitak' }]);
+    el.remove(); // the dialog closing (or test teardown) races a still-pending debounced lookup
+    // Drive the render a late lookup would run: pre-fix, showPopover on the now-disconnected popover
+    // threw InvalidStateError; the connectedness guard makes rendering off-DOM a silent no-op.
+    let threw = null;
+    try { el.renderList([{ value: 'alpha' }]); } catch (e) { threw = e; }
+    equal(threw, null, 'rendering after disconnect does not throw');
+    equal(el.shadowRoot.querySelector('.results').matches(':popover-open'), false, 'the list stays closed off-DOM');
+  });
+
   it('items arriving while the list is focus-opened keep the FULL list, not a filter on the committed value', async () => {
     combo([]);
     el.value = 'main';

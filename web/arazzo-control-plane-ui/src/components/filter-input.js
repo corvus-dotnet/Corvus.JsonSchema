@@ -164,7 +164,7 @@ class ArazzoFilterInput extends ArazzoElement {
       let extra = [];
       try { extra = (await this.lookup(this.$('input').value.trim())) || []; } catch { extra = []; }
       const input = this.$('input');
-      if (seq !== this._lookupSeq || !input || input.value.trim().toLowerCase() !== q) return; // superseded or stale
+      if (seq !== this._lookupSeq || !input || !this.isConnected || input.value.trim().toLowerCase() !== q) return; // superseded, stale, or torn down
       const seen = new Set(statics.map((i) => i.value));
       const merged = [...statics, ...extra.filter((i) => i && i.value && !seen.has(i.value))];
       if (merged.length > statics.length || statics.length) this.renderList(merged);
@@ -208,6 +208,9 @@ class ArazzoFilterInput extends ArazzoElement {
   /** @private Show the list in the top layer (escapes dialog/sidebar clipping); no-op when already open. */
   showList() {
     const list = this.$('.results');
+    // A debounced lookup can resolve after the combo was removed (dialog closed / test teardown);
+    // showPopover throws on a disconnected element, so showing off-DOM must be a no-op.
+    if (!list || !list.isConnected) return;
     list.hidden = false;
     this.positionList();
     if (list.showPopover && !list.matches(':popover-open')) list.showPopover();
