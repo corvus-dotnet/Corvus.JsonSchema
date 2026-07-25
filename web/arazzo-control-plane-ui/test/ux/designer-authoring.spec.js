@@ -480,9 +480,11 @@ test('the acquisition dialog attaches a REGISTERED source by name (no re-upload)
   await expect(dialog.locator('.name-in')).toHaveValue('petstore');
   await dialog.locator('button.attach').click();
   await expect(dialog.locator('dialog')).not.toBeVisible();
-  await expect(page.locator('#save-status')).toHaveText('source attached');
 
-  // The rail lists the new group; expanding renders its draggable operation rows.
+  // The rail lists the new group; expanding renders its draggable operation rows. The transient
+  // '#save-status' line is deliberately NOT asserted here: attaching adds a sourceDescription, and the
+  // autosave that document change schedules clears the line a beat later, so asserting its exact text
+  // races that clear (a flake under load). The durable success signal is the rail group appearing.
   const head = browser.locator('.group-head[data-name="petstore"]');
   await expect(head).toBeVisible();
   await expect(head.locator('.type')).toHaveText('openapi');
