@@ -39,6 +39,7 @@
     <Project Path="src-v4/Corvus.Json.CodeGeneration.6/Corvus.Json.CodeGeneration.6.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.7/Corvus.Json.CodeGeneration.7.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.CorvusVocabulary/Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi20/Corvus.Json.CodeGeneration.OpenApi20.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi30/Corvus.Json.CodeGeneration.OpenApi30.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
   </Folder>
