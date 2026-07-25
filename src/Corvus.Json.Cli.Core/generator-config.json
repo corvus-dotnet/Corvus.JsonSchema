@@ -150,7 +150,7 @@
         },
         "useSchema": {
             "type": "string",
-            "enum": [ "Draft4", "Draft6", "Draft7", "Draft201909", "Draft202012", "OpenApi30" ],
+            "enum": [ "Draft4", "Draft6", "Draft7", "Draft201909", "Draft202012", "OpenApi30", "OpenApi20" ],
             "default": "Draft202012",
             "description": "Well-known fallback draft schema."
         },
