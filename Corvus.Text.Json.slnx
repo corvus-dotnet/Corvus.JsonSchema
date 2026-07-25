@@ -16,6 +16,7 @@
     <Project Path="src-v4/Corvus.Json.JsonSchema.Draft4/Corvus.Json.JsonSchema.Draft4.csproj" />
     <Project Path="src-v4/Corvus.Json.JsonSchema.Draft6/Corvus.Json.JsonSchema.Draft6.csproj" />
     <Project Path="src-v4/Corvus.Json.JsonSchema.Draft7/Corvus.Json.JsonSchema.Draft7.csproj" />
+    <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi20/Corvus.Json.JsonSchema.OpenApi20.csproj" />
     <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi30/Corvus.Json.JsonSchema.OpenApi30.csproj" />
     <Project Path="src-v4/Corvus.Json.JsonSchema.OpenApi31/Corvus.Json.JsonSchema.OpenApi31.csproj" />
   </Folder>

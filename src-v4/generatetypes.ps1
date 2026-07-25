@@ -8,6 +8,10 @@ $toolPath = '../src/Corvus.Json.CodeGenerator/bin/Debug/net10.0/Corvus.Json.Json
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.Draft201909 --outputPath .\Corvus.Json.JsonSchema.Draft201909\Draft201909\ https://json-schema.org/draft/2019-09/schema
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.Draft202012 --outputPath .\Corvus.Json.JsonSchema.Draft202012\Draft202012\ https://json-schema.org/draft/2020-12/schema
 
+# OpenApi20 uses a config file: the metaschema's jsonReference definition must be
+# renamed to avoid the generated type shadowing Corvus.Json.JsonReference.
+& $toolPath config ./openapi20generatorconfig.json
+
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --outputRootTypeName OpenApiDocument .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30.json
 
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.OpenApi31 --outputPath .\Corvus.Json.JsonSchema.OpenApi31\OpenApi31\ --outputRootTypeName OpenApiDocument .\Corvus.Json.JsonSchema.OpenApi31\OpenApi31.json

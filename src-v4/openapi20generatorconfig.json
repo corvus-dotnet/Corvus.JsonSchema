@@ -1,0 +1,16 @@
+{
+    "outputPath": "./Corvus.Json.JsonSchema.OpenApi20/OpenApi20",
+    "rootNamespace": "Corvus.Json.JsonSchema.OpenApi20",
+    "typesToGenerate": [
+        {
+            "schemaFile": "./Corvus.Json.JsonSchema.OpenApi20/OpenApi20.json",
+            "outputRootTypeName": "OpenApiDocument"
+        }
+    ],
+    "namedTypes": [
+        {
+            "reference": "http://swagger.io/v2/schema.json#/definitions/jsonReference",
+            "dotnetTypeName": "JsonReferenceObject"
+        }
+    ]
+}
