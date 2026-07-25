@@ -10,6 +10,7 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi20;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
@@ -118,7 +119,43 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             string modelsPath = Path.Combine(outputPath, "Models");
             IReadOnlyList<string>? modelFileNames = null;
 
-            if (specVersion is "3.2")
+            if (specVersion is "2.0")
+            {
+                // OpenAPI 2.0 (Swagger) — use the 2.0 typed code generator. formData
+                // parameters aggregate into synthesized form-body schemas registered as
+                // in-memory documents with the schema type builder.
+                SchemaReference[] schemaRefs = OpenApi20CodeGenerator.CollectSchemaPointers(
+                    specRoot, out var parameterNames, out IReadOnlyDictionary<string, string> syntheticDocuments, filter, referenceResolver);
+
+                AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
+
+                Dictionary<string, string>? schemaTypeMap = null;
+                if (schemaRefs.Length > 0)
+                {
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, syntheticDocuments)
+                        .ConfigureAwait(false);
+                }
+
+                if (schemaTypeMap is not null)
+                {
+                    AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+
+                    if (schemaTypeMap.Count < schemaRefs.Length)
+                    {
+                        AnsiConsole.MarkupLine(
+                            $"[yellow]Warning:[/] {schemaRefs.Length - schemaTypeMap.Count} schema position(s) did not resolve to a generated type and will fall back to JsonElement.");
+                    }
+                }
+
+                OpenApi20CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.ClientName,
+                    settings.IgnoreEmptyFormUrlEncodedBody);
+                files = generator.Generate(specRoot, filter, referenceResolver);
+            }
+            else if (specVersion is "3.2")
             {
                 // OpenAPI 3.2 — use the 3.2 typed code generator
                 SchemaReference[] schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
@@ -254,21 +291,38 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
         bool useYaml,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? syntheticDocuments = null)
     {
         string specFilePath = Path.GetFullPath(specFile);
 
-        // Set up the document resolver — with YAML support if the spec is YAML
+        // Set up the document resolver — with YAML support if the spec is YAML.
+        // Synthesized documents (e.g. OpenAPI 2.0 form bodies) are registered in a
+        // prepopulated resolver that is consulted first.
         CompoundDocumentResolver documentResolver;
+        PrepopulatedDocumentResolver? syntheticResolver = null;
+
+        if (syntheticDocuments is { Count: > 0 })
+        {
+            syntheticResolver = new PrepopulatedDocumentResolver();
+            foreach ((string uri, string json) in syntheticDocuments)
+            {
+                syntheticResolver.AddDocument(uri, System.Text.Json.JsonDocument.Parse(json));
+            }
+        }
 
         if (useYaml)
         {
             YamlPreProcessor preProcessor = new();
-            documentResolver = new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            documentResolver = syntheticResolver is not null
+                ? new(syntheticResolver, new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor))
+                : new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
         }
         else
         {
-            documentResolver = new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            documentResolver = syntheticResolver is not null
+                ? new(syntheticResolver, new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()))
+                : new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
         }
 
         documentResolver.AddMetaschema();
@@ -286,6 +340,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         // Select vocabulary based on spec version
         IVocabulary defaultVocabulary = specVersion switch
         {
+            "2.0" => Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.DefaultVocabulary,
             "3.0" => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
             _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
         };
@@ -314,8 +369,18 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 // External document + fragment
                 string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = ResolveDocumentPath(docPart);
-                reference = new(resolvedDocPath, fragment);
+
+                if (docPart.Contains("://", StringComparison.Ordinal))
+                {
+                    // Absolute URI (e.g. a synthesized form-body document) — resolved by
+                    // the prepopulated resolver, never the file system.
+                    reference = new(docPart, fragment);
+                }
+                else
+                {
+                    string resolvedDocPath = ResolveDocumentPath(docPart);
+                    reference = new(resolvedDocPath, fragment);
+                }
             }
             else
             {

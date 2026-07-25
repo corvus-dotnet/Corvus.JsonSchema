@@ -60,6 +60,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi20\Corvus.Text.Json.OpenApi20.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
   </ItemGroup>

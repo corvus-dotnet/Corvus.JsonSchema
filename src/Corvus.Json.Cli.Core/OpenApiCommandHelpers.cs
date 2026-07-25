@@ -70,9 +70,29 @@ internal static class OpenApiCommandHelpers
     /// <returns>The spec version string ("3.0" or "3.1").</returns>
     internal static string DetectSpecVersion(JsonElement specRoot, string? userSpecVersion)
     {
+        string? sniffed = SniffSpecVersion(specRoot);
+
         if (userSpecVersion is not null)
         {
+            if (sniffed is not null && sniffed != userSpecVersion)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[yellow]Warning:[/] --specVersion {Markup.Escape(userSpecVersion)} overrides the document's detected version {Markup.Escape(sniffed)}.");
+            }
+
             return userSpecVersion;
+        }
+
+        return sniffed ?? "3.1";
+    }
+
+    private static string? SniffSpecVersion(JsonElement specRoot)
+    {
+        if (specRoot.TryGetProperty("swagger"u8, out JsonElement swaggerVersion)
+            && swaggerVersion.ValueKind == JsonValueKind.String
+            && swaggerVersion.GetString()?.StartsWith("2.0", StringComparison.Ordinal) == true)
+        {
+            return "2.0";
         }
 
         if (specRoot.TryGetProperty("openapi"u8, out JsonElement version)
@@ -84,13 +104,18 @@ internal static class OpenApiCommandHelpers
                 return "3.0";
             }
 
+            if (v?.StartsWith("3.1", StringComparison.Ordinal) == true)
+            {
+                return "3.1";
+            }
+
             if (v?.StartsWith("3.2", StringComparison.Ordinal) == true)
             {
                 return "3.2";
             }
         }
 
-        return "3.1";
+        return null;
     }
 
     /// <summary>
