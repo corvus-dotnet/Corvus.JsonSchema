@@ -231,6 +231,13 @@ public static class SourceGeneratorHelpers
             }
         }
 
+        // Register the well-known metaschemas so that schemas which $ref into a
+        // metaschema (e.g. the Swagger 2.0 metaschema's references into draft-04's
+        // definitions) resolve during generation. Registration is TryAdd-based, and
+        // this runs after the additional texts, so a user-supplied copy of a
+        // metaschema URI always takes precedence.
+        newResolver.AddMetaschema();
+
         return newResolver;
     }
 
