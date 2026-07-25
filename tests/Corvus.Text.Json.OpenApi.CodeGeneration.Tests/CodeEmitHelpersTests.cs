@@ -11,6 +11,37 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 public class CodeEmitHelpersTests
 {
     [TestMethod]
+    public void EmitQueryArrayWrite_TabDelimited_EmitsTabSeparatorOtherwiseIdenticalToSpaceDelimited()
+    {
+        // TabDelimited (OpenAPI 2.0 collectionFormat: tsv) must flow through the same
+        // non-exploded emission path as the other delimited styles, differing only in
+        // the percent-encoded separator.
+        IndentedWriter tabWriter = new();
+        CodeEmitHelpers.EmitQueryArrayWrite(tabWriter, "tags", "value", "0", ParameterStyle.TabDelimited, explode: false);
+
+        IndentedWriter spaceWriter = new();
+        CodeEmitHelpers.EmitQueryArrayWrite(spaceWriter, "tags", "value", "0", ParameterStyle.SpaceDelimited, explode: false);
+
+        string tabEmitted = tabWriter.ToString();
+        StringAssert.Contains(tabEmitted, "writer.Write(\"%09\"u8);");
+        Assert.AreEqual(spaceWriter.ToString().Replace("%20", "%09"), tabEmitted);
+    }
+
+    [TestMethod]
+    public void EmitQueryObjectWrite_TabDelimited_EmitsTabSeparatorOtherwiseIdenticalToSpaceDelimited()
+    {
+        IndentedWriter tabWriter = new();
+        CodeEmitHelpers.EmitQueryObjectWrite(tabWriter, "filter", "value", "0", ParameterStyle.TabDelimited, explode: false);
+
+        IndentedWriter spaceWriter = new();
+        CodeEmitHelpers.EmitQueryObjectWrite(spaceWriter, "filter", "value", "0", ParameterStyle.SpaceDelimited, explode: false);
+
+        string tabEmitted = tabWriter.ToString();
+        StringAssert.Contains(tabEmitted, "\"%09\"");
+        Assert.AreEqual(spaceWriter.ToString().Replace("%20", "%09"), tabEmitted);
+    }
+
+    [TestMethod]
     public void SanitizeIdentifier_SimpleAlpha_ReturnsPascalCase()
     {
         Assert.AreEqual("MyName", CodeEmitHelpers.SanitizeIdentifier("my_name"));

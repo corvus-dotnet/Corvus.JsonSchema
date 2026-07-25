@@ -136,6 +136,20 @@ public class FormUrlEncodedSerializerTests
         Assert.AreEqual("tags=a%7Cb%7Cc", result);
     }
 
+    [TestMethod]
+    public void Serialize_NonExplodedArrayTabDelimited()
+    {
+        // OpenAPI 2.0 (Swagger) collectionFormat: tsv on formData parameters.
+        string result = SerializeJson(
+            """{"tags":["a","b","c"]}""",
+            new Dictionary<string, PropertyEncoding>
+            {
+                ["tags"] = new(Style: "tabDelimited", Explode: false),
+            });
+
+        Assert.AreEqual("tags=a%09b%09c", result);
+    }
+
     // ── Exploded objects ──────────────────────────────────────────────────
     [TestMethod]
     public void Serialize_ExplodedObject()

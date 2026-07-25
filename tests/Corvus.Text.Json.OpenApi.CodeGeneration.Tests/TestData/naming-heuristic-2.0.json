@@ -1,0 +1,30 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "Naming Heuristic 2.0", "version": "1.0.0" },
+  "host": "example.com",
+  "basePath": "/api",
+  "paths": {
+    "/pets": {
+      "get": {
+        "parameters": [
+          { "name": "limit", "in": "query", "type": "integer", "format": "int32", "minimum": 1, "maximum": 100 }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "type": "object",
+              "properties": { "total": { "type": "integer" } }
+            },
+            "headers": {
+              "X-Rate-Limit": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      },
+      "parameters": [
+        { "name": "tenant", "in": "query", "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      ]
+    }
+  }
+}

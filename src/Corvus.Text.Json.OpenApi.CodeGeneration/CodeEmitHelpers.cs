@@ -1156,6 +1156,7 @@ public static class CodeEmitHelpers
         // form+explode: name=val1&name=val2&name=val3
         // spaceDelimited+!explode: name=val1%20val2%20val3
         // pipeDelimited+!explode: name=val1|val2|val3 (pipe gets URI-encoded to %7C)
+        // tabDelimited+!explode: name=val1%09val2%09val3 (OpenAPI 2.0 collectionFormat: tsv)
         if (style == ParameterStyle.Form && explode)
         {
             // Each element becomes a separate name=value pair.
@@ -1180,6 +1181,7 @@ public static class CodeEmitHelpers
             {
                 ParameterStyle.SpaceDelimited => "%20",
                 ParameterStyle.PipeDelimited => "%7C",
+                ParameterStyle.TabDelimited => "%09",
                 _ => ",",
             };
 
@@ -1276,10 +1278,12 @@ public static class CodeEmitHelpers
             // form+!explode: name=key1,val1,key2,val2
             // spaceDelimited+!explode: name=key1%20val1%20key2%20val2
             // pipeDelimited+!explode: name=key1%7Cval1%7Ckey2%7Cval2
+            // tabDelimited+!explode: name=key1%09val1%09key2%09val2 (OpenAPI 2.0 collectionFormat: tsv)
             string kvSep = style switch
             {
                 ParameterStyle.SpaceDelimited => "%20",
                 ParameterStyle.PipeDelimited => "%7C",
+                ParameterStyle.TabDelimited => "%09",
                 _ => ",",
             };
 

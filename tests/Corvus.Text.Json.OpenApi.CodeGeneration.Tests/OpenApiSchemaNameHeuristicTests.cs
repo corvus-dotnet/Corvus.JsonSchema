@@ -353,17 +353,21 @@ public class OpenApiSchemaNameHeuristicTests
     }
 
     [TestMethod]
-    public void HeaderNameWithoutTrailingSlash_ReturnsNoName()
+    public void EmptyHeaderName_ReturnsNoName()
     {
-        // Header name with no /schema suffix (lines 189-191)
-        AssertDirectCallFails("#/paths/~1items/get/responses/200/headers/x-next");
+        // A bare header name with no /schema suffix is a valid OpenAPI 2.0 (Swagger)
+        // Header Object position (see OpenApiSchemaNameHeuristic20ShapesTests), but an
+        // EMPTY header name is not.
+        AssertDirectCallFails("#/paths/~1items/get/responses/200/headers/");
     }
 
     [TestMethod]
-    public void ParameterIndexWithoutTrailingSlash_ReturnsNoName()
+    public void EmptyParameterIndex_ReturnsNoName()
     {
-        // Parameter index with no /schema suffix (lines 215-217)
-        AssertDirectCallFails("#/paths/~1items/get/parameters/0");
+        // A bare parameter index with no /schema suffix is a valid OpenAPI 2.0 (Swagger)
+        // Parameter Object position (see OpenApiSchemaNameHeuristic20ShapesTests), but an
+        // EMPTY index is not.
+        AssertDirectCallFails("#/paths/~1items/get/parameters/");
     }
 
     [TestMethod]

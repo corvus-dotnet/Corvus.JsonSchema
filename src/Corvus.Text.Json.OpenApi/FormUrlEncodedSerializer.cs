@@ -49,6 +49,7 @@ public static class FormUrlEncodedSerializer
     private static readonly byte[] CommaByte = [(byte)','];
     private static readonly byte[] SpaceByte = [(byte)' '];
     private static readonly byte[] PipeByte = [(byte)'|'];
+    private static readonly byte[] TabByte = [(byte)'\t'];
 
     /// <summary>
     /// Serializes a JSON object's properties directly to a <see cref="Stream"/>
@@ -396,6 +397,7 @@ public static class FormUrlEncodedSerializer
         {
             "spaceDelimited" => SpaceByte,
             "pipeDelimited" => PipeByte,
+            "tabDelimited" => TabByte,
             _ => CommaByte,
         };
 
