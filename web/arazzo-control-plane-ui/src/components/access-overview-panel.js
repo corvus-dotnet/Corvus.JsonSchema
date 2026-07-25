@@ -336,7 +336,7 @@ class ArazzoAccessOverview extends ArazzoElement {
 
   wireSection(host, key) {
     if (key === 'reach') {
-      host.querySelectorAll('[data-revoke]').forEach((btn) => btn.addEventListener('click', () => this.revoke(btn.dataset.revoke)));
+      host.querySelectorAll('[data-revoke]').forEach((btn) => btn.addEventListener('click', () => this.revoke(btn.dataset.revoke, btn)));
     } else if (key === 'administered') {
       host.querySelectorAll('[data-workflow]').forEach((btn) => btn.addEventListener('click', () => this.emit('open-workflow', { baseWorkflowId: btn.dataset.workflow })));
     } else {
@@ -347,7 +347,7 @@ class ArazzoAccessOverview extends ArazzoElement {
     }
   }
 
-  async revoke(bindingId) {
+  async revoke(bindingId, trigger) {
     const ok = await confirmDialog(this, {
       title: 'Revoke grant?',
       message: 'This deletes the claim binding for every principal it matches, not just this grantee.',
@@ -355,14 +355,16 @@ class ArazzoAccessOverview extends ArazzoElement {
       danger: true,
     });
     if (!ok) return;
-    try {
-      await this.client.deleteSecurityBinding(bindingId);
-      this.emit('revoked', { bindingId });
-      // A revoke changes both the reach list AND the conferred capabilities, so reload the whole overview.
-      if (this._grantee) await this.loadOverview(this._grantee);
-    } catch (err) {
-      this.emit('error', { problem: err?.problem, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteSecurityBinding(bindingId);
+        this.emit('revoked', { bindingId });
+        // A revoke changes both the reach list AND the conferred capabilities, so reload the whole overview.
+        if (this._grantee) await this.loadOverview(this._grantee);
+      } catch (err) {
+        this.emit('error', { problem: err?.problem, error: err });
+      }
+    });
   }
 }
 

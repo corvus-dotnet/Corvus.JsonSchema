@@ -203,10 +203,10 @@ class ArazzoCredentialDetail extends ArazzoElement {
       <button class="revoke danger" type="button">Revoke…</button>`;
     host.querySelector('.edit').addEventListener('click', () => this.emit('credential-edit', { binding: b }));
     host.querySelector('.duplicate').addEventListener('click', () => this.emit('credential-duplicate', { binding: b }));
-    host.querySelector('.revoke').addEventListener('click', () => this.confirmRevoke(b));
+    host.querySelector('.revoke').addEventListener('click', (e) => this.confirmRevoke(b, e.currentTarget));
   }
 
-  async confirmRevoke(b) {
+  async confirmRevoke(b, trigger) {
     const confirmed = await confirmDialog(this, {
       title: 'Revoke credential',
       message: `Revoke the ${b.sourceName}@${b.environment} credential binding? Runs that use this source in ${b.environment} will no longer resolve a secret. This cannot be undone.`,
@@ -214,15 +214,17 @@ class ArazzoCredentialDetail extends ArazzoElement {
       danger: true,
     });
     if (!confirmed) return;
-    try {
-      await this.client.deleteCredential(b.sourceName, b.environment);
-      this.emit('credential-deleted', { sourceName: b.sourceName, environment: b.environment });
-      this.emit('close');
-    } catch (err) {
-      this._error = err.problem || { title: err.message, status: err.status };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteCredential(b.sourceName, b.environment);
+        this.emit('credential-deleted', { sourceName: b.sourceName, environment: b.environment });
+        this.emit('close');
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 }
 

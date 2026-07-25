@@ -383,7 +383,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         setTimeout(() => { button.textContent = '⧉'; }, 1200);
       }
     });
-    this.$('.sectag-save')?.addEventListener('click', () => this.saveSecurityTags(v));
+    this.$('.sectag-save')?.addEventListener('click', (e) => this.saveSecurityTags(v, e.currentTarget));
     // Seed the tag editor once it is in the DOM (its .tags setter re-renders the rows).
     const sectagEditor = this.$('#sectag-editor');
     if (sectagEditor) sectagEditor.tags = Array.isArray(v.securityTags) ? v.securityTags : [];
@@ -714,24 +714,24 @@ class ArazzoCatalogDetail extends ArazzoElement {
     return `<div class="block" part="security-tags"><h4>Management tags</h4>${body}</div>`;
   }
 
-  async saveSecurityTags(v) {
+  async saveSecurityTags(v, trigger) {
     const editor = this.$('#sectag-editor');
     const securityTags = editor ? editor.tags : [];
-    const saveBtn = this.$('.sectag-save');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
-    try {
-      const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
-      // Re-render from the server's authoritative entity so the saved (normalised) tags show; if the response omits
-      // them, fall back to the just-saved value so the editor still reflects the save.
-      this._version = updated;
-      if (!Array.isArray(updated.securityTags)) this._version.securityTags = securityTags;
-      this.renderBody();
-      this.emit('version-changed', { version: updated });
-    } catch (err) {
-      this._error = err.problem || { title: err.message, status: err.status };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
+        // Re-render from the server's authoritative entity so the saved (normalised) tags show; if the response omits
+        // them, fall back to the just-saved value so the editor still reflects the save.
+        this._version = updated;
+        if (!Array.isArray(updated.securityTags)) this._version.securityTags = securityTags;
+        this.renderBody();
+        this.emit('version-changed', { version: updated });
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   renderActions(v) {
@@ -755,8 +755,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
     buttons.push('<button class="request-access ghost" type="button">Request access…</button>');
 
     host.innerHTML = buttons.join('');
-    host.querySelector('.obsolete')?.addEventListener('click', () => this.confirmObsolete(v));
-    host.querySelector('.delete')?.addEventListener('click', () => this.confirmDelete(v));
+    host.querySelector('.obsolete')?.addEventListener('click', (e) => this.confirmObsolete(v, e.currentTarget));
+    host.querySelector('.delete')?.addEventListener('click', (e) => this.confirmDelete(v, e.currentTarget));
     host.querySelector('.request-access')?.addEventListener('click', () => this.requestAccess(v));
   }
 
@@ -772,26 +772,28 @@ class ArazzoCatalogDetail extends ArazzoElement {
     dlg.open({ baseWorkflowId: v.baseWorkflowId, lockWorkflow: true });
   }
 
-  async confirmObsolete(v) {
+  async confirmObsolete(v, trigger) {
     const confirmed = await confirmDialog(this, {
       title: 'Obsolete version',
       message: `Mark ${v.baseWorkflowId} v${v.versionNumber} as Obsolete? It stays in the catalog but is flagged for retirement.`,
       confirmLabel: 'Obsolete',
     });
     if (!confirmed) return;
-    try {
-      const updated = await this.client.obsoleteCatalogVersion(v.baseWorkflowId, v.versionNumber);
-      this._version = updated;
-      this.renderBody();
-      this.emit('version-changed', { version: updated });
-    } catch (err) {
-      this._error = err.problem || { title: err.message, status: err.status };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        const updated = await this.client.obsoleteCatalogVersion(v.baseWorkflowId, v.versionNumber);
+        this._version = updated;
+        this.renderBody();
+        this.emit('version-changed', { version: updated });
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
-  async confirmDelete(v) {
+  async confirmDelete(v, trigger) {
     const confirmed = await confirmDialog(this, {
       title: 'Delete version',
       message: `Permanently delete ${v.baseWorkflowId} v${v.versionNumber}? This cannot be undone, and is refused while runs reference it.`,
@@ -799,15 +801,17 @@ class ArazzoCatalogDetail extends ArazzoElement {
       danger: true,
     });
     if (!confirmed) return;
-    try {
-      await this.client.deleteCatalogVersion(v.baseWorkflowId, v.versionNumber);
-      this.emit('version-deleted', { baseWorkflowId: v.baseWorkflowId, versionNumber: v.versionNumber });
-      this.emit('close');
-    } catch (err) {
-      this._error = err.problem || { title: err.message, status: err.status };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteCatalogVersion(v.baseWorkflowId, v.versionNumber);
+        this.emit('version-deleted', { baseWorkflowId: v.baseWorkflowId, versionNumber: v.versionNumber });
+        this.emit('close');
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 }
 

@@ -259,7 +259,7 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
     this.$('.env-in')?.addEventListener('change', () => this.updateSubmitState());
     this.$('.cancel').addEventListener('click', () => this.close());
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
-    this.$('.ok').addEventListener('click', () => this.submit());
+    this.$('.ok').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.submit()); });
   }
 }
 

@@ -141,7 +141,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     await this.mutate(() => this._subject().add(member), () => this.$('.grant-in').reset());
   }
 
-  async removeMember(digest, describe) {
+  async removeMember(digest, describe, trigger) {
     const subject = this._subject();
     const confirmed = await confirmDialog(this, {
       title: 'Remove administrator',
@@ -149,7 +149,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
       confirmLabel: 'Remove', danger: true,
     });
     if (!confirmed) return;
-    await this.mutate(() => subject.remove(digest));
+    await this.runAction(trigger, () => this.mutate(() => subject.remove(digest)));
   }
 
   async mutate(action, onOk) {
@@ -203,7 +203,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         </div>
       </div>
     `;
-    this.$('.addbtn').addEventListener('click', () => this.add());
+    this.$('.addbtn').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.add()); });
   }
 
   renderBody() {
@@ -239,7 +239,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         ${this.canWrite ? `<button class="rm ghost" type="button" data-digest="${escapeHtml(a.digest)}" data-describe="${escapeHtml(describe)}">Remove</button>` : ''}
       </div>`;
     }).join('');
-    this.$$('.rm').forEach((btn) => btn.addEventListener('click', () => this.removeMember(btn.dataset.digest, btn.dataset.describe)));
+    this.$$('.rm').forEach((btn) => btn.addEventListener('click', () => this.removeMember(btn.dataset.digest, btn.dataset.describe, btn)));
   }
 }
 

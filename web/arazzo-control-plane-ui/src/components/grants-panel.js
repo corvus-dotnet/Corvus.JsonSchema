@@ -370,7 +370,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     }
   }
 
-  async deleteGrant(id) {
+  async deleteGrant(id, trigger) {
     const g = this._grants.find((x) => x.id === id);
     const describe = g ? `${g.claimType}${g.claimValue ? '=' + g.claimValue : ''}` : id;
     const critical = g && isSystemCritical(g);
@@ -386,15 +386,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
       challengeLabel: 'Type the claim to confirm',
     });
     if (!confirmed) return;
-    try {
-      await this.client.deleteSecurityBinding(id);
-      this.clearDetail();
-      await this.reloadAndEmit();
-    } catch (err) {
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteSecurityBinding(id);
+        this.clearDetail();
+        await this.reloadAndEmit();
+      } catch (err) {
+        this._error = err.problem || { title: err.message };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   async reloadAndEmit() {
@@ -782,8 +784,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
     pane.querySelector('.close').addEventListener('click', () => this.clearDetail());
     pane.querySelector('.cancel').addEventListener('click', () => this.clearDetail());
-    pane.querySelector('.confirm').addEventListener('click', () => this.submitForm());
-    pane.querySelector('.del')?.addEventListener('click', () => this.deleteGrant(f.editId));
+    pane.querySelector('.confirm').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.submitForm()); });
+    pane.querySelector('.del')?.addEventListener('click', (e) => { void this.deleteGrant(f.editId, e.currentTarget); });
 
     // Scope honesty: a caller without security:write views the grant read-only — inputs disabled, no Save/Delete (the
     // server's 403 remains the backstop). A read-only caller never reaches create (New is hidden), so this is view/edit.

@@ -449,13 +449,13 @@ class ArazzoRunDetail extends ArazzoElement {
       this._resumeDialog.client = this.client;
       this._resumeDialog.open(run);
     });
-    host.querySelector('.delete')?.addEventListener('click', () => this.confirmDelete(run));
+    host.querySelector('.delete')?.addEventListener('click', (e) => this.confirmDelete(run, e.currentTarget));
 
     // Show the bar only when it has something in it.
     this.$('.actions').hidden = !(showCancel || buttons.length > 0);
   }
 
-  async confirmDelete(run) {
+  async confirmDelete(run, trigger) {
     const confirmed = await confirmDialog(this, {
       title: 'Delete run',
       message: `Permanently delete run ${run.id}? This cannot be undone.`,
@@ -463,15 +463,17 @@ class ArazzoRunDetail extends ArazzoElement {
       danger: true,
     });
     if (!confirmed) return;
-    try {
-      await this.client.deleteRun(run.id);
-      this.emit('run-deleted', { runId: run.id });
-      this.emit('close');
-    } catch (err) {
-      this._error = err.problem || { title: err.message, status: err.status };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteRun(run.id);
+        this.emit('run-deleted', { runId: run.id });
+        this.emit('close');
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 }
 

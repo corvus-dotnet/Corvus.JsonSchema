@@ -134,7 +134,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
     if (wf) { wf.client = this._client; if (this._baseWorkflowId) wf.value = this._baseWorkflowId; }
     this.$('.cancel').addEventListener('click', () => this.close());
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
-    this.$('.ok').addEventListener('click', () => this.submit());
+    this.$('.ok').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.submit()); });
     this.$$('.dur-preset').forEach((b) => b.addEventListener('click', () => { this.$('.dur-in').value = b.dataset.hours; }));
     this.$$('.scope-cb').forEach((cb) => cb.addEventListener('change', () => this.enforceScopeImplications()));
     this.enforceScopeImplications();
