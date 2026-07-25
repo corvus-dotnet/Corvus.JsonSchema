@@ -257,8 +257,9 @@ class ArazzoGitDialog extends ArazzoElement {
 
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderBinding());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderBinding());
-    this.$('.save-binding').addEventListener('click', () => this.saveBinding());
-    this.$('.pull').addEventListener('click', async () => {
+    this.$('.save-binding').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.saveBinding()); });
+    this.$('.pull').addEventListener('click', async (e) => {
+      const trigger = e.currentTarget; // captured before the await — currentTarget is null afterwards
       // Load is a REPLACE, not a git merge (§4.7): the branch's document, bound sources, and scenario
       // set overwrite the working copy. Say so before doing it — and point at History for going back.
       const sure = await this.$('.ask').ask({
@@ -267,9 +268,9 @@ class ArazzoGitDialog extends ArazzoElement {
         confirmLabel: 'Load & replace',
         danger: true,
       });
-      if (sure) this.pull();
+      if (sure) void this.runAction(trigger, () => this.pull());
     });
-    this.$('.commit').addEventListener('click', () => this.commit());
+    this.$('.commit').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.commit()); });
     this.$('.c-message').addEventListener('input', () => this.updateActions());
     this.$('.b-repo').addEventListener('change', () => { void this.loadBranches(); });
     this.$('.b-branch').addEventListener('change', () => {
@@ -283,12 +284,13 @@ class ArazzoGitDialog extends ArazzoElement {
 
       this.updateActions();
     });
-    this.$('.nb-create').addEventListener('click', () => this.createBranch());
+    this.$('.nb-create').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.createBranch()); });
     this.$('.history-more').addEventListener('click', () => { void this.loadHistory({ more: true }); });
     this.$('.hist-cmp').addEventListener('click', () => this.toggleCompareMenu());
-    this.$('.hist-rollback').addEventListener('click', () => {
+    this.$('.hist-rollback').addEventListener('click', (e) => {
+      const trigger = e.currentTarget;
       const sel = this.selectedCommits();
-      if (sel.length === 1) void this.rollbackTo(sel[0]);
+      if (sel.length === 1) void this.rollbackTo(sel[0], trigger);
     });
     // The menu closes on any press outside its wrap — component-scoped, never document-level.
     this.shadowRoot.addEventListener('pointerdown', (e) => {
@@ -686,7 +688,6 @@ class ArazzoGitDialog extends ArazzoElement {
 
   async pull() {
     this.clearError();
-    this.$('.pull').disabled = true;
     try {
       // Pull is a discard-and-REPLACE, so operate on the CURRENT stored copy. The panel captured its
       // etag when it opened, but the canvas stays editable beside it — an edit since then bumped the
@@ -712,7 +713,6 @@ class ArazzoGitDialog extends ArazzoElement {
 
   async commit() {
     this.clearError();
-    this.$('.commit').disabled = true;
     const message = this.$('.c-message').value.trim();
     const pullRequest = this.$('.c-pr').checked ? { base: this.$('.c-base').value.trim() || 'main', draft: true } : undefined;
     try {
@@ -951,7 +951,7 @@ class ArazzoGitDialog extends ArazzoElement {
 
   /** @private — the rollback IS a pull at the commit's ref: danger-confirmed, etag-guarded, and
    *  recorded on the branch by the NEXT commit (the binding never changes). */
-  async rollbackTo(commit) {
+  async rollbackTo(commit, trigger) {
     const sure = await this.$('.ask').ask({
       title: `Roll back to ${commit.sha.slice(0, 7)}?`,
       message: `“${commit.message ?? commit.sha}” replaces the working copy's document${this._workingCopy?.gitBinding?.specPaths ? ', bound sources,' : ''} and scenario set — local edits since the last commit are lost. The branch itself is untouched until you commit the rollback.`,
@@ -960,24 +960,28 @@ class ArazzoGitDialog extends ArazzoElement {
     });
     if (!sure) return;
     this.clearError();
-    try {
-      // Same discard-and-replace semantics as pull() — refresh to the live etag first (a canvas edit
-      // beside the open panel would otherwise 409 the rollback and leave the document unchanged).
-      this.emit('pull-starting');
-      this._workingCopy = await this._client.getWorkingCopy(this._workingCopy.id);
-      const pulled = await this._client.pullWorkingCopy(this._workingCopy.id, { expectedEtag: this._workingCopy.etag, ref: commit.sha });
-      this._workingCopy = pulled;
-      this.renderBinding();
-      const result = this.$('.result');
-      result.hidden = false;
-      result.innerHTML = `<span>Rolled back to <strong>${escapeHtml(commit.sha.slice(0, 7))}</strong> — commit to record it on <strong>${escapeHtml(pulled.gitBinding.branch)}</strong>.</span>`;
-      this.emit('pulled', { workingCopy: pulled });
-    } catch (err) {
-      this.showError(err.problem?.detail || err.problem?.title || err.message);
-      this.emit('error', { problem: err.problem, error: err });
-    }
+    // The confirm is modal, so re-entry is already blocked; runAction just spins the trigger for the
+    // network part (never during the dialog), and the inner handler owns its own error display.
+    await this.runAction(trigger, async () => {
+      try {
+        // Same discard-and-replace semantics as pull() — refresh to the live etag first (a canvas edit
+        // beside the open panel would otherwise 409 the rollback and leave the document unchanged).
+        this.emit('pull-starting');
+        this._workingCopy = await this._client.getWorkingCopy(this._workingCopy.id);
+        const pulled = await this._client.pullWorkingCopy(this._workingCopy.id, { expectedEtag: this._workingCopy.etag, ref: commit.sha });
+        this._workingCopy = pulled;
+        this.renderBinding();
+        const result = this.$('.result');
+        result.hidden = false;
+        result.innerHTML = `<span>Rolled back to <strong>${escapeHtml(commit.sha.slice(0, 7))}</strong> — commit to record it on <strong>${escapeHtml(pulled.gitBinding.branch)}</strong>.</span>`;
+        this.emit('pulled', { workingCopy: pulled });
+      } catch (err) {
+        this.showError(err.problem?.detail || err.problem?.title || err.message);
+        this.emit('error', { problem: err.problem, error: err });
+      }
 
-    this.updateActions();
+      this.updateActions();
+    });
   }
 }
 
