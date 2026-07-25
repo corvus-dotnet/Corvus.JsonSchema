@@ -1,0 +1,19 @@
+[
+    {
+        "description": "nullable true admits null (lenient extra in the 2.0 dialect)",
+        "schema": { "type": "string", "nullable": true },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is valid", "data": null, "valid": true },
+            { "description": "a number is invalid", "data": 1, "valid": false }
+        ]
+    },
+    {
+        "description": "nullable false does not admit null",
+        "schema": { "type": "string", "nullable": false },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is invalid", "data": null, "valid": false }
+        ]
+    }
+]

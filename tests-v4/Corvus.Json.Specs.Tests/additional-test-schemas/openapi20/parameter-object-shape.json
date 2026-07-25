@@ -1,0 +1,36 @@
+[
+    {
+        "description": "a full non-body parameter object used directly as a schema",
+        "schema": {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "collectionFormat": "csv",
+            "allowEmptyValue": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+        },
+        "tests": [
+            { "description": "an integer in range is valid", "data": 50, "valid": true },
+            { "description": "an integer below minimum is invalid", "data": 0, "valid": false },
+            { "description": "an integer above maximum is invalid", "data": 101, "valid": false },
+            { "description": "a string is invalid", "data": "50", "valid": false },
+            { "description": "an object is invalid despite unknown keywords and boolean required", "data": {}, "valid": false }
+        ]
+    },
+    {
+        "description": "an items object used directly as a schema",
+        "schema": {
+            "type": "string",
+            "pattern": "^[a-z]+$",
+            "collectionFormat": "csv"
+        },
+        "tests": [
+            { "description": "a matching string is valid", "data": "abc", "valid": true },
+            { "description": "a non-matching string is invalid", "data": "ABC", "valid": false }
+        ]
+    }
+]

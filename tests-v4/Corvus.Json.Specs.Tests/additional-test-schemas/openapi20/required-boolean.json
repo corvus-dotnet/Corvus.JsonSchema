@@ -1,0 +1,20 @@
+[
+    {
+        "description": "boolean required is inert (2.0 parameter-object form)",
+        "schema": { "type": "string", "required": true },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "an object is invalid because type string still applies", "data": {}, "valid": false },
+            { "description": "null is invalid because type string still applies", "data": null, "valid": false }
+        ]
+    },
+    {
+        "description": "array required still enforces object properties",
+        "schema": { "required": [ "foo" ] },
+        "tests": [
+            { "description": "object with foo is valid", "data": { "foo": 1 }, "valid": true },
+            { "description": "object without foo is invalid", "data": {}, "valid": false },
+            { "description": "non-object ignores required", "data": 12, "valid": true }
+        ]
+    }
+]

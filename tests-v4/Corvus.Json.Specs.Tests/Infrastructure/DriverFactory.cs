@@ -197,6 +197,17 @@ public static class DriverFactory
             "jsonSchemaBuilderAdditionalOpenApi30DriverSettings");
     }
 
+    /// <summary>
+    /// Creates a driver for additional OpenAPI 2.0 (Swagger) dialect schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalOpenApi20Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditionalOpenApi20DriverSettings");
+    }
+
     private static JsonSchemaBuilderDriver CreateDriver(IVocabulary vocabulary, string settingsKey)
     {
 #if !NET

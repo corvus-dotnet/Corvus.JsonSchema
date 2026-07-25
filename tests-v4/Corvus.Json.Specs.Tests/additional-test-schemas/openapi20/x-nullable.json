@@ -1,0 +1,35 @@
+[
+    {
+        "description": "x-nullable true admits null",
+        "schema": { "type": "string", "x-nullable": true },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is valid", "data": null, "valid": true },
+            { "description": "a number is invalid", "data": 1, "valid": false }
+        ]
+    },
+    {
+        "description": "x-nullable false does not admit null",
+        "schema": { "type": "string", "x-nullable": false },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is invalid", "data": null, "valid": false }
+        ]
+    },
+    {
+        "description": "x-nullable absent does not admit null",
+        "schema": { "type": "string" },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is invalid", "data": null, "valid": false }
+        ]
+    },
+    {
+        "description": "non-boolean x-nullable is ignored",
+        "schema": { "type": "string", "x-nullable": "yes" },
+        "tests": [
+            { "description": "a string is valid", "data": "hello", "valid": true },
+            { "description": "null is invalid", "data": null, "valid": false }
+        ]
+    }
+]
