@@ -33,7 +33,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public sealed class ServerlessWorkflowRunHost
 {
-    private readonly IWorkflowStateStore store;
+    private readonly IWorkflowCheckpointStore store;
     private readonly IHostedWorkflowResolver resolver;
     private readonly WorkflowTransportBinder transportBinder;
     private readonly TimeProvider timeProvider;
@@ -43,7 +43,7 @@ public sealed class ServerlessWorkflowRunHost
     /// <param name="resolver">Resolves the run to the <see cref="IHostedWorkflow"/> that runs it — a <see cref="BakedHostedWorkflowResolver"/> in a deployed serverless function.</param>
     /// <param name="transportBinder">Binds the workflow's descriptor to the transports the run executes through, for this host's (deployed) environment.</param>
     /// <param name="timeProvider">The time provider the restored run uses for its timer waits; defaults to <see cref="TimeProvider.System"/>.</param>
-    public ServerlessWorkflowRunHost(IWorkflowStateStore store, IHostedWorkflowResolver resolver, WorkflowTransportBinder transportBinder, TimeProvider? timeProvider = null)
+    public ServerlessWorkflowRunHost(IWorkflowCheckpointStore store, IHostedWorkflowResolver resolver, WorkflowTransportBinder transportBinder, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(resolver);

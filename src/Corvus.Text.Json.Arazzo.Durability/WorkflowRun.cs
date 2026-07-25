@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The per-run <see cref="IWorkflowRun"/> a code-generated <em>durable</em> executor touches. It carries the
 /// run's resumable state — cursor, each step's <c>outputs</c> product, retry counts, and the correlation
 /// register — stages the products as the executor builds them, and on each checkpoint serializes that state
-/// and persists it to an <see cref="IWorkflowStateStore"/> under optimistic concurrency.
+/// and persists it to an <see cref="IWorkflowCheckpointStore"/> under optimistic concurrency.
 /// </summary>
 /// <remarks>
 /// A fresh run (<see cref="CreateNew"/>) starts at cursor <c>0</c> with empty state, so the durable executor
@@ -25,7 +25,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     // ADR 0050: the per-step journal is capped so a pathological goto-loop cannot bloat the checkpoint.
     private const int JournalCap = 500;
 
-    private readonly IWorkflowStateStore store;
+    private readonly IWorkflowCheckpointStore store;
     private readonly TimeProvider timeProvider;
     private readonly PooledUtf8Map<int> retryCounts;
     private readonly PooledUtf8Map<JsonElement> stepOutputs;
@@ -53,7 +53,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private bool journalTruncated;
 
     private WorkflowRun(
-        IWorkflowStateStore store,
+        IWorkflowCheckpointStore store,
         WorkflowRunId id,
         string workflowId,
         TimeProvider timeProvider,
@@ -171,7 +171,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="securityTags">Security tags (KVP labels) to apply to the run (for row authorization, §14.2); set once at creation, typically inherited from the workflow version.</param>
     /// <returns>The new run.</returns>
     public static WorkflowRun CreateNew(
-        IWorkflowStateStore store,
+        IWorkflowCheckpointStore store,
         WorkflowRunId id,
         string workflowId,
         JsonElement inputs,
@@ -219,7 +219,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <returns>The resumed run.</returns>
     public static WorkflowRun Resume(
-        IWorkflowStateStore store,
+        IWorkflowCheckpointStore store,
         WorkflowCheckpointState state,
         WorkflowEtag etag,
         TimeProvider? timeProvider = null)
@@ -258,7 +258,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The resumed run, or <see langword="null"/> if no run with that id exists.</returns>
     public static async ValueTask<WorkflowRun?> ResumeAsync(
-        IWorkflowStateStore store,
+        IWorkflowCheckpointStore store,
         WorkflowRunId id,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
