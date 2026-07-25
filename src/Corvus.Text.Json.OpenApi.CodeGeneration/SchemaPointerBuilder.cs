@@ -614,6 +614,31 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds a Header Object sub-path relative to a response, with no <c>/schema</c> tail:
+    /// <c>/headers/&lt;headerName&gt;</c>. Used for OpenAPI 2.0 (Swagger) response headers,
+    /// whose constraint keywords live directly on the Header Object.
+    /// </summary>
+    /// <param name="headerNameUtf8">The UTF-8 header name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildHeaderObjectSubPath(ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Builds a Parameter Object sub-path relative to a path item, with no <c>/schema</c> tail:
     /// <c>/&lt;method&gt;/parameters/&lt;index&gt;</c> or <c>/parameters/&lt;index&gt;</c> (path-level).
     /// Used for OpenAPI 2.0 (Swagger) non-body parameters, whose constraint keywords live
