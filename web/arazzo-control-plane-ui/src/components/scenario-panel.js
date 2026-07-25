@@ -100,7 +100,7 @@ class ArazzoScenarioPanel extends ArazzoElement {
     this.$('.runall')?.addEventListener('click', () => this.runAll());
     this.$('.new')?.addEventListener('click', () => { this._creating = true; this._editing = null; this.render(); });
     this.$$('.sc [data-run]').forEach((b) => b.addEventListener('click', () => this.runOne(b.dataset.run)));
-    this.$$('.sc [data-del]').forEach((b) => b.addEventListener('click', () => this.delete(b.dataset.del)));
+    this.$$('.sc [data-del]').forEach((b) => b.addEventListener('click', () => this.runAction(b, () => this.delete(b.dataset.del))));
     this.$$('.sc [data-edit]').forEach((b) => b.addEventListener('click', () => { this._editing = this._editing === b.dataset.edit ? null : b.dataset.edit; this.render(); }));
     this.$$('.sc [data-trace]').forEach((b) => b.addEventListener('click', () => {
       const result = this._results.get(b.dataset.trace);
