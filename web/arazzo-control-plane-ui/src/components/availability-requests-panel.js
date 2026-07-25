@@ -191,7 +191,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
 
   // ---- mutations --------------------------------------------------------------------------------
 
-  async decide(request, action) {
+  async decide(request, action, trigger) {
     const client = this.buildClient();
     const call = {
       approve: (note) => client.approveAvailabilityRequest(request.id, note),
@@ -201,14 +201,16 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
 
     const note = await this.collectNote(request, action);
     if (note === null) return; // cancelled
-    try {
-      const updated = await call(note);
-      this._error = null;
-      this.emit('availability-request-decided', { request: updated, action });
-      await this.reload();
-    } catch (err) {
-      this.showError(err.problem || { title: err.message }, err);
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        const updated = await call(note);
+        this._error = null;
+        this.emit('availability-request-decided', { request: updated, action });
+        await this.reload();
+      } catch (err) {
+        this.showError(err.problem || { title: err.message }, err);
+      }
+    });
   }
 
   /** Gather the optional decision note. Null = cancelled. */
@@ -456,7 +458,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
   wireRowActions() {
     this.$$('.act').forEach((btn) => btn.addEventListener('click', () => {
       const request = this._requests.find((r) => r.id === btn.dataset.id);
-      if (request) this.decide(request, btn.dataset.action);
+      if (request) this.decide(request, btn.dataset.action, btn);
     }));
   }
 

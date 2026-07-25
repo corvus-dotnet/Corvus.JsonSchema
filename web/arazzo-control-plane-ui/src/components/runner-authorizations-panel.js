@@ -167,7 +167,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
 
   // ---- mutations --------------------------------------------------------------------------------
 
-  async decide(auth, action) {
+  async decide(auth, action, trigger) {
     const client = this.buildClient();
     // Reinstate (from Quarantined) and re-authorize (from Revoked) are the same authorize verb as authorizing a Pending
     // runner — distinct only in the confirm affordance the operator sees. Quarantine and revoke are their own verbs.
@@ -182,14 +182,16 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
 
     const note = await this.decisionDialog(auth, action);
     if (note === null) return; // cancelled
-    try {
-      const updated = await call(note);
-      this._error = null;
-      this.emit('runner-authorization-decided', { authorization: updated, action });
-      await this.reload();
-    } catch (err) {
-      this.showError(err.problem || { title: err.message }, err);
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        const updated = await call(note);
+        this._error = null;
+        this.emit('runner-authorization-decided', { authorization: updated, action });
+        await this.reload();
+      } catch (err) {
+        this.showError(err.problem || { title: err.message }, err);
+      }
+    });
   }
 
   showError(problem, error) {
@@ -374,7 +376,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
   wireRowActions() {
     this.$$('.act').forEach((btn) => btn.addEventListener('click', () => {
       const auth = this._auths.find((a) => this.rowKey(a) === btn.dataset.key);
-      if (auth) this.decide(auth, btn.dataset.action);
+      if (auth) this.decide(auth, btn.dataset.action, btn);
     }));
   }
 

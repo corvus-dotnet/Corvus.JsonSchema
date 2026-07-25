@@ -200,7 +200,7 @@ class ArazzoAccessRequests extends ArazzoElement {
 
   // ---- mutations --------------------------------------------------------------------------------
 
-  async decide(request, action) {
+  async decide(request, action, trigger) {
     const client = this.buildClient();
     const call = {
       approve: (note) => client.approveAccessRequest(request.id, note),
@@ -212,27 +212,29 @@ class ArazzoAccessRequests extends ArazzoElement {
 
     const note = await this.collectNote(request, action);
     if (note === null) return; // cancelled
-    try {
-      const updated = await call(note);
-      this._error = null;
-      this.emit('access-request-decided', { request: updated, action });
-      // A workflow-backed decision is ASYNCHRONOUS: the access-approval run enacts it, so the call returns
-      // the request STILL Pending and it reaches its terminal state (~1s later) only when that run
-      // completes. Wait for the transition before reloading, so the inbox clears the request rather than
-      // showing it unchanged — the reported "approve did nothing". A synchronous decision returns already
-      // terminal, so this is a no-op for it; polling on the returned status (not the action) means it
-      // covers every path uniformly, including any that become workflow-backed.
-      if (updated?.status === 'Pending') {
-        this._notice = 'Applying the decision…';
-        this.renderBody();
-        await this.awaitTransition(updated.id ?? request.id);
+    await this.runAction(trigger, async () => {
+      try {
+        const updated = await call(note);
+        this._error = null;
+        this.emit('access-request-decided', { request: updated, action });
+        // A workflow-backed decision is ASYNCHRONOUS: the access-approval run enacts it, so the call returns
+        // the request STILL Pending and it reaches its terminal state (~1s later) only when that run
+        // completes. Wait for the transition before reloading, so the inbox clears the request rather than
+        // showing it unchanged — the reported "approve did nothing". A synchronous decision returns already
+        // terminal, so this is a no-op for it; polling on the returned status (not the action) means it
+        // covers every path uniformly, including any that become workflow-backed.
+        if (updated?.status === 'Pending') {
+          this._notice = 'Applying the decision…';
+          this.renderBody();
+          await this.awaitTransition(updated.id ?? request.id);
+        }
+        this._notice = null;
+        await this.reload();
+      } catch (err) {
+        this._notice = null;
+        this.showError(err.problem || { title: err.message }, err);
       }
-      this._notice = null;
-      await this.reload();
-    } catch (err) {
-      this._notice = null;
-      this.showError(err.problem || { title: err.message }, err);
-    }
+    });
   }
 
   /**
@@ -530,7 +532,7 @@ class ArazzoAccessRequests extends ArazzoElement {
   wireRowActions() {
     this.$$('.act').forEach((btn) => btn.addEventListener('click', () => {
       const request = this._requests.find((r) => r.id === btn.dataset.id);
-      if (request) this.decide(request, btn.dataset.action);
+      if (request) this.decide(request, btn.dataset.action, btn);
     }));
   }
 

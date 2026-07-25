@@ -175,36 +175,40 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
 
   // ---- actions ----------------------------------------------------------------------------------
 
-  async makeAvailable(versionNumber, env) {
-    try {
-      await this.client.makeVersionAvailable(this.baseWorkflowId, versionNumber, env);
-      let set = this._availability.get(versionNumber);
-      if (!set) { set = new Set(); this._availability.set(versionNumber, set); }
-      set.add(env);
-      this._error = null;
-      this.renderBody();
-      this.emit('availability-changed', { baseWorkflowId: this.baseWorkflowId, versionNumber, environment: env, available: true });
-    } catch (err) {
-      this.showError(err.problem || { title: err.message }, err);
-    }
+  async makeAvailable(versionNumber, env, trigger) {
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.makeVersionAvailable(this.baseWorkflowId, versionNumber, env);
+        let set = this._availability.get(versionNumber);
+        if (!set) { set = new Set(); this._availability.set(versionNumber, set); }
+        set.add(env);
+        this._error = null;
+        this.renderBody();
+        this.emit('availability-changed', { baseWorkflowId: this.baseWorkflowId, versionNumber, environment: env, available: true });
+      } catch (err) {
+        this.showError(err.problem || { title: err.message }, err);
+      }
+    });
   }
 
-  async withdraw(versionNumber, env) {
+  async withdraw(versionNumber, env, trigger) {
     const confirmed = await confirmDialog(this, {
       title: 'Withdraw availability',
       message: `Withdraw v${versionNumber} of '${this.baseWorkflowId}' from '${env}'? Runs already executing on it continue; new runs can no longer target it there.`,
       confirmLabel: 'Withdraw', danger: true,
     });
     if (!confirmed) return;
-    try {
-      await this.client.deleteVersionAvailability(this.baseWorkflowId, versionNumber, env);
-      this._availability.get(versionNumber)?.delete(env);
-      this._error = null;
-      this.renderBody();
-      this.emit('availability-changed', { baseWorkflowId: this.baseWorkflowId, versionNumber, environment: env, available: false });
-    } catch (err) {
-      this.showError(err.problem || { title: err.message }, err);
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.deleteVersionAvailability(this.baseWorkflowId, versionNumber, env);
+        this._availability.get(versionNumber)?.delete(env);
+        this._error = null;
+        this.renderBody();
+        this.emit('availability-changed', { baseWorkflowId: this.baseWorkflowId, versionNumber, environment: env, available: false });
+      } catch (err) {
+        this.showError(err.problem || { title: err.message }, err);
+      }
+    });
   }
 
   requestPromotion(versionNumber, env) {
@@ -307,8 +311,8 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
       const env = btn.dataset.env;
       const action = btn.dataset.action;
       btn.addEventListener('click', () => {
-        if (action === 'make') this.makeAvailable(n, env);
-        else if (action === 'withdraw') this.withdraw(n, env);
+        if (action === 'make') this.makeAvailable(n, env, btn);
+        else if (action === 'withdraw') this.withdraw(n, env, btn);
         else if (action === 'request') this.requestPromotion(n, env);
       });
     });
