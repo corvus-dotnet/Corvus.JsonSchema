@@ -589,20 +589,18 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.stepJournal,
             this.journalTruncated);
 
-        var index = new WorkflowRunIndexEntry(
+        WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,
             this.Status,
             this.createdAt,
             updatedAt,
-            DueAt: this.wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
-            AwaitingChannel: this.wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
-            AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
-            ErrorType: this.fault?.Error,
-            CorrelationId: this.correlationId,
-            Tags: this.tags,
-            SecurityTags: this.securityTags,
-            Environment: this.environment,
-            ResumeRequestedAt: this.resumeRequestedAt);
+            this.wait,
+            this.fault,
+            this.correlationId,
+            this.tags,
+            this.securityTags,
+            this.environment,
+            this.resumeRequestedAt);
 
         long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);

@@ -436,6 +436,111 @@ public static class WorkflowCheckpointSerializer
     }
 
     /// <summary>
+    /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the
+    /// run's working state. The runner's checkpoint surface calls this to re-index a checkpoint a serverless function
+    /// checked in as opaque bytes (design §5.5): every index field is a top-level scalar or tag set, so this reads
+    /// just those — and the small <c>wait</c>/<c>fault</c> value objects — and skips the retry counters, correlation
+    /// tokens, step outputs, inputs, outputs and journal that <see cref="Deserialize"/> rents pooled maps and builds
+    /// collections for. The returned entry owns its tag copies, so the parsed document is disposed before return. It
+    /// is identical to the entry <see cref="WorkflowRun"/> stamped when it wrote these bytes, because both build it
+    /// through <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, string?, DateTimeOffset?)"/>.
+    /// </summary>
+    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <returns>The index entry the checkpoint projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8)
+    {
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
+        JsonElement root = document.RootElement;
+
+        string workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
+        WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
+        DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
+            ? createdAtElement.GetDateTimeOffset()
+            : default;
+
+        // The index carries a non-nullable UpdatedAt; every checkpoint the runtime writes stamps updatedAt, so this
+        // falls back to createdAt only for a checkpoint written before updatedAt was persisted.
+        DateTimeOffset updatedAt = root.TryGetProperty("updatedAt"u8, out JsonElement updatedAtElement)
+            ? updatedAtElement.GetDateTimeOffset()
+            : createdAt;
+
+        string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
+        string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
+
+        TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array
+            ? TagSet.CopyFrom(tagsElement)
+            : default;
+        SecurityTagSet securityTags = ReadSecurityTags(root);
+
+        WorkflowWait? wait = null;
+        if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
+        {
+            WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
+            wait = kind switch
+            {
+                WorkflowWaitKind.Timer => WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset()),
+                WorkflowWaitKind.Pause => WorkflowWait.Pause(),
+                _ => WorkflowWait.Message(
+                    waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
+                    waitElement.TryGetProperty("correlationId"u8, out JsonElement waitCorrelationElement) ? waitCorrelationElement.GetString() : null),
+            };
+        }
+
+        WorkflowFault? fault = null;
+        if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
+        {
+            fault = new WorkflowFault(
+                faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
+                faultElement.GetProperty("attempt"u8).GetInt32(),
+                faultElement.GetProperty("error"u8).GetString() ?? string.Empty,
+                faultElement.GetProperty("at"u8).GetDateTimeOffset());
+        }
+
+        DateTimeOffset? resumeRequestedAt = root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAtElement)
+            ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
+            : null;
+
+        return WorkflowRunIndexEntry.Project(
+            workflowId,
+            status,
+            createdAt,
+            updatedAt,
+            wait,
+            fault,
+            correlationId,
+            tags,
+            securityTags,
+            environment,
+            resumeRequestedAt);
+    }
+
+    /// <summary>
+    /// Attempts <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, returning <see langword="false"/> instead of throwing
+    /// when the bytes are not a well-formed checkpoint document. The runner's checkpoint surface uses this as the
+    /// validation boundary for a function's posted bytes, so a malformed body is a clean rejection rather than an
+    /// unhandled fault.
+    /// </summary>
+    /// <param name="checkpointUtf8">The bytes to project.</param>
+    /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
+    public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index)
+    {
+        try
+        {
+            index = ProjectIndex(checkpointUtf8);
+            return true;
+        }
+        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
+        {
+            // Malformed JSON (Corvus.Text.Json's own reader exception, or System.Text.Json's), a non-object root, a
+            // missing required property, or a bad scalar (enum/number/date) — the bytes are not a checkpoint. Every
+            // other exception (e.g. cancellation, out-of-memory) still propagates.
+            index = default;
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Rewrites a checkpoint's <c>status</c> (and optionally drops its <c>wait</c>) by copying every other property's
     /// raw bytes verbatim — the working state (retry counters, correlation tokens, step outputs, inputs, outputs) is
     /// passed straight through with no dictionary materialized. For status-only transitions such as cancel, this

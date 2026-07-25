@@ -46,4 +46,54 @@ public readonly record struct WorkflowRunIndexEntry(
     TagSet Tags = default,
     SecurityTagSet SecurityTags = default,
     string? Environment = null,
-    DateTimeOffset? ResumeRequestedAt = null);
+    DateTimeOffset? ResumeRequestedAt = null)
+{
+    /// <summary>
+    /// Projects the index entry from a run's constituent state. This is the single home for the wait-kind and
+    /// fault mapping (a timer wait yields <see cref="DueAt"/>; a message wait yields <see cref="AwaitingChannel"/>
+    /// and <see cref="AwaitingCorrelationId"/>; a fault yields <see cref="ErrorType"/>), so the two producers of
+    /// the entry agree by construction: <see cref="WorkflowRun"/> projects it from its live fields on every save,
+    /// and the runner's checkpoint surface re-projects it from the opaque bytes a serverless function checks in
+    /// (<see cref="WorkflowCheckpointSerializer.ProjectIndex(ReadOnlyMemory{byte})"/>). Every index field is a
+    /// top-level checkpoint scalar or tag set, so the re-projection never needs the run's heavy working state
+    /// (step outputs, retry counters, journal); keep it that way so the lean re-projection stays complete.
+    /// </summary>
+    /// <param name="workflowId">The id of the workflow the run executes.</param>
+    /// <param name="status">The run's lifecycle status.</param>
+    /// <param name="createdAt">When the run was first created.</param>
+    /// <param name="updatedAt">When this checkpoint was written.</param>
+    /// <param name="wait">The wait the run is suspended on, if any (Tier 2).</param>
+    /// <param name="fault">The fault the run faulted with, if any.</param>
+    /// <param name="correlationId">The run-wide telemetry correlation id, if any.</param>
+    /// <param name="tags">The free-form tags applied at creation, if any.</param>
+    /// <param name="securityTags">The security tags applied at creation, if any (§14.2).</param>
+    /// <param name="environment">The deployment environment the run is pinned to, if any (§5.5).</param>
+    /// <param name="resumeRequestedAt">When the run was marked resume-claimable (§18), if it has been.</param>
+    /// <returns>The projected index entry.</returns>
+    public static WorkflowRunIndexEntry Project(
+        string workflowId,
+        WorkflowRunStatus status,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        WorkflowWait? wait,
+        WorkflowFault? fault,
+        string? correlationId,
+        TagSet tags,
+        SecurityTagSet securityTags,
+        string? environment,
+        DateTimeOffset? resumeRequestedAt)
+        => new(
+            workflowId,
+            status,
+            createdAt,
+            updatedAt,
+            DueAt: wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
+            AwaitingChannel: wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
+            AwaitingCorrelationId: wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
+            ErrorType: fault?.Error,
+            CorrelationId: correlationId,
+            Tags: tags,
+            SecurityTags: securityTags,
+            Environment: environment,
+            ResumeRequestedAt: resumeRequestedAt);
+}

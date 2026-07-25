@@ -263,7 +263,7 @@ public static class ControlPlaneEndpointExtensions
 
         var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, auditLogger: auditLogger);
 
-        return endpoints.MapApiEndpoints(
+        endpoints.MapApiEndpoints(
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
@@ -283,5 +283,17 @@ public static class ControlPlaneEndpointExtensions
             availabilityRequestsHandler,
             identityHandler,
             gateScopes ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
+
+        // The serverless checkpoint surface (ADR 0028): a baked, Native-AOT function advances a run out of process and
+        // loads/saves its checkpoint here rather than binding a store SDK. It is not part of the generated OpenAPI
+        // surface (raw octet-stream bytes + an ETag + a write-sequence header, not a JSON model), so it is hand-mapped.
+        // Present only when a state store is wired; authenticated in every mode but Open (a dedicated scope is deferred
+        // to the deploy work).
+        if (workflowStateStore is not null)
+        {
+            endpoints.MapWorkflowCheckpointEndpoints(workflowStateStore, requireAuthorization: securityMode != ControlPlaneSecurityMode.Open);
+        }
+
+        return endpoints;
     }
 }
