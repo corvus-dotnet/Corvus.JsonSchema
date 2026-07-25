@@ -321,6 +321,15 @@ public sealed class ControlPlaneGitHubApiTests
         (await host.SendJsonAsync(HttpMethod.Post, "/github/repos/acme-org/specs/branches", """{"name":"x","from":"ghost"}""", "workspace:write", "ada"))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
+        // A repo the user can READ but not push to is a PERMISSION error, not invisibility: the base
+        // branch resolved, so the create's refusal names the missing write access, not "does not exist".
+        HttpResponseMessage forbidden = await host.SendJsonAsync(HttpMethod.Post, "/github/repos/readonly-org/readonly/branches", """{"name":"feature/x","from":"main"}""", "workspace:write", "ada");
+        forbidden.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        string forbiddenBody = await forbidden.Content.ReadAsStringAsync();
+        forbiddenBody.ShouldContain("github-write-forbidden");
+        forbiddenBody.ShouldContain("do not have permission");
+        forbiddenBody.ShouldNotContain("does not exist");
+
         // No session: fails closed like every other brokered call.
         (await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/branches", "workspace:read", "bob"))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -607,6 +616,16 @@ public sealed class ControlPlaneGitHubApiTests
                     ? Results.Json(new { @ref = reference, @object = new { sha } }, statusCode: 201)
                     : Results.UnprocessableEntity(new { message = "Reference already exists" });
             });
+
+            // A repo the signed-in user can READ (the base ref resolves) but not push to: the create is
+            // forbidden. GitHub returns 403 here (a non-disclosing 404 in some cases) — either way it is a
+            // permission denial, not invisibility, since the base-branch read above succeeded.
+            app.MapGet("/repos/readonly-org/readonly/git/ref/heads/{*branch}", (HttpContext context, string branch) => Authorized(context)
+                ? Results.Json(new { @ref = $"refs/heads/{branch}", @object = new { sha = "sha-ro-main" } })
+                : Results.Unauthorized());
+            app.MapPost("/repos/readonly-org/readonly/git/refs", (HttpContext context) => Authorized(context)
+                ? Results.Json(new { message = "Resource not accessible by personal access token" }, statusCode: 403)
+                : Results.Unauthorized());
 
             app.MapGet("/repos/acme-org/specs/commits", (HttpContext context) =>
             {

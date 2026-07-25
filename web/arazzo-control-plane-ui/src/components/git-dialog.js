@@ -107,13 +107,24 @@ class ArazzoGitDialog extends ArazzoElement {
         .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
         .row-actions { display: flex; gap: 8px; align-items: center; }
         .hint { font-size: 11px; color: var(--_muted); }
-        .new-branch { display: flex; gap: 6px; align-items: center; }
+        /* The name gets its own full-width row; "from <base>" and the button wrap onto the next line,
+           so the name box is never squeezed and the button never has to wrap its label. */
+        .new-branch { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .new-branch .nb-name { flex: 1 1 100%; min-width: 0; }
+        .new-branch .nb-base { flex: 1 1 12ch; min-width: 0; }
+        .new-branch .nb-create { flex: 0 0 auto; white-space: nowrap; }
         .pathrow { display: flex; gap: 6px; align-items: center; }
-        .pathrow input { flex: 1; min-width: 0; }
-        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; }
-        .tree-slot { margin-top: 4px; }
+        /* The field (or the specs hint) takes the row so all three browse buttons right-align, and the
+           buttons share a min width so they read as one consistent control regardless of label. */
+        .pathrow input, .pathrow .specs-head { flex: 1; min-width: 0; }
+        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; min-width: 6.5em; text-align: center; }
+        /* The repo browser floats as a dropdown in the top layer (like the kit's pickers) instead of
+           expanding inline and pushing the dialog's content around. Positioned per open from its anchor. */
+        .tree-slot { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 6px;
+                     background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
+                     box-shadow: 0 8px 24px rgb(0 0 0 / 0.28); overflow: auto; }
+        .tree-slot[popover]:not(:popover-open) { display: none; }
         .tree-slot[hidden] { display: none; }
-        .new-branch input { flex: 1; min-width: 0; }
         .specs { display: grid; gap: 4px; }
         .specs-head { font-size: 11px; }
         .spec-rows { display: grid; gap: 4px; }
@@ -174,20 +185,20 @@ class ArazzoGitDialog extends ArazzoElement {
                 <button class="browse-path ghost" type="button" disabled title="Connect and pick a repository and branch first">browse…</button>
               </span>
             </label>
-            <div class="tree-slot tree-path" hidden></div>
+            <div class="tree-slot tree-path" popover="manual" hidden></div>
             <label>Scenarios directory <span class="muted">(optional)</span>
               <span class="pathrow">
                 <input class="b-scenarios" type="text" placeholder="scenarios/my-flow">
                 <button class="browse-scenarios ghost" type="button" disabled title="Connect and pick a repository and branch first">browse…</button>
               </span>
             </label>
-            <div class="tree-slot tree-scenarios" hidden></div>
+            <div class="tree-slot tree-scenarios" popover="manual" hidden></div>
             <div class="specs">
               <span class="pathrow">
                 <span class="muted specs-head">Source paths — where each attached source lives on the branch (blank = not tracked)</span>
-                <button class="browse-specs ghost" type="button" disabled title="Connect and pick a repository and branch first">sources dir…</button>
+                <button class="browse-specs ghost" type="button" disabled title="Connect and pick a repository and branch first">browse…</button>
               </span>
-              <div class="tree-slot tree-specs" hidden></div>
+              <div class="tree-slot tree-specs" popover="manual" hidden></div>
               <div class="spec-rows"></div>
             </div>
             <div class="row-actions"><button class="save-binding" type="button" disabled>Save binding</button></div>
@@ -348,7 +359,7 @@ class ArazzoGitDialog extends ArazzoElement {
   wireTreeBrowser(buttonSel, slotSel, fieldSel, mode, onPick) {
     this.$(buttonSel).addEventListener('click', () => {
       const slot = this.$(slotSel);
-      if (!slot.hidden) { slot.hidden = true; slot.replaceChildren(); return; }
+      if (this.isTreeOpen(slot)) { this.closeTree(slot); return; }
       const repoValue = this.$('.b-repo').value;
       const slash = repoValue.indexOf('/');
       const branch = this.branchValue();
@@ -362,13 +373,65 @@ class ArazzoGitDialog extends ArazzoElement {
       tree.addEventListener('picked', (e) => {
         if (fieldSel) this.$(fieldSel).value = e.detail.path;
         if (onPick) onPick(e.detail.path);
-        slot.hidden = true;
-        slot.replaceChildren();
+        this.closeTree(slot);
         this.updateActions();
       });
       slot.replaceChildren(tree);
-      slot.hidden = false;
+      this.openTree(slot, this.$(buttonSel));
     });
+  }
+
+  /** @private Whether the browse dropdown is showing (popover-open, with a plain-hidden fallback). */
+  isTreeOpen(slot) {
+    return slot.matches?.(':popover-open') ?? !slot.hidden;
+  }
+
+  /** @private Show the browse tree as a floating dropdown in the top layer, anchored to its row so it
+   *  overlays content rather than pushing it. Any other open browse tree is closed first. */
+  openTree(slot, anchor) {
+    this.$$('.tree-slot').forEach((s) => { if (s !== slot) this.closeTree(s); });
+    const row = anchor.closest('.pathrow') ?? anchor;
+    const r = row.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - 8;
+    const above = r.top - 8;
+    const placeAbove = below < 200 && above > below;
+    slot.style.left = `${r.left}px`;
+    slot.style.width = `${r.width}px`;
+    slot.style.maxHeight = `${Math.min(340, Math.max(placeAbove ? above : below, 160))}px`;
+    if (placeAbove) { slot.style.top = 'auto'; slot.style.bottom = `${window.innerHeight - r.top + 4}px`; }
+    else { slot.style.bottom = 'auto'; slot.style.top = `${r.bottom + 4}px`; }
+    if (slot.showPopover && !slot.matches(':popover-open')) slot.showPopover();
+    else slot.hidden = false;
+    // Dismiss on Escape or a press outside the dropdown (a manual popover does not light-dismiss). The
+    // listeners ride the shadow root so `e.target` is not retargeted to the host, and Escape closes the
+    // dropdown WITHOUT bubbling to the modal dialog's own cancel.
+    this._treeDismiss = (e) => {
+      if (e.type === 'keydown') {
+        if (e.key !== 'Escape') return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeTree(slot);
+        return;
+      }
+
+      if (slot.contains(e.target) || anchor.contains(e.target)) return;
+      this.closeTree(slot);
+    };
+    this.shadowRoot.addEventListener('keydown', this._treeDismiss, true);
+    this.shadowRoot.addEventListener('pointerdown', this._treeDismiss, true);
+  }
+
+  /** @private Hide and empty a browse dropdown and drop its dismiss listeners. */
+  closeTree(slot) {
+    if (!slot) return;
+    if (slot.hidePopover && slot.matches(':popover-open')) slot.hidePopover();
+    slot.hidden = true;
+    slot.replaceChildren();
+    if (this._treeDismiss) {
+      this.shadowRoot.removeEventListener('keydown', this._treeDismiss, true);
+      this.shadowRoot.removeEventListener('pointerdown', this._treeDismiss, true);
+      this._treeDismiss = null;
+    }
   }
 
   /** The chosen branch, '' while unchosen or mid-create. */

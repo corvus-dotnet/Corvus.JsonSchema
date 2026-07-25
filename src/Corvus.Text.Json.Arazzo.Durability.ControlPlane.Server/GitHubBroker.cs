@@ -77,6 +77,10 @@ public sealed class GitHubBroker
         /// <summary>The target is not reachable by the signed-in user (non-disclosing).</summary>
         NotFound,
 
+        /// <summary>The signed-in user can READ the target but lacks write (push) access for the write —
+        /// a permission denial, distinct from invisibility (visibility was already established by a read).</summary>
+        Forbidden,
+
         /// <summary>GitHub refused the write (a stale sha, a validation error, or an already-existing pull request).</summary>
         Refused,
     }
@@ -437,9 +441,12 @@ public sealed class GitHubBroker
             return (WriteOutcome.NotConnected, null);
         }
 
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        // The base-branch read above SUCCEEDED, so the repository and branch ARE visible to the user.
+        // GitHub returns 403 (or a non-disclosing 404) when the token can read but not push — that is a
+        // write-permission denial here, not invisibility, so name it as one rather than "does not exist".
+        if (response.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.NotFound)
         {
-            return (WriteOutcome.NotFound, null);
+            return (WriteOutcome.Forbidden, null);
         }
 
         if (!response.IsSuccessStatusCode)

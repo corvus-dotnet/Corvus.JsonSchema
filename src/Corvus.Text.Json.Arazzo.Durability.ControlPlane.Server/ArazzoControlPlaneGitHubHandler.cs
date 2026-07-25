@@ -345,6 +345,9 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             case GitHubBroker.WriteOutcome.NotFound:
                 return CreateRepoBranchResult.NotFound(
                     Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}'{(from is null ? string.Empty : $" or its branch '{from}'")} does not exist, or is not visible to the signed-in user."), workspace);
+            case GitHubBroker.WriteOutcome.Forbidden:
+                return CreateRepoBranchResult.Conflict(
+                    Problem("github-write-forbidden", "No write access", 409, $"You can read '{owner}/{repo}' but do not have permission to create a branch in it. Pushing a branch needs write access — fork the repository, or choose one you can write to."), workspace);
             case GitHubBroker.WriteOutcome.Refused:
                 return CreateRepoBranchResult.Conflict(
                     Problem("github-branch-exists", "Branch not created", 409, $"GitHub refused creating '{name}' — most often the name is already taken."), workspace);
