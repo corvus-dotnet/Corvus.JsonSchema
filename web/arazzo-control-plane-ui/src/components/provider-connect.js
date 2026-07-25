@@ -82,7 +82,7 @@ class ArazzoProviderConnect extends ArazzoElement {
           <span class="muted">Connected to</span> <span class="provider-name">${escapeHtml(display)}</span>
         </span>
         <button class="disconnect" type="button" title="Drop the brokered ${escapeHtml(display)} session">Disconnect</button>`;
-      this.$('.disconnect').addEventListener('click', () => this.disconnect());
+      this.$('.disconnect').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.disconnect()); });
       return;
     }
 

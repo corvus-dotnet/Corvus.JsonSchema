@@ -127,49 +127,55 @@ class ArazzoWorkspaceTable extends ArazzoElement {
   // ---- actions ----------------------------------------------------------------------------------
 
   /** Create a blank working copy and emit it (`working-copy-created`), refreshing the list. */
-  async createBlank() {
+  async createBlank(trigger) {
     const client = this.client;
     if (!client) return;
-    try {
-      // Ask for a name up front so "untitled" documents don't accumulate — via the kit's standard
-      // dialog (system prompts are banned); `promptFn` remains an injectable test seam. The dialog title
-      // matches the button that opened it ("New workflow"); the message names what actually gets created.
-      const answer = this.promptFn
-        ? this.promptFn('Name the new working copy:', 'untitled')
-        : await this.$('.ask').ask({
-          title: 'New workflow',
-          message: 'Starts as a working copy — a draft only you edit. Publishing it later mints catalog v1.',
-          field: { label: 'Name', value: 'untitled' },
-        });
-      if (answer === null) return;
-      const workingCopy = await client.createWorkingCopy({ name: (answer || 'untitled').trim() || 'untitled' });
-      this.reload();
-      this.emit('working-copy-created', { workingCopy });
-    } catch (err) {
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    // Ask for a name up front so "untitled" documents don't accumulate — via the kit's standard
+    // dialog (system prompts are banned); `promptFn` remains an injectable test seam. The dialog title
+    // matches the button that opened it ("New workflow"); the message names what actually gets created.
+    // The prompt is modal, so it blocks a re-click on its own; runAction spins the button only for the
+    // create call that follows, never while the name dialog is open.
+    const answer = this.promptFn
+      ? this.promptFn('Name the new working copy:', 'untitled')
+      : await this.$('.ask').ask({
+        title: 'New workflow',
+        message: 'Starts as a working copy — a draft only you edit. Publishing it later mints catalog v1.',
+        field: { label: 'Name', value: 'untitled' },
+      });
+    if (answer === null) return;
+    await this.runAction(trigger, async () => {
+      try {
+        const workingCopy = await client.createWorkingCopy({ name: (answer || 'untitled').trim() || 'untitled' });
+        this.reload();
+        this.emit('working-copy-created', { workingCopy });
+      } catch (err) {
+        this._error = err.problem || { title: err.message };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   /** @private */
-  async deleteRow(id) {
+  async deleteRow(id, trigger) {
     const client = this.client;
     if (!client) return;
     const ok = this.confirmFn
       ? this.confirmFn('Delete this working copy? Published catalog versions are unaffected.')
       : await this.$('.ask').ask({ title: 'Delete this working copy?', message: 'Its draft document and scenarios go with it. Published catalog versions are unaffected.', confirmLabel: 'Delete', danger: true });
     if (!ok) return;
-    try {
-      await client.deleteWorkingCopy(id);
-      if (this._selectedId === id) this._selectedId = null;
-      this.load(true);
-      this.emit('working-copy-deleted', { id });
-    } catch (err) {
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+    await this.runAction(trigger, async () => {
+      try {
+        await client.deleteWorkingCopy(id);
+        if (this._selectedId === id) this._selectedId = null;
+        this.load(true);
+        this.emit('working-copy-deleted', { id });
+      } catch (err) {
+        this._error = err.problem || { title: err.message };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   // ---- rendering --------------------------------------------------------------------------------
@@ -244,11 +250,11 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     `;
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
-    this.$('button.new').addEventListener('click', () => this.createBlank());
+    this.$('button.new').addEventListener('click', (e) => this.createBlank(e.currentTarget));
     this.$('button.fromcat').addEventListener('click', () => this.openFromCatalog());
     this.$('.fc-cancel').addEventListener('click', () => this.$('.fromcat-dialog').close());
     this.$('.fromcat-dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.$('.fromcat-dialog').close(); });
-    this.$('.fc-create').addEventListener('click', () => { void this.createFromCatalog(); });
+    this.$('.fc-create').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.createFromCatalog()); });
     this.$('.fc-name').addEventListener('input', () => this.updateFromCatalogState());
   }
 
@@ -347,7 +353,7 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     this.$$('tbody button.rowaction').forEach((button) => {
       button.addEventListener('click', (e) => {
         e.stopPropagation(); // do not also select the row
-        this.deleteRow(button.dataset.id);
+        this.deleteRow(button.dataset.id, button);
       });
     });
     this.updatePager();

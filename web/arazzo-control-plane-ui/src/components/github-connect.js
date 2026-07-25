@@ -94,7 +94,7 @@ class ArazzoGitHubConnect extends ArazzoElement {
           <span class="muted">Connected as</span> <span class="login">${escapeHtml(this._session.login ?? 'connected')}</span>
         </span>
         <button class="disconnect" type="button" title="Drop the brokered GitHub session">Disconnect</button>`;
-      this.$('.disconnect').addEventListener('click', () => this.disconnect());
+      this.$('.disconnect').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.disconnect()); });
       return;
     }
 

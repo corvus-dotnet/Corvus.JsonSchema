@@ -235,10 +235,10 @@ class ArazzoOperationBrowser extends ArazzoElement {
     });
 
     body.querySelectorAll('button.detach').forEach((button) => {
-      button.addEventListener('click', (e) => { e.stopPropagation(); this.detach(button.dataset.name); });
+      button.addEventListener('click', (e) => { e.stopPropagation(); this.detach(button.dataset.name, button); });
     });
     body.querySelectorAll('button.register').forEach((button) => {
-      button.addEventListener('click', (e) => { e.stopPropagation(); this.registerInRegistry(button.dataset.name); });
+      button.addEventListener('click', (e) => { e.stopPropagation(); this.registerInRegistry(button.dataset.name, button); });
     });
     body.querySelectorAll('.group-head.toggle').forEach((head) => {
       const toggle = () => {
@@ -331,7 +331,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
    *  never registers (it packages workflow-scoped copies). The registered copy becomes reusable and
    *  governed; this working copy is then re-attached as a registry REFERENCE so it tracks the
    *  registered source rather than keeping a drifting private copy. */
-  async registerInRegistry(name) {
+  async registerInRegistry(name, trigger) {
     const client = this.client;
     if (!client || !this._workingCopyId) return;
     try {
@@ -343,10 +343,14 @@ class ArazzoOperationBrowser extends ArazzoElement {
       });
       if (!sure) return;
 
-      await client.createSource({ name, type: attachment.type ?? 'openapi', document: attachment.document });
-      const rebound = await client.attachWorkingCopySource(this._workingCopyId, name, { sourceName: name });
-      this.emit('source-registered', { name, attachment: rebound });
-      this.refresh();
+      // The confirm is modal; runAction spins the trigger for the register+re-attach writes only. Its
+      // errors surface through the outer catch (runAction re-throws), which owns the panel's error UI.
+      await this.runAction(trigger, async () => {
+        await client.createSource({ name, type: attachment.type ?? 'openapi', document: attachment.document });
+        const rebound = await client.attachWorkingCopySource(this._workingCopyId, name, { sourceName: name });
+        this.emit('source-registered', { name, attachment: rebound });
+        this.refresh();
+      });
     } catch (err) {
       this._error = err.problem || { title: err.message };
       this.renderBody();
@@ -354,7 +358,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
     }
   }
 
-  async detach(name) {
+  async detach(name, trigger) {
     const client = this.client;
     if (!client || !this._workingCopyId) return;
     try {
@@ -373,9 +377,12 @@ class ArazzoOperationBrowser extends ArazzoElement {
       });
       if (!sure) return;
 
-      await client.detachWorkingCopySource(this._workingCopyId, name);
-      this.emit('source-detached', { name, attachment });
-      this.refresh();
+      // The confirm is modal; runAction spins the trigger for the detach write only (errors via outer catch).
+      await this.runAction(trigger, async () => {
+        await client.detachWorkingCopySource(this._workingCopyId, name);
+        this.emit('source-detached', { name, attachment });
+        this.refresh();
+      });
     } catch (err) {
       this._error = err.problem || { title: err.message };
       this.renderBody();

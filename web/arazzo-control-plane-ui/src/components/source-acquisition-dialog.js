@@ -254,11 +254,11 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
     this.$('button.x').addEventListener('click', () => this.close());
     this.$('button.cancel').addEventListener('click', () => this.close());
-    this.$('button.attach').addEventListener('click', () => this.attach());
+    this.$('button.attach').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.attach()); });
     this.$$('.tabs button').forEach((tab) => tab.addEventListener('click', () => this.switchMode(tab.dataset.mode)));
     this.$('.name-in').addEventListener('input', () => this.updateAttachState());
     this.$('.registry-in').addEventListener('change', () => this.updateAttachState());
-    this.$('button.fetch').addEventListener('click', () => this.fetchPreview());
+    this.$('button.fetch').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.fetchPreview()); });
     this.$('.url-in').addEventListener('input', () => this.updateFetchAuthUi());
     this.$('.secret-in').addEventListener('input', () => this.updateAuthHint());
     this.$('.secret-scheme').addEventListener('change', () => this.updateSecretScheme());
@@ -809,7 +809,6 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       attachment = { document: this._uploaded.document, type: this._uploaded.type };
     }
 
-    this.$('button.attach').disabled = true;
     try {
       const attached = await this._client.attachWorkingCopySource(this._workingCopyId, name, attachment);
       this.emit('source-attached', { attachment: attached });
@@ -830,7 +829,6 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     else if (this._mode === 'github') { type = this._github.picked.type; document = this._github.picked.document; }
     else { type = this._uploaded.type; document = this._uploaded.document; }
 
-    this.$('button.attach').disabled = true;
     try {
       const managementTags = this.$('.reg-mgmt-editor')?.tags ?? [];
       const created = await this._client.createSource({
