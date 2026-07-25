@@ -112,6 +112,11 @@ Every element extends `ArazzoElement` (`src/components/base.js`) and follows the
   attribute defers to the server.
 - **Dialogs.** `confirmDialog(host, {...})` shows a themed, focus-trapped confirmation inside the host's shadow
   root. The native `prompt`, `confirm`, and `alert` are not used.
+- **Busy actions.** `runAction(trigger, work)` wraps a user-triggered service call. It blocks a second
+  activation of the same control while the first is in flight (so a double-click never double-submits) and, if
+  the work runs past about 150ms, shows a spinner in place of the control's label. It leaves `disabled` to
+  validation and never replaces server-side idempotency
+  ([ADR 0053](../adr/0053-triggered-actions-guard-and-show-delayed-busy.md)).
 - **Paging.** `arazzo-pager` is the shared Prev/Next footer over a keyset cursor
   ([ADR 0035](../adr/0035-keyset-pagination-everywhere.md)).
 

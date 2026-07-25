@@ -118,3 +118,4 @@ The template to follow for a full, fork-bearing ADR is
 | [0045](0045-debug-runs-never-credentials-in-browser.md) | Remote dev-environment debug runs, never credentials in the browser | Accepted |
 | [0047](0047-web-kit-permission-gating-server-authoritative.md) | Web-kit permission gating is server-authoritative | Accepted |
 | [0049](0049-codemirror-vendored-single-bundle.md) | CodeMirror 6, vendored as a single bundle | Accepted |
+| [0053](0053-triggered-actions-guard-and-show-delayed-busy.md) | A triggered async action guards itself and shows delayed busy feedback | Accepted |

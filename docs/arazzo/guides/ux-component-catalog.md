@@ -37,6 +37,10 @@ not repeated per entry.
   `PICKER_CSS`), so a host themes the whole kit at once.
 - **Dialogs.** `confirmDialog(host, {...})` shows a themed, focus-trapped confirmation inside the host's shadow
   root. The native `prompt` / `confirm` / `alert` are not used.
+- **Busy actions.** A user-triggered service call runs through `runAction(trigger, work)`, which blocks a
+  re-click of the same control while its operation is in flight and shows a spinner in place of the label once
+  the work outlives about 150ms. Validation still owns `disabled`
+  ([ADR 0053](../adr/0053-triggered-actions-guard-and-show-delayed-busy.md)).
 
 ## Design conventions
 
