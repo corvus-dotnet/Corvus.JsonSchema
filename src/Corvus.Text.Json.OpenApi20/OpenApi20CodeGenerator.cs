@@ -204,17 +204,46 @@ public sealed class OpenApi20CodeGenerator
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
     {
+        return CollectSchemaPointers(specRoot, out parameterNames, out _, filter, referenceResolver);
+    }
+
+    /// <summary>
+    /// Collects schema pointers, additionally returning the synthesized documents that
+    /// hold the aggregated formData body schemas. Each entry maps a synthetic document
+    /// URI to its UTF-8 JSON text; the caller must register these documents with the
+    /// schema type builder's resolver so the form-body <see cref="SchemaReference"/>s
+    /// resolve. The <c>.invalid</c> TLD guarantees an unregistered document fails fast
+    /// rather than triggering a network fetch.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="parameterNames">Receives the parameter-name map for the naming heuristic.</param>
+    /// <param name="syntheticDocuments">Receives the synthesized form-body documents (URI → JSON).</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>,
+    /// a <see cref="LocalReferenceResolver"/> is used.
+    /// </param>
+    /// <returns>An array of <see cref="SchemaReference"/> values.</returns>
+    public static SchemaReference[] CollectSchemaPointers(
+        JsonElement specRoot,
+        out Dictionary<string, string> parameterNames,
+        out IReadOnlyDictionary<string, string> syntheticDocuments,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         OpenApiDocument doc = specRoot;
 
         if (doc.PathsValue.IsUndefined())
         {
             parameterNames = new Dictionary<string, string>();
+            syntheticDocuments = new Dictionary<string, string>();
             return [];
         }
 
         List<SchemaReference> pointers = [];
         Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
+        Dictionary<string, string> formBodies = new(StringComparer.Ordinal);
 
         foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
         {
@@ -227,12 +256,40 @@ public sealed class OpenApi20CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver, "paths"u8);
+            CollectPathItemPointers(pathProp, pointers, paramNames, formBodies, referenceResolver, "paths"u8);
+        }
+
+        Dictionary<string, string> synthetic = new(StringComparer.Ordinal);
+        if (formBodies.Count > 0)
+        {
+            StringBuilder sb = new("{\"schemas\":{");
+            bool first = true;
+            foreach ((string name, string schemaJson) in formBodies)
+            {
+                if (!first)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append('"').Append(name).Append("\":").Append(schemaJson);
+                first = false;
+            }
+
+            sb.Append("}}");
+            synthetic[FormBodyDocumentUri] = sb.ToString();
         }
 
         parameterNames = paramNames;
+        syntheticDocuments = synthetic;
         return [.. pointers];
     }
+
+    /// <summary>
+    /// The synthetic document URI under which aggregated formData body schemas are
+    /// registered. The <c>.invalid</c> TLD is reserved (RFC 2606), so an accidental
+    /// resolution attempt outside the prepopulated resolver fails fast.
+    /// </summary>
+    public const string FormBodyDocumentUri = "https://corvus-openapi20.invalid/form-bodies.json";
 
     /// <summary>
     /// Lists all operations in the OpenAPI 3.0 specification, optionally filtered.
@@ -415,6 +472,7 @@ public sealed class OpenApi20CodeGenerator
         JsonProperty<JsonElement> pathProp,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
+        Dictionary<string, string> formBodies,
         IOpenApiReferenceResolver referenceResolver,
         ReadOnlySpan<byte> rootSegmentUtf8,
         string? callbackPathItemRef = null)
@@ -446,7 +504,7 @@ public sealed class OpenApi20CodeGenerator
                     && operationElement.ValueKind == JsonValueKind.Object)
                 {
                     OpenApiDocument.Operation operation = operationElement;
-                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
+                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, formBodies, referenceResolver, rootSegmentUtf8, pathItemRefValue);
                 }
             }
         }
@@ -459,6 +517,7 @@ public sealed class OpenApi20CodeGenerator
         OpenApiDocument.PathItem pathItem,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
+        Dictionary<string, string> formBodies,
         IOpenApiReferenceResolver referenceResolver,
         ReadOnlySpan<byte> rootSegmentUtf8,
         string? pathItemRefValue = null)
@@ -471,11 +530,14 @@ public sealed class OpenApi20CodeGenerator
         // Parameter Object, so the Parameter Object itself is the schema position.
         // formData parameters have no schema position in the document — they are
         // aggregated into a synthesized form-body document during preparation.
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> formDataParams = [];
+
         foreach ((OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? refValue) in
             MergeParameters(operation, pathItem, referenceResolver))
         {
             if (ParameterIsIn(param, "formData"u8))
             {
+                formDataParams.Add((param, sourceIndex, isPathLevel));
                 continue;
             }
 
@@ -544,6 +606,24 @@ public sealed class OpenApi20CodeGenerator
                     parameterNames[positionalPointer.AsSpan(1).ToString()] = name;
                 }
             }
+        }
+
+        if (formDataParams.Count > 0)
+        {
+            // Synthesize the aggregated form-body schema for this operation and emit a
+            // SchemaReference whose positional pointer is the deterministic key shared
+            // with PrepareRequestBody, and whose resolvable pointer targets the
+            // synthetic document registered by the caller.
+            string? operationId = operation.OperationId.IsNotUndefined()
+                ? operation.OperationId.GetString()
+                : null;
+
+            string formBodyTypeName = GetMethodName(operationId, method, pathProp.Name) + "FormBody";
+            formBodies[formBodyTypeName] = BuildFormBodySchemaJson(formDataParams);
+
+            string positionalPointer = BuildFormBodyPositionalPointer(pathName.Span, method);
+            string resolvablePointer = FormBodyDocumentUri + "#/schemas/" + formBodyTypeName;
+            pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
         }
 
         // Response schema and header pointers. OpenAPI 2.0 responses carry a direct

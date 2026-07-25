@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi20\Corvus.Text.Json.OpenApi20.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
