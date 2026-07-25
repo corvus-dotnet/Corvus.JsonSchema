@@ -410,6 +410,8 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                 break;
             case SourceDocumentFetcher.FetchOutcome.CredentialNotFound:
                 return FetchSourceDocumentResult.NotFound(Problem("credential-not-found", "Credential not found", 404, detail!), workspace);
+            case SourceDocumentFetcher.FetchOutcome.CredentialHostNotAllowed:
+                return FetchSourceDocumentResult.BadRequest(Problem("credential-host-not-allowed", "Credential host not allowed", 400, detail!), workspace);
             case SourceDocumentFetcher.FetchOutcome.UpstreamFailed:
                 return FetchSourceDocumentResult.BadGateway(Problem("fetch-upstream-failed", "Upstream fetch failed", 502, detail!), workspace);
             default:

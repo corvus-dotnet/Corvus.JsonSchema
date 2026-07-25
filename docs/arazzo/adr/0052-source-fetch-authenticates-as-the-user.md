@@ -143,6 +143,18 @@ provider follow, for the endpoints that genuinely present those protections.
   validation (the mix-up guard), configurable token-endpoint client authentication (body or Basic),
   and a bearer-only `token_type` check. PKCE is off only for the GitHub entry, whose OAuth App does
   not support it.
+- The fetch egress is bounded so a credential cannot reach a host it is not meant for. A one-shot
+  secret and a provider connection are host-scoped (the provider path by the registry's `hosts`
+  patterns); a §13 workload binding is scoped to its own declared `baseUrl` host, so a caller with
+  reach to a binding cannot exfiltrate its shared secret by fetching an attacker URL with it. The
+  fetcher follows redirects itself and never carries a credential across an origin boundary (the
+  runtime strips the standard `Authorization` header cross-origin, but not a custom API-key header),
+  which requires the deployment's fetch client to be configured with `AllowAutoRedirect = false`.
+  Server-side request forgery (SSRF) is out of the fetcher's remit by design: it makes no
+  address-based decisions, so a deployment MUST fence outbound destinations at the network layer
+  (private-range/metadata blocking) before enabling the fetch, and should keep the `https`-only
+  default. The document type-detection gate limits what a fetch can return, but is not an SSRF
+  control.
 - A live broker test needs a provider whose content endpoint actually accepts the brokered token (a
   git host, or an API whose gateway checks the token). A demo endpoint that validates the
   deployment's own session or realm token is not, on its own, a faithful test of the broker against

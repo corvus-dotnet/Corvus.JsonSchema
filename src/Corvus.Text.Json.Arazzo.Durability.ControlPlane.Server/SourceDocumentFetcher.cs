@@ -37,13 +37,19 @@ public sealed class SourceDocumentFetcher
 {
     private const int DefaultCanonicalBufferSize = 64 * 1024;
 
+    // The fetcher follows redirects itself (the fetch client must not auto-redirect); this caps the chain.
+    private const int MaxRedirects = 5;
+
     private readonly HttpClient client;
     private readonly ISourceCredentialStore? credentials;
     private readonly SourceCredentialProviderFactory? credentialProviders;
     private readonly bool allowInsecureHttp;
 
     /// <summary>Initializes a new instance of the <see cref="SourceDocumentFetcher"/> class.</summary>
-    /// <param name="client">The outbound HTTP client (a deployment configures its handler/egress policy).</param>
+    /// <param name="client">The outbound HTTP client. It MUST be configured to <strong>not</strong>
+    /// auto-follow redirects (<c>AllowAutoRedirect = false</c>): the fetcher follows redirects itself
+    /// so a credential is never carried across an origin boundary. The deployment configures its
+    /// handler/egress policy (and should fence outbound destinations at the network layer for SSRF).</param>
     /// <param name="credentials">The credential registry for authenticated fetches; <see langword="null"/> disables the credential option.</param>
     /// <param name="credentialProviders">Builds authentication providers from credential bindings (needs the deployment's secret resolver); <see langword="null"/> disables the credential option.</param>
     /// <param name="allowInsecureHttp">Permit <c>http</c> URLs (default: <c>https</c> only, mirroring §17.5/F5).</param>
@@ -83,6 +89,10 @@ public sealed class SourceDocumentFetcher
 
         /// <summary>The credential exists but cannot authenticate this fetch (e.g. an mTLS binding on a shared client).</summary>
         CredentialUnusable,
+
+        /// <summary>A workload binding was targeted at a host it is not scoped to (it declares no <c>baseUrl</c>,
+        /// or the URL's host is not the binding's <c>baseUrl</c> host) — the shared secret is not sent elsewhere.</summary>
+        CredentialHostNotAllowed,
 
         /// <summary>The upstream endpoint failed: unreachable, an error status, or over the size cap.</summary>
         UpstreamFailed,
@@ -126,12 +136,11 @@ public sealed class SourceDocumentFetcher
             return (FetchOutcome.SchemeNotPermitted, $"The scheme '{uri.Scheme}' is not permitted; use https{(this.allowInsecureHttp ? " or http" : string.Empty)}.", null);
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        if (authHeader is { } h)
-        {
-            request.Headers.TryAddWithoutValidation(h.Name, h.Value);
-        }
-
+        // Resolve the workload binding once and scope it to its own host. A §13 binding is a WORKLOAD
+        // credential (what a runner presents to the source's API); it may be presented only to the
+        // source's declared endpoint (its non-secret `baseUrl` host), never to an arbitrary fetch URL —
+        // otherwise a caller with reach to the binding could exfiltrate its shared secret to any host.
+        IHttpAuthenticationProvider? bindingProvider = null;
         if (credentialSourceName is not null)
         {
             if (this.credentials is null || this.credentialProviders is null)
@@ -139,9 +148,6 @@ public sealed class SourceDocumentFetcher
                 return (FetchOutcome.CredentialFetchUnavailable, "This deployment does not offer credentialed fetches.", null);
             }
 
-            // The reference resolves reach-checked and non-disclosing, exactly like every other
-            // credential read; the binding document stays alive across the provider build (secrets
-            // resolve inside it) and is disposed before the request goes out.
             using ParsedJsonDocument<SourceCredentialBinding>? binding =
                 await this.credentials.GetAsync(credentialSourceName, credentialEnvironment ?? string.Empty, reach, cancellationToken).ConfigureAwait(false);
             if (binding is not { } b)
@@ -154,32 +160,95 @@ public sealed class SourceDocumentFetcher
                 return (FetchOutcome.CredentialUnusable, "An mTLS credential binds at the connection level and cannot authenticate the shared fetch client.", null);
             }
 
-            IHttpAuthenticationProvider provider = await this.credentialProviders.CreateAsync(b.RootElement, cancellationToken).ConfigureAwait(false);
-            await provider.AuthenticateAsync(request, cancellationToken).ConfigureAwait(false);
-        }
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await this.client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-        }
-        catch (HttpRequestException ex)
-        {
-            return (FetchOutcome.UpstreamFailed, $"The endpoint could not be reached: {ex.Message}", null);
-        }
-        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return (FetchOutcome.UpstreamFailed, "The endpoint timed out.", null);
-        }
-
-        using (response)
-        {
-            if (!response.IsSuccessStatusCode)
+            Uri? baseUrl = b.RootElement.BaseUrlOverrideOrNull;
+            if (baseUrl is null)
             {
-                return (FetchOutcome.UpstreamFailed, $"The endpoint returned {(int)response.StatusCode}.", null);
+                return (FetchOutcome.CredentialHostNotAllowed, $"The credential for source '{credentialSourceName}' declares no 'baseUrl', so it cannot be scoped to a fetch host; add a baseUrl to the credential, or fetch with a one-shot secret.", null);
             }
 
-            string? contentType = response.Content.Headers.ContentType?.MediaType;
+            if (!string.Equals(baseUrl.Host, uri.Host, StringComparison.OrdinalIgnoreCase) || baseUrl.Port != uri.Port)
+            {
+                return (FetchOutcome.CredentialHostNotAllowed, $"The credential for source '{credentialSourceName}' is scoped to host '{baseUrl.Authority}', not '{uri.Authority}'; the workload credential is not sent to other hosts. Use a one-shot secret for this URL.", null);
+            }
+
+            bindingProvider = await this.credentialProviders.CreateAsync(b.RootElement, cancellationToken).ConfigureAwait(false);
+        }
+
+        // The fetcher follows redirects itself so a credential is NEVER carried across an origin
+        // boundary: the runtime strips the standard Authorization header on a cross-origin redirect,
+        // but a custom header (an API key) is not stripped, so following redirects safely — dropping
+        // credentials off-origin and re-checking the scheme each hop — is the fetcher's job. The
+        // deployment's fetch HttpClient MUST therefore be configured with AllowAutoRedirect=false.
+        string originAuthority = uri.GetLeftPart(UriPartial.Authority);
+        Uri current = uri;
+        HttpResponseMessage? response = null;
+        for (int hop = 0; ; hop++)
+        {
+            if (!ReferenceEquals(current, uri)
+                && current.Scheme != Uri.UriSchemeHttps && !(this.allowInsecureHttp && current.Scheme == Uri.UriSchemeHttp))
+            {
+                return (FetchOutcome.SchemeNotPermitted, $"A redirect to scheme '{current.Scheme}' is not permitted.", null);
+            }
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, current);
+            bool sameOrigin = string.Equals(current.GetLeftPart(UriPartial.Authority), originAuthority, StringComparison.OrdinalIgnoreCase);
+            bool credentialed = false;
+            if (sameOrigin)
+            {
+                if (authHeader is { } h)
+                {
+                    request.Headers.TryAddWithoutValidation(h.Name, h.Value);
+                    credentialed = true;
+                }
+
+                if (bindingProvider is not null)
+                {
+                    await bindingProvider.AuthenticateAsync(request, cancellationToken).ConfigureAwait(false);
+                    credentialed = true;
+                }
+            }
+
+            try
+            {
+                response = await this.client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            }
+            catch (HttpRequestException ex)
+            {
+                return (FetchOutcome.UpstreamFailed, $"The endpoint could not be reached: {ex.Message}", null);
+            }
+            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                return (FetchOutcome.UpstreamFailed, "The endpoint timed out.", null);
+            }
+
+            // Defense in depth: if a misconfigured client auto-followed a redirect while we attached a
+            // credential, the credential may have crossed origins — fail closed and name the misconfig.
+            if (credentialed && response.RequestMessage?.RequestUri is { } finalUri
+                && !string.Equals(finalUri.GetLeftPart(UriPartial.Authority), current.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase))
+            {
+                response.Dispose();
+                return (FetchOutcome.UpstreamFailed, "The fetch HttpClient auto-followed a redirect while presenting a credential; configure it with AllowAutoRedirect=false so the fetcher follows redirects without leaking credentials.", null);
+            }
+
+            if ((int)response.StatusCode is >= 300 and < 400 && response.Headers.Location is { } location && hop < MaxRedirects)
+            {
+                Uri next = location.IsAbsoluteUri ? location : new Uri(current, location);
+                response.Dispose();
+                current = next;
+                continue;
+            }
+
+            break;
+        }
+
+        using HttpResponseMessage finalResponse = response!;
+        {
+            if (!finalResponse.IsSuccessStatusCode)
+            {
+                return (FetchOutcome.UpstreamFailed, $"The endpoint returned {(int)finalResponse.StatusCode}.", null);
+            }
+
+            string? contentType = finalResponse.Content.Headers.ContentType?.MediaType;
 
             // Download into a pooled buffer, capped; the buffer is returned before this method exits
             // (the parse below copies into the pooled document's own storage).
@@ -187,7 +256,7 @@ public sealed class SourceDocumentFetcher
             try
             {
                 int length = 0;
-                using (Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+                using (Stream stream = await finalResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
                 {
                     while (true)
                     {

@@ -729,9 +729,11 @@ var workflowSimulator = new Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator(ne
 // The server-side spec-document fetcher (§4.4/ADR 0052) behind the fetch pane: no browser CORS, one fetch
 // implementation, authenticated as a provider connection, a one-shot secret, or a §13 binding (resolved through
 // the env secret scheme, the same reference pattern the composition's other secrets use). The demo composition
-// serves http on localhost, so the insecure opt-in is on.
+// serves http on localhost, so the insecure opt-in is on. The fetch client is configured to NOT auto-follow
+// redirects (the fetcher follows them itself so a credential never crosses an origin — ADR 0052 hardening); a
+// production deployment MUST do the same, and should fence outbound destinations at the network layer (SSRF).
 var sourceFetcher = new SourceDocumentFetcher(
-    new HttpClient(),
+    new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }),
     sourceCredentials,
     new Corvus.Text.Json.Arazzo.SourceCredentials.Http.SourceCredentialProviderFactory(new SecretResolverBuilder().AddEnvironment().Build()),
     allowInsecureHttp: true);

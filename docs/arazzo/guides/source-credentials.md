@@ -193,3 +193,29 @@ startup self-check resolves the demo reference **and** asserts a write is refuse
 boundary); and the control plane staying Vault-free with only the `vault://…` reference. The honest dev-to-prod
 deltas (the read-only token is delivered by the Aspire orchestrator rather than platform attestation, the dev
 root token is fixed, and the secret values are dummies) do not weaken the write and read split.
+
+## Fetch egress: SSRF fencing and credential scoping
+
+The control plane's server-side spec fetch (`POST /sources/fetch`, ADR 0052) retrieves a document from a
+caller-supplied URL. That is an outbound request from the control plane, so it has the security properties of
+any server-side fetch, and a deployment that enables it takes on two responsibilities:
+
+- **SSRF fencing is the deployment's job, at the network layer.** The fetcher makes no address-based
+  decisions (an app-layer IP blocklist is weaker than an egress control). Fence the control plane's outbound
+  path — block private ranges and the cloud metadata endpoint, allow only what spec fetching needs — before
+  enabling the fetch, and keep the `https`-only default (the `http` opt-in is for local development). The
+  fetch's document type-detection limits what a fetch can *return* to spec-shaped documents, but it is not an
+  SSRF control: reachability is still observable.
+- **The fetch client must not auto-follow redirects.** Configure it with `AllowAutoRedirect = false`. The
+  fetcher follows redirects itself (bounded, re-checking the scheme each hop) precisely so a credential is
+  never carried across an origin boundary — the runtime strips the standard `Authorization` header on a
+  cross-origin redirect, but a custom API-key header is not stripped, so following redirects safely is the
+  fetcher's job, not the client's.
+
+Credentials on the fetch are host-scoped so one cannot reach a host it is not meant for. A **workload
+binding** (the `(sourceName, environment)` reference) is scoped to its own declared `baseUrl` host: it is the
+credential a runner presents to *that source's* API, so the fetch presents it only to that host and refuses
+(`credential-host-not-allowed`, `400`) for any other URL — a caller with reach to a binding cannot exfiltrate
+its shared secret by fetching an attacker-controlled URL with it. A binding with no `baseUrl` therefore cannot
+be used for a fetch; add a `baseUrl`, or use a one-shot secret (which carries the author's own secret, at their
+own discretion, and is never stored).
