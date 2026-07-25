@@ -715,8 +715,6 @@ class ArazzoCredentialDialog extends ArazzoElement {
       return;
     }
 
-    const confirmBtn = this.$('.confirm');
-    confirmBtn.disabled = true;
     try {
       const binding = this._editing
         ? await this.client.updateCredential(this._editing.sourceName, this._editing.environment, body)
@@ -728,8 +726,6 @@ class ArazzoCredentialDialog extends ArazzoElement {
       banner.textContent = `${problem.title || 'Save failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
       banner.hidden = false;
       this.emit('error', { problem, error: err });
-    } finally {
-      confirmBtn.disabled = false;
     }
   }
 
@@ -861,7 +857,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
     this.$$('input[name="usageMode"]').forEach((r) => r.addEventListener('change', () => this.syncUsageMode()));
     this.$('form').addEventListener('submit', (e) => {
-      if (e.submitter?.value === 'confirm') { e.preventDefault(); this.submit(); }
+      if (e.submitter?.value === 'confirm') { e.preventDefault(); void this.runAction(e.submitter, () => this.submit()); }
     });
     // A close signal (save or cancel) so a caller can sequence dialogs — e.g. set up one source's credentials
     // after another when adding a workflow.

@@ -126,21 +126,19 @@ class ArazzoPurgeDialog extends ArazzoElement {
     });
     if (!confirmed) return;
 
-    const confirmBtn = this.$('.confirm');
-    confirmBtn.disabled = true;
-    try {
-      const { purgedCount } = await this.client.purgeRuns(request);
-      result.textContent = `Purged ${purgedCount} run${purgedCount === 1 ? '' : 's'}.`;
-      result.hidden = false;
-      this.emit('purge-completed', { purgedCount });
-    } catch (err) {
-      const problem = err.problem || { title: err.message };
-      banner.textContent = `${problem.title || 'Purge failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
-      banner.hidden = false;
-      this.emit('error', { problem, error: err });
-    } finally {
-      confirmBtn.disabled = false;
-    }
+    await this.runAction(this.$('.confirm'), async () => {
+      try {
+        const { purgedCount } = await this.client.purgeRuns(request);
+        result.textContent = `Purged ${purgedCount} run${purgedCount === 1 ? '' : 's'}.`;
+        result.hidden = false;
+        this.emit('purge-completed', { purgedCount });
+      } catch (err) {
+        const problem = err.problem || { title: err.message };
+        banner.textContent = `${problem.title || 'Purge failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
+        banner.hidden = false;
+        this.emit('error', { problem, error: err });
+      }
+    });
   }
 }
 

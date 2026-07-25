@@ -332,30 +332,29 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
   async commit() {
     this._error = '';
     this.renderError();
-    const confirmBtn = this.$('.confirm');
-    if (confirmBtn) confirmBtn.disabled = true;
-    let request;
-    try {
-      request = await this.buildRequest();
-    } catch (err) {
-      this._error = err.message;
-      this.renderError();
-      if (confirmBtn) confirmBtn.disabled = false;
-      return;
-    }
-    try {
-      const version = await this.client.addCatalogVersion(request);
-      await this.applyAdministrators(version.baseWorkflowId);
-      this.close();
-      this.emit('workflow-added', { version });
-    } catch (err) {
-      const problem = err.problem || { title: err.message };
-      this._error = `${problem.title || 'Add failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
-      this.renderError();
-      this.emit('error', { problem, error: err });
-    } finally {
-      if (this.$('.confirm')) this.$('.confirm').disabled = false;
-    }
+    // Both buildRequest (it may register a new source) and the add itself are network, so the whole
+    // commit spins the wizard's confirm button and guards a double-click on the final "Add workflow".
+    await this.runAction(this.$('.confirm'), async () => {
+      let request;
+      try {
+        request = await this.buildRequest();
+      } catch (err) {
+        this._error = err.message;
+        this.renderError();
+        return;
+      }
+      try {
+        const version = await this.client.addCatalogVersion(request);
+        await this.applyAdministrators(version.baseWorkflowId);
+        this.close();
+        this.emit('workflow-added', { version });
+      } catch (err) {
+        const problem = err.problem || { title: err.message };
+        this._error = `${problem.title || 'Add failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
+        this.renderError();
+        this.emit('error', { problem, error: err });
+      }
+    });
   }
 
   /** Apply the staged administrator set to the landed base id (best-effort, idempotent). */

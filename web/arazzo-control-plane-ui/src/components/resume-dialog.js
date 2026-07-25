@@ -194,7 +194,7 @@ class ArazzoResumeDialog extends ArazzoElement {
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') {
         e.preventDefault();
-        this.submit();
+        void this.runAction(e.submitter, () => this.submit());
       }
     });
   }
@@ -249,8 +249,6 @@ class ArazzoResumeDialog extends ArazzoElement {
       return;
     }
 
-    const confirmBtn = this.$('.confirm');
-    confirmBtn.disabled = true;
     try {
       // Before recording skip outputs, validate them server-side against the step's true output schema.
       if (request.mode === 'Skip' && request.skipOutputs !== undefined
@@ -279,8 +277,6 @@ class ArazzoResumeDialog extends ArazzoElement {
       banner.textContent = `${problem.title || 'Resume failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
       banner.hidden = false;
       this.emit('error', { problem, error: err });
-    } finally {
-      confirmBtn.disabled = false;
     }
   }
 }

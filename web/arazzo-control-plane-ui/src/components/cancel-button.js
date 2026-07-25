@@ -83,20 +83,18 @@ class ArazzoCancelButton extends ArazzoElement {
     const banner = this.$('.error-banner');
     if (!client || !runId) return;
     const reason = this.$('#reason')?.value?.trim() || undefined;
-    const confirmBtn = this.$('.confirm');
-    confirmBtn.disabled = true;
-    try {
-      const run = await client.cancelRun(runId, { reason });
-      this.$('dialog').close();
-      this.emit('run-cancelled', { run });
-    } catch (err) {
-      const problem = err.problem || { title: err.message };
-      banner.textContent = `${problem.title || 'Cancel failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
-      banner.hidden = false;
-      this.emit('error', { problem, error: err });
-    } finally {
-      confirmBtn.disabled = false;
-    }
+    await this.runAction(this.$('.confirm'), async () => {
+      try {
+        const run = await client.cancelRun(runId, { reason });
+        this.$('dialog').close();
+        this.emit('run-cancelled', { run });
+      } catch (err) {
+        const problem = err.problem || { title: err.message };
+        banner.textContent = `${problem.title || 'Cancel failed'}${problem.detail ? ' — ' + problem.detail : ''}`;
+        banner.hidden = false;
+        this.emit('error', { problem, error: err });
+      }
+    });
   }
 }
 
