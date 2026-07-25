@@ -332,6 +332,7 @@ public readonly struct JsonSchema
         Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         vocabularyRegistry.RegisterVocabularies(Corvus.Json.CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
         return vocabularyRegistry;
