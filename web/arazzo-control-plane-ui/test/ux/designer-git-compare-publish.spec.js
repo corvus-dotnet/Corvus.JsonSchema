@@ -148,6 +148,33 @@ test('the browse tree and the new-branch form open as floating dropdowns, not in
   assertClean(errors);
 });
 
+test('switching the working copy you are looking at resets the designer chrome (the Git panel does not linger)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openDesigner(page);
+  await openGitTab(page);
+  await expect(page.locator('aside .side-tabs [data-tab="git"]')).toHaveClass(/active/);
+  await expect(page.locator('#panel-git')).toBeVisible();
+
+  // Scroll a side panel, to prove the switch also returns scroll positions to the top.
+  await page.evaluate(() => { const p = document.getElementById('panel-inspect'); if (p) p.scrollTop = 40; });
+
+  // Switch the working copy under view: back to the workspace, open a draft again. Previously the Git
+  // tab stayed active and kept the PREVIOUS draft's binding on screen, because openWorkingCopy re-synced
+  // the other panels but never the Git panel or the active tab.
+  await page.locator('#back').click();
+  await expect(page.locator('#workspace-view')).toBeVisible();
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await expect(page.locator('#surface')).toBeVisible();
+
+  // The chrome reset to a fresh visit: the Inspect tab is active, the Git panel is hidden (so no stale
+  // binding lingers), and the panels scrolled back to the top.
+  await expect(page.locator('aside .side-tabs [data-tab="inspect"]')).toHaveClass(/active/);
+  await expect(page.locator('aside .side-tabs [data-tab="git"]')).not.toHaveClass(/active/);
+  await expect(page.locator('#panel-git')).toBeHidden();
+  expect(await page.evaluate(() => document.getElementById('panel-inspect')?.scrollTop)).toBe(0);
+  assertClean(errors);
+});
+
 test('the history renders as a headered list, newest first, and one selection arms Compare and Roll back', async ({ page }) => {
   const errors = watchErrors(page);
   await openDesigner(page);

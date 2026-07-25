@@ -505,6 +505,8 @@
       surface.fit();
       surface.selection = null;
       showSelection(null); // an open starts on the settings page (empty selection = the document)
+      resetDesignerView(); // ...and a fresh chrome: Inspect tab, design canvas, panels scrolled to top,
+                           // no stale Git binding from the previous draft (workflow-designer §4.6)
       scheduleValidate(); // the Problems badge is live from the first look
       shell.conflicted = false;
       setSaveUi('all changes saved');
@@ -859,6 +861,16 @@
       for (const panel of document.querySelectorAll('.side-panel')) panel.hidden = panel.id !== `panel-${name}`;
     }
     sideTabButtons.forEach((b) => b.addEventListener('click', () => switchSideTab(b.dataset.tab)));
+
+    // A draft switch is a fresh visit: reset the shared designer chrome so nothing from the previous
+    // working copy lingers. Back to the Inspect tab and the design canvas (an open starts on the settings
+    // page), which also hides a stale Git panel — it re-opens for the current draft on its next tab click,
+    // via the Git tab handler — and every side panel scrolled back to the top.
+    function resetDesignerView() {
+      switchSideTab('inspect');
+      showTab('design');
+      for (const panel of document.querySelectorAll('.side-panel')) panel.scrollTop = 0;
+    }
 
     textEditor.addEventListener('undo-requested', () => { if (model.canUndo) model.undo(); });
     textEditor.addEventListener('redo-requested', () => { if (model.canRedo) model.redo(); });
