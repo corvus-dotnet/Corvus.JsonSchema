@@ -137,7 +137,8 @@ public sealed class OpenApi20CodeGenerator
         string? SchemaPointer,
         bool HasDeepNesting,
         string? DefaultValueJson,
-        JsonValueKind DefaultValueKind);
+        JsonValueKind DefaultValueKind,
+        bool DegradedCollectionFormat = false);
 
     private readonly record struct RequestBodyInfo(
         string? Description,
@@ -993,7 +994,7 @@ public sealed class OpenApi20CodeGenerator
     // ── Parameter trait parsing ──────────────────────────────────────────
     // In OpenAPI 3.0, the "in" and "style" properties are plain JSON strings
     // without const-string enum Match — we use ValueEquals with UTF-8 literals.
-    private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
+    private static (ParameterLocation Location, ParameterStyle Style, bool Explode, bool DegradedCollectionFormat) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
         // OpenAPI 2.0 has no style/explode; array serialization is governed by
@@ -1004,47 +1005,55 @@ public sealed class OpenApi20CodeGenerator
             : ParameterIsIn(typed, "path"u8) ? ParameterLocation.Path
             : ParameterLocation.Query;
 
-        (ParameterStyle style, bool explode) = ParseCollectionFormat(typed, location);
-        return (location, style, explode);
+        (ParameterStyle style, bool explode, bool degraded) = ParseCollectionFormat(typed, location);
+        return (location, style, explode, degraded);
     }
 
-    private static (ParameterStyle Style, bool Explode) ParseCollectionFormat(
+    private static (ParameterStyle Style, bool Explode, bool Degraded) ParseCollectionFormat(
         OpenApiDocument.Parameter typed,
         ParameterLocation location)
     {
         // csv maps to form (query, explicit explode: false — the 3.x form default is
         // exploded) or simple (path, header). multi is only valid for query/formData
-        // per the 2.0 specification. ssv/tsv/pipes on path or header have no 3.x
-        // emission machinery; they carry their true style here and the emitter
-        // degrades them to csv semantics with a #warning in the generated code.
+        // per the 2.0 specification. ssv/tsv/pipes only have wire machinery for query
+        // parameters; on path or header they DEGRADE to csv (simple) semantics on both
+        // the client and server sides, and the degradation is reported via a #warning
+        // in the generated code so it is never silent.
         ParameterStyle csvStyle = location == ParameterLocation.Query ? ParameterStyle.Form : ParameterStyle.Simple;
 
         if (!((JsonElement)typed).TryGetProperty("collectionFormat"u8, out JsonElement cf) || cf.ValueKind != JsonValueKind.String)
         {
-            return (csvStyle, false);
+            return (csvStyle, false, false);
         }
 
-        if (cf.ValueEquals("multi"u8) && location == ParameterLocation.Query)
+        bool isDelimited = cf.ValueEquals("ssv"u8) || cf.ValueEquals("tsv"u8) || cf.ValueEquals("pipes"u8);
+
+        if (location != ParameterLocation.Query)
         {
-            return (ParameterStyle.Form, true);
+            return (csvStyle, false, isDelimited || cf.ValueEquals("multi"u8));
+        }
+
+        if (cf.ValueEquals("multi"u8))
+        {
+            return (ParameterStyle.Form, true, false);
         }
 
         if (cf.ValueEquals("ssv"u8))
         {
-            return (ParameterStyle.SpaceDelimited, false);
+            return (ParameterStyle.SpaceDelimited, false, false);
         }
 
         if (cf.ValueEquals("tsv"u8))
         {
-            return (ParameterStyle.TabDelimited, false);
+            return (ParameterStyle.TabDelimited, false, false);
         }
 
         if (cf.ValueEquals("pipes"u8))
         {
-            return (ParameterStyle.PipeDelimited, false);
+            return (ParameterStyle.PipeDelimited, false, false);
         }
 
-        return (csvStyle, false);
+        return (csvStyle, false, false);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1228,7 +1237,7 @@ public sealed class OpenApi20CodeGenerator
                 continue;
             }
 
-            (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
+            (ParameterLocation location, ParameterStyle style, bool explode, bool degradedCollectionFormat) = ParseParameterTraits(param);
 
             bool required = ((JsonElement)param).TryGetProperty("required"u8, out JsonElement requiredEl)
                 && requiredEl.ValueKind == JsonValueKind.True;
@@ -1272,7 +1281,8 @@ public sealed class OpenApi20CodeGenerator
 
             result.Add(new ParameterInfo(
                 name, location, required, style, explode,
-                serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind));
+                serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind,
+                degradedCollectionFormat));
         }
 
         return [.. result];
@@ -2094,6 +2104,11 @@ public sealed class OpenApi20CodeGenerator
         CodeEmitHelpers.EmitHeader(w);
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
+
+        foreach (ParameterInfo degraded in op.Parameters.Where(p => p.DegradedCollectionFormat))
+        {
+            w.WriteLine($"#warning OpenAPI 2.0 collectionFormat on the '{degraded.Name}' {(degraded.Location == ParameterLocation.Path ? "path" : "header")} parameter has no wire mapping outside query parameters; comma-separated (csv) semantics are used.");
+        }
 
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Request type for the {op.MethodName} operation.");
@@ -6076,6 +6091,7 @@ public sealed class OpenApi20CodeGenerator
             ParameterStyle.Matrix when explode => "';'",
             ParameterStyle.PipeDelimited => "'|'",
             ParameterStyle.SpaceDelimited => "' '",
+            ParameterStyle.TabDelimited => "'\\t'",
             _ => "','",
         };
 

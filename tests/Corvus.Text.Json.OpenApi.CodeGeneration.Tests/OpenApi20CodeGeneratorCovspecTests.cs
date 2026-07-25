@@ -177,6 +177,42 @@ public class OpenApi20CodeGeneratorCovspecTests
     }
 
     [TestMethod]
+    public void ServerEmitsEndpointRegistrationAndHandlers()
+    {
+        string[] names = [.. generatedServerFiles.Select(f => f.FileName)];
+        CollectionAssert.Contains(names, "ApiEndpointRegistration.cs");
+        CollectionAssert.Contains(names, "IApiWidgetsHandler.cs");
+        CollectionAssert.Contains(names, "IApiUploadsHandler.cs");
+    }
+
+    [TestMethod]
+    public void PathSsvDegradesToCsvOnBothSidesWithWarning()
+    {
+        // renderWidget's sections path parameter declares collectionFormat: ssv, which
+        // has no wire mapping outside query parameters: both sides use csv semantics
+        // and the generated request struct carries a #warning so it is never silent.
+        string request = FileContent("RenderWidgetRequest.cs");
+        StringAssert.Contains(request, "#warning");
+        StringAssert.Contains(request, "'sections' path parameter");
+    }
+
+    [TestMethod]
+    public void ServerSplitsTsvQueryParametersOnTab()
+    {
+        // listWidgets declares a tsv query array; the server-side binder splits on tab.
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "IndexOf('\\t')");
+    }
+
+    [TestMethod]
+    public void ServerParsesMultipartUpload()
+    {
+        // The uploads operation deserializes its synthesized form body from multipart.
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "MultipartFormDataSerializer.DeserializeAsync");
+    }
+
+    [TestMethod]
     public void HeaderObjectsPrepareWithoutSchemas()
     {
         SchemaReference[] refs = OpenApi20CodeGenerator.CollectSchemaPointers(covspecRoot, out _);
