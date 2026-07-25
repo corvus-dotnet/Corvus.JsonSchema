@@ -135,6 +135,10 @@ class ArazzoGitDialog extends ArazzoElement {
                      box-shadow: 0 8px 24px rgb(0 0 0 / 0.28); overflow: auto; }
         .tree-slot[popover]:not(:popover-open) { display: none; }
         .tree-slot[hidden] { display: none; }
+        /* The tree-slot IS the bordered, scrolling dropdown; flatten the embedded git-tree (which is a
+           bordered scroll box in its own right, for standalone use) so the two do not double up into a
+           border-inside-a-border with a wasteful gap. The slot owns the frame, scroll, and padding. */
+        .tree-slot arazzo-git-tree::part(tree) { border: none; border-radius: 0; max-height: none; overflow: visible; padding: 0; }
         .specs { display: grid; gap: 4px; }
         .specs-head { font-size: 11px; }
         .spec-rows { display: grid; gap: 4px; }

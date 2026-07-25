@@ -52,7 +52,7 @@ class ArazzoGitTree extends ArazzoElement {
         .mkdir .name { color: var(--_muted); }
         .mkdir-name { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 6px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; width: 100%; box-sizing: border-box; }
       </style>
-      <div class="tree"><ul class="root"></ul></div>`;
+      <div class="tree" part="tree"><ul class="root"></ul></div>`;
     void this.renderLevel(this.$('ul.root'), '');
   }
 
