@@ -117,7 +117,9 @@ class ArazzoGitDialog extends ArazzoElement {
         /* The field (or the specs hint) takes the row so all three browse buttons right-align, and the
            buttons share a min width so they read as one consistent control regardless of label. */
         .pathrow input, .pathrow .specs-head { flex: 1; min-width: 0; }
-        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; min-width: 6.5em; text-align: center; }
+        /* Explicit colour so a browse button reads the same whether its row sits inside a <label>
+           (muted text) or the specs block (default text) — the base button inherits its colour. */
+        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; min-width: 6.5em; text-align: center; color: var(--_text); }
         /* The repo browser floats as a dropdown in the top layer (like the kit's pickers) instead of
            expanding inline and pushing the dialog's content around. Positioned per open from its anchor. */
         .tree-slot { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 6px;
