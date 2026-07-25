@@ -85,6 +85,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Generation.Tests/Corvus.Text.Json.Arazzo.Generation.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Tests/Corvus.Text.Json.Arazzo.Durability.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Conformance/Corvus.Text.Json.Arazzo.Durability.Conformance.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.MySql.Tests/Corvus.Text.Json.Arazzo.Durability.MySql.Tests.csproj" />
@@ -164,6 +165,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Directories.EntraId/Corvus.Text.Json.Arazzo.Directories.EntraId.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Directories.Okta/Corvus.Text.Json.Arazzo.Directories.Okta.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Directories.Google/Corvus.Text.Json.Arazzo.Directories.Google.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless/Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.MySql/Corvus.Text.Json.Arazzo.Durability.MySql.csproj" />

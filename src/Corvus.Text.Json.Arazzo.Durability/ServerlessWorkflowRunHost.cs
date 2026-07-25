@@ -78,6 +78,17 @@ public sealed class ServerlessWorkflowRunHost
         }
 
         IHostedWorkflow hosted = await this.resolver.ResolveAsync(run, cancellationToken).ConfigureAwait(false);
-        return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
+        WorkflowRunResultKind kind = await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
+
+        // If the store defers its checkpoint writes (the serverless HTTP store's fire-and-forget saves), force the
+        // terminal checkpoint to land before the outcome is reported — otherwise the runner would be told the run
+        // advanced while its final state is still in flight. A synchronous store (every database backend) has no
+        // such capability and nothing to flush.
+        if (this.store is IWorkflowCheckpointFlush deferred)
+        {
+            await deferred.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return kind;
     }
 }
