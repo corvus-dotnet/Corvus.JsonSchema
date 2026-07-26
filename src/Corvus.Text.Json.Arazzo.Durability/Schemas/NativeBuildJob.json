@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NativeBuildJob",
+  "description": "The persisted state of an asynchronous Native-AOT build of a workflow version's serverless binary for one runtime target in one environment (ADR 0055): the target (base workflow id + version + environment + runtime identifier), the build's lifecycle state, and audit/optimistic-concurrency metadata. Its identity is the (baseWorkflowId, versionNumber, environment, runtimeIdentifier) tuple, from which the id is derived deterministically, so enqueuing is idempotent per target (a rebuild resets the same job to Queued). A background worker drives it Queued -> Building -> Ready | Failed. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "baseWorkflowId", "versionNumber", "environment", "runtimeIdentifier", "status", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The job's stable identifier, derived deterministically from its target tuple."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id whose version is being built."
+    },
+    "versionNumber": {
+      "type": "integer",
+      "format": "int32",
+      "minimum": 1,
+      "description": "The version number being built."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The target environment the binary is built for; builds are environment-pinned (per-(env, version) baked)."
+    },
+    "runtimeIdentifier": {
+      "type": "string",
+      "description": "The runtime identifier (RID) the Native-AOT binary targets, for example 'linux-x64'."
+    },
+    "status": {
+      "type": "string",
+      "description": "The build's lifecycle state.",
+      "enum": ["Queued", "Building", "Ready", "Failed"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the job was enqueued."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a worker claimed the job and started building, if started."
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the build completed (reached Ready or Failed), if completed."
+    },
+    "failureReason": {
+      "type": "string",
+      "description": "The reason the build failed, if it failed."
+    },
+    "buildLabel": {
+      "type": "string",
+      "description": "An optional human-friendly label for the build (for example a release name or commit description)."
+    },
+    "claimedBy": {
+      "type": "string",
+      "description": "The worker that claimed the job and is building it, if claimed."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}
