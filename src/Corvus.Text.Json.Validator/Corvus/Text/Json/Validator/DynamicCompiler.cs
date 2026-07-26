@@ -47,13 +47,11 @@ public static class DynamicCompiler
     private static readonly DynamicAssemblyLoadContext PluginAssemblyLoadContext = new();
 #endif
 
-    // Cache metadata references per host assembly to avoid re-reading PE metadata
-    // from hundreds of DLLs on every compilation. The references depend only on the
-    // host assembly's compilation context, which doesn't change across compilations.
+    // Cache metadata references per (host assembly, portable) pair to avoid re-reading PE metadata
+    // from hundreds of DLLs on every compilation. The references depend only on the host assembly's
+    // compilation context and the portability mode, neither of which changes across compilations.
     private static readonly object s_referenceCacheLock = new();
-    private static Assembly? s_cachedHostAssembly;
-    private static IReadOnlyList<MetadataReference>? s_cachedReferences;
-    private static IReadOnlyList<string?>? s_cachedDefines;
+    private static readonly Dictionary<(Assembly Host, bool Portable), (IReadOnlyList<MetadataReference> References, IReadOnlyList<string?> Defines)> s_referenceCache = new();
 
     /// <summary>
     /// Compile the generated code files and return the exported type with the given fully-qualified name.
@@ -79,20 +77,28 @@ public static class DynamicCompiler
     /// </summary>
     /// <param name="generatedCode">The generated code files.</param>
     /// <param name="hostAssembly">The host assembly whose compilation context provides metadata references.</param>
+    /// <param name="portable">When <see langword="true"/>, compile against reference assemblies only (the reference-assembly
+    /// BCL from the compilation context plus output-directory project references), never the AppDomain's loaded
+    /// implementation assemblies. The emitted assembly then references <c>System.Runtime</c> rather than
+    /// <c>System.Private.CoreLib</c>, so it can be compiled against reference assemblies downstream — required when the
+    /// assembly is shipped elsewhere and recompiled, e.g. a serverless executor native-AOT compiled in a build container
+    /// (ADR 0055). The default (<see langword="false"/>) keeps the implementation-assembly references an in-process load
+    /// needs.</param>
     /// <returns>The emitted assembly bytes.</returns>
     /// <exception cref="InvalidOperationException">Compilation failed.</exception>
     public static byte[] CompileToAssemblyBytes(
         IReadOnlyCollection<GeneratedCodeFile> generatedCode,
-        Assembly hostAssembly)
+        Assembly hostAssembly,
+        bool portable = false)
     {
-        using MemoryStream outputStream = EmitOrThrow(generatedCode, hostAssembly);
+        using MemoryStream outputStream = EmitOrThrow(generatedCode, hostAssembly, portable);
         return outputStream.ToArray();
     }
 
-    private static MemoryStream EmitOrThrow(IReadOnlyCollection<GeneratedCodeFile> generatedCode, Assembly hostAssembly)
+    private static MemoryStream EmitOrThrow(IReadOnlyCollection<GeneratedCodeFile> generatedCode, Assembly hostAssembly, bool portable = false)
     {
         (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
-            GetOrBuildMetadataReferences(hostAssembly);
+            GetOrBuildMetadataReferences(hostAssembly, portable);
 
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedCode, defines);
 
@@ -122,28 +128,26 @@ public static class DynamicCompiler
     }
 
     private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
-        GetOrBuildMetadataReferences(Assembly hostAssembly)
+        GetOrBuildMetadataReferences(Assembly hostAssembly, bool portable)
     {
         lock (s_referenceCacheLock)
         {
-            if (s_cachedReferences is not null && ReferenceEquals(s_cachedHostAssembly, hostAssembly))
+            if (s_referenceCache.TryGetValue((hostAssembly, portable), out (IReadOnlyList<MetadataReference> References, IReadOnlyList<string?> Defines) cached))
             {
-                return (s_cachedReferences, s_cachedDefines!);
+                return cached;
             }
 
             (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
-                BuildMetadataReferencesAndDefines(hostAssembly);
+                BuildMetadataReferencesAndDefines(hostAssembly, portable);
 
-            s_cachedHostAssembly = hostAssembly;
-            s_cachedReferences = references;
-            s_cachedDefines = defines;
+            s_referenceCache[(hostAssembly, portable)] = (references, defines);
 
             return (references, defines);
         }
     }
 
     private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
-        BuildMetadataReferencesAndDefines(Assembly hostAssembly)
+        BuildMetadataReferencesAndDefines(Assembly hostAssembly, bool portable)
     {
         DependencyContext? ctx = DependencyContext.Load(hostAssembly) ?? DependencyContext.Default;
 
@@ -164,10 +168,22 @@ public static class DynamicCompiler
             refs = [];
         }
 
-        // Always supplement — even when DependencyContext resolves framework assemblies,
-        // they may be facades (e.g. mscorlib 2.0.0.0 from NuGet reference assembly packages)
-        // that cause CS1705 version mismatch. AppDomain has the real GAC versions.
-        SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
+        if (portable)
+        {
+            // The DependencyContext compile libraries already resolve the reference-assembly BCL (System.Runtime, not the
+            // implementation System.Private.CoreLib) plus every package/project reference, so the emitted assembly is
+            // portable. Supplement only with output-directory project references DependencyContext may not surface — never
+            // the AppDomain's loaded implementation assemblies, which would stamp System.Private.CoreLib and break a
+            // downstream reference-assembly compile.
+            SupplementWithOutputDirectory(refs, hostAssembly, excludeImplementationCorlib: true);
+        }
+        else
+        {
+            // Always supplement — even when DependencyContext resolves framework assemblies, they may be facades (e.g.
+            // mscorlib 2.0.0.0 from NuGet reference assembly packages) that cause CS1705 version mismatch. AppDomain has the
+            // real GAC versions. The emitted assembly references implementation assemblies, so it must be loaded in-process.
+            SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
+        }
 
         return (refs, defines);
     }
@@ -263,6 +279,58 @@ public static class DynamicCompiler
         // reference assembly directories but not in the output directory or loaded AppDomain.
         // This catches assemblies like System.Numerics and netstandard that are transitively referenced.
         ResolveTransitiveReferences(references, seenNames);
+    }
+
+    // The portable supplement: add project/third-party assemblies from the output directory that the DependencyContext did
+    // not surface, WITHOUT touching the AppDomain's loaded implementation assemblies. The reference-assembly BCL from the
+    // compilation context stays the corlib, so the emitted assembly references System.Runtime (portable), not
+    // System.Private.CoreLib, and can be compiled against reference assemblies downstream. A framework-dependent output
+    // directory holds no BCL, and the implementation corlib is skipped defensively in case a self-contained one does.
+    private static void SupplementWithOutputDirectory(List<MetadataReference> references, Assembly hostAssembly, bool excludeImplementationCorlib)
+    {
+        string? directory = AppDomain.CurrentDomain.BaseDirectory;
+        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+        {
+            string? assemblyLocation = hostAssembly.Location;
+            directory = !string.IsNullOrEmpty(assemblyLocation) ? Path.GetDirectoryName(assemblyLocation) : null;
+        }
+
+        if (directory is null || !Directory.Exists(directory))
+        {
+            return;
+        }
+
+        HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
+        foreach (MetadataReference r in references)
+        {
+            if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
+            {
+                seenNames.Add(Path.GetFileNameWithoutExtension(path));
+            }
+        }
+
+        foreach (string dll in Directory.EnumerateFiles(directory, "*.dll"))
+        {
+            string simpleName = Path.GetFileNameWithoutExtension(dll);
+            if (excludeImplementationCorlib && simpleName.Equals("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (seenNames.Add(simpleName))
+            {
+                try
+                {
+                    // Validate the DLL is a managed assembly (a native DLL passes CreateFromFile but causes CS0009).
+                    AssemblyName.GetAssemblyName(dll);
+                    references.Add(MetadataReference.CreateFromFile(dll));
+                }
+                catch
+                {
+                    seenNames.Remove(simpleName);
+                }
+            }
+        }
     }
 
     private static void ResolveTransitiveReferences(List<MetadataReference> references, HashSet<string> seenNames)

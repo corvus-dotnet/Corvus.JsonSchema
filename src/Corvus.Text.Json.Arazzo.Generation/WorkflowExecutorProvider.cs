@@ -108,8 +108,12 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             return null;
         }
 
+        // Portable = compile against reference assemblies only, so the executor references System.Runtime rather than the
+        // implementation System.Private.CoreLib. The executor is a stored artifact that may be recompiled elsewhere — a
+        // serverless native-AOT build in a container references it against reference assemblies (ADR 0055) — and it still
+        // loads in-process (reference assemblies forward to the implementation at load).
         this.progress?.Invoke($"Compiling {source.Files.Count} generated file(s)...");
-        byte[] assembly = DynamicCompiler.CompileToAssemblyBytes(source.Files, typeof(WorkflowExecutorProvider).Assembly);
+        byte[] assembly = DynamicCompiler.CompileToAssemblyBytes(source.Files, typeof(WorkflowExecutorProvider).Assembly, portable: true);
         byte[] manifest = BuildManifest(assembly, packageHash, source.WorkflowId, source.EntryType, this.durable, source.Sources);
 
         this.progress?.Invoke($"Executor built for '{source.WorkflowId}' ({assembly.Length} bytes).");

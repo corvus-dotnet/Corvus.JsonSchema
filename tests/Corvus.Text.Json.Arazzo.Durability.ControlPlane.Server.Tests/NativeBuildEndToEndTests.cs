@@ -53,6 +53,7 @@ public sealed class NativeBuildEndToEndTests
         await RunPublishLoopAsync(
             builder: new FakeAotBuilder(),
             runtimePackageVersion: "5.0.0",
+            feedSources: [("local", "/tmp/feed")],
             readyTimeout: TimeSpan.FromSeconds(30),
             assertNativeBinary: native => native.ShouldBe(FakeNativeBinary));
     }
@@ -79,6 +80,13 @@ public sealed class NativeBuildEndToEndTests
         await RunPublishLoopAsync(
             builder: builder,
             runtimePackageVersion: runtimeVersion!,
+            feedSources:
+            [
+                ("local", "/work/local-packages"),
+                ("nuget.org", "https://api.nuget.org/v3/index.json"),
+                ("dotnet-eng", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"),
+                ("dotnet-libraries", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-libraries/nuget/v3/index.json"),
+            ],
             readyTimeout: TimeSpan.FromMinutes(40),
             assertNativeBinary: native =>
             {
@@ -87,7 +95,7 @@ public sealed class NativeBuildEndToEndTests
             });
     }
 
-    private static async Task RunPublishLoopAsync(IWorkflowAotBuilder builder, string runtimePackageVersion, TimeSpan readyTimeout, Action<byte[]> assertNativeBinary)
+    private static async Task RunPublishLoopAsync(IWorkflowAotBuilder builder, string runtimePackageVersion, IReadOnlyList<(string Name, string Value)> feedSources, TimeSpan readyTimeout, Action<byte[]> assertNativeBinary)
     {
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var signer = new EcdsaExecutorPackageSigner(key, "release-2026");
@@ -104,7 +112,7 @@ public sealed class NativeBuildEndToEndTests
         var management = new SecuredWorkflowManagement(runStore, "ops");
         var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
         var buildStore = new InMemoryNativeBuildJobStore();
-        var buildService = new WorkflowAotBuildService(verifier, signer, builder, new AotHostAppOptions { RuntimePackageVersion = runtimePackageVersion, FeedSources = [("local", "/tmp/feed")] });
+        var buildService = new WorkflowAotBuildService(verifier, signer, builder, new AotHostAppOptions { RuntimePackageVersion = runtimePackageVersion, FeedSources = feedSources });
 
         WebApplicationBuilder appBuilder = WebApplication.CreateBuilder();
         appBuilder.WebHost.UseTestServer();
