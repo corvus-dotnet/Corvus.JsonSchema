@@ -1,0 +1,352 @@
+// <copyright file="MongoNativeBuildJobStore.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Buffers;
+using System.Globalization;
+using System.Text;
+using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using MongoDB.Bson;
+using MongoDB.Driver;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
+
+/// <summary>
+/// A MongoDB-backed <see cref="INativeBuildJobStore"/> — Native-AOT build jobs (ADR 0055). Each job is a document keyed by its
+/// target-derived id holding its <see cref="NativeBuildJob"/> Corvus.Text.Json schema document as a binary field; the
+/// filterable fields (status, target tuple) and the creation timestamp are mirrored into BSON fields so the list query can
+/// filter and order oldest-first server-side. The id is derived from the target tuple, so <see cref="EnqueueAsync"/> is an
+/// idempotent <c>ReplaceOne</c> upsert, and the etag travels inside the document. Mirrors
+/// <see cref="MongoAvailabilityRequestStore"/>, keyed by the target-derived id rather than a random id.
+/// </summary>
+/// <remarks>The claim is an atomic <c>FindOneAndUpdate</c> conditioned on <c>status = Queued</c>: it transitions exactly one
+/// oldest queued job to Building, so two workers never claim the same job (on a lost race it retries the next-oldest).</remarks>
+public sealed class MongoNativeBuildJobStore : INativeBuildJobStore, IAsyncDisposable
+{
+    // The bounded number of oldest-Queued candidates a single claim will race for before giving up; each lost race means a
+    // concurrent worker won that candidate, so under real contention a claim succeeds well within this budget.
+    private const int MaxClaimAttempts = 64;
+
+    // Oldest-first (creation order): by createdAt then id, as the server-side sort.
+    private static readonly SortDefinition<BsonDocument> OldestFirst =
+        Builders<BsonDocument>.Sort.Ascending("createdAt").Ascending("_id");
+
+    private readonly IMongoClient client;
+    private readonly bool ownsClient;
+    private readonly TimeProvider timeProvider;
+    private readonly IMongoCollection<BsonDocument> jobs;
+
+    private MongoNativeBuildJobStore(IMongoClient client, string databaseName, bool ownsClient, TimeProvider timeProvider)
+    {
+        this.client = client;
+        this.ownsClient = ownsClient;
+        this.timeProvider = timeProvider;
+        IMongoDatabase database = client.GetDatabase(databaseName);
+        this.jobs = database.GetCollection<BsonDocument>("native_build_jobs");
+    }
+
+    /// <summary>Opens the store for operation against a database.</summary>
+    /// <param name="connectionString">A MongoDB connection string (e.g. <c>mongodb://localhost:27017</c>).</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it owns and disposes the client).</returns>
+    public static ValueTask<MongoNativeBuildJobStore> ConnectAsync(string connectionString, string databaseName = "arazzo", TimeProvider? timeProvider = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        cancellationToken.ThrowIfCancellationRequested();
+        var client = new MongoClient(connectionString);
+        return new ValueTask<MongoNativeBuildJobStore>(new MongoNativeBuildJobStore(client, databaseName, ownsClient: true, timeProvider ?? TimeProvider.System));
+    }
+
+    /// <summary>Opens the store for operation over a caller-supplied client (the caller retains ownership).</summary>
+    /// <param name="client">A configured MongoDB client.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The opened store (it does not dispose the supplied client).</returns>
+    public static ValueTask<MongoNativeBuildJobStore> ConnectAsync(IMongoClient client, string databaseName = "arazzo", TimeProvider? timeProvider = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<MongoNativeBuildJobStore>(new MongoNativeBuildJobStore(client, databaseName, ownsClient: false, timeProvider ?? TimeProvider.System));
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>> EnqueueAsync(NativeBuildJob draft, string actor, CancellationToken cancellationToken)
+    {
+        // The entity carries no created-by field, so `actor` is validated for parity with the other stores but not persisted.
+        ArgumentNullException.ThrowIfNull(actor);
+        string id = NativeBuildJob.DeriveId(draft.BaseWorkflowIdValue, draft.VersionNumberValue, draft.EnvironmentValue, draft.RuntimeIdentifierValue);
+        WorkflowEtag etag = NewEtag();
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        byte[] json = NativeBuildJobSerialization.SerializeNew(id, draft, now, etag);
+        var document = new BsonDocument
+        {
+            ["_id"] = id,
+            ["baseWorkflowId"] = draft.BaseWorkflowIdValue,
+            ["versionNumber"] = draft.VersionNumberValue,
+            ["environment"] = draft.EnvironmentValue,
+            ["runtimeIdentifier"] = draft.RuntimeIdentifierValue,
+            ["status"] = NativeBuildJobStatusNames.Queued,
+            ["createdAt"] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+            ["doc"] = new BsonBinaryData(json),
+        };
+
+        // Idempotent per target: the id is derived from the tuple, so a repeated enqueue replaces the same document — an
+        // upsert that resets the job to Queued (SerializeNew omits startedAt/completedAt/failureReason/claimedBy).
+        await this.jobs.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> GetAsync(string id, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        return doc is null ? null : ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(claimedBy);
+        var b = Builders<BsonDocument>.Filter;
+        for (int attempt = 0; attempt < MaxClaimAttempts; attempt++)
+        {
+            // Find the oldest Queued job (server-side (createdAt, _id) order).
+            BsonDocument? oldest = await this.jobs
+                .Find(b.Eq("status", NativeBuildJobStatusNames.Queued))
+                .Sort(OldestFirst)
+                .Limit(1)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (oldest is null)
+            {
+                return null; // nothing queued
+            }
+
+            string id = oldest["_id"].AsString;
+            byte[] document = oldest["doc"].AsBsonBinaryData.Bytes;
+            using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(document.AsMemory());
+            WorkflowEtag etag = NewEtag();
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+
+            // Atomic compare-and-set: FindOneAndUpdate conditioned on status = Queued transitions exactly this id to Building
+            // in one server operation. Two workers racing the same id: only the first matches (it flips the status), so the
+            // other's filter no longer matches and it retries the next-oldest — two workers never claim the same job.
+            UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
+                .Set("status", NativeBuildJobStatusNames.Building)
+                .Set("doc", new BsonBinaryData(claimed));
+            BsonDocument? updated = await this.jobs
+                .FindOneAndUpdateAsync(
+                    b.And(b.Eq("_id", id), b.Eq("status", NativeBuildJobStatusNames.Queued)),
+                    update,
+                    new FindOneAndUpdateOptions<BsonDocument> { ReturnDocument = ReturnDocument.After },
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (updated is not null)
+            {
+                return PersistedJson.ToPooledDocument<NativeBuildJob>(claimed);
+            }
+
+            // Lost the race for this id (a concurrent worker claimed it) — retry with the next-oldest.
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> CompleteAsync(string id, NativeBuildJobCompletion completion, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot be completed because it is not building.");
+        }
+
+        WorkflowEtag etag = NewEtag();
+        byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), etag);
+        UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
+            .Set("status", NativeBuildJobStatusNames.ToWire(completion.Status))
+            .Set("doc", new BsonBinaryData(json));
+        await this.jobs.UpdateOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), update, options: null, cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<PooledDocumentList<NativeBuildJob>> ListAsync(NativeBuildJobQuery query, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+
+        var list = new PooledDocumentList<NativeBuildJob>();
+        List<BsonDocument> documents = await this.jobs.Find(filter).Sort(OldestFirst).ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (BsonDocument document in documents)
+        {
+            list.Add(ParsedJsonDocument<NativeBuildJob>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+        }
+
+        return list;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> IsTargetReadyAsync(string baseWorkflowId, int versionNumber, string environment, string runtimeIdentifier, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
+
+        // A native indexed point read on the derived id (the target tuple maps to a unique _id) — never a scan. Project only
+        // the status mirror so no document is materialised.
+        string id = NativeBuildJob.DeriveId(baseWorkflowId, versionNumber, environment, runtimeIdentifier);
+        BsonDocument? projected = await this.jobs
+            .Find(Builders<BsonDocument>.Filter.Eq("_id", id))
+            .Project<BsonDocument>(Builders<BsonDocument>.Projection.Include("status"))
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return projected is not null && string.Equals(projected["status"].AsString, NativeBuildJobStatusNames.Ready, StringComparison.Ordinal);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<NativeBuildJobPage> ListAsync(NativeBuildJobQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : NativeBuildJobPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the Mongo filter needs (the leaf) only here —
+        // createdAt as the ISO-8601 "o" form the createdAt field stores (reconstructed from the token's UTC ticks).
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(NativeBuildJobContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (NativeBuildJobContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+
+        if (cursorCreatedAt is not null)
+        {
+            // Keyset seek strictly past (createdAt, id): BSON compares strings by bytes, so the ISO createdAt order is
+            // chronological and _id is byte-ordinal — the same total order OldestFirst / the in-memory pager uses.
+            filter &= b.Or(
+                b.Gt("createdAt", cursorCreatedAt),
+                b.And(b.Eq("createdAt", cursorCreatedAt), b.Gt("_id", cursorId)));
+        }
+
+        // The (createdAt, _id) sort + Limit(n+1) bounds the read to one page + 1 (lookahead) — never the whole queue.
+        var page = new PooledDocumentList<NativeBuildJob>(pageSize);
+        try
+        {
+            List<BsonDocument> documents = await this.jobs
+                .Find(filter)
+                .Sort(OldestFirst)
+                .Limit(pageSize + 1)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            bool hasMore = documents.Count > pageSize;
+            int take = hasMore ? pageSize : documents.Count;
+            for (int i = 0; i < take; i++)
+            {
+                page.Add(ParsedJsonDocument<NativeBuildJob>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            }
+
+            if (!hasMore)
+            {
+                return NativeBuildJobPage.Create(page);
+            }
+
+            NativeBuildJob last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return NativeBuildJobPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(NativeBuildJobQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Native bounded count: the same BuildFilter as the list, with CountOptions.Limit = cap + 1 so the server stops
+        // counting one past the cap; the (cap+1)th match trips Capped — never a full count of the whole queue.
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+        long total = await this.jobs.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask DisposeAsync()
+    {
+        if (this.ownsClient && this.client is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
+        return default;
+    }
+
+    private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Builds the shared list filter (status / target tuple); a null criterion adds nothing.
+    private static FilterDefinition<BsonDocument> BuildFilter(NativeBuildJobQuery query)
+    {
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter &= b.Eq("status", NativeBuildJobStatusNames.ToWire(status));
+        }
+
+        if (query.BaseWorkflowId is { } baseWorkflowId)
+        {
+            filter &= b.Eq("baseWorkflowId", baseWorkflowId);
+        }
+
+        if (query.VersionNumber is { } versionNumber)
+        {
+            filter &= b.Eq("versionNumber", versionNumber);
+        }
+
+        if (query.Environment is { } environment)
+        {
+            filter &= b.Eq("environment", environment);
+        }
+
+        if (query.RuntimeIdentifier is { } runtimeIdentifier)
+        {
+            filter &= b.Eq("runtimeIdentifier", runtimeIdentifier);
+        }
+
+        return filter;
+    }
+
+    private async ValueTask<byte[]?> DocumentAsync(string id, CancellationToken cancellationToken)
+    {
+        BsonDocument? document = await this.jobs.Find(Builders<BsonDocument>.Filter.Eq("_id", id)).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        return document?["doc"].AsBsonBinaryData.Bytes;
+    }
+}
