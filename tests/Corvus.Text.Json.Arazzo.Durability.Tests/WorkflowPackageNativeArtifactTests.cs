@@ -29,6 +29,8 @@ public sealed class WorkflowPackageNativeArtifactTests
     private static readonly byte[] Signature = Encoding.UTF8.GetBytes("""{"sig":"abc"}""");
     private static readonly byte[] LinuxBinary = [0x7F, (byte)'E', (byte)'L', (byte)'F', 10, 20, 30];
     private static readonly byte[] WindowsBinary = [(byte)'M', (byte)'Z', 40, 50, 60];
+    private static readonly byte[] AttestationManifest = Encoding.UTF8.GetBytes("""{"nativeDigest":"sha256:ab"}""");
+    private static readonly byte[] AttestationSignature = Encoding.UTF8.GetBytes("""{"algorithm":"x","keyId":"k","value":"AA=="}""");
 
     private static byte[] BasePackage() => WorkflowPackage.Pack(
         Workflow, Sources, executor: Executor, executorManifest: Manifest, executorSignature: Signature);
@@ -116,5 +118,59 @@ public sealed class WorkflowPackageNativeArtifactTests
     public void Rejects_an_empty_runtime_identifier()
     {
         Should.Throw<ArgumentException>(() => WorkflowPackage.AttachNativeArtifact(BasePackage(), string.Empty, LinuxBinary));
+    }
+
+    [TestMethod]
+    public void Attaches_a_signed_native_whose_binary_and_attestation_read_back()
+    {
+        byte[] signed = WorkflowPackage.AttachSignedNativeArtifact(BasePackage(), "linux-x64", LinuxBinary, AttestationManifest, AttestationSignature);
+
+        WorkflowPackage.TryReadNativeArtifact(signed, "linux-x64", out ReadOnlyMemory<byte> binary).ShouldBeTrue();
+        binary.ToArray().ShouldBe(LinuxBinary);
+        WorkflowPackage.TryReadNativeAttestation(signed, "linux-x64", out ReadOnlyMemory<byte> manifest, out ReadOnlyMemory<byte> signature).ShouldBeTrue();
+        manifest.ToArray().ShouldBe(AttestationManifest);
+        signature.ToArray().ShouldBe(AttestationSignature);
+
+        // Enumeration still counts only the binary, never the attestation entries under the sibling prefix.
+        WorkflowPackage.EnumerateNativeArtifactRids(signed).ShouldBe(["linux-x64"]);
+    }
+
+    [TestMethod]
+    public void Signed_attach_leaves_the_content_hash_unchanged()
+    {
+        byte[] bare = BasePackage();
+        byte[] signed = WorkflowPackage.AttachSignedNativeArtifact(bare, "linux-x64", LinuxBinary, AttestationManifest, AttestationSignature);
+
+        CatalogPackage.HashCanonical(signed).ShouldBe(CatalogPackage.HashCanonical(bare));
+    }
+
+    [TestMethod]
+    public void An_unsigned_attach_over_a_signed_target_clears_the_stale_attestation()
+    {
+        byte[] signed = WorkflowPackage.AttachSignedNativeArtifact(BasePackage(), "linux-x64", LinuxBinary, AttestationManifest, AttestationSignature);
+        byte[] reattached = WorkflowPackage.AttachNativeArtifact(signed, "linux-x64", WindowsBinary);
+
+        WorkflowPackage.TryReadNativeArtifact(reattached, "linux-x64", out ReadOnlyMemory<byte> binary).ShouldBeTrue();
+        binary.ToArray().ShouldBe(WindowsBinary);
+
+        // The attestation described the previous binary, so it must not linger pointing at a binary that is gone.
+        WorkflowPackage.TryReadNativeAttestation(reattached, "linux-x64", out _, out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void TryReadNativeAttestation_is_false_when_the_target_is_unsigned_or_absent()
+    {
+        byte[] binaryOnly = WorkflowPackage.AttachNativeArtifact(BasePackage(), "linux-x64", LinuxBinary);
+
+        WorkflowPackage.TryReadNativeAttestation(binaryOnly, "linux-x64", out _, out _).ShouldBeFalse();
+        WorkflowPackage.TryReadNativeAttestation(binaryOnly, "win-x64", out _, out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Signed_attach_rejects_empty_payloads()
+    {
+        Should.Throw<ArgumentException>(() => WorkflowPackage.AttachSignedNativeArtifact(BasePackage(), "linux-x64", default, AttestationManifest, AttestationSignature));
+        Should.Throw<ArgumentException>(() => WorkflowPackage.AttachSignedNativeArtifact(BasePackage(), "linux-x64", LinuxBinary, default, AttestationSignature));
+        Should.Throw<ArgumentException>(() => WorkflowPackage.AttachSignedNativeArtifact(BasePackage(), "linux-x64", LinuxBinary, AttestationManifest, default));
     }
 }

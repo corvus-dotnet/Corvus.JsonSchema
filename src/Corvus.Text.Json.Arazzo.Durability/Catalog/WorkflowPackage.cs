@@ -102,6 +102,14 @@ public static class WorkflowPackage
     /// the version's identity unchanged.</summary>
     public const string NativeArtifactPrefix = "metadata/native/";
 
+    /// <summary>The path prefix under which a native binary's detached attestation is stored: a manifest binding the
+    /// binary to its version, runtime target, and engine version (<c>metadata/native-attestation/&lt;rid&gt;.json</c>),
+    /// and a detached signature over it (<c>metadata/native-attestation/&lt;rid&gt;.sig</c>). The control plane signs
+    /// the manifest so a deploy verifies the native binary's provenance the same way a runner verifies the executor
+    /// (ADR 0055). A distinct prefix from <see cref="NativeArtifactPrefix"/> so enumerating the native binaries stays
+    /// unambiguous (a runtime identifier can itself contain dots). Metadata, so excluded from the content hash.</summary>
+    public const string NativeAttestationPrefix = "metadata/native-attestation/";
+
     // Container framing constants.
     private const int MagicSize = 4;        // "AWP" + version byte
     private const int HeaderSize = 8;       // magic (4) + entry count uint32 (4)
@@ -126,6 +134,8 @@ public static class WorkflowPackage
     private static ReadOnlySpan<byte> EvidenceEntryNameUtf8 => "metadata/evidence.json"u8;
 
     private static ReadOnlySpan<byte> NativeArtifactPrefixUtf8 => "metadata/native/"u8;
+
+    private static ReadOnlySpan<byte> NativeAttestationPrefixUtf8 => "metadata/native-attestation/"u8;
 
     private static ReadOnlySpan<byte> ExecutorEntryNameUtf8 => "metadata/executor.dll"u8;
 
@@ -393,10 +403,10 @@ public static class WorkflowPackage
 
     /// <summary>
     /// Returns a copy of <paramref name="package"/> carrying the native executor binary for <paramref name="runtimeIdentifier"/>
-    /// as a <see cref="NativeArtifactPrefix"/> metadata entry, replacing any native binary already present for the same
-    /// target. Every other entry is preserved verbatim, so the content hash is unchanged — a native binary is metadata,
-    /// derived from the signed executor (ADR 0055), not content. This is the control-plane build service's attach step
-    /// once a target's Native-AOT build completes.
+    /// as a <see cref="NativeArtifactPrefix"/> metadata entry, replacing any native binary (and any stale attestation)
+    /// already present for the same target. Every other entry is preserved verbatim, so the content hash is unchanged: a
+    /// native binary is metadata, derived from the signed executor (ADR 0055), not content. Prefer
+    /// <see cref="AttachSignedNativeArtifact"/>, which also carries the attestation a deploy verifies.
     /// </summary>
     /// <param name="package">The existing package bytes.</param>
     /// <param name="runtimeIdentifier">The .NET runtime identifier the binary targets (e.g. <c>linux-x64</c>).</param>
@@ -410,49 +420,67 @@ public static class WorkflowPackage
             throw new ArgumentException("The native binary is empty.", nameof(nativeBinary));
         }
 
-        Span<byte> targetNameScratch = stackalloc byte[MaxNativeEntryNameLength];
-        int targetNameLength = WriteNativeEntryName(targetNameScratch, runtimeIdentifier);
-        ReadOnlySpan<byte> targetName = targetNameScratch[..targetNameLength];
+        // Clear all three of the target's entries, then append the binary alone. Dropping the attestation keeps an
+        // unsigned re-attach from leaving a stale signature pointing at the previous binary.
+        return RepackReplacing(package, NativeEntryNames(runtimeIdentifier), [new(NativeEntryNameBytes(runtimeIdentifier), nativeBinary)]);
+    }
 
-        ReadOnlySpan<byte> span = package.Span;
-
-        // Pass 1: size the output — every existing entry except a same-target native (this attach replaces it), plus the
-        // new native entry. Kept entries are re-emitted from their (name, data) parts below, so their payloads copy verbatim.
-        int entryCount = 1; // the native entry being attached.
-        int total = checked(HeaderSize + EntryHeaderSize + targetName.Length + nativeBinary.Length);
-        var sizer = new PackageReader(span);
-        while (sizer.TryRead(out ReadOnlySpan<byte> name, out _, out int dataLength))
+    /// <summary>
+    /// Returns a copy of <paramref name="package"/> carrying the native executor binary for <paramref name="runtimeIdentifier"/>
+    /// together with its detached attestation (the signed manifest binding the binary to its version, target, and engine
+    /// version, and the signature over it), replacing any binary or attestation already present for the same target. Every
+    /// other entry is preserved verbatim, so the content hash is unchanged. This is the build service's attach step once a
+    /// target's Native-AOT build completes and the control plane has signed the result (ADR 0055).
+    /// </summary>
+    /// <param name="package">The existing package bytes.</param>
+    /// <param name="runtimeIdentifier">The .NET runtime identifier the binary targets (e.g. <c>linux-x64</c>).</param>
+    /// <param name="nativeBinary">The native executor binary.</param>
+    /// <param name="attestationManifest">The attestation manifest (the exact bytes the signature is over).</param>
+    /// <param name="attestationSignature">The detached signature over the attestation manifest.</param>
+    /// <returns>The repacked package bytes.</returns>
+    /// <exception cref="ArgumentException">The runtime identifier is empty or malformed, or any of the three payloads is empty.</exception>
+    public static byte[] AttachSignedNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, ReadOnlyMemory<byte> nativeBinary, ReadOnlyMemory<byte> attestationManifest, ReadOnlyMemory<byte> attestationSignature)
+    {
+        if (nativeBinary.IsEmpty)
         {
-            if (name.SequenceEqual(targetName))
-            {
-                continue; // replaced.
-            }
-
-            total = checked(total + EntryHeaderSize + name.Length + dataLength);
-            entryCount++;
+            throw new ArgumentException("The native binary is empty.", nameof(nativeBinary));
         }
 
-        // One allocation — the repacked package, written in place with spans.
-        byte[] result = new byte[total];
-        Span<byte> output = result;
-        Magic.CopyTo(output);
-        BinaryPrimitives.WriteUInt32LittleEndian(output[MagicSize..], (uint)entryCount);
-
-        // Pass 2: copy every kept entry verbatim, then append the new (or replacement) native entry last.
-        int pos = HeaderSize;
-        var reader = new PackageReader(span);
-        while (reader.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        if (attestationManifest.IsEmpty)
         {
-            if (name.SequenceEqual(targetName))
-            {
-                continue;
-            }
-
-            pos = WriteEntry(output, pos, name, span.Slice(dataOffset, dataLength));
+            throw new ArgumentException("The attestation manifest is empty.", nameof(attestationManifest));
         }
 
-        _ = WriteEntry(output, pos, targetName, nativeBinary.Span);
-        return result;
+        if (attestationSignature.IsEmpty)
+        {
+            throw new ArgumentException("The attestation signature is empty.", nameof(attestationSignature));
+        }
+
+        return RepackReplacing(
+            package,
+            NativeEntryNames(runtimeIdentifier),
+            [
+                new(NativeEntryNameBytes(runtimeIdentifier), nativeBinary),
+                new(NativeAttestationManifestNameBytes(runtimeIdentifier), attestationManifest),
+                new(NativeAttestationSignatureNameBytes(runtimeIdentifier), attestationSignature),
+            ]);
+    }
+
+    /// <summary>
+    /// Reads a native binary's detached attestation for a runtime target (the signed manifest and its signature), when
+    /// the package carries one. The returned memory is a view over <paramref name="package"/>. A deploy verifies these
+    /// against a trusted key before it deploys the native binary (ADR 0055).
+    /// </summary>
+    /// <param name="package">The package bytes.</param>
+    /// <param name="runtimeIdentifier">The .NET runtime identifier the attestation is for.</param>
+    /// <param name="attestationManifest">The attestation manifest bytes when present.</param>
+    /// <param name="attestationSignature">The detached signature bytes when present.</param>
+    /// <returns><see langword="true"/> when the package carries both the manifest and the signature for the target.</returns>
+    public static bool TryReadNativeAttestation(ReadOnlyMemory<byte> package, string runtimeIdentifier, out ReadOnlyMemory<byte> attestationManifest, out ReadOnlyMemory<byte> attestationSignature)
+    {
+        attestationSignature = default;
+        return TryReadEntry(package, NativeAttestationManifestNameBytes(runtimeIdentifier), out attestationManifest)
+            && TryReadEntry(package, NativeAttestationSignatureNameBytes(runtimeIdentifier), out attestationSignature);
     }
 
     /// <summary>Opens a package, materializing its workflow and source documents.</summary>
@@ -724,6 +752,103 @@ public static class WorkflowPackage
         return NativeArtifactPrefixUtf8.Length + Encoding.UTF8.GetBytes(runtimeIdentifier, destination[NativeArtifactPrefixUtf8.Length..]);
     }
 
+    // The three entry names a runtime target occupies (the binary, the attestation manifest, the attestation signature):
+    // the set an attach clears before writing, so a target's entries stay mutually consistent.
+    private static byte[][] NativeEntryNames(string runtimeIdentifier) =>
+    [
+        NativeEntryNameBytes(runtimeIdentifier),
+        NativeAttestationManifestNameBytes(runtimeIdentifier),
+        NativeAttestationSignatureNameBytes(runtimeIdentifier),
+    ];
+
+    private static byte[] NativeEntryNameBytes(string runtimeIdentifier) => ComposeEntryName(NativeArtifactPrefixUtf8, runtimeIdentifier, default);
+
+    private static byte[] NativeAttestationManifestNameBytes(string runtimeIdentifier) => ComposeEntryName(NativeAttestationPrefixUtf8, runtimeIdentifier, ".json"u8);
+
+    private static byte[] NativeAttestationSignatureNameBytes(string runtimeIdentifier) => ComposeEntryName(NativeAttestationPrefixUtf8, runtimeIdentifier, ".sig"u8);
+
+    // Composes a "<prefix><rid><suffix>" entry name to a new array. The attach and attestation-read paths run once per
+    // build (cold), so a small name array is fine. Rejects an empty or path-bearing runtime identifier, matching WriteNativeEntryName.
+    private static byte[] ComposeEntryName(ReadOnlySpan<byte> prefix, string runtimeIdentifier, ReadOnlySpan<byte> suffix)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
+        if (runtimeIdentifier.Contains('/'))
+        {
+            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' must not contain '/'.", nameof(runtimeIdentifier));
+        }
+
+        int ridByteCount = Encoding.UTF8.GetByteCount(runtimeIdentifier);
+        byte[] name = new byte[prefix.Length + ridByteCount + suffix.Length];
+        prefix.CopyTo(name);
+        Encoding.UTF8.GetBytes(runtimeIdentifier, name.AsSpan(prefix.Length));
+        suffix.CopyTo(name.AsSpan(prefix.Length + ridByteCount));
+        return name;
+    }
+
+    // Repacks the package, dropping every existing entry whose name matches one in namesToDrop and appending entriesToAppend
+    // last. Kept entries are re-emitted from their (name, data) parts, so their payloads copy verbatim. Only metadata entries
+    // are ever dropped or appended here, so the content hash is unaffected. One output allocation.
+    private static byte[] RepackReplacing(ReadOnlyMemory<byte> package, byte[][] namesToDrop, PackageEntry[] entriesToAppend)
+    {
+        ReadOnlySpan<byte> span = package.Span;
+
+        int entryCount = entriesToAppend.Length;
+        int total = HeaderSize;
+        foreach (PackageEntry entry in entriesToAppend)
+        {
+            total = checked(total + EntryHeaderSize + entry.Name.Length + entry.Data.Length);
+        }
+
+        var sizer = new PackageReader(span);
+        while (sizer.TryRead(out ReadOnlySpan<byte> name, out _, out int dataLength))
+        {
+            if (MatchesAny(name, namesToDrop))
+            {
+                continue;
+            }
+
+            total = checked(total + EntryHeaderSize + name.Length + dataLength);
+            entryCount++;
+        }
+
+        byte[] result = new byte[total];
+        Span<byte> output = result;
+        Magic.CopyTo(output);
+        BinaryPrimitives.WriteUInt32LittleEndian(output[MagicSize..], (uint)entryCount);
+
+        int pos = HeaderSize;
+        var reader = new PackageReader(span);
+        while (reader.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        {
+            if (MatchesAny(name, namesToDrop))
+            {
+                continue;
+            }
+
+            pos = WriteEntry(output, pos, name, span.Slice(dataOffset, dataLength));
+        }
+
+        foreach (PackageEntry entry in entriesToAppend)
+        {
+            pos = WriteEntry(output, pos, entry.Name, entry.Data.Span);
+        }
+
+        return result;
+    }
+
+    private static bool MatchesAny(ReadOnlySpan<byte> name, byte[][] names)
+    {
+        foreach (byte[] candidate in names)
+        {
+            if (name.SequenceEqual(candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Converts a byte[]-keyed source list to the ReadOnlyMemory form the canonical Pack/hash take (cold callers — Build,
     // tests — pay this small wrapper list; the warm publish path supplies pooled ReadOnlyMemory directly).
     private static IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> ToMemorySources(IReadOnlyList<KeyValuePair<string, byte[]>> sources)
@@ -757,6 +882,9 @@ public static class WorkflowPackage
         sourceName = string.Empty;
         return false;
     }
+
+    // One entry to append during a repack: its full UTF-8 name and its payload.
+    private readonly record struct PackageEntry(byte[] Name, ReadOnlyMemory<byte> Data);
 
     // Orders sources by key (ordinal) for a deterministic container — a plain key compare (the "sources/" prefix and
     // ".json" suffix are identical across all source entries, so the full entry name never needs to be materialized to

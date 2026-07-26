@@ -19,6 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 public sealed class WorkflowAotBuildService
 {
     private readonly IExecutorPackageVerifier verifier;
+    private readonly IExecutorPackageSigner signer;
     private readonly IWorkflowAotBuilder builder;
     private readonly AotHostAppAssembler assembler;
     private readonly AotHostAppOptions options;
@@ -27,14 +28,17 @@ public sealed class WorkflowAotBuildService
     /// Initializes a new instance of the <see cref="WorkflowAotBuildService"/> class.
     /// </summary>
     /// <param name="verifier">The executor-package verifier used to check the signed manifest against a trusted key before building. The build service always verifies (ADR 0055), so this is required.</param>
+    /// <param name="signer">The control-plane signer used to sign the native binary's attestation, so a deploy can verify the native binary's provenance. Signing the output is what closes the trust chain for the serverless path, so this is required.</param>
     /// <param name="builder">The Native-AOT builder for the runtime target this service builds for (e.g. a container builder for the Linux targets).</param>
     /// <param name="options">The feed and package versions the assembled host-app references.</param>
-    public WorkflowAotBuildService(IExecutorPackageVerifier verifier, IWorkflowAotBuilder builder, AotHostAppOptions options)
+    public WorkflowAotBuildService(IExecutorPackageVerifier verifier, IExecutorPackageSigner signer, IWorkflowAotBuilder builder, AotHostAppOptions options)
     {
         ArgumentNullException.ThrowIfNull(verifier);
+        ArgumentNullException.ThrowIfNull(signer);
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(options);
         this.verifier = verifier;
+        this.signer = signer;
         this.builder = builder;
         this.assembler = new AotHostAppAssembler();
         this.options = options;
@@ -68,7 +72,7 @@ public sealed class WorkflowAotBuildService
         }
 
         // Verify integrity and signature before building: the native binary must be provably derived from the signed IL.
-        VerifyExecutor(package, executorAssembly, manifestUtf8);
+        WorkflowExecutorManifest manifest = VerifyExecutor(package, executorAssembly, manifestUtf8);
 
         // Assemble the thin host-app around the signed executor for the target, then native-AOT compile it.
         AssembledHostApp hostApp = this.assembler.Assemble(executorAssembly, manifestUtf8, runtimeIdentifier, this.options);
@@ -78,15 +82,100 @@ public sealed class WorkflowAotBuildService
             return WorkflowAotBuildOutcome.Failure(runtimeIdentifier, result.Log);
         }
 
-        // Attach the native binary; a native binary is metadata (ADR 0055), so the content hash is unchanged.
-        byte[] attached = WorkflowPackage.AttachNativeArtifact(package, runtimeIdentifier, result.NativeBinary);
+        // Sign the native binary while it is still inside this trusted build operation (the smallest trust window): an
+        // attestation binding it to this version, target, and engine version, so a deploy verifies its provenance and a
+        // swapped binary is detected. The engine version is present because the assembler above rejects a manifest without it.
+        var attestation = new NativeArtifactAttestation(
+            NativeArtifactAttestation.CurrentFormatVersion,
+            manifest.PackageHash,
+            runtimeIdentifier,
+            manifest.EngineVersion!,
+            NativeArtifactAttestation.ComputeDigest(result.NativeBinary.Span));
+        byte[] attestationManifest = attestation.ToUtf8();
+        ExecutorPackageSignature signature = await this.signer.SignAsync(attestationManifest, cancellationToken).ConfigureAwait(false);
+
+        // Attach the binary and its attestation; both are metadata (ADR 0055), so the content hash is unchanged.
+        byte[] attached = WorkflowPackage.AttachSignedNativeArtifact(package, runtimeIdentifier, result.NativeBinary, attestationManifest, signature.ToUtf8());
         return WorkflowAotBuildOutcome.Success(runtimeIdentifier, attached, result.Log);
+    }
+
+    /// <summary>
+    /// Verifies a native binary's attestation before a deploy, the counterpart to the build-time input check. The
+    /// package carries a native binary and its detached attestation for the target, the attestation's digest matches the
+    /// binary's bytes, its target and its version (content hash) match, and its signature verifies against a trusted key.
+    /// This is what a deploy pipeline calls before it hands the binary to the function platform, so a binary swapped in
+    /// storage or transit is caught (ADR 0055).
+    /// </summary>
+    /// <param name="package">The version's package, carrying the native binary and its attestation.</param>
+    /// <param name="runtimeIdentifier">The runtime target being deployed.</param>
+    /// <param name="verifier">The trust store the deploy verifies the attestation against.</param>
+    /// <returns>The verified attestation.</returns>
+    /// <exception cref="WorkflowAotBuildException">The native binary or attestation is missing or malformed, the digest, target, or version does not match, or the signature does not verify.</exception>
+    public static NativeArtifactAttestation VerifyNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, IExecutorPackageVerifier verifier)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
+        ArgumentNullException.ThrowIfNull(verifier);
+
+        if (!WorkflowPackage.TryReadNativeArtifact(package, runtimeIdentifier, out ReadOnlyMemory<byte> nativeBinary) || nativeBinary.IsEmpty)
+        {
+            throw new WorkflowAotBuildException($"The package carries no native binary for '{runtimeIdentifier}'.");
+        }
+
+        if (!WorkflowPackage.TryReadNativeAttestation(package, runtimeIdentifier, out ReadOnlyMemory<byte> attestationManifest, out ReadOnlyMemory<byte> signatureUtf8))
+        {
+            throw new WorkflowAotBuildException($"The native binary for '{runtimeIdentifier}' is unsigned; refusing to deploy an unattested binary.");
+        }
+
+        NativeArtifactAttestation attestation;
+        try
+        {
+            attestation = NativeArtifactAttestation.Parse(attestationManifest);
+        }
+        catch (FormatException ex)
+        {
+            throw new WorkflowAotBuildException($"The native artifact attestation is malformed: {ex.Message}", ex);
+        }
+
+        if (!string.Equals(attestation.RuntimeIdentifier, runtimeIdentifier, StringComparison.Ordinal))
+        {
+            throw new WorkflowAotBuildException($"The native artifact attestation targets '{attestation.RuntimeIdentifier}', not the requested '{runtimeIdentifier}'.");
+        }
+
+        string actualDigest = NativeArtifactAttestation.ComputeDigest(nativeBinary.Span);
+        if (!string.Equals(attestation.NativeDigest, actualDigest, StringComparison.Ordinal))
+        {
+            throw new WorkflowAotBuildException($"The native binary digest '{actualDigest}' does not match the attestation's '{attestation.NativeDigest}'.");
+        }
+
+        string packageHash = CatalogPackage.HashCanonical(package);
+        if (!string.Equals(attestation.PackageHash, packageHash, StringComparison.Ordinal))
+        {
+            throw new WorkflowAotBuildException($"The native artifact attestation's package hash '{attestation.PackageHash}' does not match the version's content hash '{packageHash}'.");
+        }
+
+        ExecutorPackageSignature signature;
+        try
+        {
+            signature = ExecutorPackageSignature.Parse(signatureUtf8);
+        }
+        catch (FormatException ex)
+        {
+            throw new WorkflowAotBuildException($"The native artifact signature is malformed: {ex.Message}", ex);
+        }
+
+        if (!verifier.Verify(attestationManifest, signature))
+        {
+            throw new WorkflowAotBuildException("The native artifact signature did not verify against a trusted key; refusing to deploy.");
+        }
+
+        return attestation;
     }
 
     // The trust chain (mirrors WorkflowExecutorLoader's load-time verification, applied before an AOT compile instead of a
     // load): the manifest parses, the assembly's digest matches the manifest it is signed under, the package is signed,
-    // and the signature verifies against a trusted key. Any failure refuses the build.
-    private void VerifyExecutor(ReadOnlyMemory<byte> package, ReadOnlyMemory<byte> executorAssembly, ReadOnlyMemory<byte> manifestUtf8)
+    // and the signature verifies against a trusted key. Any failure refuses the build. Returns the parsed manifest so the
+    // caller can bind the native attestation to the same package hash and engine version.
+    private WorkflowExecutorManifest VerifyExecutor(ReadOnlyMemory<byte> package, ReadOnlyMemory<byte> executorAssembly, ReadOnlyMemory<byte> manifestUtf8)
     {
         WorkflowExecutorManifest manifest;
         try
@@ -124,6 +213,8 @@ public sealed class WorkflowAotBuildService
         {
             throw new WorkflowAotBuildException("The executor signature did not verify against a trusted key; refusing to build.");
         }
+
+        return manifest;
     }
 }
 
