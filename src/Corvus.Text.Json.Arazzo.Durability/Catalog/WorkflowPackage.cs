@@ -38,6 +38,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <item><description><c>metadata/schemas.json</c> — optional precomputed schema metadata.</description></item>
 /// <item><description><c>metadata/executor.dll</c> — optional compiled workflow executor assembly (binary).</description></item>
 /// <item><description><c>metadata/executor-manifest.json</c> — optional executor manifest.</description></item>
+/// <item><description><c>metadata/native/&lt;rid&gt;</c> — optional per-runtime-target native executor binary, one entry per runtime identifier (ADR 0055).</description></item>
 /// </list>
 /// <para>
 /// Entries are written in a deterministic fixed order — the workflow document, then the source documents ordered by
@@ -95,11 +96,20 @@ public static class WorkflowPackage
     /// <summary>The publish-evidence entry (workflow-designer design §4.6): the server-attested suite record.</summary>
     public const string EvidenceEntryName = "metadata/evidence.json";
 
+    /// <summary>The path prefix under which per-runtime-target native executor binaries are stored — one entry per
+    /// runtime identifier (e.g. <c>metadata/native/linux-x64</c>). A version can carry several, built on demand
+    /// (ADR 0055); like every <c>metadata/*</c> entry they are excluded from the content hash, so attaching one leaves
+    /// the version's identity unchanged.</summary>
+    public const string NativeArtifactPrefix = "metadata/native/";
+
     // Container framing constants.
     private const int MagicSize = 4;        // "AWP" + version byte
     private const int HeaderSize = 8;       // magic (4) + entry count uint32 (4)
     private const int EntryHeaderSize = 7;  // name length uint16 (2) + encoding byte (1) + data length uint32 (4)
     private const byte StoredEncoding = 0;  // payload stored verbatim (no compression)
+
+    // Stack scratch for composing a "metadata/native/<rid>" entry name — the 16-byte prefix plus a bounded RID.
+    private const int MaxNativeEntryNameLength = 256;
 
     // The 4-byte container magic: ASCII 'A','W','P' + the format version. All-constant, so this materializes as a
     // static data span (no allocation).
@@ -114,6 +124,8 @@ public static class WorkflowPackage
     private static ReadOnlySpan<byte> ScenariosEntryNameUtf8 => "metadata/scenarios.json"u8;
 
     private static ReadOnlySpan<byte> EvidenceEntryNameUtf8 => "metadata/evidence.json"u8;
+
+    private static ReadOnlySpan<byte> NativeArtifactPrefixUtf8 => "metadata/native/"u8;
 
     private static ReadOnlySpan<byte> ExecutorEntryNameUtf8 => "metadata/executor.dll"u8;
 
@@ -294,20 +306,6 @@ public static class WorkflowPackage
             }
         }
 
-        // Writes one entry (length-prefixed name + stored encoding + length-prefixed data) at pos, returning the new pos.
-        static int WriteEntry(Span<byte> span, int pos, ReadOnlySpan<byte> name, ReadOnlySpan<byte> data)
-        {
-            BinaryPrimitives.WriteUInt16LittleEndian(span[pos..], (ushort)name.Length);
-            pos += 2;
-            name.CopyTo(span[pos..]);
-            pos += name.Length;
-            span[pos++] = StoredEncoding;
-            BinaryPrimitives.WriteUInt32LittleEndian(span[pos..], (uint)data.Length);
-            pos += 4;
-            data.CopyTo(span[pos..]);
-            return pos + data.Length;
-        }
-
         // Writes a "sources/<key>.json" entry, composing the name straight into the output (prefix, transcoded key,
         // suffix) and back-patching the name-length prefix from the bytes actually written — no intermediate name string.
         static int WriteSourceEntry(Span<byte> span, int pos, string key, ReadOnlySpan<byte> data)
@@ -352,6 +350,109 @@ public static class WorkflowPackage
 
         data = default;
         return false;
+    }
+
+    /// <summary>
+    /// Reads the native executor binary for a runtime target (<see cref="NativeArtifactPrefix"/> + <paramref name="runtimeIdentifier"/>),
+    /// when the package carries one — the returned memory is a view over <paramref name="package"/>.
+    /// </summary>
+    /// <param name="package">The package bytes.</param>
+    /// <param name="runtimeIdentifier">The .NET runtime identifier the binary targets (e.g. <c>linux-x64</c>).</param>
+    /// <param name="data">The native binary bytes when present.</param>
+    /// <returns><see langword="true"/> when the package carries a native binary for the target.</returns>
+    public static bool TryReadNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, out ReadOnlyMemory<byte> data)
+    {
+        Span<byte> name = stackalloc byte[MaxNativeEntryNameLength];
+        int length = WriteNativeEntryName(name, runtimeIdentifier);
+        return TryReadEntry(package, name[..length], out data);
+    }
+
+    /// <summary>
+    /// Enumerates the runtime identifiers for which the package carries a native executor binary — the targets a version
+    /// has been built for — ordered ordinally.
+    /// </summary>
+    /// <param name="package">The package bytes.</param>
+    /// <returns>The runtime identifiers, ordered ordinally (empty when the package carries no native binary).</returns>
+    public static IReadOnlyList<string> EnumerateNativeArtifactRids(ReadOnlyMemory<byte> package)
+    {
+        var rids = new List<string>();
+        var reader = new PackageReader(package.Span);
+        while (reader.TryRead(out ReadOnlySpan<byte> name, out _, out _))
+        {
+            // "metadata/native/<rid>" — a prefix match with a non-empty tail (the RID never contains '/', so the tail is
+            // the whole identifier).
+            if (name.Length > NativeArtifactPrefixUtf8.Length && name.StartsWith(NativeArtifactPrefixUtf8))
+            {
+                rids.Add(Encoding.UTF8.GetString(name[NativeArtifactPrefixUtf8.Length..]));
+            }
+        }
+
+        rids.Sort(StringComparer.Ordinal);
+        return rids;
+    }
+
+    /// <summary>
+    /// Returns a copy of <paramref name="package"/> carrying the native executor binary for <paramref name="runtimeIdentifier"/>
+    /// as a <see cref="NativeArtifactPrefix"/> metadata entry, replacing any native binary already present for the same
+    /// target. Every other entry is preserved verbatim, so the content hash is unchanged — a native binary is metadata,
+    /// derived from the signed executor (ADR 0055), not content. This is the control-plane build service's attach step
+    /// once a target's Native-AOT build completes.
+    /// </summary>
+    /// <param name="package">The existing package bytes.</param>
+    /// <param name="runtimeIdentifier">The .NET runtime identifier the binary targets (e.g. <c>linux-x64</c>).</param>
+    /// <param name="nativeBinary">The native executor binary.</param>
+    /// <returns>The repacked package bytes.</returns>
+    /// <exception cref="ArgumentException">The runtime identifier is empty or malformed, or the native binary is empty.</exception>
+    public static byte[] AttachNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, ReadOnlyMemory<byte> nativeBinary)
+    {
+        if (nativeBinary.IsEmpty)
+        {
+            throw new ArgumentException("The native binary is empty.", nameof(nativeBinary));
+        }
+
+        Span<byte> targetNameScratch = stackalloc byte[MaxNativeEntryNameLength];
+        int targetNameLength = WriteNativeEntryName(targetNameScratch, runtimeIdentifier);
+        ReadOnlySpan<byte> targetName = targetNameScratch[..targetNameLength];
+
+        ReadOnlySpan<byte> span = package.Span;
+
+        // Pass 1: size the output — every existing entry except a same-target native (this attach replaces it), plus the
+        // new native entry. Kept entries are re-emitted from their (name, data) parts below, so their payloads copy verbatim.
+        int entryCount = 1; // the native entry being attached.
+        int total = checked(HeaderSize + EntryHeaderSize + targetName.Length + nativeBinary.Length);
+        var sizer = new PackageReader(span);
+        while (sizer.TryRead(out ReadOnlySpan<byte> name, out _, out int dataLength))
+        {
+            if (name.SequenceEqual(targetName))
+            {
+                continue; // replaced.
+            }
+
+            total = checked(total + EntryHeaderSize + name.Length + dataLength);
+            entryCount++;
+        }
+
+        // One allocation — the repacked package, written in place with spans.
+        byte[] result = new byte[total];
+        Span<byte> output = result;
+        Magic.CopyTo(output);
+        BinaryPrimitives.WriteUInt32LittleEndian(output[MagicSize..], (uint)entryCount);
+
+        // Pass 2: copy every kept entry verbatim, then append the new (or replacement) native entry last.
+        int pos = HeaderSize;
+        var reader = new PackageReader(span);
+        while (reader.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        {
+            if (name.SequenceEqual(targetName))
+            {
+                continue;
+            }
+
+            pos = WriteEntry(output, pos, name, span.Slice(dataOffset, dataLength));
+        }
+
+        _ = WriteEntry(output, pos, targetName, nativeBinary.Span);
+        return result;
     }
 
     /// <summary>Opens a package, materializing its workflow and source documents.</summary>
@@ -587,6 +688,40 @@ public static class WorkflowPackage
                 ArrayPool<byte>.Shared.Return(rented);
             }
         }
+    }
+
+    // Writes one entry (length-prefixed name + stored encoding + length-prefixed data) at pos, returning the new pos.
+    private static int WriteEntry(Span<byte> span, int pos, ReadOnlySpan<byte> name, ReadOnlySpan<byte> data)
+    {
+        BinaryPrimitives.WriteUInt16LittleEndian(span[pos..], (ushort)name.Length);
+        pos += 2;
+        name.CopyTo(span[pos..]);
+        pos += name.Length;
+        span[pos++] = StoredEncoding;
+        BinaryPrimitives.WriteUInt32LittleEndian(span[pos..], (uint)data.Length);
+        pos += 4;
+        data.CopyTo(span[pos..]);
+        return pos + data.Length;
+    }
+
+    // Composes the "metadata/native/<rid>" entry name into destination, returning its length. Rejects an empty or
+    // path-bearing runtime identifier (a '/' would break prefix extraction) and one too long for a package entry name.
+    private static int WriteNativeEntryName(Span<byte> destination, string runtimeIdentifier)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
+        if (runtimeIdentifier.Contains('/'))
+        {
+            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' must not contain '/'.", nameof(runtimeIdentifier));
+        }
+
+        int ridByteCount = Encoding.UTF8.GetByteCount(runtimeIdentifier);
+        if (NativeArtifactPrefixUtf8.Length + ridByteCount > destination.Length)
+        {
+            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' is too long.", nameof(runtimeIdentifier));
+        }
+
+        NativeArtifactPrefixUtf8.CopyTo(destination);
+        return NativeArtifactPrefixUtf8.Length + Encoding.UTF8.GetBytes(runtimeIdentifier, destination[NativeArtifactPrefixUtf8.Length..]);
     }
 
     // Converts a byte[]-keyed source list to the ReadOnlyMemory form the canonical Pack/hash take (cold callers — Build,
