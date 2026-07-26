@@ -18,6 +18,9 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
             ("POST", "/pets") => JsonResponse(HttpStatusCode.Created, AdvancedPet),
             ("GET", "/pets/pet-123") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
 
+            // The Swagger 2.0 sample's formData operation
+            ("POST", "/pets/pet-123") => JsonResponse(HttpStatusCode.OK, """{ "id": 123, "name": "Fido II", "tag": "dog" }"""),
+
             ("GET", string p) when p.StartsWith("/pets/batch/", StringComparison.Ordinal) => JsonResponse(HttpStatusCode.OK, AdvancedPetList),
             ("GET", "/pets/pet-42") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
 

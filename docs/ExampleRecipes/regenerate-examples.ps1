@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script regenerates the Generated/ directories for all OpenAPI and AsyncAPI
     ExampleRecipes projects. Run this after making changes to the code generators
-    (OpenApi30/31/32CodeGenerator, AsyncApi30CodeGenerator, etc.) to ensure the
+    (OpenApi20/30/31/32CodeGenerator, AsyncApi30CodeGenerator, etc.) to ensure the
     examples stay in sync.
 
     Prerequisites — build the CLI tool first:
@@ -147,6 +147,13 @@ $targets = @(
         Name = "039-AsyncApiAuthentication"
         Commands = @(
             @{ Command = "asyncapi-generate"; Spec = "streetlights.json"; Namespace = "Streetlights.Client"; Output = "Generated" }
+        )
+    },
+    @{
+        Number = "042"
+        Name = "042-OpenApi20Client"
+        Commands = @(
+            @{ Command = "openapi-client"; Spec = "petstore-2.0.json"; Namespace = "Petstore.V2.Client"; Output = "Generated" }
         )
     }
 )

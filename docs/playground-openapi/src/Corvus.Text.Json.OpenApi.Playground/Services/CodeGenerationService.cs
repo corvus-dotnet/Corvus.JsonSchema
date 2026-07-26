@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi.Playground.Models;
+using Corvus.Text.Json.OpenApi20;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
@@ -67,14 +68,21 @@ public class CodeGenerationService
         try
         {
             using System.Text.Json.JsonDocument sysDoc = System.Text.Json.JsonDocument.Parse(rootFile.Content);
-            if (!sysDoc.RootElement.TryGetProperty("openapi", out System.Text.Json.JsonElement versionEl)
-                || versionEl.ValueKind != System.Text.Json.JsonValueKind.String)
+            if (sysDoc.RootElement.TryGetProperty("swagger", out System.Text.Json.JsonElement swaggerEl)
+                && swaggerEl.ValueKind == System.Text.Json.JsonValueKind.String)
             {
-                result.Errors.Add("Not a valid OpenAPI document: missing 'openapi' field.");
+                result.SpecVersion = swaggerEl.GetString();
+            }
+            else if (sysDoc.RootElement.TryGetProperty("openapi", out System.Text.Json.JsonElement versionEl)
+                && versionEl.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                result.SpecVersion = versionEl.GetString();
+            }
+            else
+            {
+                result.Errors.Add("Not a valid OpenAPI document: missing 'openapi' (or 'swagger') field.");
                 return Task.FromResult(result);
             }
-
-            result.SpecVersion = versionEl.GetString();
             PopulateOperationTree(rootFile.Content, result.Operations);
         }
         catch (System.Text.Json.JsonException ex)
@@ -113,14 +121,21 @@ public class CodeGenerationService
             try
             {
                 using System.Text.Json.JsonDocument sysDoc = System.Text.Json.JsonDocument.Parse(rootFile.Content);
-                if (!sysDoc.RootElement.TryGetProperty("openapi", out System.Text.Json.JsonElement versionEl)
-                    || versionEl.ValueKind != System.Text.Json.JsonValueKind.String)
+                if (sysDoc.RootElement.TryGetProperty("swagger", out System.Text.Json.JsonElement swaggerEl)
+                    && swaggerEl.ValueKind == System.Text.Json.JsonValueKind.String)
                 {
-                    result.Errors.Add("Not a valid OpenAPI document: missing 'openapi' field.");
+                    result.SpecVersion = swaggerEl.GetString();
+                }
+                else if (sysDoc.RootElement.TryGetProperty("openapi", out System.Text.Json.JsonElement versionEl)
+                    && versionEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    result.SpecVersion = versionEl.GetString();
+                }
+                else
+                {
+                    result.Errors.Add("Not a valid OpenAPI document: missing 'openapi' (or 'swagger') field.");
                     return result;
                 }
-
-                result.SpecVersion = versionEl.GetString();
             }
             catch (System.Text.Json.JsonException ex)
             {
@@ -130,6 +145,7 @@ public class CodeGenerationService
 
             string specVersionCategory = result.SpecVersion switch
             {
+                string v when v.StartsWith("2.0", StringComparison.Ordinal) => "2.0",
                 string v when v.StartsWith("3.2", StringComparison.Ordinal) => "3.2",
                 string v when v.StartsWith("3.0", StringComparison.Ordinal) => "3.0",
                 _ => "3.1",
@@ -152,8 +168,13 @@ public class CodeGenerationService
 
             SchemaReference[] schemaRefs;
             Dictionary<string, string> parameterNames;
+            IReadOnlyDictionary<string, string>? syntheticDocuments = null;
 
-            if (specVersionCategory == "3.2")
+            if (specVersionCategory == "2.0")
+            {
+                schemaRefs = OpenApi20CodeGenerator.CollectSchemaPointers(specRoot, out parameterNames, out syntheticDocuments, filter, referenceResolver);
+            }
+            else if (specVersionCategory == "3.2")
             {
                 schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out parameterNames, filter, referenceResolver);
             }
@@ -179,11 +200,17 @@ public class CodeGenerationService
                     specFiles,
                     schemaRefs,
                     parameterNames,
-                    cancellationToken);
+                    cancellationToken,
+                    syntheticDocuments);
             }
 
             IReadOnlyList<OpenApiGeneratedFile> clientFiles;
-            if (specVersionCategory == "3.2")
+            if (specVersionCategory == "2.0")
+            {
+                OpenApi20CodeGenerator generator = new("Playground", schemaTypeMap);
+                clientFiles = generator.Generate(specRoot, filter, referenceResolver);
+            }
+            else if (specVersionCategory == "3.2")
             {
                 OpenApi32CodeGenerator generator = new("Playground", schemaTypeMap);
                 clientFiles = generator.Generate(specRoot, filter, referenceResolver);
@@ -234,10 +261,19 @@ public class CodeGenerationService
         IReadOnlyList<SpecFile> allFiles,
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? syntheticDocuments = null)
     {
         using PrepopulatedDocumentResolver documentResolver = new();
         AddMetaschema(documentResolver);
+
+        if (syntheticDocuments is { Count: > 0 })
+        {
+            foreach ((string uri, string json) in syntheticDocuments)
+            {
+                documentResolver.AddDocument(uri, System.Text.Json.JsonDocument.Parse(json));
+            }
+        }
 
         System.Text.Json.JsonDocument mainDoc = System.Text.Json.JsonDocument.Parse(rootFileContent);
         RegisterDocument(documentResolver, specFilePath, mainDoc, specFilePath);
@@ -255,11 +291,15 @@ public class CodeGenerationService
         Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         vocabularyRegistry.RegisterVocabularies(Corvus.Json.CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
 
-        IVocabulary defaultVocabulary = specVersion == "3.0"
-            ? Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary
-            : Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+        IVocabulary defaultVocabulary = specVersion switch
+        {
+            "2.0" => Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.DefaultVocabulary,
+            "3.0" => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+        };
 
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
