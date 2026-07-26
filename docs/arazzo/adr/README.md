@@ -91,6 +91,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0037](0037-bytes-native-seams.md) | Bytes-native seams: no record-to-document string round-trips | Accepted |
 | [0038](0038-payload-safe-governance-audit.md) | A payload-safe governance-audit primitive | Accepted |
 | [0039](0039-api-first-openapi-source-of-truth.md) | API-first: the OpenAPI surface is the source of truth | Accepted |
+| [0054](0054-run-index-carries-typed-scalar-columns.md) | The run index carries typed scalar columns, not bytes-native values | Accepted |
 
 ### Deployment and bootstrap
 
