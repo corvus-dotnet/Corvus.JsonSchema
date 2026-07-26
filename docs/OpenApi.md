@@ -4,7 +4,7 @@
 
 ## Overview
 
-`Corvus.Text.Json` includes a code generator that produces strongly-typed HTTP **clients** and ASP.NET Core **server stubs** from [OpenAPI](https://spec.openapis.org/oas/latest.html) specifications (versions 3.0, 3.1, and 3.2).
+`Corvus.Text.Json` includes a code generator that produces strongly-typed HTTP **clients** and ASP.NET Core **server stubs** from [OpenAPI](https://spec.openapis.org/oas/latest.html) specifications (versions 2.0, 3.0, 3.1, and 3.2).
 
 Both sides are generated from the same spec. The generated code handles all the HTTP plumbing — parameter serialization, schema validation, request/response parsing, streaming, and error handling — so you focus purely on business logic.
 
@@ -518,7 +518,7 @@ The bare `MapApiEndpoints(petsHandler)` overload is preserved unchanged; the cal
 | `IsCallback` | `bool` | `true` for webhook/callback operations, `false` for main `paths` |
 | `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirementSet>` | The operation's declared security as a list of **alternatives** (see below) |
 
-`SecurityRequirements` is populated for all supported spec versions (OpenAPI 3.0, 3.1, and 3.2). Operation-level `security` takes precedence over the document-level default; operations that declare neither surface an empty list.
+`SecurityRequirements` is populated for all supported spec versions (OpenAPI 2.0, 3.0, 3.1, and 3.2; in 2.0 the schemes come from `securityDefinitions`). Operation-level `security` takes precedence over the document-level default; operations that declare neither surface an empty list.
 
 #### The OR/AND structure
 
@@ -1234,7 +1234,7 @@ corvusjson openapi-client <spec-path> [options]
 | `--spec-url` | Original URL of the spec (recorded in lock file for update-style re-fetch) | — |
 | `--include-path` | Glob patterns for paths to include (repeatable or comma-separated) | All paths |
 | `--exclude-path` | Glob patterns for paths to exclude (repeatable or comma-separated) | None |
-| `--specVersion` | Override auto-detected OpenAPI version (`3.0`, `3.1`, or `3.2`) | Auto-detected |
+| `--specVersion` | Override auto-detected OpenAPI version (`2.0`, `3.0`, `3.1`, or `3.2`) | Auto-detected |
 | `--ignoreEmptyFormUrlEncodedBody` | Treat form-urlencoded bodies with no schema properties as absent | `false` |
 
 ### Server Generation
@@ -1384,8 +1384,21 @@ The generator writes a `corvusjson-openapi.lock` file alongside the output. On s
 | 3.2 | `"openapi": "3.2.0"` | Full support including `itemSchema` for streaming |
 | 3.1 | `"openapi": "3.1.x"` | Full support; JSON Schema 2020-12 for models |
 | 3.0 | `"openapi": "3.0.x"` | Full support; JSON Schema Draft 4 subset for models |
+| 2.0 (Swagger) | `"swagger": "2.0"` | Full support; see the OpenAPI 2.0 notes below |
 
-The generator auto-detects the version from the `openapi` field. All three versions produce the same client/server API surface — only the internal model schemas differ.
+The generator auto-detects the version from the `openapi` field (or the `swagger` field for 2.0 documents). All versions produce the same client/server API surface — only the internal model schemas and document shapes differ.
+
+### OpenAPI 2.0 (Swagger) notes
+
+Swagger 2.0 documents differ structurally from 3.x, and the generator lowers those differences natively:
+
+- A `body` parameter becomes the request body, with media types drawn from the effective `consumes` list (operation-level replaces document-level; `application/json` when absent).
+- `formData` parameters aggregate into a synthesized form body serialized as `application/x-www-form-urlencoded` (or `multipart/form-data` when a `file` parameter or the `consumes` list requires it); `type: file` fields become hoisted binary-part parameters.
+- `collectionFormat` maps to wire formats directly: `csv` joins with commas, `ssv` with spaces, `tsv` with tabs, `pipes` with pipes, and `multi` repeats the parameter. All five are supported on query and formData parameters, on both the client and server sides. `ssv`/`tsv`/`pipes` on `path` or `header` parameters have no wire mapping and degrade to `csv` semantics on both sides; the generated request struct carries a `#warning` naming the parameter so the degradation is visible at build time.
+- Responses carry a direct `schema` (no media-type map); media types come from the effective `produces` list, and `type: file` responses use the raw-stream path.
+- `host` + `basePath` + `schemes` produce the server URL (`https` preferred when several schemes are listed; operation-level `schemes` override).
+- Non-body parameters carry their constraint keywords directly, and the models are generated under a dedicated OpenAPI 2.0 schema dialect: JSON Schema Draft 4 keywords (including the boolean `exclusiveMinimum`/`exclusiveMaximum` forms and tuple-form `items`), the 2.0 fixed fields (`discriminator`, `readOnly`, `xml`, `example`, `externalDocs`), the widely-used `x-nullable` vendor convention, and `oneOf`/`anyOf`/`not`/`nullable` accepted as practical extras found in real-world Swagger documents. `patternProperties` and `dependencies` are not part of the dialect.
+- OpenAPI 2.0 defines no callbacks or webhooks; the `openapi-callback-client` and `openapi-callback-server` commands fail with a clear message for 2.0 documents.
 
 ## Best Practices
 
@@ -1416,6 +1429,7 @@ The generator auto-detects the version from the `openapi` field. All three versi
 
 | Feature | Corvus | Kiota |
 |---------|--------|-------|
+| OpenAPI 2.0 (Swagger) | ✅ | Via conversion |
 | OpenAPI 3.0 | ✅ | ✅ |
 | OpenAPI 3.1 | ✅ | ✅ |
 | OpenAPI 3.2 | ✅ | Partial |

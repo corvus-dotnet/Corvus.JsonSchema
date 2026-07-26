@@ -43,6 +43,7 @@
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration.CSharp.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.HttpClientDocumentResolver\Corvus.Json.CodeGeneration.HttpClientDocumentResolver.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi20\Corvus.Json.CodeGeneration.OpenApi20.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
@@ -59,6 +60,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi20\Corvus.Text.Json.OpenApi20.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
   </ItemGroup>

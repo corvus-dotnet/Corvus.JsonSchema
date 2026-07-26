@@ -563,6 +563,16 @@ foreach ($dir in $recipeDirs) {
         $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
         $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
     }
+
+    # Rewrite links from recipe pages up to doc pages (the inverse of the
+    # ../ExampleRecipes/ rewrite applied to doc pages):
+    #   ../../OpenApi.md           -> /docs/open-api.html
+    #   ../../OpenApi.md#fragment  -> /docs/open-api.html#fragment
+    $body = [regex]::Replace($body, '\(\.\./\.\./([A-Za-z0-9]+)\.md(#[^)]*)?\)', {
+        param($m)
+        "(/docs/$(ConvertTo-KebabCase $m.Groups[1].Value).html$($m.Groups[2].Value))"
+    })
+
     $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBlobRef/docs/ExampleRecipes/$($dir.Name)"
     $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 

@@ -7,7 +7,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 ## Features
 
 - **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
-- **[OpenAPI](#openapi)** — Generate strongly-typed OpenAPI 3.0, 3.1, and 3.2 HTTP clients and ASP.NET Core server stubs with typed parameters, request/response validation, streaming, and result matching.
+- **[OpenAPI](#openapi)** — Generate strongly-typed OpenAPI 2.0, 3.0, 3.1, and 3.2 HTTP clients and ASP.NET Core server stubs with typed parameters, request/response validation, streaming, and result matching.
 - **[AsyncAPI](#asyncapi)** — Generate strongly-typed AsyncAPI 2.6 and 3.0 producers, consumers, handlers, and request/reply flows with broker transport packages for NATS, Kafka, AMQP, MQTT, WebSocket, and Azure Service Bus.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
 - **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136 bytes per-document allocation.
@@ -80,6 +80,7 @@ Most applications need `Corvus.Text.Json` plus either the source generator or th
 | OpenAPI | **Corvus.Text.Json.OpenApi** | Runtime abstractions for generated OpenAPI clients and ASP.NET Core server stubs. |
 | OpenAPI | **Corvus.Text.Json.OpenApi.HttpTransport** | `HttpClient` transport for generated OpenAPI clients. |
 | OpenAPI | **Corvus.Text.Json.OpenApi.CodeGeneration** | Code-generation engine for OpenAPI and related API-generation tooling. |
+| OpenAPI | **Corvus.Text.Json.OpenApi20** | Strongly-typed V5 model types for OpenAPI 2.0 (Swagger) documents. |
 | OpenAPI | **Corvus.Text.Json.OpenApi30** | Strongly-typed V5 model types for OpenAPI 3.0 documents. |
 | OpenAPI | **Corvus.Text.Json.OpenApi31** | Strongly-typed V5 model types for OpenAPI 3.1 documents. |
 | OpenAPI | **Corvus.Text.Json.OpenApi32** | Strongly-typed V5 model types for OpenAPI 3.2 documents. |
@@ -297,12 +298,12 @@ See [JSONPath documentation](docs/JsonPath.md) for the full API, code generation
 
 ## OpenAPI
 
-`Corvus.Text.Json` can generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 3.0, 3.1, and 3.2 specifications. The generated code uses the same V5 JSON Schema engine as the core model generator, so request and response bodies are pooled, strongly typed, and schema-validated.
+`Corvus.Text.Json` can generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 2.0 (Swagger), 3.0, 3.1, and 3.2 specifications. The generated code uses the same V5 JSON Schema engine as the core model generator, so request and response bodies are pooled, strongly typed, and schema-validated.
 
 - **Typed clients** — generated request parameter objects, response result types, and `MatchResult()` dispatch over documented responses.
 - **ASP.NET Core servers** — generated handler interfaces and endpoint mapping for minimal APIs.
 - **HTTP plumbing included** — path/query/header/cookie parameter serialization, request and response validation, headers, streaming, multipart forms, and binary payloads.
-- **Spec models** — strongly-typed packages for OpenAPI 3.0, 3.1, and 3.2 documents.
+- **Spec models** — strongly-typed packages for OpenAPI 2.0, 3.0, 3.1, and 3.2 documents.
 
 See [OpenAPI documentation](docs/OpenApi.md) and the OpenAPI ExampleRecipes for client, server, callback, and end-to-end samples.
 

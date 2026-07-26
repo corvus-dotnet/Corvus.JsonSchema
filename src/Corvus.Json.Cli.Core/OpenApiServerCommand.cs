@@ -10,6 +10,7 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi20;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
@@ -88,7 +89,33 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         string modelsPath = Path.Combine(outputPath, "Models");
         IReadOnlyList<string>? modelFileNames = null;
 
-        if (specVersion is "3.2")
+        if (specVersion is "2.0")
+        {
+            SchemaReference[] schemaRefs = OpenApi20CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, out IReadOnlyDictionary<string, string> syntheticDocuments, filter, referenceResolver);
+
+            AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
+            AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
+
+            Dictionary<string, string>? schemaTypeMap = null;
+            if (schemaRefs.Length > 0)
+            {
+                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
+                    .ConfigureAwait(false);
+            }
+
+            if (schemaTypeMap is not null)
+            {
+                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+            }
+
+            OpenApi20CodeGenerator generator = new(
+                rootNamespace,
+                schemaTypeMap ?? new Dictionary<string, string>(),
+                settings.ClientName,
+                settings.IgnoreEmptyFormUrlEncodedBody);
+            files = generator.GenerateServer(specRoot, filter, referenceResolver);
+        }
+        else if (specVersion is "3.2")
         {
             SchemaReference[] schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
 
@@ -203,13 +230,31 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         string outputPath,
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? syntheticDocuments = null)
     {
         string specFilePath = Path.GetFullPath(specFile);
 
-        CompoundDocumentResolver documentResolver = new(
-            new FileSystemDocumentResolver(),
-            new HttpClientDocumentResolver(new HttpClient()));
+        // Synthesized documents (e.g. OpenAPI 2.0 form bodies) are registered in a
+        // prepopulated resolver that is consulted first.
+        PrepopulatedDocumentResolver? syntheticResolver = null;
+        if (syntheticDocuments is { Count: > 0 })
+        {
+            syntheticResolver = new PrepopulatedDocumentResolver();
+            foreach ((string uri, string json) in syntheticDocuments)
+            {
+                syntheticResolver.AddDocument(uri, System.Text.Json.JsonDocument.Parse(json));
+            }
+        }
+
+        CompoundDocumentResolver documentResolver = syntheticResolver is not null
+            ? new(
+                syntheticResolver,
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()))
+            : new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
 
         documentResolver.AddMetaschema();
 
@@ -220,9 +265,11 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         IVocabulary defaultVocabulary = specVersion switch
         {
+            "2.0" => Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.DefaultVocabulary,
             "3.0" => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
             _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
         };
@@ -245,8 +292,18 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             {
                 string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = ResolveDocumentPath(docPart);
-                reference = new(resolvedDocPath, fragment);
+
+                if (docPart.Contains("://", StringComparison.Ordinal))
+                {
+                    // Absolute URI (e.g. a synthesized form-body document) — resolved by
+                    // the prepopulated resolver, never the file system.
+                    reference = new(docPart, fragment);
+                }
+                else
+                {
+                    string resolvedDocPath = ResolveDocumentPath(docPart);
+                    reference = new(resolvedDocPath, fragment);
+                }
             }
             else
             {

@@ -263,6 +263,136 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/parameters/&lt;index&gt;</c> — the
+    /// Parameter Object itself, with no <c>/schema</c> tail.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// OpenAPI 2.0 (Swagger) non-body parameters carry their constraint keywords directly on
+    /// the Parameter Object rather than under a <c>schema</c> member, so the type builder is
+    /// pointed at the Parameter Object itself.
+    /// </para>
+    /// </remarks>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="index">The parameter index.</param>
+    /// <param name="isPathLevel">Whether the parameter is path-level.</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildParameterObjectPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        int index,
+        bool isPathLevel)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
+
+            if (!isPathLevel)
+            {
+                sb.Append((byte)'/');
+                AppendMethodUtf8(ref sb, method);
+            }
+
+            sb.Append("/parameters/"u8);
+            sb.Append(index);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/schema</c> —
+    /// the OpenAPI 2.0 (Swagger) response schema position, which has no <c>content</c> media-type map.
+    /// </summary>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildResponseSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;</c> —
+    /// the Header Object itself, with no <c>/schema</c> tail.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// OpenAPI 2.0 (Swagger) response headers carry their constraint keywords directly on
+    /// the Header Object rather than under a <c>schema</c> member.
+    /// </para>
+    /// </remarks>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
+    /// <param name="headerNameUtf8">The UTF-8 header name from the response headers map.</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildResponseHeaderObjectPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Builds a resolvable schema pointer from a <c>$ref</c> value by appending a sub-path
     /// to the reference's fragment. When the component is reached via <c>$ref</c>, the type
     /// builder cannot navigate the positional pointer (because the positional location
@@ -474,6 +604,132 @@ public static class SchemaPointerBuilder
             sb.Append("/headers/"u8);
             AppendEncodedSegment(ref sb, headerNameUtf8);
             sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a Header Object sub-path relative to a response, with no <c>/schema</c> tail:
+    /// <c>/headers/&lt;headerName&gt;</c>. Used for OpenAPI 2.0 (Swagger) response headers,
+    /// whose constraint keywords live directly on the Header Object.
+    /// </summary>
+    /// <param name="headerNameUtf8">The UTF-8 header name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildHeaderObjectSubPath(ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a Parameter Object sub-path relative to a path item, with no <c>/schema</c> tail:
+    /// <c>/&lt;method&gt;/parameters/&lt;index&gt;</c> or <c>/parameters/&lt;index&gt;</c> (path-level).
+    /// Used for OpenAPI 2.0 (Swagger) non-body parameters, whose constraint keywords live
+    /// directly on the Parameter Object.
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="index">The parameter index.</param>
+    /// <param name="isPathLevel">Whether the parameter is path-level.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildParameterObjectSubPath(
+        OperationMethod method,
+        int index,
+        bool isPathLevel)
+    {
+        Span<byte> initialBuffer = stackalloc byte[64];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            if (!isPathLevel)
+            {
+                sb.Append((byte)'/');
+                AppendMethodUtf8(ref sb, method);
+            }
+
+            sb.Append("/parameters/"u8);
+            sb.Append(index);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds an OpenAPI 2.0 (Swagger) response schema sub-path relative to a path item:
+    /// <c>/&lt;method&gt;/responses/&lt;statusCode&gt;/schema</c> (no <c>content</c> media-type map).
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildResponseSchemaSubPath(
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds an OpenAPI 2.0 (Swagger) response Header Object sub-path relative to a path item,
+    /// with no <c>/schema</c> tail:
+    /// <c>/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;</c>.
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code.</param>
+    /// <param name="headerNameUtf8">The UTF-8 header name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildResponseHeaderObjectSubPath(
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
 
             return Encoding.UTF8.GetString(sb.AsSpan());
         }

@@ -566,6 +566,19 @@ example-recipes:
       - {index: 9, language: toon, lines: [118, 121]}
       - {index: 10, language: csharp, lines: [127, 134], category: compilable, verified: false}
       - {index: 11, language: bash, lines: [140, 143]}
+  - path: "docs/ExampleRecipes/042-OpenApi20Client/README.md"
+    companion_project: "docs/ExampleRecipes/042-OpenApi20Client/"
+    blocks:
+      - {index: 0, language: json, lines: [28, 70]}
+      - {index: 1, language: bash, lines: [76, 80]}
+      - {index: 2, language: csharp, lines: [93, 97], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [105, 113], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [121, 124], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [130, 134], category: compilable, verified: false}
+      - {index: 6, language: , lines: [138, 143]}
+      - {index: 7, language: csharp, lines: [151, 171], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [177, 189], category: compilable, verified: false}
+      - {index: 9, language: bash, lines: [193, 196]}
 
 main-docs:
   - path: "docs/AddingKeywords.md"

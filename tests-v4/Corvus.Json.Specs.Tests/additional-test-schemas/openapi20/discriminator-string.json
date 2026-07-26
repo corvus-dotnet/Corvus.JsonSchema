@@ -1,0 +1,16 @@
+[
+    {
+        "description": "string-form discriminator is annotation-only",
+        "schema": {
+            "type": "object",
+            "discriminator": "petType",
+            "properties": { "petType": { "type": "string" } },
+            "required": [ "petType" ]
+        },
+        "tests": [
+            { "description": "object with the discriminator property is valid", "data": { "petType": "cat" }, "valid": true },
+            { "description": "object missing the discriminator property is invalid via required", "data": {}, "valid": false },
+            { "description": "discriminator itself does not constrain other values", "data": { "petType": "anything" }, "valid": true }
+        ]
+    }
+]

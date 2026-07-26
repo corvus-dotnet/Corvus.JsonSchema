@@ -37,7 +37,9 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <para>
 /// <b>Maintenance note:</b> This heuristic currently handles the five schema locations
 /// extracted by <c>ClientModelBuilder</c>: <c>responses</c>, <c>requestBody</c>,
-/// <c>parameters</c> (operation-level and path-level), and <c>response headers</c>.
+/// <c>parameters</c> (operation-level and path-level), and <c>response headers</c> —
+/// plus the OpenAPI 2.0 (Swagger) shapes where the Parameter Object, response schema,
+/// or Header Object is addressed without a <c>/schema</c> or <c>content</c> segment.
 /// When the walker is extended to extract schemas from additional OpenAPI locations
 /// (callbacks, link schemas), corresponding branches must be added to
 /// <see cref="TryParseOpenApiFragment"/>.
@@ -97,6 +99,9 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         // Parse: /paths/<url>/<method>/responses/<code>/content/<media>/schema[/...]
         //    or: /paths/<url>/<method>/requestBody/content/<media>/schema[/...]
         //    or: /paths/<url>/<method>/parameters/<idx>/schema[/...]
+        //    or (OpenAPI 2.0): /paths/<url>/<method>/parameters/<idx>
+        //    or (OpenAPI 2.0): /paths/<url>/<method>/responses/<code>/schema
+        //    or (OpenAPI 2.0): /paths/<url>/<method>/responses/<code>/headers/<name>
         // We only handle the root schema level (the immediate /schema).
         // Child schemas (e.g. /schema/properties/id) are handled by SubschemaNameHeuristic.
         if (!TryParseOpenApiFragment(fragment, out OpenApiSchemaContext ctx))
@@ -209,7 +214,16 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
                 int headerNameEnd = afterHeaders.IndexOf('/');
                 if (headerNameEnd < 0)
                 {
-                    return false;
+                    // OpenAPI 2.0 (Swagger) Header Object — constraint keywords live directly
+                    // on the header, so the pointer has no /schema tail.
+                    if (afterHeaders.IsEmpty)
+                    {
+                        return false;
+                    }
+
+                    ctx.HeaderName = afterHeaders;
+                    ctx.Position = SchemaPosition.ResponseHeader;
+                    return true;
                 }
 
                 ctx.HeaderName = afterHeaders[..headerNameEnd];
@@ -235,7 +249,16 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
             int nextSlash = remainder.IndexOf('/');
             if (nextSlash < 0)
             {
-                return false;
+                // OpenAPI 2.0 (Swagger) non-body Parameter Object — constraint keywords live
+                // directly on the parameter, so the pointer has no /schema tail.
+                if (remainder.IsEmpty)
+                {
+                    return false;
+                }
+
+                ctx.ParameterIndex = remainder;
+                ctx.Position = SchemaPosition.Parameter;
+                return true;
             }
 
             ctx.ParameterIndex = remainder[..nextSlash];

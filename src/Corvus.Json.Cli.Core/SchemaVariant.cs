@@ -48,4 +48,9 @@ public enum SchemaVariant
     /// OpenAPI 3.0 schema.
     /// </summary>
     OpenApi30,
+
+    /// <summary>
+    /// OpenAPI 2.0 (Swagger) schema.
+    /// </summary>
+    OpenApi20,
 }

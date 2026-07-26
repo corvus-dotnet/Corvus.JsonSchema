@@ -56,7 +56,7 @@ Produce a deterministic byte-exact serialization of JSON values using the [JSON 
 
 ## [OpenAPI Code Generation](/docs/open-api.html)
 
-Generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 3.0/3.1/3.2 specifications. Handles parameter serialization, JSON Schema validation, streaming (SSE, NDJSON), binary transfers, form-encoded bodies, and cookie authentication — all generated from a single spec.
+Generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 2.0/3.0/3.1/3.2 specifications. Handles parameter serialization, JSON Schema validation, streaming (SSE, NDJSON), binary transfers, form-encoded bodies, and cookie authentication — all generated from a single spec.
 
 ## [AsyncAPI Code Generation](/docs/async-api.html)
 

@@ -25,3 +25,6 @@
 [submodule "toon-format-spec"]
 	path = toon-format-spec
 	url = https://github.com/toon-format/spec.git
+[submodule "slack-api-specs"]
+	path = slack-api-specs
+	url = https://github.com/slackapi/slack-api-specs.git

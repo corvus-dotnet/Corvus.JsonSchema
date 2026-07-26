@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi20\Corvus.Text.Json.OpenApi20.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
@@ -26,5 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\slack-api-specs\web-api\slack_web_openapi_v2.json" Link="TestData\slack_web_openapi_v2.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\slack-api-specs\web-api\slack_web_openapi_v2.json')" />
   </ItemGroup>
 </Project>
