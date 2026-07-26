@@ -1,0 +1,311 @@
+// <copyright file="NativeBuildWorkerTests.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Security.Cryptography;
+using System.Text;
+using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using Corvus.Text.Json.Arazzo.Execution;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Aot.Tests;
+
+/// <summary>
+/// The build worker's state machine (ADR 0055): it claims the oldest queued job, builds and signs the version's native
+/// binary via the build service, persists the attached binary back into the version, and completes the job Ready; a compile
+/// failure, a bad executor input, or a vanished version is recorded as a Failed completion (not thrown) so one bad job does
+/// not stall the worker; and a re-enqueue (a rebuild) mid-build supersedes the completion, leaving the fresh Queued job for
+/// the next claim. A real in-memory job store exercises the claim/complete concurrency; a fake catalog feeds the signed
+/// package and records the persist-back; a fake builder stands in for the container compile.
+/// </summary>
+[TestClass]
+public sealed class NativeBuildWorkerTests
+{
+    // A real managed assembly (the Aot assembly itself) stands in for the signed executor.dll, so the assembler can read
+    // its assembly name from valid PE metadata; the fake builder never compiles it.
+    private static readonly byte[] ExecutorAssembly = File.ReadAllBytes(typeof(WorkflowAotBuildService).Assembly.Location);
+
+    private static readonly byte[] Workflow = Encoding.UTF8.GetBytes(
+        """{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"flow-v1","steps":[]}]}""");
+
+    private static readonly byte[] Native = [0x7F, (byte)'E', (byte)'L', (byte)'F', 1, 2, 3];
+
+    // The content hash of the test version, which the executor manifest's packageHash equals (the executor is built from
+    // that exact content). Binding the native attestation to it is what the deploy check enforces.
+    private static readonly string PackageHash = CatalogPackage.HashCanonical(WorkflowPackage.Pack(Workflow, []));
+
+    [TestMethod]
+    public async Task Builds_signs_persists_and_marks_the_job_ready()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        TrustStoreExecutorPackageVerifier verifier = TrustStore(("release-2026", key));
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ilc ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(verifier, Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Claimed.ShouldBeTrue();
+        result.WasSuperseded.ShouldBeFalse();
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Ready);
+        result.FailureReason.ShouldBeNull();
+
+        // The job is Ready in the store.
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Ready");
+        job.RootElement.ClaimedByOrNull.ShouldBe("worker-1");
+        job.RootElement.CompletedAtValue.ShouldNotBeNull();
+
+        // The worker persisted the version's package back once, and the persisted package carries the signed native binary
+        // that a deploy verifies against the trust store (the worker built from the signed IL and signed the output).
+        catalog.UpdateCalls.ShouldBe(1);
+        catalog.Persisted.ShouldNotBeNull();
+        WorkflowPackage.TryReadNativeArtifact(catalog.Persisted!.Value, "linux-x64", out ReadOnlyMemory<byte> attached).ShouldBeTrue();
+        attached.ToArray().ShouldBe(Native);
+        NativeArtifactAttestation attestation = WorkflowAotBuildService.VerifyNativeArtifact(catalog.Persisted.Value, "linux-x64", verifier);
+        attestation.NativeDigest.ShouldBe(NativeArtifactAttestation.ComputeDigest(Native));
+    }
+
+    [TestMethod]
+    public async Task Returns_idle_when_no_job_is_queued()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var jobs = new InMemoryNativeBuildJobStore();
+        var catalog = new FakeCatalog(await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly))));
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Claimed.ShouldBeFalse();
+        result.Outcome.ShouldBeNull();
+        catalog.GetPackageCalls.ShouldBe(0);
+        builder.BuildCalls.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_native_AOT_compile_failure_marks_the_job_failed_with_the_log()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Failure("error IL3050: reflection is not AOT-safe"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
+        result.FailureReason.ShouldNotBeNull().ShouldContain("IL3050");
+
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Failed");
+        job.RootElement.FailureReasonOrNull.ShouldNotBeNull().ShouldContain("IL3050");
+
+        // A failed build is not persisted back into the version.
+        catalog.UpdateCalls.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_bad_executor_input_marks_the_job_failed()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+        // A package whose executor is unsigned: the build service refuses it (WorkflowAotBuildException), which the worker
+        // records as a Failed completion rather than letting it escape and orphan the job in Building.
+        byte[] unsigned = WorkflowPackage.Pack(
+            Workflow, [], executor: ExecutorAssembly, executorManifest: Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(unsigned);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
+        result.FailureReason.ShouldNotBeNull().ShouldContain("unsigned");
+
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Failed");
+        builder.BuildCalls.ShouldBe(0);
+        catalog.UpdateCalls.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_vanished_version_marks_the_job_failed()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+
+        // The version was deleted between enqueue and claim: the catalog has no package.
+        var catalog = new FakeCatalog(package: null);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
+        result.FailureReason.ShouldNotBeNull().ShouldContain("no longer exists");
+
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Failed");
+        builder.BuildCalls.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_re_enqueue_mid_build_supersedes_the_completion()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+
+        // The build re-enqueues the same target (a rebuild) while it runs, resetting the claimed job to Queued with a new
+        // etag; the worker's Ready completion then no longer matches and is abandoned.
+        var builder = new FakeBuilder(
+            AotBuildResult.Success(Native, "ok"),
+            beforeReturn: async () => await Enqueue(jobs, "checkout", 1, "production", "linux-x64"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+
+        result.Claimed.ShouldBeTrue();
+        result.WasSuperseded.ShouldBeTrue();
+        result.Outcome.ShouldBeNull();
+
+        // The job is back to Queued (the fresh re-enqueue), not Ready — the next claim rebuilds it.
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Queued");
+    }
+
+    [TestMethod]
+    public void Rejects_null_constructor_arguments()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var jobs = new InMemoryNativeBuildJobStore();
+        var catalog = new FakeCatalog(null);
+        var service = new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), new FakeBuilder(AotBuildResult.Success(Native, "ok")), Options());
+
+        Should.Throw<ArgumentNullException>(() => new NativeBuildWorker(null!, catalog, service));
+        Should.Throw<ArgumentNullException>(() => new NativeBuildWorker(jobs, null!, service));
+        Should.Throw<ArgumentNullException>(() => new NativeBuildWorker(jobs, catalog, null!));
+    }
+
+    private static async Task<string> Enqueue(InMemoryNativeBuildJobStore jobs, string baseWorkflowId, int versionNumber, string environment, string runtimeIdentifier)
+    {
+        using ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier);
+        using ParsedJsonDocument<NativeBuildJob> enqueued = await jobs.EnqueueAsync(draft.RootElement, "alice", CancellationToken.None);
+        return enqueued.RootElement.IdValue;
+    }
+
+    private static AotHostAppOptions Options()
+        => new() { RuntimePackageVersion = "5.0.0", FeedSources = [("local", "/tmp/feed")] };
+
+    private static string Digest(byte[] assembly) => "sha256:" + Convert.ToHexStringLower(SHA256.HashData(assembly));
+
+    private static byte[] Manifest(string assemblyDigest)
+        => Encoding.UTF8.GetBytes(
+            $$"""{"formatVersion":2,"targetFramework":"net10.0","packageHash":"{{PackageHash}}","assemblyDigest":"{{assemblyDigest}}","entryType":"X","workflowId":"flow-v1","durable":true,"engineVersion":"5.0.0"}""");
+
+    private static IExecutorPackageSigner Signer(ECDsa key, string keyId = "release-2026") => new EcdsaExecutorPackageSigner(key, keyId);
+
+    private static async Task<byte[]> SignedPackage(ECDsa signingKey, string keyId, byte[] manifest)
+    {
+        ExecutorPackageSignature signature = await new EcdsaExecutorPackageSigner(signingKey, keyId).SignAsync(manifest, CancellationToken.None);
+        return WorkflowPackage.Pack(
+            Workflow, [], executor: ExecutorAssembly, executorManifest: manifest, executorSignature: signature.ToUtf8());
+    }
+
+    // A trust store holding only the public half of each signing key (what the control plane's own verifier holds).
+    private static TrustStoreExecutorPackageVerifier TrustStore(params (string KeyId, ECDsa SigningKey)[] keys)
+    {
+        var trusted = new Dictionary<string, AsymmetricAlgorithm>(StringComparer.Ordinal);
+        foreach ((string keyId, ECDsa signingKey) in keys)
+        {
+            var publicKey = ECDsa.Create();
+            publicKey.ImportParameters(signingKey.ExportParameters(includePrivateParameters: false));
+            trusted[keyId] = publicKey;
+        }
+
+        return new TrustStoreExecutorPackageVerifier(trusted);
+    }
+
+    // A catalog stand-in that feeds a version's package (or none) and records the metadata-only persist-back the worker
+    // makes. Only GetPackageAsync and UpdatePackageAsync are exercised; the rest is not part of the worker's contract.
+    private sealed class FakeCatalog(ReadOnlyMemory<byte>? package) : IWorkflowCatalogStore
+    {
+        public int GetPackageCalls { get; private set; }
+
+        public int UpdateCalls { get; private set; }
+
+        public ReadOnlyMemory<byte>? Persisted { get; private set; }
+
+        public ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+        {
+            this.GetPackageCalls++;
+            return new ValueTask<ReadOnlyMemory<byte>?>(package);
+        }
+
+        public ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+        {
+            this.UpdateCalls++;
+            this.Persisted = updatedPackage;
+            return new ValueTask<bool>(package is not null);
+        }
+
+        public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public ValueTask DeleteManyAsync(IReadOnlyList<CatalogVersionRef> versions, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+    }
+
+    // Stands in for the container compile: returns a canned result, optionally running a callback first (to model a
+    // concurrent re-enqueue mid-build), and counts its invocations.
+    private sealed class FakeBuilder(AotBuildResult result, Func<Task>? beforeReturn = null) : IWorkflowAotBuilder
+    {
+        public int BuildCalls { get; private set; }
+
+        public async ValueTask<AotBuildResult> BuildAsync(AssembledHostApp hostApp, CancellationToken cancellationToken)
+        {
+            this.BuildCalls++;
+            if (beforeReturn is not null)
+            {
+                await beforeReturn().ConfigureAwait(false);
+            }
+
+            return result;
+        }
+    }
+}

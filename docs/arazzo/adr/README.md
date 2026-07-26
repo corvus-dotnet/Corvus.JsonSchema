@@ -72,6 +72,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0027](0027-runner-environment-binding.md) | Runner-to-environment binding, with the revocation fence in the store | Accepted |
 | [0028](superseded/0028-pluggable-execution-backends.md) | Pluggable execution backends and isolation models | Superseded by 0055 |
 | [0055](0055-serverless-backend-aot-from-signed-executor.md) | Serverless execution backend, AOT-compiled from the signed executor | Accepted |
+| [0056](0056-native-build-worker-lease-not-dead-letter.md) | The native-build worker claims under an advisory lease, and a failed build is terminal, not dead-lettered | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog
