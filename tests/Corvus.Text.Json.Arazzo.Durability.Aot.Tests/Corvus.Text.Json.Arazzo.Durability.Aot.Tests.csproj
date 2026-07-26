@@ -9,6 +9,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <!-- The integration test compiles a real workflow executor portable (ADR 0057). That needs the compilation context
+         preserved so the reference-assembly BCL is resolvable, exactly as a control-plane host that compiles executors does. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
     <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
   </PropertyGroup>
   <ItemGroup>

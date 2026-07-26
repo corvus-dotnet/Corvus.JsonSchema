@@ -80,12 +80,14 @@ public sealed class WorkflowAotBuildIntegrationTests
 
         string image = Environment.GetEnvironmentVariable("ARAZZO_AOT_IMAGE") ?? "arazzo-aot-builder:net10";
 
-        // 1. Build a real durable executor IL (as catalog-add would).
-        WorkflowExecutorArtifact? executor = new WorkflowExecutorProvider(durable: true).BuildExecutor(
+        // 1. Build a real durable executor IL (as catalog-add would). Capture the provider's progress so a build failure
+        // surfaces its reason rather than a bare null.
+        var buildLog = new List<string>();
+        WorkflowExecutorArtifact? executor = new WorkflowExecutorProvider(durable: true, progress: buildLog.Add).BuildExecutor(
             Encoding.UTF8.GetBytes(WorkflowJson),
             [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))],
             "integration-hash");
-        executor.ShouldNotBeNull();
+        executor.ShouldNotBeNull($"the executor did not build. Provider progress:\n{string.Join("\n", buildLog)}");
 
         // 2. Assemble the host-app around the signed executor IL for the Linux target.
         AssembledHostApp hostApp = new AotHostAppAssembler().Assemble(
