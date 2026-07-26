@@ -28,6 +28,8 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
+    <!-- The native-build end-to-end proof drives the build worker (and, opt-in, the real container AOT builder). -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Aot\Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
   </ItemGroup>
