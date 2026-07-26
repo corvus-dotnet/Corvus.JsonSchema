@@ -22,13 +22,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 public class ServerlessRunExecutionBackendTests
 {
     private static readonly Uri FunctionUrl = new("https://fn.example/invoke");
+    private static readonly Uri CheckpointBaseUrl = new("https://runner.example/");
 
     [TestMethod]
     public async Task Advances_a_run_by_posting_its_id_and_environment_and_returns_the_reported_outcome()
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl);
+        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         WorkflowRunResultKind kind = await backend.AdvanceAsync(run, default);
@@ -39,6 +40,9 @@ public class ServerlessRunExecutionBackendTests
         handler.LastUrl.ShouldBe("https://fn.example/invoke");
         handler.LastBody.ShouldContain("run-1");
         handler.LastBody.ShouldContain("production");
+
+        // Model B: the invocation advertises the checkpoint base URL the function checkpoints back to (§6b).
+        handler.LastBody.ShouldContain("https://runner.example/");
     }
 
     [TestMethod]
@@ -46,7 +50,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Faulted"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl);
+        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Faulted);
@@ -59,7 +63,7 @@ public class ServerlessRunExecutionBackendTests
         // run). The checkpoint is authoritative, so the informational return is a benign Suspended, not a made-up terminal.
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":null}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl);
+        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
@@ -70,7 +74,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.InternalServerError, null);
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl);
+        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         // A 5xx from the function throws; the dispatcher never released the lease on a completed advance, so its
@@ -82,7 +86,7 @@ public class ServerlessRunExecutionBackendTests
     public void Advertises_isolated_isolation_and_warms_nothing()
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}"""));
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl);
+        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
 
         backend.IsolationModel.ShouldBe(RunIsolationModel.Isolated);
 
@@ -95,8 +99,9 @@ public class ServerlessRunExecutionBackendTests
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, null));
 
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, _ => FunctionUrl));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, _ => FunctionUrl, CheckpointBaseUrl));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, _ => FunctionUrl, null!));
     }
 
     private static WorkflowRun NewRun(string runId, string workflowId, string environment)

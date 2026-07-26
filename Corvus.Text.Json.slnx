@@ -166,6 +166,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Directories.Okta/Corvus.Text.Json.Arazzo.Directories.Okta.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Directories.Google/Corvus.Text.Json.Arazzo.Directories.Google.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless/Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.MySql/Corvus.Text.Json.Arazzo.Durability.MySql.csproj" />

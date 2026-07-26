@@ -9,33 +9,40 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// The runner-side serverless <see cref="IRunExecutionBackend"/> (ADR 0028): it advances a run by invoking the
 /// serverless function baked for the run's (environment, version) over HTTP, rather than loading and running the
-/// executor in-process. Because a run is a durable checkpoint in the shared store, the invocation carries only the
-/// run id and environment; the function-side <see cref="ServerlessWorkflowRunHost"/> restores the run, advances it,
-/// and checkpoints it back. This is the dispatch-and-invoke counterpart to that host, and the out-of-process peer of
-/// the in-process <see cref="HostedWorkflowResumer"/>.
+/// executor in-process. Because a run is a durable checkpoint in the shared store, the invocation carries only the run
+/// id, its environment, and the checkpoint base URL the function calls back to; the function-side
+/// <see cref="ServerlessWorkflowRunHost"/> restores the run, advances it, and checkpoints it back to that URL. This is
+/// the dispatch-and-invoke counterpart to that host, and the out-of-process peer of the in-process
+/// <see cref="HostedWorkflowResumer"/>.
 /// </summary>
 /// <remarks>
 /// Leasing is unchanged: the dispatcher holds the run's lease across <see cref="AdvanceAsync"/>, so this backend does
 /// not lease. A failed invocation throws, which leaves the run claimable, so the dispatcher's lease and retry
 /// re-claim and re-invoke it — the same recovery an in-process advance failure gets. The returned kind is
 /// informational only (every resume delegate call site ignores it; the checkpoint the function wrote is
-/// authoritative). It lives in the control-plane server rather than the durable core because it is an HTTP transport,
-/// and Durability is deliberately transport-free.
+/// authoritative). The checkpoint base URL it advertises names <em>this</em> deployment's checkpoint surface (§6b),
+/// whose per-run coordinator holds the run's write-sequence and etag while the function's fire-and-forget saves land,
+/// so a run checkpoints back to the runner that dispatched it. It lives in the control-plane server rather than the
+/// durable core because it is an HTTP transport, and Durability is deliberately transport-free.
 /// </remarks>
 public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
 {
     private readonly HttpClient client;
     private readonly Func<WorkflowRun, Uri> functionUrl;
+    private readonly string checkpointBaseUrl;
 
     /// <summary>Initializes a new instance of the <see cref="ServerlessRunExecutionBackend"/> class.</summary>
     /// <param name="client">The HTTP client the function is invoked through; its auth and timeout are the deployment's concern.</param>
     /// <param name="functionUrl">Resolves the URL of the serverless function baked for a run's (environment, version). The mapping from environment and version to URL comes from deployment and the advertise-and-match step (Phase 2).</param>
-    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, Uri> functionUrl)
+    /// <param name="checkpointBaseUrl">The base URL of this deployment's checkpoint surface (§6b) the invoked function checkpoints back to; the function posts <c>runs/{id}/checkpoint</c> relative to it.</param>
+    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, Uri> functionUrl, Uri checkpointBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(functionUrl);
+        ArgumentNullException.ThrowIfNull(checkpointBaseUrl);
         this.client = client;
         this.functionUrl = functionUrl;
+        this.checkpointBaseUrl = checkpointBaseUrl.ToString();
     }
 
     /// <inheritdoc/>
@@ -52,8 +59,8 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
 
         Uri url = this.functionUrl(run);
         byte[] body = PersistedJson.ToArray(
-            (RunId: run.Id.Value, Environment: run.Environment),
-            static (Utf8JsonWriter writer, in (string RunId, string? Environment) s) =>
+            (RunId: run.Id.Value, Environment: run.Environment, CheckpointUrl: this.checkpointBaseUrl),
+            static (Utf8JsonWriter writer, in (string RunId, string? Environment, string CheckpointUrl) s) =>
             {
                 writer.WriteStartObject();
                 writer.WriteString("runId"u8, s.RunId);
@@ -62,6 +69,7 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
                     writer.WriteString("environment"u8, s.Environment);
                 }
 
+                writer.WriteString("checkpointUrl"u8, s.CheckpointUrl);
                 writer.WriteEndObject();
             });
 

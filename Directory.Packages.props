@@ -3,6 +3,10 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <!-- AWS Lambda custom-runtime host (Native-AOT serverless execution backend, #876): the reflection-free
+         RuntimeSupport bootstrap + the ILambdaContext contract. Restored from nuget.org (the * source mapping). -->
+    <PackageVersion Include="Amazon.Lambda.Core" Version="2.6.0" />
+    <PackageVersion Include="Amazon.Lambda.RuntimeSupport" Version="1.13.1" />
     <!-- OAuth2/OIDC client for the control-plane CLI's interactive login -->
     <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
     <!-- External directory adapters (IPrincipalDirectory, design §16.5.4): pure-managed cross-platform LDAP -->
