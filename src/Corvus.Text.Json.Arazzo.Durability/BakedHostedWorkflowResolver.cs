@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The baked <see cref="IHostedWorkflowResolver"/>: a serverless AOT host is published per (environment, version)
 /// with exactly one workflow executor compiled in, so it resolves every run to that single, already-in-hand
 /// <see cref="IHostedWorkflow"/> with no loader, no dynamic IL, and nothing to warm. This is the AOT counterpart
-/// to <see cref="LoaderHostedWorkflowResolver"/>, which loads a version's IL executor on demand (ADR 0028).
+/// to <see cref="LoaderHostedWorkflowResolver"/>, which loads a version's IL executor on demand (ADR 0055).
 /// </summary>
 public sealed class BakedHostedWorkflowResolver : IHostedWorkflowResolver
 {

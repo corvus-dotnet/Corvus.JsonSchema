@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// Resolves a run to the <see cref="IHostedWorkflow"/> that executes it, independent of the execution backend. The
 /// in-process backend resolves the version's IL executor through the <see cref="Execution.WorkflowExecutorLoader"/>
 /// (<see cref="LoaderHostedWorkflowResolver"/>); an AOT serverless backend resolves a baked, compile-time executor.
-/// Either way <see cref="HostedWorkflowExecution.RunAsync"/> runs what is resolved (ADR 0028), so the resolution
+/// Either way <see cref="HostedWorkflowExecution.RunAsync"/> runs what is resolved (ADR 0055), so the resolution
 /// choice is the only thing an isolation model changes about execution.
 /// </summary>
 public interface IHostedWorkflowResolver

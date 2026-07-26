@@ -31,7 +31,7 @@ public readonly record struct WorkflowTransports(IReadOnlyDictionary<string, IAp
 public delegate WorkflowTransports WorkflowTransportBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags);
 
 /// <summary>
-/// The in-process, collectible-load-context <see cref="IRunExecutionBackend"/> (ADR 0028). It resolves a run's
+/// The in-process, collectible-load-context <see cref="IRunExecutionBackend"/> (ADR 0055). It resolves a run's
 /// workflow to a loaded <see cref="IHostedWorkflow"/> through a <see cref="LoaderHostedWorkflowResolver"/> (the
 /// catalog fetch + <see cref="WorkflowExecutorLoader"/> load, cached), then runs it through
 /// <see cref="HostedWorkflowExecution"/>. Its <see cref="AdvanceAsync"/> is the <see cref="WorkflowResumer"/> the

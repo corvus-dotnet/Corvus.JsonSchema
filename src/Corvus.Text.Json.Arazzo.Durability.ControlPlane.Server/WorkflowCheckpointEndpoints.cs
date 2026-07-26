@@ -13,7 +13,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
 /// Maps the runner's serverless checkpoint surface — <c>GET</c>/<c>POST /runs/{runId}/checkpoint</c> — onto an
-/// endpoint route builder (ADR 0028). A baked, Native-AOT function advances a run out of process and loads and saves
+/// endpoint route builder (ADR 0055). A baked, Native-AOT function advances a run out of process and loads and saves
 /// its checkpoint here rather than binding a store SDK; the <see cref="WorkflowCheckpointCoordinator"/> terminates
 /// those calls into the real store. This is the server half of the wire contract the function-side
 /// <c>HttpWorkflowStateStore</c> speaks: octet-stream checkpoint bytes, an <c>ETag</c>, and the

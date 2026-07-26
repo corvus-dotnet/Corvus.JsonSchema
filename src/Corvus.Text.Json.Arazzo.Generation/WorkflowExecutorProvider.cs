@@ -21,12 +21,18 @@ namespace Corvus.Text.Json.Arazzo.Generation;
 /// </summary>
 public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
 {
-    /// <summary>The manifest format version this provider emits.</summary>
-    public const int ManifestFormatVersion = 1;
+    /// <summary>The manifest format version this provider emits. Version 2 added <c>engineVersion</c>.</summary>
+    public const int ManifestFormatVersion = 2;
 
     private const string TargetFramework = "net10.0";
     private const string RootNamespace = "Corvus.Workflows.Generated";
     private const string WorkflowsNamespaceSuffix = "Workflows";
+
+    // The Corvus runtime (engine) version the executor IL is compiled against. It is recorded in the manifest so the
+    // AOT builder (ADR 0055) can reference a matching runtime when it native-compiles the signed assembly, and refuse
+    // a mismatch rather than mislink. IWorkflowRun's assembly is the runtime the generated executor binds to, the same
+    // value the control plane reports as its engine version.
+    private static readonly string EngineVersion = typeof(IWorkflowRun).Assembly.GetName().Version?.ToString() ?? "unknown";
 
     private readonly bool durable;
     private readonly Action<string>? progress;
@@ -66,7 +72,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
 
     /// <summary>
     /// Builds the generated C# source for a workflow executor without compiling it: the compile-time input an AOT
-    /// execution backend bakes into a native host (ADR 0028). Returns <see langword="null"/> when the package is
+    /// execution backend bakes into a native host (ADR 0055). Returns <see langword="null"/> when the package is
     /// not runnable, on the same rules as <see cref="BuildExecutor"/>.
     /// </summary>
     /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
@@ -267,6 +273,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             writer.WriteStartObject();
             writer.WriteString("assemblyDigest"u8, assemblyDigest);
             writer.WriteBoolean("durable"u8, durable);
+            writer.WriteString("engineVersion"u8, EngineVersion);
             writer.WriteString("entryType"u8, entryType);
             writer.WriteNumber("formatVersion"u8, ManifestFormatVersion);
             writer.WriteString("packageHash"u8, packageHash);

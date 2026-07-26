@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Serverless;
 /// <summary>
 /// The vendor-neutral core a serverless entry shim (an AWS Lambda handler or an Azure Functions HTTP trigger) invokes:
 /// it turns one HTTP invocation — <c>{ "runId", "environment", "checkpointUrl" }</c> — into a run advance, checkpointing
-/// back to the dispatching runner named by <c>checkpointUrl</c> (ADR 0028). The workflow resolver and transport binder
+/// back to the dispatching runner named by <c>checkpointUrl</c> (ADR 0055). The workflow resolver and transport binder
 /// are deploy-fixed (the function is baked per (environment, version)); only the checkpoint store's address is
 /// per-invocation, so a run's checkpoints reach the specific runner that dispatched it and holds its lease.
 /// </summary>

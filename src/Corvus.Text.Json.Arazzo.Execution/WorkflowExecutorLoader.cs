@@ -53,8 +53,8 @@ public sealed class WorkflowExecutorLoader : IDisposable
     /// <param name="signatureUtf8">The detached package signature as UTF-8 JSON (the package's <c>metadata/executor-manifest.sig</c>), or empty when the package is unsigned; required and verified when this loader was given a verifier.</param>
     /// <returns>The loaded, verified, cached workflow.</returns>
     /// <exception cref="WorkflowExecutorLoadException">Integrity or signature verification failed, the target framework is unsupported, or the entry type could not be activated.</exception>
-    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Loads a workflow executor from IL at runtime through a collectible AssemblyLoadContext (the in-process dynamic-load path). AOT execution backends do not use this; they bake the executor at build time (ADR 0028).")]
-    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Loads a workflow executor from IL at runtime through a collectible AssemblyLoadContext (the in-process dynamic-load path). AOT execution backends do not use this; they bake the executor at build time (ADR 0028).")]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Loads a workflow executor from IL at runtime through a collectible AssemblyLoadContext (the in-process dynamic-load path). AOT execution backends do not use this; they bake the executor at build time (ADR 0055).")]
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Loads a workflow executor from IL at runtime through a collectible AssemblyLoadContext (the in-process dynamic-load path). AOT execution backends do not use this; they bake the executor at build time (ADR 0055).")]
     public LoadedWorkflow Load(
         string baseWorkflowId,
         int versionNumber,

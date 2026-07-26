@@ -7,7 +7,7 @@ using Corvus.Text.Json.Arazzo;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// A pluggable execution backend a runner dispatches a run to (ADR 0028). It advances a run (start or resume,
+/// A pluggable execution backend a runner dispatches a run to (ADR 0055). It advances a run (start or resume,
 /// uniform) under a chosen <see cref="IsolationModel"/>, and can be asked to pre-warm a version. The in-process
 /// collectible-load-context backend (<see cref="HostedWorkflowResumer"/>) is the shipping default; out-of-process
 /// backends (serverless, container, micro-guest) plug in behind the same seam without touching dispatch, leases,

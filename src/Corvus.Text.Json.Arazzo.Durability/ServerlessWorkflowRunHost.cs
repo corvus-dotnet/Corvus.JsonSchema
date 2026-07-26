@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The serverless function-side host: the reusable core a vendor entry shim (an AWS Lambda handler or an Azure
 /// Functions HTTP trigger) invokes with a run id. Because a run is a durable checkpoint in the shared store, the host
 /// restores the run from the store, resolves the workflow that runs it, and advances it through the shared
-/// <see cref="HostedWorkflowExecution"/> core (ADR 0028). The environment is fixed at deploy time and selects the
+/// <see cref="HostedWorkflowExecution"/> core (ADR 0055). The environment is fixed at deploy time and selects the
 /// <em>resolver</em> and <em>transport binder</em> baked into the function; the <em>store</em> is per-invocation —
 /// the shim points it at the checkpoint URL the invocation carries, so a run checkpoints back to the specific runner
 /// that dispatched it and holds its lease (§6b Model B).

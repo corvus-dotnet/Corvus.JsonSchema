@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Serverless;
 /// The serverless function-side <see cref="IWorkflowCheckpointStore"/>: it proxies a run's checkpoint load and
 /// save to the dispatching runner's HTTP checkpoint surface, so a baked, Native-AOT-compiled function binds no
 /// database SDK and holds no store credentials. The runner — a normal host — terminates these into the real store
-/// under the lease it already holds, re-projecting the index from the opaque bytes (ADR 0028).
+/// under the lease it already holds, re-projecting the index from the opaque bytes (ADR 0055).
 /// </summary>
 /// <remarks>
 /// <para>

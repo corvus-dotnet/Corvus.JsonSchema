@@ -284,7 +284,7 @@ public static class ControlPlaneEndpointExtensions
             identityHandler,
             gateScopes ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
 
-        // The serverless checkpoint surface (ADR 0028): a baked, Native-AOT function advances a run out of process and
+        // The serverless checkpoint surface (ADR 0055): a baked, Native-AOT function advances a run out of process and
         // loads/saves its checkpoint here rather than binding a store SDK. It is not part of the generated OpenAPI
         // surface (raw octet-stream bytes + an ETag + a write-sequence header, not a JSON model), so it is hand-mapped.
         // Present only when a state store is wired; authenticated in every mode but Open (a dedicated scope is deferred

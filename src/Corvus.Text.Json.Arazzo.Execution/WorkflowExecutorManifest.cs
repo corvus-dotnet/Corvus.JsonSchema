@@ -16,6 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Execution;
 /// <param name="EntryType">The fully-qualified name of the <c>IHostedWorkflow</c> adapter type to activate.</param>
 /// <param name="WorkflowId">The versioned workflow id the assembly runs.</param>
 /// <param name="Durable">Whether the executor was built in durable (checkpoint &amp; resume) mode.</param>
+/// <param name="EngineVersion">The Corvus runtime version the executor IL was compiled against (manifest format 2+), so the AOT builder (ADR 0055) references a matching runtime and refuses a mismatch. <see langword="null"/> for a manifest written before format 2.</param>
 /// <param name="Sources">The <c>sourceDescriptions</c> the version declares (name + type), so a host can read the required bindings from the manifest and fail fast at load if one is missing (design §3.3). Empty when the manifest declares none.</param>
 public readonly record struct WorkflowExecutorManifest(
     int FormatVersion,
@@ -25,6 +26,7 @@ public readonly record struct WorkflowExecutorManifest(
     string EntryType,
     string WorkflowId,
     bool Durable,
+    string? EngineVersion,
     IReadOnlyList<WorkflowManifestSource> Sources)
 {
     /// <summary>Parses an executor manifest from its UTF-8 JSON form.</summary>
@@ -48,6 +50,7 @@ public readonly record struct WorkflowExecutorManifest(
             EntryType: ReadString(root, "entryType"u8),
             WorkflowId: ReadString(root, "workflowId"u8),
             Durable: root.TryGetProperty("durable"u8, out JsonElement durable) && durable.ValueKind == JsonValueKind.True,
+            EngineVersion: ReadOptionalString(root, "engineVersion"u8),
             Sources: ReadSources(root));
     }
 
@@ -77,6 +80,13 @@ public readonly record struct WorkflowExecutorManifest(
 
         return list;
     }
+
+    // Optional string: absent or non-string reads as null rather than throwing, so a manifest written before the field
+    // was added (an older format version) still parses.
+    private static string? ReadOptionalString(JsonElement root, ReadOnlySpan<byte> name)
+        => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } s
+            ? s
+            : null;
 
     private static string ReadString(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } s

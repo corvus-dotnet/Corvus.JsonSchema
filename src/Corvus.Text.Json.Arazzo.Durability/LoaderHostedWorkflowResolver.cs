@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The in-process <see cref="IHostedWorkflowResolver"/>: resolves a run's <see cref="WorkflowRun.WorkflowId"/> to a
 /// loaded <see cref="IHostedWorkflow"/> by fetching the version's compiled executor + manifest from the catalog and
 /// loading it through a <see cref="WorkflowExecutorLoader"/> on first use (cached thereafter). This is the
-/// collectible-load-context, dynamic-IL path; an AOT execution backend uses a baked resolver instead (ADR 0028).
+/// collectible-load-context, dynamic-IL path; an AOT execution backend uses a baked resolver instead (ADR 0055).
 /// </summary>
 public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
 {
@@ -57,8 +57,8 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         throw new InvalidOperationException($"The workflow id '{workflowId}' is not a versioned id of the form '{{base}}-v{{n}}'.");
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0028).")]
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0028).")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
     private async ValueTask<IHostedWorkflow> ResolveByIdAsync(string workflowId, CancellationToken cancellationToken)
     {
         (string baseWorkflowId, int versionNumber) = ParseVersionedId(workflowId);

@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Generation;
 
 /// <summary>
 /// The generated C# source for a workflow executor, before compilation. This is the compile-time input an AOT
-/// execution backend bakes into a per-version native host (ADR 0028): the in-process backend compiles it to IL at
+/// execution backend bakes into a per-version native host (ADR 0055): the in-process backend compiles it to IL at
 /// catalog-add time, while an AOT build assembles these files into a host-app project and compiles them natively.
 /// </summary>
 /// <param name="WorkflowId">The workflow id the executor runs.</param>

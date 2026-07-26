@@ -123,6 +123,10 @@ public class WorkflowExecutorProviderTests
 
         root.GetProperty("formatVersion"u8).GetInt32().ShouldBe(WorkflowExecutorProvider.ManifestFormatVersion);
         root.GetProperty("targetFramework"u8).GetString().ShouldBe("net10.0");
+
+        // Manifest format 2 records the engine version the executor was compiled against, so the AOT builder (ADR 0055)
+        // can pin a matching runtime; it is the version of the runtime assembly the generated executor binds to.
+        root.GetProperty("engineVersion"u8).GetString().ShouldBe(typeof(IWorkflowRun).Assembly.GetName().Version?.ToString());
         root.GetProperty("packageHash"u8).GetString().ShouldBe(packageHash);
         root.GetProperty("workflowId"u8).GetString().ShouldBe("adopt-v1");
         root.GetProperty("durable"u8).GetBoolean().ShouldBeTrue();

@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The isolation a run executes under: a comparable strength axis where <see cref="Isolated"/> is stronger than
 /// <see cref="InProcess"/>. It is distinct from the execution backend (the mechanism). An out-of-process serverless
 /// function, container, or micro-guest all provide <see cref="Isolated"/>, differing in weight, not in the
-/// guarantee. See <see cref="IRunExecutionBackend"/> and ADR 0028.
+/// guarantee. See <see cref="IRunExecutionBackend"/> and ADR 0055.
 /// </summary>
 public enum RunIsolationModel
 {

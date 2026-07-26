@@ -13,7 +13,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// outcome, and disposes the transports. This is the execution step shared by every backend once the executor is in
 /// hand, independent of how it was obtained. The in-process resumers resolve it through the loader; an AOT serverless
 /// backend resolves it as a compile-time (baked) executor. Neither the binding nor the run loop depends on that
-/// choice, so this core is AOT-safe and reused unchanged (ADR 0028).
+/// choice, so this core is AOT-safe and reused unchanged (ADR 0055).
 /// </summary>
 public static class HostedWorkflowExecution
 {

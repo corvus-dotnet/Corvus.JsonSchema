@@ -9,7 +9,7 @@ using Amazon.Lambda.RuntimeSupport;
 namespace Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda;
 
 /// <summary>
-/// The AWS Lambda entry shim for a baked Arazzo serverless function (ADR 0028): a reflection-free custom-runtime host
+/// The AWS Lambda entry shim for a baked Arazzo serverless function (ADR 0055): a reflection-free custom-runtime host
 /// that turns each Lambda invocation stream into a call on the vendor-neutral <see cref="ServerlessInvocationHandler"/>.
 /// The per-version function's generated entry point calls <see cref="RunAsync"/> with the executor baked into it and
 /// the transport binder for its deployed environment; everything JSON is handled by Corvus.Text.Json, so no Amazon

@@ -7,7 +7,7 @@ using Corvus.Text.Json;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// The runner-side serverless <see cref="IRunExecutionBackend"/> (ADR 0028): it advances a run by invoking the
+/// The runner-side serverless <see cref="IRunExecutionBackend"/> (ADR 0055): it advances a run by invoking the
 /// serverless function baked for the run's (environment, version) over HTTP, rather than loading and running the
 /// executor in-process. Because a run is a durable checkpoint in the shared store, the invocation carries only the run
 /// id, its environment, and the checkpoint base URL the function calls back to; the function-side
