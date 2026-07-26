@@ -453,7 +453,7 @@ public sealed class OpenApi20CodeGenerator
         foreach (OperationInfo op in operations)
         {
             files.Add(this.EmitRequestStruct(op));
-            files.Add(this.EmitResponseStruct(op, operations));
+            files.Add(this.EmitResponseStruct(op));
         }
 
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
@@ -766,44 +766,6 @@ public sealed class OpenApi20CodeGenerator
                     yield return new OperationRef(pathProp, operation, method, resolved);
                 }
             }
-        }
-    }
-
-    private static IEnumerable<(OpenApiDocument.Operation Operation, OperationMethod Method)> EnumerateOperationsWithMethod(OpenApiDocument.PathItem resolved)
-    {
-        if (resolved.Get.IsNotUndefined())
-        {
-            yield return (resolved.Get, OperationMethod.Get);
-        }
-
-        if (resolved.Put.IsNotUndefined())
-        {
-            yield return (resolved.Put, OperationMethod.Put);
-        }
-
-        if (resolved.Post.IsNotUndefined())
-        {
-            yield return (resolved.Post, OperationMethod.Post);
-        }
-
-        if (resolved.Delete.IsNotUndefined())
-        {
-            yield return (resolved.Delete, OperationMethod.Delete);
-        }
-
-        if (resolved.Options.IsNotUndefined())
-        {
-            yield return (resolved.Options, OperationMethod.Options);
-        }
-
-        if (resolved.Head.IsNotUndefined())
-        {
-            yield return (resolved.Head, OperationMethod.Head);
-        }
-
-        if (resolved.Patch.IsNotUndefined())
-        {
-            yield return (resolved.Patch, OperationMethod.Patch);
         }
     }
 
@@ -2141,8 +2103,6 @@ public sealed class OpenApi20CodeGenerator
             .Where(p => p.Location == ParameterLocation.Query).ToArray();
         ParameterInfo[] headerParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Header).ToArray();
-        ParameterInfo[] cookieParams = op.Parameters
-            .Where(p => p.Location == ParameterLocation.Cookie).ToArray();
 
         // Collect distinct response media types for the Accept header.
         string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
@@ -2171,8 +2131,10 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine($"public static bool HasHeaderParameters => {(headerParams.Length > 0 || hasAcceptHeader ? "true" : "false")};");
         w.WriteLine();
+
+        // OpenAPI 2.0 has no cookie parameter location.
         w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine($"public static bool HasCookieParameters => {(cookieParams.Length > 0 ? "true" : "false")};");
+        w.WriteLine("public static bool HasCookieParameters => false;");
 
         w.WriteLine();
         this.EmitWriteResolvedPath(w, op.PathTemplate, pathParams);
@@ -2181,7 +2143,7 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
         this.EmitWriteHeaders(w, headerParams, acceptMediaTypes);
         w.WriteLine();
-        this.EmitWriteCookies(w, cookieParams);
+        EmitWriteCookies(w);
         w.WriteLine();
         this.EmitValidate(w, op.Parameters);
 
@@ -2415,45 +2377,15 @@ public sealed class OpenApi20CodeGenerator
         w.CloseBrace();
     }
 
-    private void EmitWriteCookies(IndentedWriter w, ParameterInfo[] cookieParams)
+    private static void EmitWriteCookies(IndentedWriter w)
     {
+        // OpenAPI 2.0 has no cookie parameter location; the interface member
+        // always throws.
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public int WriteCookies(IBufferWriter<byte> writer)");
         w.OpenBrace();
-
-        if (cookieParams.Length == 0)
-        {
-            w.WriteLine("ThrowHelper.ThrowNoCookieParameters();");
-            w.WriteLine("return default;");
-            w.CloseBrace();
-            return;
-        }
-
-        w.WriteLine("int totalWritten = 0;");
-        w.WriteLine("bool first = true;");
-        w.WriteLine();
-
-        foreach (ParameterInfo param in cookieParams)
-        {
-            string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
-            ParameterSerializationKind kind = param.SerializationKind;
-
-            if (!param.IsRequired)
-            {
-                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
-                w.OpenBrace();
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
-                w.CloseBrace();
-                w.WriteLine();
-            }
-            else
-            {
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
-                w.WriteLine();
-            }
-        }
-
-        w.WriteLine("return totalWritten;");
+        w.WriteLine("ThrowHelper.ThrowNoCookieParameters();");
+        w.WriteLine("return default;");
         w.CloseBrace();
     }
 
@@ -2653,7 +2585,7 @@ public sealed class OpenApi20CodeGenerator
     }
 
     // ── Response struct emission ────────────────────────────────────────
-    private GeneratedFile EmitResponseStruct(OperationInfo op, List<OperationInfo> allOperations)
+    private GeneratedFile EmitResponseStruct(OperationInfo op)
     {
         string structName = $"{op.MethodName}Response";
         IndentedWriter w = new();
@@ -2680,27 +2612,8 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("private IDisposable? parsedDocument;");
         }
 
-        // Determine if this operation has any resolvable links.
-        bool hasLinks = op.Responses.Any(r => r.Links.Length > 0);
-        if (hasLinks)
-        {
-            w.WriteLine("private IApiTransport? transport;");
-        }
-
-        // Determine if any link uses $request.* expressions, requiring the source request.
-        bool hasRequestExprLinks = hasLinks && HasRequestBasedExpressions(op);
-        bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op);
-        if (hasRequestExprLinks)
-        {
-            w.WriteLine($"internal {op.MethodName}Request sourceRequest;");
-            w.WriteLine("internal JsonWorkspace sourceWorkspace;");
-
-            if (hasRequestBodyExprLinks && op.RequestBody is not null)
-            {
-                string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-                w.WriteLine($"internal {bodyTypeName} sourceBody;");
-            }
-        }
+        // OpenAPI 2.0 does not define links, so no transport/source-request capture
+        // fields are needed (unlike the 3.x response structs).
 
         // Emit private backing fields for text/plain responses.
         foreach (ResponseInfo resp in op.Responses)
@@ -2765,7 +2678,7 @@ public sealed class OpenApi20CodeGenerator
         this.EmitResponseHeaderProperties(w, op.Responses);
 
         w.WriteLine();
-        this.EmitCreateAsync(w, structName, op.Responses, hasLinks);
+        this.EmitCreateAsync(w, structName, op.Responses);
 
         // Collect the specific (non-default) status codes for TryGetDefault.
         List<string> specificStatusCodes = [];
@@ -2843,11 +2756,6 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("this.parsedDocument?.Dispose();");
         }
 
-        if (hasRequestExprLinks)
-        {
-            w.WriteLine("this.sourceWorkspace?.Dispose();");
-        }
-
         // Return rented text/plain buffers.
         foreach (ResponseInfo resp in op.Responses)
         {
@@ -2871,359 +2779,15 @@ public sealed class OpenApi20CodeGenerator
             CodeEmitHelpers.EmitReadStreamToRentedBufferHelper(w);
         }
 
-        // Emit link accessor struct and property when the operation has links.
-        if (hasLinks)
-        {
-            this.EmitLinksAccessor(w, structName, op, allOperations);
-        }
-
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
     }
 
-    private void EmitLinksAccessor(
-        IndentedWriter w,
-        string responseStructName,
-        OperationInfo op,
-        List<OperationInfo> allOperations)
-    {
-        // Collect all links across all responses for this operation.
-        List<LinkInfo> allLinks = [];
-        foreach (ResponseInfo resp in op.Responses)
-        {
-            allLinks.AddRange(resp.Links);
-        }
-
-        if (allLinks.Count == 0)
-        {
-            return;
-        }
-
-        string accessorName = $"{responseStructName}LinksAccessor";
-
-        // Emit the Links property on the response struct.
-        w.WriteLine();
-        w.WriteLine("/// <summary>");
-        w.WriteLine("/// Gets the links accessor for navigating to related operations.");
-        w.WriteLine("/// </summary>");
-        w.WriteLine($"public {accessorName} Links => new(this);");
-
-        // Emit the nested LinksAccessor readonly struct.
-        w.WriteLine();
-        w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Provides navigable link methods for the <see cref=\"{responseStructName}\"/>.");
-        w.WriteLine("/// </summary>");
-        w.WriteLine($"public readonly struct {accessorName}");
-        w.OpenBrace();
-
-        w.WriteLine($"private readonly {responseStructName} response;");
-        w.WriteLine();
-
-        w.WriteLine($"internal {accessorName}({responseStructName} response)");
-        w.OpenBrace();
-        w.WriteLine("this.response = response;");
-        w.CloseBrace();
-
-        // Emit one method per link.
-        foreach (LinkInfo link in allLinks)
-        {
-            this.EmitLinkMethod(w, link, op, allOperations);
-        }
-
-        w.CloseBrace();
-    }
-
-    private void EmitLinkMethod(
-        IndentedWriter w,
-        LinkInfo link,
-        OperationInfo sourceOp,
-        List<OperationInfo> allOperations)
-    {
-        // Resolve the target operation by operationId.
-        OperationInfo? targetOp = null;
-        foreach (OperationInfo candidate in allOperations)
-        {
-            if (string.Equals(candidate.OperationId, link.TargetOperationId, StringComparison.Ordinal))
-            {
-                targetOp = candidate;
-                break;
-            }
-        }
-
-        if (targetOp is null)
-        {
-            // Target operation not found (may have been excluded by filters).
-            w.WriteLine();
-            w.WriteLine($"// Link '{link.LinkName}' targets operationId '{link.TargetOperationId}' which is not available.");
-            return;
-        }
-
-        OperationInfo target = targetOp.Value;
-        string targetResponseType = $"{target.MethodName}Response";
-        string targetRequestType = $"{target.MethodName}Request";
-
-        // Determine which target parameters are NOT satisfied by link bindings.
-        HashSet<string> boundParams = new(StringComparer.OrdinalIgnoreCase);
-        foreach (LinkParameterBinding binding in link.ParameterBindings)
-        {
-            boundParams.Add(binding.ParameterName);
-        }
-
-        // Build the method signature with unsatisfied required parameters.
-        List<ParameterInfo> unsatisfiedParams = [];
-        foreach (ParameterInfo param in target.Parameters)
-        {
-            if (!boundParams.Contains(param.Name))
-            {
-                unsatisfiedParams.Add(param);
-            }
-        }
-
-        w.WriteLine();
-        if (link.Description is not null)
-        {
-            w.WriteLine("/// <summary>");
-            w.WriteLine($"/// {link.Description}");
-            w.WriteLine("/// </summary>");
-        }
-
-        // Build parameter list for the method.
-        string methodName = $"{CodeEmitHelpers.SanitizeIdentifier(link.LinkName)}Async";
-        w.Write($"public ValueTask<{targetResponseType}> {methodName}(");
-
-        bool first = true;
-        foreach (ParameterInfo param in unsatisfiedParams)
-        {
-            if (!first)
-            {
-                w.Write(", ");
-            }
-
-            string paramSourceTypeName = this.GetParameterSourceTypeName(param);
-            string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
-
-            if (param.IsRequired)
-            {
-                w.Write($"{paramSourceTypeName} {paramName}");
-            }
-            else
-            {
-                w.Write($"{paramSourceTypeName} {paramName} = default");
-            }
-
-            first = false;
-        }
-
-        if (!first)
-        {
-            w.Write(", ");
-        }
-
-        w.Write("CancellationToken cancellationToken = default)");
-        w.WriteLine();
-        w.OpenBrace();
-
-        // Emit the body: build the request, set bound parameters from runtime expressions.
-        bool hasUnsatisfiedParams = unsatisfiedParams.Count > 0;
-        if (hasUnsatisfiedParams)
-        {
-            w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-        }
-
-        w.WriteLine($"{targetRequestType} request = new()");
-        w.OpenBrace();
-
-        // Set parameters from link bindings.
-        foreach (LinkParameterBinding binding in link.ParameterBindings)
-        {
-            // Find the target parameter.
-            ParameterInfo? targetParam = null;
-            foreach (ParameterInfo p in target.Parameters)
-            {
-                if (string.Equals(p.Name, binding.ParameterName, StringComparison.OrdinalIgnoreCase))
-                {
-                    targetParam = p;
-                    break;
-                }
-            }
-
-            if (targetParam is null)
-            {
-                continue;
-            }
-
-            string paramTypeName = this.GetParameterTypeName(targetParam.Value);
-            string propertyName = CodeEmitHelpers.SanitizeIdentifier(binding.ParameterName);
-
-            RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
-            string valueExpression = EmitRuntimeExpressionValue(expr, paramTypeName, sourceOp, link);
-
-            w.WriteLine($"{propertyName} = {valueExpression},");
-        }
-
-        // Set unsatisfied parameters from method arguments.
-        foreach (ParameterInfo param in unsatisfiedParams)
-        {
-            string propertyName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
-            string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
-            string typeName = this.GetParameterTypeName(param);
-
-            if (param.IsRequired)
-            {
-                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
-            }
-            else
-            {
-                string undefinedFallback = CodeEmitHelpers.FormatDefaultValueExpression(
-                    typeName, param.DefaultValueJson, param.DefaultValueKind);
-                w.WriteLine(
-                    $"{propertyName} = {paramName}.IsUndefined ? {undefinedFallback} : " +
-                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
-            }
-        }
-
-        w.CloseBraceWithSemicolon();
-        w.WriteLine();
-
-        // Invoke the transport.
-        w.WriteLine($"return this.response.transport!.SendAsync<{targetRequestType}, {targetResponseType}>(in request, cancellationToken);");
-
-        w.CloseBrace();
-    }
-
-    private static string EmitRuntimeExpressionValue(
-        RuntimeExpression expr,
-        string targetTypeName,
-        OperationInfo sourceOp,
-        LinkInfo link)
-    {
-        switch (expr.Kind)
-        {
-            case RuntimeExpressionKind.ResponseBody:
-                // Navigate the response body via typed property accessors.
-                if (expr.JsonPointer?.StartsWith('/') == true)
-                {
-                    string bodyAccessorName = CodeEmitHelpers.StatusCodeToName(link.SourceStatusCode);
-                    string access = $"this.response.{bodyAccessorName}Body";
-                    access = AppendJsonPointerNavigation(access, expr.JsonPointer);
-                    return $"{targetTypeName}.From({access})";
-                }
-
-                return $"default({targetTypeName})";
-
-            case RuntimeExpressionKind.ResponseHeader:
-                return $"{targetTypeName}.ParseValue(\"{expr.Name}\")";
-
-            case RuntimeExpressionKind.RequestPath:
-            case RuntimeExpressionKind.RequestQuery:
-            case RuntimeExpressionKind.RequestHeader:
-                // Access the stored source request property.
-                string reqPropertyName = CodeEmitHelpers.SanitizeIdentifier(expr.Name!);
-                return $"{targetTypeName}.From(this.response.sourceRequest.{reqPropertyName})";
-
-            case RuntimeExpressionKind.RequestBody:
-                // Navigate the stored source body via typed property accessors.
-                if (expr.JsonPointer?.StartsWith('/') == true)
-                {
-                    string bodyAccess = "this.response.sourceBody";
-                    bodyAccess = AppendJsonPointerNavigation(bodyAccess, expr.JsonPointer);
-                    return $"{targetTypeName}.From({bodyAccess})";
-                }
-
-                return $"{targetTypeName}.From(this.response.sourceBody)";
-
-            case RuntimeExpressionKind.Literal:
-                return $"{targetTypeName}.ParseValue(\"\"\"{expr.LiteralValue}\"\"\")";
-
-            default:
-                // $url, $method require additional infrastructure.
-                return $"default({targetTypeName}) /* unsupported: {expr.Kind} expression */";
-        }
-    }
-
-    /// <summary>
-    /// Appends property/indexer access expressions for each segment of a JSON Pointer.
-    /// Numeric segments produce array indexer syntax (e.g., [0]), non-numeric segments
-    /// produce PascalCase property access (e.g., .PropertyName).
-    /// If the pointer references a path that doesn't exist on the generated type, the
-    /// emitted code will fail to compile — this is intentional, as it surfaces spec
-    /// authoring errors at build time.
-    /// </summary>
-    private static string AppendJsonPointerNavigation(string baseExpression, string jsonPointer)
-    {
-        string pointerPath = jsonPointer.Substring(1); // Remove leading '/'
-        string[] segments = pointerPath.Split('/');
-
-        string access = baseExpression;
-        foreach (string rawSegment in segments)
-        {
-            // JSON Pointer escaping: ~1 → /, ~0 → ~
-            string segment = rawSegment.Replace("~1", "/").Replace("~0", "~");
-
-            if (int.TryParse(segment, out int index))
-            {
-                // Numeric segment → array indexer
-                access += $"[{index}]";
-            }
-            else
-            {
-                // Named segment → typed property accessor
-                access += $".{CodeEmitHelpers.SanitizeIdentifier(segment)}";
-            }
-        }
-
-        return access;
-    }
-
-    private static bool HasRequestBasedExpressions(OperationInfo op)
-    {
-        foreach (ResponseInfo resp in op.Responses)
-        {
-            foreach (LinkInfo link in resp.Links)
-            {
-                foreach (LinkParameterBinding binding in link.ParameterBindings)
-                {
-                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
-                    if (expr.Kind is RuntimeExpressionKind.RequestPath
-                        or RuntimeExpressionKind.RequestQuery
-                        or RuntimeExpressionKind.RequestHeader
-                        or RuntimeExpressionKind.RequestBody)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static bool HasRequestBodyExpressions(OperationInfo op)
-    {
-        foreach (ResponseInfo resp in op.Responses)
-        {
-            foreach (LinkInfo link in resp.Links)
-            {
-                foreach (LinkParameterBinding binding in link.ParameterBindings)
-                {
-                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
-                    if (expr.Kind is RuntimeExpressionKind.RequestBody)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
     private void EmitCreateAsync(
         IndentedWriter w,
         string structName,
-        ResponseInfo[] responses,
-        bool hasLinks)
+        ResponseInfo[] responses)
     {
         // Determine if any response needs async processing (JSON parsing is async; streams and text are not).
         bool hasAnyJsonBody = responses.Any(
@@ -3256,12 +2820,6 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine($"{structName} response = default;");
         w.WriteLine("response.StatusCode = statusCode;");
         w.WriteLine("response.owner = owner;");
-
-        if (hasLinks)
-        {
-            w.WriteLine("response.transport = transport;");
-        }
-
         w.WriteLine();
 
         this.EmitReadResponseHeaders(w, responses);
@@ -3866,69 +3424,15 @@ public sealed class OpenApi20CodeGenerator
 
     private static void EmitCreateServerUri(IndentedWriter w, ServerInfo serverInfo)
     {
-        if (serverInfo.Variables.Length == 0)
-        {
-            // No variables — simple parameterless factory.
-            string resolvedUrl = serverInfo.UrlTemplate;
-            w.WriteLine("/// <summary>");
-            w.WriteLine("/// Creates a <see cref=\"Uri\"/> for the default server.");
-            w.WriteLine("/// </summary>");
-            w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
-            w.WriteLine(
-                $"public static Uri CreateServerUri() => new({CodeEmitHelpers.FormatStringLiteral(resolvedUrl)});");
-        }
-        else
-        {
-            // Variables — emit parameters with defaults.
-            w.WriteLine("/// <summary>");
-            w.WriteLine("/// Creates a <see cref=\"Uri\"/> for the server, substituting");
-            w.WriteLine("/// any server variables with the provided or default values.");
-            w.WriteLine("/// </summary>");
-
-            foreach (ServerVariableInfo v in serverInfo.Variables)
-            {
-                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
-                w.Write($"/// <param name=\"{paramName}\">The {v.Name} variable.");
-                if (v.AllowedValues is not null)
-                {
-                    w.Write($" Allowed: {string.Join(", ", v.AllowedValues)}.");
-                }
-
-                w.WriteLine("</param>");
-            }
-
-            w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
-
-            // Build the parameter list.
-            w.Write("public static Uri CreateServerUri(");
-            for (int i = 0; i < serverInfo.Variables.Length; i++)
-            {
-                if (i > 0)
-                {
-                    w.Write(", ");
-                }
-
-                ServerVariableInfo v = serverInfo.Variables[i];
-                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
-                w.Write($"string {paramName} = {CodeEmitHelpers.FormatStringLiteral(v.DefaultValue)}");
-            }
-
-            w.Write(") => new($\"");
-
-            // Build the interpolated string from the URL template, replacing
-            // {varName} with {paramName}.
-            string template = serverInfo.UrlTemplate;
-            foreach (ServerVariableInfo v in serverInfo.Variables)
-            {
-                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
-                template = template.Replace(
-                    $"{{{v.Name}}}", $"{{{paramName}}}", StringComparison.Ordinal);
-            }
-
-            w.Write(SymbolDisplay.FormatLiteral(template, false));
-            w.WriteLine("\");");
-        }
-
+        // OpenAPI 2.0 servers come from host/basePath/schemes — no server variables,
+        // so the factory is always parameterless.
+        string resolvedUrl = serverInfo.UrlTemplate;
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Creates a <see cref=\"Uri\"/> for the default server.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
+        w.WriteLine(
+            $"public static Uri CreateServerUri() => new({CodeEmitHelpers.FormatStringLiteral(resolvedUrl)});");
         w.WriteLine();
     }
 
@@ -4057,9 +3561,6 @@ public sealed class OpenApi20CodeGenerator
         bool hasBody = op.RequestBody is not null;
         bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
 
-        bool hasRequestExprLinks = HasRequestBasedExpressions(op);
-        bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op)
-            && hasBody && !isRawStreamBody;
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
         bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
@@ -4159,21 +3660,10 @@ public sealed class OpenApi20CodeGenerator
             string streamContentType = op.RequestBody!.Value.Content
                 .First(c => CodeEmitHelpers.IsRawStreamMediaType(c.MediaType)).MediaType;
 
-            if (hasRequestExprLinks)
-            {
-                w.WriteLine(
-                    $"return CaptureRequestAsync(" +
-                    $"SendWithStreamBodyAsyncCore<{requestName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, body, " +
-                    $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken), request, workspace);");
-            }
-            else
-            {
-                w.WriteLine(
-                    $"return SendWithStreamBodyAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, body, " +
-                    $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
-            }
+            w.WriteLine(
+                $"return SendWithStreamBodyAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, body, " +
+                $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
         }
         else if (isFormUrlEncodedBody)
         {
@@ -4181,43 +3671,19 @@ public sealed class OpenApi20CodeGenerator
 
             if (formEncodingsFieldName.Length > 0)
             {
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
-                }
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
+                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
             }
             else
             {
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
-                }
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
+                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
             }
         }
         else if (isMultipartBody)
@@ -4240,23 +3706,11 @@ public sealed class OpenApi20CodeGenerator
                 string encodingsArg = multipartEncodingsFieldName.Length > 0 ? $", {multipartEncodingsFieldName}" : ", null";
                 string serializeAsyncArgs = $"bodyValue, stream, boundary{encodingsArg}, binaryParts, ct";
 
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
-                }
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
             }
             else
             {
@@ -4265,87 +3719,24 @@ public sealed class OpenApi20CodeGenerator
                     ? $"bodyValue, stream, boundary, {multipartEncodingsFieldName}"
                     : "bodyValue, stream, boundary";
 
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
-                }
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
             }
         }
         else if (hasBody)
         {
-            if (hasRequestExprLinks)
-            {
-                w.WriteLine(
-                    $"return CaptureRequestAsync(" +
-                    $"SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, bodyValue, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-            }
-            else
-            {
-                w.WriteLine(
-                    $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                    $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
-            }
+            w.WriteLine(
+                $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
+                $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
         }
         else
         {
-            if (hasRequestExprLinks)
-            {
-                w.WriteLine(
-                    $"return CaptureRequestAsync(" +
-                    $"SendAsyncCore<{requestName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, responseValidationMode, cancellationToken), request, workspace);");
-            }
-            else
-            {
-                w.WriteLine(
-                    $"return SendAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
-            }
-        }
-
-        if (hasRequestExprLinks)
-        {
-            w.WriteLine();
-
-            if (hasRequestBodyExprLinks)
-            {
-                w.WriteLine(
-                    $"static async ValueTask<{responseName}> CaptureRequestAsync(" +
-                    $"ValueTask<{responseName}> sendTask, {requestName} request, {bodyTypeName} bodyValue, JsonWorkspace workspace)");
-                w.OpenBrace();
-                w.WriteLine($"{responseName} response = await sendTask;");
-                w.WriteLine("response.sourceRequest = request;");
-                w.WriteLine("response.sourceBody = bodyValue;");
-                w.WriteLine("response.sourceWorkspace = workspace;");
-                w.WriteLine("return response;");
-                w.CloseBrace();
-            }
-            else
-            {
-                w.WriteLine(
-                    $"static async ValueTask<{responseName}> CaptureRequestAsync(" +
-                    $"ValueTask<{responseName}> sendTask, {requestName} request, JsonWorkspace workspace)");
-                w.OpenBrace();
-                w.WriteLine($"{responseName} response = await sendTask;");
-                w.WriteLine("response.sourceRequest = request;");
-                w.WriteLine("response.sourceWorkspace = workspace;");
-                w.WriteLine("return response;");
-                w.CloseBrace();
-            }
+            w.WriteLine(
+                $"return SendAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
         }
 
         w.CloseBrace();
@@ -5949,10 +5340,6 @@ public sealed class OpenApi20CodeGenerator
             case ParameterLocation.Header:
                 EmitServerHeaderParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
                 break;
-
-            case ParameterLocation.Cookie:
-                EmitServerCookieParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
-                break;
         }
     }
 
@@ -5964,36 +5351,10 @@ public sealed class OpenApi20CodeGenerator
         string paramNameLiteral,
         string? elementTypeName)
     {
+        // OpenAPI 2.0 path parameters are always simple-style (no matrix/label prefixes).
         w.WriteLine($"{typeName} {fieldName}Value = default;");
         w.WriteLine($"if (context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}Raw)");
         w.OpenBrace();
-
-        switch (param.Style)
-        {
-            case ParameterStyle.Matrix:
-                w.WriteLine($"if ({fieldName}Raw.StartsWith(\";\"))");
-                w.OpenBrace();
-                if (param.SerializationKind is ParameterSerializationKind.Array or ParameterSerializationKind.Object && param.Explode)
-                {
-                    w.WriteLine($"{fieldName}Raw = {fieldName}Raw.Substring(1);");
-                }
-                else
-                {
-                    w.WriteLine($"int eqIdx = {fieldName}Raw.IndexOf('=');");
-                    w.WriteLine($"{fieldName}Raw = eqIdx >= 0 ? {fieldName}Raw.Substring(eqIdx + 1) : {fieldName}Raw.Substring(1);");
-                }
-
-                w.CloseBrace();
-                break;
-
-            case ParameterStyle.Label:
-                w.WriteLine($"if ({fieldName}Raw.StartsWith(\".\"))");
-                w.OpenBrace();
-                w.WriteLine($"{fieldName}Raw = {fieldName}Raw.Substring(1);");
-                w.CloseBrace();
-                break;
-        }
-
         EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
         w.CloseBrace();
     }
@@ -6006,12 +5367,6 @@ public sealed class OpenApi20CodeGenerator
         string paramNameLiteral,
         string? elementTypeName)
     {
-        if (param.Style == ParameterStyle.DeepObject && param.SerializationKind == ParameterSerializationKind.Object)
-        {
-            EmitServerDeepObjectQueryParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
-            return;
-        }
-
         if (param.Style == ParameterStyle.Form && param.Explode && param.SerializationKind == ParameterSerializationKind.Array)
         {
             w.WriteLine($"{typeName} {fieldName}Value = default;");
@@ -6030,35 +5385,6 @@ public sealed class OpenApi20CodeGenerator
         w.CloseBrace();
     }
 
-    private static void EmitServerDeepObjectQueryParsing(
-        IndentedWriter w,
-        ParameterInfo param,
-        string fieldName,
-        string typeName,
-        string paramNameLiteral,
-        string? elementTypeName)
-    {
-        w.WriteLine($"{typeName} {fieldName}Value = default;");
-        w.WriteLine($"string {fieldName}Prefix = \"{paramNameLiteral}[\";");
-        w.Write($"{fieldName}Value = {typeName}.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, ({fieldName}Prefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref {typeName}.Builder objectBuilder) =>");
-        w.WriteLine();
-        w.OpenBrace();
-        w.WriteLine("foreach (string queryKey in ctx.query.Keys)");
-        w.OpenBrace();
-        w.WriteLine("if (!queryKey.StartsWith(ctx.prefix)) continue;");
-        w.WriteLine("int closeBracket = queryKey.IndexOf(']', ctx.prefix.Length);");
-        w.WriteLine("if (closeBracket < 0) continue;");
-        w.WriteLine("System.ReadOnlySpan<char> key = queryKey.AsSpan().Slice(ctx.prefix.Length, closeBracket - ctx.prefix.Length);");
-        w.WriteLine("if (ctx.query.TryGetValue(queryKey, out var vals) && vals.Count > 0 && vals[0] is string v)");
-        w.OpenBrace();
-        string valueSourceExpr = CodeEmitHelpers.GetElementSourceExpressionPublic(param.ElementSerializationKind, "v.AsSpan()");
-        w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
-        w.CloseBrace();
-        w.CloseBrace();
-        w.CloseBraceNoNewline();
-        w.WriteLine(").RootElement;");
-    }
-
     private static void EmitServerHeaderParameterParsing(
         IndentedWriter w,
         ParameterInfo param,
@@ -6075,22 +5401,6 @@ public sealed class OpenApi20CodeGenerator
         w.CloseBrace();
     }
 
-    private static void EmitServerCookieParameterParsing(
-        IndentedWriter w,
-        ParameterInfo param,
-        string fieldName,
-        string typeName,
-        string paramNameLiteral,
-        string? elementTypeName)
-    {
-        w.WriteLine($"{typeName} {fieldName}Value = default;");
-        w.WriteLine($"if (context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null)");
-        w.OpenBrace();
-        w.WriteLine($"string {fieldName}Raw = {fieldName}CookieVal;");
-        EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
-        w.CloseBrace();
-    }
-
     private static void EmitServerValueParse(
         IndentedWriter w,
         ParameterInfo param,
@@ -6102,17 +5412,18 @@ public sealed class OpenApi20CodeGenerator
     {
         if (param.SerializationKind == ParameterSerializationKind.Array)
         {
-            string separator = GetArraySeparator(param.Style, param.Explode);
+            string separator = GetArraySeparator(param.Style);
             CodeEmitHelpers.EmitArrayParseFromSeparatedString(
                 w, $"{fieldName}Value", rawVar, workspaceExpr, typeName,
                 separator, param.ElementSerializationKind, param.HasDeepNesting, elementTypeName);
         }
         else if (param.SerializationKind == ParameterSerializationKind.Object)
         {
-            string separator = GetObjectSeparator(param.Style, param.Explode);
+            // Lenient handling for illegal-but-seen `type: object` non-body parameters;
+            // 2.0 collectionFormat styles always join object members with commas.
             CodeEmitHelpers.EmitObjectParseFromSeparatedString(
                 w, $"{fieldName}Value", rawVar, workspaceExpr, typeName,
-                separator, param.Explode, param.ElementSerializationKind, param.HasDeepNesting, elementTypeName);
+                "','", param.Explode, param.ElementSerializationKind, param.HasDeepNesting, elementTypeName);
         }
         else
         {
@@ -6120,22 +5431,14 @@ public sealed class OpenApi20CodeGenerator
         }
     }
 
-    private static string GetArraySeparator(ParameterStyle style, bool explode) =>
+    private static string GetArraySeparator(ParameterStyle style) =>
         style switch
         {
-            ParameterStyle.Label when explode => "'.'",
-            ParameterStyle.Matrix when explode => "';'",
+            // 2.0 collectionFormat lowering only produces Form/Simple (csv),
+            // SpaceDelimited (ssv), PipeDelimited (pipes), and TabDelimited (tsv).
             ParameterStyle.PipeDelimited => "'|'",
             ParameterStyle.SpaceDelimited => "' '",
             ParameterStyle.TabDelimited => "'\\t'",
-            _ => "','",
-        };
-
-    private static string GetObjectSeparator(ParameterStyle style, bool explode) =>
-        style switch
-        {
-            ParameterStyle.Label when explode => "'.'",
-            ParameterStyle.Matrix when explode => "';'",
             _ => "','",
         };
 
