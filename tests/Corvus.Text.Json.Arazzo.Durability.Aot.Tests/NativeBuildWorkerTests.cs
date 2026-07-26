@@ -7,6 +7,7 @@ using System.Text;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Execution;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -192,6 +193,38 @@ public sealed class NativeBuildWorkerTests
     }
 
     [TestMethod]
+    public async Task The_hosted_loop_drains_every_queued_job()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        // Three queued jobs for distinct targets; the loop should build all three in one drain, not one per poll interval.
+        var jobs = new InMemoryNativeBuildJobStore();
+        await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        await Enqueue(jobs, "checkout", 1, "production", "linux-arm64");
+        await Enqueue(jobs, "checkout", 1, "production", "win-x64");
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+        var options = new NativeBuildWorkerOptions { WorkerId = "worker-1", PollInterval = TimeSpan.FromMilliseconds(20) };
+        var service = new NativeBuildBackgroundService(worker, options, NullLogger<NativeBuildBackgroundService>.Instance);
+
+        await service.StartAsync(CancellationToken.None);
+        try
+        {
+            await WaitForReadyCountAsync(jobs, 3, TimeSpan.FromSeconds(10));
+        }
+        finally
+        {
+            await service.StopAsync(CancellationToken.None);
+        }
+
+        using PooledDocumentList<NativeBuildJob> ready = await jobs.ListAsync(new NativeBuildJobQuery(NativeBuildJobStatus.Ready), CancellationToken.None);
+        ready.Count.ShouldBe(3);
+        builder.BuildCalls.ShouldBe(3);
+    }
+
+    [TestMethod]
     public void Rejects_null_constructor_arguments()
     {
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -209,6 +242,25 @@ public sealed class NativeBuildWorkerTests
         using ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier);
         using ParsedJsonDocument<NativeBuildJob> enqueued = await jobs.EnqueueAsync(draft.RootElement, "alice", CancellationToken.None);
         return enqueued.RootElement.IdValue;
+    }
+
+    private static async Task WaitForReadyCountAsync(InMemoryNativeBuildJobStore jobs, int expected, TimeSpan timeout)
+    {
+        DateTime deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            using (PooledDocumentList<NativeBuildJob> ready = await jobs.ListAsync(new NativeBuildJobQuery(NativeBuildJobStatus.Ready), CancellationToken.None))
+            {
+                if (ready.Count >= expected)
+                {
+                    return;
+                }
+            }
+
+            await Task.Delay(25);
+        }
+
+        throw new TimeoutException($"Fewer than {expected} jobs reached the Ready state within {timeout}.");
     }
 
     private static AotHostAppOptions Options()

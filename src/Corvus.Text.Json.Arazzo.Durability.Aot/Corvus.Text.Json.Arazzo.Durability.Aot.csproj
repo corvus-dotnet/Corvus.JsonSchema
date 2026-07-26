@@ -26,6 +26,13 @@
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The build worker is a hostable background service (the poll/drain loop that drives NativeBuildWorker), so this
+         build-tooling library carries the hosting and logging abstractions a host wires it into. These are abstractions
+         only; the concrete host provides the runtime. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- System.Reflection.Metadata / PortableExecutable (used to read the signed executor's assembly name) are in the
          net10 shared framework, so no package reference is needed. -->
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
