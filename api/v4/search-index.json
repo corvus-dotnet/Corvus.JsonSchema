@@ -30954,6 +30954,97 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.html",
+    "Title": "RequiredArrayOnlyKeyword",
+    "Description": "The required keyword, active only when its value is an array of property names.",
+    "Keywords": "RequiredArrayOnlyKeyword class Corvus.Json.CodeGeneration.Keywords",
+    "Body": "The required keyword, active only when its value is an array of property names.\nOpenAPI 2.0 (Swagger) Parameter Objects reuse the `required` name for a boolean field, and the code generator points the type builder directly at Parameter Objects. Under [`RequiredKeyword`](/api/v4/corvus-json-codegeneration-keywords-requiredkeyword.html) the mere presence of the keyword implies [`Object`](/api/v4/corvus-json-codegeneration-coretypes.object.html) and object enumeration, giving parameter-as-schema types a spurious object face. This variant is inert unless the value is the draft-04 array form.\nInstance: Gets an instance of the [`RequiredArrayOnlyKeyword`](/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.html) keyword."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.instance.html",
+    "Title": "RequiredArrayOnlyKeyword.Instance",
+    "Description": "Gets an instance of the [`RequiredArrayOnlyKeyword`](/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.html) keyword.",
+    "Keywords": "RequiredArrayOnlyKeyword Instance property Corvus.Json.CodeGeneration.Keywords",
+    "Body": "Gets an instance of the [`RequiredArrayOnlyKeyword`](/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.html) keyword."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.keyword.html",
+    "Title": "RequiredArrayOnlyKeyword.Keyword",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword Keyword property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.keywordutf8.html",
+    "Title": "RequiredArrayOnlyKeyword.KeywordUtf8",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword KeywordUtf8 property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.propertyproviderpriority.html",
+    "Title": "RequiredArrayOnlyKeyword.PropertyProviderPriority",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword PropertyProviderPriority property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.validationpriority.html",
+    "Title": "RequiredArrayOnlyKeyword.ValidationPriority",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword ValidationPriority property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.canreduce.html",
+    "Title": "RequiredArrayOnlyKeyword.CanReduce",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword CanReduce method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.collectproperties.html",
+    "Title": "RequiredArrayOnlyKeyword.CollectProperties",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword CollectProperties method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.impliescoretypes.html",
+    "Title": "RequiredArrayOnlyKeyword.ImpliesCoreTypes",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword ImpliesCoreTypes method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.requirespropertycount.html",
+    "Title": "RequiredArrayOnlyKeyword.RequiresPropertyCount",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword RequiresPropertyCount method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.requirespropertyevaluationtracking.html",
+    "Title": "RequiredArrayOnlyKeyword.RequiresPropertyEvaluationTracking",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword RequiresPropertyEvaluationTracking method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.requiresobjectenumeration.html",
+    "Title": "RequiredArrayOnlyKeyword.RequiresObjectEnumeration",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword RequiresObjectEnumeration method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredarrayonlykeyword.getpathmodifier.html",
+    "Title": "RequiredArrayOnlyKeyword.GetPathModifier",
+    "Description": "",
+    "Keywords": "RequiredArrayOnlyKeyword GetPathModifier method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-requiredkeyword.html",
     "Title": "RequiredKeyword",
     "Description": "The required keyword.",
@@ -31700,6 +31791,62 @@
     "Title": "WriteOnlyKeyword.AnnotationPreconditionsMet",
     "Description": "",
     "Keywords": "WriteOnlyKeyword AnnotationPreconditionsMet method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.html",
+    "Title": "XNullableKeyword",
+    "Description": "The x-nullable keyword.",
+    "Keywords": "XNullableKeyword class Corvus.Json.CodeGeneration.Keywords",
+    "Body": "The x-nullable keyword.\nOpenAPI 2.0 (Swagger) has no standard way to admit null values; the `x-nullable` vendor extension is the widely-adopted pre-3.0 convention (equivalent to OpenAPI 3.0's `nullable`).\nInstance: Gets an instance of the [`XNullableKeyword`](/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.html) keyword."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.instance.html",
+    "Title": "XNullableKeyword.Instance",
+    "Description": "Gets an instance of the [`XNullableKeyword`](/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.html) keyword.",
+    "Keywords": "XNullableKeyword Instance property Corvus.Json.CodeGeneration.Keywords",
+    "Body": "Gets an instance of the [`XNullableKeyword`](/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.html) keyword."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.keyword.html",
+    "Title": "XNullableKeyword.Keyword",
+    "Description": "",
+    "Keywords": "XNullableKeyword Keyword property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.keywordutf8.html",
+    "Title": "XNullableKeyword.KeywordUtf8",
+    "Description": "",
+    "Keywords": "XNullableKeyword KeywordUtf8 property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.validationpriority.html",
+    "Title": "XNullableKeyword.ValidationPriority",
+    "Description": "",
+    "Keywords": "XNullableKeyword ValidationPriority property Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.impliescoretypes.html",
+    "Title": "XNullableKeyword.ImpliesCoreTypes",
+    "Description": "",
+    "Keywords": "XNullableKeyword ImpliesCoreTypes method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.canreduce.html",
+    "Title": "XNullableKeyword.CanReduce",
+    "Description": "",
+    "Keywords": "XNullableKeyword CanReduce method Corvus.Json.CodeGeneration.Keywords",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-keywords-xnullablekeyword.allowedcoretypes.html",
+    "Title": "XNullableKeyword.AllowedCoreTypes",
+    "Description": "",
+    "Keywords": "XNullableKeyword AllowedCoreTypes method Corvus.Json.CodeGeneration.Keywords",
     "Body": ""
   },
   {
