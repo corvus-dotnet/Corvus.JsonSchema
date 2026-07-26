@@ -422,6 +422,33 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+
+        // The Table entity is the authority for a version's existence (see AddCoreAsync) AND already carries the version's
+        // content hash, so verify the update against that stored hash — no extra package-blob download to re-canonicalize.
+        NullableResponse<TableEntity> existing = await this.catalog
+            .GetEntityIfExistsAsync<TableEntity>(baseWorkflowId, RowKey(versionNumber), cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        if (!existing.HasValue)
+        {
+            return false;
+        }
+
+        // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+        // content hash is refused so the version's identity never drifts.
+        CatalogPackage.EnsureContentHash(existing.Value!.GetString("Hash") ?? string.Empty, updatedPackage);
+
+        // Overwrite the package block blob in place; the metadata Table entity is untouched. Version mutations are
+        // control-plane-serialized, so a straightforward overwrite is sufficient.
+        await this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber))
+            .UploadAsync(BinaryData.FromBytes(updatedPackage), overwrite: true, cancellationToken)
+            .ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);

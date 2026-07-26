@@ -375,6 +375,32 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RedisKey key = VersionKey(baseWorkflowId, versionNumber);
+
+        // Read the metadata doc field (not the package field), so the update is verified against the version's STORED
+        // content hash without loading the package bytes. Only the package field is overwritten — the doc is untouched.
+        RedisValue doc = await this.database.HashGetAsync(key, DocField).ConfigureAwait(false);
+        if (doc.IsNull)
+        {
+            return false;
+        }
+
+        using (ParsedJsonDocument<CatalogVersion> versionDoc = ParsedJsonDocument<CatalogVersion>.Parse((byte[])doc!))
+        {
+            // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+            // content hash is refused so the version's identity never drifts.
+            CatalogPackage.EnsureContentHash((string)versionDoc.RootElement.Hash, updatedPackage);
+        }
+
+        // Version mutations are control-plane-serialized, so a straightforward field set is sufficient.
+        await this.database.HashSetAsync(key, PackageField, updatedPackage).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

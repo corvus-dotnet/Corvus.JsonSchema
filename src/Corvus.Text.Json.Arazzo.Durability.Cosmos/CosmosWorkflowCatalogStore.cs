@@ -515,6 +515,42 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        var partition = new PartitionKey(baseWorkflowId);
+
+        (CatalogDocument Document, string Etag)? read = await this.ReadOneAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (read is not { } found)
+        {
+            return false;
+        }
+
+        // Carry the document's projected metadata through unchanged and replace only the package. The single parse below
+        // serves both the stored-hash read and the rewrite, so the current package bytes are never decoded/re-canonicalized.
+        using ParsedJsonDocument<CatalogVersion> current = found.Document.ToVersion();
+
+        // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+        // content hash is refused so the version's identity never drifts — checked against the version's STORED hash.
+        CatalogPackage.EnsureContentHash((string)current.RootElement.Hash, updatedPackage);
+
+        // The etag guards the replace against a concurrent write; a NotFound means the version was deleted between the
+        // read and the replace. Version mutations are control-plane-serialized, so an etag-guarded replace is sufficient.
+        var options = new ItemRequestOptions { IfMatchEtag = found.Etag };
+        using var stream = CosmosJson.WriteToStream(
+            (Version: current.RootElement, Package: updatedPackage),
+            static (Utf8JsonWriter writer, in (CatalogVersion Version, ReadOnlyMemory<byte> Package) c) => CatalogDocument.WriteJson(writer, c.Version, c.Package));
+        using ResponseMessage response = await this.catalog.ReplaceItemStreamAsync(
+            stream, CatalogDocument.DocumentId(baseWorkflowId, versionNumber), partition, options, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         using ResponseMessage response = await this.catalog.DeleteItemStreamAsync(

@@ -345,6 +345,40 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        // Verify the update against the version's STORED content hash (an existing metadata column) rather than loading and
+        // re-canonicalizing the multi-MB package blob. The hash is immutable, so a blind verify-then-overwrite needs no
+        // transaction (last-writer-wins for an idempotent rebuild); only the Package blob is rewritten, never the columns.
+        string? storedHash;
+        await using (MySqlCommand select = connection.CreateCommand())
+        {
+            select.CommandText = "SELECT Hash FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            select.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+            select.Parameters.AddWithValue("@versionNumber", versionNumber);
+            storedHash = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as string;
+        }
+
+        if (storedHash is null)
+        {
+            return false;
+        }
+
+        // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+        // content hash is refused so the version's identity never drifts.
+        CatalogPackage.EnsureContentHash(storedHash, updatedPackage);
+
+        await using MySqlCommand update = connection.CreateCommand();
+        update.CommandText = "UPDATE CatalogVersions SET Package = @package WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+        update.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+        update.Parameters.AddWithValue("@versionNumber", versionNumber);
+        update.Parameters.AddWithValue("@package", updatedPackage);
+        return await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);

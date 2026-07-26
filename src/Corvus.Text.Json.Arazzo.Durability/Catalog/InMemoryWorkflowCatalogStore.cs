@@ -357,6 +357,28 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     }
 
     /// <inheritdoc/>
+    public ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (this.gate)
+        {
+            string key = SortKey(baseWorkflowId, versionNumber);
+            if (!this.versions.TryGetValue(key, out Stored stored))
+            {
+                return ValueTask.FromResult(false);
+            }
+
+            // The update may change only metadata (the native binaries and their attestations), so the canonical content
+            // must be unchanged; a differing content hash is refused so the version's identity never drifts. Check against
+            // the version's stored content hash rather than re-canonicalizing the stored package.
+            using ParsedJsonDocument<CatalogVersion> versionDoc = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
+            CatalogPackage.EnsureContentHash((string)versionDoc.RootElement.Hash, updatedPackage);
+            this.versions[key] = stored with { Package = updatedPackage.ToArray() };
+            return ValueTask.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

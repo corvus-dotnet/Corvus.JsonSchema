@@ -222,6 +222,28 @@ public static partial class CatalogPackage
     }
 
     /// <summary>
+    /// Verifies that <paramref name="updatedPackage"/> has the content hash <paramref name="expectedContentHash"/> — its
+    /// canonical content (workflow + sources) is what the version was added with — so a metadata-only update preserves the
+    /// version's identity. The shared guard behind <see cref="IWorkflowCatalogStore.UpdatePackageAsync"/> (ADR 0055): a
+    /// store checks the update against the content hash it already holds as metadata, so it neither loads nor
+    /// re-canonicalizes the stored package. Only metadata entries such as the native binaries and their attestations may
+    /// be added or replaced after a version is added.
+    /// </summary>
+    /// <param name="expectedContentHash">The version's stored content hash (its authoritative identity).</param>
+    /// <param name="updatedPackage">The proposed replacement package.</param>
+    /// <exception cref="InvalidOperationException">The updated package's content hash differs from the expected hash.</exception>
+    public static void EnsureContentHash(string expectedContentHash, ReadOnlyMemory<byte> updatedPackage)
+    {
+        ArgumentNullException.ThrowIfNull(expectedContentHash);
+        string updatedHash = HashCanonical(updatedPackage);
+        if (!string.Equals(expectedContentHash, updatedHash, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"The updated package's content hash '{updatedHash}' differs from the version's content hash '{expectedContentHash}'; a package update may change only metadata, not content.");
+        }
+    }
+
+    /// <summary>
     /// Validates a package archive locally: that it is well-formed (a workflow document with a workflow id), that
     /// the workflow id carries no <c>-vN</c> suffix, and that every non-<c>arazzo</c> <c>sourceDescriptions</c>
     /// entry has a matching source document. Also recomputes the content hash and projects the sources.

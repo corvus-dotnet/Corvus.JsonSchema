@@ -89,6 +89,21 @@ public interface IWorkflowCatalogStore
     /// <returns>The updated version as a pooled, disposable document (the caller owns it), or <see langword="null"/> if no such version exists.</returns>
     ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Replaces a version's stored package with a metadata-only update, preserving its content hash and identity. The
+    /// canonical content (workflow + sources) of <paramref name="updatedPackage"/> must be identical to the stored
+    /// version's; only metadata entries may differ. This is how post-add metadata artifacts (the Native-AOT binaries and
+    /// their signed attestations the build service attaches per runtime target, ADR 0055) are persisted back into the
+    /// otherwise-immutable version. An update whose content hash differs is refused, so a version's content never drifts.
+    /// </summary>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <param name="updatedPackage">The version's package with metadata entries added or replaced (its content unchanged).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if the version existed and was updated; <see langword="false"/> if no such version exists.</returns>
+    /// <exception cref="InvalidOperationException">The updated package's content hash differs from the stored version's, so it would change immutable content.</exception>
+    ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken);
+
     /// <summary>Deletes a single version. The caller is responsible for the referential-integrity check first.</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <param name="versionNumber">The version number.</param>

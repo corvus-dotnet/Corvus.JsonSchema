@@ -598,6 +598,35 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        // Project only the stored content hash (an existing metadata field) — never the multi-MB package binary — to verify
+        // the update against, rather than reading and re-canonicalizing the current package.
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", Id(baseWorkflowId, versionNumber));
+        BsonDocument? document = await this.versions.Find(filter)
+            .Project(Builders<BsonDocument>.Projection.Include("hash"))
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (document is null)
+        {
+            return false;
+        }
+
+        // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+        // content hash is refused so the version's identity never drifts.
+        CatalogPackage.EnsureContentHash(document["hash"].AsString, updatedPackage);
+
+        // Replace only the package binary; the projected metadata fields are untouched. Version mutations are
+        // control-plane-serialized, so a straightforward $set of the one field is sufficient.
+        byte[] packageBytes = MemoryMarshal.TryGetArray(updatedPackage, out ArraySegment<byte> segment)
+            && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+            ? array
+            : updatedPackage.ToArray();
+        var update = new BsonDocument("$set", new BsonDocument("package", new BsonBinaryData(packageBytes)));
+        UpdateResult result = await this.versions.UpdateOneAsync(filter, update, options: null, cancellationToken).ConfigureAwait(false);
+        return result.MatchedCount > 0;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", Id(baseWorkflowId, versionNumber));

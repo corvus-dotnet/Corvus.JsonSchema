@@ -142,6 +142,55 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task UpdatePackage_persists_a_metadata_only_change_leaving_content_and_identity()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default);
+        string hashBefore = (string)versionDoc.RootElement.Hash;
+
+        // Attach a native binary to the stored (canonical) package: a metadata-only change (ADR 0055), so the content hash
+        // is unchanged.
+        ReadOnlyMemory<byte>? stored = await store.GetPackageAsync("nightly-reconcile", 1, default);
+        stored.ShouldNotBeNull();
+        byte[] native = [0x7F, (byte)'E', (byte)'L', (byte)'F', 1, 2, 3];
+        byte[] withNative = WorkflowPackage.AttachNativeArtifact(stored.Value, "linux-x64", native);
+
+        (await store.UpdatePackageAsync("nightly-reconcile", 1, withNative, default)).ShouldBeTrue();
+
+        // The stored package now carries the native binary, and the version's identity (content hash) is unchanged.
+        ReadOnlyMemory<byte>? updated = await store.GetPackageAsync("nightly-reconcile", 1, default);
+        updated.ShouldNotBeNull();
+        WorkflowPackage.TryReadNativeArtifact(updated.Value, "linux-x64", out ReadOnlyMemory<byte> readBack).ShouldBeTrue();
+        readBack.ToArray().ShouldBe(native);
+
+        using ParsedJsonDocument<CatalogVersion>? after = await store.GetAsync("nightly-reconcile", 1, default);
+        after.ShouldNotBeNull();
+        ((string)after.RootElement.Hash).ShouldBe(hashBefore);
+    }
+
+    [TestMethod]
+    public async Task UpdatePackage_refuses_a_content_change()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
+
+        // A package for a different workflow has different content, so its hash differs; the update is refused so the
+        // version's content never drifts.
+        ReadOnlyMemory<byte> differentContent = Package("something-else");
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await store.UpdatePackageAsync("nightly-reconcile", 1, differentContent, default));
+    }
+
+    [TestMethod]
+    public async Task UpdatePackage_returns_false_for_an_unknown_version()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
+
+        (await store.UpdatePackageAsync("nightly-reconcile", 9, Package("nightly-reconcile"), default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_base_tag_status_text_and_owner()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();

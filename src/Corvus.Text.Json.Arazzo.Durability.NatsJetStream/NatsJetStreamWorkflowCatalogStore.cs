@@ -364,6 +364,33 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        string key = Key(baseWorkflowId, versionNumber);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } value })
+        {
+            return false;
+        }
+
+        // The envelope header IS the version document JSON; verify the update against the version's STORED content hash
+        // (read from the header) rather than decoding and re-canonicalizing the current package. The header is carried
+        // through unchanged and only the package bytes are replaced.
+        byte[] header = Envelope.DecodeHeader(value);
+        using (ParsedJsonDocument<CatalogVersion> versionDoc = ParsedJsonDocument<CatalogVersion>.Parse(header))
+        {
+            // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+            // content hash is refused so the version's identity never drifts.
+            CatalogPackage.EnsureContentHash((string)versionDoc.RootElement.Hash, updatedPackage);
+        }
+
+        // Version mutations are control-plane-serialized, so a straightforward put is sufficient.
+        await this.catalog.PutAsync(key, Envelope.Encode(header, updatedPackage.Span), cancellationToken: cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);

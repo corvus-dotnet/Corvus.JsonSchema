@@ -307,6 +307,52 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken)
+    {
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Verify the update against the version's STORED content hash (an existing metadata column) rather than loading
+            // and re-canonicalizing the package blob. Only the Package blob is rewritten — the projected columns are untouched.
+            string? storedHash;
+            using (SqliteCommand select = this.connection.CreateCommand())
+            {
+                select.CommandText = "SELECT Hash FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+                select.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                select.Parameters.AddWithValue("@versionNumber", versionNumber);
+                storedHash = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as string;
+            }
+
+            if (storedHash is null)
+            {
+                return false;
+            }
+
+            // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
+            // content hash is refused so the version's identity never drifts.
+            CatalogPackage.EnsureContentHash(storedHash, updatedPackage);
+
+            using SqliteCommand update = this.connection.CreateCommand();
+            update.CommandText = "UPDATE CatalogVersions SET Package = @package WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+            update.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+            update.Parameters.AddWithValue("@versionNumber", versionNumber);
+
+            // Bind the updated package's array whole when its memory wraps one exactly, else copy — mirroring how the
+            // add path binds the canonical package.
+            byte[] packageBytes = MemoryMarshal.TryGetArray(updatedPackage, out ArraySegment<byte> segment)
+                && segment.Offset == 0 && segment.Array is { } array && array.Length == segment.Count
+                ? array
+                : updatedPackage.ToArray();
+            update.Parameters.AddWithValue("@package", packageBytes);
+            return await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
