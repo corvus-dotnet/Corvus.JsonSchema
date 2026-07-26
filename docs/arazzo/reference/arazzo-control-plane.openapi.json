@@ -78,6 +78,10 @@
     "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7), and, where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite is green. Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
   },
   {
+    "name": "nativeBuilds",
+    "description": "Build a workflow version's native serverless binary asynchronously, one build per runtime target in an environment (ADR 0055). Enqueuing a build is idempotent per (environment, runtime target): re-requesting the same target resets its build to queued (a rebuild). A background worker drives each job queued -> building -> ready | failed, and a client polls it; producing the native binary is a prerequisite to making a version available in a serverless environment. Enqueuing requires catalog write, and reading a version's builds is reach-scoped to the workflow (capability scopes catalog:read / catalog:write)."
+  },
+  {
     "name": "accessRequests",
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   },
@@ -1017,6 +1021,98 @@
         "responses": {
           "204": { "description": "The version's availability was withdrawn." },
           "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/nativeBuilds": {
+      "get": {
+        "operationId": "listNativeBuilds",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["nativeBuilds"],
+        "summary": "List a workflow version's native build jobs",
+        "description": "Returns a page of native build jobs for this version (ADR 0055) — the asynchronous Native-AOT builds of its serverless binary per (environment, runtime target), ordered oldest first, optionally filtered by build status. Visible to a caller who can read the workflow version (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/NativeBuildStatusQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The native build jobs.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NativeBuildList" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "enqueueNativeBuild",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["nativeBuilds"],
+        "summary": "Enqueue a native build of a workflow version for a runtime target",
+        "description": "Queues an asynchronous Native-AOT build of this workflow version's serverless binary for one runtime target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment, runtimeIdentifier) resets that build job to queued (a rebuild). A background worker then drives the job queued -> building -> ready | failed; poll it with GET .../nativeBuilds/{environment}/{runtimeIdentifier}. Requires catalog write; 404 if the version does not exist.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NativeBuildEnqueue" } } }
+        },
+        "responses": {
+          "202": { "description": "The build was queued (the queued job).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NativeBuildView" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/nativeBuilds/count": {
+      "get": {
+        "operationId": "countNativeBuilds",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["nativeBuilds"],
+        "summary": "Count a workflow version's native build jobs",
+        "description": "Counts this version's native build jobs (ADR 0055), optionally filtered by status, bounded by the server's cap — no rows are returned (for a list footer or a work badge such as the number of failed builds). Visible to a caller who can read the workflow version (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/NativeBuildStatusQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching build jobs.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/nativeBuilds/{environment}/{runtimeIdentifier}": {
+      "get": {
+        "operationId": "getNativeBuild",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["nativeBuilds"],
+        "summary": "Get a native build job for a runtime target",
+        "description": "Returns the native build job for this version's (environment, runtime target) (ADR 0055): its lifecycle status (queued, building, ready, or failed) and, for a failure, the reason — what a client polls after enqueuing a build. 404 if the version has no build for that target.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" },
+          { "$ref": "#/components/parameters/RuntimeIdentifierPath" }
+        ],
+        "responses": {
+          "200": { "description": "The native build job.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NativeBuildView" } } } },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
@@ -4951,6 +5047,20 @@
         "description": "The deployment environment the binding applies to.",
         "schema": { "type": "string" }
       },
+      "RuntimeIdentifierPath": {
+        "name": "runtimeIdentifier",
+        "in": "path",
+        "required": true,
+        "description": "The .NET runtime identifier (RID) a native binary targets, e.g. 'linux-x64'.",
+        "schema": { "type": "string" }
+      },
+      "NativeBuildStatusQuery": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to native build jobs in this lifecycle state.",
+        "schema": { "$ref": "#/components/schemas/NativeBuildStatus" }
+      },
       "StatusQuery": {
         "name": "status",
         "in": "query",
@@ -8342,6 +8452,53 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["availability"]
+      },
+      "NativeBuildStatus": {
+        "type": "string",
+        "description": "The lifecycle state of a native build job (ADR 0055).",
+        "enum": ["Queued", "Building", "Ready", "Failed"]
+      },
+      "NativeBuildEnqueue": {
+        "type": "object",
+        "description": "A request to build (or rebuild) a workflow version's native serverless binary for one runtime target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment, runtimeIdentifier) resets its build to queued.",
+        "properties": {
+          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the native binary targets, e.g. 'linux-x64'." },
+          "buildLabel": { "type": "string", "description": "An optional human-friendly label for the build." }
+        },
+        "required": ["environment", "runtimeIdentifier"]
+      },
+      "NativeBuildView": {
+        "type": "object",
+        "description": "A native build job (ADR 0055): the state of an asynchronous Native-AOT build of a workflow version's serverless binary for one runtime target in one environment, and the build's lifecycle state.",
+        "properties": {
+          "id": { "type": "string", "description": "The build job's stable id, derived from its target tuple." },
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version is being built." },
+          "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The 1-based version number being built." },
+          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "runtimeIdentifier": { "type": "string", "description": "The runtime identifier (RID) the native binary targets." },
+          "status": { "$ref": "#/components/schemas/NativeBuildStatus" },
+          "buildLabel": { "type": "string", "description": "The optional human-friendly build label." },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the build was enqueued." },
+          "startedAt": { "type": "string", "format": "date-time", "description": "When a worker started building; absent if not started." },
+          "completedAt": { "type": "string", "format": "date-time", "description": "When the build completed; absent if not completed." },
+          "failureReason": { "type": "string", "description": "Why the build failed; present only for a failed build." },
+          "claimedBy": { "type": "string", "description": "The worker that claimed the build; absent if unclaimed." },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["id", "baseWorkflowId", "versionNumber", "environment", "runtimeIdentifier", "status", "createdAt", "etag"]
+      },
+      "NativeBuildList": {
+        "type": "object",
+        "description": "A page of native build jobs (ADR 0055) for a workflow version, ordered oldest first.",
+        "properties": {
+          "nativeBuilds": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NativeBuildView" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["nativeBuilds"]
       },
       "GranteeKind": {
         "type": "string",

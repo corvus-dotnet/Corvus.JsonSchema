@@ -8,6 +8,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -89,7 +90,8 @@ public static class ControlPlaneEndpointExtensions
         InProcessDraftRunner? draftRunner = null,
         IDraftRunTraceStore? draftRunTraceStore = null,
         WorkflowApprovalOptions? workflowApproval = null,
-        Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null)
+        Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null,
+        INativeBuildJobStore? nativeBuildJobStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -238,6 +240,12 @@ public static class ControlPlaneEndpointExtensions
         IAvailabilityRequestStore availRequestStore = availabilityRequestStore ?? new InMemoryAvailabilityRequestStore();
         var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType, auditLogger);
 
+        // The native-builds API (ADR 0055): enqueue and poll the asynchronous Native-AOT builds of a version's serverless
+        // binary per (environment, runtime target). Each operation is reach-gated to the workflow version, and a background
+        // build worker drives each job Queued -> Building -> Ready | Failed. Defaults to an in-memory store.
+        INativeBuildJobStore buildStore = nativeBuildJobStore ?? new InMemoryNativeBuildJobStore();
+        var nativeBuildsHandler = new ArazzoControlPlaneNativeBuildsHandler(buildStore, catalog, access, auditLogger: auditLogger);
+
         // The runner-authorization API (§5.5): which runners may serve an environment. A runner enters Pending on
         // registration and is dispatchable only once an administrator of the TARGET environment authorizes it (revocable).
         // Governed by the environment's administrators; the approver inbox spans the environments the caller administers.
@@ -269,6 +277,7 @@ public static class ControlPlaneEndpointExtensions
             new ArazzoControlPlaneRunnersHandler(runners, access),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger),
             availabilityHandler,
+            nativeBuildsHandler,
             credentialsHandler,
             workspaceHandler,
             gitHubHandler,
