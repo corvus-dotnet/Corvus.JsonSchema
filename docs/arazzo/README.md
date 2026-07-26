@@ -28,6 +28,7 @@ does not, and links them for the rest.
 | [`catalog.md`](guides/catalog.md) | The immutable, content-hashed versioned package catalog: data model, operations, store, publishing, and promotion across environments. **(done)** |
 | [`execution-host.md`](guides/execution-host.md) | The build side, the runner (load, isolation, registration), triggers, and the execution model. **(done)** |
 | [`running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
+| [`serverless-aot-build-and-deploy.md`](guides/serverless-aot-build-and-deploy.md) | Building a version's Native-AOT binary from its signed executor IL, and the deployment invariants (engine-version pin, feed retention, RID-keyed targets). **(build path done; publish and dispatch in progress)** |
 | [`durability-and-state-stores.md`](guides/durability-and-state-stores.md) | The checkpoint model, resume, and writing an `IWorkflowStateStore` backend. **(done)** |
 
 ### Access, identity, and credentials
