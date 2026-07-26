@@ -20,6 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Execution\Corvus.Text.Json.Arazzo.Execution.csproj" />
+    <!-- The build service reads a version's WorkflowPackage (the signed executor entries) and attaches the native
+         binary back; WorkflowPackage lives in Durability. This is a downward reference (build tooling to core), so it
+         introduces no cycle: Durability does not reference this build tooling. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- System.Reflection.Metadata / PortableExecutable (used to read the signed executor's assembly name) are in the
