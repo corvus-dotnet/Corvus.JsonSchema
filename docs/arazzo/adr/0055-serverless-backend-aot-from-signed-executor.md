@@ -1,0 +1,38 @@
+# ADR 0055. Serverless execution backend, AOT-compiled from the signed executor
+
+Date: 2026-07-26. Status: **Accepted**. Supersedes [ADR 0028](superseded/0028-pluggable-execution-backends.md). Scope: how a runner isolates a run, and how the first out-of-process backend (serverless) is built, deployed, and dispatched to. Builds on [ADR 0024](0024-collectible-assembly-per-version.md) and [ADR 0037](0037-bytes-native-seams.md).
+
+This supersedes ADR 0028, which proposed the pluggable-backend seam and named the intended serverless direction while only the in-process backend shipped. The seam and the first out-of-process backend (AWS Lambda) have now landed and are proven end to end, so the design moves from Proposed to Accepted. This record is self-contained. It carries forward the parts of 0028 that held, revises the one that did not (the native artifact is compiled from the signed executor IL, not from re-generated source), and records the decisions settled while building it.
+
+## Context
+
+A runner executes a run in-process by default, loading the version's assembly into a collectible load context ([ADR 0024](0024-collectible-assembly-per-version.md)). In-process is efficient and enough when the runner trusts the workflow code it hosts. Some deployments want stronger isolation, so a run cannot affect the runner or its neighbours. That isolation is a choice a deployment makes, not a rewrite of the runner, so dispatch goes through a seam an isolation model plugs into.
+
+Since 0028 that seam and the serverless backend were built. A run is a durable checkpoint in the shared store, so a serverless invocation carries only the run id, its environment, and the checkpoint callback url; the function restores the run, advances it, and checkpoints it back. The one design point 0028 got wrong was how the native artifact is produced. 0028 had the builder capture the generator's C# source and recompile it. Native AOT already compiles IL, and the platform already builds and signs the executor's IL assembly at catalog-add time, so the builder compiles from that signed assembly and never returns to source.
+
+### Grounded architectural facts
+
+- **The seam ships, and the first out-of-process backend is proven.** `IRunExecutionBackend` (advance a run, pre-warm a version, advertise an isolation model) sits behind the `WorkflowResumer` delegate the dispatcher, worker, and management client consume, so a backend slots in without touching dispatch, leases, timers, or message delivery. The in-process collectible-ALC backend and the serverless backend both implement it. `RunIsolationModel` is the coarse `InProcess` or `Isolated` axis, not one value per runtime; the backend mechanism is a separate advertised axis.
+- **The serverless function is a thin, store-backed host.** `ServerlessWorkflowRunHost` restores the run with `WorkflowRun.ResumeAsync`, resolves it to the one baked workflow with `BakedHostedWorkflowResolver`, and advances it through the shared `HostedWorkflowExecution.RunAsync` core. It re-checks dispatchability on the fresh checkpoint, so an at-least-once duplicate of a settled run is a safe no-op.
+- **The function binds no store SDK.** It loads and saves the checkpoint over HTTP through `HttpWorkflowStateStore`, and the dispatching runner terminates those calls into the real store under the lease it already holds, over its `/runs/{id}/checkpoint` surface. The invocation carries the checkpoint url, so a run checkpoints back to the specific runner that dispatched it and holds its lease. Interim saves are fire-and-forget with a per-run monotonic write-sequence, and the terminal save is a flush barrier, so the single stored checkpoint only moves forward.
+- **Per-(environment, version), executor baked in, AOT-native.** A function serves one known version with that version's executor compiled in, so an invocation fetches, verifies, and loads nothing. The host and the one executor are a single Native AOT binary per version and architecture. Native AOT cannot load runtime IL, so baking is what makes it possible. The AWS Lambda backend is proven, with the AOT binary running under the real Lambda runtime protocol, advancing a run, and checkpointing it back.
+- **The executor IL is already built and signed.** At catalog-add time the platform compiles the generated executor to IL (`WorkflowExecutorProvider.BuildExecutor`), signs the manifest over its digest, and stores it in the version's package as `metadata/executor.dll` with a detached signature.
+
+## Decision
+
+Execution is a pluggable backend seam. A runner dispatches a run to a backend that applies a chosen isolation model, and a resume goes through the same seam. The in-process collectible-load-context backend is the shipping default. The first out-of-process backend is serverless (AWS Lambda first, Azure Functions to follow), baked per (environment, version) and Native-AOT compiled.
+
+**The native artifact is compiled from the signed executor IL assembly, not from re-generated source.** This is the revision to 0028. Native AOT is an IL-to-native whole-program compile, and the executor's IL is already built and signed, so the workflow AOT builder does not return to the generator or run Roslyn. It verifies the signature over the version's `metadata/executor.dll`, assembles a thin host-app (the cloud entry point plus a stub that constructs the baked executor, referencing that signed assembly and the AOT-clean runtime as packages), and compiles the whole host-app to one native binary per version and architecture in a build container. The signing chain is to verify the signed IL, compile from it, then attest the native artifact at deploy. That is stronger than 0028's "verify the source signature", because the source was never signed and the native binary is provably derived from the signed assembly. The in-process backend keeps verify-at-load, since it loads IL dynamically.
+
+**Publishing to a serverless environment is asynchronous.** The AOT build takes minutes, so a publish queues a build job and the version moves through queued, building, then ready or failed, with progress observable through the control plane. A version becomes dispatchable on that environment only once its build and deploy complete, which the advertise-and-match step gates on.
+
+This ADR is **Accepted**. The seam and the serverless backend have landed, and the AWS Lambda backend is proven end to end.
+
+## Consequences
+
+- A deployment selects an isolation model without changing the runner. The serverless backend gives per-run `Isolated` execution with no store credentials in the function.
+- The builder is smaller and the trust chain is cleaner than 0028 proposed, because it reuses the signed IL rather than regenerating and recompiling source. AOT-cleanliness of the runtime and transports is proven under whole-program ILC; the AOT-cleanliness of an arbitrary generated executor is verified when its native binary is first built.
+- The native binary is one artifact per version and architecture, stored alongside the executor IL in the version's package. Its production is out-of-process and asynchronous, so a version is dispatchable on a serverless environment only once its build and deploy complete.
+- Resume uses the same backend seam as a fresh run, so an isolation model applies uniformly to starting and resuming.
+- The Azure Functions vendor shim, the workflow AOT builder service, the async publish state machine, and advertise-and-match are the remaining work this design admits. They refine it and do not change these decisions.
+- ADR 0028 is retained as the archived proposal that this record supersedes.

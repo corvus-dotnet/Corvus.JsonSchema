@@ -3,7 +3,8 @@
 An ADR records one architectural decision. It states the context and the governing constraint, the
 options that were weighed, the decision, and the consequences that follow. ADRs are append-only. A
 decision that is later replaced keeps its record and is marked `Superseded by NNNN`, so the history of
-why the system is shaped the way it is stays intact.
+why the system is shaped the way it is stays intact. A superseded record is moved into the `superseded/`
+sub-folder so it is not read as a current decision; its index row still links to it there.
 
 ## Format
 
@@ -69,7 +70,8 @@ The template to follow for a full, fork-bearing ADR is
 | [0025](0025-integrity-binding-optional-signature.md) | Integrity binding, with an optional signature custody split | Accepted |
 | [0026](0026-triggers-async-by-default.md) | Triggers are async by default | Accepted |
 | [0027](0027-runner-environment-binding.md) | Runner-to-environment binding, with the revocation fence in the store | Accepted |
-| [0028](0028-pluggable-execution-backends.md) | Pluggable execution backends and isolation models | Proposed |
+| [0028](superseded/0028-pluggable-execution-backends.md) | Pluggable execution backends and isolation models | Superseded by 0055 |
+| [0055](0055-serverless-backend-aot-from-signed-executor.md) | Serverless execution backend, AOT-compiled from the signed executor | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog

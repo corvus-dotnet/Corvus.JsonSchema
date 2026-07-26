@@ -94,7 +94,7 @@ fast at startup — only per-iteration faults are absorbed.
 Today a runner executes a run in-process, in a collectible load context
 ([ADR 0024](../adr/0024-collectible-assembly-per-version.md)). Stronger isolation (a per-run micro-guest, a
 serverless function, or a container) is a designed but not-yet-shipped pluggable backend seam
-([ADR 0028](../adr/0028-pluggable-execution-backends.md)). Until it lands, a deployment that needs stronger
+([ADR 0028](../adr/superseded/0028-pluggable-execution-backends.md)). Until it lands, a deployment that needs stronger
 isolation runs runners in separately-isolated hosts at the process boundary.
 
 ## See also

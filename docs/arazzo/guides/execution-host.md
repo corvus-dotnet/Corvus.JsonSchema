@@ -10,7 +10,7 @@ the executor), [0023](../adr/0023-two-process-store-as-queue.md) (two processes 
 [0025](../adr/0025-integrity-binding-optional-signature.md) (integrity binding),
 [0026](../adr/0026-triggers-async-by-default.md) (triggers async by default),
 [0027](../adr/0027-runner-environment-binding.md) (runner-to-environment binding),
-[0028](../adr/0028-pluggable-execution-backends.md) (pluggable backends, Proposed), and
+[0028](../adr/superseded/0028-pluggable-execution-backends.md) (pluggable backends, Proposed), and
 [0029](../adr/0029-native-heartbeat-partial-update.md) (the heartbeat). The task-oriented companions are the
 [authoring, generating, and running guide](authoring-generating-running.md) and the
 [running a runner guide](running-a-runner.md). This guide is the seam shapes, the packaging, the
@@ -169,7 +169,7 @@ The in-process collectible ALC is one execution model, not the only one. A runne
 execution host that dispatches a run to a pluggable backend with a chosen isolation model (in-process today, but
 equally a per-run micro-guest, a serverless function, or a container-per-run), and wake-ups (resume) ride the
 same seam, because the executor is a portable content-hashed assembly and a run is a serializable checkpoint. This
-is a **proposed** seam ([ADR 0028](../adr/0028-pluggable-execution-backends.md)): only the in-process backend
+is a **proposed** seam ([ADR 0028](../adr/superseded/0028-pluggable-execution-backends.md)): only the in-process backend
 ships. The proposed seam generalises the in-process resume into an `IRunExecutionBackend.AdvanceAsync`, which the
 resumer already invokes through a delegate, so a backend slots in behind it without touching dispatch, leases,
 timers, or message delivery; a runner would advertise its backend and isolation model in its registration, and
@@ -253,7 +253,7 @@ The build side (executor provider and packaging), the loader and `IHostedWorkflo
 dispatcher, the message and schedule triggers, control-plane authorization, source credentials, and row security
 have all shipped. The paused demo work (`samples/arazzo/.../docs/live-execution.md`) was the manual prototype
 this design productionised behind the catalog. The out-of-process execution backends
-([ADR 0028](../adr/0028-pluggable-execution-backends.md)) remain design intent. The decisions themselves are
+([ADR 0028](../adr/superseded/0028-pluggable-execution-backends.md)) remain design intent. The decisions themselves are
 recorded in ADRs 0017 and 0022 to 0029; this guide no longer restates them.
 
 ## See also

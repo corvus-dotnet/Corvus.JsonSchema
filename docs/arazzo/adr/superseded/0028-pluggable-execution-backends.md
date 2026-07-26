@@ -1,14 +1,20 @@
 # ADR 0028. Pluggable execution backends and isolation models
 
-Date: 2026-07-21. Status: **Proposed**. Scope: how a runner isolates the execution of a run. Builds on
-[ADR 0024](0024-collectible-assembly-per-version.md). This records the intended seam for dispatching a run to a
+Date: 2026-07-21. Status: **Superseded by [ADR 0055](../0055-serverless-backend-aot-from-signed-executor.md)**. Scope: how a runner isolates the execution of a run. Builds on
+[ADR 0024](../0024-collectible-assembly-per-version.md). This records the intended seam for dispatching a run to a
 pluggable execution backend with a chosen isolation model, and is explicit that only the in-process backend
 ships today.
+
+> **Superseded.** This ADR proposed the pluggable-backend seam and named the intended serverless direction while
+> only the in-process backend shipped. The seam and the first out-of-process backend (AWS Lambda) have since
+> landed and are proven end to end, and one decision here is revised: the native artifact is AOT-compiled from the
+> already-signed executor IL, not from re-generated source. The accepted, self-contained design is
+> [ADR 0055](../0055-serverless-backend-aot-from-signed-executor.md). This record is retained for history.
 
 ## Context
 
 Today a runner executes a run in-process, loading the version's assembly into a collectible load context
-([ADR 0024](0024-collectible-assembly-per-version.md)). In-process is efficient and enough when the runner
+([ADR 0024](../0024-collectible-assembly-per-version.md)). In-process is efficient and enough when the runner
 trusts the workflow code it hosts. Some deployments will want stronger isolation: a per-run micro-guest, a
 serverless function, or a container, so a run cannot affect the runner or its neighbours. That isolation should
 be a choice a deployment makes, not a rewrite of the runner, which means dispatch has to go through a seam that
@@ -17,7 +23,7 @@ an isolation model plugs into.
 ### Grounded architectural facts
 
 - **The in-process collectible-ALC backend ships.** A run executes in-process through
-  `WorkflowExecutorLoader` and a collectible `AssemblyLoadContext` ([ADR 0024](0024-collectible-assembly-per-version.md)).
+  `WorkflowExecutorLoader` and a collectible `AssemblyLoadContext` ([ADR 0024](../0024-collectible-assembly-per-version.md)).
   It now implements the seam below (`HostedWorkflowResumer` is `IRunExecutionBackend`).
 - **The pluggable-backend seam now exists.** `IRunExecutionBackend` (advance a run, pre-warm a version, and
   advertise an isolation model) is the seam execution-host §5.6 specifies. `AdvanceAsync` is delegate-shaped, so a
@@ -55,7 +61,7 @@ The seam and its shape are settled, and the first out-of-process backend is chos
   single Native AOT binary per version. This removes the executor fetch, verify, and load cost rather than warming
   around it, and Native AOT cannot load runtime IL anyway, so baking is what makes it possible. AOT-cleanliness of
   the executor, runtime, and transports is work to be done, verified by an early spike.
-- **Signing shifts from verify-at-load to attest-at-deploy** ([executor signing](../guides/execution-host.md)):
+- **Signing shifts from verify-at-load to attest-at-deploy** ([executor signing](../../guides/execution-host.md)):
   the source executor's signature is verified before AOT compilation, and the deploy pipeline attests the native
   artifact. The in-process backend keeps verify-at-load, since it loads IL dynamically.
 - **The AOT artifact is produced out-of-process, on publish, not in the running host.** Native AOT is an
