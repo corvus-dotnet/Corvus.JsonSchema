@@ -341,6 +341,19 @@ The build pipeline (Step 5) rewrites these links to website URLs:
 
 **IMPORTANT:** Do **not** omit the `../` prefix. Links like `ExampleRecipes/036-Name/` (without `../`) will not be rewritten and will produce broken link errors in the lychee check (Step 10). The rewrite regex in `build.ps1` explicitly matches `../ExampleRecipes/` only.
 
+#### Linking to documentation pages from recipes
+
+The inverse direction also works. When linking to a doc page from a recipe `README.md`, use the `../../` prefix because recipes live in `docs/ExampleRecipes/<recipe>/` and doc sources live in `docs/`:
+
+```markdown
+[OpenAPI client and server generation](../../OpenApi.md) — description
+```
+
+The recipe transform (Step 4) rewrites these to website URLs by kebab-casing the doc file name:
+- `../../OpenApi.md` → `/docs/open-api.html`
+
+As above, the exact `../../<Name>.md` shape is required for the rewrite to fire.
+
 ### Modifying source link resolution
 
 1. Edit `tools/XmlDocToMarkdown/SourceLinkResolver.cs`
