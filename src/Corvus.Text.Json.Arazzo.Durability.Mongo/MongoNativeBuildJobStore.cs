@@ -91,11 +91,13 @@ public sealed class MongoNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
             ["runtimeIdentifier"] = draft.RuntimeIdentifierValue,
             ["status"] = NativeBuildJobStatusNames.Queued,
             ["createdAt"] = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+            ["leaseExpiresAt"] = BsonNull.Value,
             ["doc"] = new BsonBinaryData(json),
         };
 
         // Idempotent per target: the id is derived from the tuple, so a repeated enqueue replaces the same document — an
-        // upsert that resets the job to Queued (SerializeNew omits startedAt/completedAt/failureReason/claimedBy).
+        // upsert that resets the job to Queued (SerializeNew omits startedAt/completedAt/failureReason/claimedBy). A
+        // (re-)enqueue resets the job to Queued, so its lease is cleared (BsonNull); a Queued job holds no lease.
         await this.jobs.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), document, new ReplaceOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
     }
@@ -109,39 +111,58 @@ public sealed class MongoNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
         var b = Builders<BsonDocument>.Filter;
+
+        // One `now` guards the lease-expiry filter and stamps the new lease/startedAt, so the claim is evaluated at a single
+        // instant. Lease/created timestamps are the ISO-8601 round-trip ("o") of a UTC instant, so a lexicographic (BSON
+        // string) compare is chronological (the same property the createdAt ordering relies on).
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        string nowText = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
+        // A job is claimable when it is Queued, or it is an orphaned Building whose lease has expired (ADR 0056). The lease is
+        // a top-level string field: BsonNull for a Queued job, so a $lte string compare (which brackets by type) does not
+        // match null — the explicit null branch covers it.
+        FilterDefinition<BsonDocument> claimable = b.Or(
+            b.Eq("status", NativeBuildJobStatusNames.Queued),
+            b.And(
+                b.Eq("status", NativeBuildJobStatusNames.Building),
+                b.Or(b.Eq("leaseExpiresAt", BsonNull.Value), b.Lte("leaseExpiresAt", nowText))));
+
         for (int attempt = 0; attempt < MaxClaimAttempts; attempt++)
         {
-            // Find the oldest Queued job (server-side (createdAt, _id) order).
+            // Find the oldest claimable job (server-side (createdAt, _id) order).
             BsonDocument? oldest = await this.jobs
-                .Find(b.Eq("status", NativeBuildJobStatusNames.Queued))
+                .Find(claimable)
                 .Sort(OldestFirst)
                 .Limit(1)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
             if (oldest is null)
             {
-                return null; // nothing queued
+                return null; // nothing claimable
             }
 
             string id = oldest["_id"].AsString;
             byte[] document = oldest["doc"].AsBsonBinaryData.Bytes;
+            DateTimeOffset leaseExpiresAt = now + leaseTtl;
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(document.AsMemory());
             WorkflowEtag etag = NewEtag();
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, leaseExpiresAt, etag);
 
-            // Atomic compare-and-set: FindOneAndUpdate conditioned on status = Queued transitions exactly this id to Building
-            // in one server operation. Two workers racing the same id: only the first matches (it flips the status), so the
-            // other's filter no longer matches and it retries the next-oldest — two workers never claim the same job.
+            // Atomic compare-and-set: FindOneAndUpdate conditioned on the same claimable predicate transitions exactly this id
+            // to Building in one server operation, stamping the new lease. Two workers racing the same id: only the first
+            // matches (it bumps the lease into the future), so the other's filter no longer matches and it retries the
+            // next-oldest — two workers never claim the same job, and a reclaim of an orphan supersedes the crashed worker.
             UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
                 .Set("status", NativeBuildJobStatusNames.Building)
+                .Set("leaseExpiresAt", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture))
                 .Set("doc", new BsonBinaryData(claimed));
             BsonDocument? updated = await this.jobs
                 .FindOneAndUpdateAsync(
-                    b.And(b.Eq("_id", id), b.Eq("status", NativeBuildJobStatusNames.Queued)),
+                    b.And(b.Eq("_id", id), claimable),
                     update,
                     new FindOneAndUpdateOptions<BsonDocument> { ReturnDocument = ReturnDocument.After },
                     cancellationToken)
@@ -177,6 +198,35 @@ public sealed class MongoNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
         byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), etag);
         UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
             .Set("status", NativeBuildJobStatusNames.ToWire(completion.Status))
+            .Set("doc", new BsonBinaryData(json));
+        await this.jobs.UpdateOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), update, options: null, cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        // Parse the existing document NON-COPYING; it must be Building, then the etag is checked (a reclaim would have moved
+        // it, so a stale expected etag conflicts) and the lease-extended record written. The lease is mirrored to the
+        // top-level field the claim filters on and rides inside the embedded doc.
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+        }
+
+        DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+        WorkflowEtag etag = NewEtag();
+        byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, leaseExpiresAt, etag);
+        UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
+            .Set("leaseExpiresAt", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture))
             .Set("doc", new BsonBinaryData(json));
         await this.jobs.UpdateOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), update, options: null, cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<NativeBuildJob>(json);

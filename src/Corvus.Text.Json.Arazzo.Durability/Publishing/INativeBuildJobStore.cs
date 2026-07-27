@@ -40,14 +40,18 @@ public interface INativeBuildJobStore
     /// <returns>The job as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<NativeBuildJob>?> GetAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>Atomically claims the oldest <see cref="NativeBuildJobStatus.Queued"/> job (oldest-first by
-    /// <c>(createdAt, id)</c>) and transitions it to <see cref="NativeBuildJobStatus.Building"/>, stamping
-    /// <c>claimedBy</c>/<c>startedAt</c> — the build worker's claim primitive. Returns <see langword="null"/> when no job is
-    /// queued.</summary>
-    /// <param name="claimedBy">The worker claiming the job (for audit).</param>
+    /// <summary>Atomically claims the oldest claimable job (oldest-first by <c>(createdAt, id)</c>) and transitions it to
+    /// <see cref="NativeBuildJobStatus.Building"/>, stamping <c>claimedBy</c>/<c>startedAt</c> and an advisory lease
+    /// (<c>leaseExpiresAt</c> = now + <paramref name="leaseTtl"/>) — the build worker's claim primitive. A job is claimable
+    /// when it is <see cref="NativeBuildJobStatus.Queued"/> or it is <see cref="NativeBuildJobStatus.Building"/> with no live
+    /// lease (an orphan of a crashed worker, reclaimed here — ADR 0056); a reclaim resets <c>startedAt</c> and the lease and
+    /// bumps the etag, superseding the orphaned worker's completion. Returns <see langword="null"/> when nothing is
+    /// claimable.</summary>
+    /// <param name="claimedBy">The worker claiming the job (for audit and lease ownership).</param>
+    /// <param name="leaseTtl">How long the claiming worker's lease is held before another worker may reclaim the job; the worker renews it on a heartbeat while it builds.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The claimed (Building) job as a pooled document the caller must dispose, or <see langword="null"/> if nothing was queued.</returns>
-    ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken);
+    /// <returns>The claimed (Building) job as a pooled document the caller must dispose, or <see langword="null"/> if nothing was claimable.</returns>
+    ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken);
 
     /// <summary>Completes a building job under optimistic concurrency: transitions it from
     /// <see cref="NativeBuildJobStatus.Building"/> to <see cref="NativeBuildJobStatus.Ready"/> or
@@ -60,6 +64,20 @@ public interface INativeBuildJobStore
     /// <exception cref="NativeBuildJobConflictException">The expected etag no longer matches.</exception>
     /// <exception cref="NativeBuildJobStateException">The job is not in the <see cref="NativeBuildJobStatus.Building"/> state.</exception>
     ValueTask<ParsedJsonDocument<NativeBuildJob>?> CompleteAsync(string id, NativeBuildJobCompletion completion, WorkflowEtag expectedEtag, CancellationToken cancellationToken);
+
+    /// <summary>Renews the advisory lease on a building job under optimistic concurrency — the heartbeat a worker calls while
+    /// its compile runs so no other worker reclaims the job as an orphan (ADR 0056). Extends <c>leaseExpiresAt</c> to
+    /// now + <paramref name="leaseTtl"/> and bumps the etag; the returned job carries the new etag the worker renews and
+    /// completes with next. The etag is the ownership token: if the job was reclaimed, <paramref name="expectedEtag"/> no
+    /// longer matches and the renewal conflicts, which is how a superseded worker learns it lost the lease.</summary>
+    /// <param name="id">The job id.</param>
+    /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to renew unconditionally).</param>
+    /// <param name="leaseTtl">How long from now the renewed lease is held.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The renewed job (carrying the new etag) as a pooled document the caller must dispose, or <see langword="null"/> if no job with that id exists.</returns>
+    /// <exception cref="NativeBuildJobConflictException">The expected etag no longer matches (the job was reclaimed).</exception>
+    /// <exception cref="NativeBuildJobStateException">The job is not in the <see cref="NativeBuildJobStatus.Building"/> state.</exception>
+    ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken);
 
     /// <summary>Lists jobs matching a filter, oldest first (creation order). The full filtered read used by the default
     /// keyset pager; the paged <see cref="ListAsync(NativeBuildJobQuery, int, JsonString, CancellationToken)"/> is the API

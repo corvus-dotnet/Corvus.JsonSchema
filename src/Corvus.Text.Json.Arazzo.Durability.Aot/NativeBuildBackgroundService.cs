@@ -55,7 +55,7 @@ public sealed class NativeBuildBackgroundService : BackgroundService
                 // re-checks the stopping token, so a shutdown breaks out promptly even mid-drain.
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    NativeBuildWorkerResult result = await this.worker.DriveNextAsync(this.options.WorkerId, stoppingToken).ConfigureAwait(false);
+                    NativeBuildWorkerResult result = await this.worker.DriveNextAsync(this.options.WorkerId, this.options.LeaseTtl, stoppingToken).ConfigureAwait(false);
                     if (!result.Claimed)
                     {
                         break;
@@ -133,4 +133,10 @@ public sealed class NativeBuildWorkerOptions
     /// <summary>Gets the interval the loop waits when the queue is empty before polling again. The default is five seconds;
     /// a build takes minutes, so an idle poll need not be frequent.</summary>
     public TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Gets how long the advisory lease stamped on a claimed job is held before another worker may reclaim it as an
+    /// orphan (ADR 0056). The worker renews it on a heartbeat while it builds, so this need only exceed the renewal interval
+    /// with margin; the default is five minutes, comfortably above a normal build time so a brief renewal hiccup does not
+    /// trigger a spurious reclaim.</summary>
+    public TimeSpan LeaseTtl { get; init; } = TimeSpan.FromMinutes(5);
 }

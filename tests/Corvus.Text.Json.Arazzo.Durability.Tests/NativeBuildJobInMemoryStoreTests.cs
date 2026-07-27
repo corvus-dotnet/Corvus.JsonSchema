@@ -102,7 +102,7 @@ public sealed class NativeBuildJobInMemoryStoreTests
         }
 
         // The oldest queued job is claimed first and transitions to Building with the worker + start stamps.
-        using (ParsedJsonDocument<NativeBuildJob>? first = await store.ClaimNextQueuedAsync("worker-a", default))
+        using (ParsedJsonDocument<NativeBuildJob>? first = await store.ClaimNextQueuedAsync("worker-a", TimeSpan.FromMinutes(5), default))
         {
             first.ShouldNotBeNull();
             first.RootElement.VersionNumberValue.ShouldBe(1);
@@ -111,14 +111,14 @@ public sealed class NativeBuildJobInMemoryStoreTests
             first.RootElement.StartedAtValue.ShouldNotBeNull();
         }
 
-        using (ParsedJsonDocument<NativeBuildJob>? second = await store.ClaimNextQueuedAsync("worker-b", default))
+        using (ParsedJsonDocument<NativeBuildJob>? second = await store.ClaimNextQueuedAsync("worker-b", TimeSpan.FromMinutes(5), default))
         {
             second.ShouldNotBeNull();
             second.RootElement.VersionNumberValue.ShouldBe(2);
         }
 
         // Nothing is queued now, so the claim yields null.
-        using ParsedJsonDocument<NativeBuildJob>? none = await store.ClaimNextQueuedAsync("worker-c", default);
+        using ParsedJsonDocument<NativeBuildJob>? none = await store.ClaimNextQueuedAsync("worker-c", TimeSpan.FromMinutes(5), default);
         none.ShouldBeNull();
     }
 
@@ -283,7 +283,7 @@ public sealed class NativeBuildJobInMemoryStoreTests
     // Claims the next queued job and returns its post-claim (Building) etag for a subsequent completion.
     private static async Task<WorkflowEtag> ClaimAndGetEtagAsync(INativeBuildJobStore store)
     {
-        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", default);
+        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", TimeSpan.FromMinutes(5), default);
         claimed.ShouldNotBeNull();
         return claimed.RootElement.EtagValue;
     }

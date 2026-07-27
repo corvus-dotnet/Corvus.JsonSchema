@@ -120,6 +120,7 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             draft.RuntimeIdentifierValue,
             NativeBuildJobStatusNames.Queued,
             now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+            null, // a Queued job holds no lease, so the envelope omits leaseExpiresAt (the claim treats absent as reclaimable via NOT IS_DEFINED)
             json);
         using Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<NativeBuildJob> document);
         try
@@ -154,14 +155,24 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
 
-        // The oldest Queued candidates in (createdAt, id) order (bounded). Each embedded doc carries the id, so the candidate
-        // ids are recovered from the projection; the authoritative native _etag is then taken from a point read for the CAS.
-        var definition = new QueryDefinition("SELECT c.doc FROM c WHERE c.status = @queued ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim")
+        // One `now` guards the lease-expiry filter/re-check and stamps the new lease/startedAt, so the claim is evaluated at a
+        // single instant. Lease/created timestamps are the ISO-8601 round-trip ("o") of a UTC instant, so an ordinal compare
+        // is chronological (the same property the createdAt ordering relies on).
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        string nowText = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
+        // The oldest CLAIMABLE candidates in (createdAt, id) order (bounded): Queued, or an orphaned Building whose lease has
+        // expired or is absent (ADR 0056). Each embedded doc carries the id, so the candidate ids are recovered from the
+        // projection; the authoritative native _etag is then taken from a point read for the CAS.
+        var definition = new QueryDefinition(
+                "SELECT c.doc FROM c WHERE c.status = @queued OR (c.status = @building AND (NOT IS_DEFINED(c.leaseExpiresAt) OR c.leaseExpiresAt <= @now)) ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim")
             .WithParameter("@queued", NativeBuildJobStatusNames.Queued)
+            .WithParameter("@building", NativeBuildJobStatusNames.Building)
+            .WithParameter("@now", nowText)
             .WithParameter("@lim", MaxClaimAttempts);
         var candidateIds = new List<string>();
         await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
@@ -189,12 +200,13 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             Stream stream;
             using (ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(currentDoc))
             {
-                if (!current.RootElement.HasStatus(NativeBuildJobStatus.Queued))
+                if (!current.RootElement.IsClaimable(now))
                 {
-                    continue; // no longer queued (concurrently claimed) — try the next
+                    continue; // no longer claimable (concurrently claimed with a live lease, or completed) — try the next
                 }
 
-                byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), NewEtag());
+                DateTimeOffset leaseExpiresAt = now + leaseTtl;
+                byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, leaseExpiresAt, NewEtag());
                 var fields = new EnvelopeFields(
                     id,
                     current.RootElement.BaseWorkflowIdValue,
@@ -203,6 +215,7 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
                     current.RootElement.RuntimeIdentifierValue,
                     NativeBuildJobStatusNames.Building,
                     current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+                    leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
                     claimed);
                 stream = EnvelopeStream(in fields, out claimedDocument);
             }
@@ -271,6 +284,67 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
                 current.RootElement.RuntimeIdentifierValue,
                 NativeBuildJobStatusNames.ToWire(completion.Status),
                 current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+                LeaseText(current.RootElement.LeaseExpiresAtValue), // carries through unchanged (a completed job is never claimable), mirroring the embedded doc
+                json);
+            stream = EnvelopeStream(in fields, out document);
+        }
+
+        using (stream)
+        {
+            try
+            {
+                using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                return document;
+            }
+            catch
+            {
+                document.Dispose();
+                throw;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ParsedJsonDocument<NativeBuildJob> document;
+        Stream stream;
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            if (payload is not { } page)
+            {
+                return null;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return null;
+            }
+
+            // Parse the existing document NON-COPYING over the live response; it must be Building, then the etag is checked (a
+            // reclaim would have moved it, so a stale expected etag conflicts) and the lease-extended record serialized. The
+            // lease is mirrored to the top-level envelope field the claim filters on and rides inside the embedded doc. The
+            // parse and its synchronous consumers all complete before the response buffer is returned at the end of this using.
+            using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc);
+            if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+            {
+                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+            }
+
+            DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+            byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, leaseExpiresAt, NewEtag());
+            var fields = new EnvelopeFields(
+                id,
+                current.RootElement.BaseWorkflowIdValue,
+                current.RootElement.VersionNumberValue,
+                current.RootElement.EnvironmentValue,
+                current.RootElement.RuntimeIdentifierValue,
+                NativeBuildJobStatusNames.Building,
+                current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+                leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
                 json);
             stream = EnvelopeStream(in fields, out document);
         }
@@ -526,6 +600,11 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
+    // The ISO-8601 "o" round-trip of an optional lease instant for the top-level envelope mirror, or null when there is no
+    // lease (so the envelope omits leaseExpiresAt and the claim treats it as reclaimable via NOT IS_DEFINED).
+    private static string? LeaseText(DateTimeOffset? leaseExpiresAt)
+        => leaseExpiresAt?.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
     // Serializes the {id, pk, baseWorkflowId, versionNumber, environment, runtimeIdentifier, status, createdAt, doc} envelope
     // into a pooled stream and builds the caller's pooled return document from the same job bytes. The job document is itself
     // JSON, so embed it verbatim as a nested value — no base64 wrap. It is valid JSON we produced, so skip validation. On any
@@ -548,6 +627,11 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
                     writer.WriteString("runtimeIdentifier"u8, c.RuntimeIdentifier);
                     writer.WriteString("status"u8, c.Status);
                     writer.WriteString("createdAt"u8, c.CreatedAt);
+                    if (c.LeaseExpiresAt is { } lease)
+                    {
+                        writer.WriteString("leaseExpiresAt"u8, lease);
+                    }
+
                     writer.WritePropertyName("doc"u8);
                     writer.WriteRawValue(c.Doc, skipInputValidation: true);
                     writer.WriteEndObject();
@@ -610,7 +694,8 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
     }
 
     // The envelope's top-level fields: the job id (item id + partition key), the mirrored filterable fields List queries and
-    // orders on, and the job document embedded verbatim.
+    // orders on, the advisory lease the claim filters on (absent — null — for a job with no lease), and the job document
+    // embedded verbatim.
     private readonly record struct EnvelopeFields(
         string Id,
         string BaseWorkflowId,
@@ -619,5 +704,6 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
         string RuntimeIdentifier,
         string Status,
         string CreatedAt,
+        string? LeaseExpiresAt,
         byte[] Doc);
 }

@@ -70,21 +70,26 @@ public sealed class InMemoryNativeBuildJobStore : INativeBuildJobStore
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
 
         lock (this.gate)
         {
-            // Find the oldest Queued job by (createdAt, id) without materialising a list: parse each row only to test its
-            // status and, when queued, compare it against the running minimum, disposing every candidate immediately.
+            // One `now` guards both the lease-expiry test (which orphaned Building jobs are reclaimable) and the stamped
+            // lease/startedAt, so the claim is evaluated at a single instant.
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+
+            // Find the oldest claimable job by (createdAt, id) without materialising a list: parse each row only to test
+            // whether it is claimable (Queued, or Building with no live lease) and, when it is, compare it against the
+            // running minimum, disposing every candidate immediately.
             string? oldestId = null;
             byte[]? oldestJson = null;
             DateTimeOffset oldestCreatedAt = default;
             foreach ((string id, byte[] json) in this.jobs)
             {
                 using ParsedJsonDocument<NativeBuildJob> doc = PersistedJson.ToPooledDocument<NativeBuildJob>(json);
-                if (!doc.RootElement.HasStatus(NativeBuildJobStatus.Queued))
+                if (!doc.RootElement.IsClaimable(now))
                 {
                     continue;
                 }
@@ -106,7 +111,7 @@ public sealed class InMemoryNativeBuildJobStore : INativeBuildJobStore
             // Parse the chosen document NON-COPYING over the stored array (alive in the dictionary through this synchronous
             // claim under the lock) — WriteClaimed reads its target/created fields, no per-read copy.
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(oldestJson.AsMemory());
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, now + leaseTtl, this.NextEtag());
             this.jobs[oldestId!] = claimed;
             return new ValueTask<ParsedJsonDocument<NativeBuildJob>?>(PersistedJson.ToPooledDocument<NativeBuildJob>(claimed));
         }
@@ -133,6 +138,32 @@ public sealed class InMemoryNativeBuildJobStore : INativeBuildJobStore
             }
 
             byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), this.NextEtag());
+            this.jobs[id] = json;
+            return new ValueTask<ParsedJsonDocument<NativeBuildJob>?>(PersistedJson.ToPooledDocument<NativeBuildJob>(json));
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+
+        lock (this.gate)
+        {
+            if (!this.jobs.TryGetValue(id, out byte[]? existing))
+            {
+                return new ValueTask<ParsedJsonDocument<NativeBuildJob>?>((ParsedJsonDocument<NativeBuildJob>?)null);
+            }
+
+            // Parse the existing document NON-COPYING over the stored array (alive in the dictionary through this
+            // synchronous renewal under the lock) — the merge reads its etag + carried-forward fields, no per-read copy.
+            using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(existing.AsMemory());
+            if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+            {
+                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+            }
+
+            byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, this.timeProvider.GetUtcNow() + leaseTtl, this.NextEtag());
             this.jobs[id] = json;
             return new ValueTask<ParsedJsonDocument<NativeBuildJob>?>(PersistedJson.ToPooledDocument<NativeBuildJob>(json));
         }

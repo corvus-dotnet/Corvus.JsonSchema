@@ -80,17 +80,18 @@ public sealed class SqliteNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
         {
             // Idempotent per target: the id is derived from the tuple, so a repeated enqueue overwrites the same row — an
             // upsert that resets the job to Queued (SerializeNew omits startedAt/completedAt/failureReason/claimedBy).
+            // A (re-)enqueue resets the job to Queued, so its lease is cleared (NULL); a Queued job holds no lease.
             string id = NativeBuildJob.DeriveId(draft.BaseWorkflowIdValue, draft.VersionNumberValue, draft.EnvironmentValue, draft.RuntimeIdentifierValue);
             WorkflowEtag etag = NewEtag();
             DateTimeOffset now = this.timeProvider.GetUtcNow();
             byte[] json = NativeBuildJobSerialization.SerializeNew(id, draft, now, etag);
             using SqliteCommand upsert = this.connection.CreateCommand();
             upsert.CommandText =
-                "INSERT INTO NativeBuildJobs (Id, BaseWorkflowId, VersionNumber, Environment, RuntimeIdentifier, Status, CreatedAt, Etag, Document) " +
-                "VALUES (@id, @base, @ver, @env, @rid, @status, @createdAt, @etag, @doc) " +
+                "INSERT INTO NativeBuildJobs (Id, BaseWorkflowId, VersionNumber, Environment, RuntimeIdentifier, Status, CreatedAt, Etag, LeaseExpiresAt, Document) " +
+                "VALUES (@id, @base, @ver, @env, @rid, @status, @createdAt, @etag, NULL, @doc) " +
                 "ON CONFLICT(Id) DO UPDATE SET BaseWorkflowId = excluded.BaseWorkflowId, VersionNumber = excluded.VersionNumber, " +
                 "Environment = excluded.Environment, RuntimeIdentifier = excluded.RuntimeIdentifier, Status = excluded.Status, " +
-                "CreatedAt = excluded.CreatedAt, Etag = excluded.Etag, Document = excluded.Document;";
+                "CreatedAt = excluded.CreatedAt, Etag = excluded.Etag, LeaseExpiresAt = excluded.LeaseExpiresAt, Document = excluded.Document;";
             upsert.Parameters.AddWithValue("@id", id);
             upsert.Parameters.AddWithValue("@base", draft.BaseWorkflowIdValue);
             upsert.Parameters.AddWithValue("@ver", draft.VersionNumberValue);
@@ -126,20 +127,32 @@ public sealed class SqliteNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // The gate serialises every operation (single-writer), so a plain select-oldest-queued then update is atomic: no
-            // SKIP LOCKED is needed because no other operation can interleave. Two workers never claim the same job.
+            // One `now` guards the lease-expiry filter and stamps the new lease/startedAt, so the claim is evaluated at a
+            // single instant. Lease/created timestamps are the ISO-8601 round-trip ("o") of a UTC instant, so a lexicographic
+            // column compare is chronological (the same property the CreatedAt ordering relies on).
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+            string nowText = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
+            // The gate serialises every operation (single-writer), so a plain select-oldest-claimable then update is atomic:
+            // no SKIP LOCKED is needed because no other operation can interleave. Two workers never claim the same job. A row
+            // is claimable when Queued, or an orphaned Building whose lease has expired (ADR 0056).
             string? id = null;
             byte[]? document = null;
             using (SqliteCommand select = this.connection.CreateCommand())
             {
-                select.CommandText = "SELECT Id, Document FROM NativeBuildJobs WHERE Status = @queued ORDER BY CreatedAt, Id LIMIT 1;";
+                select.CommandText =
+                    "SELECT Id, Document FROM NativeBuildJobs " +
+                    "WHERE Status = @queued OR (Status = @building AND (LeaseExpiresAt IS NULL OR LeaseExpiresAt <= @now)) " +
+                    "ORDER BY CreatedAt, Id LIMIT 1;";
                 select.Parameters.AddWithValue("@queued", NativeBuildJobStatusNames.Queued);
+                select.Parameters.AddWithValue("@building", NativeBuildJobStatusNames.Building);
+                select.Parameters.AddWithValue("@now", nowText);
                 using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
                 if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
@@ -153,13 +166,17 @@ public sealed class SqliteNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
                 return null;
             }
 
+            // Stamp the Building transition + the lease. The lease also rides inside the Document; the column is the
+            // denormalised copy the claim filters on.
+            DateTimeOffset leaseExpiresAt = now + leaseTtl;
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(document!.AsMemory());
             WorkflowEtag etag = NewEtag();
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, leaseExpiresAt, etag);
             using SqliteCommand update = this.connection.CreateCommand();
-            update.CommandText = "UPDATE NativeBuildJobs SET Status = @building, Etag = @etag, Document = @doc WHERE Id = @k;";
+            update.CommandText = "UPDATE NativeBuildJobs SET Status = @building, Etag = @etag, LeaseExpiresAt = @lease, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@building", NativeBuildJobStatusNames.Building);
             update.Parameters.AddWithValue("@etag", etag.Value!);
+            update.Parameters.AddWithValue("@lease", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
             update.Parameters.AddWithValue("@doc", claimed);
             update.Parameters.AddWithValue("@k", id);
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -196,6 +213,46 @@ public sealed class SqliteNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             update.CommandText = "UPDATE NativeBuildJobs SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@status", NativeBuildJobStatusNames.ToWire(completion.Status));
             update.Parameters.AddWithValue("@etag", etag.Value!);
+            update.Parameters.AddWithValue("@doc", json);
+            update.Parameters.AddWithValue("@k", id);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+            if (doc is null)
+            {
+                return null;
+            }
+
+            // Parse the existing document NON-COPYING; it must be Building, then the etag is checked (a reclaim would have
+            // moved it, so a stale expected etag conflicts) and the lease-extended record serialized. The lease rides inside
+            // the Document; the column is the denormalised copy the claim filters on.
+            using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
+            if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+            {
+                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+            }
+
+            DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+            WorkflowEtag etag = NewEtag();
+            byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, leaseExpiresAt, etag);
+            using SqliteCommand update = this.connection.CreateCommand();
+            update.CommandText = "UPDATE NativeBuildJobs SET Etag = @etag, LeaseExpiresAt = @lease, Document = @doc WHERE Id = @k;";
+            update.Parameters.AddWithValue("@etag", etag.Value!);
+            update.Parameters.AddWithValue("@lease", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
             update.Parameters.AddWithValue("@doc", json);
             update.Parameters.AddWithValue("@k", id);
             await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -453,6 +510,7 @@ public sealed class SqliteNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             Status TEXT NOT NULL,
             CreatedAt TEXT NOT NULL,
             Etag TEXT NOT NULL,
+            LeaseExpiresAt TEXT NULL,
             Document BLOB NOT NULL
         );
         CREATE INDEX IF NOT EXISTS IX_NativeBuildJobs_Status ON NativeBuildJobs (Status);

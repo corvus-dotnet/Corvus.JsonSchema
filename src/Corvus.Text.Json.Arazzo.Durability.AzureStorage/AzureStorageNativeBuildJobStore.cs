@@ -36,6 +36,7 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
     private const string RuntimeIdentifierColumn = "RuntimeIdentifier";
     private const string StatusColumn = "Status";
     private const string CreatedAtColumn = "CreatedAt";
+    private const string LeaseExpiresAtColumn = "LeaseExpiresAt";
 
     // The bounded number of oldest-Queued candidates a single claim will race for before giving up; each lost race means a
     // concurrent worker won that candidate, so under real contention a claim succeeds well within this budget.
@@ -146,13 +147,21 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
 
-        // Find the Queued candidates' (createdAt, id) over a RowKey + CreatedAt projection (no Doc read) with the status
-        // filtered server-side, then order oldest-first client-side (Table queries are unordered).
-        string filter = TableClient.CreateQueryFilter($"Status eq {NativeBuildJobStatusNames.Queued}");
+        // One `now` guards the lease-expiry filter/re-check and stamps the new lease/startedAt, so the claim is evaluated at a
+        // single instant. Lease/created timestamps are the ISO-8601 round-trip ("o") of a UTC instant, so a Table string
+        // compare is chronological (the same property the CreatedAt ordering relies on).
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        string nowText = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
+        // Find the CLAIMABLE candidates' (createdAt, id) over a RowKey + CreatedAt projection (no Doc read) with the state
+        // filtered server-side, then order oldest-first client-side (Table queries are unordered). A candidate is Queued, or
+        // an orphaned Building whose lease has expired (ADR 0056 — a Building entity always carries a LeaseExpiresAt).
+        string filter = TableClient.CreateQueryFilter(
+            $"(Status eq {NativeBuildJobStatusNames.Queued}) or (Status eq {NativeBuildJobStatusNames.Building} and LeaseExpiresAt le {nowText})");
         var keys = new List<(string CreatedAt, string Id)>();
         await foreach (TableEntity entity in this.jobs
             .QueryAsync<TableEntity>(filter, select: ["RowKey", CreatedAtColumn], cancellationToken: cancellationToken)
@@ -170,8 +179,9 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
             return byCreated != 0 ? byCreated : string.CompareOrdinal(a.Id, b.Id);
         });
 
-        // Try the oldest Queued first, transitioning it to Building under an If-Match on the loaded entity ETag; on a 412
-        // (a concurrent claim already advanced it) retry the next-oldest, so two workers never claim the same job.
+        // Try the oldest claimable candidate first, transitioning it to Building under an If-Match on the loaded entity ETag;
+        // on a 412 (a concurrent claim already advanced it) retry the next-oldest, so two workers never claim the same job and
+        // a reclaim of an orphan supersedes the crashed worker.
         int attempts = 0;
         foreach ((string _, string id) in keys)
         {
@@ -189,18 +199,23 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
             }
 
             TableEntity entity = response.Value!;
-            if (entity.GetString(StatusColumn) is not { } status || !string.Equals(status, NativeBuildJobStatusNames.Queued, StringComparison.Ordinal)
-                || entity.GetBinary(DocumentColumn) is not { } doc)
+            if (entity.GetBinary(DocumentColumn) is not { } doc)
             {
-                continue; // no longer queued (concurrently claimed) — try the next
+                continue; // no document — skip
             }
 
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
-            WorkflowEtag etag = NewEtag();
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+            if (!current.RootElement.IsClaimable(now))
+            {
+                continue; // no longer claimable (concurrently claimed with a live lease, or completed) — try the next
+            }
 
-            // The immutable target columns carry through from the loaded document so the replaced entity keeps them; only
-            // Status and Doc change on the claim.
+            WorkflowEtag etag = NewEtag();
+            DateTimeOffset leaseExpiresAt = now + leaseTtl;
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, leaseExpiresAt, etag);
+
+            // The immutable target columns carry through from the loaded document so the replaced entity keeps them; Status,
+            // the LeaseExpiresAt mirror the claim filters on, and Doc change on the claim.
             var updated = new TableEntity(JobPartition, Enc(id))
             {
                 [StatusColumn] = NativeBuildJobStatusNames.Building,
@@ -210,6 +225,7 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
                 [EnvironmentColumn] = current.RootElement.EnvironmentValue,
                 [RuntimeIdentifierColumn] = current.RootElement.RuntimeIdentifierValue,
                 [CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+                [LeaseExpiresAtColumn] = leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
             };
 
             try
@@ -256,6 +272,46 @@ public sealed class AzureStorageNativeBuildJobStore : INativeBuildJobStore
             [EnvironmentColumn] = current.RootElement.EnvironmentValue,
             [RuntimeIdentifierColumn] = current.RootElement.RuntimeIdentifierValue,
             [CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+        };
+
+        await this.jobs.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        byte[]? doc = await this.DocumentAsync(id, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        // Parse the existing document NON-COPYING; it must be Building, then the etag is checked (a reclaim would have moved
+        // it, so a stale expected etag conflicts) and the lease-extended record written. The lease is mirrored to the
+        // LeaseExpiresAt entity column the claim filters on and rides inside the Doc.
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc.AsMemory());
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+        }
+
+        DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+        WorkflowEtag etag = NewEtag();
+        byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, leaseExpiresAt, etag);
+
+        // The immutable target columns and the Building status carry through; only the LeaseExpiresAt mirror and Doc change.
+        var entity = new TableEntity(JobPartition, Enc(id))
+        {
+            [StatusColumn] = NativeBuildJobStatusNames.Building,
+            [DocumentColumn] = json,
+            [BaseWorkflowIdColumn] = current.RootElement.BaseWorkflowIdValue,
+            [VersionNumberColumn] = current.RootElement.VersionNumberValue,
+            [EnvironmentColumn] = current.RootElement.EnvironmentValue,
+            [RuntimeIdentifierColumn] = current.RootElement.RuntimeIdentifierValue,
+            [CreatedAtColumn] = current.RootElement.CreatedAtValue.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
+            [LeaseExpiresAtColumn] = leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture),
         };
 
         await this.jobs.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);

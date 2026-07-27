@@ -77,6 +77,7 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
 
         // Idempotent per target: the id is derived from the tuple, so a repeated enqueue overwrites the same row via a
         // race-safe MERGE that resets the job to Queued (SerializeNew omits startedAt/completedAt/failureReason/claimedBy).
+        // A (re-)enqueue resets the job to Queued, so its lease is cleared (NULL); a Queued job holds no lease.
         upsert.CommandText =
             """
             MERGE NativeBuildJobs WITH (HOLDLOCK) AS target
@@ -84,10 +85,10 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
             ON target.Id = source.Id
             WHEN MATCHED THEN
                 UPDATE SET BaseWorkflowId = @base, VersionNumber = @ver, Environment = @env, RuntimeIdentifier = @rid,
-                    Status = @status, CreatedAt = @createdAt, Etag = @etag, Document = @doc
+                    Status = @status, CreatedAt = @createdAt, Etag = @etag, LeaseExpiresAt = NULL, Document = @doc
             WHEN NOT MATCHED THEN
-                INSERT (Id, BaseWorkflowId, VersionNumber, Environment, RuntimeIdentifier, Status, CreatedAt, Etag, Document)
-                VALUES (@id, @base, @ver, @env, @rid, @status, @createdAt, @etag, @doc);
+                INSERT (Id, BaseWorkflowId, VersionNumber, Environment, RuntimeIdentifier, Status, CreatedAt, Etag, LeaseExpiresAt, Document)
+                VALUES (@id, @base, @ver, @env, @rid, @status, @createdAt, @etag, NULL, @doc);
             """;
         upsert.Parameters.AddWithValue("@id", id);
         upsert.Parameters.AddWithValue("@base", draft.BaseWorkflowIdValue);
@@ -112,23 +113,33 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-        // Read the single oldest Queued row (oldest-first by (CreatedAt, Id)) WITH (UPDLOCK, READPAST, ROWLOCK): UPDLOCK holds
-        // an update lock on the chosen row for the transaction and READPAST makes a concurrent claim skip it and take the
-        // next, so two workers never claim the same job.
+        // One `now` guards the lease-expiry filter and stamps the new lease/startedAt, so the claim is evaluated at a single
+        // instant. Lease/created timestamps are the ISO-8601 round-trip ("o") of a UTC instant, so a lexicographic column
+        // compare is chronological (the same property the CreatedAt ordering relies on).
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        string nowText = now.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+
+        // Read the single oldest CLAIMABLE row (oldest-first by (CreatedAt, Id)) WITH (UPDLOCK, READPAST, ROWLOCK): Queued, or
+        // an orphaned Building whose lease has expired (ADR 0056). UPDLOCK holds an update lock on the chosen row for the
+        // transaction and READPAST makes a concurrent claim skip it and take the next, so two workers never claim the same
+        // job; a crashed worker holds no lock, so its orphan is lockable and reclaimed.
         string? id = null;
         byte[]? document = null;
         await using (SqlCommand select = connection.CreateCommand())
         {
             select.Transaction = transaction;
             select.CommandText =
-                "SELECT TOP 1 Id, Document FROM NativeBuildJobs WITH (UPDLOCK, READPAST, ROWLOCK) WHERE Status = @queued ORDER BY CreatedAt, Id;";
+                "SELECT TOP 1 Id, Document FROM NativeBuildJobs WITH (UPDLOCK, READPAST, ROWLOCK) " +
+                "WHERE Status = @queued OR (Status = @building AND (LeaseExpiresAt IS NULL OR LeaseExpiresAt <= @now)) ORDER BY CreatedAt, Id;";
             select.Parameters.AddWithValue("@queued", NativeBuildJobStatusNames.Queued);
+            select.Parameters.AddWithValue("@building", NativeBuildJobStatusNames.Building);
+            select.Parameters.AddWithValue("@now", nowText);
             await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -143,19 +154,22 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
             return null;
         }
 
-        // Parse the locked row NON-COPYING, stamp the Building transition, and write it back within the same transaction.
+        // Parse the locked row NON-COPYING, stamp the Building transition + the lease, and write it back within the same
+        // transaction. The lease also rides inside the Document; the column is the denormalised copy the claim filters on.
+        DateTimeOffset leaseExpiresAt = now + leaseTtl;
         using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(document!.AsMemory());
         WorkflowEtag etag = NewEtag();
-        ParsedJsonDocument<NativeBuildJob> claimed = NativeBuildJobSerialization.SerializeClaimedDoc(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+        ParsedJsonDocument<NativeBuildJob> claimed = NativeBuildJobSerialization.SerializeClaimedDoc(current.RootElement, claimedBy, now, leaseExpiresAt, etag);
         try
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(claimed.RootElement).Memory;
             await using (SqlCommand update = connection.CreateCommand())
             {
                 update.Transaction = transaction;
-                update.CommandText = "UPDATE NativeBuildJobs SET Status = @building, Etag = @etag, Document = @doc WHERE Id = @k;";
+                update.CommandText = "UPDATE NativeBuildJobs SET Status = @building, Etag = @etag, LeaseExpiresAt = @lease, Document = @doc WHERE Id = @k;";
                 update.Parameters.AddWithValue("@building", NativeBuildJobStatusNames.Building);
                 update.Parameters.AddWithValue("@etag", etag.Value!);
+                update.Parameters.AddWithValue("@lease", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
                 using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(utf8);
                 update.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
                 update.Parameters.AddWithValue("@k", id);
@@ -200,6 +214,50 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
             update.CommandText = "UPDATE NativeBuildJobs SET Status = @status, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@status", NativeBuildJobStatusNames.ToWire(completion.Status));
             update.Parameters.AddWithValue("@etag", etag.Value!);
+            using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(utf8);
+            update.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
+            update.Parameters.AddWithValue("@k", id);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        byte[]? existing = await DocumentAsync(connection, id, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
+        {
+            return null;
+        }
+
+        // Parse the existing document NON-COPYING over the driver's array (the read leaf); it must be Building, then the etag
+        // is checked (a reclaim would have moved it, so a stale expected etag conflicts) and the lease-extended record
+        // serialized into the pooled buffer the returned document owns. The lease rides inside the Document; the column is the
+        // denormalised copy the claim filters on.
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(existing.AsMemory());
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+        }
+
+        DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+        WorkflowEtag etag = NewEtag();
+        ParsedJsonDocument<NativeBuildJob> updated = NativeBuildJobSerialization.SerializeRenewalDoc(current.RootElement, id, expectedEtag, leaseExpiresAt, etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await using SqlCommand update = connection.CreateCommand();
+            update.CommandText = "UPDATE NativeBuildJobs SET Etag = @etag, LeaseExpiresAt = @lease, Document = @doc WHERE Id = @k;";
+            update.Parameters.AddWithValue("@etag", etag.Value!);
+            update.Parameters.AddWithValue("@lease", leaseExpiresAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
             using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(utf8);
             update.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
             update.Parameters.AddWithValue("@k", id);
@@ -453,6 +511,7 @@ public sealed class SqlServerNativeBuildJobStore : INativeBuildJobStore, IAsyncD
                 Status NVARCHAR(64) NOT NULL,
                 CreatedAt NVARCHAR(33) NOT NULL,
                 Etag NVARCHAR(255) NOT NULL,
+                LeaseExpiresAt NVARCHAR(33) NULL,
                 Document VARBINARY(MAX) NOT NULL
             );
             CREATE INDEX IX_NativeBuildJobs_Status ON NativeBuildJobs (Status);

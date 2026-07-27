@@ -61,6 +61,10 @@ public readonly partial struct NativeBuildJob
     /// <summary>Gets the worker that claimed the job, or <see langword="null"/> if unclaimed.</summary>
     public string? ClaimedByOrNull => this.ClaimedBy.IsNotUndefined() ? (string)this.ClaimedBy : null;
 
+    /// <summary>Gets the instant the claiming worker's advisory lease on this Building job expires, or
+    /// <see langword="null"/> if no lease is held (ADR 0056).</summary>
+    public DateTimeOffset? LeaseExpiresAtValue => this.LeaseExpiresAt.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.LeaseExpiresAt).ToDateTimeOffset() : null;
+
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
@@ -77,6 +81,21 @@ public readonly partial struct NativeBuildJob
         NativeBuildJobStatus.Failed => this.Status.ValueEquals("Failed"u8),
         _ => false,
     };
+
+    /// <summary>Tests whether this job holds a live (unexpired) advisory lease as of <paramref name="now"/> — the claiming
+    /// worker is presumed alive (ADR 0056). A Building job with no <c>leaseExpiresAt</c> holds no live lease.</summary>
+    /// <param name="now">The current instant to test the lease against.</param>
+    /// <returns><see langword="true"/> if a lease is held and has not expired.</returns>
+    public bool HasLiveLease(DateTimeOffset now) => this.LeaseExpiresAtValue is { } expires && expires > now;
+
+    /// <summary>Tests whether this job may be claimed as of <paramref name="now"/>: it is Queued, or it is Building but holds
+    /// no live lease (an orphan left by a crashed worker, reclaimable exactly as a run with no live lease is — ADR 0056),
+    /// string-free on the status.</summary>
+    /// <param name="now">The current instant to test the lease against.</param>
+    /// <returns><see langword="true"/> if the job is claimable.</returns>
+    public bool IsClaimable(DateTimeOffset now)
+        => this.HasStatus(NativeBuildJobStatus.Queued)
+        || (this.HasStatus(NativeBuildJobStatus.Building) && !this.HasLiveLease(now));
 
     /// <summary>Tests whether this job targets the given base workflow id, string-free (no id string is realised from the
     /// document — the candidate string's bytes are compared against the JSON value).</summary>
@@ -216,16 +235,31 @@ public readonly partial struct NativeBuildJob
         writer.WriteEndObject();
     }
 
-    /// <summary>Realises a claimed (Building) copy of this job (status + claimedBy + startedAt set; everything else carried
-    /// through) and writes its JSON to the caller's (pooled) writer — the Queued -> Building transition.</summary>
+    /// <summary>Realises a claimed (Building) copy of this job (status + claimedBy + startedAt + leaseExpiresAt set;
+    /// everything else carried through) and writes its JSON to the caller's (pooled) writer — the Queued -> Building
+    /// transition (also the reclaim of an orphaned Building job, which resets startedAt and the lease).</summary>
     /// <param name="writer">The writer to serialize into.</param>
     /// <param name="claimedBy">The worker claiming the job.</param>
     /// <param name="startedAt">The instant the build started.</param>
+    /// <param name="leaseExpiresAt">The instant the claiming worker's advisory lease expires (ADR 0056).</param>
     /// <param name="etag">The new optimistic-concurrency token to assign.</param>
-    public void WriteClaimed(Utf8JsonWriter writer, string claimedBy, DateTimeOffset startedAt, WorkflowEtag etag)
+    public void WriteClaimed(Utf8JsonWriter writer, string claimedBy, DateTimeOffset startedAt, DateTimeOffset leaseExpiresAt, WorkflowEtag etag)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Mutable> builder = this.ApplyClaimed(workspace, claimedBy, startedAt, etag);
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyClaimed(workspace, claimedBy, startedAt, leaseExpiresAt, etag);
+        builder.RootElement.WriteTo(writer);
+    }
+
+    /// <summary>Realises a lease-renewed copy of this Building job (leaseExpiresAt + etag set; status/claimedBy/startedAt and
+    /// everything else carried through) and writes its JSON to the caller's (pooled) writer — the heartbeat that keeps a
+    /// running build's lease live so no other worker reclaims it (ADR 0056).</summary>
+    /// <param name="writer">The writer to serialize into.</param>
+    /// <param name="leaseExpiresAt">The new instant the lease expires.</param>
+    /// <param name="etag">The new optimistic-concurrency token to assign.</param>
+    public void WriteRenewedLease(Utf8JsonWriter writer, DateTimeOffset leaseExpiresAt, WorkflowEtag etag)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = this.ApplyRenewedLease(workspace, leaseExpiresAt, etag);
         builder.RootElement.WriteTo(writer);
     }
 
@@ -260,13 +294,23 @@ public readonly partial struct NativeBuildJob
     }
 
     // Realises a mutable builder over this document and applies the claim; id/created/target fields carry through.
-    private JsonDocumentBuilder<Mutable> ApplyClaimed(JsonWorkspace workspace, string claimedBy, DateTimeOffset startedAt, WorkflowEtag etag)
+    private JsonDocumentBuilder<Mutable> ApplyClaimed(JsonWorkspace workspace, string claimedBy, DateTimeOffset startedAt, DateTimeOffset leaseExpiresAt, WorkflowEtag etag)
     {
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetStatus(NativeBuildJobStatusNames.Building);
         builder.RootElement.SetEtag(etag.Value ?? string.Empty);
         builder.RootElement.SetClaimedBy(claimedBy);
         builder.RootElement.SetStartedAt(startedAt);
+        builder.RootElement.SetLeaseExpiresAt(leaseExpiresAt);
+        return builder;
+    }
+
+    // Realises a mutable builder over this document and extends the lease; status/claimedBy/startedAt and everything else carry through.
+    private JsonDocumentBuilder<Mutable> ApplyRenewedLease(JsonWorkspace workspace, DateTimeOffset leaseExpiresAt, WorkflowEtag etag)
+    {
+        JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
+        builder.RootElement.SetLeaseExpiresAt(leaseExpiresAt);
+        builder.RootElement.SetEtag(etag.Value ?? string.Empty);
         return builder;
     }
 

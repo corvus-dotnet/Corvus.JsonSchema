@@ -50,7 +50,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ilc ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(verifier, Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Claimed.ShouldBeTrue();
         result.WasSuperseded.ShouldBeFalse();
@@ -82,7 +82,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Claimed.ShouldBeFalse();
         result.Outcome.ShouldBeNull();
@@ -102,7 +102,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Failure("error IL3050: reflection is not AOT-safe"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("IL3050");
@@ -131,7 +131,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("unsigned");
@@ -154,7 +154,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("no longer exists");
@@ -181,7 +181,7 @@ public sealed class NativeBuildWorkerTests
             beforeReturn: async () => await Enqueue(jobs, "checkout", 1, "production", "linux-x64"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
 
         result.Claimed.ShouldBeTrue();
         result.WasSuperseded.ShouldBeTrue();

@@ -20,6 +20,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Conformance;
 /// </summary>
 public abstract class NativeBuildJobStoreConformance
 {
+    // A lease long enough that a just-claimed job is never reclaimed within a synchronous test flow (the clock only moves
+    // where a test advances a StepClock), so the claim/complete tests are unaffected by the lease; the reclaim tests use
+    // explicit short TTLs and advance the clock past them.
+    private static readonly TimeSpan DefaultLeaseTtl = TimeSpan.FromMinutes(5);
+
     private readonly List<IAsyncDisposable> disposables = [];
 
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
@@ -104,7 +109,7 @@ public abstract class NativeBuildJobStoreConformance
 
         // Drive it to Ready.
         WorkflowEtag buildingEtag;
-        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", default))
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", DefaultLeaseTtl, default))
         {
             buildingEtag = claimed!.RootElement.EtagValue;
         }
@@ -135,7 +140,7 @@ public abstract class NativeBuildJobStoreConformance
         clock.Advance(TimeSpan.FromSeconds(1));
         string third = await this.EnqueueAsync(store, "w", 3, "production", "linux-x64", "alice");
 
-        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-7", default))
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-7", DefaultLeaseTtl, default))
         {
             claimed.ShouldNotBeNull();
             claimed!.RootElement.IdValue.ShouldBe(first); // the oldest queued
@@ -148,7 +153,7 @@ public abstract class NativeBuildJobStoreConformance
         (await this.ClaimIdAsync(store)).ShouldBe(third);
 
         // Nothing left queued.
-        (await store.ClaimNextQueuedAsync("worker-7", default)).ShouldBeNull();
+        (await store.ClaimNextQueuedAsync("worker-7", DefaultLeaseTtl, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -171,7 +176,7 @@ public abstract class NativeBuildJobStoreConformance
         {
             while (true)
             {
-                using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync(worker, default);
+                using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync(worker, DefaultLeaseTtl, default);
                 if (claimed is null)
                 {
                     return;
@@ -260,6 +265,143 @@ public abstract class NativeBuildJobStoreConformance
         // The job is still Queued (never claimed), so it cannot be completed — even unconditionally.
         await Should.ThrowAsync<NativeBuildJobStateException>(async () =>
             await store.CompleteAsync(id, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), WorkflowEtag.None, default));
+    }
+
+    [TestMethod]
+    public async Task An_orphaned_building_job_is_reclaimed_once_its_lease_expires()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        INativeBuildJobStore store = await this.NewStoreAsync(clock);
+        string id = await this.EnqueueAsync(store, "w", 1, "production", "linux-x64", "alice");
+
+        // worker-1 claims with a 60s lease, then "crashes" (never renews, never completes).
+        WorkflowEtag firstClaim;
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", TimeSpan.FromSeconds(60), default))
+        {
+            claimed!.RootElement.ClaimedByOrNull.ShouldBe("worker-1");
+            firstClaim = claimed.RootElement.EtagValue;
+        }
+
+        // While the lease is live the Building job is not reclaimable — a second worker finds nothing to claim.
+        clock.Advance(TimeSpan.FromSeconds(30));
+        (await store.ClaimNextQueuedAsync("worker-2", TimeSpan.FromSeconds(60), default)).ShouldBeNull();
+
+        // Once the lease expires, worker-2 reclaims the orphan: the same job, re-Building under the new claimant, with a
+        // fresh startedAt and a bumped etag that supersedes the crashed worker.
+        clock.Advance(TimeSpan.FromSeconds(31));
+        using ParsedJsonDocument<NativeBuildJob>? reclaimed = await store.ClaimNextQueuedAsync("worker-2", TimeSpan.FromSeconds(60), default);
+        reclaimed.ShouldNotBeNull();
+        reclaimed!.RootElement.IdValue.ShouldBe(id);
+        reclaimed.RootElement.StatusValue.ShouldBe("Building");
+        reclaimed.RootElement.ClaimedByOrNull.ShouldBe("worker-2");
+        reclaimed.RootElement.EtagValue.ShouldNotBe(firstClaim);
+    }
+
+    [TestMethod]
+    public async Task A_reclaim_supersedes_the_orphaned_workers_completion()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        INativeBuildJobStore store = await this.NewStoreAsync(clock);
+        string id = await this.EnqueueAsync(store, "w", 1, "production", "linux-x64", "alice");
+
+        WorkflowEtag orphanEtag;
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", TimeSpan.FromSeconds(60), default))
+        {
+            orphanEtag = claimed!.RootElement.EtagValue;
+        }
+
+        // The lease expires and worker-2 reclaims it, taking a new etag.
+        clock.Advance(TimeSpan.FromSeconds(61));
+        WorkflowEtag reclaimEtag;
+        using (ParsedJsonDocument<NativeBuildJob>? reclaimed = await store.ClaimNextQueuedAsync("worker-2", TimeSpan.FromSeconds(60), default))
+        {
+            reclaimEtag = reclaimed!.RootElement.EtagValue;
+        }
+
+        // The orphaned worker-1 finishing late completes on its now-stale etag → conflict (its work is abandoned). Correctness
+        // rests on the etag, not the lease: only one completion wins even during a lease handoff.
+        await Should.ThrowAsync<NativeBuildJobConflictException>(async () =>
+            await store.CompleteAsync(id, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), orphanEtag, default));
+
+        // worker-2 completes on the reclaim etag → succeeds.
+        using ParsedJsonDocument<NativeBuildJob>? completed = await store.CompleteAsync(id, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), reclaimEtag, default);
+        completed!.RootElement.StatusValue.ShouldBe("Ready");
+    }
+
+    [TestMethod]
+    public async Task Renewing_the_lease_extends_it_so_the_job_is_not_reclaimed()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        INativeBuildJobStore store = await this.NewStoreAsync(clock);
+        string id = await this.EnqueueAsync(store, "w", 1, "production", "linux-x64", "alice");
+
+        WorkflowEtag etag;
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", TimeSpan.FromSeconds(60), default))
+        {
+            etag = claimed!.RootElement.EtagValue;
+        }
+
+        // Near expiry the owner renews for another 60s: status/claimedBy/startedAt carry through, the etag advances.
+        clock.Advance(TimeSpan.FromSeconds(50));
+        WorkflowEtag renewedEtag;
+        using (ParsedJsonDocument<NativeBuildJob>? renewed = await store.RenewLeaseAsync(id, etag, TimeSpan.FromSeconds(60), default))
+        {
+            renewed.ShouldNotBeNull();
+            renewed!.RootElement.StatusValue.ShouldBe("Building");
+            renewed.RootElement.ClaimedByOrNull.ShouldBe("worker-1");
+            renewedEtag = renewed.RootElement.EtagValue;
+            renewedEtag.ShouldNotBe(etag);
+        }
+
+        // Past the ORIGINAL lease but within the renewed one, the job is still not reclaimable.
+        clock.Advance(TimeSpan.FromSeconds(20));
+        (await store.ClaimNextQueuedAsync("worker-2", TimeSpan.FromSeconds(60), default)).ShouldBeNull();
+
+        // The owner still completes on the renewed etag.
+        using ParsedJsonDocument<NativeBuildJob>? completed = await store.CompleteAsync(id, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), renewedEtag, default);
+        completed!.RootElement.StatusValue.ShouldBe("Ready");
+    }
+
+    [TestMethod]
+    public async Task Renewing_with_a_stale_etag_conflicts_after_a_reclaim()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        INativeBuildJobStore store = await this.NewStoreAsync(clock);
+        string id = await this.EnqueueAsync(store, "w", 1, "production", "linux-x64", "alice");
+
+        WorkflowEtag orphanEtag;
+        using (ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker-1", TimeSpan.FromSeconds(60), default))
+        {
+            orphanEtag = claimed!.RootElement.EtagValue;
+        }
+
+        clock.Advance(TimeSpan.FromSeconds(61));
+        using (await store.ClaimNextQueuedAsync("worker-2", TimeSpan.FromSeconds(60), default))
+        {
+        }
+
+        // worker-1's heartbeat lands after it was reclaimed: its expected etag no longer matches, so the renewal conflicts —
+        // which is how a superseded worker learns it lost the lease and should stop building.
+        await Should.ThrowAsync<NativeBuildJobConflictException>(async () =>
+            await store.RenewLeaseAsync(id, orphanEtag, TimeSpan.FromSeconds(60), default));
+    }
+
+    [TestMethod]
+    public async Task Renewing_a_missing_job_returns_null()
+    {
+        INativeBuildJobStore store = await this.NewStoreAsync();
+        (await store.RenewLeaseAsync("missing", WorkflowEtag.None, TimeSpan.FromSeconds(60), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Renewing_a_job_that_is_not_building_is_a_wrong_state()
+    {
+        INativeBuildJobStore store = await this.NewStoreAsync();
+        string id = await this.EnqueueAsync(store, "w", 1, "production", "linux-x64", "alice");
+
+        // The job is still Queued (never claimed), so there is no lease to renew — even unconditionally.
+        await Should.ThrowAsync<NativeBuildJobStateException>(async () =>
+            await store.RenewLeaseAsync(id, WorkflowEtag.None, TimeSpan.FromSeconds(60), default));
     }
 
     [TestMethod]
@@ -465,14 +607,14 @@ public abstract class NativeBuildJobStoreConformance
     // Claims the next queued job and returns its id (or null if none), disposing the claimed document.
     private async ValueTask<string?> ClaimIdAsync(INativeBuildJobStore store)
     {
-        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", default);
+        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", DefaultLeaseTtl, default);
         return claimed?.RootElement.IdValue;
     }
 
     // Claims the next queued job and returns the etag it was stamped with (for a subsequent optimistic completion).
     private async ValueTask<WorkflowEtag> ClaimEtagAsync(INativeBuildJobStore store)
     {
-        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", default);
+        using ParsedJsonDocument<NativeBuildJob>? claimed = await store.ClaimNextQueuedAsync("worker", DefaultLeaseTtl, default);
         return claimed!.RootElement.EtagValue;
     }
 

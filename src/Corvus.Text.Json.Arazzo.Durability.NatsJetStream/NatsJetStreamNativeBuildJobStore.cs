@@ -162,9 +162,13 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
+
+        // One `now` guards the lease-expiry test (which orphaned Building jobs are reclaimable) and stamps the new
+        // lease/startedAt, so the claim is evaluated at a single instant.
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
 
         // Enumerate the index keys (cheap, no documents) and recover (createdAt, id) from each; KV listing is unordered, so
         // the (createdAt, id) order is materialised client-side.
@@ -192,9 +196,10 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
             return byCreated != 0 ? byCreated : string.CompareOrdinal(a.Id, b.Id);
         });
 
-        // Try the oldest Queued first, transitioning it to Building under the KV native revision CAS (UpdateAsync with the
-        // read revision); on a wrong-revision conflict (a concurrent claim already advanced it) retry the next-oldest, so
-        // two workers never claim the same job.
+        // Try the oldest CLAIMABLE candidate first (Queued, or an orphaned Building whose lease has expired — ADR 0056),
+        // transitioning it to Building under the KV native revision CAS (UpdateAsync with the read revision); on a
+        // wrong-revision conflict (a concurrent claim already advanced it) retry the next-oldest, so two workers never claim
+        // the same job.
         int attempts = 0;
         foreach ((string _, string id) in keys)
         {
@@ -210,13 +215,13 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
             }
 
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(bytes.AsMemory());
-            if (!current.RootElement.HasStatus(NativeBuildJobStatus.Queued))
+            if (!current.RootElement.IsClaimable(now))
             {
-                continue; // already claimed/completed
+                continue; // completed, or Building with a live lease
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, now + leaseTtl, etag);
             try
             {
                 await this.store.UpdateAsync(JobPrefix + Enc(id), claimed, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -249,6 +254,30 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
 
         WorkflowEtag etag = NewEtag();
         byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), etag);
+        await this.store.PutAsync(JobPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(JobPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } bytes })
+        {
+            return null;
+        }
+
+        // Parse the existing document NON-COPYING; it must be Building, then the etag is checked (a reclaim would have moved
+        // it, so a stale expected etag conflicts) and the lease-extended record put back. The lease rides inside the document.
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(bytes.AsMemory());
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+        }
+
+        WorkflowEtag etag = NewEtag();
+        byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, this.timeProvider.GetUtcNow() + leaseTtl, etag);
         await this.store.PutAsync(JobPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<NativeBuildJob>(json);
     }

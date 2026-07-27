@@ -151,15 +151,20 @@ public sealed class RedisNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(claimedBy);
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Walk the keyset index oldest-first (ZRANGEBYLEX returns members in (createdAt, id) order). For each Queued
-        // candidate, transition it to Building under an optimistic CAS: a Redis transaction whose condition is that the
-        // record's bytes are still the ones we read. Two workers racing the same record: only the first commits (it changes
-        // the value), so the other's condition fails and it retries the next-oldest — two workers never claim the same job.
+        // One `now` guards the lease-expiry test (which orphaned Building jobs are reclaimable) and stamps the new
+        // lease/startedAt, so the claim is evaluated at a single instant.
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+
+        // Walk the keyset index oldest-first (ZRANGEBYLEX returns members in (createdAt, id) order). For each CLAIMABLE
+        // candidate (Queued, or an orphaned Building whose lease has expired — ADR 0056), transition it to Building under an
+        // optimistic CAS: a Redis transaction whose condition is that the record's bytes are still the ones we read. Two
+        // workers racing the same record: only the first commits (it changes the value), so the other's condition fails and
+        // it retries the next-oldest — two workers never claim the same job.
         RedisValue[] members = await this.database.SortedSetRangeByValueAsync(JobByCreatedKey).ConfigureAwait(false);
         foreach (RedisValue value in members)
         {
@@ -174,13 +179,13 @@ public sealed class RedisNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
 
             byte[] currentBytes = ((byte[]?)currentValue)!; // non-empty (guarded above), so the RedisValue holds bytes
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(currentBytes.AsMemory());
-            if (!current.RootElement.HasStatus(NativeBuildJobStatus.Queued))
+            if (!current.RootElement.IsClaimable(now))
             {
-                continue; // already claimed/completed — the claim never changes createdAt/id, so the member stays valid
+                continue; // completed, or Building with a live lease — the claim never changes createdAt/id, so the member stays valid
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, this.timeProvider.GetUtcNow(), etag);
+            byte[] claimed = NativeBuildJobSerialization.SerializeClaimed(current.RootElement, claimedBy, now, now + leaseTtl, etag);
             ITransaction transaction = this.database.CreateTransaction();
             transaction.AddCondition(Condition.StringEqual(JobPrefix + id, currentValue));
             _ = transaction.StringSetAsync(JobPrefix + id, claimed);
@@ -220,6 +225,43 @@ public sealed class RedisNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
         // Serialize the completed result into the pooled buffer the returned document owns and bind its exact bytes (no GC
         // array, no second copy); return on success, dispose on a write failure.
         ParsedJsonDocument<NativeBuildJob> updated = NativeBuildJobSerialization.SerializeCompletionDoc(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), etag);
+        try
+        {
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
+            await this.database.StringSetAsync(JobPrefix + id, utf8).ConfigureAwait(false);
+            return updated;
+        }
+        catch
+        {
+            updated.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Read the existing document into a pooled lease (no GC read array) and parse it NON-COPYING (the lease stays alive
+        // through the synchronous state + etag check + merge). The etag is the ownership token: a reclaim would have moved it,
+        // so a stale expected etag conflicts.
+        using Lease<byte>? lease = await this.database.StringGetLeaseAsync(JobPrefix + id).ConfigureAwait(false);
+        if (lease is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(lease.Memory);
+        if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
+        {
+            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+        }
+
+        DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;
+        WorkflowEtag etag = NewEtag();
+        ParsedJsonDocument<NativeBuildJob> updated = NativeBuildJobSerialization.SerializeRenewalDoc(current.RootElement, id, expectedEtag, leaseExpiresAt, etag);
         try
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;

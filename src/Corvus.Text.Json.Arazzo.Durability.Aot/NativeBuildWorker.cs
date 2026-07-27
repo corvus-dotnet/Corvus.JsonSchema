@@ -58,9 +58,10 @@ public sealed class NativeBuildWorker
     /// a cancellation is propagated (the claimed job is left Building for a later reclaim, not marked failed).
     /// </summary>
     /// <param name="workerId">The identifier of this worker, stamped as the job's <c>claimedBy</c> for audit.</param>
+    /// <param name="leaseTtl">How long the claiming worker's advisory lease is held before another worker may reclaim the job as an orphan (ADR 0056).</param>
     /// <param name="cancellationToken">A cancellation token; a cancellation leaves any claimed job Building for reclaim.</param>
     /// <returns>The outcome of the cycle: idle, a completion (Ready or Failed), or a superseded completion.</returns>
-    public async ValueTask<NativeBuildWorkerResult> DriveNextAsync(string workerId, CancellationToken cancellationToken)
+    public async ValueTask<NativeBuildWorkerResult> DriveNextAsync(string workerId, TimeSpan leaseTtl, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workerId);
 
@@ -72,7 +73,7 @@ public sealed class NativeBuildWorker
 
         // Claim the oldest queued job (Queued -> Building) and read the leaf identifiers the stores need, then release the
         // pooled claim document before the long build so its buffer is not rented across the compile.
-        using (ParsedJsonDocument<NativeBuildJob>? claimedDoc = await this.jobs.ClaimNextQueuedAsync(workerId, cancellationToken).ConfigureAwait(false))
+        using (ParsedJsonDocument<NativeBuildJob>? claimedDoc = await this.jobs.ClaimNextQueuedAsync(workerId, leaseTtl, cancellationToken).ConfigureAwait(false))
         {
             if (claimedDoc is not { } claimed)
             {

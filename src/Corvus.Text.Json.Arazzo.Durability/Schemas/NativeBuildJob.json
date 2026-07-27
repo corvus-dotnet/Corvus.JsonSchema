@@ -59,6 +59,11 @@
       "type": "string",
       "description": "The worker that claimed the job and is building it, if claimed."
     },
+    "leaseExpiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The instant after which the claiming worker's advisory lease on this Building job expires and another worker may reclaim it (ADR 0056). The claiming worker renews it on a heartbeat while the compile runs; a build left Building with no live lease is an orphan of a crashed worker and is reclaimable. Present only while Building; the etag is the authoritative ownership token, this is the liveness signal."
+    },
     "etag": {
       "type": "string",
       "description": "The optimistic-concurrency token."
