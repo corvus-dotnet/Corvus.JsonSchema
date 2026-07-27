@@ -76,6 +76,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0057](0057-serverless-executor-compiled-against-reference-assemblies.md) | The serverless workflow executor is compiled against reference assemblies | Accepted |
 | [0058](0058-run-isolation-governed-by-environment-matched-at-start.md) | A run's required isolation is governed by its environment, advertised by runners, and matched at the start gate | Accepted |
 | [0059](0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md) | The serverless deploy and invoke run on the runner as the secure boundary, and the control plane holds no user cloud secrets | Accepted |
+| [0060](0060-local-serverless-deploy-emulated-with-localstack.md) | Local serverless deploy is emulated with LocalStack, and one Lambda deployer serves local development and production | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog
