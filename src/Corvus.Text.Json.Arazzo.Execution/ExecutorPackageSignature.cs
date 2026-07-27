@@ -30,7 +30,7 @@ public readonly record struct ExecutorPackageSignature(string Algorithm, string 
         JsonElement root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
         {
-            throw new FormatException("The executor signature is not a JSON object.");
+            ThrowHelper.ThrowExecutorSignatureNotJsonObject();
         }
 
         string algorithm = ReadString(root, "algorithm"u8);
@@ -40,7 +40,7 @@ public readonly record struct ExecutorPackageSignature(string Algorithm, string 
         byte[] value = new byte[Base64.GetMaxDecodedFromUtf8Length(valueBase64.Length)];
         if (!Convert.TryFromBase64String(valueBase64, value, out int written))
         {
-            throw new FormatException("The executor signature's 'value' is not valid base64.");
+            ThrowHelper.ThrowExecutorSignatureValueNotBase64();
         }
 
         return new ExecutorPackageSignature(algorithm, keyId, value.AsMemory(0, written));
@@ -67,7 +67,7 @@ public readonly record struct ExecutorPackageSignature(string Algorithm, string 
     private static string ReadString(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } s
             ? s
-            : throw new FormatException($"The executor signature is missing the required string property '{System.Text.Encoding.UTF8.GetString(name)}'.");
+            : throw ThrowHelper.GetExecutorSignatureMissingStringPropertyException(System.Text.Encoding.UTF8.GetString(name));
 }
 
 /// <summary>The signature algorithms an executor-package signer may use and a runner's verifier understands.</summary>

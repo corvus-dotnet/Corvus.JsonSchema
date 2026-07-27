@@ -63,12 +63,12 @@ public sealed class WorkflowAotBuildService
 
         if (!WorkflowPackage.TryReadEntry(package, "metadata/executor.dll"u8, out ReadOnlyMemory<byte> executorAssembly) || executorAssembly.IsEmpty)
         {
-            throw new WorkflowAotBuildException("The package carries no compiled executor assembly to build.");
+            ThrowHelper.ThrowNoExecutorAssembly();
         }
 
         if (!WorkflowPackage.TryReadEntry(package, "metadata/executor-manifest.json"u8, out ReadOnlyMemory<byte> manifestUtf8) || manifestUtf8.IsEmpty)
         {
-            throw new WorkflowAotBuildException("The package carries no executor manifest.");
+            ThrowHelper.ThrowNoExecutorManifest();
         }
 
         // Verify integrity and signature before building: the native binary must be provably derived from the signed IL.
@@ -118,12 +118,12 @@ public sealed class WorkflowAotBuildService
 
         if (!WorkflowPackage.TryReadNativeArtifact(package, runtimeIdentifier, out ReadOnlyMemory<byte> nativeBinary) || nativeBinary.IsEmpty)
         {
-            throw new WorkflowAotBuildException($"The package carries no native binary for '{runtimeIdentifier}'.");
+            ThrowHelper.ThrowNoNativeBinary(runtimeIdentifier);
         }
 
         if (!WorkflowPackage.TryReadNativeAttestation(package, runtimeIdentifier, out ReadOnlyMemory<byte> attestationManifest, out ReadOnlyMemory<byte> signatureUtf8))
         {
-            throw new WorkflowAotBuildException($"The native binary for '{runtimeIdentifier}' is unsigned; refusing to deploy an unattested binary.");
+            ThrowHelper.ThrowUnsignedNativeBinary(runtimeIdentifier);
         }
 
         NativeArtifactAttestation attestation;
@@ -133,24 +133,24 @@ public sealed class WorkflowAotBuildService
         }
         catch (FormatException ex)
         {
-            throw new WorkflowAotBuildException($"The native artifact attestation is malformed: {ex.Message}", ex);
+            throw ThrowHelper.GetMalformedNativeAttestationException(ex);
         }
 
         if (!string.Equals(attestation.RuntimeIdentifier, runtimeIdentifier, StringComparison.Ordinal))
         {
-            throw new WorkflowAotBuildException($"The native artifact attestation targets '{attestation.RuntimeIdentifier}', not the requested '{runtimeIdentifier}'.");
+            ThrowHelper.ThrowAttestationRuntimeMismatch(attestation.RuntimeIdentifier, runtimeIdentifier);
         }
 
         string actualDigest = NativeArtifactAttestation.ComputeDigest(nativeBinary.Span);
         if (!string.Equals(attestation.NativeDigest, actualDigest, StringComparison.Ordinal))
         {
-            throw new WorkflowAotBuildException($"The native binary digest '{actualDigest}' does not match the attestation's '{attestation.NativeDigest}'.");
+            ThrowHelper.ThrowNativeDigestMismatch(actualDigest, attestation.NativeDigest);
         }
 
         string packageHash = CatalogPackage.HashCanonical(package);
         if (!string.Equals(attestation.PackageHash, packageHash, StringComparison.Ordinal))
         {
-            throw new WorkflowAotBuildException($"The native artifact attestation's package hash '{attestation.PackageHash}' does not match the version's content hash '{packageHash}'.");
+            ThrowHelper.ThrowAttestationPackageHashMismatch(attestation.PackageHash, packageHash);
         }
 
         ExecutorPackageSignature signature;
@@ -160,12 +160,12 @@ public sealed class WorkflowAotBuildService
         }
         catch (FormatException ex)
         {
-            throw new WorkflowAotBuildException($"The native artifact signature is malformed: {ex.Message}", ex);
+            throw ThrowHelper.GetMalformedNativeSignatureException(ex);
         }
 
         if (!verifier.Verify(attestationManifest, signature))
         {
-            throw new WorkflowAotBuildException("The native artifact signature did not verify against a trusted key; refusing to deploy.");
+            ThrowHelper.ThrowNativeSignatureUntrusted();
         }
 
         return attestation;
@@ -184,19 +184,18 @@ public sealed class WorkflowAotBuildService
         }
         catch (FormatException ex)
         {
-            throw new WorkflowAotBuildException($"The executor manifest is malformed: {ex.Message}", ex);
+            throw ThrowHelper.GetMalformedExecutorManifestException(ex);
         }
 
         string actualDigest = "sha256:" + Convert.ToHexStringLower(SHA256.HashData(executorAssembly.Span));
         if (!string.Equals(manifest.AssemblyDigest, actualDigest, StringComparison.Ordinal))
         {
-            throw new WorkflowAotBuildException(
-                $"The executor assembly digest '{actualDigest}' does not match the manifest's '{manifest.AssemblyDigest}'.");
+            ThrowHelper.ThrowExecutorAssemblyDigestMismatch(actualDigest, manifest.AssemblyDigest);
         }
 
         if (!WorkflowPackage.TryReadEntry(package, "metadata/executor-manifest.sig"u8, out ReadOnlyMemory<byte> signatureUtf8) || signatureUtf8.IsEmpty)
         {
-            throw new WorkflowAotBuildException("The executor package is unsigned; the AOT builder refuses to build from an unsigned executor.");
+            ThrowHelper.ThrowUnsignedExecutorPackage();
         }
 
         ExecutorPackageSignature signature;
@@ -206,12 +205,12 @@ public sealed class WorkflowAotBuildService
         }
         catch (FormatException ex)
         {
-            throw new WorkflowAotBuildException($"The executor signature is malformed: {ex.Message}", ex);
+            throw ThrowHelper.GetMalformedExecutorSignatureException(ex);
         }
 
         if (!this.verifier.Verify(manifestUtf8, signature))
         {
-            throw new WorkflowAotBuildException("The executor signature did not verify against a trusted key; refusing to build.");
+            ThrowHelper.ThrowExecutorSignatureUntrusted();
         }
 
         return manifest;

@@ -100,7 +100,7 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("A workflow administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowWorkflowAdministratorsRequired(nameof(administrators));
         }
 
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);

@@ -85,7 +85,7 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         }
         catch (SqlException ex) when (ex.Number is 2627 or 2601)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator) so

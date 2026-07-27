@@ -204,7 +204,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         {
             if (this.loop is not null)
             {
-                throw new InvalidOperationException("The draft runner's background loop is already running.");
+                ThrowHelper.ThrowDraftRunnerLoopAlreadyRunning();
             }
 
             TimeSpan interval = pollInterval ?? TimeSpan.FromSeconds(1);

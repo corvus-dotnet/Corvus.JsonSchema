@@ -112,7 +112,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+            ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);

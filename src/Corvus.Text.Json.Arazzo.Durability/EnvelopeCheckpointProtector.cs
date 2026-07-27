@@ -64,13 +64,13 @@ public abstract class EnvelopeCheckpointProtector : ICheckpointProtector
     {
         if (ciphertext.Length < LengthPrefixSize)
         {
-            throw new CryptographicException("The protected checkpoint is too short to be valid.");
+            ThrowHelper.ThrowCheckpointTooShort();
         }
 
         int wrappedLength = BinaryPrimitives.ReadInt32BigEndian(ciphertext.Span[..LengthPrefixSize]);
         if (wrappedLength <= 0 || ciphertext.Length < LengthPrefixSize + wrappedLength + NonceSize + TagSize)
         {
-            throw new CryptographicException("The protected checkpoint is malformed.");
+            ThrowHelper.ThrowCheckpointMalformed();
         }
 
         ReadOnlyMemory<byte> wrapped = ciphertext.Slice(LengthPrefixSize, wrappedLength);

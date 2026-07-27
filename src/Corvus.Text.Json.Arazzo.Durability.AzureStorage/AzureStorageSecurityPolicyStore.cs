@@ -131,7 +131,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
-            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+            ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
         }
 
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);

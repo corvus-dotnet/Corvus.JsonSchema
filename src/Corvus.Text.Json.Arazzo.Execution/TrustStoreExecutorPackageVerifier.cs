@@ -87,7 +87,7 @@ public sealed class TrustStoreExecutorPackageVerifier : IExecutorPackageVerifier
         }
         catch (ArgumentException ex)
         {
-            throw new ArgumentException($"The trusted public key '{keyId}' is neither an ECDSA nor an RSA public key.", nameof(pem), ex);
+            throw ThrowHelper.GetTrustedPublicKeyNotAsymmetricException(keyId, nameof(pem), ex);
         }
     }
 }

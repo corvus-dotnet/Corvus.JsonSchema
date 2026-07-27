@@ -106,7 +106,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         {
             AccessRequest request = created.RootElement;
             return await this.GrantAndDecideAsync(request, request.EtagValue, actor, SelfElevationReason, cancellationToken).ConfigureAwait(false)
-                ?? throw new AccessRequestStateException(created.RootElement.IdValue, "The self-elevation could not be completed.");
+                ?? throw ServerThrowHelper.GetSelfElevationIncompleteException(created.RootElement.IdValue);
         }
         finally
         {
@@ -237,7 +237,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         List<string> granted = this.CapScopes(request);
         if (granted.Count == 0)
         {
-            throw new AccessRequestStateException(request.IdValue, "None of the requested scopes is grantable (eligibility may cover only run access).");
+            ServerThrowHelper.ThrowNoGrantableScopesEligibility(request.IdValue);
         }
 
         DateTimeOffset? expiresAt = eligibilityWindow is { } window ? this.timeProvider.GetUtcNow().Add(window) : null;
@@ -315,7 +315,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         if (!request.SubjectClaimTypeEquals(subjectClaimType)
             || !request.SubjectClaimValueEquals(subjectClaimValue))
         {
-            throw new AccessRequestStateException(requestId, "Only the requester may withdraw their own request.");
+            ServerThrowHelper.ThrowOnlyRequesterMayWithdraw(requestId);
         }
 
         return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Withdrawn), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
@@ -333,7 +333,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             "eligible" => await this.GrantRequestAsEligibleAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
             "rejected" => await this.EnactDenialAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
             "withdrawn" => await this.EnactWithdrawalAsync(requestId, actor, cancellationToken).ConfigureAwait(false),
-            _ => throw new ArgumentException($"Unrecognised settlement outcome '{outcome}'.", nameof(outcome)),
+            _ => throw ServerThrowHelper.GetUnrecognisedSettlementOutcomeException(outcome),
         };
     }
 
@@ -413,7 +413,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     {
         if (!request.HasStatus(expected))
         {
-            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}, not {AccessRequestStatusNames.ToWire(expected)}.");
+            ServerThrowHelper.ThrowRequestStatusMismatch(request.IdValue, request.StatusValue, AccessRequestStatusNames.ToWire(expected));
         }
     }
 
@@ -423,7 +423,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     {
         if (!request.HasStatus(AccessRequestStatus.Approved) && !request.HasStatus(AccessRequestStatus.Eligible))
         {
-            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}; only an approved grant or an eligibility assignment can be revoked.");
+            ServerThrowHelper.ThrowRequestNotRevocable(request.IdValue, request.StatusValue);
         }
     }
 
@@ -436,7 +436,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         {
             if (!char.IsAsciiLetterOrDigit(c) && c is not ('-' or '_' or '.' or ':'))
             {
-                throw new AccessRequestStateException(baseWorkflowId, $"The workflow id '{baseWorkflowId}' is not a permitted access-request target.");
+                ServerThrowHelper.ThrowWorkflowIdNotPermitted(baseWorkflowId);
             }
         }
     }
@@ -449,7 +449,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         List<string> granted = this.CapScopes(request);
         if (granted.Count == 0)
         {
-            throw new AccessRequestStateException(request.IdValue, "None of the requested scopes is grantable (an approval may grant only run access).");
+            ServerThrowHelper.ThrowNoGrantableScopesApproval(request.IdValue);
         }
 
         (string bindingId, DateTimeOffset expiresAt) = await this.WriteGrantAsync(request, granted, actor, cancellationToken).ConfigureAwait(false);

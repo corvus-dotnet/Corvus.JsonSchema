@@ -52,13 +52,13 @@ public sealed class KeyVaultSecretResolver : ISecretResolver
     {
         if (reference.Scheme != SecretScheme.KeyVault)
         {
-            throw new SecretResolutionException(reference, "this resolver only handles the keyvault:// scheme.");
+            ThrowHelper.ThrowSchemeMismatch(reference);
         }
 
         int slash = reference.Locator.IndexOf('/', StringComparison.Ordinal);
         if (slash <= 0 || slash == reference.Locator.Length - 1)
         {
-            throw new SecretResolutionException(reference, "a keyvault:// reference must be keyvault://<vault-host>/<secret-name>[#version].");
+            ThrowHelper.ThrowReferenceMalformed(reference);
         }
 
         string host = reference.Locator[..slash];
@@ -73,7 +73,7 @@ public sealed class KeyVaultSecretResolver : ISecretResolver
         }
         catch (RequestFailedException ex)
         {
-            throw new SecretResolutionException(reference, $"Key Vault returned {ex.Status} reading secret '{secretName}' from '{vaultUri}'.", ex);
+            throw ThrowHelper.GetReadFailedException(reference, secretName, vaultUri, ex);
         }
     }
 }

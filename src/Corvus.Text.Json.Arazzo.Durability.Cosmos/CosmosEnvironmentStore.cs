@@ -123,7 +123,7 @@ public sealed class CosmosEnvironmentStore : IEnvironmentStore, IAsyncDisposable
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+                ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
             }
 
             response.EnsureSuccessStatusCode();

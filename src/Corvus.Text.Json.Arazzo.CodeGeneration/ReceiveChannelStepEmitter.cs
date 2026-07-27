@@ -86,8 +86,7 @@ internal static class ReceiveChannelStepEmitter
 
         if (correlationName is not null && isResponder)
         {
-            throw new NotSupportedException(
-                $"Receive channel step '{stepId}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.");
+            ThrowHelper.ThrowResponderCorrelationIdUnsupported(stepId);
         }
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
@@ -260,7 +259,7 @@ internal static class ReceiveChannelStepEmitter
     {
         if (requestBody is not { } body)
         {
-            throw new NotSupportedException($"Request/reply receive step '{stepId}' has no requestBody; a responder step must declare the reply payload to send back.");
+            throw ThrowHelper.GetResponderNoRequestBodyException(stepId);
         }
 
         var sources = new CriterionSources(payloadLocal, "messageHeaders");
@@ -325,7 +324,7 @@ internal static class ReceiveChannelStepEmitter
                 if (!CriterionExpressionParsing.TryEmitElementNavigation(
                         expression, navigationPointer, baseName, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
                 {
-                    throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply value '{value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+                    ThrowHelper.ThrowResponderReplyValueUnresolvable(stepId, value);
                 }
 
                 return elementLocal;
@@ -346,7 +345,7 @@ internal static class ReceiveChannelStepEmitter
                     ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => value,
                     ArgumentValueKind.LiteralNull => "null",
                     ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(value),
-                    _ => throw new NotSupportedException($"Request/reply receive step '{stepId}' binds an unsupported reply payload kind '{kind}'."),
+                    _ => throw ThrowHelper.GetUnsupportedReplyPayloadKindException(stepId, kind),
                 };
 
                 return JsonTemplateEmitter.EmitConstant(constantJson, fields, $"{baseName}Constant");
@@ -369,8 +368,7 @@ internal static class ReceiveChannelStepEmitter
             {
                 if (text.Contains(token, StringComparison.Ordinal))
                 {
-                    throw new NotSupportedException(
-                        $"Receive channel step '{stepId}' has a criterion referencing '{token}'; a channel step's criteria may reference only $message, $inputs, and $steps.");
+                    ThrowHelper.ThrowReceiveCriterionForbiddenReference(stepId, token);
                 }
             }
         }

@@ -152,26 +152,23 @@ public sealed class WorkflowExecutorLoader : IDisposable
         }
         catch (FormatException ex)
         {
-            throw new WorkflowExecutorLoadException($"The executor manifest is malformed: {ex.Message}", ex);
+            throw ThrowHelper.GetMalformedExecutorManifestException(ex);
         }
 
         if (!string.Equals(manifest.PackageHash, expectedPackageHash, StringComparison.Ordinal))
         {
-            throw new WorkflowExecutorLoadException(
-                $"The executor manifest's package hash '{manifest.PackageHash}' does not match the version's content hash '{expectedPackageHash}'.");
+            ThrowHelper.ThrowExecutorManifestPackageHashMismatch(manifest.PackageHash, expectedPackageHash);
         }
 
         string actualDigest = "sha256:" + Convert.ToHexStringLower(SHA256.HashData(assembly.Span));
         if (!string.Equals(manifest.AssemblyDigest, actualDigest, StringComparison.Ordinal))
         {
-            throw new WorkflowExecutorLoadException(
-                $"The executor assembly digest '{actualDigest}' does not match the manifest's '{manifest.AssemblyDigest}'.");
+            ThrowHelper.ThrowExecutorAssemblyDigestMismatch(actualDigest, manifest.AssemblyDigest);
         }
 
         if (!string.Equals(manifest.TargetFramework, supportedTargetFramework, StringComparison.Ordinal))
         {
-            throw new WorkflowExecutorLoadException(
-                $"The executor targets '{manifest.TargetFramework}', which this runner ('{supportedTargetFramework}') cannot load.");
+            ThrowHelper.ThrowExecutorTargetFrameworkMismatch(manifest.TargetFramework, supportedTargetFramework);
         }
 
         // Signature (§3.3): the integrity binding above proves the DLL matches the manifest and the manifest matches
@@ -183,7 +180,7 @@ public sealed class WorkflowExecutorLoader : IDisposable
         {
             if (signatureUtf8.IsEmpty)
             {
-                throw new WorkflowExecutorLoadException("The executor package is unsigned, but this runner requires a valid signature.");
+                ThrowHelper.ThrowUnsignedExecutorPackage();
             }
 
             ExecutorPackageSignature signature;
@@ -193,13 +190,12 @@ public sealed class WorkflowExecutorLoader : IDisposable
             }
             catch (FormatException ex)
             {
-                throw new WorkflowExecutorLoadException($"The executor signature is malformed: {ex.Message}", ex);
+                throw ThrowHelper.GetMalformedExecutorSignatureException(ex);
             }
 
             if (!verifier.Verify(manifestUtf8, signature))
             {
-                throw new WorkflowExecutorLoadException(
-                    $"The executor manifest's signature (key '{signature.KeyId}', {signature.Algorithm}) did not verify against a trusted key.");
+                ThrowHelper.ThrowExecutorManifestSignatureUntrusted(signature.KeyId, signature.Algorithm);
             }
         }
 
@@ -217,11 +213,11 @@ public sealed class WorkflowExecutorLoader : IDisposable
             Assembly loadedAssembly = context.LoadFromStream(stream);
 
             Type entryType = loadedAssembly.GetType(manifest.EntryType)
-                ?? throw new WorkflowExecutorLoadException($"The executor manifest's entry type '{manifest.EntryType}' was not found in the assembly.");
+                ?? throw ThrowHelper.GetEntryTypeNotFoundException(manifest.EntryType);
 
             if (Activator.CreateInstance(entryType) is not IHostedWorkflow workflow)
             {
-                throw new WorkflowExecutorLoadException($"The executor entry type '{manifest.EntryType}' does not implement IHostedWorkflow.");
+                throw ThrowHelper.GetEntryTypeNotHostedWorkflowException(manifest.EntryType);
             }
 
             VerifyDeclaredSources(manifest, workflow.Descriptor);
@@ -254,8 +250,7 @@ public sealed class WorkflowExecutorLoader : IDisposable
 
             if (!declared)
             {
-                throw new WorkflowExecutorLoadException(
-                    $"The executor manifest does not declare the source '{required}' the workflow requires; its sources[] is inconsistent with the compiled assembly.");
+                ThrowHelper.ThrowUndeclaredSource(required);
             }
         }
     }

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+
+  <data name="NoChannelForAction" xml:space="preserve">
+    <value>No AsyncAPI source description defines a channel '{0}' with action '{1}'.</value>
+  </data>
+  <data name="SourceDescriptionNotDefined" xml:space="preserve">
+    <value>operationId '{0}' references source description '{1}', which is not defined.</value>
+  </data>
+  <data name="OperationIdNotInSource" xml:space="preserve">
+    <value>operationId '{0}' does not resolve to an operation in source '{1}'.</value>
+  </data>
+  <data name="AmbiguousOperationId" xml:space="preserve">
+    <value>operationId '{0}' is defined by more than one source description ('{1}' and '{2}'); qualify it with a runtime expression ($sourceDescriptions.&lt;name&gt;.{0}) to select one.</value>
+  </data>
+  <data name="NoSourceForOperationId" xml:space="preserve">
+    <value>No source description defines operationId '{0}'.</value>
+  </data>
+  <data name="OperationPathNotInSource" xml:space="preserve">
+    <value>operationPath '{0}' does not resolve to an operation in source '{1}'.</value>
+  </data>
+  <data name="OperationPathNotResolved" xml:space="preserve">
+    <value>operationPath '{0}' does not resolve to any source description operation.</value>
+  </data>
+  <data name="NonSendChannel" xml:space="preserve">
+    <value>Channel step '{0}' targets a non-send channel '{1}'; only send channel steps are supported so far.</value>
+  </data>
+  <data name="ChannelNoMessage" xml:space="preserve">
+    <value>Channel step '{0}' targets a channel '{1}' with no message.</value>
+  </data>
+  <data name="NoRequestBodyToPublish" xml:space="preserve">
+    <value>Channel step '{0}' has no requestBody payload to publish.</value>
+  </data>
+  <data name="UnsupportedPayloadKind" xml:space="preserve">
+    <value>Channel step '{0}' binds an unsupported {1} payload.</value>
+  </data>
+  <data name="ChannelMessageNoHeadersSchema" xml:space="preserve">
+    <value>Channel step '{0}' sets message headers (parameters with in: header), but the message '{1}' on channel '{2}' declares no headers schema.</value>
+  </data>
+  <data name="MessageNotPublishable" xml:space="preserve">
+    <value>Channel step '{0}' targets a channel '{1}' whose message '{2}' is not publishable.</value>
+  </data>
+  <data name="ChannelNoPublishableMessage" xml:space="preserve">
+    <value>Channel step '{0}' targets a channel '{1}' with no publishable message.</value>
+  </data>
+  <data name="MessageNoRequestReplyMethod" xml:space="preserve">
+    <value>Channel step '{0}' targets a request/reply channel '{1}' whose message '{2}' has no request/reply method.</value>
+  </data>
+  <data name="ChannelNoRequestReplyMethod" xml:space="preserve">
+    <value>Channel step '{0}' targets a request/reply channel '{1}' with no request/reply method.</value>
+  </data>
+  <data name="MultiMessageNoDistinctPayloadType" xml:space="preserve">
+    <value>Channel step '{0}' targets a multi-message channel '{1}' whose message '{2}' has no distinct payload type to select on.</value>
+  </data>
+  <data name="ResponderCorrelationIdUnsupported" xml:space="preserve">
+    <value>Receive channel step '{0}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.</value>
+  </data>
+  <data name="ResponderNoRequestBody" xml:space="preserve">
+    <value>Request/reply receive step '{0}' has no requestBody; a responder step must declare the reply payload to send back.</value>
+  </data>
+  <data name="ResponderReplyValueUnresolvable" xml:space="preserve">
+    <value>Request/reply receive step '{0}' has a reply value '{1}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.</value>
+  </data>
+  <data name="UnsupportedReplyPayloadKind" xml:space="preserve">
+    <value>Request/reply receive step '{0}' binds an unsupported reply payload kind '{1}'.</value>
+  </data>
+  <data name="ReceiveCriterionForbiddenReference" xml:space="preserve">
+    <value>Receive channel step '{0}' has a criterion referencing '{1}'; a channel step's criteria may reference only $message, $inputs, and $steps.</value>
+  </data>
+  <data name="NoValueForRequiredParameter" xml:space="preserve">
+    <value>Step provides no value for required parameter '{0}' of operation '{1}'.</value>
+  </data>
+  <data name="UnsupportedRequestBodyBaseKind" xml:space="preserve">
+    <value>Request body kind '{0}' is not supported as a base for payload replacements.</value>
+  </data>
+  <data name="UnresolvableArgumentValueKind" xml:space="preserve">
+    <value>Argument value kind '{0}' cannot be resolved to a JSON element.</value>
+  </data>
+  <data name="StepMissingStepId" xml:space="preserve">
+    <value>A step is missing its required stepId.</value>
+  </data>
+  <data name="FireAndForgetSuccessCriteria" xml:space="preserve">
+    <value>Channel step '{0}' has success criteria on a fire-and-forget send step; only receive and request/reply channel steps support success criteria (against $message.*).</value>
+  </data>
+  <data name="CorrelationIdNotReceiveStep" xml:space="preserve">
+    <value>Channel step '{0}' declares a correlationId but is not a receive step; per the Arazzo specification correlationId applies only to AsyncAPI steps with action 'receive'.</value>
+  </data>
+  <data name="CorrelationIdOnRequestReply" xml:space="preserve">
+    <value>Channel step '{0}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.</value>
+  </data>
+  <data name="CorrelationIdNotDefined" xml:space="preserve">
+    <value>Channel step '{0}' declares correlationId '{1}', but the channel's message defines no correlation id of that name (it must be in-sync with a correlationId defined in the AsyncAPI document).</value>
+  </data>
+  <data name="UnsupportedCorrelationLocation" xml:space="preserve">
+    <value>Channel step '{0}' correlationId '{1}' has location '{2}'; only $message.payload#/… and $message.header#/… correlation locations are supported.</value>
+  </data>
+  <data name="UnsupportedStepTarget" xml:space="preserve">
+    <value>Step '{0}' targets {1}; only operation, sub-workflow, and channel steps are supported by the current generator.</value>
+  </data>
+  <data name="ChannelSourceNoProtocol" xml:space="preserve">
+    <value>Channel source '{0}' declares no servers[].protocol; a channel source document must name its transport protocol (ADR 0051) so the host can bind the broker transport.</value>
+  </data>
+  <data name="UnresolvedParameterReference" xml:space="preserve">
+    <value>Could not resolve reusable parameter reference '{0}'.</value>
+  </data>
+  <data name="UnresolvedActionReference" xml:space="preserve">
+    <value>Could not resolve reusable action reference '{0}'.</value>
+  </data>
+  <data name="SubWorkflowCriterionForbiddenReference" xml:space="preserve">
+    <value>Sub-workflow step '{0}' has a criterion referencing '{1}'; a sub-workflow step's criteria may reference only $inputs and $steps.</value>
+  </data>
+  <data name="StepDependencyCycle" xml:space="preserve">
+    <value>A cycle was detected in the steps' dependency relationships (dependsOn plus implicit $steps references); the steps cannot be ordered.{0}</value>
+  </data>
+  <data name="SubWorkflowSourceNotGenerated" xml:space="preserve">
+    <value>A sub-workflow step references source description '{0}', which is not a generated Arazzo (type: arazzo) source description.</value>
+  </data>
+  <data name="ChannelParameterNoStepParameter" xml:space="preserve">
+    <value>Channel address parameter '{0}' has no matching step parameter; a parameterised channel address needs a step parameter for each placeholder.</value>
+  </data>
+  <data name="UnsupportedChannelParameterKind" xml:space="preserve">
+    <value>Channel address parameter '{0}' binds a {1} value; only expression and string-literal channel parameters are supported.</value>
+  </data>
+  <data name="ChannelActionCriterionForbiddenReference" xml:space="preserve">
+    <value>Channel step '{0}' has an onSuccess/onFailure action criterion referencing '{1}'; a channel step's action criteria run after the message is handled and may reference only $inputs and $steps.</value>
+  </data>
+  <data name="GotoUnknownStep" xml:space="preserve">
+    <value>Action '{0}' performs a goto to unknown step '{1}'.</value>
+  </data>
+  <data name="WorkflowMissingId" xml:space="preserve">
+    <value>Workflow at index {0} is missing its required workflowId.</value>
+  </data>
+  <data name="WorkflowDependencyCycle" xml:space="preserve">
+    <value>A cycle was detected in the workflows' dependsOn relationships; the workflows cannot be ordered.</value>
+  </data>
+  <data name="InterpolatedValueUnresolvable" xml:space="preserve">
+    <value>Step '{0}' has an interpolated value fragment '{1}' that references a value other than $message, $inputs, or $steps.</value>
+  </data>
+  <data name="UnresolvableStepValue" xml:space="preserve">
+    <value>Step '{0}' has a value '{1}' that cannot be resolved; it may reference only $message, $inputs, and $steps.</value>
+  </data>
+</root>

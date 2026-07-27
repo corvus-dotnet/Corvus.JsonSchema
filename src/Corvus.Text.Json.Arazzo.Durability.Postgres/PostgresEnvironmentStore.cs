@@ -107,7 +107,7 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the

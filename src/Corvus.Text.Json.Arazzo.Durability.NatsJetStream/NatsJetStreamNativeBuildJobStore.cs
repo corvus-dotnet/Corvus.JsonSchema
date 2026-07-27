@@ -249,7 +249,7 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
         using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(bytes.AsMemory());
         if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
         {
-            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot be completed because it is not building.");
+            ThrowHelper.ThrowNativeBuildJobNotBuildingForCompletion(id);
         }
 
         WorkflowEtag etag = NewEtag();
@@ -273,7 +273,7 @@ public sealed class NatsJetStreamNativeBuildJobStore : INativeBuildJobStore, IAs
         using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(bytes.AsMemory());
         if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
         {
-            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+            ThrowHelper.ThrowNativeBuildJobNotBuildingForLeaseRenewal(id);
         }
 
         WorkflowEtag etag = NewEtag();

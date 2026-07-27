@@ -137,7 +137,7 @@ public sealed class RedisSourceStore : ISourceStore, IAsyncDisposable
         RedisResult result = await this.database.ScriptEvaluateAsync(AddScript, keys, argv).ConfigureAwait(false);
         if ((long)result == 0)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);

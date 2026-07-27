@@ -114,7 +114,7 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         }
         catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table (keyed by TagsHash, the orderable row discriminator)

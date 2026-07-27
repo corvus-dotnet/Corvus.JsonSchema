@@ -140,7 +140,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         ArgumentNullException.ThrowIfNull(actor);
         if (await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false) is not null)
         {
-            throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+            ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
         }
 
         WorkflowEtag etag = NewEtag();

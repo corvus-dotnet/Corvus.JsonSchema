@@ -53,7 +53,7 @@ public static class NativeBuildJobContinuationToken
         {
             if (!Utf8Formatter.TryFormat(utcTicks, raw, out int pos))
             {
-                throw new FormatException("The native-build-job instant could not be formatted into the page token.");
+                ThrowHelper.ThrowNativeBuildJobInstantNotFormatted();
             }
 
             raw[pos++] = Separator;
@@ -97,14 +97,14 @@ public static class NativeBuildJobContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The native-build-job page token is not valid base64url.");
+            ThrowHelper.ThrowNativeBuildJobTokenInvalidBase64();
         }
 
         ReadOnlySpan<byte> key = destination[..decoded];
         int sep = key.IndexOf(Separator);
         if (sep < 0 || !Utf8Parser.TryParse(key[..sep], out utcTicks, out int consumed) || consumed != sep)
         {
-            throw new FormatException("The native-build-job page token is malformed.");
+            ThrowHelper.ThrowNativeBuildJobTokenMalformed();
         }
 
         idUtf8 = key[(sep + 1)..];

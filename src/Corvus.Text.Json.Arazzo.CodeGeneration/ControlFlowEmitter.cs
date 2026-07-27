@@ -987,8 +987,7 @@ internal static class ControlFlowEmitter
                 {
                     if (text.Contains(token, StringComparison.Ordinal))
                     {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' has an onSuccess/onFailure action criterion referencing '{token}'; a channel step's action criteria run after the message is handled and may reference only $inputs and $steps.");
+                        ThrowHelper.ThrowChannelActionCriterionForbiddenReference(stepId, token);
                     }
                 }
             }
@@ -1131,8 +1130,7 @@ internal static class ControlFlowEmitter
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))
                 {
-                    throw new InvalidOperationException(
-                        $"Action '{action.Name}' performs a goto to unknown step '{action.TargetStepId}'.");
+                    throw ThrowHelper.GetGotoUnknownStepException(action.Name, action.TargetStepId);
                 }
 
                 return $"ArazzoTelemetry.Gotos.Add(1); {camel}Next = {target.ToString(CultureInfo.InvariantCulture)};\n";

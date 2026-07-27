@@ -83,7 +83,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new GoogleDirectoryException($"the Directory API returned {(int)response.StatusCode} ({response.StatusCode}) searching {resource.Path}.");
+            ThrowHelper.ThrowSearchFailed(response.StatusCode, resource.Path);
         }
 
         // Allocation ledger (per search). The response byte[] is the one driver-forced GC alloc; the parse reads it IN
@@ -124,7 +124,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new GoogleDirectoryException($"the Directory API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+            ThrowHelper.ThrowGroupMembershipsFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -426,7 +426,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
-            throw new GoogleDirectoryException("the token response was not a JSON object.");
+            ThrowHelper.ThrowTokenResponseNotJsonObject();
         }
 
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
@@ -453,7 +453,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new GoogleDirectoryException("the token response did not contain an access_token.");
+            ThrowHelper.ThrowTokenResponseMissingAccessToken();
         }
 
         return (accessToken, lifetime);
@@ -510,7 +510,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
     {
         if (this.options.Authentication is not GoogleServiceAccount account)
         {
-            throw new InvalidOperationException($"Unsupported Google authentication '{this.options.Authentication.GetType().Name}'.");
+            throw ThrowHelper.GetUnsupportedAuthenticationException(this.options.Authentication.GetType().Name);
         }
 
         DateTimeOffset requestedAt = this.timeProvider.GetUtcNow();
@@ -525,7 +525,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new GoogleDirectoryException($"the token endpoint returned {(int)response.StatusCode} ({response.StatusCode}).");
+            ThrowHelper.ThrowTokenEndpointFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -549,7 +549,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         }
         catch (ArgumentException e)
         {
-            throw new GoogleDirectoryException("the service-account private key could not be imported.", e);
+            throw ThrowHelper.GetPrivateKeyImportFailedException(e);
         }
 
         byte[] signature = rsa.SignData(Encoding.UTF8.GetBytes(signingInput), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);

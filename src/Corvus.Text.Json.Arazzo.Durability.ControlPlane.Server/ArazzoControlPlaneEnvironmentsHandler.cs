@@ -139,7 +139,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         {
             if (!body.Name.IsNotUndefined())
             {
-                throw new ArgumentException("A 'name' is required.");
+                ServerThrowHelper.ThrowNameRequired();
             }
 
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the creator keeps
@@ -334,7 +334,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 // Interim single-grant path ({dimension, value}); the kind is inferred from the dimension.
                 if (!body.DimensionValue.IsNotUndefined())
                 {
-                    throw new ArgumentException("Provide either a resolved grantee `identity` or a single `{ dimension, value }` grant.");
+                    ServerThrowHelper.ThrowGranteeIdentityOrDimensionRequired();
                 }
 
                 var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
@@ -349,7 +349,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
             if (newAdministrator.IsEmpty)
             {
-                throw new ArgumentException("The named grantee does not resolve to a deployment identity.");
+                ServerThrowHelper.ThrowGranteeDoesNotResolve();
             }
         }
         catch (ArgumentException ex)
@@ -431,7 +431,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 SecurityTagSet resolved = SecurityTagSet.Build(in state, BuildAdministratorGrantIdentity);
                 if (resolved.IsEmpty)
                 {
-                    throw new ArgumentException($"The administrator grant '{(string)identity.DimensionValue}={(string)identity.Value}' does not resolve to a deployment identity.");
+                    ServerThrowHelper.ThrowAdministratorGrantDoesNotResolve((string)identity.DimensionValue, (string)identity.Value);
                 }
 
                 newAdministrators.Add(resolved);

@@ -175,7 +175,7 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
                 break;
 
             default:
-                throw new InvalidOperationException($"Unsupported LDAP bind method '{this.options.Bind.GetType().Name}'.");
+                throw ThrowHelper.GetUnsupportedBindMethodException(this.options.Bind.GetType().Name);
         }
     }
 

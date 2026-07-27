@@ -100,7 +100,7 @@ public sealed class PostgresEnvironmentAdministratorStore : IEnvironmentAdminist
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("An environment administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowEnvironmentAdministratorsRequired(nameof(administrators));
         }
 
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);

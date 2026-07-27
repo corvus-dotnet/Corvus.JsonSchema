@@ -262,7 +262,7 @@ public abstract class ControlPlaneRowSecurityPolicy
         GranteeKind.Team => "tenant",
         GranteeKind.Role => "role",
         GranteeKind.Workflow => "workflow",
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+        _ => throw ServerThrowHelper.GetUnknownGranteeKindException(kind),
     };
 }
 

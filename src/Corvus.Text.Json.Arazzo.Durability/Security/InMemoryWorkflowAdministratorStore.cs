@@ -54,7 +54,7 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("A workflow administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowWorkflowAdministrationRecordRequiresAdministrator();
         }
 
         lock (this.gate)

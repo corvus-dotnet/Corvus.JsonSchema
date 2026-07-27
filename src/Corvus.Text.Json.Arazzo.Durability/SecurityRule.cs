@@ -888,7 +888,7 @@ public sealed class SecurityRule
             {
                 OperandKind.Literal => [this.value],
                 OperandKind.Claim => claims.TryGetValue(this.value, out IReadOnlyList<string>? values) ? values : [],
-                _ => throw new InvalidOperationException("ResolveKnown is not valid for a tag-key operand."),
+                _ => throw ThrowHelper.GetResolveKnownNotValidForTagKeyException(),
             };
     }
 
@@ -906,7 +906,7 @@ public sealed class SecurityRule
             this.SkipWhitespace();
             if (this.position != this.span.Length)
             {
-                throw new FormatException($"Unexpected trailing content in security rule at position {this.position}.");
+                ThrowHelper.ThrowUnexpectedTrailingContentInRule(this.position);
             }
         }
 
@@ -954,7 +954,7 @@ public sealed class SecurityRule
                 Node grouped = this.ParseOr();
                 if (!this.TryConsume(")"))
                 {
-                    throw new FormatException("Expected ')' in security rule.");
+                    ThrowHelper.ThrowExpectedCloseParenInRule();
                 }
 
                 return grouped;
@@ -993,13 +993,13 @@ public sealed class SecurityRule
         {
             if (!left.IsTagKey)
             {
-                throw new FormatException("The left side of an ordered comparison (<, <=, >, >=) must be a security-tag dimension.");
+                ThrowHelper.ThrowOrderedComparisonLeftMustBeDimension();
             }
 
             Operand right = this.ParseOperand();
             if (right.IsTagKey || right.IsClaimsPredicate)
             {
-                throw new FormatException("The right side of an ordered comparison (<, <=, >, >=) must be a literal or $claim value.");
+                ThrowHelper.ThrowOrderedComparisonRightMustBeLiteralOrClaim();
             }
 
             IReadOnlyList<string> ascending = this.orderings.TryGetOrdering(left.Value, out IReadOnlyList<string> labels) ? labels : [];
@@ -1011,7 +1011,7 @@ public sealed class SecurityRule
             this.SkipWhitespace();
             if (!this.TryConsume("("))
             {
-                throw new FormatException("Expected '(' after 'in' in security rule.");
+                ThrowHelper.ThrowExpectedOpenParenAfterIn();
             }
 
             var values = new List<string>();
@@ -1021,7 +1021,7 @@ public sealed class SecurityRule
                 ReadOnlySpan<char> token = this.ReadOperandToken();
                 if (token.IsEmpty || (token[0] != '\'' && token[0] != '"'))
                 {
-                    throw new FormatException($"An 'in' list takes quoted literal values in security rule at position {this.position}.");
+                    ThrowHelper.ThrowInListTakesQuotedLiterals(this.position);
                 }
 
                 values.Add(Unquote(token));
@@ -1036,7 +1036,7 @@ public sealed class SecurityRule
                     break;
                 }
 
-                throw new FormatException($"Expected ',' or ')' in 'in' list in security rule at position {this.position}.");
+                ThrowHelper.ThrowExpectedCommaOrCloseParenInInList(this.position);
             }
 
             return new InNode(left, values);
@@ -1048,7 +1048,7 @@ public sealed class SecurityRule
             ReadOnlySpan<char> token = this.ReadOperandToken();
             if (token.IsEmpty)
             {
-                throw new FormatException($"Expected an operand in security rule at position {this.position}.");
+                ThrowHelper.ThrowExpectedOperandInRule(this.position);
             }
 
             if (token[0] == '\'' || token[0] == '"')
@@ -1065,7 +1065,7 @@ public sealed class SecurityRule
                 {
                     "$claims.superset" => new Operand(OperandKind.ClaimsPredicate, "superset"),
                     "$claims.intersects" => new Operand(OperandKind.ClaimsPredicate, "intersects"),
-                    _ => throw new FormatException($"Unknown $claims predicate '{text}' in security rule (expected $claims.superset or $claims.intersects)."),
+                    _ => throw ThrowHelper.GetUnknownClaimsPredicateException(text),
                 };
             }
 

@@ -94,7 +94,7 @@ public sealed class SqliteEnvironmentAdministratorStore : IEnvironmentAdministra
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("An environment administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowEnvironmentAdministratorsRequired(nameof(administrators));
         }
 
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);

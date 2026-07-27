@@ -223,13 +223,13 @@ public readonly partial struct Environment
     {
         if (!draft.Name.IsNotUndefined())
         {
-            throw new ArgumentException("An environment requires a 'name'.", nameof(draft));
+            ThrowHelper.ThrowEnvironmentRequiresName();
         }
 
         using UnescapedUtf8JsonString name = draft.Name.GetUtf8String();
         if (name.Span.IsEmpty)
         {
-            throw new ArgumentException("An environment requires a non-empty 'name'.", nameof(draft));
+            ThrowHelper.ThrowEnvironmentRequiresNonEmptyName();
         }
     }
 

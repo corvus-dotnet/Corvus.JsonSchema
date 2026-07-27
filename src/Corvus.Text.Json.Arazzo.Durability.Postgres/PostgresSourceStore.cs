@@ -106,7 +106,7 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the

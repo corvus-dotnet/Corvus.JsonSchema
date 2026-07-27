@@ -164,7 +164,7 @@ public sealed class CompiledCriterion
     {
         if (string.IsNullOrEmpty(contextExpression))
         {
-            throw new ArgumentException("A context expression is required for regex and jsonpath criteria.", nameof(contextExpression));
+            ThrowHelper.ThrowContextExpressionRequired(nameof(contextExpression));
         }
 
         return ArazzoExpression.Parse(contextExpression);

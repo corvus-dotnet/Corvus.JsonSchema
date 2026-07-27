@@ -36,7 +36,7 @@ internal static class EcdsaDerSignatureConverter
         }
         catch (AsnContentException ex)
         {
-            throw new CryptographicException("The ECDSA signature is not a valid ASN.1 DER SEQUENCE { r, s }.", ex);
+            throw ThrowHelper.GetInvalidDerSignatureException(ex);
         }
 
         var result = new byte[fieldSizeBytes * 2];
@@ -50,19 +50,19 @@ internal static class EcdsaDerSignatureConverter
     {
         if (value.Sign < 0)
         {
-            throw new CryptographicException("An ECDSA signature component is negative.");
+            ThrowHelper.ThrowNegativeSignatureComponent();
         }
 
         int byteCount = value.GetByteCount(isUnsigned: true);
         if (byteCount > destination.Length)
         {
-            throw new CryptographicException("An ECDSA signature component is larger than the curve's field size.");
+            ThrowHelper.ThrowSignatureComponentTooLarge();
         }
 
         destination.Clear();
         if (!value.TryWriteBytes(destination[(destination.Length - byteCount)..], out _, isUnsigned: true, isBigEndian: true))
         {
-            throw new CryptographicException("Failed to encode an ECDSA signature component.");
+            ThrowHelper.ThrowSignatureComponentEncodingFailed();
         }
     }
 }

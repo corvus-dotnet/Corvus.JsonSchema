@@ -79,7 +79,7 @@ public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
         {
             return this.inner is { } resume
                 ? await resume(run, cancellationToken).ConfigureAwait(false)
-                : throw new InvalidOperationException($"Run '{run.Id.Value}' executes workflow '{run.WorkflowId}', which this draft-only resumer does not host.");
+                : throw ThrowHelper.GetDraftResumerDoesNotHostRunException(run.Id.Value, run.WorkflowId);
         }
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.Id, cancellationToken).ConfigureAwait(false);
@@ -102,7 +102,7 @@ public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
         // The capture record carries the content hash, so a cache hit needs no package read.
         string contentHash;
         using (ParsedJsonDocument<DraftRun>? record = await this.drafts.GetAsync(id, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Draft run '{id.Value}' has no captured draft in the draft-run store."))
+            ?? throw ThrowHelper.GetDraftRunHasNoCaptureException(id.Value))
         {
             contentHash = record.RootElement.ContentHashValue;
         }
@@ -118,13 +118,13 @@ public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
         }
 
         ReadOnlyMemory<byte> package = await this.drafts.GetPackageAsync(id, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Draft run '{id.Value}' has a capture record but no captured package.");
+            ?? throw ThrowHelper.GetDraftRunHasNoPackageException(id.Value);
         WorkflowPackageContents contents = WorkflowPackage.Open(package);
 
         WorkflowExecutorArtifact? artifact = this.provider.BuildExecutor(contents.Workflow, contents.Sources, contentHash);
         if (artifact is not { } built)
         {
-            throw new InvalidOperationException($"Draft run '{id.Value}' is not executable: the captured document did not compile.");
+            throw ThrowHelper.GetDraftRunNotExecutableException(id.Value);
         }
 
         lock (this.cacheLock)

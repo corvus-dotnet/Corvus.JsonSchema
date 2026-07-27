@@ -50,7 +50,7 @@ public sealed class KmsExecutorPackageSigner : IExecutorPackageSigner
             "ECDSA_SHA_256" => (ExecutorSignatureAlgorithms.EcdsaP256Sha256, 32),
             "ECDSA_SHA_384" => (ExecutorSignatureAlgorithms.EcdsaP384Sha384, 48),
             "RSASSA_PSS_SHA_256" => (ExecutorSignatureAlgorithms.RsaPssSha256, (int?)null),
-            _ => throw new ArgumentException($"An executor-package KMS signer must use ECDSA_SHA_256, ECDSA_SHA_384, or RSASSA_PSS_SHA_256; '{signingAlgorithm.Value}' is not supported.", nameof(signingAlgorithm)),
+            _ => throw ThrowHelper.GetUnsupportedSigningAlgorithmException(signingAlgorithm),
         };
     }
 

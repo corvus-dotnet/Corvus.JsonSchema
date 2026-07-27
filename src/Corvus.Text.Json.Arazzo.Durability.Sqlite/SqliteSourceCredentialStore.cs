@@ -101,7 +101,7 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
             {
-                throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+                ThrowHelper.ThrowSourceCredentialAlreadyExists(draft.SourceNameValue, draft.EnvironmentValue);
             }
 
             // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)

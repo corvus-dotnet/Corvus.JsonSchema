@@ -70,9 +70,7 @@ public sealed class SecurityShell
             {
                 if (this.IsInternal(e.CurrentKey))
                 {
-                    throw new ArgumentException(
-                        $"Security tag key '{Encoding.UTF8.GetString(e.CurrentKey)}' uses the reserved internal prefix '{this.InternalPrefix}'; that keyspace is owned by the deployment.",
-                        nameof(userTags));
+                    ThrowHelper.ThrowUserTagUsesReservedInternalPrefix(Encoding.UTF8.GetString(e.CurrentKey), this.InternalPrefix);
                 }
             }
         }
@@ -95,9 +93,7 @@ public sealed class SecurityShell
         {
             if (this.IsInternal(tag))
             {
-                throw new ArgumentException(
-                    $"Security tag key '{tag.Key}' uses the reserved internal prefix '{this.InternalPrefix}'; that keyspace is owned by the deployment.",
-                    nameof(userTags));
+                ThrowHelper.ThrowUserTagUsesReservedInternalPrefix(tag.Key, this.InternalPrefix);
             }
         }
     }

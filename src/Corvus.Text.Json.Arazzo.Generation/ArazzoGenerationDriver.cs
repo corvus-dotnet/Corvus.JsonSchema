@@ -124,7 +124,7 @@ public static class ArazzoGenerationDriver
         }
 
         byte[] arazzoBytes = documentLoader(arazzoRetrievalUri)
-            ?? throw new FileNotFoundException($"The Arazzo document '{arazzoRetrievalUri}' could not be loaded.");
+            ?? throw ThrowHelper.GetArazzoDocumentNotFoundException(arazzoRetrievalUri);
 
         Uri baseUri = ComputeBaseUri(arazzoBytes, arazzoRetrievalUri);
         var written = new List<string>();
@@ -250,7 +250,7 @@ public static class ArazzoGenerationDriver
                     else if (sourceType == "arazzo")
                     {
                         byte[] childBytes = documentLoader(specUri)
-                            ?? throw new FileNotFoundException($"The Arazzo source document '{specUri}' could not be loaded.");
+                            ?? throw ThrowHelper.GetArazzoSourceDocumentNotFoundException(specUri);
 
                         Uri childBaseUri = ComputeBaseUri(childBytes, specUri);
                         string childIdentity = childBaseUri.AbsoluteUri;
@@ -262,8 +262,7 @@ public static class ArazzoGenerationDriver
                         }
                         else if (ancestors.Contains(childIdentity))
                         {
-                            throw new InvalidOperationException(
-                                $"A cyclic Arazzo source-description reference was detected at '{childBaseUri}'.");
+                            ThrowHelper.ThrowCyclicArazzoSourceReference(childBaseUri);
                         }
                         else
                         {

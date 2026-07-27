@@ -62,7 +62,7 @@ public static class EnvironmentAdministeredContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The administered-environments page token is not valid base64url.");
+            ThrowHelper.ThrowAdministeredEnvironmentsTokenInvalidBase64();
         }
 
         environmentNameUtf8 = destination[..decoded];

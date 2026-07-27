@@ -62,5 +62,5 @@ public interface IWorkflowAdministratorStore
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
     /// <exception cref="NotSupportedException">The store does not maintain the reverse administration index.</exception>
     ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
-        => throw new NotSupportedException("This administrator store does not maintain the reverse administration index (design §15.4).");
+        => throw ThrowHelper.GetWorkflowReverseIndexNotMaintainedException();
 }

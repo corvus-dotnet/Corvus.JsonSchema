@@ -76,7 +76,7 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new ScimDirectoryException($"the service provider returned {(int)response.StatusCode} ({response.StatusCode}) searching {resourceType.Path}.");
+            ThrowHelper.ThrowSearchFailed(response.StatusCode, resourceType.Path);
         }
 
         // Allocation ledger (per search). The response byte[] is the one driver-forced GC alloc (HttpContent gives no
@@ -695,7 +695,7 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         return this.options.Authentication switch
         {
             ScimBearerToken bearer => await bearer.Token.ResolveStringAsync(this.resolver, cancellationToken).ConfigureAwait(false),
-            _ => throw new InvalidOperationException($"Unsupported SCIM authentication '{this.options.Authentication.GetType().Name}'."),
+            _ => throw ThrowHelper.GetUnsupportedAuthenticationException(this.options.Authentication.GetType().Name),
         };
     }
 }

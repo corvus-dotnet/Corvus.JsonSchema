@@ -122,7 +122,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 // Interim single-grant path ({dimension, value}); the kind is inferred from the dimension.
                 if (!body.DimensionValue.IsNotUndefined())
                 {
-                    throw new ArgumentException("Provide either a resolved grantee `identity` or a single `{ dimension, value }` grant.");
+                    ServerThrowHelper.ThrowGranteeIdentityOrDimensionRequired();
                 }
 
                 var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
@@ -141,7 +141,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
             if (newAdministrator.IsEmpty)
             {
-                throw new ArgumentException("The named grantee does not resolve to a deployment identity.");
+                ServerThrowHelper.ThrowGranteeDoesNotResolve();
             }
         }
         catch (ArgumentException ex)
@@ -337,7 +337,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 {
                     // A grant the deployment declines to map names no identity — rejected. Only this error path forms the
                     // {dimension, value} strings (for the 400 message); the success path stays string-free.
-                    throw new ArgumentException($"The administrator grant '{(string)identity.DimensionValue}={(string)identity.Value}' does not resolve to a deployment identity.");
+                    ServerThrowHelper.ThrowAdministratorGrantDoesNotResolve((string)identity.DimensionValue, (string)identity.Value);
                 }
 
                 newAdministrators.Add(resolved);

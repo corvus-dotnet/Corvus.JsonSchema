@@ -122,7 +122,7 @@ public static class ObservedIdentityContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The observed-identity page token is not valid base64url.");
+                ThrowHelper.ThrowObservedIdentityTokenInvalidBase64();
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -156,7 +156,7 @@ public static class ObservedIdentityContinuationToken
         {
             if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException($"'{token}' is not a valid observed-identity page token.");
+                ThrowHelper.ThrowObservedIdentityTokenInvalid(token);
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -187,7 +187,7 @@ public static class ObservedIdentityContinuationToken
         int separator = key.IndexOf(Separator);
         if (separator < 0)
         {
-            throw new FormatException("The observed-identity page token is malformed.");
+            ThrowHelper.ThrowObservedIdentityTokenMalformed();
         }
 
         cursor = (Encoding.UTF8.GetString(key[..separator]), Encoding.UTF8.GetString(key[(separator + 1)..]));

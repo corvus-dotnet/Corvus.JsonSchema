@@ -64,7 +64,7 @@ public sealed class ProviderBroker
             provider.Validate();
             if (!names.Add(provider.Name!))
             {
-                throw new ArgumentException($"The provider registry names '{provider.Name}' more than once.", nameof(providers));
+                ServerThrowHelper.ThrowProviderNamedMoreThanOnce(provider.Name);
             }
         }
 
@@ -585,19 +585,19 @@ public sealed class ConnectedProviderOptions
     {
         if (string.IsNullOrEmpty(this.Name) || string.IsNullOrEmpty(this.ClientId) || string.IsNullOrEmpty(this.ClientSecretRef) || string.IsNullOrEmpty(this.CallbackUrl))
         {
-            throw new ArgumentException($"A connected provider requires Name, ClientId, ClientSecretRef, and CallbackUrl (provider '{this.Name}').");
+            ServerThrowHelper.ThrowConnectedProviderMissingFields(this.Name);
         }
 
         bool hasIssuer = !string.IsNullOrEmpty(this.Issuer);
         bool hasEndpoints = !string.IsNullOrEmpty(this.AuthorizeEndpoint) && !string.IsNullOrEmpty(this.TokenEndpoint);
         if (hasIssuer == hasEndpoints)
         {
-            throw new ArgumentException($"A connected provider requires exactly one of Issuer (OIDC discovery) or AuthorizeEndpoint + TokenEndpoint (provider '{this.Name}').");
+            ServerThrowHelper.ThrowConnectedProviderEndpointAmbiguous(this.Name);
         }
 
         if (this.Hosts.Count == 0)
         {
-            throw new ArgumentException($"A connected provider requires at least one hosts pattern — with no coverage its connection could never authenticate a fetch (provider '{this.Name}').");
+            ServerThrowHelper.ThrowConnectedProviderNoHosts(this.Name);
         }
     }
 }

@@ -190,7 +190,7 @@ public sealed class SecuredEnvironmentAdministration
 
                 if (admins.Count == 1)
                 {
-                    throw new ArgumentException("Cannot remove the last administrator of an environment; an environment must always have at least one administrator.", nameof(digest));
+                    ThrowHelper.ThrowCannotRemoveLastEnvironmentAdministrator();
                 }
 
                 admins.RemoveAt(index);
@@ -211,7 +211,7 @@ public sealed class SecuredEnvironmentAdministration
         ArgumentNullException.ThrowIfNull(newAdministrators);
         if (newAdministrators.Count == 0)
         {
-            throw new ArgumentException("An environment administration transfer requires at least one new administrator.", nameof(newAdministrators));
+            ThrowHelper.ThrowEnvironmentTransferRequiresAdministrator();
         }
 
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

@@ -129,7 +129,7 @@ public static class WorkflowContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The continuation token is malformed.");
+                ThrowHelper.ThrowContinuationTokenMalformed();
             }
 
             return Encoding.UTF8.GetString(buffer[..decoded]);
@@ -161,7 +161,7 @@ public static class WorkflowContinuationToken
         {
             if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The continuation token is malformed.");
+                ThrowHelper.ThrowContinuationTokenMalformed();
             }
 
             return Encoding.UTF8.GetString(buffer[..decoded]);

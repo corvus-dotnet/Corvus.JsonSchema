@@ -126,7 +126,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             if (!await this.database.StringSetAsync(RulePrefix + name, utf8, when: When.NotExists).ConfigureAwait(false))
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             await this.database.SetAddAsync(RuleIndexKey, name).ConfigureAwait(false);

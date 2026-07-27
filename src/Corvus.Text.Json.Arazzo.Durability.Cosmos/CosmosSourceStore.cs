@@ -122,7 +122,7 @@ public sealed class CosmosSourceStore : ISourceStore, IAsyncDisposable
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+                ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
             }
 
             response.EnsureSuccessStatusCode();

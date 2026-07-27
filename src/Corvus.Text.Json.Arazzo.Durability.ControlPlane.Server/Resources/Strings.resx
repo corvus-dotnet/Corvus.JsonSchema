@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+
+  <data name="SelfElevationIncomplete" xml:space="preserve">
+    <value>The self-elevation could not be completed.</value>
+  </data>
+  <data name="NoGrantableScopesEligibility" xml:space="preserve">
+    <value>None of the requested scopes is grantable (eligibility may cover only run access).</value>
+  </data>
+  <data name="OnlyRequesterMayWithdraw" xml:space="preserve">
+    <value>Only the requester may withdraw their own request.</value>
+  </data>
+  <data name="UnrecognisedSettlementOutcome" xml:space="preserve">
+    <value>Unrecognised settlement outcome '{0}'.</value>
+  </data>
+  <data name="RequestStatusMismatch" xml:space="preserve">
+    <value>The request is {0}, not {1}.</value>
+  </data>
+  <data name="RequestNotRevocable" xml:space="preserve">
+    <value>The request is {0}; only an approved grant or an eligibility assignment can be revoked.</value>
+  </data>
+  <data name="WorkflowIdNotPermitted" xml:space="preserve">
+    <value>The workflow id '{0}' is not a permitted access-request target.</value>
+  </data>
+  <data name="NoGrantableScopesApproval" xml:space="preserve">
+    <value>None of the requested scopes is grantable (an approval may grant only run access).</value>
+  </data>
+  <data name="GranteeIdentityOrDimensionRequired" xml:space="preserve">
+    <value>Provide either a resolved grantee `identity` or a single `{ dimension, value }` grant.</value>
+  </data>
+  <data name="GranteeDoesNotResolve" xml:space="preserve">
+    <value>The named grantee does not resolve to a deployment identity.</value>
+  </data>
+  <data name="AdministratorGrantDoesNotResolve" xml:space="preserve">
+    <value>The administrator grant '{0}={1}' does not resolve to a deployment identity.</value>
+  </data>
+  <data name="ProviderNamedMoreThanOnce" xml:space="preserve">
+    <value>The provider registry names '{0}' more than once.</value>
+  </data>
+  <data name="ConnectedProviderMissingFields" xml:space="preserve">
+    <value>A connected provider requires Name, ClientId, ClientSecretRef, and CallbackUrl (provider '{0}').</value>
+  </data>
+  <data name="ConnectedProviderEndpointAmbiguous" xml:space="preserve">
+    <value>A connected provider requires exactly one of Issuer (OIDC discovery) or AuthorizeEndpoint + TokenEndpoint (provider '{0}').</value>
+  </data>
+  <data name="ConnectedProviderNoHosts" xml:space="preserve">
+    <value>A connected provider requires at least one hosts pattern — with no coverage its connection could never authenticate a fetch (provider '{0}').</value>
+  </data>
+  <data name="NoGitHubProviderEntry" xml:space="preserve">
+    <value>The provider broker carries no '{0}' entry; register GitHubBrokerOptions.ToProviderEntry() with it.</value>
+  </data>
+  <data name="GitHubSignInBeginFailed" xml:space="preserve">
+    <value>Beginning the GitHub sign-in reported {0}.</value>
+  </data>
+  <data name="GitHubBrokerMissingFields" xml:space="preserve">
+    <value>A GitHub broker requires BaseUrl, ApiBaseUrl, ClientId, ClientSecretRef, and CallbackUrl.</value>
+  </data>
+  <data name="RowSecurityPolicyRequired" xml:space="preserve">
+    <value>ControlPlaneSecurityMode.{0} requires a row-security policy; pass rowSecurity, or use ScopesOnly (capability scopes, no row reach) or Open (unsecured).</value>
+  </data>
+  <data name="RowSecurityPolicyForbidden" xml:space="preserve">
+    <value>ControlPlaneSecurityMode.{0} grants full (System) row reach and would ignore a row-security policy; omit rowSecurity, or use Scoped/RowSecurityOnly to enforce it.</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>A 'name' is required.</value>
+  </data>
+  <data name="WorkingCopyVanished" xml:space="preserve">
+    <value>Working copy '{0}' vanished during source carry-over.</value>
+  </data>
+  <data name="MetaSchemaMissing" xml:space="preserve">
+    <value>The embedded Arazzo meta-schema '{0}' is missing.</value>
+  </data>
+  <data name="TypeRequired" xml:space="preserve">
+    <value>A 'type' is required.</value>
+  </data>
+  <data name="DocumentRequired" xml:space="preserve">
+    <value>A 'document' is required.</value>
+  </data>
+  <data name="SourceNameRequired" xml:space="preserve">
+    <value>A 'sourceName' is required.</value>
+  </data>
+  <data name="EnvironmentRequired" xml:space="preserve">
+    <value>An 'environment' is required.</value>
+  </data>
+  <data name="MtlsCannotBeUsageScoped" xml:space="preserve">
+    <value>An mTLS credential authenticates the deployment to the source at the TLS handshake (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.</value>
+  </data>
+  <data name="ApiKeyNotForChannelSource" xml:space="preserve">
+    <value>An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as 'bearer' (a token presented at connect), 'basic' (SASL username/password), 'oauth2ClientCredentials', or 'mtls'.</value>
+  </data>
+  <data name="ChannelCredentialCannotBeUsageScoped" xml:space="preserve">
+    <value>A channel credential authenticates the runner's broker connection (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.</value>
+  </data>
+  <data name="ChannelCredentialNeedsServerUrl" xml:space="preserve">
+    <value>A channel credential must carry the environment's broker URL as a 'serverUrl' config entry (ADR 0051); the transport protocol comes from the source document's servers[].protocol.</value>
+  </data>
+  <data name="AuthKindRequired" xml:space="preserve">
+    <value>An 'authKind' is required.</value>
+  </data>
+  <data name="UnknownCredentialStatus" xml:space="preserve">
+    <value>Unknown credential status.</value>
+  </data>
+  <data name="UnknownGranteeKind" xml:space="preserve">
+    <value>Unknown grantee kind.</value>
+  </data>
+  <data name="ServerlessRunHostFailed" xml:space="preserve">
+    <value>The serverless run host returned {0} advancing run '{1}' at '{2}'.</value>
+  </data>
+</root>

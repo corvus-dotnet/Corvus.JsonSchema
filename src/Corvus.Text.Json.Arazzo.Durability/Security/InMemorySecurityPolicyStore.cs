@@ -59,7 +59,7 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         {
             if (this.rules.ContainsKey(name))
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());

@@ -103,7 +103,7 @@ public readonly partial struct AvailabilityEntry
     {
         if (!draft.BaseWorkflowId.IsNotUndefined() || !draft.VersionNumber.IsNotUndefined() || !draft.Environment.IsNotUndefined())
         {
-            throw new ArgumentException("An availability entry requires a 'baseWorkflowId', 'versionNumber', and 'environment'.", nameof(draft));
+            ThrowHelper.ThrowAvailabilityEntryRequiresKey();
         }
     }
 }

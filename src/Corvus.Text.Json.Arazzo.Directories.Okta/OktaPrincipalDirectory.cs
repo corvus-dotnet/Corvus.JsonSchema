@@ -73,7 +73,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new OktaDirectoryException($"the Management API returned {(int)response.StatusCode} ({response.StatusCode}) searching {resource.Path}.");
+            ThrowHelper.ThrowSearchFailed(response.StatusCode, resource.Path);
         }
 
         // Allocation ledger (per search). The response byte[] is the one driver-forced GC alloc (HttpContent gives no
@@ -141,7 +141,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new OktaDirectoryException($"the Management API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+            ThrowHelper.ThrowGroupMembershipsFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -572,7 +572,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         return this.options.Authentication switch
         {
             OktaApiToken apiToken => await apiToken.Token.ResolveStringAsync(this.resolver, cancellationToken).ConfigureAwait(false),
-            _ => throw new InvalidOperationException($"Unsupported Okta authentication '{this.options.Authentication.GetType().Name}'."),
+            _ => throw ThrowHelper.GetUnsupportedAuthenticationException(this.options.Authentication.GetType().Name),
         };
     }
 }

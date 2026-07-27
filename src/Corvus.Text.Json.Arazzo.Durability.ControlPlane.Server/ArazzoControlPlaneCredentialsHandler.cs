@@ -167,12 +167,12 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // bytes-to-bytes (no per-field strings, no list) — see the draft build below.
             if (!body.SourceName.IsNotUndefined())
             {
-                throw new ArgumentException("A 'sourceName' is required.");
+                ServerThrowHelper.ThrowSourceNameRequired();
             }
 
             if (!body.Environment.IsNotUndefined())
             {
-                throw new ArgumentException("An 'environment' is required.");
+                ServerThrowHelper.ThrowEnvironmentRequired();
             }
 
             authKind = ReadAuthKind(body.AuthKind);
@@ -184,7 +184,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             {
                 if (hasUsageGrantee)
                 {
-                    throw new ArgumentException("An mTLS credential authenticates the deployment to the source at the TLS handshake (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.");
+                    ServerThrowHelper.ThrowMtlsCannotBeUsageScoped();
                 }
 
                 hasUsageTags = false;
@@ -204,17 +204,17 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             {
                 if (authKind == SourceCredentialKind.ApiKey)
                 {
-                    throw new ArgumentException("An API key attaches per HTTP request, but a channel source authenticates at connection (ADR 0051); bind the broker credential as 'bearer' (a token presented at connect), 'basic' (SASL username/password), 'oauth2ClientCredentials', or 'mtls'.");
+                    ServerThrowHelper.ThrowApiKeyNotForChannelSource();
                 }
 
                 if (hasUsageGrantee)
                 {
-                    throw new ArgumentException("A channel credential authenticates the runner's broker connection (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.");
+                    ServerThrowHelper.ThrowChannelCredentialCannotBeUsageScoped();
                 }
 
                 if (!HasNonEmptyConfigValue((JsonElement)body.Config, "serverUrl"u8))
                 {
-                    throw new ArgumentException("A channel credential must carry the environment's broker URL as a 'serverUrl' config entry (ADR 0051); the transport protocol comes from the source document's servers[].protocol.");
+                    ServerThrowHelper.ThrowChannelCredentialNeedsServerUrl();
                 }
             }
             catch (ArgumentException ex)
@@ -421,7 +421,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private static SourceCredentialKind ReadAuthKind(Models.SourceCredentialKind authKind)
         => authKind.IsNotUndefined()
             ? SourceCredentialKindExtensions.Parse((string)authKind)
-            : throw new ArgumentException("An 'authKind' is required.");
+            : throw ServerThrowHelper.GetAuthKindRequiredException();
 
     // Whether the named source is registered as an AsyncAPI (channel) source under the caller's reach (ADR 0051). An
     // unregistered or out-of-reach source classifies as not-a-channel: the binding surface does not require
@@ -732,7 +732,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         CredentialStatus.Valid => "valid",
         CredentialStatus.ExpiringSoon => "expiringSoon",
         CredentialStatus.Expired => "expired",
-        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown credential status."),
+        _ => throw ServerThrowHelper.GetUnknownCredentialStatusException(status),
     };
 
     // ── credential-list projection (closure-free Build<TContext> over the page; §13) ────────────────────────────────

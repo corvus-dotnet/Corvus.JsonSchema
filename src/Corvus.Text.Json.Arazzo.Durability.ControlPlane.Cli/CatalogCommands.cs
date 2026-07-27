@@ -55,7 +55,7 @@ internal static class CatalogPackageFiles
                     continue;
                 }
 
-                throw new FileNotFoundException($"Source '{name}' could not be resolved to a local file; provide it with --source {name}=<path>.");
+                CliThrowHelper.ThrowSourceNotResolved(name);
             }
 
             resolved.Add(new KeyValuePair<string, byte[]>(name, File.ReadAllBytes(path)));
@@ -73,7 +73,7 @@ internal static class CatalogPackageFiles
             int eq = arg.IndexOf('=', StringComparison.Ordinal);
             if (eq <= 0)
             {
-                throw new ArgumentException($"--source must be in the form name=path; got '{arg}'.");
+                CliThrowHelper.ThrowSourceArgMalformed(arg);
             }
 
             map[arg[..eq]] = arg[(eq + 1)..];

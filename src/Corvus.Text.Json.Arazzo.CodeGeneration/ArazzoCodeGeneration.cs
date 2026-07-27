@@ -86,7 +86,7 @@ public static class ArazzoCodeGeneration
 
             string workflowId = workflow.WorkflowId.IsNotUndefined()
                 ? workflow.WorkflowId.GetString()!
-                : throw new InvalidOperationException($"Workflow at index {index} is missing its required workflowId.");
+                : throw ThrowHelper.GetWorkflowMissingIdException(index);
 
             workflowDependencies.Add((workflowId, WorkflowExecutorEmitter.ReadWorkflowDependsOn(workflow)));
 
@@ -216,7 +216,7 @@ public static class ArazzoCodeGeneration
 
         if (ordered.Count != workflows.Count)
         {
-            throw new InvalidOperationException("A cycle was detected in the workflows' dependsOn relationships; the workflows cannot be ordered.");
+            ThrowHelper.ThrowWorkflowDependencyCycle();
         }
 
         return ordered;

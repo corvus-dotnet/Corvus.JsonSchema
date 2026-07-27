@@ -295,7 +295,7 @@ public static class OpenApiSchemaTypeGeneration
 
             if (counter == 1000)
             {
-                throw new InvalidOperationException("Unexpected duplicate file generated.");
+                ThrowHelper.ThrowUnexpectedDuplicateFile();
             }
         }
 

@@ -310,7 +310,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentNullException.ThrowIfNull(context);
         if (this.resumer is null)
         {
-            throw new InvalidOperationException("This management client was created without a resumer; ResumeAsync requires one.");
+            ThrowHelper.ThrowResumerRequired();
         }
 
         // A run outside the caller's write reach is not actionable (§14.2).
@@ -705,7 +705,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 {
                     case ResumeMode.Rewind:
                         cursor = options.TargetCursor
-                            ?? throw new ArgumentException("Rewind requires a target cursor.", nameof(options));
+                            ?? throw ThrowHelper.GetRewindRequiresTargetCursorException();
                         break;
 
                     case ResumeMode.Skip:
@@ -731,7 +731,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                         break;
 
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(options), options.Mode, "Unknown resume mode.");
+                        throw ThrowHelper.GetUnknownResumeModeException(options.Mode);
                 }
 
                 // Carry the immutable run-creation metadata (correlation id, pinned environment, tags) through the
@@ -877,5 +877,5 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     private IWorkflowWaitIndex RequireIndex()
-        => this.index ?? throw new NotSupportedException("The state store must implement IWorkflowWaitIndex for visibility queries (ListAsync/PurgeAsync).");
+        => this.index ?? throw ThrowHelper.GetStateStoreMustImplementWaitIndexForVisibilityException();
 }

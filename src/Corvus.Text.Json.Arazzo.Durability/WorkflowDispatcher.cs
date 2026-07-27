@@ -51,7 +51,7 @@ public sealed class WorkflowDispatcher
         ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
         this.store = store;
         this.index = store as IWorkflowDispatchIndex
-            ?? throw new ArgumentException("The state store must implement IWorkflowDispatchIndex to drive a dispatcher.", nameof(store));
+            ?? throw ThrowHelper.GetStateStoreMustImplementDispatchIndexForDispatcherException();
         this.owner = owner;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);

@@ -61,6 +61,6 @@ public static class DirectorySpanIdentityMapper
         public bool TryMapIdentity(DirectoryRecordView record, ref IdentityBuilder identity) => map(record, ref identity);
 
         public ResolvedPrincipal? Map(DirectoryRecord record)
-            => throw new NotSupportedException("This is a span identity mapper; use it with a UTF-8-sourced adapter's span path, or supply a string mapper via DirectoryIdentityMapper.FromFunc.");
+            => throw ThrowHelper.GetSpanMapperMapNotSupportedException();
     }
 }

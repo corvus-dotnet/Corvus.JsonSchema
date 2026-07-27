@@ -99,8 +99,7 @@ public sealed class WorkflowOperationBinder
             }
         }
 
-        throw new InvalidOperationException(
-            $"No AsyncAPI source description defines a channel '{channelPath}' with action '{action.ToString().ToLowerInvariant()}'.");
+        throw ThrowHelper.GetNoChannelForActionException(channelPath, action.ToString().ToLowerInvariant());
     }
 
     private static string? ExtractSourceName(string operationPath)
@@ -128,8 +127,7 @@ public sealed class WorkflowOperationBinder
         {
             if (!this.byName.TryGetValue(qualifiedSource, out SourceDescriptionClient named))
             {
-                throw new InvalidOperationException(
-                    $"operationId '{operationId}' references source description '{qualifiedSource}', which is not defined.");
+                ThrowHelper.ThrowSourceDescriptionNotDefined(operationId, qualifiedSource);
             }
 
             if (named.Resolver.TryResolveOperationId(qualifiedId, out ResolvedOperation qualifiedOperation))
@@ -137,8 +135,7 @@ public sealed class WorkflowOperationBinder
                 return new StepBinding(StepTargetKind.OperationId, qualifiedOperation, null);
             }
 
-            throw new InvalidOperationException(
-                $"operationId '{operationId}' does not resolve to an operation in source '{qualifiedSource}'.");
+            throw ThrowHelper.GetOperationIdNotInSourceException(operationId, qualifiedSource);
         }
 
         // A plain operationId: search every source. More than one match is genuinely ambiguous — the
@@ -152,10 +149,7 @@ public sealed class WorkflowOperationBinder
             {
                 if (match is not null)
                 {
-                    throw new InvalidOperationException(
-                        $"operationId '{operationId}' is defined by more than one source description "
-                        + $"('{matchedSource}' and '{operation.SourceName}'); qualify it with a runtime "
-                        + $"expression ($sourceDescriptions.<name>.{operationId}) to select one.");
+                    ThrowHelper.ThrowAmbiguousOperationId(operationId, matchedSource, operation.SourceName);
                 }
 
                 match = operation;
@@ -168,7 +162,7 @@ public sealed class WorkflowOperationBinder
             return new StepBinding(StepTargetKind.OperationId, resolved, null);
         }
 
-        throw new InvalidOperationException($"No source description defines operationId '{operationId}'.");
+        throw ThrowHelper.GetNoSourceForOperationIdException(operationId);
     }
 
     /// <summary>
@@ -220,8 +214,7 @@ public sealed class WorkflowOperationBinder
                 return new StepBinding(StepTargetKind.OperationPath, operation, null);
             }
 
-            throw new InvalidOperationException(
-                $"operationPath '{operationPath}' does not resolve to an operation in source '{sourceName}'.");
+            throw ThrowHelper.GetOperationPathNotInSourceException(operationPath, sourceName);
         }
 
         // No (or unknown) source in the expression — try every client.
@@ -233,8 +226,7 @@ public sealed class WorkflowOperationBinder
             }
         }
 
-        throw new InvalidOperationException(
-            $"operationPath '{operationPath}' does not resolve to any source description operation.");
+        throw ThrowHelper.GetOperationPathNotResolvedException(operationPath);
     }
 
     /// <summary>Gets the transport protocol the named AsyncAPI source description declares (its document's

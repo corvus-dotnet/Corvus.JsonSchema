@@ -46,7 +46,7 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
             (string, string, string) key = (draft.SourceNameValue, draft.EnvironmentValue, SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue));
             if (this.bindings.ContainsKey(key))
             {
-                throw new InvalidOperationException($"A source credential binding for '{KeyOf(draft.SourceNameValue, draft.EnvironmentValue)}' with those security tags already exists.");
+                ThrowHelper.ThrowSourceCredentialBindingAlreadyExists(KeyOf(draft.SourceNameValue, draft.EnvironmentValue));
             }
 
             byte[] json = SourceCredentialSerialization.SerializeNew(this.NextId(), draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());

@@ -34,8 +34,7 @@ public sealed class BakedHostedWorkflowResolver : IHostedWorkflowResolver
         // loader resolver, which only ever returns the workflow the run's id resolves to.
         if (!string.Equals(run.WorkflowId, this.workflow.Descriptor.WorkflowId, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                $"This host is baked for workflow '{this.workflow.Descriptor.WorkflowId}', but the run targets '{run.WorkflowId}' (a routing fault).");
+            ThrowHelper.ThrowBakedHostWorkflowMismatch(this.workflow.Descriptor.WorkflowId, run.WorkflowId);
         }
 
         return new ValueTask<IHostedWorkflow>(this.workflow);

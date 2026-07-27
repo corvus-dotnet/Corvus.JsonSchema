@@ -44,7 +44,7 @@ internal static class ChannelAddressEmitter
 
             if (match is not { } parameter)
             {
-                throw new NotSupportedException($"Channel address parameter '{name}' has no matching step parameter; a parameterised channel address needs a step parameter for each placeholder.");
+                throw ThrowHelper.GetChannelParameterNoStepParameterException(name);
             }
 
             string identifier = EmitText.SanitizeIdentifier(name);
@@ -62,7 +62,7 @@ internal static class ChannelAddressEmitter
                     break;
 
                 default:
-                    throw new NotSupportedException($"Channel address parameter '{name}' binds a {parameter.Kind} value; only expression and string-literal channel parameters are supported.");
+                    throw ThrowHelper.GetUnsupportedChannelParameterKindException(name, parameter.Kind);
             }
 
             resolved.Add((name, local));

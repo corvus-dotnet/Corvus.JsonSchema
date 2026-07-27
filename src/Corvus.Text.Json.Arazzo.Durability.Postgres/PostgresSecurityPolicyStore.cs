@@ -108,7 +108,7 @@ public sealed class PostgresSecurityPolicyStore : ISecurityPolicyStore, IAsyncDi
             }
             catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);

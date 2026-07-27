@@ -92,7 +92,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     {
         // Leases pass through unprotected (they carry no run payload), so the revocation fence forwards straight to the
         // inner store when it supports it — a wrapped Postgres/Sqlite store fences exactly as an unwrapped one would.
-        return (this.innerLeaseAdmin ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowLeaseAdministration.")).ExpireLeasesForOwnerAsync(owner, cancellationToken);
+        return (this.innerLeaseAdmin ?? throw ThrowHelper.GetWrappedStoreNoLeaseAdministrationException()).ExpireLeasesForOwnerAsync(owner, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -132,11 +132,11 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
     /// <inheritdoc/>
     public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
-        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
+        => (this.innerDispatch ?? throw ThrowHelper.GetWrappedStoreNoDispatchIndexException()).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 
     /// <inheritdoc/>
     public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
-        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
+        => (this.innerDispatch ?? throw ThrowHelper.GetWrappedStoreNoDispatchIndexException()).QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
@@ -159,5 +159,5 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private IWorkflowWaitIndex RequireIndex()
-        => this.innerIndex ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowWaitIndex.");
+        => this.innerIndex ?? throw ThrowHelper.GetWrappedStoreNoWaitIndexException();
 }

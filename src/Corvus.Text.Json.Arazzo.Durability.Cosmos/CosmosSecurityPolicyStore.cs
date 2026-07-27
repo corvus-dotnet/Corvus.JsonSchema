@@ -146,7 +146,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(RulePartition), cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             response.EnsureSuccessStatusCode();

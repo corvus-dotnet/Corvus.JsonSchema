@@ -86,7 +86,7 @@ public sealed class SqlServerEnvironmentStore : IEnvironmentStore, IAsyncDisposa
         }
         catch (SqlException ex) when (ex.Number is 2627 or 2601)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator) so

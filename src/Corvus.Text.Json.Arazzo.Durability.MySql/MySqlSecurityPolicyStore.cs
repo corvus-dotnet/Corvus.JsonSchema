@@ -109,7 +109,7 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             }
             catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);

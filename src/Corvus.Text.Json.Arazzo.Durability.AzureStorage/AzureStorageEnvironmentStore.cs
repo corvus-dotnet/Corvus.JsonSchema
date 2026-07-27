@@ -107,7 +107,7 @@ public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<Environment>(json);

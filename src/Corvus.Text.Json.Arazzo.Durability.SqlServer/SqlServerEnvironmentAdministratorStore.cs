@@ -76,7 +76,7 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("An environment administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowEnvironmentAdministratorsRequired(nameof(administrators));
         }
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);

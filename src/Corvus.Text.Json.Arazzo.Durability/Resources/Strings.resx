@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Continuation-token / paging decode failures -->
+  <data name="ContinuationTokenMalformed" xml:space="preserve">
+    <value>The continuation token is malformed.</value>
+  </data>
+  <data name="AvailabilityTokenInvalidBase64" xml:space="preserve">
+    <value>The availability page token is not valid base64url.</value>
+  </data>
+  <data name="AvailabilityTokenMalformed" xml:space="preserve">
+    <value>The availability page token is malformed.</value>
+  </data>
+  <data name="AvailabilityTokenInvalidVersion" xml:space="preserve">
+    <value>The availability page token has an invalid version number.</value>
+  </data>
+  <data name="RunnerTokenInvalidBase64" xml:space="preserve">
+    <value>The runner page token is not valid base64url.</value>
+  </data>
+  <data name="AvailabilityRequestInstantNotFormatted" xml:space="preserve">
+    <value>The availability-request instant could not be formatted into the page token.</value>
+  </data>
+  <data name="AvailabilityRequestTokenInvalidBase64" xml:space="preserve">
+    <value>The availability-request page token is not valid base64url.</value>
+  </data>
+  <data name="AvailabilityRequestTokenMalformed" xml:space="preserve">
+    <value>The availability-request page token is malformed.</value>
+  </data>
+  <data name="AdministeredWorkflowsTokenInvalidBase64" xml:space="preserve">
+    <value>The administered-workflows page token is not valid base64url.</value>
+  </data>
+  <data name="AdministeredEnvironmentsTokenInvalidBase64" xml:space="preserve">
+    <value>The administered-environments page token is not valid base64url.</value>
+  </data>
+  <data name="NativeBuildJobInstantNotFormatted" xml:space="preserve">
+    <value>The native-build-job instant could not be formatted into the page token.</value>
+  </data>
+  <data name="NativeBuildJobTokenInvalidBase64" xml:space="preserve">
+    <value>The native-build-job page token is not valid base64url.</value>
+  </data>
+  <data name="NativeBuildJobTokenMalformed" xml:space="preserve">
+    <value>The native-build-job page token is malformed.</value>
+  </data>
+  <data name="SecurityRuleTokenInvalidBase64" xml:space="preserve">
+    <value>The security-rule page token is not valid base64url.</value>
+  </data>
+  <data name="SourcePageTokenInvalidBase64" xml:space="preserve">
+    <value>The source page token is not valid base64url.</value>
+  </data>
+  <data name="SourcePageTokenInvalid" xml:space="preserve">
+    <value>'{0}' is not a valid source page token.</value>
+  </data>
+  <data name="SourcePageTokenMalformed" xml:space="preserve">
+    <value>The source page token is malformed.</value>
+  </data>
+  <data name="CredentialTokenInvalidBase64" xml:space="preserve">
+    <value>The credential page token is not valid base64url.</value>
+  </data>
+  <data name="CredentialTokenInvalid" xml:space="preserve">
+    <value>'{0}' is not a valid credential page token.</value>
+  </data>
+  <data name="CredentialTokenMalformed" xml:space="preserve">
+    <value>The credential page token is malformed.</value>
+  </data>
+  <data name="ObservedIdentityTokenInvalidBase64" xml:space="preserve">
+    <value>The observed-identity page token is not valid base64url.</value>
+  </data>
+  <data name="ObservedIdentityTokenInvalid" xml:space="preserve">
+    <value>'{0}' is not a valid observed-identity page token.</value>
+  </data>
+  <data name="ObservedIdentityTokenMalformed" xml:space="preserve">
+    <value>The observed-identity page token is malformed.</value>
+  </data>
+  <data name="AccessRequestInstantNotFormatted" xml:space="preserve">
+    <value>The access-request instant could not be formatted into the page token.</value>
+  </data>
+  <data name="AccessRequestTokenInvalidBase64" xml:space="preserve">
+    <value>The access-request page token is not valid base64url.</value>
+  </data>
+  <data name="AccessRequestTokenMalformed" xml:space="preserve">
+    <value>The access-request page token is malformed.</value>
+  </data>
+  <data name="RunnerAuthorizationTokenInvalidBase64" xml:space="preserve">
+    <value>The runner-authorization page token is not valid base64url.</value>
+  </data>
+  <data name="RunnerAuthorizationTokenMalformed" xml:space="preserve">
+    <value>The runner-authorization page token is malformed.</value>
+  </data>
+  <data name="BindingOrderNotFormatted" xml:space="preserve">
+    <value>The binding order could not be formatted into the page token.</value>
+  </data>
+  <data name="SecurityBindingTokenInvalidBase64" xml:space="preserve">
+    <value>The security-binding page token is not valid base64url.</value>
+  </data>
+  <data name="SecurityBindingTokenMalformed" xml:space="preserve">
+    <value>The security-binding page token is malformed.</value>
+  </data>
+  <data name="EnvironmentTokenInvalidBase64" xml:space="preserve">
+    <value>The environment page token is not valid base64url.</value>
+  </data>
+  <data name="EnvironmentTokenInvalid" xml:space="preserve">
+    <value>'{0}' is not a valid environment page token.</value>
+  </data>
+  <data name="EnvironmentTokenMalformed" xml:space="preserve">
+    <value>The environment page token is malformed.</value>
+  </data>
+
+  <!-- Checkpoint protection -->
+  <data name="CheckpointTooShort" xml:space="preserve">
+    <value>The protected checkpoint is too short to be valid.</value>
+  </data>
+  <data name="CheckpointMalformed" xml:space="preserve">
+    <value>The protected checkpoint is malformed.</value>
+  </data>
+  <data name="InvalidAesKeyLength" xml:space="preserve">
+    <value>The AES key must be 16, 24, or 32 bytes (AES-128/192/256).</value>
+  </data>
+
+  <!-- Transport / dispatch / worker binding -->
+  <data name="WorkflowRequiresApiSource" xml:space="preserve">
+    <value>Workflow '{0}' requires API source '{1}', which has no configured transport binding.</value>
+  </data>
+  <data name="WorkflowRequiresChannelSource" xml:space="preserve">
+    <value>Workflow '{0}' requires channel source '{1}', which has no configured message transport.</value>
+  </data>
+  <data name="StateStoreMustImplementDispatchIndexForDispatcher" xml:space="preserve">
+    <value>The state store must implement IWorkflowDispatchIndex to drive a dispatcher.</value>
+  </data>
+  <data name="StateStoreMustImplementWaitIndexForWorker" xml:space="preserve">
+    <value>The state store must implement IWorkflowWaitIndex to drive a worker.</value>
+  </data>
+
+  <!-- Management / wrapped-store capability -->
+  <data name="LoadRunStateNotSupported" xml:space="preserve">
+    <value>This management client does not support loading run state.</value>
+  </data>
+  <data name="WrappedStoreNoLeaseAdministration" xml:space="preserve">
+    <value>The wrapped store does not implement IWorkflowLeaseAdministration.</value>
+  </data>
+  <data name="WrappedStoreNoDispatchIndex" xml:space="preserve">
+    <value>The wrapped store does not implement IWorkflowDispatchIndex.</value>
+  </data>
+  <data name="WrappedStoreNoWaitIndex" xml:space="preserve">
+    <value>The wrapped store does not implement IWorkflowWaitIndex.</value>
+  </data>
+  <data name="StateStoreMustImplementWaitIndexForVisibility" xml:space="preserve">
+    <value>The state store must implement IWorkflowWaitIndex for visibility queries (ListAsync/PurgeAsync).</value>
+  </data>
+  <data name="ResumerRequired" xml:space="preserve">
+    <value>This management client was created without a resumer; ResumeAsync requires one.</value>
+  </data>
+  <data name="RewindRequiresTargetCursor" xml:space="preserve">
+    <value>Rewind requires a target cursor.</value>
+  </data>
+  <data name="UnknownResumeMode" xml:space="preserve">
+    <value>Unknown resume mode.</value>
+  </data>
+
+  <!-- Row security / baked host / tag validation -->
+  <data name="StoreDoesNotImplementRowSecurity" xml:space="preserve">
+    <value>The store '{0}' does not yet implement row-security (reach) filtering in its query (§14.2/§14.4); a reach filter would otherwise be silently ignored, leaking rows across the authorization boundary. Use a store that implements ISupportsRowSecurityFilter, or run without row security.</value>
+  </data>
+  <data name="BakedHostWorkflowMismatch" xml:space="preserve">
+    <value>This host is baked for workflow '{0}', but the run targets '{1}' (a routing fault).</value>
+  </data>
+  <data name="UserTagUsesReservedInternalPrefix" xml:space="preserve">
+    <value>Security tag key '{0}' uses the reserved internal prefix '{1}'; that keyspace is owned by the deployment.</value>
+  </data>
+
+  <!-- Hosted-workflow resolution -->
+  <data name="WorkflowIdNotVersioned" xml:space="preserve">
+    <value>The workflow id '{0}' is not a versioned id of the form '{{base}}-v{{n}}'.</value>
+  </data>
+  <data name="VersionNotInCatalog" xml:space="preserve">
+    <value>Version {0} of '{1}' is not in the catalog.</value>
+  </data>
+  <data name="VersionNotRunnable" xml:space="preserve">
+    <value>Version {0} of '{1}' is not runnable (no executor in the package).</value>
+  </data>
+  <data name="VersionHasNoManifest" xml:space="preserve">
+    <value>Version {0} of '{1}' has an executor but no manifest.</value>
+  </data>
+
+  <!-- Catalog package -->
+  <data name="PackageWorkflowHasNoWorkflowId" xml:space="preserve">
+    <value>The package's Arazzo workflow has no workflowId.</value>
+  </data>
+  <data name="UpdatedPackageContentHashDiffers" xml:space="preserve">
+    <value>The updated package's content hash '{0}' differs from the version's content hash '{1}'; a package update may change only metadata, not content.</value>
+  </data>
+
+  <!-- Security-rule parser -->
+  <data name="ResolveKnownNotValidForTagKey" xml:space="preserve">
+    <value>ResolveKnown is not valid for a tag-key operand.</value>
+  </data>
+  <data name="UnexpectedTrailingContentInRule" xml:space="preserve">
+    <value>Unexpected trailing content in security rule at position {0}.</value>
+  </data>
+  <data name="ExpectedCloseParenInRule" xml:space="preserve">
+    <value>Expected ')' in security rule.</value>
+  </data>
+  <data name="OrderedComparisonLeftMustBeDimension" xml:space="preserve">
+    <value>The left side of an ordered comparison (&lt;, &lt;=, &gt;, &gt;=) must be a security-tag dimension.</value>
+  </data>
+  <data name="OrderedComparisonRightMustBeLiteralOrClaim" xml:space="preserve">
+    <value>The right side of an ordered comparison (&lt;, &lt;=, &gt;, &gt;=) must be a literal or $claim value.</value>
+  </data>
+  <data name="ExpectedOpenParenAfterIn" xml:space="preserve">
+    <value>Expected '(' after 'in' in security rule.</value>
+  </data>
+  <data name="InListTakesQuotedLiterals" xml:space="preserve">
+    <value>An 'in' list takes quoted literal values in security rule at position {0}.</value>
+  </data>
+  <data name="ExpectedCommaOrCloseParenInInList" xml:space="preserve">
+    <value>Expected ',' or ')' in 'in' list in security rule at position {0}.</value>
+  </data>
+  <data name="ExpectedOperandInRule" xml:space="preserve">
+    <value>Expected an operand in security rule at position {0}.</value>
+  </data>
+  <data name="UnknownClaimsPredicate" xml:space="preserve">
+    <value>Unknown $claims predicate '{0}' in security rule (expected $claims.superset or $claims.intersects).</value>
+  </data>
+
+  <!-- Enum token round-trips -->
+  <data name="UnknownCatalogStatus" xml:space="preserve">
+    <value>Unknown catalog status.</value>
+  </data>
+  <data name="UnknownGranteeKind" xml:space="preserve">
+    <value>Unknown grantee kind.</value>
+  </data>
+  <data name="UnknownSourceCredentialKind" xml:space="preserve">
+    <value>Unknown source credential kind.</value>
+  </data>
+  <data name="UnknownSourceCredentialAuthKind" xml:space="preserve">
+    <value>Unknown source credential auth kind '{0}'.</value>
+  </data>
+
+  <!-- Native build job state -->
+  <data name="NativeBuildJobNotBuildingForCompletion" xml:space="preserve">
+    <value>The native build job '{0}' cannot be completed because it is not building.</value>
+  </data>
+  <data name="NativeBuildJobNotBuildingForRenewal" xml:space="preserve">
+    <value>The native build job '{0}' cannot have its lease renewed because it is not building.</value>
+  </data>
+
+  <!-- Secured catalog / administration -->
+  <data name="WorkflowIdAlreadyVersioned" xml:space="preserve">
+    <value>The submitted workflow id '{0}' already carries a version suffix; submit the base id without '-vN'.</value>
+  </data>
+  <data name="CannotRemoveLastWorkflowAdministrator" xml:space="preserve">
+    <value>Cannot remove the last administrator of a workflow; a workflow must always have at least one administrator.</value>
+  </data>
+  <data name="WorkflowTransferRequiresAdministrator" xml:space="preserve">
+    <value>A workflow administration transfer requires at least one new administrator.</value>
+  </data>
+  <data name="WorkflowAdministrationRequiresStore" xml:space="preserve">
+    <value>Workflow administration management requires an administrator store; none is configured on this catalog client.</value>
+  </data>
+  <data name="CannotRemoveLastEnvironmentAdministrator" xml:space="preserve">
+    <value>Cannot remove the last administrator of an environment; an environment must always have at least one administrator.</value>
+  </data>
+  <data name="EnvironmentTransferRequiresAdministrator" xml:space="preserve">
+    <value>An environment administration transfer requires at least one new administrator.</value>
+  </data>
+  <data name="EnvironmentAdministrationRecordRequiresAdministrator" xml:space="preserve">
+    <value>An environment administration record requires at least one administrator identity.</value>
+  </data>
+  <data name="WorkflowAdministrationRecordRequiresAdministrator" xml:space="preserve">
+    <value>A workflow administration record requires at least one administrator identity.</value>
+  </data>
+  <data name="WorkflowReverseIndexNotMaintained" xml:space="preserve">
+    <value>This administrator store does not maintain the reverse administration index (design §15.4).</value>
+  </data>
+  <data name="EnvironmentReverseIndexNotMaintained" xml:space="preserve">
+    <value>This administrator store does not maintain the reverse administration index (design §7.8).</value>
+  </data>
+
+  <!-- Workflow package binary -->
+  <data name="PackageSourceEntryNameTooLong" xml:space="preserve">
+    <value>Package entry name 'sources/{0}.json' is too long.</value>
+  </data>
+  <data name="NativeBinaryEmpty" xml:space="preserve">
+    <value>The native binary is empty.</value>
+  </data>
+  <data name="AttestationManifestEmpty" xml:space="preserve">
+    <value>The attestation manifest is empty.</value>
+  </data>
+  <data name="AttestationSignatureEmpty" xml:space="preserve">
+    <value>The attestation signature is empty.</value>
+  </data>
+  <data name="PackageHasNoWorkflowJson" xml:space="preserve">
+    <value>The package has no 'workflow.json' document.</value>
+  </data>
+  <data name="RuntimeIdentifierContainsSlash" xml:space="preserve">
+    <value>The runtime identifier '{0}' must not contain '/'.</value>
+  </data>
+  <data name="RuntimeIdentifierTooLong" xml:space="preserve">
+    <value>The runtime identifier '{0}' is too long.</value>
+  </data>
+  <data name="InvalidWorkflowPackageBadMagic" xml:space="preserve">
+    <value>The bytes are not a valid workflow package (bad magic).</value>
+  </data>
+  <data name="UnsupportedPackageEntryEncoding" xml:space="preserve">
+    <value>Unsupported workflow-package entry encoding {0}.</value>
+  </data>
+  <data name="WorkflowPackageTruncated" xml:space="preserve">
+    <value>The workflow package is truncated or malformed.</value>
+  </data>
+
+  <!-- Draft validation (create/save contracts) -->
+  <data name="AvailabilityEntryRequiresKey" xml:space="preserve">
+    <value>An availability entry requires a 'baseWorkflowId', 'versionNumber', and 'environment'.</value>
+  </data>
+  <data name="AvailabilityRequestRequiresContent" xml:space="preserve">
+    <value>An availability request requires a 'baseWorkflowId', 'versionNumber', and 'environment'.</value>
+  </data>
+  <data name="NativeBuildJobRequiresContent" xml:space="preserve">
+    <value>A native build job requires a 'baseWorkflowId', 'versionNumber', 'environment', and 'runtimeIdentifier'.</value>
+  </data>
+  <data name="RunnerAuthorizationRequiresContent" xml:space="preserve">
+    <value>An environment-runner authorization requires an 'environment' and 'runnerId'.</value>
+  </data>
+  <data name="SourceRequiresName" xml:space="preserve">
+    <value>A source requires a 'name'.</value>
+  </data>
+  <data name="SourceRequiresNonEmptyName" xml:space="preserve">
+    <value>A source requires a non-empty 'name'.</value>
+  </data>
+  <data name="SourceRequiresType" xml:space="preserve">
+    <value>A source requires a 'type'.</value>
+  </data>
+  <data name="SourceRequiresDocument" xml:space="preserve">
+    <value>A source requires a 'document'.</value>
+  </data>
+  <data name="WorkingCopyRequiresName" xml:space="preserve">
+    <value>A working copy requires a 'name'.</value>
+  </data>
+  <data name="WorkingCopyRequiresNonEmptyName" xml:space="preserve">
+    <value>A working copy requires a non-empty 'name'.</value>
+  </data>
+  <data name="WorkingCopyRequiresDocument" xml:space="preserve">
+    <value>A working copy requires a 'document'.</value>
+  </data>
+  <data name="EnvironmentRequiresName" xml:space="preserve">
+    <value>An environment requires a 'name'.</value>
+  </data>
+  <data name="EnvironmentRequiresNonEmptyName" xml:space="preserve">
+    <value>An environment requires a non-empty 'name'.</value>
+  </data>
+
+  <!-- Source-credential binding validation -->
+  <data name="BindingRequiresSecretReference" xml:space="preserve">
+    <value>A source credential binding requires at least one secret reference.</value>
+  </data>
+  <data name="SecretReferenceRequiresName" xml:space="preserve">
+    <value>A secret reference requires a non-empty name.</value>
+  </data>
+  <data name="InvalidSecretRefInBinding" xml:space="preserve">
+    <value>Secret reference '{0}' is not a valid SecretRef (scheme://locator[#version]); secret material must never be stored inline.</value>
+  </data>
+  <data name="MtlsRequiresCertificate" xml:space="preserve">
+    <value>An mTLS credential binding requires a 'certificate' secret reference.</value>
+  </data>
+  <data name="MtlsCannotBeUsageScoped" xml:space="preserve">
+    <value>An mTLS credential is connection-level and cannot be usage-scoped; it must not carry usage tags.</value>
+  </data>
+  <data name="BindingRequiresSourceName" xml:space="preserve">
+    <value>A source credential binding requires a 'sourceName'.</value>
+  </data>
+  <data name="BindingRequiresEnvironment" xml:space="preserve">
+    <value>A source credential binding requires an 'environment'.</value>
+  </data>
+
+  <!-- Secret resolvers -->
+  <data name="EnvResolverWrongScheme" xml:space="preserve">
+    <value>this resolver only handles the env:// scheme.</value>
+  </data>
+  <data name="EnvSecretsUnversioned" xml:space="preserve">
+    <value>environment-variable secrets are unversioned; remove the #version.</value>
+  </data>
+  <data name="EnvVariableNotSet" xml:space="preserve">
+    <value>environment variable '{0}' is not set.</value>
+  </data>
+  <data name="FileResolverWrongScheme" xml:space="preserve">
+    <value>this resolver only handles the file:// scheme.</value>
+  </data>
+  <data name="FileSecretsUnversioned" xml:space="preserve">
+    <value>file secrets are unversioned; remove the #version.</value>
+  </data>
+  <data name="CouldNotReadSecretFile" xml:space="preserve">
+    <value>could not read secret file '{0}'.</value>
+  </data>
+  <data name="SecretLocatorEscapesRoot" xml:space="preserve">
+    <value>the locator escapes the configured secret root '{0}'; file references may not use absolute paths or '..' traversal.</value>
+  </data>
+  <data name="NoResolverForScheme" xml:space="preserve">
+    <value>no resolver is registered for the '{0}' scheme.</value>
+  </data>
+  <data name="NoSecretResolversRegistered" xml:space="preserve">
+    <value>no secret resolvers have been registered; register at least one before calling Build().</value>
+  </data>
+  <data name="MultipleResolversForScheme" xml:space="preserve">
+    <value>more than one resolver was registered for the '{0}' scheme; register exactly one resolver per scheme.</value>
+  </data>
+  <data name="InvalidSecretReference" xml:space="preserve">
+    <value>'{0}' is not a valid secret reference (expected scheme://locator[#version] with a known scheme).</value>
+  </data>
+
+  <!-- In-memory store uniqueness -->
+  <data name="SourceCredentialBindingAlreadyExists" xml:space="preserve">
+    <value>A source credential binding for '{0}' with those security tags already exists.</value>
+  </data>
+  <data name="SecurityRuleAlreadyExists" xml:space="preserve">
+    <value>A security rule named '{0}' already exists.</value>
+  </data>
+  <data name="SourceAlreadyExists" xml:space="preserve">
+    <value>A source named '{0}' with those security tags already exists.</value>
+  </data>
+  <data name="EnvironmentAlreadyExists" xml:space="preserve">
+    <value>An environment named '{0}' with those security tags already exists.</value>
+  </data>
+
+  <!-- Draft runs -->
+  <data name="DraftResumerDoesNotHostRun" xml:space="preserve">
+    <value>Run '{0}' executes workflow '{1}', which this draft-only resumer does not host.</value>
+  </data>
+  <data name="DraftRunHasNoCapture" xml:space="preserve">
+    <value>Draft run '{0}' has no captured draft in the draft-run store.</value>
+  </data>
+  <data name="DraftRunHasNoPackage" xml:space="preserve">
+    <value>Draft run '{0}' has a capture record but no captured package.</value>
+  </data>
+  <data name="DraftRunNotExecutable" xml:space="preserve">
+    <value>Draft run '{0}' is not executable: the captured document did not compile.</value>
+  </data>
+  <data name="NoRunToAssembleTrace" xml:space="preserve">
+    <value>No run '{0}' exists to assemble a metadata trace for.</value>
+  </data>
+  <data name="DraftRunnerLoopAlreadyRunning" xml:space="preserve">
+    <value>The draft runner's background loop is already running.</value>
+  </data>
+</root>

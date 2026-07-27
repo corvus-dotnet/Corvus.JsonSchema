@@ -67,6 +67,6 @@ public sealed class KeyVaultExecutorPackageSigner : IExecutorPackageSigner
             "ES256" => ExecutorSignatureAlgorithms.EcdsaP256Sha256,
             "ES384" => ExecutorSignatureAlgorithms.EcdsaP384Sha384,
             "PS256" => ExecutorSignatureAlgorithms.RsaPssSha256,
-            _ => throw new ArgumentException($"An executor-package Key Vault signer must use ES256, ES384, or PS256; '{algorithm}' is not supported.", nameof(algorithm)),
+            _ => throw ThrowHelper.GetUnsupportedAlgorithmException(algorithm),
         };
 }

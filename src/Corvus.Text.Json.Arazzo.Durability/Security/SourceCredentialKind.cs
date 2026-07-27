@@ -48,7 +48,7 @@ public static class SourceCredentialKindExtensions
         SourceCredentialKind.Basic => "basic",
         SourceCredentialKind.OAuth2ClientCredentials => "oauth2ClientCredentials",
         SourceCredentialKind.Mtls => "mtls",
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown source credential kind."),
+        _ => throw ThrowHelper.GetUnknownSourceCredentialKindException(kind),
     };
 
     /// <summary>Parses the persisted JSON token (the <c>authKind</c> enum value) to a kind.</summary>
@@ -61,6 +61,6 @@ public static class SourceCredentialKindExtensions
         "basic" => SourceCredentialKind.Basic,
         "oauth2ClientCredentials" => SourceCredentialKind.OAuth2ClientCredentials,
         "mtls" => SourceCredentialKind.Mtls,
-        _ => throw new ArgumentException($"Unknown source credential auth kind '{token}'.", nameof(token)),
+        _ => throw ThrowHelper.GetUnknownSourceCredentialAuthKindException(token),
     };
 }

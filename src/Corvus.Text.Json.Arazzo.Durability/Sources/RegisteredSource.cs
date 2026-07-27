@@ -235,23 +235,23 @@ public readonly partial struct RegisteredSource
     {
         if (!draft.Name.IsNotUndefined())
         {
-            throw new ArgumentException("A source requires a 'name'.", nameof(draft));
+            ThrowHelper.ThrowSourceRequiresName();
         }
 
         using UnescapedUtf8JsonString name = draft.Name.GetUtf8String();
         if (name.Span.IsEmpty)
         {
-            throw new ArgumentException("A source requires a non-empty 'name'.", nameof(draft));
+            ThrowHelper.ThrowSourceRequiresNonEmptyName();
         }
 
         if (!draft.Type.IsNotUndefined())
         {
-            throw new ArgumentException("A source requires a 'type'.", nameof(draft));
+            ThrowHelper.ThrowSourceRequiresType();
         }
 
         if (!draft.Document.IsNotUndefined())
         {
-            throw new ArgumentException("A source requires a 'document'.", nameof(draft));
+            ThrowHelper.ThrowSourceRequiresDocument();
         }
     }
 }

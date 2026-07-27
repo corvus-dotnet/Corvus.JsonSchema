@@ -13,10 +13,17 @@
     <NoWarn>$(NoWarn);CS1591;NU1504;CS1572;CS1573;CS1574;CS1584;CS1658;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>The control-plane system workflows (design §16.5.1): the bootstrapped access-approval workflow specs and the generated AsyncAPI producer/consumer for its access.decision exchange, so the control plane can publish an approver's decision (PublishAccessDecisionProducer) and a system runner can consume it (ReceiveAccessDecisionConsumer) to resume the suspended approval run. Transport-agnostic (depends only on the IMessageTransport abstraction). Regenerate the messaging with the Corvus.Json.Cli asyncapi-generate command over specs/access-approval.asyncapi.json (rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows, outputPath Generated, mode both).</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <Using Include="SR = Resources.Strings" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
@@ -30,6 +37,10 @@
          not a host, so it does not get it transitively from the ASP.NET Core framework reference). -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>

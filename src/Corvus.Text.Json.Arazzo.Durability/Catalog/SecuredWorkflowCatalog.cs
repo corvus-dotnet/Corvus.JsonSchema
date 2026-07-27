@@ -71,9 +71,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         if (CatalogPackage.IsVersioned(baseWorkflowId))
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "versioned-id-rejected");
-            throw new ArgumentException(
-                $"The submitted workflow id '{baseWorkflowId}' already carries a version suffix; submit the base id without '-vN'.",
-                nameof(packageUtf8));
+            ThrowHelper.ThrowWorkflowIdAlreadyVersioned(baseWorkflowId);
         }
 
         // Workflow-id administration (§13/§14.2/§15): a base id's administration is established by its first version's
@@ -485,7 +483,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
                 if (admins.Count == 1)
                 {
-                    throw new ArgumentException("Cannot remove the last administrator of a workflow; a workflow must always have at least one administrator.", nameof(digest));
+                    ThrowHelper.ThrowCannotRemoveLastWorkflowAdministrator();
                 }
 
                 admins.RemoveAt(index);
@@ -500,7 +498,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         ArgumentNullException.ThrowIfNull(newAdministrators);
         if (newAdministrators.Count == 0)
         {
-            throw new ArgumentException("A workflow administration transfer requires at least one new administrator.", nameof(newAdministrators));
+            ThrowHelper.ThrowWorkflowTransferRequiresAdministrator();
         }
 
         // Materialize each resolved identity as the durable AdministratorIdentity (tags only — the bulk hand-off carries no
@@ -600,7 +598,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         if (this.administrators is not { } store)
         {
-            throw new NotSupportedException("Workflow administration management requires an administrator store; none is configured on this catalog client.");
+            throw ThrowHelper.GetWorkflowAdministrationRequiresStoreException();
         }
 
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity($"catalog.administration.{operation}");

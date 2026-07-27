@@ -108,7 +108,7 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider : IHttpAuthent
         using HttpResponseMessage response = await this.tokenClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new OAuth2TokenException($"the token endpoint returned {(int)response.StatusCode} ({response.StatusCode}).");
+            ThrowHelper.ThrowOAuth2TokenEndpointFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -126,7 +126,7 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider : IHttpAuthent
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
-            throw new OAuth2TokenException("the token response was not a JSON object.");
+            ThrowHelper.ThrowOAuth2TokenResponseNotJsonObject();
         }
 
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
@@ -153,7 +153,7 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider : IHttpAuthent
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new OAuth2TokenException("the token response did not contain an access_token.");
+            ThrowHelper.ThrowOAuth2TokenResponseMissingAccessToken();
         }
 
         return (accessToken, lifetime);

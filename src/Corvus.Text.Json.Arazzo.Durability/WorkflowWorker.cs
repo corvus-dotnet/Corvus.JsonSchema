@@ -43,7 +43,7 @@ public sealed class WorkflowWorker
         ArgumentNullException.ThrowIfNull(owner);
         this.store = store;
         this.index = store as IWorkflowWaitIndex
-            ?? throw new ArgumentException("The state store must implement IWorkflowWaitIndex to drive a worker.", nameof(store));
+            ?? throw ThrowHelper.GetStateStoreMustImplementWaitIndexForWorkerException();
         this.owner = owner;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);

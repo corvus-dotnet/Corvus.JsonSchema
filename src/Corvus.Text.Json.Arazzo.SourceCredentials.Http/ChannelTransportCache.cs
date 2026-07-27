@@ -84,15 +84,13 @@ public sealed class ChannelTransportCache : IAsyncDisposable
         using ParsedJsonDocument<SourceCredentialBinding>? document = await this.store.GetAsync(sourceName, this.environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
         if (document is not { } doc)
         {
-            throw new WorkflowTransportBindingException(
-                $"Channel source '{sourceName}' has no credential binding in '{this.environment}' (ADR 0051); bind the environment's broker URL ('serverUrl' config) and broker credential.");
+            throw ThrowHelper.GetChannelSourceHasNoBindingException(sourceName, this.environment);
         }
 
         SourceCredentialBinding binding = doc.RootElement;
         if (!binding.TryGetConfigValue("serverUrl", out string? serverUrl) || string.IsNullOrEmpty(serverUrl))
         {
-            throw new WorkflowTransportBindingException(
-                $"The channel credential for source '{sourceName}' in '{this.environment}' carries no 'serverUrl' config entry (ADR 0051); the binding must name the environment's broker endpoint.");
+            ThrowHelper.ThrowChannelCredentialMissingServerUrl(sourceName, this.environment);
         }
 
         IChannelTransportFactory? factory = null;
@@ -107,8 +105,7 @@ public sealed class ChannelTransportCache : IAsyncDisposable
 
         if (factory is null)
         {
-            throw new WorkflowTransportBindingException(
-                $"Channel source '{sourceName}' declares protocol '{protocol}', but this host registers no transport factory for it (ADR 0051).");
+            ThrowHelper.ThrowNoTransportFactoryForProtocol(sourceName, protocol);
         }
 
         // The revealed secret values live only in the settings handed to the factory and the connection it
@@ -146,8 +143,7 @@ public sealed class ChannelTransportCache : IAsyncDisposable
         }
         catch (Exception ex) when (ex is NotSupportedException or InvalidOperationException)
         {
-            throw new WorkflowTransportBindingException(
-                $"The channel credential for source '{sourceName}' in '{this.environment}' could not build a '{protocol}' transport: {ex.Message}");
+            throw ThrowHelper.GetChannelTransportBuildFailedException(sourceName, this.environment, protocol, ex);
         }
     }
 

@@ -64,7 +64,7 @@ public sealed class SimulationMessageTransport(MockApiTransport recorder, Simula
         string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
         if (triggers is null || !triggers.TryTake(replyChannel, correlationId: null, out SimulationTrigger reply))
         {
-            throw new InvalidOperationException($"The request/reply send on '{requestChannel}' has no scripted reply — add a scenario trigger for its reply channel '{replyChannel}' carrying the reply payload.");
+            throw ThrowHelper.GetNoScriptedReplyException(requestChannel, replyChannel);
         }
 
         var requestBuffer = new ArrayBufferWriter<byte>(256);

@@ -95,14 +95,14 @@ public static class EnvironmentRunnerAuthorizationContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The runner-authorization page token is not valid base64url.");
+            ThrowHelper.ThrowRunnerAuthorizationTokenInvalidBase64();
         }
 
         ReadOnlySpan<byte> key = destination[..decoded];
         int sep = key.IndexOf(Separator);
         if (sep < 0)
         {
-            throw new FormatException("The runner-authorization page token is malformed.");
+            ThrowHelper.ThrowRunnerAuthorizationTokenMalformed();
         }
 
         environmentUtf8 = key[..sep];

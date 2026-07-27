@@ -90,7 +90,7 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
         }
         catch (SqlException ex) when (ex.Number is 2627 or 2601)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceCredentialAlreadyExists(draft.SourceNameValue, draft.EnvironmentValue);
         }
 
         // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)

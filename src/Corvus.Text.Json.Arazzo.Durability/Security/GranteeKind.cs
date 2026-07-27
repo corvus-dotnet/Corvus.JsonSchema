@@ -37,7 +37,7 @@ public static class GranteeKinds
         GranteeKind.Team => "team",
         GranteeKind.Role => "role",
         GranteeKind.Workflow => "workflow",
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+        _ => throw ThrowHelper.GetUnknownGranteeKindException(kind),
     };
 
     /// <summary>Gets the canonical lower-case token as UTF-8 (for bytes-to-bytes serialization) — the <see cref="ToToken(GranteeKind)"/> form without a managed string.</summary>
@@ -49,7 +49,7 @@ public static class GranteeKinds
         GranteeKind.Team => "team"u8,
         GranteeKind.Role => "role"u8,
         GranteeKind.Workflow => "workflow"u8,
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+        _ => throw ThrowHelper.GetUnknownGranteeKindException(kind),
     };
 
     // ── C# domain enum ⇄ CTJ ObservedIdentity.GranteeKind adapters ───────────────────────────────────────────────────
@@ -89,7 +89,7 @@ public static class GranteeKinds
             return "workflow";
         }
 
-        throw new ArgumentOutOfRangeException(nameof(kind), "Unknown grantee kind.");
+        throw ThrowHelper.GetUnknownGranteeKindException(kind);
     }
 
     /// <summary>Maps a domain <see cref="GranteeKind"/> to the CTJ <see cref="ObservedIdentity.GranteeKind"/> the observed
@@ -103,7 +103,7 @@ public static class GranteeKinds
         GranteeKind.Team => ObservedIdentity.GranteeKind.EnumValues.Team,
         GranteeKind.Role => ObservedIdentity.GranteeKind.EnumValues.Role,
         GranteeKind.Workflow => ObservedIdentity.GranteeKind.EnumValues.Workflow,
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown grantee kind."),
+        _ => throw ThrowHelper.GetUnknownGranteeKindException(kind),
     };
 
     /// <summary>Reifies a CTJ <see cref="ObservedIdentity.GranteeKind"/> back to the domain <see cref="GranteeKind"/> — at
@@ -133,6 +133,6 @@ public static class GranteeKinds
             return GranteeKind.Workflow;
         }
 
-        throw new ArgumentOutOfRangeException(nameof(kind), "Unknown grantee kind.");
+        throw ThrowHelper.GetUnknownGranteeKindException(kind);
     }
 }

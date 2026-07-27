@@ -50,7 +50,7 @@ public readonly struct SecretRef : IEquatable<SecretRef>
         ArgumentException.ThrowIfNullOrEmpty(reference);
         return TryParse(reference, out SecretRef result)
             ? result
-            : throw new FormatException($"'{reference}' is not a valid secret reference (expected scheme://locator[#version] with a known scheme).");
+            : throw ThrowHelper.GetInvalidSecretReferenceException(reference);
     }
 
     /// <summary>Tries to parse a secret reference.</summary>

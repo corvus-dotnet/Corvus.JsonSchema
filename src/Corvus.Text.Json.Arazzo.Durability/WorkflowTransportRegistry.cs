@@ -97,12 +97,10 @@ public sealed class WorkflowTransportRegistry
     private IApiTransportFactory RequireApiSource(WorkflowDescriptor descriptor, string source)
         => this.apiSources.TryGetValue(source, out IApiTransportFactory? factory)
             ? factory
-            : throw new WorkflowTransportBindingException(
-                $"Workflow '{descriptor.WorkflowId}' requires API source '{source}', which has no configured transport binding.");
+            : throw ThrowHelper.GetWorkflowRequiresApiSourceException(descriptor.WorkflowId, source);
 
     private IMessageTransport RequireMessageSource(WorkflowDescriptor descriptor, string source)
         => this.messageSources.TryGetValue(source, out IMessageTransport? transport)
             ? transport
-            : throw new WorkflowTransportBindingException(
-                $"Workflow '{descriptor.WorkflowId}' requires channel source '{source}', which has no configured message transport.");
+            : throw ThrowHelper.GetWorkflowRequiresChannelSourceException(descriptor.WorkflowId, source);
 }

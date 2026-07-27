@@ -70,8 +70,7 @@ public static class RequestBindingEmitter
             {
                 if (parameter.IsRequired)
                 {
-                    throw new InvalidOperationException(
-                        $"Step provides no value for required parameter '{parameter.Name}' of operation '{operation.Operation.OperationId ?? operation.Operation.MethodName}'.");
+                    ThrowHelper.ThrowNoValueForRequiredParameter(parameter.Name, operation.Operation.OperationId ?? operation.Operation.MethodName);
                 }
 
                 continue;
@@ -302,7 +301,7 @@ public static class RequestBindingEmitter
                     ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => body.Value,
                     ArgumentValueKind.LiteralNull => "null",
                     ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(body.Value),
-                    _ => throw new NotSupportedException($"Request body kind '{body.Kind}' is not supported as a base for payload replacements."),
+                    _ => throw ThrowHelper.GetUnsupportedRequestBodyBaseKindException(body.Kind),
                 };
                 string constant = JsonTemplateEmitter.EmitConstant(json, fields, $"{fieldName}BaseConst");
                 statements.Append("JsonElement ").Append(baseLocal).Append(" = ").Append(constant).AppendLine(";");
@@ -360,7 +359,7 @@ public static class RequestBindingEmitter
                     ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => value,
                     ArgumentValueKind.LiteralNull => "null",
                     ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(value),
-                    _ => throw new NotSupportedException($"Argument value kind '{kind}' cannot be resolved to a JSON element."),
+                    _ => throw ThrowHelper.GetUnresolvableArgumentValueKindException(kind),
                 };
                 string constant = JsonTemplateEmitter.EmitConstant(json, fields, $"{fieldName}Const");
                 statements.Append("JsonElement ").Append(elementLocal).Append(" = ").Append(constant).AppendLine(";");

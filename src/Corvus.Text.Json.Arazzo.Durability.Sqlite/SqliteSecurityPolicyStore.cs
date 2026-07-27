@@ -90,7 +90,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);

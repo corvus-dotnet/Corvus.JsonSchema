@@ -82,7 +82,7 @@ public static class AsyncApiSourceGenerator
         ArgumentNullException.ThrowIfNull(documentLoader);
 
         byte[] specBytes = documentLoader(specUri)
-            ?? throw new FileNotFoundException($"The AsyncAPI source document '{specUri}' could not be loaded.");
+            ?? throw ThrowHelper.GetAsyncApiSourceDocumentNotFoundException(specUri);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
@@ -109,8 +109,7 @@ public static class AsyncApiSourceGenerator
         bool is26 = AsyncApiSpecVersion.Is26(version);
         if (!is26 && !AsyncApiSpecVersion.Is30(version))
         {
-            throw new NotSupportedException(
-                $"AsyncAPI source '{schemaEntryKey}' is version {version}; Arazzo channel steps require AsyncAPI 2.6 or 3.0.");
+            ThrowHelper.ThrowUnsupportedAsyncApiVersion(schemaEntryKey, version);
         }
 
         string[] pointers = is26

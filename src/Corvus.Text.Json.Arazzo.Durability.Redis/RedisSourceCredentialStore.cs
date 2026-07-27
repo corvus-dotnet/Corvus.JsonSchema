@@ -150,7 +150,7 @@ public sealed class RedisSourceCredentialStore : ISourceCredentialStore, IAsyncD
         RedisResult result = await this.database.ScriptEvaluateAsync(AddScript, keys, argv).ConfigureAwait(false);
         if ((long)result == 0)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceCredentialAlreadyExists(draft.SourceNameValue, draft.EnvironmentValue);
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);

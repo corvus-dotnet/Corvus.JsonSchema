@@ -83,10 +83,7 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
         {
             // A failed invocation leaves the run claimable, so the dispatcher's lease and retry re-claim and
             // re-invoke it — the same recovery an in-process advance failure gets.
-            throw new HttpRequestException(
-                $"The serverless run host returned {(int)response.StatusCode} advancing run '{run.Id}' at '{url}'.",
-                null,
-                response.StatusCode);
+            ServerThrowHelper.ThrowServerlessRunHostFailed(response.StatusCode, run.Id, url);
         }
 
         byte[] payload = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);

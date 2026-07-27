@@ -373,7 +373,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 // The just-created copy vanished mid-carry (should not happen); surface the best current state.
                 return await this.store.GetAsync(id, context, cancellationToken).ConfigureAwait(false)
-                    ?? throw new InvalidOperationException($"Working copy '{id}' vanished during source carry-over.");
+                    ?? throw ServerThrowHelper.GetWorkingCopyVanishedException(id);
             }
 
             current = next;
@@ -2164,7 +2164,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         private static ValidatorSchema Load(string name, string canonicalUri)
         {
             using Stream stream = typeof(ArazzoMetaSchema).Assembly.GetManifestResourceStream($"Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.{name}.json")
-                ?? throw new InvalidOperationException($"The embedded Arazzo meta-schema '{name}' is missing.");
+                ?? throw ServerThrowHelper.GetMetaSchemaMissingException(name);
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return ValidatorSchema.FromText(reader.ReadToEnd(), canonicalUri);
         }

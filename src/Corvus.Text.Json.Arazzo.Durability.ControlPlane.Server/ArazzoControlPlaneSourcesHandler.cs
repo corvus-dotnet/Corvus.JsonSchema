@@ -141,17 +141,17 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         {
             if (!body.Name.IsNotUndefined())
             {
-                throw new ArgumentException("A 'name' is required.");
+                ServerThrowHelper.ThrowNameRequired();
             }
 
             if (!body.Type.IsNotUndefined())
             {
-                throw new ArgumentException("A 'type' is required.");
+                ServerThrowHelper.ThrowTypeRequired();
             }
 
             if (!body.Document.IsNotUndefined())
             {
-                throw new ArgumentException("A 'document' is required.");
+                ServerThrowHelper.ThrowDocumentRequired();
             }
 
             // managementTags = the principal's deployment-internal tenant tag (always stamped, so the registrant keeps

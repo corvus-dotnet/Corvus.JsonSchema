@@ -91,7 +91,7 @@ public static class AvailabilityContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The availability page token is not valid base64url.");
+                ThrowHelper.ThrowAvailabilityTokenInvalidBase64();
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -124,19 +124,19 @@ public static class AvailabilityContinuationToken
         int firstSep = key.IndexOf(Separator);
         if (firstSep < 0)
         {
-            throw new FormatException("The availability page token is malformed.");
+            ThrowHelper.ThrowAvailabilityTokenMalformed();
         }
 
         ReadOnlySpan<byte> rest = key[(firstSep + 1)..];
         int secondSep = rest.IndexOf(Separator);
         if (secondSep < 0)
         {
-            throw new FormatException("The availability page token is malformed.");
+            ThrowHelper.ThrowAvailabilityTokenMalformed();
         }
 
         if (!Utf8Parser.TryParse(rest[..secondSep], out int versionNumber, out _))
         {
-            throw new FormatException("The availability page token has an invalid version number.");
+            ThrowHelper.ThrowAvailabilityTokenInvalidVersion();
         }
 
         cursor = (

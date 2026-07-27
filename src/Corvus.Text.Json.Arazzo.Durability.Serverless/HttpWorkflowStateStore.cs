@@ -115,8 +115,7 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
         // durable or the run's outcome cannot be reported.
         if (!committed[^1])
         {
-            throw new InvalidOperationException(
-                "The terminal checkpoint did not commit to the dispatching runner; the run stays claimable for re-invocation.");
+            ThrowHelper.ThrowTerminalCheckpointNotCommitted();
         }
     }
 

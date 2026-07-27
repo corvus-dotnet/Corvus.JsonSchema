@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+
+  <data name="NativeAttestationNotJsonObject" xml:space="preserve">
+    <value>The native artifact attestation is not a JSON object.</value>
+  </data>
+  <data name="NativeAttestationMissingStringProperty" xml:space="preserve">
+    <value>The native artifact attestation is missing the required string property '{0}'.</value>
+  </data>
+  <data name="NativeAttestationMissingIntegerProperty" xml:space="preserve">
+    <value>The native artifact attestation is missing the required integer property '{0}'.</value>
+  </data>
+  <data name="ExecutorManifestNotJsonObject" xml:space="preserve">
+    <value>The executor manifest is not a JSON object.</value>
+  </data>
+  <data name="ExecutorManifestMissingStringProperty" xml:space="preserve">
+    <value>The executor manifest is missing the required string property '{0}'.</value>
+  </data>
+  <data name="ExecutorManifestMissingIntegerProperty" xml:space="preserve">
+    <value>The executor manifest is missing the required integer property '{0}'.</value>
+  </data>
+  <data name="ExecutorSignatureNotJsonObject" xml:space="preserve">
+    <value>The executor signature is not a JSON object.</value>
+  </data>
+  <data name="ExecutorSignatureValueNotBase64" xml:space="preserve">
+    <value>The executor signature's 'value' is not valid base64.</value>
+  </data>
+  <data name="ExecutorSignatureMissingStringProperty" xml:space="preserve">
+    <value>The executor signature is missing the required string property '{0}'.</value>
+  </data>
+  <data name="TrustedPublicKeyNotAsymmetric" xml:space="preserve">
+    <value>The trusted public key '{0}' is neither an ECDSA nor an RSA public key.</value>
+  </data>
+  <data name="UnsupportedEcdsaKeySize" xml:space="preserve">
+    <value>An executor-package ECDSA key must be P-256 or P-384; this one is {0}-bit.</value>
+  </data>
+  <data name="MalformedExecutorManifest" xml:space="preserve">
+    <value>The executor manifest is malformed: {0}</value>
+  </data>
+  <data name="ExecutorManifestPackageHashMismatch" xml:space="preserve">
+    <value>The executor manifest's package hash '{0}' does not match the version's content hash '{1}'.</value>
+  </data>
+  <data name="ExecutorAssemblyDigestMismatch" xml:space="preserve">
+    <value>The executor assembly digest '{0}' does not match the manifest's '{1}'.</value>
+  </data>
+  <data name="ExecutorTargetFrameworkMismatch" xml:space="preserve">
+    <value>The executor targets '{0}', which this runner ('{1}') cannot load.</value>
+  </data>
+  <data name="UnsignedExecutorPackage" xml:space="preserve">
+    <value>The executor package is unsigned, but this runner requires a valid signature.</value>
+  </data>
+  <data name="MalformedExecutorSignature" xml:space="preserve">
+    <value>The executor signature is malformed: {0}</value>
+  </data>
+  <data name="ExecutorManifestSignatureUntrusted" xml:space="preserve">
+    <value>The executor manifest's signature (key '{0}', {1}) did not verify against a trusted key.</value>
+  </data>
+  <data name="EntryTypeNotFound" xml:space="preserve">
+    <value>The executor manifest's entry type '{0}' was not found in the assembly.</value>
+  </data>
+  <data name="EntryTypeNotHostedWorkflow" xml:space="preserve">
+    <value>The executor entry type '{0}' does not implement IHostedWorkflow.</value>
+  </data>
+  <data name="UndeclaredSource" xml:space="preserve">
+    <value>The executor manifest does not declare the source '{0}' the workflow requires; its sources[] is inconsistent with the compiled assembly.</value>
+  </data>
+</root>

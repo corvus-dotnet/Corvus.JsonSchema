@@ -67,7 +67,8 @@ public sealed class VaultTransitExecutorPackageSigner : IExecutorPackageSigner
                 (this.hashAlgorithm, this.marshalingAlgorithm, this.signatureAlgorithm, this.base64Url) = (TransitHashAlgorithm.SHA2_256, null, SignatureAlgorithm.pss, false);
                 break;
             default:
-                throw new ArgumentException($"An executor-package Vault Transit signer must use {ExecutorSignatureAlgorithms.EcdsaP256Sha256}, {ExecutorSignatureAlgorithms.EcdsaP384Sha384}, or {ExecutorSignatureAlgorithms.RsaPssSha256}; '{algorithm}' is not supported.", nameof(algorithm));
+                ThrowHelper.ThrowUnsupportedAlgorithm(algorithm);
+                break;
         }
     }
 
@@ -100,7 +101,7 @@ public sealed class VaultTransitExecutorPackageSigner : IExecutorPackageSigner
     {
         if (string.IsNullOrEmpty(vaultSignature))
         {
-            throw new InvalidOperationException("Vault returned an empty Transit signature.");
+            ThrowHelper.ThrowEmptyTransitSignature();
         }
 
         int lastColon = vaultSignature.LastIndexOf(':');

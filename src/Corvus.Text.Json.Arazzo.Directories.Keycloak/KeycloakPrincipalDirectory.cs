@@ -78,7 +78,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new KeycloakDirectoryException($"the Keycloak Admin API returned {(int)response.StatusCode} ({response.StatusCode}) searching {resource}.");
+            ThrowHelper.ThrowSearchFailed(response.StatusCode, resource);
         }
 
         // Allocation ledger (per search). The response byte[] is the one driver-forced GC alloc (HttpContent gives no
@@ -125,7 +125,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
             KeycloakResource.Users => "users",
             KeycloakResource.Groups => "groups",
             KeycloakResource.Roles => "roles",
-            _ => throw new InvalidOperationException($"Unsupported Keycloak resource '{resource}'."),
+            _ => throw ThrowHelper.GetUnsupportedResourceException(resource),
         };
 
         // briefRepresentation=false on users so the attributes (the mapper's identity source) come back; an empty query
@@ -148,7 +148,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new KeycloakDirectoryException($"the Keycloak Admin API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+            ThrowHelper.ThrowGroupMembershipsFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -623,7 +623,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
-            throw new KeycloakDirectoryException("the token response was not a JSON object.");
+            ThrowHelper.ThrowTokenResponseNotJsonObject();
         }
 
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
@@ -650,7 +650,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new KeycloakDirectoryException("the token response did not contain an access_token.");
+            ThrowHelper.ThrowTokenResponseMissingAccessToken();
         }
 
         return (accessToken, lifetime);
@@ -715,7 +715,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
                 break;
 
             default:
-                throw new InvalidOperationException($"Unsupported Keycloak authentication '{this.options.Authentication.GetType().Name}'.");
+                throw ThrowHelper.GetUnsupportedAuthenticationException(this.options.Authentication.GetType().Name);
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(this.options.BaseUrl, $"/realms/{tokenRealm}/protocol/openid-connect/token"))
@@ -727,7 +727,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new KeycloakDirectoryException($"the Keycloak token endpoint returned {(int)response.StatusCode} ({response.StatusCode}).");
+            ThrowHelper.ThrowTokenEndpointFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);

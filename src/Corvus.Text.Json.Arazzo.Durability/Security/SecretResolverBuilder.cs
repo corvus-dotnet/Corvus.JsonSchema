@@ -59,7 +59,7 @@ public sealed class SecretResolverBuilder
     {
         if (this.resolvers.Count == 0)
         {
-            throw new InvalidOperationException("no secret resolvers have been registered; register at least one before calling Build().");
+            ThrowHelper.ThrowNoSecretResolversRegistered();
         }
 
         // Each scheme must be handled by at most one registered resolver: CompositeSecretResolver dispatches to the
@@ -77,7 +77,7 @@ public sealed class SecretResolverBuilder
 
             if (count > 1)
             {
-                throw new InvalidOperationException($"more than one resolver was registered for the '{scheme}' scheme; register exactly one resolver per scheme.");
+                ThrowHelper.ThrowMultipleResolversForScheme(scheme);
             }
         }
 

@@ -103,12 +103,12 @@ public static class ControlPlaneEndpointExtensions
         // it would be silently ignored); scope gating is applied exactly for the scope-gating modes.
         if ((securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly) && rowSecurity is null)
         {
-            throw new ArgumentException($"ControlPlaneSecurityMode.{securityMode} requires a row-security policy; pass rowSecurity, or use ScopesOnly (capability scopes, no row reach) or Open (unsecured).", nameof(rowSecurity));
+            ServerThrowHelper.ThrowRowSecurityPolicyRequired(securityMode);
         }
 
         if ((securityMode is ControlPlaneSecurityMode.Open or ControlPlaneSecurityMode.ScopesOnly) && rowSecurity is not null)
         {
-            throw new ArgumentException($"ControlPlaneSecurityMode.{securityMode} grants full (System) row reach and would ignore a row-security policy; omit rowSecurity, or use Scoped/RowSecurityOnly to enforce it.", nameof(rowSecurity));
+            ServerThrowHelper.ThrowRowSecurityPolicyForbidden(securityMode);
         }
 
         bool gateScopes = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.ScopesOnly;

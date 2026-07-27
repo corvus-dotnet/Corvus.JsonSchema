@@ -127,7 +127,7 @@ public sealed class NatsJetStreamWorkflowAdministratorStore : IWorkflowAdministr
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("A workflow administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowWorkflowAdministratorRequired(nameof(administrators));
         }
 
         string key = Key(baseWorkflowId);

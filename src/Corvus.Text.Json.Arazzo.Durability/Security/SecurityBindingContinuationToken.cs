@@ -52,7 +52,7 @@ public static class SecurityBindingContinuationToken
         {
             if (!Utf8Formatter.TryFormat(order, raw, out int pos))
             {
-                throw new FormatException("The binding order could not be formatted into the page token.");
+                ThrowHelper.ThrowBindingOrderNotFormatted();
             }
 
             raw[pos++] = Separator;
@@ -96,14 +96,14 @@ public static class SecurityBindingContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The security-binding page token is not valid base64url.");
+            ThrowHelper.ThrowSecurityBindingTokenInvalidBase64();
         }
 
         ReadOnlySpan<byte> key = destination[..decoded];
         int sep = key.IndexOf(Separator);
         if (sep < 0 || !Utf8Parser.TryParse(key[..sep], out order, out int consumed) || consumed != sep)
         {
-            throw new FormatException("The security-binding page token is malformed.");
+            ThrowHelper.ThrowSecurityBindingTokenMalformed();
         }
 
         idUtf8 = key[(sep + 1)..];

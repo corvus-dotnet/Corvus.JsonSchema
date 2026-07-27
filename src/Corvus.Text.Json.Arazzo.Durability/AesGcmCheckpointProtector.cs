@@ -33,7 +33,7 @@ public sealed class AesGcmCheckpointProtector : ICheckpointProtector, IDisposabl
     {
         if (key.Length is not (16 or 24 or 32))
         {
-            throw new ArgumentException("The AES key must be 16, 24, or 32 bytes (AES-128/192/256).", nameof(key));
+            ThrowHelper.ThrowInvalidAesKeyLength();
         }
 
         this.key = key.ToArray();
@@ -67,7 +67,7 @@ public sealed class AesGcmCheckpointProtector : ICheckpointProtector, IDisposabl
         ReadOnlySpan<byte> source = ciphertext.Span;
         if (source.Length < NonceSize + TagSize)
         {
-            throw new CryptographicException("The protected checkpoint is too short to be valid.");
+            ThrowHelper.ThrowCheckpointTooShort();
         }
 
         ReadOnlySpan<byte> nonce = source[..NonceSize];

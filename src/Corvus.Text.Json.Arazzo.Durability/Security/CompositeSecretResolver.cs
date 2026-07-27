@@ -49,6 +49,6 @@ public sealed class CompositeSecretResolver : ISecretResolver
             }
         }
 
-        throw new SecretResolutionException(reference, $"no resolver is registered for the '{reference.Scheme}' scheme.");
+        throw ThrowHelper.GetNoResolverForSchemeException(reference);
     }
 }

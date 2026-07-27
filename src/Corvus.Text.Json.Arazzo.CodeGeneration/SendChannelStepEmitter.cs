@@ -76,12 +76,12 @@ internal static class SendChannelStepEmitter
 
         if (descriptor.ProducerClassName is not { } producerClass)
         {
-            throw new NotSupportedException($"Channel step '{stepId}' targets a non-send channel '{descriptor.ChannelAddress}'; only send channel steps are supported so far.");
+            throw ThrowHelper.GetNonSendChannelException(stepId, descriptor.ChannelAddress);
         }
 
         if (descriptor.Messages.Count == 0)
         {
-            throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no message.");
+            ThrowHelper.ThrowChannelNoMessage(stepId, descriptor.ChannelAddress);
         }
 
         // A single-message operation binds its one message directly; a multi-message operation selects the
@@ -92,7 +92,7 @@ internal static class SendChannelStepEmitter
 
         if (requestBody is not { } body)
         {
-            throw new NotSupportedException($"Channel step '{stepId}' has no requestBody payload to publish.");
+            throw ThrowHelper.GetNoRequestBodyToPublishException(stepId);
         }
 
         bool isRequestReply = descriptor.ReplyPayloadTypeName is not null;
@@ -132,7 +132,7 @@ internal static class SendChannelStepEmitter
                     JsonTemplateEmitter.EmitConstant(body.Value, fields, $"{identifier}_PayloadConst"),
                 ArgumentValueKind.LiteralNull => JsonTemplateEmitter.EmitConstant("null", fields, $"{identifier}_PayloadConst"),
                 ArgumentValueKind.LiteralString => JsonTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{identifier}_PayloadConst"),
-                _ => throw new NotSupportedException($"Channel step '{stepId}' binds an unsupported {body.Kind} payload."),
+                _ => throw ThrowHelper.GetUnsupportedPayloadKindException(stepId, body.Kind),
             };
             statements.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(built).AppendLine(";");
         }
@@ -176,8 +176,7 @@ internal static class SendChannelStepEmitter
             {
                 if (message.HeadersTypeName is null)
                 {
-                    throw new NotSupportedException(
-                        $"Channel step '{stepId}' sets message headers (parameters with in: header), but the message '{message.MessageName}' on channel '{descriptor.ChannelAddress}' declares no headers schema.");
+                    ThrowHelper.ThrowChannelMessageNoHeadersSchema(stepId, message.MessageName, descriptor.ChannelAddress);
                 }
             }
         }
@@ -207,7 +206,7 @@ internal static class SendChannelStepEmitter
                 {
                     if (message.ProducerMethodName is not { } publishMethod)
                     {
-                        throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' is not publishable.");
+                        throw ThrowHelper.GetMessageNotPublishableException(stepId, descriptor.ChannelAddress, message.MessageName);
                     }
 
                     statements.Append("    await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
@@ -220,7 +219,7 @@ internal static class SendChannelStepEmitter
 
             if (selected.ProducerMethodName is not { } publishMethod)
             {
-                throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
+                throw ThrowHelper.GetChannelNoPublishableMessageException(stepId, descriptor.ChannelAddress);
             }
 
             // Re-wrap the JsonElement payload to the message's model type with From so the single
@@ -251,7 +250,7 @@ internal static class SendChannelStepEmitter
             {
                 if (message.RequestReplyMethodName is not { } requestReplyMethod)
                 {
-                    throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' has no request/reply method.");
+                    throw ThrowHelper.GetMessageNoRequestReplyMethodException(stepId, descriptor.ChannelAddress, message.MessageName);
                 }
 
                 statements.Append("    ").Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.').Append(requestReplyMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
@@ -261,7 +260,7 @@ internal static class SendChannelStepEmitter
         {
             if (selected.RequestReplyMethodName is not { } requestMethod)
             {
-                throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' with no request/reply method.");
+                throw ThrowHelper.GetChannelNoRequestReplyMethodException(stepId, descriptor.ChannelAddress);
             }
 
             // Re-wrap the JsonElement payload to the message's model type with From, exactly as the
@@ -429,8 +428,7 @@ internal static class SendChannelStepEmitter
             AsyncApiChannelMessageDescriptor message = descriptor.Messages[i];
             if (message.PayloadTypeName is not { } payloadType)
             {
-                throw new NotSupportedException(
-                    $"Channel step '{stepId}' targets a multi-message channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' has no distinct payload type to select on.");
+                throw ThrowHelper.GetMultiMessageNoDistinctPayloadTypeException(stepId, descriptor.ChannelAddress, message.MessageName);
             }
 
             string candidate = $"{camel}Candidate{i.ToString(CultureInfo.InvariantCulture)}";

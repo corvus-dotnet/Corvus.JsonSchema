@@ -128,10 +128,10 @@ public sealed class SystemWorkflowInstaller
         Assembly assembly = typeof(SystemWorkflowInstaller).Assembly;
         string suffix = ".specs." + fileName;
         string resourceName = Array.Find(assembly.GetManifestResourceNames(), n => n.EndsWith(suffix, StringComparison.Ordinal))
-            ?? throw new InvalidOperationException($"The embedded system-workflow spec '{fileName}' was not found in assembly '{assembly.GetName().Name}'.");
+            ?? throw SystemWorkflowsThrowHelper.GetSpecNotFoundException(fileName, assembly.GetName().Name);
 
         using Stream stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidOperationException($"The embedded system-workflow spec resource '{resourceName}' could not be opened.");
+            ?? throw SystemWorkflowsThrowHelper.GetSpecResourceNotOpenedException(resourceName);
         byte[] buffer = new byte[stream.Length];
         stream.ReadExactly(buffer);
         return buffer;
@@ -164,8 +164,7 @@ public sealed class SystemWorkflowInstaller
 
         if (this.executorProvider.BuildExecutor(ReadSpec("access-approval.arazzo.json"), ReadSources(), "system-install-probe") is null)
         {
-            throw new InvalidOperationException(
-                $"The '{BaseWorkflowId}' system workflow failed to bake: its executor could not be generated and compiled, and the deployment refuses to come up with a non-runnable critical workflow. The executor build log (\"Executor build skipped: …\") carries the generation/compile diagnostics.");
+            SystemWorkflowsThrowHelper.ThrowSystemWorkflowBakeFailed(BaseWorkflowId);
         }
     }
 
@@ -253,7 +252,7 @@ public sealed class SystemWorkflowInstaller
 
         if (options.BrokerTokenRef is not { Length: > 0 } brokerTokenRef)
         {
-            throw new ArgumentException("BrokerServerUrl is set but BrokerTokenRef is not; the channel credential needs the broker connection token's secret reference (ADR 0051).", nameof(options));
+            throw SystemWorkflowsThrowHelper.GetBrokerTokenRefRequiredException();
         }
 
         ParsedJsonDocument<SourceCredentialBinding>? existing =

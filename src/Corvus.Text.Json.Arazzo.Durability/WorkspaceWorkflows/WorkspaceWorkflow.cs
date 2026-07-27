@@ -259,18 +259,18 @@ public readonly partial struct WorkspaceWorkflow
     {
         if (!draft.Name.IsNotUndefined())
         {
-            throw new ArgumentException("A working copy requires a 'name'.", nameof(draft));
+            ThrowHelper.ThrowWorkingCopyRequiresName();
         }
 
         using UnescapedUtf8JsonString name = draft.Name.GetUtf8String();
         if (name.Span.IsEmpty)
         {
-            throw new ArgumentException("A working copy requires a non-empty 'name'.", nameof(draft));
+            ThrowHelper.ThrowWorkingCopyRequiresNonEmptyName();
         }
 
         if (!draft.Document.IsNotUndefined())
         {
-            throw new ArgumentException("A working copy requires a 'document'.", nameof(draft));
+            ThrowHelper.ThrowWorkingCopyRequiresDocument();
         }
     }
 }

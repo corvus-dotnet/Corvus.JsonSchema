@@ -68,7 +68,7 @@ public static class WorkflowExecutorEmitter
 
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
-            string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
+            string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw ThrowHelper.GetStepMissingStepIdException();
             StepBinding binding = binder.Bind(step);
 
             // A step timeout (ms) bounds the step's async work; like onSuccess/onFailure it promotes the
@@ -101,7 +101,7 @@ public static class WorkflowExecutorEmitter
                 bool isRequestReply = !isReceive && channel.Channel.ReplyPayloadTypeName is not null;
                 if (criteria.Count > 0 && !isReceive && !isRequestReply)
                 {
-                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a fire-and-forget send step; only receive and request/reply channel steps support success criteria (against $message.*).");
+                    ThrowHelper.ThrowFireAndForgetSuccessCriteria(stepId);
                 }
 
                 // onSuccess/onFailure actions promote the channel step into the control-flow loop. A
@@ -119,19 +119,16 @@ public static class WorkflowExecutorEmitter
                 {
                     if (!isReceive)
                     {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares a correlationId but is not a receive step; per the Arazzo specification correlationId applies only to AsyncAPI steps with action 'receive'.");
+                        ThrowHelper.ThrowCorrelationIdNotReceiveStep(stepId);
                     }
 
                     if (isRequestReply)
                     {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.");
+                        ThrowHelper.ThrowCorrelationIdOnRequestReply(stepId);
                     }
 
                     string rawLocation = ResolveCorrelationLocation(channel.Channel, correlationName)
-                        ?? throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares correlationId '{correlationName}', but the channel's message defines no correlation id of that name (it must be in-sync with a correlationId defined in the AsyncAPI document).");
+                        ?? throw ThrowHelper.GetCorrelationIdNotDefinedException(stepId, correlationName);
 
                     // The correlation token lives in the message payload or headers: the matching send step
                     // publishes both (its requestBody payload and its in:header parameters), and the receive
@@ -140,8 +137,7 @@ public static class WorkflowExecutorEmitter
                     bool isHeader = locationExpression.Kind == AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessageHeader;
                     if ((locationExpression.Kind != AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessagePayload && !isHeader) || locationExpression.JsonPointer is not { } pointer)
                     {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' correlationId '{correlationName}' has location '{rawLocation}'; only $message.payload#/… and $message.header#/… correlation locations are supported.");
+                        throw ThrowHelper.GetUnsupportedCorrelationLocationException(stepId, correlationName, rawLocation);
                     }
 
                     correlationLocation = pointer;
@@ -157,8 +153,7 @@ public static class WorkflowExecutorEmitter
 
             if (binding.Kind is not (StepTargetKind.OperationId or StepTargetKind.OperationPath) || binding.Operation is not { } operation)
             {
-                throw new InvalidOperationException(
-                    $"Step '{stepId}' targets {binding.Kind}; only operation, sub-workflow, and channel steps are supported by the current generator.");
+                throw ThrowHelper.GetUnsupportedStepTargetException(stepId, binding.Kind);
             }
 
             usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
@@ -206,8 +201,7 @@ public static class WorkflowExecutorEmitter
             if (boundStep.Channel is { } boundChannel && seenMessageSources.Add(boundChannel.SourceName))
             {
                 string protocol = binder.ChannelSourceProtocol(boundChannel.SourceName)
-                    ?? throw new InvalidOperationException(
-                        $"Channel source '{boundChannel.SourceName}' declares no servers[].protocol; a channel source document must name its transport protocol (ADR 0051) so the host can bind the broker transport.");
+                    ?? throw ThrowHelper.GetChannelSourceNoProtocolException(boundChannel.SourceName);
                 usedMessageSources.Add(new MessageSourceInfo(boundChannel.SourceName, protocol));
             }
         }
@@ -342,7 +336,7 @@ public static class WorkflowExecutorEmitter
                     if (ResolveComponentReference(components, reference) is not { } resolved
                         || !resolved.TryGetProperty("name"u8, out JsonElement resolvedName) || resolvedName.ValueKind != JsonValueKind.String)
                     {
-                        throw new InvalidOperationException($"Could not resolve reusable parameter reference '{reference}'.");
+                        throw ThrowHelper.GetUnresolvedParameterReferenceException(reference);
                     }
 
                     JsonElement valueSource = element.TryGetProperty("value"u8, out JsonElement overrideValue)
@@ -602,7 +596,7 @@ public static class WorkflowExecutorEmitter
                 string reference = referenceElement.GetString()!;
                 if (ResolveComponentReference(components, reference) is not { } resolved || ReadInlineAction(resolved) is not { } resolvedAction)
                 {
-                    throw new InvalidOperationException($"Could not resolve reusable action reference '{reference}'.");
+                    throw ThrowHelper.GetUnresolvedActionReferenceException(reference);
                 }
 
                 list.Add(resolvedAction);
@@ -778,8 +772,7 @@ public static class WorkflowExecutorEmitter
                 {
                     if (text.Contains(token, StringComparison.Ordinal))
                     {
-                        throw new NotSupportedException(
-                            $"Sub-workflow step '{stepId}' has a criterion referencing '{token}'; a sub-workflow step's criteria may reference only $inputs and $steps.");
+                        ThrowHelper.ThrowSubWorkflowCriterionForbiddenReference(stepId, token);
                     }
                 }
             }
@@ -975,8 +968,7 @@ public static class WorkflowExecutorEmitter
             string implicitNote = implicitEdges.Count > 0
                 ? $" Implicit dependencies from runtime expressions contributed to the cycle: {string.Join("; ", implicitEdges)}."
                 : string.Empty;
-            throw new InvalidOperationException(
-                $"A cycle was detected in the steps' dependency relationships (dependsOn plus implicit $steps references); the steps cannot be ordered.{implicitNote}");
+            ThrowHelper.ThrowStepDependencyCycle(implicitNote);
         }
 
         return ordered;
@@ -1176,8 +1168,7 @@ public static class WorkflowExecutorEmitter
             return sourceNamespace;
         }
 
-        throw new InvalidOperationException(
-            $"A sub-workflow step references source description '{subWorkflowSource}', which is not a generated Arazzo (type: arazzo) source description.");
+        throw ThrowHelper.GetSubWorkflowSourceNotGeneratedException(subWorkflowSource);
     }
 
     internal static void AppendIndented(StringBuilder target, string text, int indent)

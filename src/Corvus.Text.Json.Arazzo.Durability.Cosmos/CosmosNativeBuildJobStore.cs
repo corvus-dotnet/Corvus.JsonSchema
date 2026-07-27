@@ -272,7 +272,7 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc);
             if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
             {
-                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot be completed because it is not building.");
+                ThrowHelper.ThrowNativeBuildJobNotBuildingForCompletion(id);
             }
 
             byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), NewEtag());
@@ -331,7 +331,7 @@ public sealed class CosmosNativeBuildJobStore : INativeBuildJobStore, IAsyncDisp
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(doc);
             if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
             {
-                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+                ThrowHelper.ThrowNativeBuildJobNotBuildingForLeaseRenewal(id);
             }
 
             DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;

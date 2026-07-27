@@ -477,7 +477,7 @@ public readonly partial struct CatalogVersion
     {
         CatalogStatus.Active => "Active"u8,
         CatalogStatus.Obsolete => "Obsolete"u8,
-        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown catalog status."),
+        _ => throw ThrowHelper.GetUnknownCatalogStatusException(status),
     };
 
     /// <summary>Parses a <see cref="CatalogVersion"/> from its persisted JSON document, detached from the parse buffer.</summary>

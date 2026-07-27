@@ -38,7 +38,7 @@ public sealed class EcdsaExecutorPackageSigner : IExecutorPackageSigner
         {
             256 => (ExecutorSignatureAlgorithms.EcdsaP256Sha256, HashAlgorithmName.SHA256),
             384 => (ExecutorSignatureAlgorithms.EcdsaP384Sha384, HashAlgorithmName.SHA384),
-            _ => throw new ArgumentException($"An executor-package ECDSA key must be P-256 or P-384; this one is {privateKey.KeySize}-bit.", nameof(privateKey)),
+            _ => throw ThrowHelper.GetUnsupportedEcdsaKeySizeException(privateKey.KeySize, nameof(privateKey)),
         };
     }
 

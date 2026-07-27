@@ -164,7 +164,7 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         byte[]? raced = conflict ? await this.ReadDocumentAsync(itemId, cancellationToken).ConfigureAwait(false) : null;
         if (raced is null)
         {
-            throw new InvalidOperationException("The runner authorization create conflicted but could not be re-read.");
+            ThrowHelper.ThrowRunnerAuthorizationCreateConflictNotReread();
         }
 
         ParsedJsonDocument<EnvironmentRunnerAuthorization> racedDoc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(raced);

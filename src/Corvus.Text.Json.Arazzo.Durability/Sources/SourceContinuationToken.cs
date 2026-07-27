@@ -119,7 +119,7 @@ public static class SourceContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The source page token is not valid base64url.");
+                ThrowHelper.ThrowSourcePageTokenInvalidBase64();
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -153,7 +153,7 @@ public static class SourceContinuationToken
         {
             if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException($"'{token}' is not a valid source page token.");
+                ThrowHelper.ThrowSourcePageTokenInvalid(token);
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -184,7 +184,7 @@ public static class SourceContinuationToken
         int sep = key.IndexOf(Separator);
         if (sep < 0)
         {
-            throw new FormatException("The source page token is malformed.");
+            ThrowHelper.ThrowSourcePageTokenMalformed();
         }
 
         cursor = (

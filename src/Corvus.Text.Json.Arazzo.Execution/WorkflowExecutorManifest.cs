@@ -39,7 +39,7 @@ public readonly record struct WorkflowExecutorManifest(
         JsonElement root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
         {
-            throw new FormatException("The executor manifest is not a JSON object.");
+            ThrowHelper.ThrowExecutorManifestNotJsonObject();
         }
 
         return new WorkflowExecutorManifest(
@@ -91,12 +91,12 @@ public readonly record struct WorkflowExecutorManifest(
     private static string ReadString(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } s
             ? s
-            : throw new FormatException($"The executor manifest is missing the required string property '{System.Text.Encoding.UTF8.GetString(name)}'.");
+            : throw ThrowHelper.GetExecutorManifestMissingStringPropertyException(System.Text.Encoding.UTF8.GetString(name));
 
     private static int ReadInt(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int i)
             ? i
-            : throw new FormatException($"The executor manifest is missing the required integer property '{System.Text.Encoding.UTF8.GetString(name)}'.");
+            : throw ThrowHelper.GetExecutorManifestMissingIntegerPropertyException(System.Text.Encoding.UTF8.GetString(name));
 }
 
 /// <summary>A source description a version declares in its executor manifest: the binding a runner resolves a transport for.</summary>

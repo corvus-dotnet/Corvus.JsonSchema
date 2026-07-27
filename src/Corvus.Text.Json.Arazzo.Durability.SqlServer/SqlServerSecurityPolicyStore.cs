@@ -85,7 +85,7 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
             }
             catch (SqlException ex) when (ex.Number is 2627 or 2601)
             {
-                throw new InvalidOperationException($"A security rule named '{name}' already exists.");
+                ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
             await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);

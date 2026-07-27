@@ -20,18 +20,18 @@ public sealed class EnvSecretResolver : ISecretResolver
     {
         if (reference.Scheme != SecretScheme.Environment)
         {
-            throw new SecretResolutionException(reference, "this resolver only handles the env:// scheme.");
+            ThrowHelper.ThrowEnvResolverWrongScheme(reference);
         }
 
         if (reference.Version is not null)
         {
-            throw new SecretResolutionException(reference, "environment-variable secrets are unversioned; remove the #version.");
+            ThrowHelper.ThrowEnvSecretsUnversioned(reference);
         }
 
         string? value = Environment.GetEnvironmentVariable(reference.Locator);
         if (value is null)
         {
-            throw new SecretResolutionException(reference, $"environment variable '{reference.Locator}' is not set.");
+            ThrowHelper.ThrowEnvVariableNotSet(reference);
         }
 
         return new ValueTask<SecretMaterial>(SecretMaterial.FromString(value));

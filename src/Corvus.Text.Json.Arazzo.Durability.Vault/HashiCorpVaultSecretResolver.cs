@@ -39,18 +39,18 @@ public sealed class HashiCorpVaultSecretResolver : ISecretResolver
     {
         if (reference.Scheme != SecretScheme.HashiCorpVault)
         {
-            throw new SecretResolutionException(reference, "this resolver only handles the vault:// scheme.");
+            ThrowHelper.ThrowSchemeMismatch(reference);
         }
 
         int slash = reference.Locator.IndexOf('/', StringComparison.Ordinal);
         if (slash <= 0 || slash == reference.Locator.Length - 1)
         {
-            throw new SecretResolutionException(reference, "a vault:// reference must be vault://<mount>/<path>#<field>.");
+            ThrowHelper.ThrowReferenceMalformed(reference);
         }
 
         if (reference.Version is not { Length: > 0 } field)
         {
-            throw new SecretResolutionException(reference, "a vault:// reference must name the field to read as #<field> (a KV secret is a key/value map).");
+            throw ThrowHelper.GetFieldRequiredException(reference);
         }
 
         string mount = reference.Locator[..slash];
@@ -63,12 +63,12 @@ public sealed class HashiCorpVaultSecretResolver : ISecretResolver
         }
         catch (VaultApiException ex)
         {
-            throw new SecretResolutionException(reference, $"Vault returned {ex.HttpStatusCode} reading '{mount}/{path}'.", ex);
+            throw ThrowHelper.GetReadFailedException(reference, mount, path, ex);
         }
 
         if (!secret.Data.Data.TryGetValue(field, out object? value))
         {
-            throw new SecretResolutionException(reference, $"the Vault secret '{mount}/{path}' has no field '{field}'.");
+            ThrowHelper.ThrowFieldMissing(reference, mount, path, field);
         }
 
         return SecretMaterial.FromString(value?.ToString() ?? string.Empty);

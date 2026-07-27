@@ -47,7 +47,7 @@ public readonly record struct NativeArtifactAttestation(
         JsonElement root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
         {
-            throw new FormatException("The native artifact attestation is not a JSON object.");
+            ThrowHelper.ThrowNativeAttestationNotJsonObject();
         }
 
         return new NativeArtifactAttestation(
@@ -81,10 +81,10 @@ public readonly record struct NativeArtifactAttestation(
     private static string ReadString(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } s
             ? s
-            : throw new FormatException($"The native artifact attestation is missing the required string property '{System.Text.Encoding.UTF8.GetString(name)}'.");
+            : throw ThrowHelper.GetNativeAttestationMissingStringPropertyException(System.Text.Encoding.UTF8.GetString(name));
 
     private static int ReadInt(JsonElement root, ReadOnlySpan<byte> name)
         => root.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int i)
             ? i
-            : throw new FormatException($"The native artifact attestation is missing the required integer property '{System.Text.Encoding.UTF8.GetString(name)}'.");
+            : throw ThrowHelper.GetNativeAttestationMissingIntegerPropertyException(System.Text.Encoding.UTF8.GetString(name));
 }

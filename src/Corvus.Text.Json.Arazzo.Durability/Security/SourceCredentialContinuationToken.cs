@@ -130,7 +130,7 @@ public static class SourceCredentialContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The credential page token is not valid base64url.");
+                ThrowHelper.ThrowCredentialTokenInvalidBase64();
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -164,7 +164,7 @@ public static class SourceCredentialContinuationToken
         {
             if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException($"'{token}' is not a valid credential page token.");
+                ThrowHelper.ThrowCredentialTokenInvalid(token);
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -197,14 +197,14 @@ public static class SourceCredentialContinuationToken
         int first = key.IndexOf(Separator);
         if (first < 0)
         {
-            throw new FormatException("The credential page token is malformed.");
+            ThrowHelper.ThrowCredentialTokenMalformed();
         }
 
         ReadOnlySpan<byte> afterFirst = key[(first + 1)..];
         int second = afterFirst.IndexOf(Separator);
         if (second < 0)
         {
-            throw new FormatException("The credential page token is malformed.");
+            ThrowHelper.ThrowCredentialTokenMalformed();
         }
 
         cursor = (

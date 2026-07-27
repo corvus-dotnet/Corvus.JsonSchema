@@ -154,7 +154,7 @@ public sealed class CosmosAvailabilityStore : IAvailabilityStore, IAsyncDisposab
         byte[]? raced = conflict ? await this.ReadDocumentAsync(itemId, cancellationToken).ConfigureAwait(false) : null;
         return raced is not null
             ? (PersistedJson.ToPooledDocument<AvailabilityEntry>(raced), false)
-            : throw new InvalidOperationException("The availability entry create conflicted but could not be re-read.");
+            : throw ThrowHelper.GetAvailabilityCreateConflictNotRereadException();
     }
 
     /// <inheritdoc/>

@@ -125,9 +125,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         if (!new MySqlConnectionStringBuilder(dataSource.ConnectionString).UseAffectedRows)
         {
-            throw new ArgumentException(
-                "The MySqlDataSource must be configured with UseAffectedRows=true for correct optimistic-concurrency and lease semantics.",
-                nameof(dataSource));
+            ThrowHelper.ThrowDataSourceRequiresAffectedRows(nameof(dataSource));
         }
 
         return new ValueTask<MySqlWorkflowStateStore>(

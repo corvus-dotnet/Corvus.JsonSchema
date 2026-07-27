@@ -62,7 +62,7 @@ public static class WorkflowAdministeredContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The administered-workflows page token is not valid base64url.");
+            ThrowHelper.ThrowAdministeredWorkflowsTokenInvalidBase64();
         }
 
         baseWorkflowIdUtf8 = destination[..decoded];

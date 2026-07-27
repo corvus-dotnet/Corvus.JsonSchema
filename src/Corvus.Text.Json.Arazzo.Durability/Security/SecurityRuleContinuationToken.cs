@@ -63,7 +63,7 @@ public static class SecurityRuleContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The security-rule page token is not valid base64url.");
+            ThrowHelper.ThrowSecurityRuleTokenInvalidBase64();
         }
 
         nameUtf8 = destination[..decoded];

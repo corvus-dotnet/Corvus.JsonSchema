@@ -54,7 +54,7 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
             return (workflowId[..suffix], version);
         }
 
-        throw new InvalidOperationException($"The workflow id '{workflowId}' is not a versioned id of the form '{{base}}-v{{n}}'.");
+        throw ThrowHelper.GetWorkflowIdNotVersionedException(workflowId);
     }
 
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
@@ -70,15 +70,15 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         // The version document is owned here only to read its hash (an owned copy, safe after dispose).
         string hash;
         using (ParsedJsonDocument<CatalogVersion> versionDoc = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not in the catalog."))
+            ?? throw ThrowHelper.GetVersionNotInCatalogException(versionNumber, baseWorkflowId))
         {
             hash = (string)versionDoc.RootElement.Hash;
         }
 
         ReadOnlyMemory<byte> assembly = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' is not runnable (no executor in the package).");
+            ?? throw ThrowHelper.GetVersionNotRunnableException(versionNumber, baseWorkflowId);
         ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Version {versionNumber} of '{baseWorkflowId}' has an executor but no manifest.");
+            ?? throw ThrowHelper.GetVersionHasNoManifestException(versionNumber, baseWorkflowId);
 
         // The detached signature is optional here (empty when the package is unsigned); the loader enforces it only when
         // it was configured with a verifier — a signing-required runner rejects an unsigned or badly-signed package.

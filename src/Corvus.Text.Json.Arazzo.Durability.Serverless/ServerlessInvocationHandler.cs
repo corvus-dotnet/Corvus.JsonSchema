@@ -94,13 +94,13 @@ public sealed class ServerlessInvocationHandler
         string? runId = root.TryGetProperty("runId"u8, out JsonElement runIdElement) ? runIdElement.GetString() : null;
         if (string.IsNullOrEmpty(runId))
         {
-            throw new ArgumentException("The invocation is missing the required 'runId'.", nameof(invocationJson));
+            ThrowHelper.ThrowMissingRunId(nameof(invocationJson));
         }
 
         string? checkpointUrl = root.TryGetProperty("checkpointUrl"u8, out JsonElement urlElement) ? urlElement.GetString() : null;
         if (string.IsNullOrEmpty(checkpointUrl) || !Uri.TryCreate(checkpointUrl, UriKind.Absolute, out Uri? parsed))
         {
-            throw new ArgumentException("The invocation is missing a valid absolute 'checkpointUrl'.", nameof(invocationJson));
+            throw ThrowHelper.GetMissingCheckpointUrlException(nameof(invocationJson));
         }
 
         return (new WorkflowRunId(runId), parsed);

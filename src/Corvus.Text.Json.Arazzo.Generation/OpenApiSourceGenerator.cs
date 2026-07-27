@@ -79,7 +79,7 @@ public static class OpenApiSourceGenerator
         ArgumentNullException.ThrowIfNull(documentLoader);
 
         byte[] specBytes = documentLoader(specUri)
-            ?? throw new FileNotFoundException($"The OpenAPI source document '{specUri}' could not be loaded.");
+            ?? throw ThrowHelper.GetOpenApiSourceDocumentNotFoundException(specUri);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;

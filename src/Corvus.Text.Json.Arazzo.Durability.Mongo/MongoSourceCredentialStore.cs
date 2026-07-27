@@ -123,7 +123,7 @@ public sealed class MongoSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceCredentialAlreadyExists(draft.SourceNameValue, draft.EnvironmentValue);
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);

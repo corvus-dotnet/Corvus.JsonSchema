@@ -620,7 +620,7 @@ public readonly partial struct SourceCredentialBinding
     {
         if (!draft.SecretRefs.IsNotUndefined() || draft.SecretRefs.GetArrayLength() == 0)
         {
-            throw new ArgumentException("A source credential binding requires at least one secret reference.", nameof(draft));
+            ThrowHelper.ThrowBindingRequiresSecretReference();
         }
 
         foreach (SecretReference reference in draft.SecretRefs.EnumerateArray())
@@ -628,15 +628,13 @@ public readonly partial struct SourceCredentialBinding
             using UnescapedUtf8JsonString name = reference.Name.GetUtf8String();
             if (name.Span.IsEmpty)
             {
-                throw new ArgumentException("A secret reference requires a non-empty name.", nameof(draft));
+                ThrowHelper.ThrowSecretReferenceRequiresName();
             }
 
             using UnescapedUtf8JsonString referenceValue = reference.Ref.GetUtf8String();
             if (!SecretRef.IsWellFormed(referenceValue.Span))
             {
-                throw new ArgumentException(
-                    $"Secret reference '{(string)reference.Name}' is not a valid SecretRef (scheme://locator[#version]); secret material must never be stored inline.",
-                    nameof(draft));
+                ThrowHelper.ThrowInvalidSecretRefInBinding((string)reference.Name);
             }
         }
 
@@ -647,12 +645,12 @@ public readonly partial struct SourceCredentialBinding
         {
             if (!draft.TryGetSecretRef("certificate", out _))
             {
-                throw new ArgumentException("An mTLS credential binding requires a 'certificate' secret reference.", nameof(draft));
+                ThrowHelper.ThrowMtlsRequiresCertificate();
             }
 
             if (draft.UsageTags.IsNotUndefined() && draft.UsageTags.GetArrayLength() > 0)
             {
-                throw new ArgumentException("An mTLS credential is connection-level and cannot be usage-scoped; it must not carry usage tags.", nameof(draft));
+                ThrowHelper.ThrowMtlsCannotBeUsageScoped();
             }
         }
     }
@@ -663,12 +661,12 @@ public readonly partial struct SourceCredentialBinding
     {
         if (!draft.SourceName.IsNotUndefined())
         {
-            throw new ArgumentException("A source credential binding requires a 'sourceName'.", nameof(draft));
+            ThrowHelper.ThrowBindingRequiresSourceName();
         }
 
         if (!draft.Environment.IsNotUndefined())
         {
-            throw new ArgumentException("A source credential binding requires an 'environment'.", nameof(draft));
+            ThrowHelper.ThrowBindingRequiresEnvironment();
         }
     }
 

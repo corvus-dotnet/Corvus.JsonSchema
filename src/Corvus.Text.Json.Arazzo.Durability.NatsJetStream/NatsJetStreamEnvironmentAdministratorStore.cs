@@ -130,7 +130,7 @@ public sealed class NatsJetStreamEnvironmentAdministratorStore : IEnvironmentAdm
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("An environment administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowEnvironmentAdministratorRequired(nameof(administrators));
         }
 
         string key = Key(environmentName);

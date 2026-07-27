@@ -120,7 +120,7 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
         ArgumentNullException.ThrowIfNull(actor);
         if (administrators.Count == 0)
         {
-            throw new ArgumentException("A workflow administration record requires at least one administrator identity.", nameof(administrators));
+            ThrowHelper.ThrowWorkflowAdministratorRequired(nameof(administrators));
         }
 
         byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);

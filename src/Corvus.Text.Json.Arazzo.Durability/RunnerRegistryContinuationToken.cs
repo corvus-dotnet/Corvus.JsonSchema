@@ -63,7 +63,7 @@ public static class RunnerRegistryContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The runner page token is not valid base64url.");
+            ThrowHelper.ThrowRunnerTokenInvalidBase64();
         }
 
         runnerIdUtf8 = destination[..decoded];

@@ -99,7 +99,7 @@ public interface ISecuredWorkflowManagement
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The disposable checkpoint state, or <see langword="null"/> when absent or outside reach.</returns>
     ValueTask<WorkflowCheckpointState?> LoadStateAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
-        => throw new NotSupportedException("This management client does not support loading run state.");
+        => throw ThrowHelper.GetLoadRunStateNotSupportedException();
 
     /// <summary>Resumes a faulted run, re-executing it from its last checkpoint per the chosen <see cref="ResumeMode"/>.</summary>
     /// <param name="id">The run id.</param>

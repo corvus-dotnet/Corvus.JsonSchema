@@ -69,5 +69,5 @@ public interface IEnvironmentAdministratorStore
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
     /// <exception cref="NotSupportedException">The store does not maintain the reverse administration index.</exception>
     ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
-        => throw new NotSupportedException("This administrator store does not maintain the reverse administration index (design §7.8).");
+        => throw ThrowHelper.GetEnvironmentReverseIndexNotMaintainedException();
 }

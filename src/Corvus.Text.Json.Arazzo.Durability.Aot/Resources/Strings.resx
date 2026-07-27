@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+
+  <data name="NoExecutorAssembly" xml:space="preserve">
+    <value>The package carries no compiled executor assembly to build.</value>
+  </data>
+  <data name="NoExecutorManifest" xml:space="preserve">
+    <value>The package carries no executor manifest.</value>
+  </data>
+  <data name="NoNativeBinary" xml:space="preserve">
+    <value>The package carries no native binary for '{0}'.</value>
+  </data>
+  <data name="UnsignedNativeBinary" xml:space="preserve">
+    <value>The native binary for '{0}' is unsigned; refusing to deploy an unattested binary.</value>
+  </data>
+  <data name="MalformedNativeAttestation" xml:space="preserve">
+    <value>The native artifact attestation is malformed: {0}</value>
+  </data>
+  <data name="AttestationRuntimeMismatch" xml:space="preserve">
+    <value>The native artifact attestation targets '{0}', not the requested '{1}'.</value>
+  </data>
+  <data name="NativeDigestMismatch" xml:space="preserve">
+    <value>The native binary digest '{0}' does not match the attestation's '{1}'.</value>
+  </data>
+  <data name="AttestationPackageHashMismatch" xml:space="preserve">
+    <value>The native artifact attestation's package hash '{0}' does not match the version's content hash '{1}'.</value>
+  </data>
+  <data name="MalformedNativeSignature" xml:space="preserve">
+    <value>The native artifact signature is malformed: {0}</value>
+  </data>
+  <data name="NativeSignatureUntrusted" xml:space="preserve">
+    <value>The native artifact signature did not verify against a trusted key; refusing to deploy.</value>
+  </data>
+  <data name="MalformedExecutorManifest" xml:space="preserve">
+    <value>The executor manifest is malformed: {0}</value>
+  </data>
+  <data name="UnsignedExecutorPackage" xml:space="preserve">
+    <value>The executor package is unsigned; the AOT builder refuses to build from an unsigned executor.</value>
+  </data>
+  <data name="MalformedExecutorSignature" xml:space="preserve">
+    <value>The executor signature is malformed: {0}</value>
+  </data>
+  <data name="ExecutorSignatureUntrusted" xml:space="preserve">
+    <value>The executor signature did not verify against a trusted key; refusing to build.</value>
+  </data>
+  <data name="ExecutorAssemblyDigestMismatch" xml:space="preserve">
+    <value>The executor assembly digest '{0}' does not match the manifest's '{1}'.</value>
+  </data>
+</root>

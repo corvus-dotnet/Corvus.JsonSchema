@@ -119,7 +119,7 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);

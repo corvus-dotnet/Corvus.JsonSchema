@@ -53,7 +53,7 @@ public static class AvailabilityRequestContinuationToken
         {
             if (!Utf8Formatter.TryFormat(utcTicks, raw, out int pos))
             {
-                throw new FormatException("The availability-request instant could not be formatted into the page token.");
+                ThrowHelper.ThrowAvailabilityRequestInstantNotFormatted();
             }
 
             raw[pos++] = Separator;
@@ -97,14 +97,14 @@ public static class AvailabilityRequestContinuationToken
 
         if (Base64Url.DecodeFromUtf8(tokenUtf8, destination, out _, out int decoded) != OperationStatus.Done)
         {
-            throw new FormatException("The availability-request page token is not valid base64url.");
+            ThrowHelper.ThrowAvailabilityRequestTokenInvalidBase64();
         }
 
         ReadOnlySpan<byte> key = destination[..decoded];
         int sep = key.IndexOf(Separator);
         if (sep < 0 || !Utf8Parser.TryParse(key[..sep], out utcTicks, out int consumed) || consumed != sep)
         {
-            throw new FormatException("The availability-request page token is malformed.");
+            ThrowHelper.ThrowAvailabilityRequestTokenMalformed();
         }
 
         idUtf8 = key[(sep + 1)..];

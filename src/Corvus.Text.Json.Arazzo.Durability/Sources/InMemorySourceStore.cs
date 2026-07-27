@@ -42,7 +42,7 @@ public sealed class InMemorySourceStore : ISourceStore
             (string, string) key = (draft.NameValue, SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue));
             if (this.sources.ContainsKey(key))
             {
-                throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+                ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
             }
 
             byte[] json = SourceSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());

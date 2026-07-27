@@ -80,7 +80,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new EntraIdDirectoryException($"Graph returned {(int)response.StatusCode} ({response.StatusCode}) searching {resource.Path}.");
+            ThrowHelper.ThrowSearchFailed(response.StatusCode, resource.Path);
         }
 
         // Allocation ledger (per search). The response byte[] is the one driver-forced GC alloc (HttpContent gives no
@@ -369,7 +369,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new EntraIdDirectoryException($"Graph returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+            ThrowHelper.ThrowGroupMembershipsFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
@@ -541,7 +541,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         var reader = new Utf8JsonReader(body);
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
-            throw new EntraIdDirectoryException("the token response was not a JSON object.");
+            ThrowHelper.ThrowTokenResponseNotJsonObject();
         }
 
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
@@ -568,7 +568,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new EntraIdDirectoryException("the token response did not contain an access_token.");
+            ThrowHelper.ThrowTokenResponseMissingAccessToken();
         }
 
         return (accessToken, lifetime);
@@ -607,7 +607,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     {
         if (this.options.Authentication is not EntraIdClientCredentials clientCredentials)
         {
-            throw new InvalidOperationException($"Unsupported Entra ID authentication '{this.options.Authentication.GetType().Name}'.");
+            throw ThrowHelper.GetUnsupportedAuthenticationException(this.options.Authentication.GetType().Name);
         }
 
         var form = new List<KeyValuePair<string, string>>(4)
@@ -628,7 +628,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new EntraIdDirectoryException($"the identity platform token endpoint returned {(int)response.StatusCode} ({response.StatusCode}).");
+            ThrowHelper.ThrowTokenEndpointFailed(response.StatusCode);
         }
 
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);

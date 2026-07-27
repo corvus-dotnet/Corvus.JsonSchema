@@ -92,9 +92,7 @@ public sealed class SourceCredentialApiTransport : IApiTransport
             if (applied is not null)
             {
                 await response.DisposeAsync().ConfigureAwait(false);
-                throw new SourceCredentialExpiredException(
-                    this.sourceName,
-                    $"The source '{this.sourceName}' rejected its credential (HTTP {response.StatusCode}); rotate it in the secret store and resume the run.");
+                ThrowHelper.ThrowSourceCredentialRejected(this.sourceName, response.StatusCode);
             }
         }
 

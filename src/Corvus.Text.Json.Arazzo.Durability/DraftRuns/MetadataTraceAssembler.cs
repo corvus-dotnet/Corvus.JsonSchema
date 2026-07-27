@@ -79,7 +79,7 @@ public static class MetadataTraceAssembler
     {
         ArgumentNullException.ThrowIfNull(store);
         WorkflowCheckpoint checkpoint = await store.LoadAsync(id, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"No run '{id.Value}' exists to assemble a metadata trace for.");
+            ?? throw ThrowHelper.GetNoRunToAssembleTraceException(id.Value);
         WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries, capturedSteps);
     }
 

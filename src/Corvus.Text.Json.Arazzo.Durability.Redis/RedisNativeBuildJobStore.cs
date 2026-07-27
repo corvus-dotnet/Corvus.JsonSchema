@@ -217,7 +217,7 @@ public sealed class RedisNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
         using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(lease.Memory);
         if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
         {
-            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot be completed because it is not building.");
+            ThrowHelper.ThrowNativeBuildJobNotBuildingForCompletion(id);
         }
 
         WorkflowEtag etag = NewEtag();
@@ -256,7 +256,7 @@ public sealed class RedisNativeBuildJobStore : INativeBuildJobStore, IAsyncDispo
         using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(lease.Memory);
         if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
         {
-            throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+            ThrowHelper.ThrowNativeBuildJobNotBuildingForLeaseRenewal(id);
         }
 
         DateTimeOffset leaseExpiresAt = this.timeProvider.GetUtcNow() + leaseTtl;

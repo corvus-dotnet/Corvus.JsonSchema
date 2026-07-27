@@ -44,7 +44,7 @@ public sealed class GitHubBroker
         options.Validate();
         if (!providers.TryGetProvider(ProviderName, out _))
         {
-            throw new ArgumentException($"The provider broker carries no '{ProviderName}' entry; register GitHubBrokerOptions.ToProviderEntry() with it.", nameof(providers));
+            ServerThrowHelper.ThrowNoGitHubProviderEntry(ProviderName);
         }
 
         this.client = client;
@@ -100,7 +100,7 @@ public sealed class GitHubBroker
         // discovery), so begin cannot fail here.
         return outcome == ProviderBroker.BeginOutcome.Success
             ? (authorizeUrl!, state!)
-            : throw new InvalidOperationException($"Beginning the GitHub sign-in reported {outcome}.");
+            : throw ServerThrowHelper.GetGitHubSignInBeginFailedException(outcome);
     }
 
     /// <summary>
@@ -527,7 +527,7 @@ public sealed class GitHubBrokerOptions
     {
         if (string.IsNullOrEmpty(this.BaseUrl) || string.IsNullOrEmpty(this.ApiBaseUrl) || string.IsNullOrEmpty(this.ClientId) || string.IsNullOrEmpty(this.ClientSecretRef) || string.IsNullOrEmpty(this.CallbackUrl))
         {
-            throw new ArgumentException("A GitHub broker requires BaseUrl, ApiBaseUrl, ClientId, ClientSecretRef, and CallbackUrl.");
+            ServerThrowHelper.ThrowGitHubBrokerMissingFields();
         }
     }
 

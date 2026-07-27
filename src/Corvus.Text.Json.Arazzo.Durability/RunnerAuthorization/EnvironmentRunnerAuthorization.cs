@@ -187,7 +187,7 @@ public readonly partial struct EnvironmentRunnerAuthorization
     {
         if (!draft.Environment.IsNotUndefined() || !draft.RunnerId.IsNotUndefined())
         {
-            throw new ArgumentException("An environment-runner authorization requires an 'environment' and 'runnerId'.", nameof(draft));
+            ThrowHelper.ThrowRunnerAuthorizationRequiresContent();
         }
     }
 

@@ -43,12 +43,12 @@ public sealed class FileSecretResolver : ISecretResolver
     {
         if (reference.Scheme != SecretScheme.File)
         {
-            throw new SecretResolutionException(reference, "this resolver only handles the file:// scheme.");
+            ThrowHelper.ThrowFileResolverWrongScheme(reference);
         }
 
         if (reference.Version is not null)
         {
-            throw new SecretResolutionException(reference, "file secrets are unversioned; remove the #version.");
+            ThrowHelper.ThrowFileSecretsUnversioned(reference);
         }
 
         string path = this.ConfinePath(reference);
@@ -60,7 +60,7 @@ public sealed class FileSecretResolver : ISecretResolver
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            throw new SecretResolutionException(reference, $"could not read secret file '{reference.Locator}'.", ex);
+            throw ThrowHelper.GetCouldNotReadSecretFileException(reference, ex);
         }
     }
 
@@ -80,7 +80,7 @@ public sealed class FileSecretResolver : ISecretResolver
         string rootWithSeparator = this.secretRoot.EndsWith(Path.DirectorySeparatorChar) ? this.secretRoot : this.secretRoot + Path.DirectorySeparatorChar;
         if (!combined.StartsWith(rootWithSeparator, StringComparison.Ordinal) && !string.Equals(combined, this.secretRoot, StringComparison.Ordinal))
         {
-            throw new SecretResolutionException(reference, $"the locator escapes the configured secret root '{this.secretRoot}'; file references may not use absolute paths or '..' traversal.");
+            ThrowHelper.ThrowSecretLocatorEscapesRoot(reference, this.secretRoot);
         }
 
         return combined;

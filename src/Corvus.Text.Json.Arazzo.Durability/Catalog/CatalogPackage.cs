@@ -61,7 +61,7 @@ public static partial class CatalogPackage
             return workflowId;
         }
 
-        throw new ArgumentException("The package's Arazzo workflow has no workflowId.", nameof(packageZip));
+        throw ThrowHelper.GetPackageWorkflowHasNoWorkflowIdException();
     }
 
     /// <summary>Reads the distinct source-description names the package's Arazzo workflow declares (its
@@ -239,8 +239,7 @@ public static partial class CatalogPackage
         string updatedHash = HashCanonical(updatedPackage);
         if (!string.Equals(expectedContentHash, updatedHash, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                $"The updated package's content hash '{updatedHash}' differs from the version's content hash '{expectedContentHash}'; a package update may change only metadata, not content.");
+            ThrowHelper.ThrowUpdatedPackageContentHashDiffers(updatedHash, expectedContentHash);
         }
     }
 

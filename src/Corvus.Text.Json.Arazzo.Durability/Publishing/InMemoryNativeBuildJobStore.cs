@@ -134,7 +134,7 @@ public sealed class InMemoryNativeBuildJobStore : INativeBuildJobStore
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(existing.AsMemory());
             if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
             {
-                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot be completed because it is not building.");
+                ThrowHelper.ThrowNativeBuildJobNotBuildingForCompletion(id);
             }
 
             byte[] json = NativeBuildJobSerialization.SerializeCompletion(current.RootElement, id, expectedEtag, completion, this.timeProvider.GetUtcNow(), this.NextEtag());
@@ -160,7 +160,7 @@ public sealed class InMemoryNativeBuildJobStore : INativeBuildJobStore
             using ParsedJsonDocument<NativeBuildJob> current = ParsedJsonDocument<NativeBuildJob>.Parse(existing.AsMemory());
             if (!current.RootElement.HasStatus(NativeBuildJobStatus.Building))
             {
-                throw new NativeBuildJobStateException(id, $"The native build job '{id}' cannot have its lease renewed because it is not building.");
+                ThrowHelper.ThrowNativeBuildJobNotBuildingForRenewal(id);
             }
 
             byte[] json = NativeBuildJobSerialization.SerializeRenewal(current.RootElement, id, expectedEtag, this.timeProvider.GetUtcNow() + leaseTtl, this.NextEtag());

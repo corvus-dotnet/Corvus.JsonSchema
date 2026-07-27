@@ -238,7 +238,7 @@ public sealed class SimpleConditionEvaluator
             this.SkipWhitespace();
             if (this.position != this.span.Length)
             {
-                throw new FormatException($"Unexpected trailing content in condition at position {this.position}.");
+                ThrowHelper.ThrowUnexpectedTrailingContent(this.position);
             }
         }
 
@@ -288,7 +288,7 @@ public sealed class SimpleConditionEvaluator
                 Node grouped = this.ParseOr();
                 if (!this.TryConsume(")"))
                 {
-                    throw new FormatException("Expected ')' in condition.");
+                    ThrowHelper.ThrowExpectedClosingParen();
                 }
 
                 return grouped;
@@ -309,7 +309,7 @@ public sealed class SimpleConditionEvaluator
             ReadOnlySpan<char> token = this.ReadOperandToken();
             if (token.IsEmpty)
             {
-                throw new FormatException($"Expected an operand in condition at position {this.position}.");
+                ThrowHelper.ThrowExpectedOperand(this.position);
             }
 
             if (token[0] == '$')
@@ -321,7 +321,7 @@ public sealed class SimpleConditionEvaluator
             Comparand literal = Comparand.ParseLiteral(token);
             if (literal.Kind == ComparandKind.Undefined)
             {
-                throw new FormatException($"Unrecognized literal '{token.ToString()}' in condition.");
+                ThrowHelper.ThrowUnrecognizedLiteral(token.ToString());
             }
 
             return Operand.FromLiteral(literal);

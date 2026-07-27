@@ -219,7 +219,7 @@ public static class WorkflowPackage
                 int nameLength = "sources/"u8.Length + Encoding.UTF8.GetByteCount(key) + ".json"u8.Length;
                 if (nameLength > ushort.MaxValue)
                 {
-                    throw new ArgumentException($"Package entry name 'sources/{key}.json' is too long.", nameof(sources));
+                    ThrowHelper.ThrowPackageSourceEntryNameTooLong(key);
                 }
 
                 total = checked(total + EntryHeaderSize + nameLength + sortedSources[i].Value.Length);
@@ -417,7 +417,7 @@ public static class WorkflowPackage
     {
         if (nativeBinary.IsEmpty)
         {
-            throw new ArgumentException("The native binary is empty.", nameof(nativeBinary));
+            ThrowHelper.ThrowNativeBinaryEmpty();
         }
 
         // Clear all three of the target's entries, then append the binary alone. Dropping the attestation keeps an
@@ -443,17 +443,17 @@ public static class WorkflowPackage
     {
         if (nativeBinary.IsEmpty)
         {
-            throw new ArgumentException("The native binary is empty.", nameof(nativeBinary));
+            ThrowHelper.ThrowNativeBinaryEmpty();
         }
 
         if (attestationManifest.IsEmpty)
         {
-            throw new ArgumentException("The attestation manifest is empty.", nameof(attestationManifest));
+            ThrowHelper.ThrowAttestationManifestEmpty();
         }
 
         if (attestationSignature.IsEmpty)
         {
-            throw new ArgumentException("The attestation signature is empty.", nameof(attestationSignature));
+            ThrowHelper.ThrowAttestationSignatureEmpty();
         }
 
         return RepackReplacing(
@@ -536,7 +536,7 @@ public static class WorkflowPackage
 
         if (workflow is null)
         {
-            throw new ArgumentException("The package has no 'workflow.json' document.", nameof(package));
+            ThrowHelper.ThrowPackageHasNoWorkflowJson();
         }
 
         sources.Sort(BySourceKey);
@@ -598,7 +598,7 @@ public static class WorkflowPackage
 
         if (!hasWorkflow)
         {
-            throw new ArgumentException("The package has no 'workflow.json' document.", nameof(package));
+            ThrowHelper.ThrowPackageHasNoWorkflowJson();
         }
 
         sources.Sort(SourceKeyComparer.Instance);
@@ -739,13 +739,13 @@ public static class WorkflowPackage
         ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
         if (runtimeIdentifier.Contains('/'))
         {
-            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' must not contain '/'.", nameof(runtimeIdentifier));
+            ThrowHelper.ThrowRuntimeIdentifierContainsSlash(runtimeIdentifier);
         }
 
         int ridByteCount = Encoding.UTF8.GetByteCount(runtimeIdentifier);
         if (NativeArtifactPrefixUtf8.Length + ridByteCount > destination.Length)
         {
-            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' is too long.", nameof(runtimeIdentifier));
+            ThrowHelper.ThrowRuntimeIdentifierTooLong(runtimeIdentifier);
         }
 
         NativeArtifactPrefixUtf8.CopyTo(destination);
@@ -774,7 +774,7 @@ public static class WorkflowPackage
         ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
         if (runtimeIdentifier.Contains('/'))
         {
-            throw new ArgumentException($"The runtime identifier '{runtimeIdentifier}' must not contain '/'.", nameof(runtimeIdentifier));
+            ThrowHelper.ThrowRuntimeIdentifierContainsSlash(runtimeIdentifier);
         }
 
         int ridByteCount = Encoding.UTF8.GetByteCount(runtimeIdentifier);
@@ -909,7 +909,7 @@ public static class WorkflowPackage
         {
             if (span.Length < HeaderSize || !span[..MagicSize].SequenceEqual(Magic))
             {
-                throw new ArgumentException("The bytes are not a valid workflow package (bad magic).", nameof(span));
+                ThrowHelper.ThrowInvalidWorkflowPackageBadMagic();
             }
 
             this.span = span;
@@ -938,7 +938,7 @@ public static class WorkflowPackage
             byte encoding = this.span[this.pos++];
             if (encoding != StoredEncoding)
             {
-                throw new InvalidDataException($"Unsupported workflow-package entry encoding {encoding}.");
+                ThrowHelper.ThrowUnsupportedPackageEntryEncoding(encoding);
             }
 
             dataLength = (int)BinaryPrimitives.ReadUInt32LittleEndian(this.span.Slice(this.pos, 4));
@@ -957,7 +957,7 @@ public static class WorkflowPackage
         {
             if (count < 0 || this.pos + count > this.span.Length)
             {
-                throw new InvalidDataException("The workflow package is truncated or malformed.");
+                ThrowHelper.ThrowWorkflowPackageTruncated();
             }
         }
     }

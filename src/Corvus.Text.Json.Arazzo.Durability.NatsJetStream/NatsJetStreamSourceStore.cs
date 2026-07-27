@@ -120,7 +120,7 @@ public sealed class NatsJetStreamSourceStore : ISourceStore, IAsyncDisposable
         }
         catch (NatsKVException)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);

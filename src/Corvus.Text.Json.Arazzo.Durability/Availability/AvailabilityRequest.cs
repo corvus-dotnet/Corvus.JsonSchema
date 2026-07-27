@@ -206,7 +206,7 @@ public readonly partial struct AvailabilityRequest
     {
         if (!draft.BaseWorkflowId.IsNotUndefined() || !draft.VersionNumber.IsNotUndefined() || !draft.Environment.IsNotUndefined())
         {
-            throw new ArgumentException("An availability request requires a 'baseWorkflowId', 'versionNumber', and 'environment'.", nameof(draft));
+            ThrowHelper.ThrowAvailabilityRequestRequiresContent();
         }
     }
 

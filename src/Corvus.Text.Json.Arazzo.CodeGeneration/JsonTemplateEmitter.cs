@@ -85,8 +85,7 @@ internal static class JsonTemplateEmitter
         if (!InterpolationInliner.TryEmit(
                 template, sources.BodyLocal, inputsVariable, stepOutputLocals, inputAccessors, $"{baseName}I", out InterpolationInlineCode code))
         {
-            throw new NotSupportedException(
-                $"Step '{context}' has an interpolated value fragment '{template}' that references a value other than $message, $inputs, or $steps.");
+            ThrowHelper.ThrowInterpolatedValueUnresolvable(context, template);
         }
 
         statements.Append(code.Statements);
@@ -216,8 +215,7 @@ internal static class JsonTemplateEmitter
                             return elementLocal;
                         }
 
-                        throw new NotSupportedException(
-                            $"Step '{context}' has a value '{value}' that cannot be resolved; it may reference only $message, $inputs, and $steps.");
+                        throw ThrowHelper.GetUnresolvableStepValueException(context, value);
                     }
                 }
 

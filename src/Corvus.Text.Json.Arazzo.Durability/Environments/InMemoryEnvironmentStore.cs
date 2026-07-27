@@ -42,7 +42,7 @@ public sealed class InMemoryEnvironmentStore : IEnvironmentStore
             (string, string) key = (draft.NameValue, SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue));
             if (this.environments.ContainsKey(key))
             {
-                throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+                ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
             }
 
             byte[] json = EnvironmentSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), this.NextEtag());

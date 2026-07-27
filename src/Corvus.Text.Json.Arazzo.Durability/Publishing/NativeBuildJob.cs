@@ -289,7 +289,7 @@ public readonly partial struct NativeBuildJob
     {
         if (!draft.BaseWorkflowId.IsNotUndefined() || !draft.VersionNumber.IsNotUndefined() || !draft.Environment.IsNotUndefined() || !draft.RuntimeIdentifier.IsNotUndefined())
         {
-            throw new ArgumentException("A native build job requires a 'baseWorkflowId', 'versionNumber', 'environment', and 'runtimeIdentifier'.", nameof(draft));
+            ThrowHelper.ThrowNativeBuildJobRequiresContent();
         }
     }
 

@@ -86,8 +86,7 @@ public static class SourceCredentialTransports
             {
                 if (!sourceClients.TryGetValue(source, out HttpClient? client))
                 {
-                    throw new WorkflowTransportBindingException(
-                        $"Workflow '{descriptor.WorkflowId}' requires API source '{source}', which has no configured transport binding.");
+                    ThrowHelper.ThrowApiSourceHasNoTransportBinding(descriptor.WorkflowId, source);
                 }
 
                 apiTransports[source] = CreateApiTransportFactory(client, source, environment, cache, runTags).CreateTransport();
@@ -100,8 +99,7 @@ public static class SourceCredentialTransports
 
             if (channelTransports is null)
             {
-                throw new WorkflowTransportBindingException(
-                    $"Workflow '{descriptor.WorkflowId}' requires a message transport, but this host configures no channel-transport cache.");
+                ThrowHelper.ThrowNoChannelTransportCache(descriptor.WorkflowId);
             }
 
             IReadOnlyDictionary<string, IMessageTransport> messageTransports = messageMaps.GetOrAdd(

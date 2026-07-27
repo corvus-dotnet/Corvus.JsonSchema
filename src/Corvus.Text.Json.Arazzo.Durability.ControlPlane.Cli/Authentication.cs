@@ -82,7 +82,7 @@ internal static class OAuthFlows
         LoginResult result = await client.LoginAsync(new LoginRequest(), cancellationToken).ConfigureAwait(false);
         if (result.IsError)
         {
-            throw new InvalidOperationException($"Sign-in failed: {result.Error}");
+            CliThrowHelper.ThrowSignInFailed(result.Error);
         }
 
         return new TokenSet(
@@ -100,7 +100,7 @@ internal static class OAuthFlows
         DiscoveryDocumentResponse discovery = await DiscoverAsync(http, config.Authority, cancellationToken).ConfigureAwait(false);
         if (discovery.IsError)
         {
-            throw new InvalidOperationException($"OIDC discovery failed: {discovery.Error}");
+            CliThrowHelper.ThrowOidcDiscoveryFailed(discovery.Error);
         }
 
         // PKCE on the device flow (RFC 8628 §3.1 + RFC 9700): the client the deployment provisions enforces
@@ -120,7 +120,7 @@ internal static class OAuthFlows
             authorizationRequest, cancellationToken).ConfigureAwait(false);
         if (authorization.IsError)
         {
-            throw new InvalidOperationException($"Device authorization failed: {authorization.Error}");
+            CliThrowHelper.ThrowDeviceAuthorizationFailed(authorization.Error);
         }
 
         Console.Error.WriteLine("To sign in, visit:");
@@ -160,7 +160,7 @@ internal static class OAuthFlows
                     interval += 5;
                     break;
                 default:
-                    throw new InvalidOperationException($"Device sign-in failed: {token.Error}");
+                    throw CliThrowHelper.GetDeviceSignInFailedException(token.Error);
             }
         }
     }
@@ -191,7 +191,7 @@ internal static class OAuthFlows
 
     private static TokenSet ToTokenSet(TokenResponse token, OAuthConfig config, string? refreshToken)
         => new(
-            token.AccessToken ?? throw new InvalidOperationException("The token response contained no access token."),
+            token.AccessToken ?? throw CliThrowHelper.GetNoAccessTokenException(),
             refreshToken,
             DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn),
             config.Authority,

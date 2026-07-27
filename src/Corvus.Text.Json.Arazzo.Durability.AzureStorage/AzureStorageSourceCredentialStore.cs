@@ -112,7 +112,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
-            throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceCredentialAlreadyExists(draft.SourceNameValue, draft.EnvironmentValue);
         }
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);

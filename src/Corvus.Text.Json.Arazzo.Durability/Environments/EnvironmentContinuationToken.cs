@@ -119,7 +119,7 @@ public static class EnvironmentContinuationToken
         {
             if (Base64Url.DecodeFromUtf8(tokenUtf8, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException("The environment page token is not valid base64url.");
+                ThrowHelper.ThrowEnvironmentTokenInvalidBase64();
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -153,7 +153,7 @@ public static class EnvironmentContinuationToken
         {
             if (Base64Url.DecodeFromChars(token, buffer, out _, out int decoded) != OperationStatus.Done)
             {
-                throw new FormatException($"'{token}' is not a valid environment page token.");
+                ThrowHelper.ThrowEnvironmentTokenInvalid(token);
             }
 
             return TryReadCursor(buffer[..decoded], out cursor);
@@ -184,7 +184,7 @@ public static class EnvironmentContinuationToken
         int sep = key.IndexOf(Separator);
         if (sep < 0)
         {
-            throw new FormatException("The environment page token is malformed.");
+            ThrowHelper.ThrowEnvironmentTokenMalformed();
         }
 
         cursor = (

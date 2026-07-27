@@ -42,10 +42,7 @@ internal static class RowSecurityPushdown
     {
         if (security is not null && store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
         {
-            throw new NotSupportedException(
-                $"The store '{store.GetType().Name}' does not yet implement row-security (reach) filtering in its query (§14.2/§14.4); " +
-                "a reach filter would otherwise be silently ignored, leaking rows across the authorization boundary. " +
-                "Use a store that implements ISupportsRowSecurityFilter, or run without row security.");
+            ThrowHelper.ThrowStoreDoesNotImplementRowSecurity(store.GetType().Name);
         }
     }
 }

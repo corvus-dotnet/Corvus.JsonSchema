@@ -239,7 +239,7 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     {
         if (!request.HasStatus(AccessRequestStatus.Pending))
         {
-            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}, not {AccessRequestStatusNames.ToWire(AccessRequestStatus.Pending)}.");
+            ServerThrowHelper.ThrowRequestStatusMismatch(request.IdValue, request.StatusValue, AccessRequestStatusNames.ToWire(AccessRequestStatus.Pending));
         }
     }
 }

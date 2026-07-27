@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+
+  <data name="ApiSourceHasNoTransportBinding" xml:space="preserve">
+    <value>Workflow '{0}' requires API source '{1}', which has no configured transport binding.</value>
+  </data>
+  <data name="NoChannelTransportCache" xml:space="preserve">
+    <value>Workflow '{0}' requires a message transport, but this host configures no channel-transport cache.</value>
+  </data>
+  <data name="ChannelSourceHasNoBinding" xml:space="preserve">
+    <value>Channel source '{0}' has no credential binding in '{1}' (ADR 0051); bind the environment's broker URL ('serverUrl' config) and broker credential.</value>
+  </data>
+  <data name="ChannelCredentialMissingServerUrl" xml:space="preserve">
+    <value>The channel credential for source '{0}' in '{1}' carries no 'serverUrl' config entry (ADR 0051); the binding must name the environment's broker endpoint.</value>
+  </data>
+  <data name="NoTransportFactoryForProtocol" xml:space="preserve">
+    <value>Channel source '{0}' declares protocol '{1}', but this host registers no transport factory for it (ADR 0051).</value>
+  </data>
+  <data name="ChannelTransportBuildFailed" xml:space="preserve">
+    <value>The channel credential for source '{0}' in '{1}' could not build a '{2}' transport: {3}</value>
+  </data>
+  <data name="SourceCredentialRejected" xml:space="preserve">
+    <value>The source '{0}' rejected its credential (HTTP {1}); rotate it in the secret store and resume the run.</value>
+  </data>
+  <data name="UnsupportedSourceCredentialKind" xml:space="preserve">
+    <value>Unsupported source credential kind '{0}'.</value>
+  </data>
+  <data name="UnreadableClientCertificate" xml:space="preserve">
+    <value>Binding '{0}' (mtls) has an unreadable client certificate: {1}</value>
+  </data>
+  <data name="OAuth2NoTokenClient" xml:space="preserve">
+    <value>Binding '{0}' uses OAuth2 client credentials but no token-endpoint HttpClient was supplied to the factory.</value>
+  </data>
+  <data name="OAuth2NonHttpsTokenUrl" xml:space="preserve">
+    <value>Binding '{0}' has a non-https OAuth2 tokenUrl ('{1}://…'); the client secret would be sent in cleartext. Use an https token endpoint, or construct the factory with allowInsecureOAuthTokenEndpoint: true for local development.</value>
+  </data>
+  <data name="MissingSecretReference" xml:space="preserve">
+    <value>Binding '{0}' ({1}) is missing the required '{2}' secret reference.</value>
+  </data>
+  <data name="UnknownApiKeyLocation" xml:space="preserve">
+    <value>Binding '{0}' has an unknown api-key location '{1}'.</value>
+  </data>
+  <data name="MissingConfigValue" xml:space="preserve">
+    <value>Binding '{0}' ({1}) is missing the required '{2}' configuration value.</value>
+  </data>
+  <data name="OAuth2TokenEndpointFailed" xml:space="preserve">
+    <value>the token endpoint returned {0} ({1}).</value>
+  </data>
+  <data name="OAuth2TokenResponseNotJsonObject" xml:space="preserve">
+    <value>the token response was not a JSON object.</value>
+  </data>
+  <data name="OAuth2TokenResponseMissingAccessToken" xml:space="preserve">
+    <value>the token response did not contain an access_token.</value>
+  </data>
+</root>

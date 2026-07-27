@@ -120,7 +120,7 @@ public sealed class MongoEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<Environment>(json);

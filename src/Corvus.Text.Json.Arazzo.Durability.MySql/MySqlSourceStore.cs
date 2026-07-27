@@ -113,7 +113,7 @@ public sealed class MySqlSourceStore : ISourceStore, IAsyncDisposable
         }
         catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
         {
-            throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowSourceAlreadyExists(draft.NameValue);
         }
 
         // Mirror the management tags into the queryable side table (keyed by TagsHash, the orderable row discriminator)

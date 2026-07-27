@@ -66,7 +66,7 @@ public sealed class SourceCredentialProviderFactory
             // source's HttpClient handler, §13.1) — there is nothing to apply per request, so the built provider is a
             // no-op. The certificate itself is resolved by ResolveClientCertificateAsync at client-construction time.
             SourceCredentialKind.Mtls => MtlsClientCertificateAuthenticationProvider.Instance,
-            _ => throw new InvalidOperationException($"Unsupported source credential kind '{binding.AuthKindValue}'."),
+            _ => throw ThrowHelper.GetUnsupportedSourceCredentialKindException(binding.AuthKindValue),
         };
     }
 
@@ -111,7 +111,7 @@ public sealed class SourceCredentialProviderFactory
         }
         catch (Exception ex) when (ex is FormatException or System.Security.Cryptography.CryptographicException)
         {
-            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' (mtls) has an unreadable client certificate: {ex.Message}", ex);
+            throw ThrowHelper.GetUnreadableClientCertificateException(binding.SourceNameValue, ex);
         }
         finally
         {
@@ -144,7 +144,7 @@ public sealed class SourceCredentialProviderFactory
     {
         if (this.oauthTokenClient is null)
         {
-            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' uses OAuth2 client credentials but no token-endpoint HttpClient was supplied to the factory.");
+            ThrowHelper.ThrowOAuth2NoTokenClient(binding.SourceNameValue);
         }
 
         string tokenUrl = RequireConfig(binding, "tokenUrl");
@@ -154,7 +154,7 @@ public sealed class SourceCredentialProviderFactory
         // explicitly opted into an insecure endpoint for local development.
         if (!this.allowInsecureOAuthTokenEndpoint && !string.Equals(tokenEndpoint.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' has a non-https OAuth2 tokenUrl ('{tokenEndpoint.Scheme}://…'); the client secret would be sent in cleartext. Use an https token endpoint, or construct the factory with allowInsecureOAuthTokenEndpoint: true for local development.");
+            ThrowHelper.ThrowOAuth2NonHttpsTokenUrl(binding.SourceNameValue, tokenEndpoint.Scheme);
         }
 
         string clientId = RequireConfig(binding, "clientId");
@@ -180,7 +180,7 @@ public sealed class SourceCredentialProviderFactory
     {
         if (!binding.TryGetSecretRef(role, out SecretRef secretRef))
         {
-            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' ({binding.AuthKindValue}) is missing the required '{role}' secret reference.");
+            ThrowHelper.ThrowMissingSecretReference(binding.SourceNameValue, binding.AuthKindValue, role);
         }
 
         return await this.resolver.ResolveAsync(secretRef, cancellationToken).ConfigureAwait(false);
@@ -194,7 +194,7 @@ public sealed class SourceCredentialProviderFactory
             if (string.Equals(location, "header", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Header; }
             if (string.Equals(location, "query", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Query; }
             if (string.Equals(location, "cookie", StringComparison.OrdinalIgnoreCase)) { return ApiKeyLocation.Cookie; }
-            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' has an unknown api-key location '{location}'.");
+            ThrowHelper.ThrowUnknownApiKeyLocation(binding.SourceNameValue, location);
         }
 
         return ApiKeyLocation.Header;
@@ -206,5 +206,5 @@ public sealed class SourceCredentialProviderFactory
     private static string RequireConfig(SourceCredentialBinding binding, string key)
         => binding.TryGetConfigValue(key, out string? value) && !string.IsNullOrEmpty(value)
             ? value!
-            : throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' ({binding.AuthKindValue}) is missing the required '{key}' configuration value.");
+            : throw ThrowHelper.GetMissingConfigValueException(binding.SourceNameValue, binding.AuthKindValue, key);
 }

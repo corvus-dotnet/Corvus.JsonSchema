@@ -121,7 +121,7 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         }
         catch (NatsKVException)
         {
-            throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
+            ThrowHelper.ThrowEnvironmentAlreadyExists(draft.NameValue);
         }
 
         return PersistedJson.ToPooledDocument<Environment>(json);
