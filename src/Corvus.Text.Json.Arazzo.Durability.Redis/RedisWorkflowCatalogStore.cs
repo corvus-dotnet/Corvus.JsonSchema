@@ -558,6 +558,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             createdBy: metadata.CreatedBy,
             createdAt: now,
             runnable: projection.HasExecutor,
+            executorBuildError: projection.ExecutorBuildError,
             securityTags: metadata.SecurityTags);
 
         // Store the CatalogVersion JSON document verbatim in the "doc" field and the package alongside; the

@@ -272,7 +272,7 @@ var draftRunner = new InProcessDraftRunner(
     runnerEnvironment: "development",
     draftRunStore,
     draftRunTraceStore,
-    new WorkflowExecutorProvider(),
+    new WorkflowExecutorProvider(progress: msg => Console.Error.WriteLine($"[draft-executor-build] {msg}")),
     DemoData.CreateLiveBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is

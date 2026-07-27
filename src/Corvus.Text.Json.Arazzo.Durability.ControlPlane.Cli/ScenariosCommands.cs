@@ -195,7 +195,7 @@ internal sealed class ScenariosRunCommand : AsyncCommand<ScenariosRunSettings>
         var runs = new List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>();
         try
         {
-            using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+            using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true, progress: msg => Console.Error.WriteLine($"[executor-build] {msg}")));
             foreach (string file in files)
             {
                 byte[] scenarioBytes = await File.ReadAllBytesAsync(file, cancellationToken);

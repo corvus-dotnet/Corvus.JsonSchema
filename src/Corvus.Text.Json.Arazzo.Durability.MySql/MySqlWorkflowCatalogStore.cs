@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, SecurityTags";
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, ExecutorBuildError, SecurityTags";
 
     // Field separators for the denormalized SecurityTags column (control chars, never present in tag text).
     private const char SecurityTagPairSeparator = (char)0x1F;
@@ -450,7 +450,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         insert.CommandText =
             $"""
             INSERT INTO CatalogVersions ({ColumnList}, Package)
-            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @securityTags, @package);
+            VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @executorBuildError, @securityTags, @package);
             """;
         insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
         insert.Parameters.AddWithValue("@versionNumber", versionNumber);
@@ -472,6 +472,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         insert.Parameters.AddWithValue("@obsoletedBy", DBNull.Value);
         insert.Parameters.AddWithValue("@obsoletedAt", DBNull.Value);
         insert.Parameters.AddWithValue("@runnable", projection.HasExecutor ? 1 : 0);
+        insert.Parameters.AddWithValue("@executorBuildError", (object?)projection.ExecutorBuildError ?? DBNull.Value);
         insert.Parameters.AddWithValue("@securityTags", (object?)securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator) ?? DBNull.Value);
         insert.Parameters.AddWithValue("@package", projection.CanonicalPackage);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -506,6 +507,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             createdBy: metadata.CreatedBy,
             createdAt: now,
             runnable: projection.HasExecutor,
+            executorBuildError: projection.ExecutorBuildError,
             securityTags: securityTags);
     }
 
@@ -553,7 +555,8 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
             obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
             runnable: reader.GetBoolean(19),
-            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(20) ? null : reader.GetString(20), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
+            executorBuildError: reader.IsDBNull(20) ? null : reader.GetString(20),
+            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(21) ? null : reader.GetString(21), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -660,6 +663,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ObsoletedBy VARCHAR(255) NULL,
             ObsoletedAt BIGINT NULL,
             Runnable TINYINT(1) NOT NULL DEFAULT 0,
+            ExecutorBuildError TEXT NULL,
             SecurityTags TEXT NULL,
             Package LONGBLOB NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber),

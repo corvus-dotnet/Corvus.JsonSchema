@@ -582,6 +582,11 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             entity["Description"] = description;
         }
 
+        if (version.ExecutorBuildError.IsNotUndefined())
+        {
+            entity["ExecutorBuildError"] = (string)version.ExecutorBuildError;
+        }
+
         WriteGovernance(
             entity,
             version.StatusValue,
@@ -639,6 +644,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             obsoletedBy: entity.GetString("ObsoletedBy"),
             obsoletedAt: entity.GetInt64("ObsoletedAt") is { } oa ? DateTimeOffset.FromUnixTimeMilliseconds(oa) : null,
             runnable: entity.GetBoolean("Runnable") ?? false,
+            executorBuildError: entity.GetString("ExecutorBuildError"),
             securityTags: DecodeSecurityTags(entity.GetString("SecurityTags")));
 
     // Security tags round-trip as a JSON property so a single-row read carries them for the control-plane's
@@ -680,6 +686,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
                 runnable: projection.HasExecutor,
+                executorBuildError: projection.ExecutorBuildError,
                 securityTags: securityTags);
 
             // Write the package blob first; it is keyed by (base, version) and is overwritten harmlessly on a

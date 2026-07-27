@@ -261,7 +261,7 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
         runnerEnvironment,
         draftRunStore,
         draftRunTraceStore,
-        new WorkflowExecutorProvider(),
+        new WorkflowExecutorProvider(progress: msg => Console.Error.WriteLine($"[draft-executor-build] {msg}")),
         binder,
         hostTimerWaits: false);
     builder.Services.AddSingleton(draftRunner);

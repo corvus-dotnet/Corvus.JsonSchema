@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ColumnList =
-        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, SecurityTags";
+        "BaseWorkflowId, VersionNumber, WorkflowId, Title, Description, Status, Tags, OwnerName, OwnerEmail, OwnerTeam, OwnerUrl, Sources, Hash, CreatedBy, CreatedAt, LastUpdatedBy, LastUpdatedAt, ObsoletedBy, ObsoletedAt, Runnable, ExecutorBuildError, SecurityTags";
 
     // Field separators for the denormalized SecurityTags column (control chars, never present in tag text).
     private const char SecurityTagPairSeparator = (char)0x1F;
@@ -455,7 +455,8 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             obsoletedBy: reader.IsDBNull(17) ? null : reader.GetString(17),
             obsoletedAt: reader.IsDBNull(18) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(18)),
             runnable: reader.GetBoolean(19),
-            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(20) ? null : reader.GetString(20), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
+            executorBuildError: reader.IsDBNull(20) ? null : reader.GetString(20),
+            securityTags: SecurityTagSet.FromSecurityDelimited(reader.IsDBNull(21) ? null : reader.GetString(21), SecurityTagPairSeparator, SecurityTagKeyValueSeparator));
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
@@ -581,7 +582,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             insert.CommandText =
                 $"""
                 INSERT INTO CatalogVersions ({ColumnList}, Package)
-                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @securityTags, @package);
+                VALUES (@baseWorkflowId, @versionNumber, @workflowId, @title, @description, @status, @tags, @ownerName, @ownerEmail, @ownerTeam, @ownerUrl, @sources, @hash, @createdBy, @createdAt, @lastUpdatedBy, @lastUpdatedAt, @obsoletedBy, @obsoletedAt, @runnable, @executorBuildError, @securityTags, @package);
                 """;
             insert.Parameters.AddWithValue("baseWorkflowId", baseWorkflowId);
             insert.Parameters.AddWithValue("versionNumber", versionNumber);
@@ -603,6 +604,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             insert.Parameters.Add(NullableText("obsoletedBy", null));
             insert.Parameters.Add(NullableBigint("obsoletedAt", null));
             insert.Parameters.AddWithValue("runnable", projection.HasExecutor);
+            insert.Parameters.Add(NullableText("executorBuildError", projection.ExecutorBuildError));
             insert.Parameters.Add(NullableText("securityTags", securityTags.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
             insert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("package", projection.CanonicalPackage));
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -641,6 +643,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             createdBy: metadata.CreatedBy,
             createdAt: now,
             runnable: projection.HasExecutor,
+            executorBuildError: projection.ExecutorBuildError,
             securityTags: securityTags);
     }
 
@@ -681,6 +684,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             ObsoletedBy TEXT NULL,
             ObsoletedAt BIGINT NULL,
             Runnable BOOLEAN NOT NULL DEFAULT FALSE,
+            ExecutorBuildError TEXT NULL,
             SecurityTags TEXT NULL,
             Package BYTEA NOT NULL,
             PRIMARY KEY (BaseWorkflowId, VersionNumber)

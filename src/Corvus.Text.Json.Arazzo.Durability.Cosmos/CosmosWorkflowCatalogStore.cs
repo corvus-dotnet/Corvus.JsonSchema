@@ -665,6 +665,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
                 runnable: projection.HasExecutor,
+                executorBuildError: projection.ExecutorBuildError,
                 securityTags: securityTags);
 
             try

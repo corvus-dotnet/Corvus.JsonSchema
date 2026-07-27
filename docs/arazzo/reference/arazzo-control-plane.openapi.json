@@ -6047,6 +6047,7 @@
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
           "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },
+          "executorBuildError": { "type": "string", "description": "Why the workflow executor could not be built at catalog-add time, present only when 'runnable' is false because the executor failed to build (a malformed workflow, an unsupported cross-document source, or a compilation error). The version is still catalogued; this surfaces the cause rather than a bare not-runnable." },
           "hash": { "type": "string", "description": "The SHA-256 of the canonical package, hex-encoded." },
           "evidence": { "$ref": "#/components/schemas/PublishEvidenceSummary", "description": "The publish-evidence summary (§4.6), projected from the package's metadata/evidence.json. Present only on the single-version detail and only for versions published with scenario evidence; index pages omit it. The full per-scenario record is served by the evidence endpoint." },
           "createdBy": { "type": "string" },

@@ -542,6 +542,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
                 runnable: projection.HasExecutor,
+                executorBuildError: projection.ExecutorBuildError,
                 securityTags: securityTags);
 
             byte[] value = Envelope.Encode(header, projection.CanonicalPackage.Span);

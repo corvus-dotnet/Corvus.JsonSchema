@@ -707,6 +707,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             obsoletedBy: document["obsoletedBy"].IsBsonNull ? null : document["obsoletedBy"].AsString,
             obsoletedAt: document["obsoletedAt"].IsBsonNull ? null : DateTimeOffset.FromUnixTimeMilliseconds(document["obsoletedAt"].AsInt64),
             runnable: document.GetValue("runnable", false).AsBoolean,
+            executorBuildError: document.GetValue("executorBuildError", BsonNull.Value).IsBsonNull ? null : document["executorBuildError"].AsString,
             securityTags: ReadSecurityTags(document));
 
     private static TagSet ReadTags(BsonDocument document)
@@ -774,6 +775,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 securityTags: securityTags,
                 hash: projection.Hash,
                 runnable: projection.HasExecutor,
+                executorBuildError: projection.ExecutorBuildError,
                 createdBy: metadata.CreatedBy,
                 createdAt: now,
                 package: packageBytes);
@@ -794,6 +796,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                     createdBy: metadata.CreatedBy,
                     createdAt: now,
                     runnable: projection.HasExecutor,
+                    executorBuildError: projection.ExecutorBuildError,
                     securityTags: securityTags);
             }
             catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
@@ -842,6 +845,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         SecurityTagSet securityTags,
         string hash,
         bool runnable,
+        string? executorBuildError,
         string createdBy,
         DateTimeOffset createdAt,
         byte[] package)
@@ -872,6 +876,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ["sources"] = sourcesBson,
             ["hash"] = hash,
             ["runnable"] = runnable,
+            ["executorBuildError"] = (BsonValue?)executorBuildError ?? BsonNull.Value,
             ["package"] = new BsonBinaryData(package),
             ["createdBy"] = createdBy,
             ["createdAt"] = createdAt.ToUnixTimeMilliseconds(),

@@ -212,6 +212,41 @@ public class WorkflowExecutorProviderTests
     }
 
     [TestMethod]
+    public void Reports_the_reason_when_the_executor_cannot_be_built()
+    {
+        const string crossDoc = """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "x", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "other", "url": "./other.arazzo.json", "type": "arazzo" } ],
+              "workflows": [ { "workflowId": "x-v1", "steps": [] } ]
+            }
+            """;
+
+        WorkflowExecutorArtifact? artifact = new WorkflowExecutorProvider().BuildExecutor(
+            Encoding.UTF8.GetBytes(crossDoc),
+            [],
+            "hash",
+            out string? buildError);
+
+        artifact.ShouldBeNull();
+        buildError.ShouldNotBeNull().ShouldContain("cross-document");
+    }
+
+    [TestMethod]
+    public void Reports_no_reason_when_the_executor_builds()
+    {
+        WorkflowExecutorArtifact? artifact = new WorkflowExecutorProvider().BuildExecutor(
+            Encoding.UTF8.GetBytes(WorkflowJson),
+            [KeyValuePair.Create("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))],
+            "hash",
+            out string? buildError);
+
+        artifact.ShouldNotBeNull();
+        buildError.ShouldBeNull();
+    }
+
+    [TestMethod]
     public void Returns_null_when_the_workflow_has_no_workflow_id()
     {
         const string noId = """

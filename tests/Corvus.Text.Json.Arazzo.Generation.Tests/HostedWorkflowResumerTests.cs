@@ -95,6 +95,29 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
+    public async Task A_version_whose_executor_cannot_be_built_is_catalogued_not_runnable_with_the_reason()
+    {
+        // A cross-document (arazzo) source cannot be compiled into a self-contained executor, so the package is still
+        // catalogued but flagged not-runnable with the reason recorded on the version (surfaced through the API).
+        byte[] crossDoc = Encoding.UTF8.GetBytes(
+            """
+            {
+              "arazzo": "1.0.1",
+              "info": { "title": "x", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "other", "url": "./other.arazzo.json", "type": "arazzo" } ],
+              "workflows": [ { "workflowId": "x-v1", "steps": [] } ]
+            }
+            """);
+
+        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("x", WorkflowPackage.Pack(crossDoc, []), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
+
+        ((bool)version.Runnable).ShouldBeFalse();
+        ((string)version.ExecutorBuildError).ShouldContain("cross-document");
+    }
+
+    [TestMethod]
     public async Task PrepareAsync_warms_the_loader_cache_without_running_the_run()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
