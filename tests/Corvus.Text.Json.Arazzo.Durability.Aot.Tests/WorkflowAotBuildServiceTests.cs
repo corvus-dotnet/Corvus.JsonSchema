@@ -203,6 +203,80 @@ public sealed class WorkflowAotBuildServiceTests
         Should.Throw<ArgumentNullException>(() => new WorkflowAotBuildService(Verifier(), NullSigner(), Ok(), null!));
     }
 
+    [TestMethod]
+    public async Task Deploy_verifies_the_binary_then_hands_it_to_the_deployer()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+        var built = new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), new CapturingAotBuilder(AotBuildResult.Success(Native, "ok")), Options());
+        WorkflowAotBuildOutcome build = await built.BuildAndAttachAsync(package, "linux-x64", CancellationToken.None);
+
+        var deployer = new CapturingDeployer(ServerlessDeployResult.Success("https://fn.example/invoke", "deployed"));
+        var service = new WorkflowDeployService(TrustStore(("release-2026", key)), deployer);
+
+        WorkflowDeployOutcome outcome = await service.DeployAsync(build.Package, "flow", 1, "production", "linux-x64", CancellationToken.None);
+
+        outcome.Succeeded.ShouldBeTrue(outcome.Log);
+        outcome.FunctionUrl.ShouldBe("https://fn.example/invoke");
+
+        // The verified native binary was handed to the deployer for the requested target.
+        deployer.Received.ShouldNotBeNull();
+        deployer.Received!.Value.BaseWorkflowId.ShouldBe("flow");
+        deployer.Received!.Value.Environment.ShouldBe("production");
+        deployer.Received!.Value.RuntimeIdentifier.ShouldBe("linux-x64");
+        deployer.Received!.Value.NativeBinary.ToArray().ShouldBe(Native);
+    }
+
+    [TestMethod]
+    public async Task Deploy_returns_a_failure_when_the_deployer_fails()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+        var built = new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), new CapturingAotBuilder(AotBuildResult.Success(Native, "ok")), Options());
+        WorkflowAotBuildOutcome build = await built.BuildAndAttachAsync(package, "linux-x64", CancellationToken.None);
+
+        var service = new WorkflowDeployService(TrustStore(("release-2026", key)), new CapturingDeployer(ServerlessDeployResult.Failure("throttled")));
+        WorkflowDeployOutcome outcome = await service.DeployAsync(build.Package, "flow", 1, "production", "linux-x64", CancellationToken.None);
+
+        outcome.Succeeded.ShouldBeFalse();
+        outcome.FunctionUrl.ShouldBeEmpty();
+        outcome.Log.ShouldBe("throttled");
+    }
+
+    [TestMethod]
+    public async Task Deploy_refuses_a_swapped_binary_before_it_reaches_the_deployer()
+    {
+        // A binary swapped in storage or transit is caught by the runner's verify before it enters the user's account
+        // (ADR 0059), so the deployer is never called.
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+        byte[] swapped = [0x7F, (byte)'E', (byte)'L', (byte)'F', 9, 9, 9];
+        var attestation = new NativeArtifactAttestation(
+            NativeArtifactAttestation.CurrentFormatVersion, CatalogPackage.HashCanonical(package), "linux-x64", "5.0.0", NativeArtifactAttestation.ComputeDigest(Native));
+        byte[] manifest = attestation.ToUtf8();
+        ExecutorPackageSignature signature = await Signer(key).SignAsync(manifest, CancellationToken.None);
+        byte[] tampered = WorkflowPackage.AttachSignedNativeArtifact(package, "linux-x64", swapped, manifest, signature.ToUtf8());
+
+        var deployer = new CapturingDeployer(ServerlessDeployResult.Success("https://never", "never"));
+        var service = new WorkflowDeployService(TrustStore(("release-2026", key)), deployer);
+
+        await Should.ThrowAsync<WorkflowAotBuildException>(
+            async () => await service.DeployAsync(tampered, "flow", 1, "production", "linux-x64", CancellationToken.None));
+        deployer.Received.ShouldBeNull();
+    }
+
+    // A deployer that records the request it received and returns a configured result.
+    private sealed class CapturingDeployer(ServerlessDeployResult result) : IServerlessDeployer
+    {
+        public ServerlessDeployRequest? Received { get; private set; }
+
+        public ValueTask<ServerlessDeployResult> DeployAsync(ServerlessDeployRequest request, CancellationToken cancellationToken)
+        {
+            this.Received = request;
+            return ValueTask.FromResult(result);
+        }
+    }
+
     private static AotHostAppOptions Options()
         => new() { RuntimePackageVersion = "5.0.0", FeedSources = [("local", "/tmp/feed")] };
 
