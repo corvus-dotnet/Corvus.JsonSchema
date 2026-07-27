@@ -135,6 +135,22 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task Registering_a_runner_persists_its_advertised_isolation_model()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The runner advertises an Isolated execution backend (ADR 0058) in its self-description; the server stamp must
+        // copy isolationModel through bytes-to-bytes, so the start gate can later match it against an environment.
+        const string body = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", body, "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        RunnerRegistration record = (await host.Registry.ListAsync(default)).Single();
+        record.IsolationModelValue.ShouldBe(RunIsolationModel.Isolated);
+    }
+
+    [TestMethod]
     public async Task Re_registering_with_the_same_principal_keeps_the_authorization()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();

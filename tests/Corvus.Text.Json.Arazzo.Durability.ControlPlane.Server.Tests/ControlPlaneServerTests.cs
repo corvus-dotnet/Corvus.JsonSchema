@@ -1077,6 +1077,64 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_matches_the_environment_required_isolation()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        // An environment that requires Isolated execution (ADR 0058), persisted through the store's write path so the
+        // requiredIsolation carries all the way to the start gate (proving Environment.WriteNew threads it).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>.Parse(
+                """{"name":"isolated-env","requiredIsolation":"Isolated"}"""u8.ToArray()))
+        {
+            (await environmentStore.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
+
+        // Only an in-process runner hosts the version (absent isolationModel), so the environment's Isolated requirement
+        // cannot be satisfied and the start gate refuses the run with an isolation-aware 409.
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-inproc"), default);
+        HttpResponseMessage rejected = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=isolated-env",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        rejected.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(rejected))
+        {
+            problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("Isolated");
+        }
+
+        // An isolated runner hosting the version satisfies the requirement → the run is accepted and pinned.
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", isolationModel: "Isolated"), default);
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=isolated-env",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            doc.RootElement.GetProperty("runId").GetString().ShouldNotBeNullOrEmpty();
+        }
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task ListRunners_returns_the_registered_runners()
     {
         var clock = new MutableClock(T0);
@@ -1144,7 +1202,7 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
-    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production", bool servesSchedules = false)
+    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production", bool servesSchedules = false, string? isolationModel = null)
     {
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
         using (var w = new Stj.Utf8JsonWriter(buffer))
@@ -1169,6 +1227,11 @@ public sealed class ControlPlaneServerTests
             if (servesSchedules)
             {
                 w.WriteBoolean("servesSchedules", true);
+            }
+
+            if (isolationModel is not null)
+            {
+                w.WriteString("isolationModel", isolationModel);
             }
 
             w.WriteEndObject();

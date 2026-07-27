@@ -644,6 +644,13 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                     WriteCopied(writer, "servesSchedules"u8, (JsonElement)c.Body.ServesSchedules);
                 }
 
+                // The runner's advertised execution-backend isolation (ADR 0058), copied bytes-to-bytes; absent means
+                // the in-process default. The start gate matches it against the pinned environment's requiredIsolation.
+                if (c.Body.IsolationModel.IsNotUndefined())
+                {
+                    WriteCopied(writer, "isolationModel"u8, (JsonElement)c.Body.IsolationModel);
+                }
+
                 writer.WriteEndObject();
             }));
     }

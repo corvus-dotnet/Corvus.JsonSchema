@@ -68,6 +68,10 @@ public readonly partial struct Environment
     /// <param name="managementTags">The resolved management tags (empty for an update).</param>
     /// <param name="requireEvidence">The require-evidence flag value (or undefined — absent on create means the
     /// default-off behaviour; absent on update leaves the stored flag unchanged).</param>
+    /// <param name="allowsDraftRuns">The draft-run permission flag value (or undefined — same absent semantics as
+    /// <paramref name="requireEvidence"/>).</param>
+    /// <param name="requiredIsolation">The required run isolation value (ADR 0058) (or undefined — absent on create
+    /// means the in-process default; absent on update leaves the stored requirement unchanged).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
     public static ParsedJsonDocument<Environment> Draft(
@@ -76,9 +80,10 @@ public readonly partial struct Environment
         in JsonElement description,
         in SecurityTagSet managementTags,
         in JsonElement requireEvidence = default,
-        in JsonElement allowsDraftRuns = default)
+        in JsonElement allowsDraftRuns = default,
+        in JsonElement requiredIsolation = default)
     {
-        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns);
+        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -89,6 +94,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, s.RequireEvidence);
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -153,6 +159,7 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
         WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, (JsonElement)draft.RequireEvidence);
         WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, (JsonElement)draft.AllowsDraftRuns);
+        WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -186,6 +193,10 @@ public readonly partial struct Environment
 
         // Draft-run permission (workflow-designer design §18): same replace-or-carry semantics as requireEvidence.
         WriteValuePreferringDraft(writer, JsonPropertyNames.AllowsDraftRunsUtf8, (JsonElement)draft.AllowsDraftRuns, (JsonElement)this.AllowsDraftRuns);
+
+        // Required run isolation (ADR 0058): an update that includes it replaces the stored requirement; an update that
+        // omits it leaves the environment's requirement unchanged (same replace-or-carry semantics as allowsDraftRuns).
+        WriteValuePreferringDraft(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation, (JsonElement)this.RequiredIsolation);
 
         // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
         // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
@@ -247,7 +258,8 @@ public readonly partial struct Environment
         JsonElement description,
         SecurityTagSet managementTags,
         JsonElement requireEvidence,
-        JsonElement allowsDraftRuns)
+        JsonElement allowsDraftRuns,
+        JsonElement requiredIsolation)
     {
         public JsonElement Name { get; } = name;
 
@@ -260,5 +272,7 @@ public readonly partial struct Environment
         public JsonElement RequireEvidence { get; } = requireEvidence;
 
         public JsonElement AllowsDraftRuns { get; } = allowsDraftRuns;
+
+        public JsonElement RequiredIsolation { get; } = requiredIsolation;
     }
 }

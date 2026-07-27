@@ -109,6 +109,39 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_required_isolation_round_trips_and_survives_updates_that_omit_it()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // An environment that requires an isolated execution backend (ADR 0058).
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"secure","requiredIsolation":"Isolated"}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("requiredIsolation").GetString().ShouldBe("Isolated");
+        }
+
+        // An update that omits it leaves the requirement unchanged (replace-or-carry, like allowsDraftRuns).
+        HttpResponseMessage updated = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/secure", """{"displayName":"Secure env"}""", Write);
+        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(updated))
+        {
+            doc.RootElement.GetProperty("requiredIsolation").GetString().ShouldBe("Isolated");
+        }
+
+        // An update that includes it replaces the requirement — an administrator can relax it back to in-process.
+        HttpResponseMessage relaxed = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/secure", """{"requiredIsolation":"InProcess"}""", Write);
+        relaxed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(relaxed))
+        {
+            doc.RootElement.GetProperty("requiredIsolation").GetString().ShouldBe("InProcess");
+        }
+    }
+
+    [TestMethod]
     public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
