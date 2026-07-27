@@ -42,6 +42,12 @@ public readonly partial struct Environment
         => ((JsonElement)this.RequiredIsolation).ValueKind == JsonValueKind.String && this.RequiredIsolation.ValueEquals("Isolated"u8)
             ? RunIsolationModel.Isolated : RunIsolationModel.InProcess;
 
+    /// <summary>Gets the runtime identifier (RID) the serverless native binary targets for this environment (ADR 0055),
+    /// defaulting to <c>linux-x64</c> when absent. Meaningful only when <see cref="RequiredIsolationValue"/> is
+    /// <see cref="RunIsolationModel.Isolated"/>; the deploy-on-publish build and the dispatch-ready gate key on it.</summary>
+    public string RuntimeIdentifierValue
+        => ((JsonElement)this.RuntimeIdentifier).ValueKind == JsonValueKind.String ? (string)this.RuntimeIdentifier : "linux-x64";
+
     /// <summary>Gets the security tags (KVP labels) scoping who may <strong>manage and see</strong> this environment
     /// (§14.2) as a deferred holder over the persisted bytes — empty on an unscoped environment. Drives the management
     /// reach check.</summary>
@@ -72,6 +78,8 @@ public readonly partial struct Environment
     /// <paramref name="requireEvidence"/>).</param>
     /// <param name="requiredIsolation">The required run isolation value (ADR 0058) (or undefined — absent on create
     /// means the in-process default; absent on update leaves the stored requirement unchanged).</param>
+    /// <param name="runtimeIdentifier">The serverless build-target RID value (ADR 0055) (or undefined — absent on
+    /// create means the <c>linux-x64</c> default; absent on update leaves the stored target unchanged).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
     public static ParsedJsonDocument<Environment> Draft(
@@ -81,9 +89,10 @@ public readonly partial struct Environment
         in SecurityTagSet managementTags,
         in JsonElement requireEvidence = default,
         in JsonElement allowsDraftRuns = default,
-        in JsonElement requiredIsolation = default)
+        in JsonElement requiredIsolation = default,
+        in JsonElement runtimeIdentifier = default)
     {
-        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation);
+        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -95,6 +104,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, s.RequireEvidence);
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
+                WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, s.RuntimeIdentifier);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -160,6 +170,7 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, (JsonElement)draft.RequireEvidence);
         WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, (JsonElement)draft.AllowsDraftRuns);
         WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation);
+        WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -197,6 +208,10 @@ public readonly partial struct Environment
         // Required run isolation (ADR 0058): an update that includes it replaces the stored requirement; an update that
         // omits it leaves the environment's requirement unchanged (same replace-or-carry semantics as allowsDraftRuns).
         WriteValuePreferringDraft(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation, (JsonElement)this.RequiredIsolation);
+
+        // Serverless build-target RID (ADR 0055): same replace-or-carry semantics — an update that omits it leaves the
+        // environment's target unchanged.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier, (JsonElement)this.RuntimeIdentifier);
 
         // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
         // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
@@ -259,7 +274,8 @@ public readonly partial struct Environment
         SecurityTagSet managementTags,
         JsonElement requireEvidence,
         JsonElement allowsDraftRuns,
-        JsonElement requiredIsolation)
+        JsonElement requiredIsolation,
+        JsonElement runtimeIdentifier)
     {
         public JsonElement Name { get; } = name;
 
@@ -274,5 +290,7 @@ public readonly partial struct Environment
         public JsonElement AllowsDraftRuns { get; } = allowsDraftRuns;
 
         public JsonElement RequiredIsolation { get; } = requiredIsolation;
+
+        public JsonElement RuntimeIdentifier { get; } = runtimeIdentifier;
     }
 }

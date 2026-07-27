@@ -142,6 +142,39 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_runtime_identifier_round_trips_and_survives_updates_that_omit_it()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // An Isolated environment targeting a specific serverless RID (ADR 0055).
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"edge","requiredIsolation":"Isolated","runtimeIdentifier":"linux-arm64"}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("runtimeIdentifier").GetString().ShouldBe("linux-arm64");
+        }
+
+        // An update that omits it leaves the target unchanged (replace-or-carry).
+        HttpResponseMessage updated = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/edge", """{"displayName":"Edge env"}""", Write);
+        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(updated))
+        {
+            doc.RootElement.GetProperty("runtimeIdentifier").GetString().ShouldBe("linux-arm64");
+        }
+
+        // An update that includes it replaces the target.
+        HttpResponseMessage retargeted = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/edge", """{"runtimeIdentifier":"linux-x64"}""", Write);
+        retargeted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(retargeted))
+        {
+            doc.RootElement.GetProperty("runtimeIdentifier").GetString().ShouldBe("linux-x64");
+        }
+    }
+
+    [TestMethod]
     public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

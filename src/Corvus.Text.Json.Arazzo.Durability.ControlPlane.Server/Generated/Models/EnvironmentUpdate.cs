@@ -285,6 +285,27 @@ public readonly partial struct EnvironmentUpdate
     }
 
     /// <summary>
+    /// Gets the (optional) <c>runtimeIdentifier</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. &#39;linux-x64&#39; (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RuntimeIdentifier
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RuntimeIdentifierUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -758,6 +779,11 @@ public readonly partial struct EnvironmentUpdate
         public const string RequireEvidence = "requireEvidence";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RuntimeIdentifier"/>.
+        /// </summary>
+        public const string RuntimeIdentifier = "runtimeIdentifier";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AllowsDraftRunsUtf8 => "allowsDraftRuns"u8;
@@ -786,6 +812,11 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the JSON property name for <see cref="RequireEvidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RequireEvidenceUtf8 => "requireEvidence"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RuntimeIdentifier"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RuntimeIdentifierUtf8 => "runtimeIdentifier"u8;
     }
 
     /// <summary>
@@ -822,6 +853,11 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the escaped UTF-8 JSON property name for <see cref="RequireEvidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RequireEvidence => "requireEvidence"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RuntimeIdentifier"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RuntimeIdentifier => "runtimeIdentifier"u8;
     }
 
     /// <summary>
@@ -859,5 +895,10 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the pre-baked property name blob for <see cref="RequireEvidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RequireEvidence => [0x15, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x45, 0x76, 0x69, 0x64, 0x65, 0x6E, 0x63, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RuntimeIdentifier"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RuntimeIdentifier => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x74, 0x69, 0x6D, 0x65, 0x49, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x22];
     }
 }

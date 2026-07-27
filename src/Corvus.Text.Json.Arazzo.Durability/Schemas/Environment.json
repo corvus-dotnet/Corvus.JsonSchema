@@ -30,6 +30,10 @@
       "enum": ["InProcess", "Isolated"],
       "description": "The minimum run isolation this environment requires (ADR 0058). 'Isolated' admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; 'InProcess' (the default when absent) also allows the in-process collectible-ALC backend. A governed policy an environment administrator sets. Mutable."
     },
+    "runtimeIdentifier": {
+      "type": "string",
+      "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires 'Isolated' execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an 'InProcess' environment. Mutable."
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",

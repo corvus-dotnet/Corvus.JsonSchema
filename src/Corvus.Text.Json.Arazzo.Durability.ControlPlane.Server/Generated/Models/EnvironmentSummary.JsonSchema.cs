@@ -70,6 +70,7 @@ public readonly partial struct EnvironmentSummary
         private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RequiredIsolationSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requiredIsolation"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RequireEvidenceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requireEvidence"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RuntimeIdentifierSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runtimeIdentifier"u8, buffer, out written);
 
         private static void MatchAllowsDraftRuns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -279,6 +280,21 @@ public readonly partial struct EnvironmentSummary
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
+        private static void MatchRuntimeIdentifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext12 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RuntimeIdentifierUtf8,
+                    evaluationPath: RuntimeIdentifierSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
+            context.CommitChildContext(childContext12.IsMatch, ref childContext12);
+        }
+
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
@@ -294,6 +310,7 @@ public readonly partial struct EnvironmentSummary
                 (static () => JsonPropertyNames.NameUtf8, MatchName),
                 (static () => JsonPropertyNames.RequiredIsolationUtf8, MatchRequiredIsolation),
                 (static () => JsonPropertyNames.RequireEvidenceUtf8, MatchRequireEvidence),
+                (static () => JsonPropertyNames.RuntimeIdentifierUtf8, MatchRuntimeIdentifier),
             ]);
         }
 
