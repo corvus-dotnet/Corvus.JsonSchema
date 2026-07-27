@@ -148,12 +148,16 @@ if ($missing) {
 }
 ```
 
-## Not yet wired
+## Wiring status
 
 The build service produces, signs, and attaches the native binary, and the deploy-time verification of the attestation
-exists (`WorkflowAotBuildService.VerifyNativeArtifact`). Two increments still connect it end to end. The async publish
-state machine (queued, building, ready, failed) drives the build per (version, target) and gates a version as
-dispatchable on a serverless environment only once its build completes. Dispatch advertise-and-match then routes a run
-to a runner that hosts the matching target, and the deploy step calls the attestation verification before it hands a
-binary to the function platform. Until those land, the sample runners run in-process, and this build path is exercised
-by the container integration proof rather than by a live serverless deploy.
+exists (`WorkflowAotBuildService.VerifyNativeArtifact`). Publishing is now wired to the build. Promoting a version into
+an environment that requires Isolated execution queues its build for the environment's runtime target (deploy-on-publish),
+and the start gate holds a run pinned to that environment until the build reaches ready (the dispatch-ready gate,
+`INativeBuildJobStore.IsTargetReadyAsync`). Dispatch also matches the environment's required isolation against a runner's
+advertised model (Phase 2, ADR 0058).
+
+One step remains to reach a live serverless deploy: the deploy step itself, which calls `VerifyNativeArtifact` and hands
+the verified binary to the function platform (AWS Lambda, then Azure Functions). Until it lands, the sample runners run
+in-process, this build path is exercised by the container integration proof rather than by a live serverless deploy, and
+an Isolated environment's runs stay held at the build-ready gate because there is no deployed function to dispatch to.

@@ -279,7 +279,7 @@ public static class ControlPlaneEndpointExtensions
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, buildStore),
             availabilityHandler,
             nativeBuildsHandler,
             credentialsHandler,

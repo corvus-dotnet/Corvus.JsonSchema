@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Logging;
@@ -1103,10 +1104,15 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
+        var builds = new InMemoryNativeBuildJobStore();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, nativeBuildJobStore: builds);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
+
+        // A ready serverless build for the environment's default target (linux-x64) so the dispatch-ready gate is satisfied
+        // throughout — this test isolates the ISOLATION match (the readiness gate is exercised separately).
+        await SeedReadyBuildAsync(builds, "flow", 1, "isolated-env", "linux-x64");
 
         // Only an in-process runner hosts the version (absent isolationModel), so the environment's Isolated requirement
         // cannot be satisfied and the start gate refuses the run with an isolation-aware 409.
@@ -1130,6 +1136,60 @@ public sealed class ControlPlaneServerTests
         {
             doc.RootElement.GetProperty("runId").GetString().ShouldNotBeNullOrEmpty();
         }
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_requires_the_serverless_build_to_be_ready()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        // An Isolated environment pinned to a specific runtime target (ADR 0055).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>.Parse(
+                """{"name":"isolated-env","requiredIsolation":"Isolated","runtimeIdentifier":"linux-arm64"}"""u8.ToArray()))
+        {
+            (await environmentStore.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        var builds = new InMemoryNativeBuildJobStore();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, nativeBuildJobStore: builds);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", isolationModel: "Isolated"), default);
+
+        // An isolated runner hosts the version, but no serverless binary has been built for the environment's target →
+        // the dispatch-ready gate (ADR 0055) refuses the run (409) rather than accept one nothing can yet execute.
+        HttpResponseMessage notReady = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=isolated-env",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        notReady.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(notReady))
+        {
+            problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("linux-arm64");
+        }
+
+        // Once the build for that target reaches Ready, the run is accepted.
+        await SeedReadyBuildAsync(builds, "flow", 1, "isolated-env", "linux-arm64");
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=isolated-env",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
 
         await app.StopAsync();
     }
@@ -1200,6 +1260,22 @@ public sealed class ControlPlaneServerTests
         }
 
         await app.StopAsync();
+    }
+
+    // Drives a native build to Ready (Enqueue -> Claim -> Complete), so the dispatch-ready gate admits a run pinned to an
+    // Isolated environment targeting the given RID.
+    private static async Task SeedReadyBuildAsync(INativeBuildJobStore builds, string baseWorkflowId, int versionNumber, string environment, string runtimeIdentifier)
+    {
+        using (ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier))
+        {
+            (await builds.EnqueueAsync(draft.RootElement, "test", default)).Dispose();
+        }
+
+        using ParsedJsonDocument<NativeBuildJob>? claimed = await builds.ClaimNextQueuedAsync("test-worker", TimeSpan.FromMinutes(5), default);
+        NativeBuildJob building = claimed!.RootElement;
+        using (await builds.CompleteAsync(building.IdValue, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), building.EtagValue, default))
+        {
+        }
     }
 
     private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production", bool servesSchedules = false, string? isolationModel = null)

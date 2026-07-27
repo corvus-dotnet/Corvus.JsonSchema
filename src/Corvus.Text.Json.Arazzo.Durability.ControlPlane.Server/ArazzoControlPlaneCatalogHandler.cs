@@ -9,6 +9,7 @@ using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Testing;
 using Microsoft.Extensions.Logging;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
@@ -43,6 +44,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly ControlPlaneAccess access;
     private readonly IEnvironmentStore? environmentStore;
     private readonly IAvailabilityStore? availabilityStore;
+    private readonly INativeBuildJobStore? builds;
     private readonly WorkflowSimulator? simulator;
     private readonly ILogger? auditLogger;
 
@@ -65,7 +67,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
     /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
     /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null)
+    /// <param name="simulator">The workflow simulator used by the simulate endpoint.</param>
+    /// <param name="auditLogger">The governance audit sink.</param>
+    /// <param name="builds">The native-build job store (ADR 0055); when supplied, the start gate holds a run pinned to an
+    /// <see cref="RunIsolationModel.Isolated"/> environment until that environment's serverless build is ready. <see langword="null"/>
+    /// skips the dispatch-ready check, for an in-process-only deployment.</param>
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null, INativeBuildJobStore? builds = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -77,6 +84,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.access = access;
         this.environmentStore = environmentStore;
         this.availabilityStore = availabilityStore;
+        this.builds = builds;
         this.simulator = simulator;
         this.auditLogger = auditLogger;
     }
@@ -520,6 +528,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // The environment also governs the minimum run isolation (ADR 0058), resolved once here (realise-at-leaf) to match
         // against a hosting runner's advertised model at the gate below; absent an environment registry it stays InProcess.
         RunIsolationModel requiredIsolation = RunIsolationModel.InProcess;
+        string requiredRuntimeIdentifier = "linux-x64";
         if (this.environmentStore is { } envStore)
         {
             using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
@@ -530,6 +539,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             }
 
             requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
+            requiredRuntimeIdentifier = environmentDoc.RootElement.RuntimeIdentifierValue;
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
@@ -574,6 +584,17 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                 Problem("no-runner", "No hosting runner", 409, requiredIsolation == RunIsolationModel.Isolated
                     ? $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}' with the {requiredIsolation} isolation environment '{environment}' requires; start an isolated-backend runner that hosts it and retry."
                     : $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
+        }
+
+        // Dispatch-ready gate (ADR 0055): an Isolated environment runs a version through its serverless native binary,
+        // which is built asynchronously for the environment's runtime target (deploy-on-publish). Until that build reaches
+        // Ready, refuse the run with a 409 rather than accept one no serverless backend can yet execute. Skipped when no
+        // build store is wired (an in-process-only deployment) or the environment does not require Isolated execution.
+        if (requiredIsolation == RunIsolationModel.Isolated && this.builds is { } buildStore
+            && !await buildStore.IsTargetReadyAsync(baseWorkflowId, versionNumber, environment, requiredRuntimeIdentifier, cancellationToken).ConfigureAwait(false))
+        {
+            return StartCatalogWorkflowRunResult.Conflict(
+                Problem("build-not-ready", "Serverless build not ready", 409, $"Version {versionNumber} of '{baseWorkflowId}' has no ready {requiredRuntimeIdentifier} serverless build for environment '{environment}' (ADR 0055); its build is queued, in progress, or failed. Retry once it is ready."), workspace);
         }
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
