@@ -117,13 +117,14 @@ public readonly partial struct CatalogVersion
         string? obsoletedBy = null,
         DateTimeOffset? obsoletedAt = null,
         bool runnable = false,
+        string? executorBuildError = null,
         SecurityTagSet securityTags = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
         {
-            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, securityTags);
+            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, executorBuildError, securityTags);
             writer.Flush();
 
             // Pooled + disposable (rented backing + pooled parse metadata), the converted-seam idiom — not a standalone
@@ -158,13 +159,14 @@ public readonly partial struct CatalogVersion
         string? obsoletedBy = null,
         DateTimeOffset? obsoletedAt = null,
         bool runnable = false,
+        string? executorBuildError = null,
         SecurityTagSet securityTags = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
         {
-            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, securityTags);
+            WriteDocument(writer, baseWorkflowId, versionNumber, workflowId, title, description, status, tags, owner, sources, hash, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, obsoletedBy, obsoletedAt, runnable, executorBuildError, securityTags);
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
         }
@@ -395,6 +397,7 @@ public readonly partial struct CatalogVersion
         string? obsoletedBy,
         DateTimeOffset? obsoletedAt,
         bool runnable,
+        string? executorBuildError,
         SecurityTagSet securityTags)
     {
         writer.WriteStartObject();
@@ -460,6 +463,11 @@ public readonly partial struct CatalogVersion
         }
 
         writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, runnable);
+        if (executorBuildError is not null)
+        {
+            writer.WriteString(JsonPropertyNames.ExecutorBuildErrorUtf8, executorBuildError);
+        }
+
         writer.WriteEndObject();
     }
 

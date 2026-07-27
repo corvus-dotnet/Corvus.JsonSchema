@@ -34,6 +34,12 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
     // value the control plane reports as its engine version.
     private static readonly string EngineVersion = typeof(IWorkflowRun).Assembly.GetName().Version?.ToString() ?? "unknown";
 
+    // The reason the current build was skipped, captured so BuildExecutor(out buildError) can report it. A whole build is
+    // synchronous (generation and compilation both run to completion on the calling thread), so a thread-static capture is
+    // race-free even when one provider instance serves concurrent catalog adds on different threads.
+    [ThreadStatic]
+    private static string? t_lastSkipReason;
+
     private readonly bool durable;
     private readonly Action<string>? progress;
 
@@ -54,17 +60,42 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         ReadOnlyMemory<byte> workflowUtf8,
         IReadOnlyList<KeyValuePair<string, byte[]>> sources,
         string packageHash)
+        => this.BuildExecutor(workflowUtf8, sources, packageHash, out _);
+
+    /// <summary>
+    /// Builds the compiled executor artifact and, when it cannot be built, reports why in <paramref name="buildError"/> —
+    /// so the catalog can record the reason on the version rather than discarding it (the version is still catalogued, just
+    /// not runnable). The parameterless overload discards the reason.
+    /// </summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The referenced source documents, keyed by name.</param>
+    /// <param name="packageHash">The version's content hash.</param>
+    /// <param name="buildError">On return, the reason the executor could not be built, or <see langword="null"/> on success.</param>
+    /// <returns>The compiled artifact, or <see langword="null"/> if none can be produced.</returns>
+    public WorkflowExecutorArtifact? BuildExecutor(
+        ReadOnlyMemory<byte> workflowUtf8,
+        IReadOnlyList<KeyValuePair<string, byte[]>> sources,
+        string packageHash,
+        out string? buildError)
     {
         ArgumentNullException.ThrowIfNull(sources);
         ArgumentException.ThrowIfNullOrEmpty(packageHash);
 
+        t_lastSkipReason = null;
         try
         {
-            return this.BuildCore(workflowUtf8, sources, packageHash);
+            WorkflowExecutorArtifact? artifact = this.BuildCore(workflowUtf8, sources, packageHash);
+
+            // A null artifact means a generation step short-circuited (e.g. a cross-document source); it recorded its reason
+            // through Skip. A produced artifact clears any stale reason.
+            buildError = artifact is null ? t_lastSkipReason : null;
+            return artifact;
         }
         catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
-            // A package that cannot be generated or compiled is still catalogued — just not runnable.
+            // A package that cannot be generated or compiled is still catalogued — just not runnable. The reason (for a
+            // compile failure, the compiler's error list) is reported to the caller and surfaced through progress.
+            buildError = ex.Message;
             this.progress?.Invoke($"Executor build skipped: {ex.Message}");
             return null;
         }
@@ -73,7 +104,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
     /// <summary>
     /// Builds the generated C# source for a workflow executor without compiling it: the compile-time input an AOT
     /// execution backend bakes into a native host (ADR 0055). Returns <see langword="null"/> when the package is
-    /// not runnable, on the same rules as <see cref="BuildExecutor"/>.
+    /// not runnable, on the same rules as <see cref="BuildExecutor(System.ReadOnlyMemory{byte}, System.Collections.Generic.IReadOnlyList{System.Collections.Generic.KeyValuePair{string, byte[]}}, string)"/>.
     /// </summary>
     /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
     /// <param name="sources">The package's source documents (OpenAPI/AsyncAPI plus any external schemas), keyed by name.</param>
@@ -168,6 +199,14 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         return (workflowId, self, sourceList);
     }
 
+    // Records why a build was skipped so BuildExecutor(out buildError) can report it, and surfaces it through the progress
+    // callback for a wired host.
+    private void Skip(string reason)
+    {
+        t_lastSkipReason = reason;
+        this.progress?.Invoke($"Executor build skipped: {reason}");
+    }
+
     private WorkflowExecutorSource? GenerateSource(
         ReadOnlyMemory<byte> workflowUtf8,
         IReadOnlyList<KeyValuePair<string, byte[]>> sources,
@@ -178,7 +217,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
 
         if (workflowId is null)
         {
-            this.progress?.Invoke("Executor build skipped: the workflow has no workflowId.");
+            this.Skip("the workflow has no workflowId.");
             return null;
         }
 
@@ -187,7 +226,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         // assembly. Catalogue it as not-runnable.
         if (sourceRefs.Any(s => string.Equals(s.Type, "arazzo", StringComparison.OrdinalIgnoreCase)))
         {
-            this.progress?.Invoke("Executor build skipped: cross-document (arazzo) sources are not self-contained.");
+            this.Skip("cross-document (arazzo) sources are not self-contained.");
             return null;
         }
 
@@ -203,7 +242,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
         {
             if (!sourcesByName.TryGetValue(name, out byte[]? bytes))
             {
-                this.progress?.Invoke($"Executor build skipped: source '{name}' is declared but absent from the package.");
+                this.Skip($"source '{name}' is declared but absent from the package.");
                 return null;
             }
 
@@ -243,7 +282,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
 
             if (generatedCode.Count == 0)
             {
-                this.progress?.Invoke("Executor build skipped: generation produced no code.");
+                this.Skip("generation produced no code.");
                 return null;
             }
 

@@ -88,6 +88,10 @@
     "runnable": {
       "type": "boolean",
       "description": "Whether the package carries a compiled workflow executor assembly an execution host can run."
+    },
+    "executorBuildError": {
+      "type": "string",
+      "description": "Why the workflow executor could not be built at catalog-add time, present only when the version is not runnable because its executor failed to build (a malformed workflow, an unsupported cross-document source, or a compilation error). The version is still catalogued; this records the cause so it is not silently lost."
     }
   },
   "additionalProperties": false,

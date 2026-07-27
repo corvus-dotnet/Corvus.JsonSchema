@@ -118,6 +118,7 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             createdBy: metadata.CreatedBy,
             createdAt: now,
             runnable: projection.HasExecutor,
+            executorBuildError: projection.ExecutorBuildError,
             securityTags: metadata.SecurityTags);
 
         // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather

@@ -132,10 +132,11 @@ public static partial class CatalogPackage
         IReadOnlyList<KeyValuePair<string, byte[]>>? providerSources =
             metadataProvider is not null || executorProvider is not null ? MaterializeSources(contents.Sources) : null;
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources!) ?? default;
-        WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, providerSources!, hash);
+        string? executorBuildError = null;
+        WorkflowExecutorArtifact? executor = executorProvider is null ? null : executorProvider.BuildExecutor(rewrittenWorkflow, providerSources!, hash, out executorBuildError);
         byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence);
 
-        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
+        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue, executorBuildError);
     }
 
     /// <summary>
@@ -381,7 +382,7 @@ public static partial class CatalogPackage
         // The executor path always materialises the sources (the providers take byte[]); the same owned copies feed both.
         IReadOnlyList<KeyValuePair<string, byte[]>> providerSources = MaterializeSources(contents.Sources);
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources) ?? default;
-        WorkflowExecutorArtifact? executor = executorProvider.BuildExecutor(rewrittenWorkflow, providerSources, hash);
+        WorkflowExecutorArtifact? executor = executorProvider.BuildExecutor(rewrittenWorkflow, providerSources, hash, out string? executorBuildError);
 
         // Sign the executor manifest verbatim (the exact bytes packed), so a runner verifies against the identical bytes it
         // reads back. When no executor was produced there is nothing to sign, and the package is stored unsigned.
@@ -394,7 +395,7 @@ public static partial class CatalogPackage
 
         byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence, signature);
 
-        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
+        return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue, executorBuildError);
     }
 
     // Copies pooled source views to owned arrays for the optional metadata/executor providers (which take byte[]); only
@@ -498,7 +499,8 @@ public readonly record struct CatalogPackageProjection(
     string Title,
     string? Description,
     IReadOnlyList<CatalogSourceRef> Sources,
-    bool HasExecutor = false);
+    bool HasExecutor = false,
+    string? ExecutorBuildError = null);
 
 /// <summary>The result of a local <see cref="CatalogPackage.Validate"/> of a package archive.</summary>
 /// <param name="IsValid">Whether the package is well-formed and referentially complete (no <paramref name="Issues"/>).</param>
