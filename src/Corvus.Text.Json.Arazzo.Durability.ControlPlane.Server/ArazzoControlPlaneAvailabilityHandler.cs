@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
@@ -41,6 +42,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     private readonly ControlPlaneAccess access;
     private readonly string actor;
     private readonly ILogger? auditLogger;
+    private readonly INativeBuildJobStore? builds;
 
     // The audited resource kind for promotion/demotion on this surface (design §850).
     private const string TargetKind = "version-availability";
@@ -65,7 +67,11 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     /// <param name="credentials">The source-credential store (readiness: a credential per source × environment).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> and deployment identity per request.</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane", ILogger? auditLogger = null)
+    /// <param name="auditLogger">The governance audit sink.</param>
+    /// <param name="builds">The native-build job store (ADR 0055); when supplied, first-promoting a version into an
+    /// <see cref="RunIsolationModel.Isolated"/> environment queues its serverless build (deploy-on-publish). <see langword="null"/>
+    /// disables that, for an in-process-only deployment.</param>
+    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane", ILogger? auditLogger = null, INativeBuildJobStore? builds = null)
     {
         ArgumentNullException.ThrowIfNull(availability);
         ArgumentNullException.ThrowIfNull(environments);
@@ -82,6 +88,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         this.access = access;
         this.actor = actor;
         this.auditLogger = auditLogger;
+        this.builds = builds;
     }
 
     // The §850 audit subject: the authenticated principal who promoted/demoted, falling back to the configured actor.
@@ -242,6 +249,20 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         if (created)
         {
             GovernanceAudit.Mutation(this.auditLogger, "environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "promoted");
+        }
+
+        // Deploy-on-publish (ADR 0055): first-promoting a version into an environment that requires Isolated execution
+        // queues its serverless native build for the environment's runtime target, so the dispatch-ready gate can hold a
+        // run until the binary is built. A re-promote (already available) does not re-enqueue — an explicit nativeBuilds
+        // request drives a rebuild. Skipped entirely when no build store is wired (an in-process-only deployment).
+        if (created && this.builds is { } buildStore)
+        {
+            using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (environmentDoc is { } isolationEnv && isolationEnv.RootElement.RequiredIsolationValue == RunIsolationModel.Isolated)
+            {
+                using ParsedJsonDocument<NativeBuildJob> buildDraft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, isolationEnv.RootElement.RuntimeIdentifierValue, null);
+                (await buildStore.EnqueueAsync(buildDraft.RootElement, this.actor, cancellationToken).ConfigureAwait(false)).Dispose();
+            }
         }
 
         workspace.TakeOwnership(entry);

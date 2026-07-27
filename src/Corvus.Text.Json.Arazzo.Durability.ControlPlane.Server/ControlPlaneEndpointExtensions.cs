@@ -228,10 +228,15 @@ public static class ControlPlaneEndpointExtensions
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
             workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore, auditLogger: auditLogger);
 
+        // The native-build job store (ADR 0055), hoisted so it feeds both the availability handler's deploy-on-publish
+        // (first-promoting a version into an Isolated environment queues its serverless build) and the native-builds API
+        // below. Defaults to an in-memory store.
+        INativeBuildJobStore buildStore = nativeBuildJobStore ?? new InMemoryNativeBuildJobStore();
+
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
         // version references must resolve a credential in that environment, §7.7). The store is hoisted above.
-        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditLogger: auditLogger);
+        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditLogger: auditLogger, builds: buildStore);
 
         // The availability-request ("promotion request") API (§7.8): a principal who cannot make a version available
         // directly raises a request; the TARGET environment's administrators approve (readiness-gated, mirroring the direct
@@ -242,8 +247,7 @@ public static class ControlPlaneEndpointExtensions
 
         // The native-builds API (ADR 0055): enqueue and poll the asynchronous Native-AOT builds of a version's serverless
         // binary per (environment, runtime target). Each operation is reach-gated to the workflow version, and a background
-        // build worker drives each job Queued -> Building -> Ready | Failed. Defaults to an in-memory store.
-        INativeBuildJobStore buildStore = nativeBuildJobStore ?? new InMemoryNativeBuildJobStore();
+        // build worker drives each job Queued -> Building -> Ready | Failed. Uses the store hoisted above.
         var nativeBuildsHandler = new ArazzoControlPlaneNativeBuildsHandler(buildStore, catalog, access, auditLogger: auditLogger);
 
         // The runner-authorization API (§5.5): which runners may serve an environment. A runner enters Pending on

@@ -65,6 +65,39 @@ public sealed class ControlPlaneAvailabilityApiTests
     }
 
     [TestMethod]
+    public async Task Making_a_version_available_in_an_Isolated_environment_queues_its_serverless_build()
+    {
+        await using Scoped host = await StartAsync();
+
+        // An Isolated environment targeting a specific RID (ADR 0055) and a source-less version (ready by vacuity).
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"edge","requiredIsolation":"Isolated","runtimeIdentifier":"linux-arm64"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+
+        // Deploy-on-publish (ADR 0055): promoting the version into the Isolated environment queues its Native-AOT build
+        // for that environment's runtime target, so the target is now pollable via the nativeBuilds surface.
+        (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/edge", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument job = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/catalog/checkout/versions/1/nativeBuilds/edge/linux-arm64", "catalog:read", "acme")))
+        {
+            job.RootElement.GetProperty("status").GetString().ShouldBe("Queued");
+            job.RootElement.GetProperty("runtimeIdentifier").GetString().ShouldBe("linux-arm64");
+        }
+    }
+
+    [TestMethod]
+    public async Task Making_a_version_available_in_an_in_process_environment_queues_no_build()
+    {
+        await using Scoped host = await StartAsync();
+
+        // A default (InProcess) environment — deploy-on-publish must not fire.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+        (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // No native build was queued for an in-process environment (404: the version has no build for that target).
+        (await host.SendAsync(HttpMethod.Get, "/catalog/checkout/versions/1/nativeBuilds/production/linux-x64", "catalog:read", "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task Making_available_requires_target_environment_administration_and_existing_resources()
     {
         await using Scoped host = await StartAsync();
