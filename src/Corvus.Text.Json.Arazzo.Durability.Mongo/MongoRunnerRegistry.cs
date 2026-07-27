@@ -90,7 +90,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
 
@@ -98,6 +98,14 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.ElemMatch(
             "loadedVersions",
             Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId) & Builders<BsonDocument>.Filter.Eq("versionNumber", versionNumber));
+
+        // ADR 0058: an InProcess requirement is met by any hosting runner (filter unchanged); an Isolated requirement only
+        // by a runner whose top-level isolationModel is 'Isolated', pushed into the query as an additional condition.
+        if (requiredIsolation == RunIsolationModel.Isolated)
+        {
+            filter &= Builders<BsonDocument>.Filter.Eq("isolationModel", "Isolated");
+        }
+
         return await this.registrations.Find(filter).Limit(1).AnyAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -122,6 +130,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         {
             ["_id"] = registration.RunnerIdValue,
             ["lastSeenAt"] = lastSeenAtUnixMilliseconds,
+            ["isolationModel"] = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess",
             ["doc"] = new BsonBinaryData(doc),
             ["loadedVersions"] = loadedVersions,
         };

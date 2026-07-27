@@ -76,7 +76,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
-    public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         cancellationToken.ThrowIfCancellationRequested();
@@ -85,7 +85,7 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
         {
             foreach (byte[] bytes in this.entries.Values)
             {
-                if (RunnerRegistration.FromJson(bytes).HostsVersion(baseWorkflowId, versionNumber))
+                if (RunnerRegistration.FromJson(bytes).HostsVersion(baseWorkflowId, versionNumber, requiredIsolation))
                 {
                     return ValueTask.FromResult(true);
                 }

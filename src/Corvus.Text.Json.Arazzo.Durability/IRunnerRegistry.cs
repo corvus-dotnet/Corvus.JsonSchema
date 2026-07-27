@@ -109,16 +109,21 @@ public interface IRunnerRegistry
     }
 
     /// <summary>
-    /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.
+    /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version and
+    /// provides at least the required isolation (ADR 0058) — the start-gate match. A runner satisfies an
+    /// <see cref="RunIsolationModel.Isolated"/> requirement only if it advertises <c>Isolated</c>; an
+    /// <see cref="RunIsolationModel.InProcess"/> requirement is met by any hosting runner.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>
     /// <param name="versionNumber">The version number.</param>
+    /// <param name="requiredIsolation">The isolation the target environment requires (default <see cref="RunIsolationModel.InProcess"/> preserves the isolation-blind behaviour).</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>
-    /// <see langword="true"/> if at least one registered runner advertises this version in its hosted versions
-    /// with <c>loaded == true</c>. Backends answer this from an index, not by scanning every runner.
+    /// <see langword="true"/> if at least one registered runner advertises this version in its hosted versions with
+    /// <c>loaded == true</c> and provides the required isolation. Backends answer this from an index, not by scanning
+    /// every runner.
     /// </returns>
-    ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
+    ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken);
 
     /// <summary>
     /// Determines whether any registered runner serving <paramref name="environment"/> declares that it hosts §18

@@ -1,8 +1,9 @@
 # Arazzo workflow execution host: design
 
 How a catalogued workflow becomes a compiled assembly stored with the catalog, and how a hosting service loads
-and runs it. The build side and the runner have shipped; only the pluggable out-of-process backends (§ below)
-remain design intent.
+and runs it. The build side and the runner have shipped, along with the pluggable-backend seam and the governed
+isolation advertise-and-match that selects an out-of-process backend (§ below). The first such backend
+(serverless) is proven; broadening the set to more targets and its operator surface remains in progress.
 
 The decisions are the engine and runner ADRs, [0017](../adr/0017-code-generate-the-executor.md) (generate
 the executor), [0023](../adr/0023-two-process-store-as-queue.md) (two processes sharing the store),
@@ -10,8 +11,10 @@ the executor), [0023](../adr/0023-two-process-store-as-queue.md) (two processes 
 [0025](../adr/0025-integrity-binding-optional-signature.md) (integrity binding),
 [0026](../adr/0026-triggers-async-by-default.md) (triggers async by default),
 [0027](../adr/0027-runner-environment-binding.md) (runner-to-environment binding),
-[0028](../adr/superseded/0028-pluggable-execution-backends.md) (pluggable backends, Proposed), and
-[0029](../adr/0029-native-heartbeat-partial-update.md) (the heartbeat). The task-oriented companions are the
+[0055](../adr/0055-serverless-backend-aot-from-signed-executor.md) (pluggable backends and the serverless
+backend, superseding the proposed [0028](../adr/superseded/0028-pluggable-execution-backends.md)),
+[0058](../adr/0058-run-isolation-governed-by-environment-matched-at-start.md) (isolation advertised and matched
+at the start gate), and [0029](../adr/0029-native-heartbeat-partial-update.md) (the heartbeat). The task-oriented companions are the
 [authoring, generating, and running guide](authoring-generating-running.md) and the
 [running a runner guide](running-a-runner.md). This guide is the seam shapes, the packaging, the
 load and isolation model, and the trigger surface.
@@ -166,16 +169,22 @@ are in the OpenAPI contract; the [runner guide](running-a-runner.md) is the oper
 ### Pluggable execution backends
 
 The in-process collectible ALC is one execution model, not the only one. A runner is better understood as an
-execution host that dispatches a run to a pluggable backend with a chosen isolation model (in-process today, but
+execution host that dispatches a run to a pluggable backend with a chosen isolation model (in-process, or
 equally a per-run micro-guest, a serverless function, or a container-per-run), and wake-ups (resume) ride the
-same seam, because the executor is a portable content-hashed assembly and a run is a serializable checkpoint. This
-is a **proposed** seam ([ADR 0028](../adr/superseded/0028-pluggable-execution-backends.md)): only the in-process backend
-ships. The proposed seam generalises the in-process resume into an `IRunExecutionBackend.AdvanceAsync`, which the
-resumer already invokes through a delegate, so a backend slots in behind it without touching dispatch, leases,
-timers, or message delivery; a runner would advertise its backend and isolation model in its registration, and
-dispatch would match a run's required isolation against it. The one-environment-per-runner, admin-authorized
-model is the security anchor for any out-of-process backend: a function or guest executes with the environment's
-credentials, so it must be provisioned for and authorized in exactly that environment.
+same seam, because the executor is a portable content-hashed assembly and a run is a serializable checkpoint. The
+seam has landed ([ADR 0055](../adr/0055-serverless-backend-aot-from-signed-executor.md)).
+`IRunExecutionBackend.AdvanceAsync` generalises the in-process resume, which the resumer already invokes through a
+delegate, so a backend slots in behind it without touching dispatch, leases, timers, or message delivery. The
+in-process backend and the first out-of-process backend (serverless, AOT-compiled from the signed executor) both
+ship. Selection is governed, not per-runner guesswork
+([ADR 0058](../adr/0058-run-isolation-governed-by-environment-matched-at-start.md)). An environment declares the
+isolation its runs require (`requiredIsolation`, defaulting to in-process), a runner advertises the isolation it
+provides (`isolationModel`) in its registration, and the start gate matches the two string-free when it checks
+that a live runner hosts the version, so a run that requires isolation is admitted only where an isolated runner
+can take it. The one-environment-per-runner, admin-authorized model is the security anchor for any out-of-process
+backend. A function or guest executes with the environment's credentials, so it must be provisioned for and
+authorized in exactly that environment. Broadening the backend set (micro-guest, container-per-run) and the
+operator surface for it remains in progress.
 
 ## The trigger surface
 
@@ -252,9 +261,11 @@ and orphan-reclaim spans.
 The build side (executor provider and packaging), the loader and `IHostedWorkflow`, the HTTP trigger and
 dispatcher, the message and schedule triggers, control-plane authorization, source credentials, and row security
 have all shipped. The paused demo work (`samples/arazzo/.../docs/live-execution.md`) was the manual prototype
-this design productionised behind the catalog. The out-of-process execution backends
-([ADR 0028](../adr/superseded/0028-pluggable-execution-backends.md)) remain design intent. The decisions themselves are
-recorded in ADRs 0017 and 0022 to 0029; this guide no longer restates them.
+this design productionised behind the catalog. The pluggable-backend seam, the first out-of-process backend
+(serverless, [ADR 0055](../adr/0055-serverless-backend-aot-from-signed-executor.md)), and the governed isolation
+advertise-and-match that selects it ([ADR 0058](../adr/0058-run-isolation-governed-by-environment-matched-at-start.md))
+have landed; broadening the backend set and its operator surface remains in progress. The decisions themselves are
+recorded in ADRs 0017, 0022 to 0029, and 0055 to 0058; this guide no longer restates them.
 
 ## See also
 

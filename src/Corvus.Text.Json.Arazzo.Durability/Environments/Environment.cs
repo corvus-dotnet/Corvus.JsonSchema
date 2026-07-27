@@ -35,6 +35,13 @@ public readonly partial struct Environment
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Gets the minimum run isolation this environment requires (ADR 0058), read string-free; an absent
+    /// <c>requiredIsolation</c> means <see cref="RunIsolationModel.InProcess"/>. The start gate matches this against a
+    /// runner's advertised isolation model.</summary>
+    public RunIsolationModel RequiredIsolationValue
+        => ((JsonElement)this.RequiredIsolation).ValueKind == JsonValueKind.String && this.RequiredIsolation.ValueEquals("Isolated"u8)
+            ? RunIsolationModel.Isolated : RunIsolationModel.InProcess;
+
     /// <summary>Gets the security tags (KVP labels) scoping who may <strong>manage and see</strong> this environment
     /// (§14.2) as a deferred holder over the persisted bytes — empty on an unscoped environment. Drives the management
     /// reach check.</summary>

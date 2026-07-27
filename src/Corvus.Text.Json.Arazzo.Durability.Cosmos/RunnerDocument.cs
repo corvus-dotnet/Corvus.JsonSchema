@@ -50,6 +50,10 @@ public readonly partial struct RunnerDocument
                 writer.WriteString(JsonPropertyNames.IdUtf8, c.RunnerId);
                 writer.WriteNumber(JsonPropertyNames.LastSeenAtUtf8, c.LastSeenAt.ToUnixTimeMilliseconds());
 
+                // The runner's isolation (ADR 0058) as a queryable top-level envelope field, so the start-gate query can
+                // require it without decoding the nested doc. Absent isolationModel means InProcess; written string-free.
+                writer.WriteString(JsonPropertyNames.IsolationModelUtf8, c.Registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated"u8 : "InProcess"u8);
+
                 // The registration is itself JSON — embed it verbatim as a nested value, not base64 (which would be a
                 // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
                 writer.WritePropertyName(JsonPropertyNames.DocUtf8);

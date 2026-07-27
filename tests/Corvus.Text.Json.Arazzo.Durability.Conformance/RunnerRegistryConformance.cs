@@ -150,10 +150,10 @@ public abstract class RunnerRegistryConformance
             Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true), ("billing", 1, "h", false)]),
             default);
 
-        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
-        (await registry.IsVersionHostedAsync("billing", 1, default)).ShouldBeFalse();  // hosted but not loaded
-        (await registry.IsVersionHostedAsync("shipping", 4, default)).ShouldBeFalse();  // wrong version
-        (await registry.IsVersionHostedAsync("other", 3, default)).ShouldBeFalse();     // wrong base
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("billing", 1, RunIsolationModel.InProcess, default)).ShouldBeFalse();  // hosted but not loaded
+        (await registry.IsVersionHostedAsync("shipping", 4, RunIsolationModel.InProcess, default)).ShouldBeFalse();  // wrong version
+        (await registry.IsVersionHostedAsync("other", 3, RunIsolationModel.InProcess, default)).ShouldBeFalse();     // wrong base
     }
 
     [TestMethod]
@@ -161,10 +161,10 @@ public abstract class RunnerRegistryConformance
     {
         IRunnerRegistry registry = await this.NewRegistryAsync();
         await registry.RegisterAsync(Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true)]), default);
-        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeTrue();
 
         await registry.PruneAsync(T0.AddMinutes(5), default);
-        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeFalse();
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -172,12 +172,30 @@ public abstract class RunnerRegistryConformance
     {
         IRunnerRegistry registry = await this.NewRegistryAsync();
         await registry.RegisterAsync(Reg("runner-1", T0, T0, hosted: [("shipping", 3, "h", true)]), default);
-        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeTrue();
 
         // The same runner re-registers hosting a different version — the old (shipping, 3) entry must drop out.
         await registry.RegisterAsync(Reg("runner-1", T0, T0.AddMinutes(1), hosted: [("shipping", 4, "h", true)]), default);
-        (await registry.IsVersionHostedAsync("shipping", 3, default)).ShouldBeFalse();
-        (await registry.IsVersionHostedAsync("shipping", 4, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeFalse();
+        (await registry.IsVersionHostedAsync("shipping", 4, RunIsolationModel.InProcess, default)).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task IsVersionHosted_matches_the_required_isolation()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+
+        // An in-process runner (absent isolationModel) and an isolated runner, each hosting a distinct loaded version.
+        await registry.RegisterAsync(Reg("runner-inproc", T0, T0, hosted: [("shipping", 3, "h", true)]), default);
+        await registry.RegisterAsync(Reg("runner-isolated", T0, T0, hosted: [("billing", 7, "h", true)], isolationModel: "Isolated"), default);
+
+        // An InProcess requirement (ADR 0058) is met by any runner hosting the version.
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.InProcess, default)).ShouldBeTrue();
+        (await registry.IsVersionHostedAsync("billing", 7, RunIsolationModel.InProcess, default)).ShouldBeTrue();
+
+        // An Isolated requirement is met only by a runner advertising Isolated.
+        (await registry.IsVersionHostedAsync("shipping", 3, RunIsolationModel.Isolated, default)).ShouldBeFalse(); // the in-process runner cannot satisfy Isolated
+        (await registry.IsVersionHostedAsync("billing", 7, RunIsolationModel.Isolated, default)).ShouldBeTrue();  // the isolated runner satisfies it
     }
 
     [TestMethod]
@@ -350,7 +368,8 @@ public abstract class RunnerRegistryConformance
         string environment = "production",
         (string Key, string Value)[]? reachTags = null,
         bool hostsDraftRuns = false,
-        bool servesSchedules = false)
+        bool servesSchedules = false,
+        string? isolationModel = null)
     {
         string[] runnerTransports = transports ?? ["http"];
         (string BaseId, int Version, string Hash, bool Loaded)[] hostedVersions = hosted ?? [];
@@ -413,6 +432,11 @@ public abstract class RunnerRegistryConformance
             if (servesSchedules)
             {
                 writer.WriteBoolean("servesSchedules", true);
+            }
+
+            if (isolationModel is not null)
+            {
+                writer.WriteString("isolationModel", isolationModel);
             }
 
             writer.WriteEndObject();

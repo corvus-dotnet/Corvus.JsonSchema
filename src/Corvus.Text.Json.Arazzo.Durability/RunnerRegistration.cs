@@ -51,6 +51,30 @@ public readonly partial struct RunnerRegistration
         return false;
     }
 
+    /// <summary>Gets the run isolation this runner's execution backend provides (ADR 0058); an absent <c>isolationModel</c> means <see cref="RunIsolationModel.InProcess"/>.</summary>
+    public RunIsolationModel IsolationModelValue
+        => ((JsonElement)this.IsolationModel).ValueKind == JsonValueKind.String && this.IsolationModel.ValueEquals("Isolated"u8)
+            ? RunIsolationModel.Isolated : RunIsolationModel.InProcess;
+
+    /// <summary>Determines whether this runner satisfies a required isolation (ADR 0058): its advertised model is at least as
+    /// strong as the requirement (<see cref="RunIsolationModel.Isolated"/> is stronger than <see cref="RunIsolationModel.InProcess"/>),
+    /// string-free. An <see cref="RunIsolationModel.InProcess"/> requirement is met by any runner; an
+    /// <see cref="RunIsolationModel.Isolated"/> requirement only by a runner advertising <c>Isolated</c>.</summary>
+    /// <param name="requiredIsolation">The isolation the target environment requires.</param>
+    /// <returns><see langword="true"/> if this runner provides at least the required isolation.</returns>
+    public bool ProvidesIsolation(RunIsolationModel requiredIsolation)
+        => requiredIsolation == RunIsolationModel.InProcess || this.IsolationModelValue == RunIsolationModel.Isolated;
+
+    /// <summary>Determines whether this runner hosts the given loaded version AND provides the required isolation (ADR 0058) —
+    /// the start-gate match. The isolation check runs first, so a runner of the wrong isolation is rejected without scanning
+    /// its hosted versions.</summary>
+    /// <param name="baseWorkflowId">The base workflow id of the version.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <param name="requiredIsolation">The isolation the target environment requires.</param>
+    /// <returns><see langword="true"/> if this runner hosts the loaded version and provides the required isolation.</returns>
+    public bool HostsVersion(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation)
+        => this.ProvidesIsolation(requiredIsolation) && this.HostsVersion(baseWorkflowId, versionNumber);
+
     /// <summary>Gets the (baseWorkflowId, versionNumber) pairs this runner hosts with the version loaded — the rows a backend projects into its hosting index.</summary>
     /// <returns>The loaded hosted versions.</returns>
     public IReadOnlyList<(string BaseWorkflowId, int VersionNumber)> LoadedHostedVersions()

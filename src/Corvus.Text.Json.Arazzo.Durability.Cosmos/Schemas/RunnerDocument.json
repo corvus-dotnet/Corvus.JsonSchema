@@ -7,6 +7,7 @@
   "properties": {
     "id": { "type": "string", "description": "The runner id (also the partition key)." },
     "lastSeenAt": { "type": "integer", "format": "int64", "description": "The most recent heartbeat, Unix milliseconds." },
+    "isolationModel": { "type": "string", "description": "The run isolation this runner's execution backend provides (ADR 0058), queryable by the start gate. Absent means InProcess." },
     "doc": { "type": "object", "additionalProperties": true, "description": "The canonical registration, embedded verbatim as a nested JSON value (it is itself JSON, so no base64 wrapper)." },
     "loadedVersions": {
       "type": "array",

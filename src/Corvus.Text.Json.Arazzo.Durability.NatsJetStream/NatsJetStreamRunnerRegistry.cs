@@ -137,18 +137,23 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         NatsKVEntry<byte[]>? existing = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
         if (existing is { Value: { } oldValue })
         {
-            foreach ((string oldBase, int oldVersion) in RunnerRegistration.FromJson(oldValue).LoadedHostedVersions())
+            RunnerRegistration old = RunnerRegistration.FromJson(oldValue);
+            string oldIsolation = IsolationToken(old);
+            foreach ((string oldBase, int oldVersion) in old.LoadedHostedVersions())
             {
-                await this.DeleteAsync(HostingKey(oldBase, oldVersion, runnerId), cancellationToken).ConfigureAwait(false);
+                await this.DeleteAsync(HostingKey(oldBase, oldVersion, oldIsolation, runnerId), cancellationToken).ConfigureAwait(false);
             }
         }
 
         byte[] doc = PersistedJson.ToArray(registration, static (Utf8JsonWriter writer, in RunnerRegistration r) => r.WriteTo(writer));
         await this.registry.PutAsync(key, doc, cancellationToken: cancellationToken).ConfigureAwait(false);
 
+        // The runner's isolation (ADR 0058) is a runner-level property, encoded as a segment of each hosting-index key so an
+        // Isolated start-gate requirement is answered by a subject-wildcard scan of just the isolated keys. Absent = InProcess.
+        string isolation = IsolationToken(registration);
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
-            await this.registry.PutAsync(HostingKey(baseWorkflowId, versionNumber, runnerId), HostingMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await this.registry.PutAsync(HostingKey(baseWorkflowId, versionNumber, isolation, runnerId), HostingMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -328,14 +333,17 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
 
-        // Enumerate only the hosting-index keys scoped to this (base, version) via a subject-wildcard filter
-        // (KV keys map to subjects; the final '>' matches the single Base64Url(runnerId) segment). GetKeysAsync
-        // already excludes deleted/tombstoned keys, so any returned key means a live runner hosts the version.
-        string filter = HostingKeyPrefix(baseWorkflowId, versionNumber) + ">";
+        // Enumerate only the hosting-index keys scoped to this (base, version) via a subject-wildcard filter (KV keys map
+        // to subjects). ADR 0058: an InProcess requirement uses the trailing '>' to span the {isolation}.{Base64Url(runnerId)}
+        // tail, so any hosting runner matches; an Isolated requirement pins the isolation segment to 'Isolated', so only
+        // isolated runners' keys are scanned. GetKeysAsync excludes deleted/tombstoned keys, so any returned key is a live host.
+        string filter = requiredIsolation == RunIsolationModel.Isolated
+            ? HostingKeyPrefix(baseWorkflowId, versionNumber) + "Isolated.>"
+            : HostingKeyPrefix(baseWorkflowId, versionNumber) + ">";
         await foreach (string unused in this.registry.GetKeysAsync([filter], cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             return true;
@@ -361,9 +369,10 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
                 RunnerRegistration registration = RunnerRegistration.FromJson(value);
                 if (registration.LastSeenAtValue < deadBefore)
                 {
+                    string isolation = IsolationToken(registration);
                     foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
                     {
-                        await this.DeleteAsync(HostingKey(baseWorkflowId, versionNumber, registration.RunnerIdValue), cancellationToken).ConfigureAwait(false);
+                        await this.DeleteAsync(HostingKey(baseWorkflowId, versionNumber, isolation, registration.RunnerIdValue), cancellationToken).ConfigureAwait(false);
                     }
 
                     await this.DeleteAsync(key, cancellationToken).ConfigureAwait(false);
@@ -391,8 +400,15 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     private static string HostingKeyPrefix(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{HostingPrefix}{Enc(baseWorkflowId)}.{versionNumber}.");
 
-    private static string HostingKey(string baseWorkflowId, int versionNumber, string runnerId)
-        => HostingKeyPrefix(baseWorkflowId, versionNumber) + Enc(runnerId);
+    // The hosting-index key carries the runner's isolation (ADR 0058) as its own segment ahead of the runner id, so an
+    // Isolated requirement narrows to '{prefix}.Isolated.>' while an InProcess requirement's '{prefix}.>' spans both.
+    // The token is a literal single subject token (no dot), matching the structural '.' separators the key already uses.
+    private static string HostingKey(string baseWorkflowId, int versionNumber, string isolationToken, string runnerId)
+        => HostingKeyPrefix(baseWorkflowId, versionNumber) + isolationToken + "." + Enc(runnerId);
+
+    // The runner's advertised isolation as its wire token; absent isolationModel means InProcess (ADR 0058).
+    private static string IsolationToken(in RunnerRegistration registration)
+        => registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess";
 
     private static bool IsHostingKey(string key)
         => key.StartsWith(HostingPrefix, StringComparison.Ordinal);

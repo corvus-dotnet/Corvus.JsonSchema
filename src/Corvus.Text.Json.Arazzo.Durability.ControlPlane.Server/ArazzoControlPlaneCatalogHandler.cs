@@ -517,6 +517,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // The pinned environment must exist and be in the caller's reach (non-disclosing 404) when an environment
         // registry is wired; without one the pin is recorded unvalidated. `var` avoids the Environment type-name clash.
+        // The environment also governs the minimum run isolation (ADR 0058), resolved once here (realise-at-leaf) to match
+        // against a hosting runner's advertised model at the gate below; absent an environment registry it stays InProcess.
+        RunIsolationModel requiredIsolation = RunIsolationModel.InProcess;
         if (this.environmentStore is { } envStore)
         {
             using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
@@ -525,6 +528,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                 return StartCatalogWorkflowRunResult.NotFound(
                     Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
             }
+
+            requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
@@ -561,12 +566,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             }
         }
 
-        // Gate on a registered runner that hosts this version: a run accepted with no runner to execute it would
-        // sit Pending indefinitely, so refuse it up front with a 409 the caller can act on.
-        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        // Gate on a registered runner that hosts this version AND provides the environment's required isolation (ADR 0058):
+        // a run accepted with no runner to execute it would sit Pending indefinitely, so refuse it up front with a 409.
+        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, requiredIsolation, cancellationToken).ConfigureAwait(false))
         {
             return StartCatalogWorkflowRunResult.Conflict(
-                Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
+                Problem("no-runner", "No hosting runner", 409, requiredIsolation == RunIsolationModel.Isolated
+                    ? $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}' with the {requiredIsolation} isolation environment '{environment}' requires; start an isolated-backend runner that hosts it and retry."
+                    : $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
         }
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's

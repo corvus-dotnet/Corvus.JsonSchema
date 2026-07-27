@@ -192,7 +192,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
             }
         }
 
-        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, cancellationToken).ConfigureAwait(false))
+        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, RunIsolationModel.InProcess, cancellationToken).ConfigureAwait(false))
         {
             return CreateScheduleResult.Conflict(
                 Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {targetVersion} of '{targetBase}'; a schedule needs one to run its target."), workspace);
@@ -330,7 +330,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
             }
         }
 
-        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, cancellationToken).ConfigureAwait(false))
+        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, RunIsolationModel.InProcess, cancellationToken).ConfigureAwait(false))
         {
             return RunScheduleNowResult.Conflict(Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {targetVersion} of '{targetBase}'."), workspace);
         }

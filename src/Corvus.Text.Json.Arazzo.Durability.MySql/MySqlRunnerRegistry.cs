@@ -29,6 +29,7 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             runner_id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
             base_workflow_id VARCHAR(255) NOT NULL,
             version_number INT NOT NULL,
+            isolation_model VARCHAR(50) NULL,
             PRIMARY KEY (runner_id, base_workflow_id, version_number),
             INDEX ix_runner_hosted_versions_version (base_workflow_id, version_number),
             CONSTRAINT fk_runner_hosted FOREIGN KEY (runner_id) REFERENCES runner_registrations (runner_id) ON DELETE CASCADE
@@ -137,14 +138,18 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // The runner's isolation (ADR 0058) is a runner-level field, denormalised onto each hosting-index row so the
+        // start-gate EXISTS query can require it without a join. Absent isolationModel means InProcess.
+        string isolationModel = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess";
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
             await using MySqlCommand insert = connection.CreateCommand();
             insert.Transaction = transaction;
-            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number) VALUES (@runnerId, @baseWorkflowId, @versionNumber);";
+            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number, isolation_model) VALUES (@runnerId, @baseWorkflowId, @versionNumber, @isolationModel);";
             insert.Parameters.AddWithValue("@runnerId", runnerId);
             insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
             insert.Parameters.AddWithValue("@versionNumber", versionNumber);
+            insert.Parameters.AddWithValue("@isolationModel", isolationModel);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -152,14 +157,18 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT EXISTS(SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber);";
+
+        // ADR 0058: an InProcess requirement is met by any hosting runner; an Isolated requirement only by a runner whose
+        // denormalised isolation_model is 'Isolated'. @requiredIsolation is the single bounded wire string for this call.
+        command.CommandText = "SELECT EXISTS(SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber AND (@requiredIsolation = 'InProcess' OR isolation_model = 'Isolated'));";
         command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
         command.Parameters.AddWithValue("@versionNumber", versionNumber);
+        command.Parameters.AddWithValue("@requiredIsolation", requiredIsolation == RunIsolationModel.Isolated ? "Isolated" : "InProcess");
         return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)) != 0;
     }
 

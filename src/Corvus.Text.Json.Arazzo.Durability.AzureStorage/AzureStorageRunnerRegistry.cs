@@ -134,19 +134,32 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         };
         await this.runners.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
 
+        // The runner's isolation (ADR 0058) is a runner-level field, denormalised onto each hosting-index entity so the
+        // start-gate partition query can require it without reading the runner. Absent isolationModel means InProcess.
+        string isolationModel = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess";
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
-            var index = new TableEntity(HostingPartition(baseWorkflowId, versionNumber), runnerId);
+            var index = new TableEntity(HostingPartition(baseWorkflowId, versionNumber), runnerId)
+            {
+                ["IsolationModel"] = isolationModel,
+            };
             await this.hosting.UpsertEntityAsync(index, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         string partition = HostingPartition(baseWorkflowId, versionNumber);
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {partition}");
+
+        // ADR 0058: an InProcess requirement matches any hosting entity in the partition; an Isolated requirement adds the
+        // denormalised IsolationModel column condition, so only entities projected from an isolated runner match. The
+        // isolated value rides as a query-filter parameter (a single bounded literal), quoted/escaped by CreateQueryFilter.
+        const string isolatedValue = "Isolated";
+        string filter = requiredIsolation == RunIsolationModel.Isolated
+            ? TableClient.CreateQueryFilter($"PartitionKey eq {partition} and IsolationModel eq {isolatedValue}")
+            : TableClient.CreateQueryFilter($"PartitionKey eq {partition}");
         IAsyncEnumerator<TableEntity> enumerator = this.hosting
             .QueryAsync<TableEntity>(filter, maxPerPage: 1, select: ["PartitionKey"], cancellationToken: cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
