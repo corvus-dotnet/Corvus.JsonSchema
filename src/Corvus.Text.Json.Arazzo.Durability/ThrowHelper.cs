@@ -94,6 +94,21 @@ internal static class ThrowHelper
 
     [DoesNotReturn]
     [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentInstantNotFormatted()
+        => throw new FormatException(SR.WorkflowDeploymentInstantNotFormatted);
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentTokenInvalidBase64()
+        => throw new FormatException(SR.WorkflowDeploymentTokenInvalidBase64);
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentTokenMalformed()
+        => throw new FormatException(SR.WorkflowDeploymentTokenMalformed);
+
+    [DoesNotReturn]
+    [StackTraceHidden]
     public static void ThrowSecurityRuleTokenInvalidBase64()
         => throw new FormatException(SR.SecurityRuleTokenInvalidBase64);
 
@@ -362,6 +377,17 @@ internal static class ThrowHelper
     public static void ThrowNativeBuildJobNotBuildingForRenewal(string id)
         => throw new NativeBuildJobStateException(id, SR.Format(SR.NativeBuildJobNotBuildingForRenewal, id));
 
+    // ── Workflow deployment state ───────────────────────────────────────────────────────────────────────────────────
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentNotDeployingForCompletion(string id)
+        => throw new WorkflowDeploymentStateException(id, SR.Format(SR.WorkflowDeploymentNotDeployingForCompletion, id));
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentNotDeployingForRenewal(string id)
+        => throw new WorkflowDeploymentStateException(id, SR.Format(SR.WorkflowDeploymentNotDeployingForRenewal, id));
+
     // ── Secured catalog / administration ────────────────────────────────────────────────────────────────────────────
     [DoesNotReturn]
     [StackTraceHidden]
@@ -473,6 +499,11 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowNativeBuildJobRequiresContent()
         => throw new ArgumentException(SR.NativeBuildJobRequiresContent, "draft");
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentRequiresContent()
+        => throw new ArgumentException(SR.WorkflowDeploymentRequiresContent, "draft");
 
     [DoesNotReturn]
     [StackTraceHidden]

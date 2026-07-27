@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkflowDeployment",
+  "description": "The persisted state of an asynchronous deployment of a workflow version's signed native binary to a function platform for one runtime target in one environment (ADR 0055): the target (base workflow id + version + environment + runtime identifier), the deployment's lifecycle state, the resulting function invoke URL, and audit/optimistic-concurrency metadata. Its identity is the (baseWorkflowId, versionNumber, environment, runtimeIdentifier) tuple, from which the id is derived deterministically, so enqueuing is idempotent per target (a redeploy resets the same deployment to Queued). A background worker drives it Queued -> Deploying -> Deployed | Failed. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "baseWorkflowId", "versionNumber", "environment", "runtimeIdentifier", "status", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The deployment's stable identifier, derived deterministically from its target tuple."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id whose version is being deployed."
+    },
+    "versionNumber": {
+      "type": "integer",
+      "format": "int32",
+      "minimum": 1,
+      "description": "The version number being deployed."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The target environment the binary is deployed to; deployments are environment-pinned (per-(env, version) baked)."
+    },
+    "runtimeIdentifier": {
+      "type": "string",
+      "description": "The runtime identifier (RID) the native binary targets, for example 'linux-x64'."
+    },
+    "status": {
+      "type": "string",
+      "description": "The deployment's lifecycle state.",
+      "enum": ["Queued", "Deploying", "Deployed", "Failed"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the deployment was enqueued."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a worker claimed the deployment and started deploying, if started."
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the deployment completed (reached Deployed or Failed), if completed."
+    },
+    "failureReason": {
+      "type": "string",
+      "description": "The reason the deployment failed, if it failed."
+    },
+    "functionUrl": {
+      "type": "string",
+      "description": "The deployed function's invoke URL, set when the deployment reaches Deployed."
+    },
+    "claimedBy": {
+      "type": "string",
+      "description": "The worker that claimed the deployment and is deploying it, if claimed."
+    },
+    "leaseExpiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The instant after which the claiming worker's advisory lease on this Deploying deployment expires and another worker may reclaim it (ADR 0056). The claiming worker renews it on a heartbeat while the deploy runs; a deployment left Deploying with no live lease is an orphan of a crashed worker and is reclaimable. Present only while Deploying; the etag is the authoritative ownership token, this is the liveness signal."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}

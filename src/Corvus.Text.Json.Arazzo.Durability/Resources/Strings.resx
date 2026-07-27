@@ -99,6 +99,15 @@
   <data name="NativeBuildJobTokenMalformed" xml:space="preserve">
     <value>The native-build-job page token is malformed.</value>
   </data>
+  <data name="WorkflowDeploymentInstantNotFormatted" xml:space="preserve">
+    <value>The workflow-deployment instant could not be formatted into the page token.</value>
+  </data>
+  <data name="WorkflowDeploymentTokenInvalidBase64" xml:space="preserve">
+    <value>The workflow-deployment page token is not valid base64url.</value>
+  </data>
+  <data name="WorkflowDeploymentTokenMalformed" xml:space="preserve">
+    <value>The workflow-deployment page token is malformed.</value>
+  </data>
   <data name="SecurityRuleTokenInvalidBase64" xml:space="preserve">
     <value>The security-rule page token is not valid base64url.</value>
   </data>
@@ -301,6 +310,14 @@
     <value>The native build job '{0}' cannot have its lease renewed because it is not building.</value>
   </data>
 
+  <!-- Workflow deployment state -->
+  <data name="WorkflowDeploymentNotDeployingForCompletion" xml:space="preserve">
+    <value>The workflow deployment '{0}' cannot be completed because it is not deploying.</value>
+  </data>
+  <data name="WorkflowDeploymentNotDeployingForRenewal" xml:space="preserve">
+    <value>The workflow deployment '{0}' cannot have its lease renewed because it is not deploying.</value>
+  </data>
+
   <!-- Secured catalog / administration -->
   <data name="WorkflowIdAlreadyVersioned" xml:space="preserve">
     <value>The submitted workflow id '{0}' already carries a version suffix; submit the base id without '-vN'.</value>
@@ -374,6 +391,9 @@
   </data>
   <data name="NativeBuildJobRequiresContent" xml:space="preserve">
     <value>A native build job requires a 'baseWorkflowId', 'versionNumber', 'environment', and 'runtimeIdentifier'.</value>
+  </data>
+  <data name="WorkflowDeploymentRequiresContent" xml:space="preserve">
+    <value>A workflow deployment requires a 'baseWorkflowId', 'versionNumber', 'environment', and 'runtimeIdentifier'.</value>
   </data>
   <data name="RunnerAuthorizationRequiresContent" xml:space="preserve">
     <value>An environment-runner authorization requires an 'environment' and 'runnerId'.</value>
