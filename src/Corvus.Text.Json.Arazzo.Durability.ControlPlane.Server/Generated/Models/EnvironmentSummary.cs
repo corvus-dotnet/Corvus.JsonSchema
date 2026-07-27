@@ -352,6 +352,27 @@ public readonly partial struct EnvironmentSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>requiredIsolation</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentSummary.RequiredIsolationEntity RequiredIsolation
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequiredIsolationUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentSummary.RequiredIsolationEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>requireEvidence</c> property.
     /// </summary>
     /// <remarks>
@@ -866,6 +887,11 @@ public readonly partial struct EnvironmentSummary
         public const string Name = "name";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RequiredIsolation"/>.
+        /// </summary>
+        public const string RequiredIsolation = "requiredIsolation";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="RequireEvidence"/>.
         /// </summary>
         public const string RequireEvidence = "requireEvidence";
@@ -919,6 +945,11 @@ public readonly partial struct EnvironmentSummary
         /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RequiredIsolation"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequiredIsolationUtf8 => "requiredIsolation"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="RequireEvidence"/>.
@@ -982,6 +1013,11 @@ public readonly partial struct EnvironmentSummary
         public static ReadOnlySpan<byte> Name => "name"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RequiredIsolation"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequiredIsolation => "requiredIsolation"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="RequireEvidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RequireEvidence => "requireEvidence"u8;
@@ -1042,6 +1078,11 @@ public readonly partial struct EnvironmentSummary
         /// Gets the pre-baked property name blob for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RequiredIsolation"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequiredIsolation => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x49, 0x73, 0x6F, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="RequireEvidence"/>.

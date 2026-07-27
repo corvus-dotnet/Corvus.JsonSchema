@@ -225,6 +225,27 @@ public readonly partial struct RunnerRegistrationRequest
     }
 
     /// <summary>
+    /// Gets the (optional) <c>isolationModel</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The run isolation this runner&#39;s execution backend provides (ADR 0058): InProcess or Isolated. Absent means InProcess. The start gate matches a target environment&#39;s requiredIsolation against this (Isolated is stronger than InProcess).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.IsolationModelEntity IsolationModel
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsolationModelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.IsolationModelEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>maxConcurrency</c> property.
     /// </summary>
     /// <remarks>
@@ -800,6 +821,11 @@ public readonly partial struct RunnerRegistrationRequest
         public const string HostsDraftRuns = "hostsDraftRuns";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public const string IsolationModel = "isolationModel";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
         public const string MaxConcurrency = "maxConcurrency";
@@ -838,6 +864,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the JSON property name for <see cref="HostsDraftRuns"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostsDraftRunsUtf8 => "hostsDraftRuns"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModelUtf8 => "isolationModel"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="MaxConcurrency"/>.
@@ -886,6 +917,11 @@ public readonly partial struct RunnerRegistrationRequest
         public static ReadOnlySpan<byte> HostsDraftRuns => "hostsDraftRuns"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModel => "isolationModel"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
         public static ReadOnlySpan<byte> MaxConcurrency => "maxConcurrency"u8;
@@ -931,6 +967,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the pre-baked property name blob for <see cref="HostsDraftRuns"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostsDraftRuns => [0x05, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModel => [0x05, 0x01, 0x00, 0x00, 0x22, 0x69, 0x73, 0x6F, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x4D, 0x6F, 0x64, 0x65, 0x6C, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="MaxConcurrency"/>.

@@ -54,6 +54,11 @@
     "servesSchedules": {
       "type": "boolean",
       "description": "Whether this runner claims durable schedule runs (the reserved $schedule workflow id, #896) pinned to its environment — the built-in scheduler engine seam. Absent means false; the control plane surfaces per-environment scheduling capability from it and refuses to create a schedule in an environment no runner serves."
+    },
+    "isolationModel": {
+      "type": "string",
+      "enum": ["InProcess", "Isolated"],
+      "description": "The run isolation this runner's execution backend provides (ADR 0058): 'InProcess' (the in-process collectible-ALC backend) or 'Isolated' (an out-of-process serverless or container backend). Absent means 'InProcess'. The start gate matches a target environment's requiredIsolation against this: a runner satisfies a requirement when its model is at least as strong (Isolated is stronger than InProcess)."
     }
   },
   "additionalProperties": false,

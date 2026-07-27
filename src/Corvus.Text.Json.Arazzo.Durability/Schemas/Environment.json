@@ -25,6 +25,11 @@
       "type": "boolean",
       "description": "Development-class flag (workflow-designer design §18): when true, working-copy DRAFTS may execute here as debug runs, under this environment's credential bindings. Absent/false — only published, availability-granted versions run here. Mutable."
     },
+    "requiredIsolation": {
+      "type": "string",
+      "enum": ["InProcess", "Isolated"],
+      "description": "The minimum run isolation this environment requires (ADR 0058). 'Isolated' admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; 'InProcess' (the default when absent) also allows the in-process collectible-ALC backend. A governed policy an environment administrator sets. Mutable."
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
