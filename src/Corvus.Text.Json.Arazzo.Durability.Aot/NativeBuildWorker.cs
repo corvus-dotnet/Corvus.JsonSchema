@@ -33,6 +33,7 @@ public sealed class NativeBuildWorker
     private readonly INativeBuildJobStore jobs;
     private readonly IWorkflowCatalogStore catalog;
     private readonly WorkflowAotBuildService buildService;
+    private readonly TimeProvider timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NativeBuildWorker"/> class.
@@ -40,7 +41,8 @@ public sealed class NativeBuildWorker
     /// <param name="jobs">The build-job store the worker claims from and completes.</param>
     /// <param name="catalog">The catalog the worker loads a version's package from and persists the attached binary back into.</param>
     /// <param name="buildService">The build service that verifies, compiles, signs, and attaches the native binary for a target.</param>
-    public NativeBuildWorker(INativeBuildJobStore jobs, IWorkflowCatalogStore catalog, WorkflowAotBuildService buildService)
+    /// <param name="timeProvider">The time source driving the lease-renewal heartbeat; defaults to <see cref="TimeProvider.System"/>.</param>
+    public NativeBuildWorker(INativeBuildJobStore jobs, IWorkflowCatalogStore catalog, WorkflowAotBuildService buildService, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -48,6 +50,7 @@ public sealed class NativeBuildWorker
         this.jobs = jobs;
         this.catalog = catalog;
         this.buildService = buildService;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -59,9 +62,10 @@ public sealed class NativeBuildWorker
     /// </summary>
     /// <param name="workerId">The identifier of this worker, stamped as the job's <c>claimedBy</c> for audit.</param>
     /// <param name="leaseTtl">How long the claiming worker's advisory lease is held before another worker may reclaim the job as an orphan (ADR 0056).</param>
+    /// <param name="leaseRenewalInterval">How often the worker renews its lease while the build runs; must be comfortably below <paramref name="leaseTtl"/>.</param>
     /// <param name="cancellationToken">A cancellation token; a cancellation leaves any claimed job Building for reclaim.</param>
     /// <returns>The outcome of the cycle: idle, a completion (Ready or Failed), or a superseded completion.</returns>
-    public async ValueTask<NativeBuildWorkerResult> DriveNextAsync(string workerId, TimeSpan leaseTtl, CancellationToken cancellationToken)
+    public async ValueTask<NativeBuildWorkerResult> DriveNextAsync(string workerId, TimeSpan leaseTtl, TimeSpan leaseRenewalInterval, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workerId);
 
@@ -71,8 +75,8 @@ public sealed class NativeBuildWorker
         string runtimeIdentifier;
         WorkflowEtag claimedEtag;
 
-        // Claim the oldest queued job (Queued -> Building) and read the leaf identifiers the stores need, then release the
-        // pooled claim document before the long build so its buffer is not rented across the compile.
+        // Claim the oldest claimable job (Queued, or an orphaned Building — ADR 0056) and read the leaf identifiers the
+        // stores need, then release the pooled claim document before the long build so its buffer is not rented across it.
         using (ParsedJsonDocument<NativeBuildJob>? claimedDoc = await this.jobs.ClaimNextQueuedAsync(workerId, leaseTtl, cancellationToken).ConfigureAwait(false))
         {
             if (claimedDoc is not { } claimed)
@@ -88,11 +92,113 @@ public sealed class NativeBuildWorker
             claimedEtag = job.EtagValue;
         }
 
+        // Renew the lease on a heartbeat while the (minutes-long) build runs so no other worker reclaims this job as an
+        // orphan (ADR 0056). Each renewal bumps the etag, so the heartbeat threads the current etag forward and the
+        // completion uses the latest; the heartbeat is stopped before completing so that etag is stable. A renewal that
+        // conflicts means another worker reclaimed an expired lease (this worker lost it): the heartbeat records that and the
+        // cycle abandons its completion as superseded (the etag would reject it anyway, but this avoids a wasted round trip).
+        Lock etagGate = new();
+        WorkflowEtag currentEtag = claimedEtag;
+        bool leaseLost = false;
+        using var stopHeartbeat = new CancellationTokenSource();
+
+        async Task RenewLeaseLoopAsync()
+        {
+            try
+            {
+                using var timer = new PeriodicTimer(leaseRenewalInterval, this.timeProvider);
+                while (await timer.WaitForNextTickAsync(stopHeartbeat.Token).ConfigureAwait(false))
+                {
+                    WorkflowEtag expected;
+                    lock (etagGate)
+                    {
+                        expected = currentEtag;
+                    }
+
+                    try
+                    {
+                        using ParsedJsonDocument<NativeBuildJob>? renewed = await this.jobs.RenewLeaseAsync(id, expected, leaseTtl, stopHeartbeat.Token).ConfigureAwait(false);
+                        if (renewed is not { } r)
+                        {
+                            lock (etagGate)
+                            {
+                                leaseLost = true; // the job vanished (deleted mid-build)
+                            }
+
+                            return;
+                        }
+
+                        lock (etagGate)
+                        {
+                            currentEtag = r.RootElement.EtagValue;
+                        }
+                    }
+                    catch (NativeBuildJobConflictException)
+                    {
+                        lock (etagGate)
+                        {
+                            leaseLost = true; // reclaimed by another worker
+                        }
+
+                        return;
+                    }
+                    catch (NativeBuildJobStateException)
+                    {
+                        lock (etagGate)
+                        {
+                            leaseLost = true; // no longer Building (reclaimed then re-completed)
+                        }
+
+                        return;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // The build finished (or a shutdown): stop renewing.
+            }
+        }
+
+        Task heartbeat = RenewLeaseLoopAsync();
+        NativeBuildJobCompletion completion;
+        try
+        {
+            completion = await this.DetermineCompletionAsync(id, baseWorkflowId, versionNumber, runtimeIdentifier, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            // Stop the heartbeat and let it drain before reading the final etag, so no renewal races the completion.
+            await stopHeartbeat.CancelAsync().ConfigureAwait(false);
+            await heartbeat.ConfigureAwait(false);
+        }
+
+        WorkflowEtag finalEtag;
+        bool lost;
+        lock (etagGate)
+        {
+            finalEtag = currentEtag;
+            lost = leaseLost;
+        }
+
+        if (lost)
+        {
+            return NativeBuildWorkerResult.Superseded(id, runtimeIdentifier);
+        }
+
+        return await this.CompleteAsync(id, runtimeIdentifier, completion, finalEtag, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Loads the package, builds and attaches the native binary, and persists it, returning the terminal completion to apply
+    // (Ready, or Failed with a reason). A bad input or a native-AOT compile failure becomes a Failed completion (never
+    // thrown), so one bad job does not stall the worker; a shutdown cancellation is propagated (the job is left Building for
+    // a later reclaim, not marked failed). This runs under the lease heartbeat driven by the caller.
+    private async ValueTask<NativeBuildJobCompletion> DetermineCompletionAsync(string id, string baseWorkflowId, int versionNumber, string runtimeIdentifier, CancellationToken cancellationToken)
+    {
         // Load the version's package (carrying the signed executor); its bytes flow straight into the build, never a string.
         ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
         if (package is not { } packageBytes)
         {
-            return await this.CompleteFailedAsync(id, runtimeIdentifier, VersionGoneReason(baseWorkflowId, versionNumber), claimedEtag, cancellationToken).ConfigureAwait(false);
+            return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, VersionGoneReason(baseWorkflowId, versionNumber));
         }
 
         WorkflowAotBuildOutcome outcome;
@@ -109,13 +215,13 @@ public sealed class NativeBuildWorker
         {
             // Bad input (an unsigned, tampered, or untrusted executor: WorkflowAotBuildException) or an unexpected builder
             // failure must terminate the job as Failed with the reason, so it is not orphaned in the Building state.
-            return await this.CompleteFailedAsync(id, runtimeIdentifier, Summarize(ex.Message), claimedEtag, cancellationToken).ConfigureAwait(false);
+            return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, Summarize(ex.Message));
         }
 
         if (!outcome.Succeeded)
         {
             // A clean native-AOT compile failure (an AOT-cleanliness gap): record the build log as the failure reason.
-            return await this.CompleteFailedAsync(id, runtimeIdentifier, Summarize(outcome.Log), claimedEtag, cancellationToken).ConfigureAwait(false);
+            return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, Summarize(outcome.Log));
         }
 
         // Persist the attached binary back into the version (metadata-only: the content hash is unchanged, ADR 0055).
@@ -128,15 +234,12 @@ public sealed class NativeBuildWorker
         {
             // The update would change immutable content — a logic error (the build attaches only metadata); record it as
             // Failed rather than looping, since a retry would fail identically.
-            return await this.CompleteFailedAsync(id, runtimeIdentifier, Summarize(ex.Message), claimedEtag, cancellationToken).ConfigureAwait(false);
+            return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, Summarize(ex.Message));
         }
 
-        if (!updated)
-        {
-            return await this.CompleteFailedAsync(id, runtimeIdentifier, VersionGoneReason(baseWorkflowId, versionNumber), claimedEtag, cancellationToken).ConfigureAwait(false);
-        }
-
-        return await this.CompleteAsync(id, runtimeIdentifier, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), claimedEtag, cancellationToken).ConfigureAwait(false);
+        return updated
+            ? new NativeBuildJobCompletion(NativeBuildJobStatus.Ready)
+            : new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, VersionGoneReason(baseWorkflowId, versionNumber));
     }
 
     // The message for a version that no longer exists (deleted between enqueue and build, or mid-build).
@@ -157,9 +260,6 @@ public sealed class NativeBuildWorker
             ? message
             : string.Concat("...(truncated)\n", message.AsSpan(message.Length - MaxFailureReasonLength));
     }
-
-    private async ValueTask<NativeBuildWorkerResult> CompleteFailedAsync(string id, string runtimeIdentifier, string failureReason, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => await this.CompleteAsync(id, runtimeIdentifier, new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, failureReason), expectedEtag, cancellationToken).ConfigureAwait(false);
 
     private async ValueTask<NativeBuildWorkerResult> CompleteAsync(string id, string runtimeIdentifier, NativeBuildJobCompletion completion, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
     {

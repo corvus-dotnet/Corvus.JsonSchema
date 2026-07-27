@@ -55,7 +55,7 @@ public sealed class NativeBuildBackgroundService : BackgroundService
                 // re-checks the stopping token, so a shutdown breaks out promptly even mid-drain.
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    NativeBuildWorkerResult result = await this.worker.DriveNextAsync(this.options.WorkerId, this.options.LeaseTtl, stoppingToken).ConfigureAwait(false);
+                    NativeBuildWorkerResult result = await this.worker.DriveNextAsync(this.options.WorkerId, this.options.LeaseTtl, this.options.LeaseRenewalInterval, stoppingToken).ConfigureAwait(false);
                     if (!result.Claimed)
                     {
                         break;
@@ -139,4 +139,9 @@ public sealed class NativeBuildWorkerOptions
     /// with margin; the default is five minutes, comfortably above a normal build time so a brief renewal hiccup does not
     /// trigger a spurious reclaim.</summary>
     public TimeSpan LeaseTtl { get; init; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>Gets how often the worker renews its lease while a build runs (ADR 0056). It must be comfortably below
+    /// <see cref="LeaseTtl"/> so several renewals fall within one lease; the default is thirty seconds, so a five-minute
+    /// lease tolerates several missed renewals before another worker reclaims a genuinely dead one.</summary>
+    public TimeSpan LeaseRenewalInterval { get; init; } = TimeSpan.FromSeconds(30);
 }

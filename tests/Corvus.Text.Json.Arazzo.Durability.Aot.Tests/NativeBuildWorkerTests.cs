@@ -50,7 +50,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ilc ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(verifier, Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Claimed.ShouldBeTrue();
         result.WasSuperseded.ShouldBeFalse();
@@ -82,7 +82,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Claimed.ShouldBeFalse();
         result.Outcome.ShouldBeNull();
@@ -102,7 +102,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Failure("error IL3050: reflection is not AOT-safe"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("IL3050");
@@ -131,7 +131,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("unsigned");
@@ -154,7 +154,7 @@ public sealed class NativeBuildWorkerTests
         var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
         result.FailureReason.ShouldNotBeNull().ShouldContain("no longer exists");
@@ -181,7 +181,7 @@ public sealed class NativeBuildWorkerTests
             beforeReturn: async () => await Enqueue(jobs, "checkout", 1, "production", "linux-x64"));
         var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
 
-        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), CancellationToken.None);
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
 
         result.Claimed.ShouldBeTrue();
         result.WasSuperseded.ShouldBeTrue();
@@ -190,6 +190,63 @@ public sealed class NativeBuildWorkerTests
         // The job is back to Queued (the fresh re-enqueue), not Ready — the next claim rebuilds it.
         using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
         job!.RootElement.StatusValue.ShouldBe("Queued");
+    }
+
+    [TestMethod]
+    public async Task A_long_build_renews_its_lease_and_completes_with_the_renewed_etag()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+
+        // The build blocks until the lease heartbeat has renewed at least once (the job's etag advances past the claim
+        // etag). A renewal bumps the etag, so completing with the stale claim etag would conflict — the worker must thread
+        // the renewed etag forward. A Ready outcome (not Superseded) is the proof it did.
+        var builder = new FakeBuilder(
+            AotBuildResult.Success(Native, "ok"),
+            beforeReturn: () => WaitForEtagToAdvanceAsync(jobs, id, TimeSpan.FromSeconds(10)));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        // A short renewal interval so a renewal fires well within the blocked build; the lease TTL stays generous.
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromSeconds(30), TimeSpan.FromMilliseconds(10), CancellationToken.None);
+
+        result.WasSuperseded.ShouldBeFalse();
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Ready);
+
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Ready");
+    }
+
+    [TestMethod]
+    public async Task A_lease_reclaimed_mid_build_is_abandoned_as_superseded()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var inner = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(inner, "checkout", 1, "production", "linux-x64");
+        var renewalAttempted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // The store fails every lease renewal with a conflict, modelling another worker reclaiming the (expired) lease. The
+        // build blocks until the heartbeat has attempted its renewal, so the worker observes the lost lease and abandons its
+        // completion as superseded rather than completing a build another worker now owns.
+        var jobs = new ReclaimOnRenewStore(inner, renewalAttempted);
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ok"), beforeReturn: () => renewalAttempted.Task);
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromSeconds(30), TimeSpan.FromMilliseconds(10), CancellationToken.None);
+
+        result.Claimed.ShouldBeTrue();
+        result.WasSuperseded.ShouldBeTrue();
+        result.Outcome.ShouldBeNull();
+
+        // The superseded worker never completed the job, so it is left Building for the reclaiming worker.
+        using ParsedJsonDocument<NativeBuildJob>? job = await inner.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Building");
     }
 
     [TestMethod]
@@ -261,6 +318,33 @@ public sealed class NativeBuildWorkerTests
         }
 
         throw new TimeoutException($"Fewer than {expected} jobs reached the Ready state within {timeout}.");
+    }
+
+    // Waits until the job's etag advances past whatever it is on entry — the observable effect of a lease renewal (each
+    // renewal bumps the etag). Polls rather than sleeping a fixed duration so it is robust to timer jitter.
+    private static async Task WaitForEtagToAdvanceAsync(InMemoryNativeBuildJobStore jobs, string id, TimeSpan timeout)
+    {
+        string baseline;
+        using (ParsedJsonDocument<NativeBuildJob>? doc = await jobs.GetAsync(id, CancellationToken.None))
+        {
+            baseline = doc!.RootElement.EtagValue.Value!;
+        }
+
+        DateTime deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            using (ParsedJsonDocument<NativeBuildJob>? doc = await jobs.GetAsync(id, CancellationToken.None))
+            {
+                if (doc!.RootElement.EtagValue.Value != baseline)
+                {
+                    return;
+                }
+            }
+
+            await Task.Delay(5);
+        }
+
+        throw new TimeoutException($"The lease was not renewed (the etag did not advance) within {timeout}.");
     }
 
     private static AotHostAppOptions Options()
@@ -359,5 +443,32 @@ public sealed class NativeBuildWorkerTests
 
             return result;
         }
+    }
+
+    // Wraps a real store but fails every lease renewal with a conflict, modelling another worker having reclaimed the
+    // (expired) lease. Signals when the first renewal is attempted so a test can hold a build in flight until the worker has
+    // observed the lost lease. Every other operation delegates to the inner store.
+    private sealed class ReclaimOnRenewStore(INativeBuildJobStore inner, TaskCompletionSource renewalAttempted) : INativeBuildJobStore
+    {
+        public ValueTask<ParsedJsonDocument<NativeBuildJob>> EnqueueAsync(NativeBuildJob draft, string actor, CancellationToken cancellationToken)
+            => inner.EnqueueAsync(draft, actor, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<NativeBuildJob>?> GetAsync(string id, CancellationToken cancellationToken)
+            => inner.GetAsync(id, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<NativeBuildJob>?> ClaimNextQueuedAsync(string claimedBy, TimeSpan leaseTtl, CancellationToken cancellationToken)
+            => inner.ClaimNextQueuedAsync(claimedBy, leaseTtl, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<NativeBuildJob>?> CompleteAsync(string id, NativeBuildJobCompletion completion, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+            => inner.CompleteAsync(id, completion, expectedEtag, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<NativeBuildJob>?> RenewLeaseAsync(string id, WorkflowEtag expectedEtag, TimeSpan leaseTtl, CancellationToken cancellationToken)
+        {
+            renewalAttempted.TrySetResult();
+            throw new NativeBuildJobConflictException(id, expectedEtag); // the lease was reclaimed
+        }
+
+        public ValueTask<PooledDocumentList<NativeBuildJob>> ListAsync(NativeBuildJobQuery query, CancellationToken cancellationToken)
+            => inner.ListAsync(query, cancellationToken);
     }
 }
