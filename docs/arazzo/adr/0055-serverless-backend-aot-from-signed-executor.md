@@ -30,6 +30,17 @@ Execution is a pluggable backend seam. A runner dispatches a run to a backend th
 
 This ADR is **Accepted**. The seam and the serverless backend have landed, and the AWS Lambda backend is proven end to end.
 
+## Amendment (2026-07-28): the compilation form-factor is per target — Native AOT for runtime-less targets, ReadyToRun for runtime-present ones
+
+The decision above compiled the serverless artifact to Native AOT for every target. Building the second target (Azure Functions, [ADR 0061](0061-azure-functions-serverless-target-isolated-worker-readytorun.md)) showed the Native-AOT mandate is a property of the *target*, not of this design: it is forced only where the platform provides no .NET runtime.
+
+- **AWS Lambda's `provided.al2023` custom runtime has no .NET runtime on the box**, so a function there must be a self-contained native binary — nothing else can run. Self-contained plus fast cold start ⟹ Native AOT. **Lambda stays Native AOT.**
+- **Azure Functions' `dotnet-isolated` worker runs on a host that has the .NET runtime.** A self-contained AOT binary buys nothing there, and Azure's platform-optimal cold start is **framework-dependent ReadyToRun plus the host's placeholder pre-warm** — a path a user Native-AOT app opts out of (the Functions team's own position is that R2R yields better cold start than Native AOT in their environment). So **the Azure target is compiled framework-dependent ReadyToRun**, not Native AOT.
+
+So the workflow builder compiles the assembled host-app in a **per-target form-factor**: self-contained Native AOT for a runtime-less target, framework-dependent ReadyToRun for a runtime-present one. The seam, the async publish state machine, the baked-executor-from-signed-IL, the deploy queue, and dispatch are all unchanged; only the host-app templates and the publish flags branch (the assembler's target axis).
+
+**The signing and provenance chain adapts without weakening.** For Native AOT the whole binary is signed at build and verified at deploy (above). ReadyToRun images *retain the IL*, so the R2R target verifies the **signed `executor.dll`** at deploy — the same verify-the-signed-executor model the in-process backend already uses at load — and the trusted set is the .NET/ASP.NET framework, the assembler-generated host, and the verified executor, exactly as for the in-process backend. A serverless deployment still runs only a verified executor; only the compilation form-factor differs by target.
+
 ## Consequences
 
 - A deployment selects an isolation model without changing the runner. The serverless backend gives per-run `Isolated` execution with no store credentials in the function.
