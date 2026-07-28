@@ -19,7 +19,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 /// </summary>
 public sealed class AotHostAppAssembler
 {
-    private const string ExecutorFileName = "executor.dll";
     private const string ProjectFileName = "fn.csproj";
     private const string ProgramFileName = "Program.cs";
     private const string NuGetConfigFileName = "nuget.config";
@@ -48,12 +47,18 @@ public sealed class AotHostAppAssembler
 
         string executorAssemblyName = ReadAssemblyName(executorAssembly);
 
+        // The executor file MUST be named after its assembly simple name: ILC (and the runtime AOT type loader) resolve a
+        // referenced assembly by simple name (GetModuleForSimpleName), NOT by the <Reference>'s HintPath — so a fixed
+        // 'executor.dll' whose assembly identity is 'Corvus.Dynamic.GeneratedTypes_<guid>' can't be found, and the entry
+        // type fails to load at startup with a type-loader FileNotFoundException for the executor assembly.
+        string executorFileName = $"{executorAssemblyName}.dll";
+
         var files = new List<AotProjectFile>
         {
             Text(ProgramFileName, Program(manifest.EntryType)),
             Text(ProjectFileName, Project(runtimeIdentifier, executorAssemblyName, options)),
             Text(NuGetConfigFileName, NuGetConfig(options)),
-            new(ExecutorFileName, executorAssembly),
+            new(executorFileName, executorAssembly),
         };
 
         return new AssembledHostApp(runtimeIdentifier, manifest.EntryType, manifest.EngineVersion!, files);
@@ -116,10 +121,15 @@ $"""
     <PackageReference Include="{options.LambdaShimPackageId}" Version="{options.RuntimePackageVersion}" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The version's already-signed executor IL; ILC links it into the native binary. -->
+    <!-- The version's already-signed executor IL; ILC links it into the native binary. The file is named after the
+         assembly simple name so ILC resolves it by name (see AotHostAppAssembler.Assemble). -->
     <Reference Include="{executorAssemblyName}">
-      <HintPath>{ExecutorFileName}</HintPath>
+      <HintPath>{executorAssemblyName}.dll</HintPath>
     </Reference>
+    <!-- Root the executor for ILC: its types are reached only through the entry type constructed in Program, so the
+         AOT trimmer would otherwise drop the assembly's metadata and the entry type fails to load at startup with a
+         type-loader FileNotFoundException for the executor assembly. Rooting keeps all its types + metadata compiled in. -->
+    <TrimmerRootAssembly Include="{executorAssemblyName}" />
   </ItemGroup>
 </Project>
 """;

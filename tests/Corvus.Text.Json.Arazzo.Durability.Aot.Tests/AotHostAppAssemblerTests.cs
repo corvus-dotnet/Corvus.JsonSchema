@@ -53,7 +53,10 @@ public sealed class AotHostAppAssemblerTests
         project.ShouldContain("<RuntimeIdentifier>linux-x64</RuntimeIdentifier>");
         project.ShouldContain("""<PackageReference Include="Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda" Version="5.0.0-local.2" />""");
         project.ShouldContain($"""<Reference Include="{StandInExecutorName}">""");
-        project.ShouldContain("<HintPath>executor.dll</HintPath>");
+        // The executor file is named after its assembly simple name so ILC resolves it by name (GetModuleForSimpleName),
+        // not by HintPath — otherwise the AOT type loader cannot find the executor assembly and the entry type fails to load.
+        project.ShouldContain($"<HintPath>{StandInExecutorName}.dll</HintPath>");
+        project.ShouldContain($"""<TrimmerRootAssembly Include="{StandInExecutorName}" />""");
     }
 
     [TestMethod]
@@ -78,7 +81,7 @@ public sealed class AotHostAppAssemblerTests
     {
         AssembledHostApp app = Assemble("linux-x64");
 
-        AotProjectFile executor = app.Files.Single(f => f.RelativePath == "executor.dll");
+        AotProjectFile executor = app.Files.Single(f => f.RelativePath == $"{StandInExecutorName}.dll");
         executor.Content.ToArray().ShouldBe(StandInExecutor);
     }
 
