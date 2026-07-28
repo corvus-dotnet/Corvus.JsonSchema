@@ -94,5 +94,11 @@ public static class PostgresControlPlaneDeployment
         await PostgresSourceStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresEnvironmentAdministratorStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresObservedIdentityStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
+
+        // Serverless execution backend (#876): the native-AOT build-job queue the control-plane build worker drains,
+        // and the workflow-deployment queue the RUNNER's deploy worker drains. Both are the store-as-queue boundary
+        // (ADR 0023) between the two processes, so the control plane owns their DDL like every other shared store.
+        await PostgresNativeBuildJobStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
+        await PostgresWorkflowDeploymentStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
     }
 }

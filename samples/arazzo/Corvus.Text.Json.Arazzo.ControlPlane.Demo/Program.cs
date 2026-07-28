@@ -264,6 +264,15 @@ if (enableSystemApprovalWorkflow)
 }
 PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);
 
+// Serverless execution backend (#876): the two store-as-queue boundaries between this control plane and the runner.
+// The build-job queue — this host's build worker (Phase 3b) drains it, compiling each Ready version into a native-AOT
+// executor package; and the workflow-deployment queue — the RUNNER's deploy worker drains it, deploying each package to
+// its cloud function. This host reads both back: the catalog handler's dispatch gate blocks a run until its deployment
+// is Deployed, and (Phase 3b) the build worker enqueues a deployment once a build reports Ready. Their schema is created
+// by PostgresControlPlaneDeployment.ProvisionAsync above (the control plane owns DDL); ConnectAsync never runs DDL.
+PostgresNativeBuildJobStore nativeBuildJobStore = await PostgresNativeBuildJobStore.ConnectAsync(dataSource);
+PostgresWorkflowDeploymentStore workflowDeploymentStore = await PostgresWorkflowDeploymentStore.ConnectAsync(dataSource);
+
 var draftRunner = new InProcessDraftRunner(
     stateStore,
     owner: "arazzo-inprocess-draft-runner",
@@ -783,7 +792,12 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
             Environment = "system",
         }
         : null,
-    onApprovalServiceBuilt: svc => seedApprovalService = svc);
+    onApprovalServiceBuilt: svc => seedApprovalService = svc,
+    // Serverless execution backend (#876): the shared build-job + workflow-deployment queues. Passing the deployment
+    // store lights up the catalog handler's dispatch gate (a run of an Isolated-backend version is refused until its
+    // deployment reaches Deployed); passing the build-job store lets the build worker (Phase 3b) drain it here.
+    nativeBuildJobStore: nativeBuildJobStore,
+    workflowDeploymentStore: workflowDeploymentStore);
 
 // oscar's PENDING access request (the approver-inbox content): seeded THROUGH the approval service, exactly as a real
 // caller submits — so with the system approval workflow enabled it starts the bootstrapped approval run and can be
