@@ -74,6 +74,81 @@ public sealed class NativeBuildWorkerTests
     }
 
     [TestMethod]
+    public async Task A_ready_build_enqueues_a_deployment_for_the_target()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Success(Native, "ilc ok"));
+        var deployments = new InMemoryWorkflowDeploymentStore();
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()), deployments);
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Ready);
+
+        // Deploy-on-build (ADR 0059): a Queued deployment now exists for the same target tuple, awaiting the runner's deploy
+        // worker. The query is scoped to (Queued, checkout, 1, production, linux-x64), so a count of one proves it is that
+        // exact target's deployment.
+        using PooledDocumentList<WorkflowDeployment> pending = await deployments.ListAsync(
+            new WorkflowDeploymentQuery(WorkflowDeploymentStatus.Queued, "checkout", 1, "production", "linux-x64"), CancellationToken.None);
+        pending.Count.ShouldBe(1);
+    }
+
+    [TestMethod]
+    public async Task A_failed_build_enqueues_no_deployment()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+        var builder = new FakeBuilder(AotBuildResult.Failure("error IL3050: reflection is not AOT-safe"));
+        var deployments = new InMemoryWorkflowDeploymentStore();
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()), deployments);
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Failed);
+
+        // A build that never reached Ready deploys nothing: no deployment (in any state) exists for the target.
+        using PooledDocumentList<WorkflowDeployment> any = await deployments.ListAsync(
+            new WorkflowDeploymentQuery(null, "checkout", 1, "production", "linux-x64"), CancellationToken.None);
+        any.Count.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_superseded_build_enqueues_no_deployment()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        await Enqueue(jobs, "checkout", 1, "production", "linux-x64");
+        var catalog = new FakeCatalog(package);
+
+        // The build re-enqueues the same target mid-build (a rebuild), so this cycle's completion is abandoned as superseded;
+        // a superseded cycle must not enqueue a deployment (the fresh rebuild will, when it reaches Ready).
+        var builder = new FakeBuilder(
+            AotBuildResult.Success(Native, "ok"),
+            beforeReturn: async () => await Enqueue(jobs, "checkout", 1, "production", "linux-x64"));
+        var deployments = new InMemoryWorkflowDeploymentStore();
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(TrustStore(("release-2026", key)), Signer(key), builder, Options()), deployments);
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
+
+        result.WasSuperseded.ShouldBeTrue();
+
+        using PooledDocumentList<WorkflowDeployment> any = await deployments.ListAsync(
+            new WorkflowDeploymentQuery(null, "checkout", 1, "production", "linux-x64"), CancellationToken.None);
+        any.Count.ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task Returns_idle_when_no_job_is_queued()
     {
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);

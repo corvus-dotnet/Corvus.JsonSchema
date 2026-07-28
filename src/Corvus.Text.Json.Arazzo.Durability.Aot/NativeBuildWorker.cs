@@ -11,9 +11,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 /// it atomically claims the oldest queued <see cref="NativeBuildJob"/> (Queued -> Building), loads that version's package,
 /// native-AOT compiles and signs its binary for the job's runtime target via <see cref="WorkflowAotBuildService"/>,
 /// persists the attached binary back into the version (a metadata-only update that preserves the content hash), and
-/// completes the job (Building -> Ready | Failed). It is host-agnostic — a poll loop (a hosted background service) calls
-/// <see cref="DriveNextAsync"/> repeatedly — so the claim/complete concurrency and the build orchestration are testable
-/// without a host, and any number of workers scale out safely because the claim is atomic.
+/// completes the job (Building -> Ready | Failed). On a Ready completion, when a deployment store is wired, it enqueues a
+/// Queued <see cref="WorkflowDeployment"/> for the same target so the runner's deploy worker deploys the version's serverless
+/// function from the just-attached binary (deploy-on-build, ADR 0059). It is host-agnostic — a poll loop (a hosted background
+/// service) calls <see cref="DriveNextAsync"/> repeatedly — so the claim/complete concurrency and the build orchestration are
+/// testable without a host, and any number of workers scale out safely because the claim is atomic.
 /// </summary>
 /// <remarks>
 /// <para>The version's package flows through as <see cref="ReadOnlyMemory{T}"/> of <see cref="byte"/> from load to build
@@ -33,6 +35,7 @@ public sealed class NativeBuildWorker
     private readonly INativeBuildJobStore jobs;
     private readonly IWorkflowCatalogStore catalog;
     private readonly WorkflowAotBuildService buildService;
+    private readonly IWorkflowDeploymentStore? deployments;
     private readonly TimeProvider timeProvider;
 
     /// <summary>
@@ -41,8 +44,11 @@ public sealed class NativeBuildWorker
     /// <param name="jobs">The build-job store the worker claims from and completes.</param>
     /// <param name="catalog">The catalog the worker loads a version's package from and persists the attached binary back into.</param>
     /// <param name="buildService">The build service that verifies, compiles, signs, and attaches the native binary for a target.</param>
+    /// <param name="deployments">The workflow-deployment store (ADR 0059); when supplied, a build reaching Ready enqueues a
+    /// Queued deployment for the same target, which the runner's deploy worker claims and deploys (deploy-on-build). <see langword="null"/>
+    /// enqueues nothing, for an in-process-only deployment that never deploys a serverless function.</param>
     /// <param name="timeProvider">The time source driving the lease-renewal heartbeat; defaults to <see cref="TimeProvider.System"/>.</param>
-    public NativeBuildWorker(INativeBuildJobStore jobs, IWorkflowCatalogStore catalog, WorkflowAotBuildService buildService, TimeProvider? timeProvider = null)
+    public NativeBuildWorker(INativeBuildJobStore jobs, IWorkflowCatalogStore catalog, WorkflowAotBuildService buildService, IWorkflowDeploymentStore? deployments = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -50,6 +56,7 @@ public sealed class NativeBuildWorker
         this.jobs = jobs;
         this.catalog = catalog;
         this.buildService = buildService;
+        this.deployments = deployments;
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -72,6 +79,7 @@ public sealed class NativeBuildWorker
         string id;
         string baseWorkflowId;
         int versionNumber;
+        string environment;
         string runtimeIdentifier;
         WorkflowEtag claimedEtag;
 
@@ -88,6 +96,7 @@ public sealed class NativeBuildWorker
             id = job.IdValue;
             baseWorkflowId = job.BaseWorkflowIdValue;
             versionNumber = job.VersionNumberValue;
+            environment = job.EnvironmentValue;
             runtimeIdentifier = job.RuntimeIdentifierValue;
             claimedEtag = job.EtagValue;
         }
@@ -185,7 +194,21 @@ public sealed class NativeBuildWorker
             return NativeBuildWorkerResult.Superseded(id, runtimeIdentifier);
         }
 
-        return await this.CompleteAsync(id, runtimeIdentifier, completion, finalEtag, cancellationToken).ConfigureAwait(false);
+        NativeBuildWorkerResult result = await this.CompleteAsync(id, runtimeIdentifier, completion, finalEtag, cancellationToken).ConfigureAwait(false);
+
+        // Deploy-on-build (ADR 0059): a build reaching Ready is the trigger to deploy its serverless function. Enqueue a
+        // Queued deployment for the same target tuple so the runner's deploy worker claims it, reads the now-attached binary,
+        // verifies it, and deploys it. Idempotent per target, so a rebuild reaching Ready re-requests the deploy (a redeploy
+        // of the new binary), and it fires only on a genuine Ready completion (not Failed, not a superseded rebuild) and only
+        // when a deployment store is wired (an in-process-only deployment enqueues nothing). A rebuild recovers the narrow
+        // window where the worker stops between the Ready completion and this enqueue.
+        if (this.deployments is { } deploymentStore && result is { WasSuperseded: false, Outcome: NativeBuildJobStatus.Ready })
+        {
+            using ParsedJsonDocument<WorkflowDeployment> draft = WorkflowDeployment.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier);
+            (await deploymentStore.EnqueueAsync(draft.RootElement, workerId, cancellationToken).ConfigureAwait(false)).Dispose();
+        }
+
+        return result;
     }
 
     // Loads the package, builds and attaches the native binary, and persists it, returning the terminal completion to apply

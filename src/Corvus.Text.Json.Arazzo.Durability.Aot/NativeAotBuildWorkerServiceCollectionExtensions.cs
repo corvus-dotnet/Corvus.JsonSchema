@@ -16,7 +16,10 @@ public static class NativeAotBuildWorkerServiceCollectionExtensions
     /// already have registered the worker's collaborators in the container: an
     /// <see cref="Corvus.Text.Json.Arazzo.Durability.Publishing.INativeBuildJobStore"/>, an
     /// <see cref="Corvus.Text.Json.Arazzo.Durability.IWorkflowCatalogStore"/>, and a <see cref="WorkflowAotBuildService"/>
-    /// (with the runtime target's <see cref="IWorkflowAotBuilder"/> and the trust store's signer and verifier).
+    /// (with the runtime target's <see cref="IWorkflowAotBuilder"/> and the trust store's signer and verifier). When the host
+    /// also registers an <see cref="Corvus.Text.Json.Arazzo.Durability.Publishing.IWorkflowDeploymentStore"/>, the worker
+    /// enqueues a deployment for each build that reaches Ready (deploy-on-build, ADR 0059); without one, builds complete but
+    /// nothing is deployed (an in-process-only deployment).
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="options">The worker identity and poll cadence.</param>
