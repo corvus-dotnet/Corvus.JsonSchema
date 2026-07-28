@@ -148,16 +148,37 @@ if ($missing) {
 }
 ```
 
-## Wiring status
+## From build to a live run
 
-The build service produces, signs, and attaches the native binary, and the deploy-time verification of the attestation
-exists (`WorkflowAotBuildService.VerifyNativeArtifact`). Publishing is now wired to the build. Promoting a version into
-an environment that requires Isolated execution queues its build for the environment's runtime target (deploy-on-publish),
+The path from a signed executor to a running serverless function is now wired end to end. Promoting a version into an
+environment that requires Isolated execution queues its build for the environment's runtime target (deploy-on-publish),
 and the start gate holds a run pinned to that environment until the build reaches ready (the dispatch-ready gate,
 `INativeBuildJobStore.IsTargetReadyAsync`). Dispatch also matches the environment's required isolation against a runner's
 advertised model (Phase 2, ADR 0058).
 
-One step remains to reach a live serverless deploy: the deploy step itself, which calls `VerifyNativeArtifact` and hands
-the verified binary to the function platform (AWS Lambda, then Azure Functions). Until it lands, the sample runners run
-in-process, this build path is exercised by the container integration proof rather than by a live serverless deploy, and
-an Isolated environment's runs stay held at the build-ready gate because there is no deployed function to dispatch to.
+The deploy step then hands the built binary to the function platform. `WorkflowDeployWorker` drives a per-target
+deployment through `Queued -> Deploying -> Deployed | Failed`, calling `WorkflowDeployService.DeployAsync`, which first
+verifies the attestation (`WorkflowAotBuildService.VerifyNativeArtifact`) and then passes the verified binary to an
+`IServerlessDeployer`. That interface is the per-platform seam: `LambdaServerlessDeployer` is the AWS Lambda
+implementation (it packages the `bootstrap` binary, creates the `provided.al2023` function, and exposes a Function URL).
+Each deployed function is baked for one environment, so the deployer stamps the environment's source base URLs as
+`ARAZZO_SOURCE__<name>` function environment variables, which the baked `Bind()` in the host-app reads into one
+`HttpClientTransport` per source. A run is dispatched by `ServerlessRunExecutionBackend`, which POSTs
+`{ runId, environment, checkpointUrl }` to the resolved Function URL (`DeployedFunctionUrlResolver`); the function
+restores the run, binds its transports, advances it, and checkpoints back over HTTP through `HttpWorkflowStateStore`.
+
+### Verifying the deploy path
+
+The deploy-and-run path is exercised live against **LocalStack** as the local analogy for AWS Lambda: a version
+promoted into an Isolated environment builds, deploys as a Lambda, and a run dispatched to it executes an OpenAPI step
+and completes, with the outcome checkpointed back. Under rootless **podman**, pin **LocalStack 4.0** and set
+**`LAMBDA_PREBUILD_IMAGES=1`**: LocalStack's runtime code-copy (the Docker-API `put_archive` that streams the native
+binary into the exec container) is unreliable there ("passing bulk input to subprocess: write |1: broken pipe"), and
+prebuilding bakes the code into a per-function image via a podman *build* (a filesystem build context, which is
+unaffected), skipping that copy. The 3.0 image's prebuild path has a separate bug and the `:stable` tag is the licensed
+image, so a community 4.x pin is required. See `samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost`.
+
+The remaining work this design admits: the **Azure Functions** target (a second `IServerlessDeployer` plus its vendor
+entry shim), an automated **CI gate** that runs the built binary under a real function runtime (the live proof above is
+a manual sample, not yet a repository test), execution-host **isolation hardening**, and the **operator surface** (web +
+CLI) for builds, deployments, and isolation.
