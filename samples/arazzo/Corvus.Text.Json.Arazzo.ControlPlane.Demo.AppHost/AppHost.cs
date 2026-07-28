@@ -170,9 +170,24 @@ var nats = builder.AddContainer("nats", "nats", "2.10")
 // provided.al2023; :3.0 is pinned because :stable/:latest now demand a Pro token even to start and :2.0's Lambda runtime
 // enum predates provided.al2023 (verified, not assumed — ADR 0060). Ephemeral (no volume), like the rest of the demo.
 // Registered here; the serverless runner (below) references it for its Lambda endpoint.
+// LocalStack's Lambda provider does not run a function in-process: for each function it spawns a SIBLING container
+// running the provided.al2023 runtime, so LocalStack needs access to the host container runtime. On this rootless-podman
+// box that means mounting the podman API socket at the docker.sock path LocalStack expects and pointing DOCKER_HOST at
+// it (start it first with `podman system service --time=0 unix:///run/user/1000/podman/podman.sock`). Each Lambda
+// sibling container reaches the serverless runner's checkpoint callback (host.containers.internal:8091) through the
+// podman host gateway. Without the socket the deploy still succeeds (CreateFunction) but the function stays State=Failed
+// with "Docker not available", so a run dispatched to it can never advance.
+// The edge is pinned to host :4566 (isProxied:false, so LocalStack binds it directly): a Lambda Function URL LocalStack
+// returns is 'http://<hash>.lambda-url.us-east-1.localhost.localstack.cloud:4566/', whose host resolves to 127.0.0.1, so
+// the serverless runner can only reach it when LocalStack is actually on host :4566 (a DCP-assigned dynamic port makes
+// every Function URL unreachable). LAMBDA_DOCKER_FLAGS gives each spawned Lambda container a route to the runner's
+// checkpoint callback (host.containers.internal), and the docker.sock mount lets LocalStack spawn those containers.
 var localstack = builder.AddContainer("localstack", "localstack/localstack", "3.0")
     .WithEnvironment("ACTIVATE_PRO", "0")
-    .WithHttpEndpoint(targetPort: 4566, name: "edge");
+    .WithBindMount("/run/user/1000/podman/podman.sock", "/var/run/docker.sock")
+    .WithEnvironment("DOCKER_HOST", "unix:///var/run/docker.sock")
+    .WithEnvironment("LAMBDA_DOCKER_FLAGS", "--add-host=host.containers.internal:host-gateway")
+    .WithHttpEndpoint(port: 4566, targetPort: 4566, isProxied: false, name: "edge");
 
 // The local NuGet feed the control-plane build worker's container restores the pinned runtime graph from. The
 // serverless-aot guide's dev feed: build-local-packages.ps1 packs the solution to <repo>/local-packages at

@@ -26,9 +26,10 @@ internal sealed class RunnerAutoAuthorizationService(
     IEnvironmentRunnerAuthorizationStore authorizations,
     ILogger<RunnerAutoAuthorizationService> logger) : BackgroundService
 {
-    // The environments this demo stands in as administrator for: development (the application runner) and system (the
-    // control-plane system runner, design §16.5.1). Production authorizes runners deliberately through the UI/API.
-    private static readonly string[] Environments = ["development", "system"];
+    // The environments this demo stands in as administrator for: development (the application runner), system (the
+    // control-plane system runner, design §16.5.1), and isolated (the serverless runner, #876). Production authorizes
+    // runners deliberately through the UI/API.
+    private static readonly string[] Environments = ["development", "system", "isolated"];
     private const string AdministratorActor = "demo";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
