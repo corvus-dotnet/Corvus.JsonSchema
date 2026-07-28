@@ -182,11 +182,23 @@ var nats = builder.AddContainer("nats", "nats", "2.10")
 // the serverless runner can only reach it when LocalStack is actually on host :4566 (a DCP-assigned dynamic port makes
 // every Function URL unreachable). LAMBDA_DOCKER_FLAGS gives each spawned Lambda container a route to the runner's
 // checkpoint callback (host.containers.internal), and the docker.sock mount lets LocalStack spawn those containers.
-var localstack = builder.AddContainer("localstack", "localstack/localstack", "3.0")
-    .WithEnvironment("ACTIVATE_PRO", "0")
+// LocalStack 4.0 (Community, token-free) with prebuilt Lambda images. Under rootless podman, LocalStack's runtime code
+// copy (the Docker API put_archive that streams the ~8 MB native binary into the exec container) intermittently fails
+// with "passing bulk input to subprocess: write |1: broken pipe" — podman's socket unpack-subprocess drops the stream.
+// LAMBDA_PREBUILD_IMAGES bakes the code into a per-function image via a podman *build* (a filesystem build context, which
+// is unaffected) and skips both runtime put_archive calls, so the deployed native-AOT function starts and runs to
+// completion. 4.0 is required: 3.0's prebuild path had a shutil bug, and the 2026.x ':stable' tag is the licensed image
+// that quits without a LOCALSTACK_AUTH_TOKEN.
+var localstack = builder.AddContainer("localstack", "localstack/localstack", "4.0")
     .WithBindMount("/run/user/1000/podman/podman.sock", "/var/run/docker.sock")
     .WithEnvironment("DOCKER_HOST", "unix:///var/run/docker.sock")
     .WithEnvironment("LAMBDA_DOCKER_FLAGS", "--add-host=host.containers.internal:host-gateway")
+    .WithEnvironment("LAMBDA_PREBUILD_IMAGES", "1")
+    // Give the native-AOT function room to cold-start its custom runtime before LocalStack times the exec environment out.
+    .WithEnvironment("LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT", "90")
+    // Surface the Lambda exec-container failure reason: at the default log level LocalStack Community swallows it (an
+    // empty "Failed to start execution environment:"), so keep debug logging on to diagnose any podman-side error.
+    .WithEnvironment("LS_LOG", "debug")
     .WithHttpEndpoint(port: 4566, targetPort: 4566, isProxied: false, name: "edge");
 
 // The local NuGet feed the control-plane build worker's container restores the pinned runtime graph from. The
