@@ -179,7 +179,17 @@ image via a podman *build* (a filesystem build context, which is unaffected), sk
 prebuild path has a separate bug and every 2026.x CalVer / `:stable` tag is the licensed image that needs a token, so a
 4.x pin is required. See `samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost`.
 
+The same path is a **repository gate**, not only a manual sample: `ServerlessLiveExecutionLocalStackTests` (opt-in,
+`[integration][docker]`) compiles a real echo-workflow bootstrap in the AOT builder container, deploys it with the
+production `LambdaServerlessDeployer` to LocalStack 4.9.2, and asserts execution two ways over one deployed function. The
+first invokes a no-`runId` probe and checks the bootstrap faults *inside* the Arazzo invocation handler (its exception
+message survives native-AOT symbol stripping, where a stack-frame name would not). Its **run-to-completion companion**
+hosts the runner's real checkpoint surface (`MapWorkflowCheckpointEndpoints`) and the workflow's `echo` source on Kestrel
+bound to `0.0.0.0`, seeds a Pending run, dispatches the function a real `{ runId, environment, checkpointUrl }`, and
+asserts the run reaches `Completed` with the `callEcho` step output `{ "status": "ok" }` — proving the function loaded
+its checkpoint, called its source at `host.containers.internal`, and saved the advance back. The gate skips unless
+`ARAZZO_AOT_LOCAL_FEED` and `ARAZZO_AOT_RUNTIME_VERSION` are set (and, under podman, `ARAZZO_LOCALSTACK_DOCKER_SOCK`).
+
 The remaining work this design admits: the **Azure Functions** target (a second `IServerlessDeployer` plus its vendor
-entry shim), an automated **CI gate** that runs the built binary under a real function runtime (the live proof above is
-a manual sample, not yet a repository test), execution-host **isolation hardening**, and the **operator surface** (web +
-CLI) for builds, deployments, and isolation.
+entry shim), execution-host **isolation hardening**, and the **operator surface** (web + CLI) for builds, deployments,
+and isolation.
