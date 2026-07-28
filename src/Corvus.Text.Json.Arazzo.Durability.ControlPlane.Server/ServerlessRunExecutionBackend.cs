@@ -28,14 +28,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
 {
     private readonly HttpClient client;
-    private readonly Func<WorkflowRun, Uri> functionUrl;
+    private readonly Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl;
     private readonly string checkpointBaseUrl;
 
     /// <summary>Initializes a new instance of the <see cref="ServerlessRunExecutionBackend"/> class.</summary>
     /// <param name="client">The HTTP client the function is invoked through; its auth and timeout are the deployment's concern.</param>
-    /// <param name="functionUrl">Resolves the URL of the serverless function baked for a run's (environment, version). The mapping from environment and version to URL comes from deployment and the advertise-and-match step (Phase 2).</param>
+    /// <param name="functionUrl">Resolves the invoke URL of the serverless function deployed for a run's (base workflow, version, environment). The resolution is asynchronous because it reads the run's Deployed <c>WorkflowDeployment</c> from the store (ADR 0059); <see cref="DeployedFunctionUrlResolver.ForStore"/> is the production resolver. It throws when the run has no deployed function, which leaves the run claimable for retry.</param>
     /// <param name="checkpointBaseUrl">The base URL of this deployment's checkpoint surface (§6b) the invoked function checkpoints back to; the function posts <c>runs/{id}/checkpoint</c> relative to it.</param>
-    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, Uri> functionUrl, Uri checkpointBaseUrl)
+    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl, Uri checkpointBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(functionUrl);
@@ -57,7 +57,7 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
     {
         ArgumentNullException.ThrowIfNull(run);
 
-        Uri url = this.functionUrl(run);
+        Uri url = await this.functionUrl(run, cancellationToken).ConfigureAwait(false);
         byte[] body = PersistedJson.ToArray(
             (RunId: run.Id.Value, Environment: run.Environment, CheckpointUrl: this.checkpointBaseUrl),
             static (Utf8JsonWriter writer, in (string RunId, string? Environment, string CheckpointUrl) s) =>

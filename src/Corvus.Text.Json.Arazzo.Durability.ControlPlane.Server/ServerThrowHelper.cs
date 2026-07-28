@@ -248,4 +248,21 @@ internal static class ServerThrowHelper
     [StackTraceHidden]
     public static void ThrowServerlessRunHostFailed(HttpStatusCode statusCode, object? runId, object? url)
         => throw new HttpRequestException(SR.Format(SR.ServerlessRunHostFailed, (int)statusCode, runId, url), null, statusCode);
+
+    /// <summary>Throws when a run's serverless function is not deployed, so the run cannot be advanced (it stays claimable for a retry once its deploy completes).</summary>
+    /// <param name="runId">The run id.</param>
+    /// <param name="workflowId">The run's versioned workflow id.</param>
+    /// <param name="environment">The run's pinned environment.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRunNotDeployed(object? runId, object? workflowId, object? environment)
+        => throw new InvalidOperationException(SR.Format(SR.RunNotDeployed, runId, workflowId, environment));
+
+    /// <summary>Throws when a run's workflow id is not a versioned id, so its deployed serverless function cannot be resolved.</summary>
+    /// <param name="runId">The run id.</param>
+    /// <param name="workflowId">The run's workflow id.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRunWorkflowIdNotVersioned(object? runId, object? workflowId)
+        => throw new InvalidOperationException(SR.Format(SR.RunWorkflowIdNotVersioned, runId, workflowId));
 }

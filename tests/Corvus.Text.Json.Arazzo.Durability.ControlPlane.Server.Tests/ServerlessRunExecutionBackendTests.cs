@@ -29,7 +29,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         WorkflowRunResultKind kind = await backend.AdvanceAsync(run, default);
@@ -50,7 +50,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Faulted"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Faulted);
@@ -63,7 +63,7 @@ public class ServerlessRunExecutionBackendTests
         // run). The checkpoint is authoritative, so the informational return is a benign Suspended, not a made-up terminal.
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":null}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
@@ -74,7 +74,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.InternalServerError, null);
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         // A 5xx from the function throws; the dispatcher never released the lease on a completed advance, so its
@@ -86,7 +86,7 @@ public class ServerlessRunExecutionBackendTests
     public void Advertises_isolated_isolation_and_warms_nothing()
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}"""));
-        var backend = new ServerlessRunExecutionBackend(http, _ => FunctionUrl, CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
 
         backend.IsolationModel.ShouldBe(RunIsolationModel.Isolated);
 
@@ -99,9 +99,9 @@ public class ServerlessRunExecutionBackendTests
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, null));
 
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, _ => FunctionUrl, CheckpointBaseUrl));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl));
         Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, _ => FunctionUrl, null!));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), null!));
     }
 
     private static WorkflowRun NewRun(string runId, string workflowId, string environment)

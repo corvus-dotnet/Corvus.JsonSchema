@@ -165,4 +165,10 @@
   <data name="ServerlessRunHostFailed" xml:space="preserve">
     <value>The serverless run host returned {0} advancing run '{1}' at '{2}'.</value>
   </data>
+  <data name="RunNotDeployed" xml:space="preserve">
+    <value>The serverless function for run '{0}' (workflow '{1}') in environment '{2}' is not deployed; the run stays claimable so a retry advances it once its deploy completes.</value>
+  </data>
+  <data name="RunWorkflowIdNotVersioned" xml:space="preserve">
+    <value>Run '{0}' has workflow id '{1}', which is not a versioned '{{base}}-v{{version}}' id, so its deployed serverless function cannot be resolved.</value>
+  </data>
 </root>
