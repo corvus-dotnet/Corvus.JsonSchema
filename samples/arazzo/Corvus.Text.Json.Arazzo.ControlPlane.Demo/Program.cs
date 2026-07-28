@@ -287,6 +287,7 @@ PostgresWorkflowDeploymentStore workflowDeploymentStore = await PostgresWorkflow
 string? aotFeedPath = builder.Configuration["ControlPlane:Aot:FeedPath"];
 string? aotRuntimeVersion = builder.Configuration["ControlPlane:Aot:RuntimeVersion"];
 string? aotTrustPublicKeyFile = builder.Configuration["ControlPlane:ExecutorTrust:PublicKeyFile"];
+bool serverlessBuildWorkerWired = false;
 if (executorSigner is { } buildSigner
     && !string.IsNullOrWhiteSpace(aotFeedPath) && Directory.Exists(aotFeedPath)
     && !string.IsNullOrWhiteSpace(aotRuntimeVersion)
@@ -339,6 +340,7 @@ if (executorSigner is { } buildSigner
         WorkerId = $"cp-build-{System.Environment.MachineName}-{System.Environment.ProcessId}",
         PollInterval = TimeSpan.FromSeconds(2),
     });
+    serverlessBuildWorkerWired = true;
 }
 else if (executorSigner is not null)
 {
@@ -552,6 +554,56 @@ if (seedExampleData)
     {
         await observedIdentityStore.SeenAsync(
             GranteeKind.Team.ToObservedKind(), Observed(group), Observed(label), DemoData.GroupIdentity(group), complete: true, "seed", default);
+    }
+}
+
+// Serverless (Isolated) demo (#876, ADR 0055/0058): stand up the Isolated environment the ServerlessRunner serves and
+// publish a version into it, so the whole serverless loop runs live. Only when the control-plane build worker is wired
+// (the runtime feed is present) — otherwise there is nothing to build, deploy, or invoke. Reusing an existing catalogued
+// workflow (nightly-reconcile v2) avoids authoring a new spec: a source-less workflow is impossible (Arazzo requires
+// minItems:1 steps and every step references a source), and the point of the demo is the serverless PATH — build the
+// native binary in the pared arazzo-aot-builder container, deploy it to LocalStack as a Lambda, invoke it — not the
+// workflow's content. Making the version available in an Isolated environment enqueues its native build
+// (deploy-on-publish); the direct-store MakeAvailableAsync bypasses that enqueue, so this mirrors the availability
+// handler and enqueues the NativeBuildJob explicitly.
+if (seedExampleData && serverlessBuildWorkerWired)
+{
+    const string isolatedEnvironment = "isolated";
+    const string isolatedRuntimeIdentifier = "linux-x64";
+    const string serverlessWorkflowId = "nightly-reconcile";
+    const int serverlessVersion = 2;
+
+    // The Isolated environment (ADR 0058): its runs execute in a deployed native-AOT function, never in-process. Parsed
+    // as JSON (like the run-start gate's own environment fixtures) so requiredIsolation + runtimeIdentifier are set
+    // directly; the store stamps createdAt/etc. Governed by arazzo-admins like every other seeded environment (§7.7).
+    using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> isolatedEnv =
+        ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>.Parse(
+            System.Text.Encoding.UTF8.GetBytes($$"""
+            {
+              "name": "{{isolatedEnvironment}}",
+              "displayName": "Isolated (serverless)",
+              "description": "The serverless Isolated environment (ADR 0058): runs execute in a deployed native-AOT AWS Lambda function (LocalStack here), not in-process.",
+              "allowsDraftRuns": false,
+              "requiredIsolation": "Isolated",
+              "runtimeIdentifier": "{{isolatedRuntimeIdentifier}}"
+            }
+            """)))
+    {
+        (await environmentStore.AddAsync(isolatedEnv.RootElement, "demo", default)).Dispose();
+    }
+
+    await new SecuredEnvironmentAdministration(environmentAdministratorStore, "demo")
+        .EstablishAsync(isolatedEnvironment, DemoData.GroupIdentity("arazzo-admins"), default, false, default, false, default);
+
+    // Publish nightly-reconcile v2 into the Isolated environment: make it available, then enqueue the native build for
+    // the environment's runtime target. The control-plane build worker compiles + signs the native binary in the
+    // container, deploy-on-build enqueues a deployment, and the ServerlessRunner deploys it to LocalStack. A run started
+    // in this environment then dispatches to the ServerlessRunner, which invokes the deployed function.
+    (await availabilityStore.MakeAvailableAsync(serverlessWorkflowId, serverlessVersion, isolatedEnvironment, "demo", default)).Entry.Dispose();
+    using (ParsedJsonDocument<NativeBuildJob> buildDraft =
+        NativeBuildJob.Draft(serverlessWorkflowId, serverlessVersion, isolatedEnvironment, isolatedRuntimeIdentifier, null))
+    {
+        (await nativeBuildJobStore.EnqueueAsync(buildDraft.RootElement, "demo", default)).Dispose();
     }
 }
 
