@@ -613,6 +613,10 @@ if (aotRuntimeVersion is not null)
         // (isProxied:false), and LocalStack's Lambda container reaches the host through the podman host gateway. (This is
         // the one value phase 4 tunes if the LocalStack Lambda network cannot resolve host.containers.internal.)
         .WithEnvironment("Runner__CheckpointBaseUrl", serverlessCheckpointBaseUrl)
+        // The deployed environment's source configuration baked into each function's transport binder (ARAZZO_SOURCE__<name>).
+        // The demo's single 'echo' source IS this runner (it serves /demo/echo), reached at the same host.containers.internal
+        // URL the checkpoint uses — so a serverless-check run's GET resolves and the run completes.
+        .WithEnvironment("Runner__FunctionSources__echo", serverlessCheckpointBaseUrl)
         // Authenticated registration as the arazzo-runner machine principal (client-credentials), like the in-process runner.
         .WithReference(controlplane)
         .WaitFor(controlplane)

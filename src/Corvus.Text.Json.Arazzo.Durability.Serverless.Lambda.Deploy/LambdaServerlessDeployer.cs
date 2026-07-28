@@ -80,6 +80,10 @@ public sealed class LambdaServerlessDeployer : IServerlessDeployer
                         MemorySize = this.options.MemorySizeMb,
                         Timeout = this.options.TimeoutSeconds,
                         PackageType = PackageType.Zip,
+
+                        // The deployed environment's source configuration (base URLs) the baked function's transport
+                        // binder reads to reach its sources (ADR 0059: the runner, not the control plane, holds it).
+                        Environment = FunctionEnvironment(this.options.FunctionEnvironment),
                     },
                     cancellationToken).ConfigureAwait(false);
             }
@@ -164,6 +168,13 @@ public sealed class LambdaServerlessDeployer : IServerlessDeployer
             ? Amazon.Lambda.Architecture.Arm64
             : Amazon.Lambda.Architecture.X86_64;
     }
+
+    // The function's environment block, or null when there is nothing to set (a null block leaves the function's
+    // environment empty rather than clearing it to an empty map, which some platforms treat differently).
+    private static Amazon.Lambda.Model.Environment? FunctionEnvironment(IReadOnlyDictionary<string, string>? variables)
+        => variables is { Count: > 0 }
+            ? new Amazon.Lambda.Model.Environment { Variables = new Dictionary<string, string>(variables, StringComparer.Ordinal) }
+            : null;
 
     private static string Sanitize(string value)
     {

@@ -112,6 +112,27 @@ var lambdaClient = new AmazonLambdaClient(
     lambdaConfig);
 builder.Services.AddSingleton<IAmazonLambda>(lambdaClient);
 
+// The checkpoint base URL the invoked function calls back to — this host, at a URL reachable from the LocalStack Lambda
+// container (the AppHost injects host.containers.internal:<port>). Read early: it drives BOTH the run-execution backend
+// (below) AND this host's own listen address — the runner must bind 0.0.0.0 (not loopback), or the Lambda container
+// cannot reach the checkpoint callback (nor the demo source endpoint this runner also serves) through the host gateway.
+string checkpointBaseUrl = builder.Configuration["Runner:CheckpointBaseUrl"]
+    ?? throw new InvalidOperationException("Runner:CheckpointBaseUrl (the /runs/{id}/checkpoint base URL the invoked function calls back to) is required — the AppHost injects a value reachable from the LocalStack Lambda container.");
+builder.WebHost.UseUrls($"http://0.0.0.0:{new Uri(checkpointBaseUrl, UriKind.Absolute).Port}");
+
+// The deployed environment's source configuration the baked function reaches its sources through (ADR 0059, the runner
+// holds it): each configured source's base URL is set on the Lambda as ARAZZO_SOURCE__<name>, which the baked transport
+// binder reads to build one HTTP transport per source. The AppHost supplies Runner:FunctionSources:<name> as URLs the
+// Lambda container can reach; in this demo the single 'echo' source is served by THIS runner (its /demo/echo endpoint).
+var functionSourceEnv = new Dictionary<string, string>(StringComparer.Ordinal);
+foreach (IConfigurationSection source in builder.Configuration.GetSection("Runner:FunctionSources").GetChildren())
+{
+    if (source.Value is { Length: > 0 } sourceUrl)
+    {
+        functionSourceEnv[$"ARAZZO_SOURCE__{source.Key}"] = sourceUrl;
+    }
+}
+
 // The deploy service the deploy worker drives: verify the native artifact, then deploy it via the Lambda deployer. The
 // execution-role ARN is a dummy against LocalStack (which ignores IAM); a real deployment supplies the function's role.
 var deployService = new WorkflowDeployService(
@@ -121,6 +142,7 @@ var deployService = new WorkflowDeployService(
         new LambdaDeployerOptions
         {
             ExecutionRoleArn = builder.Configuration["Runner:Lambda:ExecutionRoleArn"] ?? "arn:aws:iam::000000000000:role/lambda-role",
+            FunctionEnvironment = functionSourceEnv,
         }));
 builder.Services.AddSingleton(deployService);
 builder.Services.AddWorkflowDeployWorker(new WorkflowDeployWorkerOptions
@@ -132,10 +154,7 @@ builder.Services.AddWorkflowDeployWorker(new WorkflowDeployWorkerOptions
 // The serverless run-execution backend as this runner's resumer (ADR 0055): dispatch and timer-resume advance a claimed
 // run by INVOKING its deployed function. The production DeployedFunctionUrlResolver maps a run's (base workflow, version,
 // environment) to the Deployed function URL from the shared deployment store; the function checkpoints back to
-// checkpointBaseUrl (this host, resolved from the invoked function's network view — the AppHost injects a value the
-// LocalStack Lambda container can reach). A resolve failure (no deployed function yet) throws, leaving the run claimable.
-string checkpointBaseUrl = builder.Configuration["Runner:CheckpointBaseUrl"]
-    ?? throw new InvalidOperationException("Runner:CheckpointBaseUrl (the /runs/{id}/checkpoint base URL the invoked function calls back to) is required — the AppHost injects a value reachable from the LocalStack Lambda container.");
+// checkpointBaseUrl. A resolve failure (no deployed function yet) throws, leaving the run claimable.
 var serverlessBackend = new ServerlessRunExecutionBackend(
     new HttpClient(),
     DeployedFunctionUrlResolver.ForStore(deployments, environments),
@@ -188,6 +207,11 @@ app.MapDefaultEndpoints();
 // function binds no store SDK — it saves over HTTP, and the dispatching runner terminates that into the real store. Open
 // here (the demo's callback is unauthenticated); a dedicated checkpoint scope is deferred (see WorkflowCheckpointEndpoints).
 app.MapWorkflowCheckpointEndpoints(stateStore, requireAuthorization: false);
+
+// The demo's 'echo' source: a trivial always-200 endpoint the serverless-check workflow calls, served by this runner so
+// a serverless run has a reachable source and can run to completion. The invoked Lambda reaches it at the same
+// host.containers.internal:<port> it uses for the checkpoint callback (wired via Runner:FunctionSources:echo).
+app.MapGet("/demo/echo", () => Results.Json(new { status = "ok" }));
 
 // A tiny identity endpoint so the dashboard's resource link lands somewhere informative.
 app.MapGet("/", () => Results.Text(

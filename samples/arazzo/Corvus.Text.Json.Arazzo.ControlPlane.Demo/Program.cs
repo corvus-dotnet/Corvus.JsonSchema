@@ -570,8 +570,8 @@ if (seedExampleData && serverlessBuildWorkerWired)
 {
     const string isolatedEnvironment = "isolated";
     const string isolatedRuntimeIdentifier = "linux-x64";
-    const string serverlessWorkflowId = "nightly-reconcile";
-    const int serverlessVersion = 2;
+    const string serverlessWorkflowId = "serverless-check";
+    const int serverlessVersion = 1;
 
     // The Isolated environment (ADR 0058): its runs execute in a deployed native-AOT function, never in-process. Parsed
     // as JSON (like the run-start gate's own environment fixtures) so requiredIsolation + runtimeIdentifier are set
@@ -595,10 +595,19 @@ if (seedExampleData && serverlessBuildWorkerWired)
     await new SecuredEnvironmentAdministration(environmentAdministratorStore, "demo")
         .EstablishAsync(isolatedEnvironment, DemoData.GroupIdentity("arazzo-admins"), default, false, default, false, default);
 
-    // Publish nightly-reconcile v2 into the Isolated environment: make it available, then enqueue the native build for
-    // the environment's runtime target. The control-plane build worker compiles + signs the native binary in the
-    // container, deploy-on-build enqueues a deployment, and the ServerlessRunner deploys it to LocalStack. A run started
-    // in this environment then dispatches to the ServerlessRunner, which invokes the deployed function.
+    // Catalogue the source-simple serverless-check workflow (its executor is compiled + signed at add-time like every
+    // version). It has a single GET on the 'echo' source the ServerlessRunner serves, so a run of it executes entirely
+    // inside the deployed Lambda and completes — the cleanest demonstration of the serverless path end to end.
+    string serverlessSpecsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
+    ReadOnlyMemory<byte> serverlessPackage = WorkflowPackage.Pack(
+        await File.ReadAllBytesAsync(Path.Combine(serverlessSpecsDir, "serverless-check.arazzo.json")),
+        [new KeyValuePair<string, byte[]>("echo", await File.ReadAllBytesAsync(Path.Combine(serverlessSpecsDir, "echo.openapi.json")))]);
+    (await catalog.AddAsync(serverlessPackage, new CatalogOwner("Serverless Demo", "serverless@example.com", "Platform", null), TagSet.FromTags(["serverless"]), DemoData.GroupIdentity("arazzo-admins"), default)).Dispose();
+
+    // Publish serverless-check v1 into the Isolated environment: make it available, then enqueue the native build for the
+    // environment's runtime target. The control-plane build worker compiles + signs the native binary in the container,
+    // deploy-on-build enqueues a deployment, and the ServerlessRunner deploys it to LocalStack. A run started in this
+    // environment then dispatches to the ServerlessRunner, which invokes the deployed function.
     (await availabilityStore.MakeAvailableAsync(serverlessWorkflowId, serverlessVersion, isolatedEnvironment, "demo", default)).Entry.Dispose();
     using (ParsedJsonDocument<NativeBuildJob> buildDraft =
         NativeBuildJob.Draft(serverlessWorkflowId, serverlessVersion, isolatedEnvironment, isolatedRuntimeIdentifier, null))

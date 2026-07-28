@@ -1,0 +1,22 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Echo API", "version": "1.0.0", "description": "A trivial source for the serverless demo: one GET that always returns 200, served by the serverless runner so an Isolated run has a reachable source and can complete." },
+  "paths": {
+    "/demo/echo": {
+      "get": {
+        "operationId": "echo",
+        "summary": "Return a fixed OK payload.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "status": { "type": "string" } } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

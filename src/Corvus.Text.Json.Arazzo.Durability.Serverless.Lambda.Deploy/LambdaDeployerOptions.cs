@@ -23,4 +23,11 @@ public sealed record LambdaDeployerOptions
 
     /// <summary>Gets the function's invocation timeout in seconds. Defaults to 30.</summary>
     public int TimeoutSeconds { get; init; } = 30;
+
+    /// <summary>
+    /// Gets the environment variables set on the created function — the deployed environment's source configuration the
+    /// baked function's transport binder reads (each <c>ARAZZO_SOURCE__&lt;name&gt;</c> is a source's base URL). Empty by
+    /// default; the runner supplies it from the environment's source registry (ADR 0059, the runner holds the config).
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyDictionary<string, string>? FunctionEnvironment { get; init; }
 }

@@ -1,0 +1,19 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Serverless Check", "version": "1.0.0", "description": "A minimal serverless-demo workflow: one GET on the echo source. Published into the Isolated environment, it executes in a deployed native-AOT Lambda and runs to completion." },
+  "sourceDescriptions": [ { "name": "echo", "url": "./echo.openapi.json", "type": "openapi" } ],
+  "workflows": [
+    {
+      "workflowId": "serverless-check",
+      "steps": [
+        {
+          "stepId": "callEcho",
+          "operationId": "echo",
+          "successCriteria": [ { "condition": "$statusCode == 200" } ],
+          "outputs": { "status": "$response.body#/status" }
+        }
+      ],
+      "outputs": { "status": "$steps.callEcho.outputs.status" }
+    }
+  ]
+}
