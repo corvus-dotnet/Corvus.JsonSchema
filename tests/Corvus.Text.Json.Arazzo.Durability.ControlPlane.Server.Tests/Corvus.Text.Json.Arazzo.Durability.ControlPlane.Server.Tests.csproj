@@ -20,9 +20,15 @@
   <ItemGroup>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <!-- The opt-in LocalStack invoke-and-run gate (ADR 0060) deploys a real AOT bootstrap and runs it. -->
+    <PackageReference Include="AWSSDK.Lambda" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.LocalStack" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
+    <!-- The AWS Lambda deployer under test by the live LocalStack invoke-and-run gate. -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
     <!-- The function-side HttpWorkflowStateStore drives the end-to-end wire test against the runner's checkpoint surface. -->
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless\Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
