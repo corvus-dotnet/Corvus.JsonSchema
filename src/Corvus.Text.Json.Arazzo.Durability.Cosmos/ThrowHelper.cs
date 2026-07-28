@@ -85,4 +85,18 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowNativeBuildJobNotBuildingForLeaseRenewal(string id)
         => throw new NativeBuildJobStateException(id, SR.Format(SR.NativeBuildJobNotBuildingForLeaseRenewal, id));
+
+    /// <summary>Throws when a workflow deployment cannot be completed because it is not deploying.</summary>
+    /// <param name="id">The workflow deployment id.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentNotDeployingForCompletion(string id)
+        => throw new WorkflowDeploymentStateException(id, SR.Format(SR.WorkflowDeploymentNotDeployingForCompletion, id));
+
+    /// <summary>Throws when a workflow deployment cannot have its lease renewed because it is not deploying.</summary>
+    /// <param name="id">The workflow deployment id.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowDeploymentNotDeployingForRenewal(string id)
+        => throw new WorkflowDeploymentStateException(id, SR.Format(SR.WorkflowDeploymentNotDeployingForRenewal, id));
 }

@@ -84,4 +84,10 @@
   <data name="NativeBuildJobNotBuildingForLeaseRenewal" xml:space="preserve">
     <value>The native build job '{0}' cannot have its lease renewed because it is not building.</value>
   </data>
+  <data name="WorkflowDeploymentNotDeployingForCompletion" xml:space="preserve">
+    <value>The workflow deployment '{0}' cannot be completed because it is not deploying.</value>
+  </data>
+  <data name="WorkflowDeploymentNotDeployingForLeaseRenewal" xml:space="preserve">
+    <value>The workflow deployment '{0}' cannot have its lease renewed because it is not deploying.</value>
+  </data>
 </root>
