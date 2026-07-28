@@ -25,6 +25,13 @@ public sealed class AotHostAppAssemblerTests
         FeedSources = [("local", "/work/local-packages"), ("nuget.org", "https://api.nuget.org/v3/index.json")],
     };
 
+    private static readonly AotHostAppOptions AzureOptions = new()
+    {
+        Target = ServerlessTarget.AzureFunctions,
+        RuntimePackageVersion = "5.0.0-local.2",
+        FeedSources = [("local", "/work/local-packages"), ("nuget.org", "https://api.nuget.org/v3/index.json")],
+    };
+
     // A real .NET assembly stands in for the executor: the assembler only reads its name from PE metadata and embeds
     // its bytes, so any valid assembly exercises those paths.
     private static readonly byte[] StandInExecutor = File.ReadAllBytes(typeof(AotHostAppAssembler).Assembly.Location);
@@ -100,6 +107,57 @@ public sealed class AotHostAppAssemblerTests
     {
         Should.Throw<ArgumentException>(() => new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), string.Empty, Options));
     }
+
+    [TestMethod]
+    public void Assembles_an_azure_isolated_worker_entry_that_registers_the_baked_handler()
+    {
+        AssembledHostApp app = AssembleAzure("linux-x64");
+        app.Target.ShouldBe(ServerlessTarget.AzureFunctions);
+
+        string program = FileText(app, "Program.cs");
+        program.ShouldContain("FunctionsApplication.CreateBuilder(args)");
+        program.ShouldContain("ConfigureFunctionsWebApplication()");
+        program.ShouldContain($"new BakedHostedWorkflowResolver(new {EntryType}())");
+        program.ShouldContain("ServerlessInvocationHandler");
+        // The Lambda entry must not leak into the Azure host.
+        program.ShouldNotContain("LambdaServerlessFunction");
+    }
+
+    [TestMethod]
+    public void Assembles_the_azure_http_trigger_and_host_json()
+    {
+        AssembledHostApp app = AssembleAzure("linux-x64");
+
+        string invoke = FileText(app, "ArazzoInvokeFunction.cs");
+        invoke.ShouldContain("""[Function("invoke")]""");
+        invoke.ShouldContain("[HttpTrigger(");
+        invoke.ShouldContain("HandleAsync");
+
+        FileText(app, "host.json").ShouldContain("\"version\": \"2.0\"");
+    }
+
+    [TestMethod]
+    public void Assembles_the_azure_project_as_a_framework_dependent_readytorun_isolated_worker()
+    {
+        string project = FileText(AssembleAzure("linux-x64"), "fn.csproj");
+
+        project.ShouldContain("<PublishReadyToRun>true</PublishReadyToRun>");
+        project.ShouldContain("<SelfContained>false</SelfContained>");
+        project.ShouldContain("<AzureFunctionsVersion>v4</AzureFunctionsVersion>");
+        project.ShouldContain("<RuntimeIdentifier>linux-x64</RuntimeIdentifier>");
+        project.ShouldContain("""<FrameworkReference Include="Microsoft.AspNetCore.App" />""");
+        project.ShouldContain("""<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />""");
+        project.ShouldContain("""<PackageReference Include="Corvus.Text.Json.Arazzo.Durability.Serverless" Version="5.0.0-local.2" />""");
+        project.ShouldContain($"""<Reference Include="{StandInExecutorName}">""");
+
+        // Lambda-only bits must not leak into a runtime-present ReadyToRun target.
+        project.ShouldNotContain("<PublishAot>");
+        project.ShouldNotContain("bootstrap");
+        project.ShouldNotContain("Amazon.Lambda");
+        project.ShouldNotContain("TrimmerRootAssembly");
+    }
+
+    private static AssembledHostApp AssembleAzure(string rid) => new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), rid, AzureOptions);
 
     private static AssembledHostApp Assemble(string rid) => new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), rid, Options);
 

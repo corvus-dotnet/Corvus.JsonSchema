@@ -48,11 +48,13 @@ public readonly record struct AotBuildResult(bool Succeeded, ReadOnlyMemory<byte
 /// <param name="EntryType">The baked <c>IHostedWorkflow</c> type the host stub constructs (from the executor manifest).</param>
 /// <param name="EngineVersion">The Corvus runtime version the executor was compiled against (from the manifest), which the referenced runtime packages must provide.</param>
 /// <param name="Files">The project files, each a relative path and its content.</param>
+/// <param name="Target">The serverless platform this host-app is compiled for, which decides the compile form-factor and the published-artifact shape a builder reads back.</param>
 public readonly record struct AssembledHostApp(
     string RuntimeIdentifier,
     string EntryType,
     string EngineVersion,
-    IReadOnlyList<AotProjectFile> Files);
+    IReadOnlyList<AotProjectFile> Files,
+    ServerlessTarget Target = ServerlessTarget.AwsLambda);
 
 /// <summary>One file in an assembled host-app project.</summary>
 /// <param name="RelativePath">The path relative to the project root (forward-slashed).</param>
