@@ -162,6 +162,18 @@ var nats = builder.AddContainer("nats", "nats", "2.10")
     .WithArgs("-js", "--auth", natsToken)
     .WithEndpoint(targetPort: 4222, scheme: "nats", name: "nats");
 
+// The local "AWS" — LocalStack presents the real AWS Lambda control + data plane (CreateFunction, UpdateFunctionCode,
+// Function URLs, Invoke) through the same API surface the runner calls against real AWS (ADR 0060), so the serverless
+// deploy the ServerlessRunner performs against it is the same code that runs against a real account. The serverless
+// runner deploys each Isolated version's signed native binary here as a provided.al2023 Lambda, so the serverless deploy
+// path is demonstrable on a developer box with no cloud account. Community mode (ACTIVATE_PRO=0) is free and supports
+// provided.al2023; :3.0 is pinned because :stable/:latest now demand a Pro token even to start and :2.0's Lambda runtime
+// enum predates provided.al2023 (verified, not assumed — ADR 0060). Ephemeral (no volume), like the rest of the demo.
+// Registered here; the ServerlessRunner references it for its Lambda endpoint (added with that runner).
+builder.AddContainer("localstack", "localstack/localstack", "3.0")
+    .WithEnvironment("ACTIVATE_PRO", "0")
+    .WithHttpEndpoint(targetPort: 4566, name: "edge");
+
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
 // step" stand-in, design §13.5.1). It writes a read-only, path-scoped policy, mints the runner's read-only token
 // bound to it, then exits. The runner never has these privileges. The script splits along the same seam as the
