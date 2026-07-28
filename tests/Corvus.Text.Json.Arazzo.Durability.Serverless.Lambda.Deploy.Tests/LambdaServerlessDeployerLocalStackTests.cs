@@ -31,11 +31,12 @@ public sealed class LambdaServerlessDeployerLocalStackTests
     {
         // Testcontainers.LocalStack defaults to localstack/localstack:2.0, whose Lambda runtime enum predates
         // provided.al2023; a modern Community image is required for the custom AOT runtime (ADR 0060, verified not
-        // assumed). A pinned 3.x Community image supports provided.al2023 and runs free (unlike :stable/:latest, which
-        // now demand a Pro licence token even to start). ACTIVATE_PRO=0 keeps it in Community mode.
+        // assumed). This pins localstack/localstack:4.9.2, the latest token-free Community release — the SAME tag the demo
+        // AppHost uses, so the test and the sample exercise one emulator. Every 2026.x CalVer / :stable / :latest tag is
+        // the licensed image that quits without a LOCALSTACK_AUTH_TOKEN, so a 4.x pin is required. (This test proves the
+        // deploy control-plane sequence only; executing a bootstrap additionally needs LAMBDA_PREBUILD_IMAGES under podman.)
         container = new LocalStackBuilder()
-            .WithImage("localstack/localstack:3.0")
-            .WithEnvironment("ACTIVATE_PRO", "0")
+            .WithImage("localstack/localstack:4.9.2")
             .Build();
         await container.StartAsync();
 

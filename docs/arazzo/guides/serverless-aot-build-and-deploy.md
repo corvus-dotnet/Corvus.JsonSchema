@@ -171,12 +171,13 @@ restores the run, binds its transports, advances it, and checkpoints back over H
 
 The deploy-and-run path is exercised live against **LocalStack** as the local analogy for AWS Lambda: a version
 promoted into an Isolated environment builds, deploys as a Lambda, and a run dispatched to it executes an OpenAPI step
-and completes, with the outcome checkpointed back. Under rootless **podman**, pin **LocalStack 4.0** and set
-**`LAMBDA_PREBUILD_IMAGES=1`**: LocalStack's runtime code-copy (the Docker-API `put_archive` that streams the native
-binary into the exec container) is unreliable there ("passing bulk input to subprocess: write |1: broken pipe"), and
-prebuilding bakes the code into a per-function image via a podman *build* (a filesystem build context, which is
-unaffected), skipping that copy. The 3.0 image's prebuild path has a separate bug and the `:stable` tag is the licensed
-image, so a community 4.x pin is required. See `samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost`.
+and completes, with the outcome checkpointed back. Under rootless **podman**, pin a **4.x Community** LocalStack (the
+demo AppHost and the deploy integration test both pin **4.9.2**) and set **`LAMBDA_PREBUILD_IMAGES=1`**: LocalStack's
+runtime code-copy (the Docker-API `put_archive` that streams the native binary into the exec container) is unreliable
+there ("passing bulk input to subprocess: write |1: broken pipe"), and prebuilding bakes the code into a per-function
+image via a podman *build* (a filesystem build context, which is unaffected), skipping that copy. The 3.0 image's
+prebuild path has a separate bug and every 2026.x CalVer / `:stable` tag is the licensed image that needs a token, so a
+4.x pin is required. See `samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost`.
 
 The remaining work this design admits: the **Azure Functions** target (a second `IServerlessDeployer` plus its vendor
 entry shim), an automated **CI gate** that runs the built binary under a real function runtime (the live proof above is
