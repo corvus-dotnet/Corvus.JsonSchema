@@ -1104,15 +1104,15 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        var builds = new InMemoryNativeBuildJobStore();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, nativeBuildJobStore: builds);
+        var deployments = new InMemoryWorkflowDeploymentStore();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, workflowDeploymentStore: deployments);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
 
-        // A ready serverless build for the environment's default target (linux-x64) so the dispatch-ready gate is satisfied
-        // throughout — this test isolates the ISOLATION match (the readiness gate is exercised separately).
-        await SeedReadyBuildAsync(builds, "flow", 1, "isolated-env", "linux-x64");
+        // A deployed serverless function for the environment's default target (linux-x64) so the dispatch-ready gate is
+        // satisfied throughout — this test isolates the ISOLATION match (the readiness gate is exercised separately).
+        await SeedDeployedAsync(deployments, "flow", 1, "isolated-env", "linux-x64");
 
         // Only an in-process runner hosts the version (absent isolationModel), so the environment's Isolated requirement
         // cannot be satisfied and the start gate refuses the run with an isolation-aware 409.
@@ -1141,7 +1141,7 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
-    public async Task StartCatalogWorkflowRun_requires_the_serverless_build_to_be_ready()
+    public async Task StartCatalogWorkflowRun_requires_the_serverless_function_to_be_deployed()
     {
         var clock = new MutableClock(T0);
         var runStore = new InMemoryWorkflowStateStore(clock);
@@ -1166,15 +1166,15 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        var builds = new InMemoryNativeBuildJobStore();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, nativeBuildJobStore: builds);
+        var deployments = new InMemoryWorkflowDeploymentStore();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, workflowDeploymentStore: deployments);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
         await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", isolationModel: "Isolated"), default);
 
-        // An isolated runner hosts the version, but no serverless binary has been built for the environment's target →
-        // the dispatch-ready gate (ADR 0055) refuses the run (409) rather than accept one nothing can yet execute.
+        // An isolated runner hosts the version, but no serverless function has been deployed for the environment's target →
+        // the dispatch-ready gate (ADR 0059) refuses the run (409) rather than accept one nothing can yet execute.
         HttpResponseMessage notReady = await client.PostAsync(
             "/catalog/flow/versions/1/runs?environment=isolated-env",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
@@ -1184,8 +1184,8 @@ public sealed class ControlPlaneServerTests
             problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("linux-arm64");
         }
 
-        // Once the build for that target reaches Ready, the run is accepted.
-        await SeedReadyBuildAsync(builds, "flow", 1, "isolated-env", "linux-arm64");
+        // Once the function for that target is Deployed, the run is accepted.
+        await SeedDeployedAsync(deployments, "flow", 1, "isolated-env", "linux-arm64");
         HttpResponseMessage accepted = await client.PostAsync(
             "/catalog/flow/versions/1/runs?environment=isolated-env",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
@@ -1262,18 +1262,18 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
-    // Drives a native build to Ready (Enqueue -> Claim -> Complete), so the dispatch-ready gate admits a run pinned to an
-    // Isolated environment targeting the given RID.
-    private static async Task SeedReadyBuildAsync(INativeBuildJobStore builds, string baseWorkflowId, int versionNumber, string environment, string runtimeIdentifier)
+    // Drives a deployment through its lifecycle to Deployed (enqueue -> claim -> complete) so the dispatch-ready gate
+    // (ADR 0059) admits an Isolated run for the target, mirroring how the runner's deploy worker completes a deploy.
+    private static async Task SeedDeployedAsync(IWorkflowDeploymentStore deployments, string baseWorkflowId, int versionNumber, string environment, string runtimeIdentifier)
     {
-        using (ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier))
+        using (ParsedJsonDocument<WorkflowDeployment> draft = WorkflowDeployment.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier))
         {
-            (await builds.EnqueueAsync(draft.RootElement, "test", default)).Dispose();
+            (await deployments.EnqueueAsync(draft.RootElement, "test", default)).Dispose();
         }
 
-        using ParsedJsonDocument<NativeBuildJob>? claimed = await builds.ClaimNextQueuedAsync("test-worker", TimeSpan.FromMinutes(5), default);
-        NativeBuildJob building = claimed!.RootElement;
-        using (await builds.CompleteAsync(building.IdValue, new NativeBuildJobCompletion(NativeBuildJobStatus.Ready), building.EtagValue, default))
+        using ParsedJsonDocument<WorkflowDeployment>? claimed = await deployments.ClaimNextQueuedAsync("test-worker", TimeSpan.FromMinutes(5), default);
+        WorkflowDeployment deploying = claimed!.RootElement;
+        using (await deployments.CompleteAsync(deploying.IdValue, new WorkflowDeploymentCompletion(WorkflowDeploymentStatus.Deployed, "https://fn.example/invoke"), deploying.EtagValue, default))
         {
         }
     }

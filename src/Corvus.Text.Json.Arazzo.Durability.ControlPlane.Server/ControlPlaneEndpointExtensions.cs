@@ -91,7 +91,8 @@ public static class ControlPlaneEndpointExtensions
         IDraftRunTraceStore? draftRunTraceStore = null,
         WorkflowApprovalOptions? workflowApproval = null,
         Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null,
-        INativeBuildJobStore? nativeBuildJobStore = null)
+        INativeBuildJobStore? nativeBuildJobStore = null,
+        IWorkflowDeploymentStore? workflowDeploymentStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -233,6 +234,12 @@ public static class ControlPlaneEndpointExtensions
         // below. Defaults to an in-memory store.
         INativeBuildJobStore buildStore = nativeBuildJobStore ?? new InMemoryNativeBuildJobStore();
 
+        // The workflow-deployment store (ADR 0055, ADR 0059): the state of deploying a version's signed native binary to a
+        // serverless function per (environment, runtime target). The catalog handler's dispatch-ready gate reads it to hold
+        // an Isolated run until its function is Deployed; the runner's deploy worker drives it Queued -> Deployed | Failed.
+        // Defaults to an in-memory store.
+        IWorkflowDeploymentStore deploymentStore = workflowDeploymentStore ?? new InMemoryWorkflowDeploymentStore();
+
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
         // version references must resolve a credential in that environment, §7.7). The store is hoisted above.
@@ -279,7 +286,7 @@ public static class ControlPlaneEndpointExtensions
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, buildStore),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore),
             availabilityHandler,
             nativeBuildsHandler,
             credentialsHandler,
