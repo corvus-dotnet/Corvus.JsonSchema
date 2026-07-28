@@ -32,6 +32,19 @@ public sealed class ContainerWorkflowAotBuilderTests
         command.ShouldContain("-v /host/local-packages:/work/local-packages:ro");
         command.ShouldContain("arazzo-aot-builder:net10");
         command.ShouldContain("dotnet publish /work/fn/fn.csproj -r linux-x64 -c Release -o /work/fn/out");
+        // A Native-AOT (Lambda) target is self-contained; the framework-dependent flag is Azure-only.
+        command.ShouldNotContain("--self-contained");
+    }
+
+    [TestMethod]
+    public void Builds_a_framework_dependent_publish_command_for_the_azure_target()
+    {
+        var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions { ReadOnlyMounts = [] });
+
+        string command = string.Join(' ', builder.BuildContainerArguments("/tmp/work", "linux-x64", ServerlessTarget.AzureFunctions));
+
+        // The dotnet-isolated host provides the runtime, so the isolated-worker app is published framework-dependent.
+        command.ShouldContain("dotnet publish /work/fn/fn.csproj -r linux-x64 -c Release --self-contained false -o /work/fn/out");
     }
 
     [TestMethod]

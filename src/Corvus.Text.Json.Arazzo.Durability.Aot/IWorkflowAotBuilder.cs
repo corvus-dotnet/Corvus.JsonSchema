@@ -21,14 +21,14 @@ public interface IWorkflowAotBuilder
     ValueTask<AotBuildResult> BuildAsync(AssembledHostApp hostApp, CancellationToken cancellationToken);
 }
 
-/// <summary>The outcome of a native-AOT build.</summary>
-/// <param name="Succeeded">Whether the build produced a native binary.</param>
-/// <param name="NativeBinary">The native binary bytes when <paramref name="Succeeded"/> is <see langword="true"/>; otherwise empty.</param>
+/// <summary>The outcome of a serverless host-app build.</summary>
+/// <param name="Succeeded">Whether the build produced a deploy artifact.</param>
+/// <param name="NativeBinary">The deploy artifact bytes when <paramref name="Succeeded"/> is <see langword="true"/>; otherwise empty. This is the single native binary for a Native-AOT (AWS Lambda) target, or the zipped published isolated-worker app for a ReadyToRun (Azure Functions) target.</param>
 /// <param name="Log">The build log (compiler and linker output), for diagnostics whether the build succeeded or failed.</param>
 public readonly record struct AotBuildResult(bool Succeeded, ReadOnlyMemory<byte> NativeBinary, string Log)
 {
     /// <summary>Creates a successful result.</summary>
-    /// <param name="nativeBinary">The native binary bytes.</param>
+    /// <param name="nativeBinary">The deploy artifact bytes (a native binary, or a zipped published app).</param>
     /// <param name="log">The build log.</param>
     /// <returns>The result.</returns>
     public static AotBuildResult Success(ReadOnlyMemory<byte> nativeBinary, string log) => new(true, nativeBinary, log);

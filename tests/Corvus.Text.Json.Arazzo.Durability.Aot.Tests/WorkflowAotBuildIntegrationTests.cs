@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.IO.Compression;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Generation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -119,5 +120,71 @@ public sealed class WorkflowAotBuildIntegrationTests
         result.Succeeded.ShouldBeTrue($"AOT build failed. Log:\n{result.Log}");
         result.NativeBinary.Length.ShouldBeGreaterThan(1_000_000);
         result.NativeBinary.Span[..4].ToArray().ShouldBe([0x7F, (byte)'E', (byte)'L', (byte)'F']);
+    }
+
+    [TestMethod]
+    [TestCategory("integration")]
+    public async Task Builds_a_real_workflow_executor_to_an_azure_isolated_worker_app_in_the_container()
+    {
+        string? feed = Environment.GetEnvironmentVariable("ARAZZO_AOT_LOCAL_FEED");
+        string? runtimeVersion = Environment.GetEnvironmentVariable("ARAZZO_AOT_RUNTIME_VERSION");
+        if (string.IsNullOrEmpty(feed) || string.IsNullOrEmpty(runtimeVersion))
+        {
+            Assert.Inconclusive("Set ARAZZO_AOT_LOCAL_FEED (the local package feed path) and ARAZZO_AOT_RUNTIME_VERSION (its Corvus runtime version), and build the arazzo-aot-builder image, to run this proof.");
+            return;
+        }
+
+        string image = Environment.GetEnvironmentVariable("ARAZZO_AOT_IMAGE") ?? "arazzo-aot-builder:net10";
+
+        // 1. Build the same real durable executor IL.
+        var buildLog = new List<string>();
+        WorkflowExecutorArtifact? executor = new WorkflowExecutorProvider(durable: true, progress: buildLog.Add).BuildExecutor(
+            Encoding.UTF8.GetBytes(WorkflowJson),
+            [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))],
+            "integration-hash-azure");
+        executor.ShouldNotBeNull($"the executor did not build. Provider progress:\n{string.Join("\n", buildLog)}");
+
+        // 2. Assemble the host-app for the Azure Functions target (a ReadyToRun isolated worker).
+        AssembledHostApp hostApp = new AotHostAppAssembler().Assemble(
+            executor!.Value.Assembly,
+            executor.Value.Manifest,
+            "linux-x64",
+            new AotHostAppOptions
+            {
+                Target = ServerlessTarget.AzureFunctions,
+                RuntimePackageVersion = runtimeVersion,
+                FeedSources =
+                [
+                    ("local", "/work/local-packages"),
+                    ("nuget.org", "https://api.nuget.org/v3/index.json"),
+                    ("dotnet-eng", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"),
+                    ("dotnet-libraries", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-libraries/nuget/v3/index.json"),
+                ],
+            });
+
+        // 3. Publish it framework-dependent ReadyToRun in the container. This is the real proof that the generated
+        // isolated-worker host-app (Program, the [Function], the csproj) compiles against a real executor reference.
+        var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions
+        {
+            ContainerImage = image,
+            ReadOnlyMounts = [(feed, "/work/local-packages")],
+        });
+
+        AotBuildResult result = await builder.BuildAsync(hostApp, CancellationToken.None);
+
+        // 4. The output is a zip of the published isolated-worker app with the expected Functions layout, and its
+        // generated function metadata records the HTTP-trigger the Worker source generator discovered.
+        result.Succeeded.ShouldBeTrue($"Azure ReadyToRun build failed. Log:\n{result.Log}");
+        using var zip = new ZipArchive(new MemoryStream(result.NativeBinary.ToArray()), ZipArchiveMode.Read);
+
+        zip.GetEntry("handler.dll").ShouldNotBeNull("the isolated-worker assembly is missing from the app.");
+        zip.GetEntry("host.json").ShouldNotBeNull();
+        zip.GetEntry("worker.config.json").ShouldNotBeNull();
+
+        ZipArchiveEntry metadataEntry = zip.GetEntry("functions.metadata").ShouldNotBeNull("the generated function metadata is missing.");
+        using var reader = new StreamReader(metadataEntry.Open());
+        string metadata = await reader.ReadToEndAsync();
+        metadata.ShouldContain("\"invoke\"", customMessage: $"the [Function(\"invoke\")] trigger was not discovered. Metadata:\n{metadata}");
+        metadata.ShouldContain("httpTrigger");
     }
 }

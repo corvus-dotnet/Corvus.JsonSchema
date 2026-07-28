@@ -3,15 +3,17 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.IO.Compression;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 
 /// <summary>
-/// An <see cref="IWorkflowAotBuilder"/> that native-AOT compiles the assembled host-app by running the Amazon Linux
-/// 2023 build image (ADR 0055). It writes the host-app to a working directory, mounts it into the container alongside
-/// the package feed, runs a single <c>dotnet publish</c>, and reads back the native <c>bootstrap</c>. It builds the
-/// Linux targets; a Windows target needs a Windows build host, since Native AOT does not cross-compile across
-/// operating systems.
+/// An <see cref="IWorkflowAotBuilder"/> that compiles the assembled host-app by running the build image (ADR 0055). It
+/// writes the host-app to a working directory, mounts it into the container alongside the package feed, runs a single
+/// <c>dotnet publish</c>, and reads back the deploy artifact per target: the single native <c>bootstrap</c> for an AWS
+/// Lambda (Native-AOT) build, or the whole published isolated-worker app zipped for an Azure Functions (ReadyToRun)
+/// build. It builds the Linux targets; a Windows Native-AOT target needs a Windows build host, since Native AOT does
+/// not cross-compile across operating systems.
 /// </summary>
 public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
 {
@@ -43,11 +45,31 @@ public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
 
             Directory.CreateDirectory(Path.Combine(workDirectory, OutputDirectoryName));
 
-            IReadOnlyList<string> arguments = this.BuildContainerArguments(workDirectory, hostApp.RuntimeIdentifier);
+            IReadOnlyList<string> arguments = this.BuildContainerArguments(workDirectory, hostApp.RuntimeIdentifier, hostApp.Target);
             (int exitCode, string log) = await RunProcessAsync(this.options.ContainerCommand, arguments, cancellationToken).ConfigureAwait(false);
 
-            string bootstrapPath = Path.Combine(workDirectory, OutputDirectoryName, "bootstrap");
-            if (exitCode != 0 || !File.Exists(bootstrapPath))
+            string outputDirectory = Path.Combine(workDirectory, OutputDirectoryName);
+            if (exitCode != 0)
+            {
+                return AotBuildResult.Failure(log);
+            }
+
+            if (hostApp.Target == ServerlessTarget.AzureFunctions)
+            {
+                // A runtime-present target publishes a framework-dependent isolated-worker app: the deploy artifact is the
+                // whole published directory (handler.dll + its dependency assemblies + host.json + functions.metadata +
+                // worker.config.json + .azurefunctions/), zipped. The worker assembly's presence is the success signal.
+                if (!File.Exists(Path.Combine(outputDirectory, "handler.dll")))
+                {
+                    return AotBuildResult.Failure(log);
+                }
+
+                return AotBuildResult.Success(ZipDirectory(outputDirectory), log);
+            }
+
+            // A runtime-less target publishes a single self-contained native binary named 'bootstrap'.
+            string bootstrapPath = Path.Combine(outputDirectory, "bootstrap");
+            if (!File.Exists(bootstrapPath))
             {
                 return AotBuildResult.Failure(log);
             }
@@ -64,7 +86,7 @@ public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
     // The container CLI arguments to run the build: mount the assembled project read-write (so the publish writes its
     // intermediate and output there), mount the read-only feeds, and publish the one project to the runtime target.
     // Internal so the argument shape is unit-testable without a container.
-    internal IReadOnlyList<string> BuildContainerArguments(string workDirectory, string runtimeIdentifier)
+    internal IReadOnlyList<string> BuildContainerArguments(string workDirectory, string runtimeIdentifier, ServerlessTarget target = ServerlessTarget.AwsLambda)
     {
         var arguments = new List<string> { "run", "--rm" };
 
@@ -89,6 +111,16 @@ public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
         arguments.Add(runtimeIdentifier);
         arguments.Add("-c");
         arguments.Add("Release");
+
+        if (target == ServerlessTarget.AzureFunctions)
+        {
+            // Framework-dependent: the dotnet-isolated host provides the runtime (ADR 0061). The csproj sets
+            // <SelfContained>false</SelfContained> too, but pass it explicitly so a -r publish never implies
+            // self-contained on any SDK.
+            arguments.Add("--self-contained");
+            arguments.Add("false");
+        }
+
         arguments.Add("-o");
         arguments.Add($"{ProjectMountPath}/{OutputDirectoryName}");
         return arguments;
@@ -139,6 +171,28 @@ public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
         {
             // The process already exited, or could not be signalled; nothing more to do.
         }
+    }
+
+    // Zips a published isolated-worker app directory into the deploy payload the Azure deployer zip-deploys. Debug
+    // symbols are dropped: they are not needed at runtime and only enlarge the deploy (and its cold start).
+    private static byte[] ZipDirectory(string directory)
+    {
+        using var memory = new MemoryStream();
+        using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (string file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                if (file.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string entryName = Path.GetRelativePath(directory, file).Replace('\\', '/');
+                archive.CreateEntryFromFile(file, entryName, CompressionLevel.Optimal);
+            }
+        }
+
+        return memory.ToArray();
     }
 
     private static void TryDeleteDirectory(string path)
