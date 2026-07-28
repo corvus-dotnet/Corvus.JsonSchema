@@ -13,6 +13,8 @@ using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Keycloak;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
@@ -272,6 +274,81 @@ PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIden
 // by PostgresControlPlaneDeployment.ProvisionAsync above (the control plane owns DDL); ConnectAsync never runs DDL.
 PostgresNativeBuildJobStore nativeBuildJobStore = await PostgresNativeBuildJobStore.ConnectAsync(dataSource);
 PostgresWorkflowDeploymentStore workflowDeploymentStore = await PostgresWorkflowDeploymentStore.ConnectAsync(dataSource);
+
+// Serverless execution backend (#876, ADR 0055/0059): the control-plane build worker. It drains the native-AOT
+// build-job queue, compiling each Ready version's signed executor IL into a native binary INSIDE the arazzo-aot-builder
+// container, signs the binary, and (deploy-on-build) enqueues a Queued deployment the runner's deploy worker claims. It
+// runs HERE, not on the runner, because the build reads the catalog and signs against the control-plane signing vault —
+// secrets the runner never holds (ADR 0059). It is wired only when the fully-signed chain is present (ADR 0055: a version
+// reaches a serverless environment only through a signed chain, else its deployment stays in-process): the signing vault
+// (executorSigner, above), the exported PUBLIC half of the signing key the build re-verifies the executor IL against, and
+// the local package feed the container restores the pinned runtime graph from. Absent any of these the serverless build
+// path stays dark and Isolated environments hold their runs at the build-ready gate — surfaced below, never silently.
+string? aotFeedPath = builder.Configuration["ControlPlane:Aot:FeedPath"];
+string? aotRuntimeVersion = builder.Configuration["ControlPlane:Aot:RuntimeVersion"];
+string? aotTrustPublicKeyFile = builder.Configuration["ControlPlane:ExecutorTrust:PublicKeyFile"];
+if (executorSigner is { } buildSigner
+    && !string.IsNullOrWhiteSpace(aotFeedPath) && Directory.Exists(aotFeedPath)
+    && !string.IsNullOrWhiteSpace(aotRuntimeVersion)
+    && !string.IsNullOrWhiteSpace(aotTrustPublicKeyFile) && File.Exists(aotTrustPublicKeyFile))
+{
+    // Build only from a verified, signed executor: re-verify the SAME executor-IL signature the catalog store stamped at
+    // add time, against the exported public half of the signing key (the private half never leaves the vault).
+    string aotTrustKeyId = builder.Configuration["ControlPlane:ExecutorTrust:KeyId"]
+        ?? builder.Configuration["ControlPlane:SigningVault:KeyId"]
+        ?? builder.Configuration["ControlPlane:SigningVault:KeyName"] ?? "arazzo-executor-signing";
+    IExecutorPackageVerifier buildVerifier = TrustStoreExecutorPackageVerifier.FromPem(
+        new Dictionary<string, string>(StringComparer.Ordinal) { [aotTrustKeyId] = await File.ReadAllTextAsync(aotTrustPublicKeyFile) });
+
+    // The container builder mounts the local package feed read-only at the path the feed config names, and runs the pared
+    // arazzo-aot-builder image (Amazon Linux 2023, matching the Lambda provided.al2023 glibc LocalStack itself runs).
+    var containerAotBuilder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions
+    {
+        ContainerImage = builder.Configuration["ControlPlane:Aot:BuilderImage"] ?? "arazzo-aot-builder:net10",
+        ContainerCommand = builder.Configuration["ControlPlane:Aot:ContainerCli"] ?? "podman",
+        ReadOnlyMounts = [(aotFeedPath, "/work/local-packages")],
+    });
+
+    // The host-app pins the runtime graph at the feed's package version (the serverless-aot guide's invariant 2: the feed
+    // retains it) and restores from the local feed plus the .NET package sources ILCompiler resolves from.
+    var aotBuildService = new WorkflowAotBuildService(
+        buildVerifier,
+        buildSigner,
+        containerAotBuilder,
+        new AotHostAppOptions
+        {
+            RuntimePackageVersion = aotRuntimeVersion,
+            FeedSources =
+            [
+                ("local", "/work/local-packages"),
+                ("nuget.org", "https://api.nuget.org/v3/index.json"),
+                ("dotnet-eng", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"),
+                ("dotnet-libraries", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-libraries/nuget/v3/index.json"),
+            ],
+        });
+
+    // AddNativeAotBuildWorker resolves these four collaborators from DI: the build-job queue it drains, the catalog it
+    // loads each version's package from and attaches the native binary back into, the build service, and (deploy-on-build)
+    // the deployment queue it enqueues a Queued deployment into on a Ready build.
+    builder.Services.AddSingleton<INativeBuildJobStore>(nativeBuildJobStore);
+    builder.Services.AddSingleton<IWorkflowCatalogStore>(catalogStore);
+    builder.Services.AddSingleton(aotBuildService);
+    builder.Services.AddSingleton<IWorkflowDeploymentStore>(workflowDeploymentStore);
+    builder.Services.AddNativeAotBuildWorker(new NativeBuildWorkerOptions
+    {
+        WorkerId = $"cp-build-{System.Environment.MachineName}-{System.Environment.ProcessId}",
+        PollInterval = TimeSpan.FromSeconds(2),
+    });
+}
+else if (executorSigner is not null)
+{
+    // Signing is configured (so the serverless path is intended) but the build worker could not wire: name the missing
+    // input rather than leaving an operator to wonder why Isolated runs never leave the build-ready gate.
+    Console.Error.WriteLine(
+        "[serverless-build] Executor signing is configured but the control-plane build worker is NOT wired. Need " +
+        $"ControlPlane:Aot:FeedPath (a directory; got '{aotFeedPath}'), ControlPlane:Aot:RuntimeVersion (got '{aotRuntimeVersion}'), and " +
+        $"ControlPlane:ExecutorTrust:PublicKeyFile (a file; got '{aotTrustPublicKeyFile}'). Isolated environments will hold runs at the build-ready gate.");
+}
 
 var draftRunner = new InProcessDraftRunner(
     stateStore,

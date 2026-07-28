@@ -174,6 +174,17 @@ builder.AddContainer("localstack", "localstack/localstack", "3.0")
     .WithEnvironment("ACTIVATE_PRO", "0")
     .WithHttpEndpoint(targetPort: 4566, name: "edge");
 
+// The local NuGet feed the control-plane build worker's container restores the pinned runtime graph from. The
+// serverless-aot guide's dev feed: build-local-packages.ps1 packs the solution to <repo>/local-packages at
+// 5.0.0-local.N (newer than nuget.org). The path is overridable via ARAZZO_AOT_LOCAL_FEED; the version defaults to the
+// newest the Lambda shim package carries in the feed (overridable via ARAZZO_AOT_RUNTIME_VERSION). When the feed is
+// absent (build-local-packages.ps1 was never run), aotRuntimeVersion stays null and the AOT config below is NOT
+// injected — the control plane then logs why its serverless build path is dark and the demo still runs, with Isolated
+// runs held at the build-ready gate (never a silent stall).
+string aotFeedPath = builder.Configuration["ARAZZO_AOT_LOCAL_FEED"]
+    ?? Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "..", "..", "..", "local-packages"));
+string? aotRuntimeVersion = builder.Configuration["ARAZZO_AOT_RUNTIME_VERSION"] ?? NewestLocalFeedVersion(aotFeedPath);
+
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
 // step" stand-in, design §13.5.1). It writes a read-only, path-scoped policy, mints the runner's read-only token
 // bound to it, then exits. The runner never has these privileges. The script splits along the same seam as the
@@ -429,6 +440,22 @@ if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(git
         .WithEnvironment("GITHUB_OAUTH_CLIENT_SECRET", githubClientSecret);
 }
 
+// Serverless execution backend (#876, ADR 0055/0059): light up the control-plane build worker when the local runtime
+// feed is present. It native-AOT compiles each Ready Isolated version's signed executor in the arazzo-aot-builder
+// container (restoring the pinned runtime from this feed) and, deploy-on-build, enqueues a deployment the serverless
+// runner claims. The build re-verifies the executor IL against the same signing key's PUBLIC half the runner trusts
+// (signingPublicKeyPath, exported by the signing provisioner) — the control plane already signs against the private
+// half in the signing vault (wired above). Absent the feed this stays unset and the control plane surfaces why.
+if (aotRuntimeVersion is not null)
+{
+    // The control plane already WaitForCompletion(signingVaultInit) above, so the exported public key exists by startup.
+    controlplane
+        .WithEnvironment("ControlPlane__Aot__FeedPath", aotFeedPath)
+        .WithEnvironment("ControlPlane__Aot__RuntimeVersion", aotRuntimeVersion)
+        .WithEnvironment("ControlPlane__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)
+        .WithEnvironment("ControlPlane__ExecutorTrust__KeyId", signingKeyName);
+}
+
 // The runner ("execution-host") — the second process in the topology. It shares the store, registers in the
 // runner registry, and claims/resumes runs (design §5/§7). It is the §13 secret *consumer*: it holds ONLY the
 // read-only Vault token (least privilege), waits for provisioning to finish, and resolves credentials at bind
@@ -539,3 +566,23 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("
     .WithHttpHealthCheck("/health");
 
 builder.Build().Run();
+
+// Picks the newest 5.0.0-local.N version the Lambda shim package (the host-app's LambdaShimPackageId) carries in the
+// local feed, so the control-plane build worker pins the runtime graph at exactly what build-local-packages.ps1 last
+// packed. Returns null when the feed directory or the shim package is absent (the feed was never built), which leaves
+// the serverless build path unwired. Ordered by the integer local-suffix so .10 sorts after .9 (a plain string sort
+// would not).
+static string? NewestLocalFeedVersion(string feedPath)
+{
+    const string shimPrefix = "Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.";
+    if (!Directory.Exists(feedPath))
+    {
+        return null;
+    }
+
+    return Directory.EnumerateFiles(feedPath, shimPrefix + "*.nupkg")
+        .Select(path => Path.GetFileNameWithoutExtension(path)[shimPrefix.Length..])
+        .Where(version => System.Text.RegularExpressions.Regex.IsMatch(version, @"^\d+\.\d+\.\d+-local\.\d+$"))
+        .OrderBy(version => int.Parse(version[(version.LastIndexOf('.') + 1)..], System.Globalization.CultureInfo.InvariantCulture))
+        .LastOrDefault();
+}
