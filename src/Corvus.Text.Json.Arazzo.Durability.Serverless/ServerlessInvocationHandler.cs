@@ -91,6 +91,21 @@ public sealed class ServerlessInvocationHandler
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(invocationJson);
         JsonElement root = document.RootElement;
 
+        // A Lambda Function URL (or API Gateway) delivers the request wrapped in an event envelope — the actual invocation
+        // body is the `body` string (base64-encoded when `isBase64Encoded` is true). A direct Invoke delivers the body
+        // verbatim. When the top-level payload is not our {runId, ...} shape but carries a `body`, unwrap it and re-parse,
+        // so both invocation paths reach the same {runId, environment, checkpointUrl}.
+        if (!root.TryGetProperty("runId"u8, out _)
+            && root.TryGetProperty("body"u8, out JsonElement bodyElement)
+            && bodyElement.ValueKind == JsonValueKind.String
+            && bodyElement.GetString() is { Length: > 0 } bodyText)
+        {
+            bool base64 = root.TryGetProperty("isBase64Encoded"u8, out JsonElement flagElement)
+                && flagElement.ValueKind == JsonValueKind.True;
+            byte[] innerBytes = base64 ? Convert.FromBase64String(bodyText) : System.Text.Encoding.UTF8.GetBytes(bodyText);
+            return ParseInvocation(innerBytes);
+        }
+
         string? runId = root.TryGetProperty("runId"u8, out JsonElement runIdElement) ? runIdElement.GetString() : null;
         if (string.IsNullOrEmpty(runId))
         {
