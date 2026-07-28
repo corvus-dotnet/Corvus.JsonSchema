@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <c>HttpWorkflowStateStore</c> speaks: octet-stream checkpoint bytes, an <c>ETag</c>, and the
 /// <see cref="WriteSequenceHeader"/> monotonic write-sequence.
 /// </summary>
-internal static class WorkflowCheckpointEndpoints
+public static class WorkflowCheckpointEndpoints
 {
     /// <summary>The header carrying a checkpoint's monotonic write-sequence on a save, and the last applied one on a load. Matches the function-side <c>HttpWorkflowStateStore.WriteSequenceHeader</c>.</summary>
     internal const string WriteSequenceHeader = "X-Arazzo-Checkpoint-Seq";

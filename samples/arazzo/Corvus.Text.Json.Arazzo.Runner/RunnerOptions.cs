@@ -17,4 +17,8 @@ namespace Corvus.Text.Json.Arazzo.Runner;
 /// schedule is a durable run of the built-in scheduler workflow rather than a catalogued version, so it is claimed only
 /// by a runner that both opts in here and has the scheduler wired into its <see cref="HostedWorkflowResumer"/>. Off by
 /// default: a runner with no scheduler must not claim a schedule run, or it would fault it.</param>
-public sealed record RunnerOptions(string RunnerId, string Environment, int MaxConcurrency = 4, bool ServesSchedules = false);
+/// <param name="IsolationModel">The execution isolation model this runner advertises (ADR 0058), e.g. <c>Isolated</c> for
+/// a serverless runner that advances runs through a deployed function. <see langword="null"/> (the default) advertises
+/// nothing, which the control plane reads as the in-process default — so an existing in-process runner is unchanged.
+/// Dispatch matches an environment's required isolation against this advertised model.</param>
+public sealed record RunnerOptions(string RunnerId, string Environment, int MaxConcurrency = 4, bool ServesSchedules = false, string? IsolationModel = null);

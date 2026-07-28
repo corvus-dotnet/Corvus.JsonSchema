@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Aspire service defaults: OpenTelemetry (incl. the shared Corvus.Arazzo source/meter), health checks, service
+         discovery, HTTP resilience — the serverless runner's traces/logs/metrics flow to the Aspire dashboard. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
+    <!-- The reusable runner building blocks (options/registration/dispatch/registrar), shared with the in-process
+         runner. This host composes them around the serverless resumer + deploy worker rather than the in-process one. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Runner\Corvus.Text.Json.Arazzo.Runner.csproj" />
+    <!-- The shared durability store (the same Postgres database the control plane owns + seeds). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
+    <!-- The runner-side deploy worker + deploy service (ADR 0059): drains the workflow-deployment queue. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Aot\Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
+    <!-- The AWS Lambda deploy target (ADR 0055/0060): the IServerlessDeployer wired to LocalStack (or real AWS). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
+    <!-- The serverless run-execution backend (invoke-the-function resumer), the deployed-function URL resolver, and the
+         /runs/{id}/checkpoint callback surface the invoked function saves back through (ADR 0055). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
+    <!-- The executor-package trust store: the deploy verifies the signed native artifact before it deploys it. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Execution\Corvus.Text.Json.Arazzo.Execution.csproj" />
+    <!-- The runner's cloud identity: the AWS Lambda client the deployer runs against LocalStack for local development. -->
+    <PackageReference Include="AWSSDK.Lambda" />
+  </ItemGroup>
+
+</Project>

@@ -155,6 +155,11 @@ public sealed class RunnerRegistrationService(
                 writer.WriteBoolean("servesSchedules", true);
             }
 
+            if (options.IsolationModel is { Length: > 0 } isolationModel)
+            {
+                writer.WriteString("isolationModel", isolationModel);
+            }
+
             writer.WriteEndObject();
         }
 
@@ -198,6 +203,11 @@ public sealed class RunnerRegistrationService(
             if (options.ServesSchedules)
             {
                 writer.WriteBoolean("servesSchedules", true);
+            }
+
+            if (options.IsolationModel is { Length: > 0 } isolationModel)
+            {
+                writer.WriteString("isolationModel", isolationModel);
             }
 
             writer.WriteEndObject();

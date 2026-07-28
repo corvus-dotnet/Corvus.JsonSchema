@@ -169,8 +169,8 @@ var nats = builder.AddContainer("nats", "nats", "2.10")
 // path is demonstrable on a developer box with no cloud account. Community mode (ACTIVATE_PRO=0) is free and supports
 // provided.al2023; :3.0 is pinned because :stable/:latest now demand a Pro token even to start and :2.0's Lambda runtime
 // enum predates provided.al2023 (verified, not assumed — ADR 0060). Ephemeral (no volume), like the rest of the demo.
-// Registered here; the ServerlessRunner references it for its Lambda endpoint (added with that runner).
-builder.AddContainer("localstack", "localstack/localstack", "3.0")
+// Registered here; the serverless runner (below) references it for its Lambda endpoint.
+var localstack = builder.AddContainer("localstack", "localstack/localstack", "3.0")
     .WithEnvironment("ACTIVATE_PRO", "0")
     .WithHttpEndpoint(targetPort: 4566, name: "edge");
 
@@ -564,6 +564,54 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("
     .WaitForCompletion(signingVaultInit)
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/health");
+
+// The serverless runner ("execution-host" for the Isolated environment, ADR 0055/0059) — the deploy-and-invoke process
+// alongside the in-process runner. It shares the store, drains the workflow-deployment queue (deploying each version's
+// signed native binary to LocalStack as a provided.al2023 Lambda via its OWN cloud identity — the control plane holds no
+// cloud credentials), and advances Isolated runs by invoking the deployed function. It registers as an Isolated runner so
+// the control plane routes only the isolated environment's runs to it. Pinned to :8091 (isProxied:false) so the URL the
+// invoked LocalStack Lambda checkpoints back to is stable, reachable from LocalStack's Lambda container via the podman
+// host gateway. Only wired when the runtime feed is present (aotRuntimeVersion), like the control-plane build worker —
+// without a built binary to deploy there is nothing for this runner to do.
+if (aotRuntimeVersion is not null)
+{
+    const int serverlessRunnerPort = 8091;
+    // A plain string (not an interpolated literal) so WithEnvironment binds its (string, string) overload rather than
+    // the ReferenceExpression interpolated-string handler, which only accepts IValueProvider interpolation holes.
+    string serverlessCheckpointBaseUrl = $"http://host.containers.internal:{serverlessRunnerPort}";
+    builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ServerlessRunner_Demo>("serverless-runner")
+        .WithReference(workflowstore)
+        .WaitFor(workflowstore)
+        // §14 at rest: the SAME per-boot checkpoint key every process touching the shared state store wraps with.
+        .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
+        // The single Isolated environment this runner serves (phase 4 seeds it + a version available there).
+        .WithEnvironment("Runner__Environment", "isolated")
+        // #879 executor-package trust: the signing key's PUBLIC half, so the deploy verifies each native binary's
+        // attestation before it hands it to Lambda. Never the private half — this runner cannot sign.
+        .WithEnvironment("Runner__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)
+        .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
+        // The runner's cloud identity: LocalStack's Lambda control plane (ADR 0060). Dummy static creds — LocalStack
+        // Community ignores IAM; the deployer code is identical to the real-AWS path, only the endpoint differs.
+        .WithEnvironment("Runner__Lambda__ServiceUrl", localstack.GetEndpoint("edge"))
+        .WaitFor(localstack)
+        // The checkpoint callback base URL the invoked Lambda posts back to. The runner binds :8091 on the host directly
+        // (isProxied:false), and LocalStack's Lambda container reaches the host through the podman host gateway. (This is
+        // the one value phase 4 tunes if the LocalStack Lambda network cannot resolve host.containers.internal.)
+        .WithEnvironment("Runner__CheckpointBaseUrl", serverlessCheckpointBaseUrl)
+        // Authenticated registration as the arazzo-runner machine principal (client-credentials), like the in-process runner.
+        .WithReference(controlplane)
+        .WaitFor(controlplane)
+        .WithReference(keycloak)
+        .WaitFor(keycloak)
+        .WithEnvironment("Runner__ControlPlane__BaseUrl", controlplane.GetEndpoint("http"))
+        .WithEnvironment("Runner__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+        .WithEnvironment("Runner__Keycloak__ClientId", "arazzo-runner")
+        .WithEnvironment("Runner__Keycloak__ClientSecret", "arazzo-runner-dev-secret")
+        // Gate on the signing provisioner so the exported public key exists before this runner reads it.
+        .WaitForCompletion(signingVaultInit)
+        .WithHttpEndpoint(port: serverlessRunnerPort, isProxied: false)
+        .WithHttpHealthCheck("/health");
+}
 
 builder.Build().Run();
 
