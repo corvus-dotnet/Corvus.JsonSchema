@@ -36,12 +36,13 @@ The state file feeds three environment variables that the opt-in `[TestCategory(
 | `ARAZZO_CHECKPOINT_SECRET` | `checkpointSecret` |
 | `ARAZZO_CHECKPOINT_STORAGE` | `storageConnection` |
 
-With those set (plus `ARAZZO_AOT_LOCAL_FEED` and `ARAZZO_AOT_RUNTIME_VERSION` for the app build, and an `az login` session), two gates in `Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests` prove run-to-completion through the deployed listener:
+With those set (plus `ARAZZO_AOT_LOCAL_FEED` and `ARAZZO_AOT_RUNTIME_VERSION` for the app build, and an `az login` session), three gates in `Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests` prove run-to-completion through the deployed listener:
 
 - **`ServerlessRealCloudCheckpointListenerTests`** — the real Azure Functions runtime image, run locally, advances a seeded run to completion through the public listener and its shared store. A fast gate that needs no Function App provision.
 - **`ArmFunctionAppLiveDeployTests.Runs_a_seeded_run_to_completion_on_a_live_flex_app_...`** — a real Flex Consumption Function App does the same, and tears down its own function-side resources.
+- **`ServerlessRealCloudCheckpointListenerLambdaTests`** — an AWS Lambda (under LocalStack) does the same, proving the listener is vendor-neutral: one checkpoint surface for both clouds.
 
-Both seed a Pending run into the shared store, dispatch it with a run-scoped `CheckpointToken`, and assert the run reloads `Completed` with `callEcho`'s `{ "status": "ok" }`.
+All three seed a Pending run into the shared store, dispatch it with a run-scoped `CheckpointToken`, and assert the run reloads `Completed` with `callEcho`'s `{ "status": "ok" }`.
 
 > The AOT app build restores the Corvus runtime from `ARAZZO_AOT_LOCAL_FEED`, **not** live source. After any change to the serverless runtime (for example the checkpoint-token wiring), rebuild the feed — `pwsh build-local-packages.ps1 -Version 5.0.0-local.<n>` — and point `ARAZZO_AOT_RUNTIME_VERSION` at the new version, or the deployed function will lag the source it is tested against.
 
