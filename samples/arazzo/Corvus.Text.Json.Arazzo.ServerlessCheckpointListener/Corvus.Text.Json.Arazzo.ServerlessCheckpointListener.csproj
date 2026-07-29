@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <NoWarn>$(NoWarn);CS1591;IDE0065;IDE0290;IDE0079;IDE0130;CA1852</NoWarn>
+    <UserSecretsId>arazzo-serverless-checkpoint-listener</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The token-authenticated checkpoint surface (MapWorkflowCheckpointEndpoints + CheckpointToken, ADR 0062). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
+    <!-- The durable store the checkpoint surface terminates into, shared with the seeding/asserting test process. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.AzureStorage\Corvus.Text.Json.Arazzo.Durability.AzureStorage.csproj" />
+  </ItemGroup>
+</Project>
