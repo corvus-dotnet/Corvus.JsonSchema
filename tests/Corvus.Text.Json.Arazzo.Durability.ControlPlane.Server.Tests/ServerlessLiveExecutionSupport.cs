@@ -124,6 +124,9 @@ internal static class ServerlessLiveExecutionSupport
         var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions
         {
             ContainerImage = image,
+            // The container CLI: podman locally (the default), overridable to docker via ARAZZO_CONTAINER_CLI. On
+            // GitHub-hosted runners rootless podman's build RUN steps fail under crun, so CI sets this to docker.
+            ContainerCommand = System.Environment.GetEnvironmentVariable("ARAZZO_CONTAINER_CLI") ?? "podman",
             ReadOnlyMounts = [(feed, "/work/local-packages")],
         });
 

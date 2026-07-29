@@ -263,10 +263,11 @@ jobs:
       ARAZZO_AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_TESTS_E2E_SUBSCRIPTION_ID }}
       ARAZZO_AZURE_RESOURCE_GROUP: ${{ secrets.ARAZZO_AZURE_RESOURCE_GROUP }}
       ARAZZO_AZURE_LOCATION: ${{ vars.ARAZZO_AZURE_LOCATION }}
-      # The AOT build and the Functions runtime container both run under rootless podman (the default the build
-      # scripts and Testcontainers-based gate expect), so point Testcontainers at podman and disable Ryuk.
-      DOCKER_HOST: unix:///run/user/1000/podman/podman.sock
-      TESTCONTAINERS_RYUK_DISABLED: "true"
+      # Use Docker on the GitHub-hosted runner (it runs a root daemon, natively available), not rootless podman:
+      # podman's `build` RUN steps fail under crun on Actions. ARAZZO_CONTAINER_CLI switches the AOT builder image
+      # build and the in-container AOT build to docker; Testcontainers and LocalStack use the default docker socket,
+      # so DOCKER_HOST is left unset.
+      ARAZZO_CONTAINER_CLI: docker
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -279,11 +280,6 @@ jobs:
           dotnet-version: |
             10.0.x
             9.0.x
-
-      - name: Start rootless podman API socket
-        run: |
-          systemctl --user enable --now podman.socket || podman system service --time=0 unix:///run/user/1000/podman/podman.sock &
-          for i in $(seq 1 15); do curl -s --unix-socket /run/user/1000/podman/podman.sock http://d/v1.0.0/libpod/_ping && break; sleep 1; done
 
       - name: Azure login (OIDC)
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
@@ -298,7 +294,7 @@ jobs:
           $version = "5.0.0-local.$($env:GITHUB_RUN_NUMBER)"
           "ARAZZO_AOT_RUNTIME_VERSION=$version" >> $env:GITHUB_ENV
           "ARAZZO_AOT_LOCAL_FEED=$($env:GITHUB_WORKSPACE)/local-packages" >> $env:GITHUB_ENV
-          ./src/Corvus.Text.Json.Arazzo.Durability.Aot/build-aot-builder-image.ps1 -ContainerCli podman
+          ./src/Corvus.Text.Json.Arazzo.Durability.Aot/build-aot-builder-image.ps1 -ContainerCli docker
           ./build-local-packages.ps1 -Version $version
         timeout-minutes: 60
 
