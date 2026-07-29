@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>The Azure Functions IServerlessDeployer for the Arazzo serverless backend (ADR 0055, ADR 0059, ADR 0061): the runner uploads a version's verified ReadyToRun isolated-worker app package to blob storage and points the target dotnet-isolated Function App at it by run-from-package (WEBSITE_RUN_FROM_PACKAGE), over an injected package BlobContainerClient. One deployer targets Azurite locally and real Azure Storage in production; only the injected client's endpoint differs. The management-plane app configuration is the injected IFunctionAppConfigurator (real Azure Resource Manager in production).</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The IServerlessDeployer seam this project implements lives in the runner-side AOT deploy library (ADR 0059). -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.Aot\Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

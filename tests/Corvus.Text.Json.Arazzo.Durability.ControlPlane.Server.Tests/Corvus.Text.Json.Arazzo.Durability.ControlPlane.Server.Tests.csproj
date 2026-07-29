@@ -24,11 +24,16 @@
     <PackageReference Include="AWSSDK.Lambda" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="Testcontainers.LocalStack" />
+    <!-- The opt-in Azure Functions run-from-package deploy gate (ADR 0061) uploads the app package to Azurite blob. -->
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Testcontainers.Azurite" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <!-- The AWS Lambda deployer under test by the live LocalStack invoke-and-run gate. -->
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
+    <!-- The Azure Functions deployer under test by the live run-from-package (Azurite) deploy-and-run gate. -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.csproj" />
     <!-- The function-side HttpWorkflowStateStore drives the end-to-end wire test against the runner's checkpoint surface. -->
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless\Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />

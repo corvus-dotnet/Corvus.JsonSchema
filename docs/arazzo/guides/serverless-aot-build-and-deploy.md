@@ -199,8 +199,20 @@ runtime image (`mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isola
 trigger. The run reaches `Completed` with `callEcho` `{ "status": "ok" }`, the isolated worker having reached this test's
 Kestrel checkpoint surface and `echo` source through `host.containers.internal` (a `--add-host …:host-gateway` route).
 Both gates compile the identical workflow from one shared fixture, so the two vendors' execution is proven over the same
-run. The zip-**deploy** to a Function App is proven against real Azure, the analogue of Lambda's `AWS_IAM` invoke auth.
+run.
 
-The remaining work this design admits: the Azure Functions **deployer** (a second `IServerlessDeployer` that zip-deploys
-the published app to a `dotnet-isolated` Function App — the target's execution path and CI gate are in place),
-execution-host **isolation hardening**, and the **operator surface** (web + CLI) for builds, deployments, and isolation.
+The Azure deploy path itself is `AzureFunctionsServerlessDeployer` (the `...AzureFunctions.Deploy` package). It deploys a
+version's app package by **run-from-package**: it uploads the zip to a blob container over the injected
+`BlobContainerClient` (Azurite locally, real Azure Storage in production, only the endpoint differing, the same way the
+Lambda deployer uses `IAmazonLambda`), then points the `dotnet-isolated` Function App at it with `WEBSITE_RUN_FROM_PACKAGE`.
+The management-plane app configuration, which sets that value and the source app settings over ARM, has no local emulator,
+so it is a separate injected seam, `IFunctionAppConfigurator`, real ARM in production and a recording fake in tests. The
+storage mechanism is proven live against Azurite by `AzureFunctionsServerlessDeployerAzuriteTests`, which checks the
+run-from-package URL the deployer mints fetches back the byte-identical package it uploaded. The whole path is proven end
+to end by `AzureFunctionsRunFromPackageDeployTests`, which uploads a real app to Azurite, fetches the package from that URL
+exactly as the App Service platform would, and runs it to completion under the real Functions host. The standalone
+`dotnet-isolated` runtime image does not itself honour a `WEBSITE_RUN_FROM_PACKAGE` URL (that download is an App Service
+platform feature), so the gate performs the platform's fetch and mounts the package in its place.
+
+The remaining work this design admits: execution-host **isolation hardening**, and the **operator surface** (web + CLI)
+for builds, deployments, and isolation.

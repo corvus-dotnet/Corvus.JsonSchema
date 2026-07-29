@@ -87,6 +87,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Conformance/Corvus.Text.Json.Arazzo.Durability.Conformance.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Aot.Tests/Corvus.Text.Json.Arazzo.Durability.Aot.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests.csproj" />
@@ -170,6 +171,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless/Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Aot/Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
