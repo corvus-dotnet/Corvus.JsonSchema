@@ -190,6 +190,17 @@ asserts the run reaches `Completed` with the `callEcho` step output `{ "status":
 its checkpoint, called its source at `host.containers.internal`, and saved the advance back. The gate skips unless
 `ARAZZO_AOT_LOCAL_FEED` and `ARAZZO_AOT_RUNTIME_VERSION` are set (and, under podman, `ARAZZO_LOCALSTACK_DOCKER_SOCK`).
 
-The remaining work this design admits: the **Azure Functions** target (a second `IServerlessDeployer` plus its vendor
-entry shim), execution-host **isolation hardening**, and the **operator surface** (web + CLI) for builds, deployments,
-and isolation.
+The **Azure Functions** target has the counterpart gate `ServerlessLiveExecutionAzureFunctionsTests` (opt-in,
+`[integration][docker]`). Azure has no management-plane emulator (Azurite emulates Storage only), so it proves
+**execution**, not the deploy (ADR 0061): it compiles the *same* `serverless-check` workflow into a framework-dependent
+ReadyToRun isolated-worker app in the AOT builder container, drops the published app into the real Azure Functions
+runtime image (`mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated10.0`) at `/home/site/wwwroot`
+(HTTP-only, so no Azure Storage is needed), and dispatches the same seeded Pending run to its `[Function("invoke")]` HTTP
+trigger. The run reaches `Completed` with `callEcho` `{ "status": "ok" }`, the isolated worker having reached this test's
+Kestrel checkpoint surface and `echo` source through `host.containers.internal` (a `--add-host …:host-gateway` route).
+Both gates compile the identical workflow from one shared fixture, so the two vendors' execution is proven over the same
+run. The zip-**deploy** to a Function App is proven against real Azure, the analogue of Lambda's `AWS_IAM` invoke auth.
+
+The remaining work this design admits: the Azure Functions **deployer** (a second `IServerlessDeployer` that zip-deploys
+the published app to a `dotnet-isolated` Function App — the target's execution path and CI gate are in place),
+execution-host **isolation hardening**, and the **operator surface** (web + CLI) for builds, deployments, and isolation.

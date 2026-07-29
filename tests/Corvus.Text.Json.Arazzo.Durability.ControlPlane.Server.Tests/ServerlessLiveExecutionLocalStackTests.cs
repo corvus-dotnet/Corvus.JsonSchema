@@ -8,7 +8,6 @@ using Amazon.Lambda.Model;
 using Amazon.Runtime;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
-using Corvus.Text.Json.Arazzo.Generation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -41,50 +40,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestCategory("docker")]
 public sealed class ServerlessLiveExecutionLocalStackTests
 {
-    // A minimal source-calling workflow: one GET on the "echo" source. The same shape the demo deploys, so the native
-    // binary carries genuine workflow, transport-binding, and JSON logic rather than a trivial stub.
-    private const string WorkflowJson = """
-        {
-          "arazzo": "1.1.0",
-          "info": { "title": "Serverless Check", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "echo", "url": "./echo.openapi.json", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "serverless-check",
-              "steps": [
-                {
-                  "stepId": "callEcho",
-                  "operationId": "echo",
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                  "outputs": { "status": "$response.body#/status" }
-                }
-              ],
-              "outputs": { "status": "$steps.callEcho.outputs.status" }
-            }
-          ]
-        }
-        """;
-
-    private const string EchoOpenApi = """
-        {
-          "openapi": "3.1.0",
-          "info": { "title": "Echo API", "version": "1.0.0" },
-          "paths": {
-            "/demo/echo": {
-              "get": {
-                "operationId": "echo",
-                "responses": {
-                  "200": {
-                    "description": "OK",
-                    "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string" } } } } }
-                  }
-                }
-              }
-            }
-          }
-        }
-        """;
-
     [TestMethod]
     public async Task The_deployed_native_bootstrap_executes_under_localstack_and_reaches_the_invocation_handler()
     {
@@ -101,7 +56,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
 
         // 1. Compile the real executor to a native binary in the build container (the same path catalog-add + the build
         // worker drive). A build failure surfaces the provider's progress, not a bare null.
-        byte[] nativeBinary = await BuildNativeBootstrapAsync(feed, runtimeVersion, image);
+        byte[] nativeBinary = await ServerlessLiveExecutionSupport.BuildDeployArtifactAsync(ServerlessTarget.AwsLambda, feed, runtimeVersion, image);
 
         // 2. Run LocalStack 4.9.2 (the SAME image the demo pins) with the container runtime it needs to spawn the Lambda
         // exec container, and prebuilt images so it bakes the code in via a podman build rather than the unreliable
@@ -174,7 +129,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
         // its checkpoint callback loads and saves the run's checkpoint here, and its one source call hits /demo/echo. The
         // store is in-memory and shared between the seed below and MapWorkflowCheckpointEndpoints, so the checkpoint the
         // function writes back lands where the assertions read it.
-        int hostPort = FreeTcpPort();
+        int hostPort = ServerlessLiveExecutionSupport.FreeTcpPort();
         var store = new InMemoryWorkflowStateStore();
         WebApplication host = WebApplication.CreateSlimBuilder().Build();
         host.Urls.Add($"http://0.0.0.0:{hostPort}");
@@ -194,7 +149,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
             }
 
             // 3. Compile the real executor to a native binary (the same build the execute-under-LocalStack proof drives).
-            byte[] nativeBinary = await BuildNativeBootstrapAsync(feed, runtimeVersion, image);
+            byte[] nativeBinary = await ServerlessLiveExecutionSupport.BuildDeployArtifactAsync(ServerlessTarget.AwsLambda, feed, runtimeVersion, image);
 
             // 4. LocalStack 4.9.2 with prebuilt images (ADR 0060), plus the docker flag that gives each spawned Lambda
             // container a route to host.containers.internal — the host gateway it reaches this test's Kestrel host through.
@@ -271,57 +226,5 @@ public sealed class ServerlessLiveExecutionLocalStackTests
             await host.StopAsync();
             await host.DisposeAsync();
         }
-    }
-
-    // A free ephemeral TCP port for the Kestrel checkpoint host. Bind-to-0 then release; the small reuse window is
-    // acceptable for an opt-in integration test that immediately binds the port on 0.0.0.0.
-    private static int FreeTcpPort()
-    {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
-        listener.Start();
-        try
-        {
-            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
-        }
-        finally
-        {
-            listener.Stop();
-        }
-    }
-
-    private static async Task<byte[]> BuildNativeBootstrapAsync(string feed, string runtimeVersion, string image)
-    {
-        var buildLog = new List<string>();
-        WorkflowExecutorArtifact? executor = new WorkflowExecutorProvider(durable: true, progress: buildLog.Add).BuildExecutor(
-            Encoding.UTF8.GetBytes(WorkflowJson),
-            [new("echo", Encoding.UTF8.GetBytes(EchoOpenApi))],
-            "live-execution-hash");
-        executor.ShouldNotBeNull($"the executor did not build. Provider progress:\n{string.Join("\n", buildLog)}");
-
-        AssembledHostApp hostApp = new AotHostAppAssembler().Assemble(
-            executor!.Value.Assembly,
-            executor.Value.Manifest,
-            "linux-x64",
-            new AotHostAppOptions
-            {
-                RuntimePackageVersion = runtimeVersion,
-                FeedSources =
-                [
-                    ("local", "/work/local-packages"),
-                    ("nuget.org", "https://api.nuget.org/v3/index.json"),
-                    ("dotnet-eng", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"),
-                    ("dotnet-libraries", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-libraries/nuget/v3/index.json"),
-                ],
-            });
-
-        var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions
-        {
-            ContainerImage = image,
-            ReadOnlyMounts = [(feed, "/work/local-packages")],
-        });
-
-        AotBuildResult result = await builder.BuildAsync(hostApp, default);
-        result.Succeeded.ShouldBeTrue($"AOT build failed. Log:\n{result.Log}");
-        return result.NativeBinary.ToArray();
     }
 }
