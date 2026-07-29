@@ -48,9 +48,68 @@ All three seed a Pending run into the shared store, dispatch it with a run-scope
 
 ## CI wiring
 
-Run deploy before the gates and teardown in an `always()`/`finally` step, so a failed test still cleans up:
+The `azure-e2e` job in [`.github/workflows/build.yml`](../../../../.github/workflows/build.yml) runs these gates in CI. It is **dormant by default** — gated on the `RUN_AZURE_E2E` repository variable being `'true'` — so it never breaks a release build before its Azure identity exists. When enabled it logs in via OIDC, builds the AOT feed and builder image, runs `Deploy-CheckpointListener.ps1`, exports `ARAZZO_CHECKPOINT_LISTENER_URL` / `ARAZZO_CHECKPOINT_SECRET` / `ARAZZO_CHECKPOINT_STORAGE` from the state file (masking the secret), runs the `TestCategory=azure` gates, and runs `Remove-CheckpointListener.ps1` in an `always()` step. The `azure` category is excluded from the Docker `integration-tests` job (as `cosmos` is) so these gates do not silently skip there.
 
-1. `az login` (the pipeline's Azure credentials — see `.github/workflows/build.yml`'s `testPhaseAzureCredentials` slot; nothing sensitive is committed).
-2. `Deploy-CheckpointListener.ps1`, then export `ARAZZO_CHECKPOINT_LISTENER_URL` / `ARAZZO_CHECKPOINT_SECRET` / `ARAZZO_CHECKPOINT_STORAGE` from the state file (mask the secret).
-3. Run the `[TestCategory("azure")]` gates.
-4. `Remove-CheckpointListener.ps1` in an always-run step.
+Because a full CI run happens on the pre-release pull request, a single `pull_request` federated credential and Contributor on the test resource group is all the job needs.
+
+### Enabling it (one-time)
+
+All commands are cross-platform PowerShell (`pwsh`). You need an `az login` session that can create an app registration and assign roles on the resource group, and `gh` authenticated with admin on the repository. No subscription or resource-group identifier is committed, so fill in your own:
+
+```pwsh
+$Sub  = '<subscription-id>'
+$Rg   = '<resource-group>'
+$Repo = 'corvus-dotnet/Corvus.JsonSchema'
+```
+
+1. **Create the service principal.**
+   ```pwsh
+   $AppId = az ad app create --display-name arazzo-tests-e2e --query appId -o tsv
+   az ad sp create --id $AppId
+   $SpObjectId = az ad sp show --id $AppId --query id -o tsv
+   ```
+2. **Add the GitHub OIDC federated credential** (the pre-release PR build). Add a second one with subject `repo:$Repo:ref:refs/heads/main` if push-to-`main` builds should run it too.
+   ```pwsh
+   $FederatedCredential = @{
+       name      = 'github-pr'
+       issuer    = 'https://token.actions.githubusercontent.com'
+       subject   = "repo:$Repo:pull_request"
+       audiences = @('api://AzureADTokenExchange')
+   } | ConvertTo-Json
+   az ad app federated-credential create --id $AppId --parameters $FederatedCredential
+   ```
+3. **Grant Contributor on the test resource group only.** If it returns `PrincipalNotFound`, wait about 30 seconds for the service principal to replicate and re-run.
+   ```pwsh
+   az role assignment create `
+     --assignee-object-id $SpObjectId `
+     --assignee-principal-type ServicePrincipal `
+     --role Contributor `
+     --scope "/subscriptions/$Sub/resourceGroups/$Rg"
+   ```
+4. **Set the secrets and the enable switch.**
+   ```pwsh
+   $TenantId = az account show --query tenantId -o tsv
+   gh secret   set AZURE_TESTS_E2E_CLIENT_ID       --repo $Repo --body $AppId
+   gh secret   set AZURE_TESTS_E2E_TENANT_ID       --repo $Repo --body $TenantId
+   gh secret   set AZURE_TESTS_E2E_SUBSCRIPTION_ID --repo $Repo --body $Sub
+   gh secret   set ARAZZO_AZURE_RESOURCE_GROUP     --repo $Repo --body $Rg
+   gh variable set RUN_AZURE_E2E                    --repo $Repo --body 'true'
+   ```
+5. **Verify.**
+   ```pwsh
+   gh secret list --repo $Repo
+   gh variable list --repo $Repo
+   az ad app federated-credential list --id $AppId -o table
+   az role assignment list --assignee $AppId --scope "/subscriptions/$Sub/resourceGroups/$Rg" -o table
+   ```
+
+Then open a pull request from a **same-repo** branch (a fork PR does not receive the secrets or the OIDC token) and watch the **Azure E2E (Checkpoint Listener)** job. To pause it again, set `RUN_AZURE_E2E` to `false`.
+
+### What to expect, and first-run snags
+
+The job is heavy on first run: the feed build alone is about 40 minutes, then the deploy and the three gates (local Azure Functions runtime, real Flex, LocalStack Lambda), then teardown. On success the resource group is left empty. The parts only a live run can settle, each isolated to this one job:
+
+- **`azure/login` reports no matching federated identity** — the OIDC subject must be exactly `repo:corvus-dotnet/Corvus.JsonSchema:pull_request` for a same-repo PR.
+- **The job has no secrets** — the PR came from a fork; use a same-repo branch.
+- **The podman socket step fails** — the AOT builder and the LocalStack/Functions containers run under rootless podman; if the runner trips here, switch those to Docker or install podman.
+- **A resource-creation `AuthorizationFailed`** — the service principal is missing Contributor on the resource group, or a provider is genuinely unregistered (the deploy warns rather than failing at that point, so it surfaces at the `containerapp`/`functionapp` create).
