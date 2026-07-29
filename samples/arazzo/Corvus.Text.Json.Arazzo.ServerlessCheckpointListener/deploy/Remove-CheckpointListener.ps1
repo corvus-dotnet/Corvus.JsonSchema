@@ -41,11 +41,14 @@ az account set --subscription $state.subscriptionId 2>&1 | Out-Null
 $rg = $state.resourceGroup
 Write-Host "Tearing down checkpoint listener (suffix $($state.suffix)) in $rg" -ForegroundColor Cyan
 
+# Delete the cost-bearing, independent resources first (storage account and registry), so cost drops immediately even
+# if the Container Apps environment — which can take many minutes to delete — is slow. Then the app, then the
+# environment (which must be empty of apps), then the Log Analytics workspace it referenced.
+Remove-AzResource storage account delete -n $state.storageAccount -g $rg --yes
+Remove-AzResource acr delete -n $state.registry -g $rg --yes
 Remove-AzResource containerapp delete -n $state.app -g $rg --yes
 Remove-AzResource containerapp env delete -n $state.environment -g $rg --yes
 Remove-AzResource monitor log-analytics workspace delete -g $rg -n $state.workspace --yes --force true
-Remove-AzResource acr delete -n $state.registry -g $rg --yes
-Remove-AzResource storage account delete -n $state.storageAccount -g $rg --yes
 
 Remove-Item -Path $StateFile -ErrorAction SilentlyContinue
 Write-Host 'Teardown complete.' -ForegroundColor Green
