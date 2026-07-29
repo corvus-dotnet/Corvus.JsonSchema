@@ -80,11 +80,21 @@ Write-Host "Deploying checkpoint listener (suffix $Suffix) to $ResourceGroup / $
 
 Invoke-Az account set --subscription $SubscriptionId | Out-Null
 
-# 1. Providers. Registration is asynchronous; wait until Registered.
+# 1. Providers (Container Apps needs Microsoft.App + Microsoft.OperationalInsights). Registering a provider is a
+#    subscription-scoped operation an operator performs once, and it persists. This is best-effort so a least-privileged,
+#    resource-group-scoped CI identity that cannot read or register providers still proceeds: if one is genuinely
+#    unregistered the later resource creation fails with a clear error, and an operator registers it once.
 foreach ($provider in @('Microsoft.App', 'Microsoft.OperationalInsights')) {
-    Invoke-Az provider register -n $provider | Out-Null
-    while ((Invoke-Az provider show -n $provider --query registrationState -o tsv) -ne 'Registered') {
-        Start-Sleep -Seconds 10
+    try {
+        if ((& az provider show -n $provider --query registrationState -o tsv 2>$null) -ne 'Registered') {
+            & az provider register -n $provider 2>&1 | Out-Null
+            for ($i = 0; $i -lt 30 -and (& az provider show -n $provider --query registrationState -o tsv 2>$null) -ne 'Registered'; $i++) {
+                Start-Sleep -Seconds 10
+            }
+        }
+    }
+    catch {
+        Write-Warning "Could not verify or register ${provider} (an operator may need to register it once): $_"
     }
 }
 
