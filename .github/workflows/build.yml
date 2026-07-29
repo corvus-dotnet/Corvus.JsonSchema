@@ -211,7 +211,9 @@ jobs:
         # Arazzo durability backends (Postgres, SQL Server, MySQL, Redis, MongoDB, NATS JetStream, Azure
         # Storage), each spinning up its container via Testcontainers on the runner's Docker. The Cosmos
         # backend carries its own "cosmos" category and is excluded here because the emulator is heavy and
-        # comparatively flaky on CI; run it on demand with --filter TestCategory=cosmos.
+        # comparatively flaky on CI; run it on demand with --filter TestCategory=cosmos. The "azure" category
+        # (the real-cloud checkpoint-listener run-to-completion gates) is excluded here too: it needs a live
+        # Azure subscription and a deployed listener, so it runs in the dedicated azure-e2e job below.
         run: |
           dotnet-coverage collect \
             --output integration-tests.cobertura.xml \
@@ -221,7 +223,7 @@ jobs:
               -f net10.0 \
               -c Release \
               --no-build \
-              --filter TestCategory=integration&TestCategory!=failing&TestCategory!=cosmos \
+              --filter TestCategory=integration&TestCategory!=failing&TestCategory!=cosmos&TestCategory!=azure \
               --report-trx --report-trx-filename integration-tests.trx"
         timeout-minutes: 30
         env:
@@ -233,6 +235,115 @@ jobs:
         with:
           name: Integration Test Results
           path: '**/integration-tests.trx'
+          reporter: dotnet-trx
+
+  azure-e2e:
+    name: Azure E2E (Checkpoint Listener)
+    needs:
+      - build
+    # Dormant until a maintainer opts in: set the repository variable RUN_AZURE_E2E to 'true' AND provision the
+    # secrets below. Left off, this job is skipped, so it never breaks a release build before its Azure identity
+    # exists. It is heavy (it builds the AOT feed + builder image, deploys a Container App, and provisions a Flex
+    # Function App), which is acceptable because full CI runs happen only at release time.
+    #
+    # Required to enable:
+    #   Repository variable RUN_AZURE_E2E = 'true'
+    #   Secrets (an OIDC federated service principal with Contributor on the test resource group):
+    #     AZURE_TESTS_E2E_CLIENT_ID, AZURE_TESTS_E2E_TENANT_ID, AZURE_TESTS_E2E_SUBSCRIPTION_ID
+    #     ARAZZO_AZURE_RESOURCE_GROUP  (the test resource group; nothing is committed)
+    #   Optional variable ARAZZO_AZURE_LOCATION (defaults to uksouth).
+    if: ${{ vars.RUN_AZURE_E2E == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # OIDC login to Azure
+      contents: read
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+      ARAZZO_AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_TESTS_E2E_SUBSCRIPTION_ID }}
+      ARAZZO_AZURE_RESOURCE_GROUP: ${{ secrets.ARAZZO_AZURE_RESOURCE_GROUP }}
+      ARAZZO_AZURE_LOCATION: ${{ vars.ARAZZO_AZURE_LOCATION }}
+      # The AOT build and the Functions runtime container both run under rootless podman (the default the build
+      # scripts and Testcontainers-based gate expect), so point Testcontainers at podman and disable Ryuk.
+      DOCKER_HOST: unix:///run/user/1000/podman/podman.sock
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+
+      - name: Start rootless podman API socket
+        run: |
+          systemctl --user enable --now podman.socket || podman system service --time=0 unix:///run/user/1000/podman/podman.sock &
+          for i in $(seq 1 15); do curl -s --unix-socket /run/user/1000/podman/podman.sock http://d/v1.0.0/libpod/_ping && break; sleep 1; done
+
+      - name: Azure login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_TESTS_E2E_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TESTS_E2E_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TESTS_E2E_SUBSCRIPTION_ID }}
+
+      - name: Build the AOT builder image and the local package feed
+        shell: pwsh
+        run: |
+          $version = "5.0.0-local.$($env:GITHUB_RUN_NUMBER)"
+          "ARAZZO_AOT_RUNTIME_VERSION=$version" >> $env:GITHUB_ENV
+          "ARAZZO_AOT_LOCAL_FEED=$($env:GITHUB_WORKSPACE)/local-packages" >> $env:GITHUB_ENV
+          ./src/Corvus.Text.Json.Arazzo.Durability.Aot/build-aot-builder-image.ps1 -ContainerCli podman
+          ./build-local-packages.ps1 -Version $version
+        timeout-minutes: 60
+
+      - name: Build the test project
+        run: |
+          dotnet build tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj \
+            -f net10.0 -c Release
+        timeout-minutes: 30
+
+      - name: Deploy the checkpoint listener
+        shell: pwsh
+        run: |
+          $state = Join-Path $env:RUNNER_TEMP 'listener-deploy-state.json'
+          ./samples/arazzo/Corvus.Text.Json.Arazzo.ServerlessCheckpointListener/deploy/Deploy-CheckpointListener.ps1 -StateFile $state
+          $s = Get-Content -Raw $state | ConvertFrom-Json
+          "ARAZZO_CHECKPOINT_LISTENER_URL=$($s.listenerUrl)" >> $env:GITHUB_ENV
+          Write-Output "::add-mask::$($s.checkpointSecret)"
+          "ARAZZO_CHECKPOINT_SECRET=$($s.checkpointSecret)" >> $env:GITHUB_ENV
+          Write-Output "::add-mask::$($s.storageConnection)"
+          "ARAZZO_CHECKPOINT_STORAGE=$($s.storageConnection)" >> $env:GITHUB_ENV
+        timeout-minutes: 20
+
+      - name: Run Azure E2E tests
+        run: |
+          dotnet test tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj \
+            -f net10.0 -c Release --no-build \
+            --filter "TestCategory=azure&TestCategory!=failing" \
+            --report-trx --report-trx-filename azure-e2e-tests.trx
+        timeout-minutes: 40
+
+      - name: Tear down the checkpoint listener
+        if: always()
+        shell: pwsh
+        run: |
+          $state = Join-Path $env:RUNNER_TEMP 'listener-deploy-state.json'
+          if (Test-Path $state) {
+            ./samples/arazzo/Corvus.Text.Json.Arazzo.ServerlessCheckpointListener/deploy/Remove-CheckpointListener.ps1 -StateFile $state
+          }
+        timeout-minutes: 20
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@df6247429542221bc30d46a036ee47af1102c451 # v2.7.0
+        if: always()
+        with:
+          name: Azure E2E Test Results
+          path: '**/azure-e2e-tests.trx'
           reporter: dotnet-trx
 
   deploy-docs:

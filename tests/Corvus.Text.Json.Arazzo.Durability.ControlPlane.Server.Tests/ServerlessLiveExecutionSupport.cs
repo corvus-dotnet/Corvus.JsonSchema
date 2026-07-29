@@ -250,4 +250,154 @@ internal static class ServerlessLiveExecutionSupport
             await host.DisposeAsync();
         }
     }
+
+    /// <summary>
+    /// Runs a published isolated-worker app under the real Azure Functions host container, pointed at a <b>publicly
+    /// reachable, token-authenticated checkpoint listener</b> (ADR 0062) and its <c>echo</c> source, and drives a seeded
+    /// Pending run of the shared <c>serverless-check</c> workflow to completion through it. Unlike
+    /// <see cref="RunSeededRunToCompletionUnderFunctionsHostAsync"/> — which hosts an in-process Kestrel checkpoint surface
+    /// over an in-memory store — the checkpoint surface and store here are the real deployed listener and its backing Azure
+    /// Storage account, and the callback is authenticated by a run-scoped bearer token the runner mints. The function
+    /// process runs locally (the real Functions runtime image), so this gates the token-authenticated cloud checkpoint
+    /// round-trip and the shared-store advance in CI without provisioning a Function App; the deployed-Flex counterpart
+    /// proves the same run with the function on real Flex Consumption.
+    /// </summary>
+    /// <param name="appDirectory">The published isolated-worker app directory to mount at the container's <c>/home/site/wwwroot</c>.</param>
+    /// <param name="functionsImage">The Azure Functions runtime image to run it under.</param>
+    /// <param name="store">The shared Azure Storage run store the listener terminates into — seeded here and read back here.</param>
+    /// <param name="listenerBaseUrl">The deployed listener's public base URL (its checkpoint surface and <c>echo</c> source).</param>
+    /// <param name="checkpointSecret">The shared checkpoint secret the runner mints the run-scoped token with and the listener validates with.</param>
+    /// <returns>A task that completes when the run has reached and been verified <c>Completed</c> in the shared store.</returns>
+    internal static async Task RunSeededRunToCompletionAgainstListenerUnderLocalFunctionsHostAsync(
+        string appDirectory, string functionsImage, IWorkflowStateStore store, string listenerBaseUrl, ReadOnlyMemory<byte> checkpointSecret)
+    {
+        // The source base URL is the listener root (no trailing slash; the echo op's '/demo/echo' path is appended); the
+        // checkpoint base URL adds a trailing slash so the function-side store's relative 'runs/{id}/checkpoint' resolves.
+        string sourceBaseUrl = listenerBaseUrl.TrimEnd('/');
+
+        WorkflowRunId runId = await SeedPendingRunAsync(store);
+        string checkpointToken = IssueCheckpointToken(checkpointSecret.Span, runId);
+
+        IContainer functions = new ContainerBuilder()
+            .WithImage(functionsImage)
+            .WithBindMount(appDirectory, "/home/site/wwwroot")
+            .WithEnvironment("AzureWebJobsStorage", string.Empty)
+            .WithEnvironment("AzureWebJobsSecretStorageType", "files")
+            .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
+            .WithEnvironment("ARAZZO_SOURCE__echo", sourceBaseUrl)
+            .WithPortBinding(80, assignRandomHostPort: true)
+            .Build();
+        await functions.StartAsync();
+        try
+        {
+            var invokeUri = new UriBuilder(Uri.UriSchemeHttp, functions.Hostname, functions.GetMappedPublicPort(80), "/api/invoke").Uri;
+            try
+            {
+                await InvokeUntilCompletedAsync(invokeUri, runId, sourceBaseUrl, checkpointToken, TimeSpan.FromMinutes(3));
+            }
+            catch
+            {
+                // On failure, surface the isolated worker's own logs — the checkpoint/echo call error that faulted the
+                // advance is only visible inside the function, not in the runner's non-2xx retry loop.
+                (string workerStdout, string workerStderr) = await functions.GetLogsAsync();
+                Console.WriteLine($"=== Functions worker STDOUT ===\n{workerStdout}\n=== Functions worker STDERR ===\n{workerStderr}");
+                throw;
+            }
+        }
+        finally
+        {
+            await functions.DisposeAsync();
+        }
+
+        await AssertRunCompletedWithEchoAsync(store, runId);
+    }
+
+    /// <summary>
+    /// Seeds a Pending run of the shared <c>serverless-check</c> workflow into <paramref name="store"/> exactly as the
+    /// control plane's start path does (<c>CreateNew</c> + <c>Enqueue</c>, which persists it Pending at cursor 0), and
+    /// returns its id. The workflowId must match the baked workflow's, so it is <c>serverless-check</c>.
+    /// </summary>
+    /// <param name="store">The store to seed the run into.</param>
+    /// <returns>The seeded run's id.</returns>
+    internal static async Task<WorkflowRunId> SeedPendingRunAsync(IWorkflowStateStore store)
+    {
+        var runId = new WorkflowRunId(Guid.NewGuid().ToString("n"));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+        using WorkflowRun seed = WorkflowRun.CreateNew(store, runId, "serverless-check", inputs.RootElement, "isolated");
+        await seed.EnqueueAsync(default);
+        return runId;
+    }
+
+    /// <summary>Mints a run-scoped checkpoint token (ADR 0062) valid for a window that comfortably outlives one invocation.</summary>
+    /// <param name="secret">The shared checkpoint secret.</param>
+    /// <param name="runId">The run the token authorises checkpoints for.</param>
+    /// <returns>The bearer token string.</returns>
+    internal static string IssueCheckpointToken(ReadOnlySpan<byte> secret, WorkflowRunId runId)
+        => CheckpointToken.Issue(secret, runId.Value, DateTimeOffset.UtcNow.AddMinutes(30));
+
+    /// <summary>
+    /// Dispatches the real runner invocation to a function's invoke URL — the run id, its environment, the checkpoint base
+    /// URL the function calls back to (trailing slash added), and the run-scoped checkpoint token — retrying until the
+    /// function returns a success response carrying a <c>Completed</c> outcome or the budget elapses. Re-invoking is safe:
+    /// a completed run replies <c>Completed</c>, so retrying is both a readiness gate and faithful to at-least-once dispatch.
+    /// </summary>
+    /// <param name="invokeUri">The function's HTTP-trigger invoke URL.</param>
+    /// <param name="runId">The seeded run to advance.</param>
+    /// <param name="checkpointBaseUrl">The checkpoint surface base URL the function calls back to.</param>
+    /// <param name="checkpointToken">The run-scoped bearer token the function presents on each checkpoint call.</param>
+    /// <param name="budget">How long to keep retrying before failing.</param>
+    /// <returns>A task that completes when a <c>Completed</c> outcome is observed.</returns>
+    internal static async Task InvokeUntilCompletedAsync(Uri invokeUri, WorkflowRunId runId, string checkpointBaseUrl, string checkpointToken, TimeSpan budget)
+    {
+        string baseUrl = checkpointBaseUrl.EndsWith('/') ? checkpointBaseUrl : checkpointBaseUrl + "/";
+        string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{baseUrl}}","checkpointToken":"{{checkpointToken}}"}""";
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        string payload = string.Empty;
+        bool responded = false;
+        var budgetTimer = System.Diagnostics.Stopwatch.StartNew();
+        while (budgetTimer.Elapsed < budget)
+        {
+            try
+            {
+                using HttpResponseMessage response = await httpClient.PostAsync(
+                    invokeUri, new StringContent(invocation, Encoding.UTF8, "application/json"));
+                if (response.IsSuccessStatusCode)
+                {
+                    payload = await response.Content.ReadAsStringAsync();
+                    responded = true;
+                    break;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // The function is still warming and not yet accepting invocations; retry.
+            }
+            catch (TaskCanceledException)
+            {
+                // A request timed out during a slow cold start; retry.
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+
+        responded.ShouldBeTrue("the function never returned a success response for the invocation within the budget.");
+        payload.ShouldContain("Completed", customMessage: $"the run did not report Completed; payload: {payload}");
+    }
+
+    /// <summary>
+    /// Reloads a run from the store the function checkpointed back into and asserts the durable proof: it is
+    /// <c>Completed</c>, and its one step read the echo source's body — <c>callEcho</c>'s output is <c>{ "status": "ok" }</c>.
+    /// </summary>
+    /// <param name="store">The shared store the checkpoint landed in.</param>
+    /// <param name="runId">The run to reload and verify.</param>
+    /// <returns>A task that completes when the run has been verified <c>Completed</c>.</returns>
+    internal static async Task AssertRunCompletedWithEchoAsync(IWorkflowStateStore store, WorkflowRunId runId)
+    {
+        using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, runId);
+        finished.ShouldNotBeNull("the run's checkpoint is missing — the function never saved its advance back through the listener.");
+        finished!.Status.ShouldBe(WorkflowRunStatus.Completed);
+        finished.TryGetStepOutputs("callEcho", out JsonElement callEchoOutputs).ShouldBeTrue("the callEcho step recorded no outputs.");
+        callEchoOutputs.TryGetProperty("status"u8, out JsonElement status).ShouldBeTrue("callEcho's outputs carry no 'status'.");
+        status.GetString().ShouldBe("ok");
+    }
 }

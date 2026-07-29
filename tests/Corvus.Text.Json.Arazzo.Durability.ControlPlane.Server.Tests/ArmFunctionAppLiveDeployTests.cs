@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using Azure.Identity;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -95,6 +96,113 @@ public sealed class ArmFunctionAppLiveDeployTests
         finally
         {
             // 4. Tear down everything created, so there is zero cost between runs. Best-effort and independent.
+            if (provisioned)
+            {
+                await TryRunAzAsync($"functionapp delete -n {appName} -g {resourceGroup}");
+                if (!string.IsNullOrWhiteSpace(planId))
+                {
+                    await TryRunAzAsync($"resource delete --ids {planId.Trim()}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(appInsightsId))
+                {
+                    await TryRunAzAsync($"resource delete --ids {appInsightsId.Trim()}");
+                }
+
+                await TryRunAzAsync($"storage account delete -n {storageAccount} -g {resourceGroup} --yes");
+            }
+        }
+    }
+
+    /// <summary>
+    /// The full real-cloud run-to-completion capstone (ADR 0062): a real Flex Consumption Function App advances a seeded
+    /// run to <c>Completed</c> through a <b>publicly deployed, token-authenticated checkpoint listener</b> and its shared
+    /// Azure Storage store. It provisions a Flex app (with the <c>echo</c> source pointed at the listener), deploys our real
+    /// app through the production Flex deployer, seeds a Pending run into the shared store, and dispatches the run to the
+    /// live app with a run-scoped bearer token the runner mints. The deployed worker loads its checkpoint from the listener
+    /// over public HTTPS (presenting the token), calls its <c>echo</c> source (served by the listener), and saves the
+    /// advanced checkpoint back; the listener validates the token and terminates the save into the shared store, where the
+    /// run reloads <c>Completed</c> with <c>callEcho</c>'s <c>{ "status": "ok" }</c>. It then tears down every function-side
+    /// resource it created (the listener and its store are externally managed), so there is zero cost between runs.
+    /// </summary>
+    [TestMethod]
+    public async Task Runs_a_seeded_run_to_completion_on_a_live_flex_app_through_the_public_token_authenticated_listener()
+    {
+        string? subscription = System.Environment.GetEnvironmentVariable("ARAZZO_AZURE_SUBSCRIPTION_ID");
+        string? resourceGroup = System.Environment.GetEnvironmentVariable("ARAZZO_AZURE_RESOURCE_GROUP");
+        string? feed = System.Environment.GetEnvironmentVariable("ARAZZO_AOT_LOCAL_FEED");
+        string? runtimeVersion = System.Environment.GetEnvironmentVariable("ARAZZO_AOT_RUNTIME_VERSION");
+        string? listenerUrl = System.Environment.GetEnvironmentVariable("ARAZZO_CHECKPOINT_LISTENER_URL");
+        string? secretBase64 = System.Environment.GetEnvironmentVariable("ARAZZO_CHECKPOINT_SECRET");
+        string? storageConnection = System.Environment.GetEnvironmentVariable("ARAZZO_CHECKPOINT_STORAGE");
+        if (string.IsNullOrEmpty(subscription) || string.IsNullOrEmpty(resourceGroup) || string.IsNullOrEmpty(feed) || string.IsNullOrEmpty(runtimeVersion)
+            || string.IsNullOrEmpty(listenerUrl) || string.IsNullOrEmpty(secretBase64) || string.IsNullOrEmpty(storageConnection))
+        {
+            Assert.Inconclusive("Set ARAZZO_AZURE_SUBSCRIPTION_ID, ARAZZO_AZURE_RESOURCE_GROUP, ARAZZO_AOT_LOCAL_FEED, ARAZZO_AOT_RUNTIME_VERSION, ARAZZO_CHECKPOINT_LISTENER_URL, ARAZZO_CHECKPOINT_SECRET, and ARAZZO_CHECKPOINT_STORAGE (a deployed listener + its shared store, and be logged in with the Azure CLI) to run this real-cloud run-to-completion proof.");
+            return;
+        }
+
+        string builderImage = System.Environment.GetEnvironmentVariable("ARAZZO_AOT_IMAGE") ?? "arazzo-aot-builder:net10";
+        string location = System.Environment.GetEnvironmentVariable("ARAZZO_AZURE_LOCATION") ?? "uksouth";
+        byte[] checkpointSecret = Convert.FromBase64String(secretBase64);
+
+        string id = Guid.NewGuid().ToString("n")[..10];
+        string storageAccount = $"arz{id}";
+        string appPrefix = $"arz{id}";
+        var request = new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        string appName = ArmFunctionAppConfigurator.AppName(request, appPrefix);
+
+        // Build the real app package BEFORE provisioning, so a build failure leaves no Azure resources behind.
+        byte[] appZip = await ServerlessLiveExecutionSupport.BuildDeployArtifactAsync(ServerlessTarget.AzureFunctions, feed, runtimeVersion, builderImage);
+        request = request with { NativeBinary = appZip };
+
+        string? planId = null;
+        string? appInsightsId = null;
+        bool provisioned = false;
+        try
+        {
+            // 1. Provision a Flex Consumption dotnet-isolated (.NET 10) Function App and its own storage (the function's
+            // AzureWebJobsStorage, distinct from the shared run store the listener terminates into).
+            await RunAzAsync($"storage account create -n {storageAccount} -g {resourceGroup} -l {location} --sku Standard_LRS --allow-blob-public-access false");
+            provisioned = true;
+            await RunAzAsync($"functionapp create -n {appName} -g {resourceGroup} --storage-account {storageAccount} --flexconsumption-location {location} --runtime dotnet-isolated --runtime-version 10");
+            planId = await CaptureAzAsync($"functionapp show -n {appName} -g {resourceGroup} --query appServicePlanId -o tsv");
+            appInsightsId = await CaptureAzAsync($"resource list -g {resourceGroup} --resource-type Microsoft.Insights/components --query \"[?name=='{appName}'].id | [0]\" -o tsv");
+
+            // 2. Deploy through the PRODUCTION Flex deployer, with the deployed environment's echo source set to the
+            // listener (the deployer merges ARAZZO_SOURCE__echo over the app settings before One Deploy), so the worker's
+            // transport binder calls the listener's /demo/echo.
+            var deployer = new AzureFunctionsFlexDeployer(
+                new AzureCliCredential(),
+                new AzureFunctionsFlexDeployerOptions
+                {
+                    SubscriptionId = subscription,
+                    ResourceGroupName = resourceGroup,
+                    AppNamePrefix = appPrefix,
+                    FunctionAppSettings = new Dictionary<string, string> { ["ARAZZO_SOURCE__echo"] = listenerUrl.TrimEnd('/') },
+                });
+
+            ServerlessDeployResult result = await deployer.DeployAsync(request, default);
+            result.Succeeded.ShouldBeTrue(result.Log);
+
+            // 3. Wait until the platform serves our function from the deployment (a no-runId probe stops being a 404).
+            bool loaded = await PollUntilInvokeRouteIsOurFunctionAsync(new Uri(result.FunctionUrl), TimeSpan.FromMinutes(6));
+            loaded.ShouldBeTrue($"the live Flex Function App '{appName}' never served our invoke route (it stayed a 404) after One Deploy.");
+
+            // 4. The durable capstone: seed a Pending run into the shared store, mint the run-scoped token, dispatch to the
+            // live Flex app, and prove the whole advance lands Completed in the shared store — the deployed worker
+            // authenticated its checkpoint callbacks to the public listener, which terminated them into this store.
+            await AzureStorageWorkflowStateStore.PrepareAsync(storageConnection);
+            AzureStorageWorkflowStateStore store = await AzureStorageWorkflowStateStore.ConnectAsync(storageConnection);
+            WorkflowRunId runId = await ServerlessLiveExecutionSupport.SeedPendingRunAsync(store);
+            string token = ServerlessLiveExecutionSupport.IssueCheckpointToken(checkpointSecret, runId);
+            await ServerlessLiveExecutionSupport.InvokeUntilCompletedAsync(new Uri(result.FunctionUrl), runId, listenerUrl, token, TimeSpan.FromMinutes(5));
+            await ServerlessLiveExecutionSupport.AssertRunCompletedWithEchoAsync(store, runId);
+        }
+        finally
+        {
+            // 5. Tear down every function-side resource created, so there is zero cost between runs. Best-effort and
+            // independent. The listener and its shared store are externally managed (a separate lifecycle).
             if (provisioned)
             {
                 await TryRunAzAsync($"functionapp delete -n {appName} -g {resourceGroup}");
