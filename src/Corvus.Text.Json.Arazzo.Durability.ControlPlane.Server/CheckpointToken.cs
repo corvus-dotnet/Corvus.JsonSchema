@@ -20,16 +20,25 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 public static class CheckpointToken
 {
+    /// <summary>The minimum checkpoint-secret length: 256 bits, matching the HMAC-SHA256 output, so a full-strength key is required.</summary>
+    public const int MinimumSecretBytes = 32;
+
     /// <summary>
     /// Mints a checkpoint token for a run, valid until <paramref name="expiry"/>.
     /// </summary>
-    /// <param name="secret">The shared checkpoint secret the runner mints with and the checkpoint surface validates with.</param>
+    /// <param name="secret">The shared checkpoint secret the runner mints with and the checkpoint surface validates with. It must be at least <see cref="MinimumSecretBytes"/> bytes of high-entropy key material.</param>
     /// <param name="runId">The run the token authorises checkpoints for.</param>
     /// <param name="expiry">When the token stops being valid.</param>
     /// <returns>The bearer token string.</returns>
+    /// <exception cref="ArgumentException">The secret is shorter than <see cref="MinimumSecretBytes"/>, or the run id is empty.</exception>
     public static string Issue(ReadOnlySpan<byte> secret, string runId, DateTimeOffset expiry)
     {
         ArgumentException.ThrowIfNullOrEmpty(runId);
+        if (secret.Length < MinimumSecretBytes)
+        {
+            throw new ArgumentException($"The checkpoint secret must be at least {MinimumSecretBytes} bytes of high-entropy key material.", nameof(secret));
+        }
+
         long expiryUnixSeconds = expiry.ToUnixTimeSeconds();
         return $"{expiryUnixSeconds.ToString(CultureInfo.InvariantCulture)}.{Sign(secret, runId, expiryUnixSeconds)}";
     }
@@ -45,7 +54,7 @@ public static class CheckpointToken
     /// <returns><see langword="true"/> if the token authorises checkpoints for the run.</returns>
     public static bool TryValidate(ReadOnlySpan<byte> secret, string? token, string runId, DateTimeOffset now)
     {
-        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(runId))
+        if (secret.Length < MinimumSecretBytes || string.IsNullOrEmpty(token) || string.IsNullOrEmpty(runId))
         {
             return false;
         }
@@ -56,7 +65,11 @@ public static class CheckpointToken
             return false;
         }
 
-        if (!long.TryParse(token.AsSpan(0, separator), NumberStyles.Integer, CultureInfo.InvariantCulture, out long expiryUnixSeconds)
+        // Parse the expiry as a bare non-negative decimal and require it to be canonical (no sign, whitespace, or leading
+        // zeros), so exactly one token string authenticates a run — a signed/padded variant is not an equivalent token.
+        ReadOnlySpan<char> expirySegment = token.AsSpan(0, separator);
+        if (!long.TryParse(expirySegment, NumberStyles.None, CultureInfo.InvariantCulture, out long expiryUnixSeconds)
+            || !expirySegment.SequenceEqual(expiryUnixSeconds.ToString(CultureInfo.InvariantCulture))
             || expiryUnixSeconds <= now.ToUnixTimeSeconds())
         {
             return false;

@@ -61,6 +61,14 @@ public sealed class ServerlessInvocationHandler
     {
         (WorkflowRunId runId, Uri checkpointUrl, string? checkpointToken) = ParseInvocation(invocationJson);
 
+        // A bearer credential must never travel in cleartext, so refuse a token over a non-HTTPS checkpoint URL (a loopback
+        // address is exempt: in-process and local tests use plain HTTP where TLS adds nothing, but a token never crosses
+        // the internet unencrypted). Checked before the client is created, so nothing leaks.
+        if (checkpointToken is not null && !checkpointUrl.IsLoopback && !checkpointUrl.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("A checkpoint token must not be sent over a non-HTTPS checkpoint URL.", nameof(invocationJson));
+        }
+
         // A per-invocation client over the shared handler carries the dispatching runner's checkpoint base address, so a
         // run's checkpoints reach the runner that holds its lease (Model B). disposeHandler:false keeps the pooled handler.
         var client = new HttpClient(this.checkpointHandler, disposeHandler: false) { BaseAddress = checkpointUrl };

@@ -75,6 +75,36 @@ public sealed class CheckpointTokenTests
     }
 
     [TestMethod]
+    public void Issue_rejects_a_secret_shorter_than_the_minimum()
+    {
+        Should.Throw<ArgumentException>(() => CheckpointToken.Issue(Encoding.UTF8.GetBytes("too-short-secret"), "run-1", Now.AddMinutes(10)));
+    }
+
+    [TestMethod]
+    public void Validation_fails_under_a_secret_shorter_than_the_minimum()
+    {
+        string token = CheckpointToken.Issue(Secret, "run-1", Now.AddMinutes(10));
+
+        CheckpointToken.TryValidate(Encoding.UTF8.GetBytes("too-short-secret"), token, "run-1", Now).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void A_non_canonical_expiry_does_not_validate()
+    {
+        string token = CheckpointToken.Issue(Secret, "run-1", Now.AddMinutes(10));
+        int separator = token.IndexOf('.');
+        string expiry = token[..separator];
+        string signature = token[(separator + 1)..];
+
+        // A signed, or zero-padded, expiry carries the same signature but is not the one canonical token for the run.
+        CheckpointToken.TryValidate(Secret, $"+{expiry}.{signature}", "run-1", Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, $"0{expiry}.{signature}", "run-1", Now).ShouldBeFalse();
+
+        // Sanity: the canonical token still validates.
+        CheckpointToken.TryValidate(Secret, token, "run-1", Now).ShouldBeTrue();
+    }
+
+    [TestMethod]
     public async Task The_endpoint_rejects_a_checkpoint_request_with_no_token()
     {
         await using TokenHost host = await TokenHost.StartAsync();
