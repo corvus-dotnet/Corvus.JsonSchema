@@ -78,6 +78,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0059](0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md) | The serverless deploy and invoke run on the runner as the secure boundary, and the control plane holds no user cloud secrets | Accepted |
 | [0060](0060-local-serverless-deploy-emulated-with-localstack.md) | Local serverless deploy is emulated with LocalStack, and one Lambda deployer serves local development and production | Accepted |
 | [0061](0061-azure-functions-serverless-target-isolated-worker-readytorun.md) | The Azure Functions serverless target is a ReadyToRun isolated worker | Accepted |
+| [0062](0062-authenticated-serverless-checkpoint-callbacks.md) | Authenticated serverless checkpoint callbacks use a run-scoped bearer token | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog

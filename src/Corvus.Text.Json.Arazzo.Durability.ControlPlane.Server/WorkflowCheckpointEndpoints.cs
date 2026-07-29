@@ -35,8 +35,9 @@ public static class WorkflowCheckpointEndpoints
     /// <param name="endpoints">The endpoint route builder.</param>
     /// <param name="store">The real state store a checkpoint terminates into.</param>
     /// <param name="requireAuthorization">Whether to require an authenticated principal (every mode but Open); a dedicated checkpoint scope is deferred to the deploy work.</param>
+    /// <param name="authenticateCheckpointToken">An optional run-scoped checkpoint-token authenticator (ADR 0062): given the request's run and the presented bearer token, returns whether it authorises checkpoints for that run. When supplied, a request without a valid token is a 401 — this is how a publicly reachable checkpoint surface authenticates a serverless function's callback (e.g. <c>(id, token) =&gt; CheckpointToken.TryValidate(secret, token, id.Value, now)</c>). When <see langword="null"/>, only <paramref name="requireAuthorization"/> (the host's ambient authorization) applies.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization)
+    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunId, string, bool>? authenticateCheckpointToken = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -48,6 +49,11 @@ public static class WorkflowCheckpointEndpoints
             if (RunId(context) is not { } id)
             {
                 await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The required parameter 'runId' is missing.").ConfigureAwait(false);
+                return;
+            }
+
+            if (!Authenticated(context, id, authenticateCheckpointToken))
+            {
                 return;
             }
 
@@ -74,6 +80,11 @@ public static class WorkflowCheckpointEndpoints
             if (RunId(context) is not { } id)
             {
                 await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The required parameter 'runId' is missing.").ConfigureAwait(false);
+                return;
+            }
+
+            if (!Authenticated(context, id, authenticateCheckpointToken))
+            {
                 return;
             }
 
@@ -125,6 +136,46 @@ public static class WorkflowCheckpointEndpoints
         }
 
         return endpoints;
+    }
+
+    // When a checkpoint-token authenticator is configured, the request must carry a valid run-scoped bearer token; without
+    // one it is a 401. When none is configured the surface relies on the host's ambient authorization (requireAuthorization).
+    private static bool Authenticated(HttpContext context, WorkflowRunId id, Func<WorkflowRunId, string, bool>? authenticate)
+    {
+        if (authenticate is null)
+        {
+            return true;
+        }
+
+        string? token = BearerToken(context.Request);
+        if (token is null || !authenticate(id, token))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.Headers.WWWAuthenticate = "Bearer";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string? BearerToken(HttpRequest request)
+    {
+        if (request.Headers.TryGetValue("Authorization", out StringValues values))
+        {
+            foreach (string? value in values)
+            {
+                if (value?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    string token = value["Bearer ".Length..].Trim();
+                    if (token.Length > 0)
+                    {
+                        return token;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     private static WorkflowRunId? RunId(HttpContext context)
