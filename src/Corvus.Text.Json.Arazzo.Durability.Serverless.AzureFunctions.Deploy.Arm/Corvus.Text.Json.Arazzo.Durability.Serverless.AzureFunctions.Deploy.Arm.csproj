@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>The Azure Resource Manager implementation of IFunctionAppConfigurator for the Arazzo serverless backend (ADR 0059, ADR 0061): it points a dotnet-isolated Function App at an uploaded run-from-package (WEBSITE_RUN_FROM_PACKAGE) and sets the deployed environment's source app settings over ARM, then returns the app's default host. This is the real management-plane half the deployer delegates to; the runner injects an ArmClient carrying the environment's identity (there is no ARM emulator, so it is verified against real Azure).</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The IFunctionAppConfigurator seam this project implements (and, transitively, the ServerlessDeployRequest it reads). -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.ResourceManager.AppService" />
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -214,5 +214,15 @@ exactly as the App Service platform would, and runs it to completion under the r
 `dotnet-isolated` runtime image does not itself honour a `WEBSITE_RUN_FROM_PACKAGE` URL (that download is an App Service
 platform feature), so the gate performs the platform's fetch and mounts the package in its place.
 
+On **Flex Consumption** — Microsoft's recommended serverless plan, and the one that boots the deployed isolated worker
+where Linux Consumption does not — the deploy mechanism is different: Flex's only deployment technology is *One Deploy*,
+not `WEBSITE_RUN_FROM_PACKAGE`. So `AzureFunctionsFlexDeployer` (the `…AzureFunctions.Deploy.Arm` package) posts the app
+package to the app's One Deploy endpoint (`{scm}/api/publish`) with an Azure Resource Manager AAD bearer token (Flex
+disables SCM basic auth) and waits on the deployment. This is proven end to end against **real Azure** by
+`ArmFunctionAppLiveDeployTests`: it provisions a real Flex Consumption dotnet-isolated (.NET 10) Function App, runs the
+production deployer against it, checks the platform loaded our function (its `invoke` route stops being a 404), and tears
+down every resource it created (zero cost between runs). It skips unless `ARAZZO_AZURE_SUBSCRIPTION_ID` and
+`ARAZZO_AZURE_RESOURCE_GROUP` are set (with the Azure CLI authenticated); no subscription identifiers are in source.
+
 The remaining work this design admits: execution-host **isolation hardening**, and the **operator surface** (web + CLI)
 for builds, deployments, and isolation.

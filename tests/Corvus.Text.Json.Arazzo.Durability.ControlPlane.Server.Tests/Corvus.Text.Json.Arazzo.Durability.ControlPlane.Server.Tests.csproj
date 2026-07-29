@@ -27,6 +27,10 @@
     <!-- The opt-in Azure Functions run-from-package deploy gate (ADR 0061) uploads the app package to Azurite blob. -->
     <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="Testcontainers.Azurite" />
+    <!-- The opt-in live-Azure deploy gate (ADR 0061) drives the real ARM configurator against a real Function App. The
+         credential types (AzureCliCredential) come from Azure.Core, which Azure.ResourceManager pulls; a separate
+         Azure.Identity reference would duplicate them and make the type ambiguous. -->
+    <PackageReference Include="Azure.ResourceManager.AppService" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
@@ -34,6 +38,8 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
     <!-- The Azure Functions deployer under test by the live run-from-package (Azurite) deploy-and-run gate. -->
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.csproj" />
+    <!-- The real ARM IFunctionAppConfigurator under test by the live-Azure deploy gate. -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.csproj" />
     <!-- The function-side HttpWorkflowStateStore drives the end-to-end wire test against the runner's checkpoint surface. -->
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless\Corvus.Text.Json.Arazzo.Durability.Serverless.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
