@@ -239,12 +239,13 @@ jobs:
 
   azure-e2e:
     name: Azure E2E (Checkpoint Listener)
-    needs:
-      - build
+    # No `needs: build`. This job is self-contained — it builds its own AOT feed and test project — so it runs
+    # independently rather than being gated on (and skipped by) unrelated failures in the matrix build (packaging,
+    # net481, or the website). Its own build step still catches a genuine compile break.
     # Dormant until a maintainer opts in: set the repository variable RUN_AZURE_E2E to 'true' AND provision the
-    # secrets below. Left off, this job is skipped, so it never breaks a release build before its Azure identity
-    # exists. It is heavy (it builds the AOT feed + builder image, deploys a Container App, and provisions a Flex
-    # Function App), which is acceptable because full CI runs happen only at release time.
+    # secrets below. Left off, this job is skipped, so it never runs before its Azure identity exists. It is heavy
+    # (it builds the AOT feed + builder image, deploys a Container App, and provisions a Flex Function App), which is
+    # acceptable because full CI runs happen only at release time.
     #
     # Required to enable:
     #   Repository variable RUN_AZURE_E2E = 'true'
