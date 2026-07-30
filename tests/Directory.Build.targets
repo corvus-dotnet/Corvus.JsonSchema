@@ -40,6 +40,16 @@
     <PackageReference Remove="Testcontainers.Nats" />
     <PackageReference Remove="Testcontainers.RabbitMq" />
     <PackageReference Remove="Testcontainers.Kafka" />
+    <!-- The Arazzo durability/backend test projects add these Testcontainers modules; none support net481. -->
+    <PackageReference Remove="Testcontainers.Azurite" />
+    <PackageReference Remove="Testcontainers.CosmosDb" />
+    <PackageReference Remove="Testcontainers.Keycloak" />
+    <PackageReference Remove="Testcontainers.LocalStack" />
+    <PackageReference Remove="Testcontainers.MongoDb" />
+    <PackageReference Remove="Testcontainers.MsSql" />
+    <PackageReference Remove="Testcontainers.MySql" />
+    <PackageReference Remove="Testcontainers.PostgreSql" />
+    <PackageReference Remove="Testcontainers.Redis" />
   </ItemGroup>
 
 </Project>
