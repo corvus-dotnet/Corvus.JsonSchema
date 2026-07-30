@@ -30,10 +30,11 @@ if (-not (Test-Path $StateFile)) {
 
 $state = Get-Content -Raw -Path $StateFile | ConvertFrom-Json
 
-# Best-effort az: never throw, so one failed delete does not abandon the rest.
+# Best-effort az: never throw, so one failed delete does not abandon the rest. Declares no parameters and uses the
+# automatic $args, so az flags (-n/-g/--yes) pass straight through rather than PowerShell trying to bind them.
 function Remove-AzResource {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
-    try { & az @Args 2>&1 | Out-Null } catch { Write-Warning "az $($Args -join ' ') failed: $_" }
+    & az @args 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Warning "az $($args -join ' ') exited $LASTEXITCODE" }
 }
 
 az account set --subscription $state.subscriptionId 2>&1 | Out-Null

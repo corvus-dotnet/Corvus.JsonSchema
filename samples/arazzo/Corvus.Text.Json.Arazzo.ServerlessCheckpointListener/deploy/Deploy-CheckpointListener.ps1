@@ -57,11 +57,12 @@ if (-not $SubscriptionId -or -not $ResourceGroup) {
 }
 
 # Only stdout is a reliable channel for captured values: the Azure CLI can emit a Python dependency warning on
-# stderr. This helper runs az, throws on failure, and returns stdout trimmed.
+# stderr. This helper runs az, throws on failure, and returns stdout trimmed. It declares no parameters and uses the
+# automatic $args, so az flags like -o/-n/-g pass straight through — a param block would make PowerShell try to bind
+# them as function parameters and fail ("the parameter name 'o' is ambiguous").
 function Invoke-Az {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
-    $out = & az @Args
-    if ($LASTEXITCODE -ne 0) { throw "az $($Args -join ' ') failed (exit $LASTEXITCODE): $out" }
+    $out = & az @args
+    if ($LASTEXITCODE -ne 0) { throw "az $($args -join ' ') failed (exit $LASTEXITCODE): $out" }
     return ($out | Out-String).Trim()
 }
 
