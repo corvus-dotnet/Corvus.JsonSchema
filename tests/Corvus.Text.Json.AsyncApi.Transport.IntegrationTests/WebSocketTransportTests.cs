@@ -668,6 +668,8 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — requester transport subscribes to the reply channel so the relay forwards replies to it
         WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
@@ -755,7 +757,8 @@ public class WebSocketTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -818,7 +821,8 @@ public class WebSocketTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -881,7 +885,8 @@ public class WebSocketTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -895,6 +900,8 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
@@ -913,6 +920,7 @@ public class WebSocketTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 default,
                 cts.Token));
 
@@ -922,6 +930,8 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
@@ -943,7 +953,8 @@ public class WebSocketTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]

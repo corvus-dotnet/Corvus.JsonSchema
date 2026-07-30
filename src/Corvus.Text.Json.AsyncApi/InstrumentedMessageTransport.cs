@@ -85,13 +85,14 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
         return RequestCoreAsync<TRequest, TReply>(
-            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken);
+            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -101,6 +102,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
         in MessageContext context,
+        JsonWorkspace workspace,
         JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
@@ -108,7 +110,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
     {
         MessageContext contextCopy = context;
         return RequestWithContextCoreAsync<TRequest, TReply>(
-            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, contextCopy, headers, cancellationToken);
+            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, contextCopy, workspace, headers, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -265,6 +267,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
@@ -286,7 +289,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         try
         {
             var result = await this.inner.RequestAsync<TRequest, TReply>(
-                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken)
+                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken)
                 .ConfigureAwait(false);
 
             AsyncApiTelemetry.MessagesSent.Add(
@@ -317,6 +320,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
         MessageContext context,
+        JsonWorkspace workspace,
         JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
@@ -338,7 +342,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         try
         {
             var result = await this.inner.RequestAsync<TRequest, TReply>(
-                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, in context, headers, cancellationToken)
+                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, in context, workspace, headers, cancellationToken)
                 .ConfigureAwait(false);
 
             AsyncApiTelemetry.MessagesSent.Add(

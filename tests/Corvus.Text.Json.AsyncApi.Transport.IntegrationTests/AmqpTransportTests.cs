@@ -719,6 +719,8 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
             ConnectionUri = AmqpFixture.ConnectionUri,
@@ -740,6 +742,7 @@ public class AmqpTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -748,6 +751,8 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
             ConnectionUri = AmqpFixture.ConnectionUri,
@@ -773,12 +778,15 @@ public class AmqpTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — create a fresh transport for request/reply
         AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
@@ -853,7 +861,8 @@ public class AmqpTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -912,7 +921,8 @@ public class AmqpTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             // Assert — the responder doubled the value.
             Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -978,7 +988,8 @@ public class AmqpTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             // Assert — the responder doubled the value.
             Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -997,6 +1008,8 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithHeadersForwardsHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — verify that headers are included in request messages
         AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
@@ -1079,6 +1092,7 @@ public class AmqpTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             headersDoc.RootElement);
 
         // Assert — reply received and headers were in the request

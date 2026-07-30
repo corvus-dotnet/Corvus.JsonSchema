@@ -251,6 +251,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -270,7 +271,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
             natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
         }
 
-        return RequestCoreAsync<TRequest, TReply>(requestChannel, request, natsHeaders, cancellationToken);
+        return RequestCoreAsync<TRequest, TReply>(requestChannel, request, natsHeaders, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -405,6 +406,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         string subject,
         TRequest request,
         NatsHeaders headers,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -427,8 +429,10 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         {
             try
             {
-                // Cold path — document not disposed; returned values reference its memory
+                // Cold path — the caller's workspace owns the returned reply document (disposed with it), since
+                // the returned value is used after this method returns.
                 ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Data);
+                workspace.TakeOwnership(replyDoc);
                 replyPayload = replyDoc.RootElement;
             }
             catch (Exception parseEx)
@@ -485,6 +489,11 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         }
 
         ParsedJsonDocument<JsonElement>? headersDoc = DecodeHeadersDocument(reply.Headers);
+        if (headersDoc is not null)
+        {
+            workspace.TakeOwnership(headersDoc);
+        }
+
         JsonElement replyHeaders = headersDoc?.RootElement ?? default;
         return (replyPayload, replyHeaders);
     }

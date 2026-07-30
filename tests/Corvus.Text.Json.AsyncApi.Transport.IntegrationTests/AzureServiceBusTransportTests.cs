@@ -123,7 +123,8 @@ public class AzureServiceBusTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             // Assert
             Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -189,7 +190,8 @@ public class AzureServiceBusTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             // Assert
             Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);

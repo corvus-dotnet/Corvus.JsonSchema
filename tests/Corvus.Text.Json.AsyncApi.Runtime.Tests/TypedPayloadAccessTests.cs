@@ -157,6 +157,7 @@ public class TypedPayloadAccessTests
     [TestMethod]
     public async Task RequestReply_TypedAccess_OnReplyPayload()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using InMemoryMessageTransport transport = new();
 
         LightMeasuredPayload request = LightMeasuredPayload.ParseValue(
@@ -167,7 +168,7 @@ public class TypedPayloadAccessTests
                 "request/ch"u8.ToArray(),
                 "reply/ch"u8.ToArray(),
                 request,
-                "corr-typed-access"u8.ToArray()).AsTask();
+                "corr-typed-access"u8.ToArray(), workspace).AsTask();
 
         transport.CompleteRequest(
             "corr-typed-access",
@@ -182,6 +183,7 @@ public class TypedPayloadAccessTests
     [TestMethod]
     public async Task RequestReply_WithHeaders_ReturnsTypedReplyAndHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using InMemoryMessageTransport transport = new();
 
         LightMeasuredPayload request = LightMeasuredPayload.ParseValue(
@@ -192,7 +194,7 @@ public class TypedPayloadAccessTests
                 "req/ch"u8.ToArray(),
                 "rep/ch"u8.ToArray(),
                 request,
-                "corr-with-headers"u8.ToArray()).AsTask();
+                "corr-with-headers"u8.ToArray(), workspace).AsTask();
 
         transport.CompleteRequest(
             "corr-with-headers",

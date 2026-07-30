@@ -213,6 +213,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyWithCorrelationId()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — set up a responder on the request channel
         ReadOnlyMemory<byte> requestChannel = "test.request"u8.ToArray();
         ReadOnlyMemory<byte> replyChannel = "test.reply"u8.ToArray();
@@ -243,6 +245,7 @@ public class NatsTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token);
 
             // If we get here, a reply was received (the subscription handler or NATS handled it)
@@ -299,7 +302,8 @@ public class NatsTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert — the responder doubled the number and the requester received the exact value
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -353,7 +357,8 @@ public class NatsTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert — the responder doubled the number and the requester received the exact value
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -895,6 +900,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrowsOperationCanceledException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — no responder, should timeout
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -916,7 +923,8 @@ public class NatsTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             Assert.Fail("Expected an exception for request with no responder.");
         }
@@ -932,6 +940,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -952,7 +962,7 @@ public class NatsTransportTests
 
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await transport.RequestAsync<JsonElement, JsonElement>(
-                channel, channel, doc.RootElement, "corr"u8.ToArray()));
+                channel, channel, doc.RootElement, "corr"u8.ToArray(), workspace));
     }
 
     [TestMethod]
@@ -1008,6 +1018,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — transport for the requester
         NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -1043,7 +1055,8 @@ public class NatsTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -1056,6 +1069,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — verify that headers are forwarded in request/reply
         NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -1093,6 +1108,7 @@ public class NatsTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             headersDoc.RootElement);
 
         // Assert — reply received and request headers were forwarded

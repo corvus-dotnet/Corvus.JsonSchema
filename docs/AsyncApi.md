@@ -1135,6 +1135,8 @@ ValueTask SubscribeReplyAsync<TRequest, TReply>(
 
 The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
 
+**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable.
+
 **Implementation status.** `SubscribeReplyAsync` is a default interface member that throws `NotSupportedException`, so a transport opts in by overriding it. The in-memory testing transport implements a full in-process round-trip: a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). The broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) inherit the default until responder support is implemented for each.
 
 This responder foundation is what the Arazzo workflow engine's request/reply *receive* step builds on.

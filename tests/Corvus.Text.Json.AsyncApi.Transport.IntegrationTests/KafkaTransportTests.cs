@@ -546,6 +546,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
@@ -572,6 +574,7 @@ public class KafkaTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -580,6 +583,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
@@ -601,7 +606,7 @@ public class KafkaTransportTests
 
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await transport.RequestAsync<JsonElement, JsonElement>(
-                channel, channel, doc.RootElement, "corr"u8.ToArray()));
+                channel, channel, doc.RootElement, "corr"u8.ToArray(), workspace));
     }
 
     [TestMethod]
@@ -653,6 +658,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtrip()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         string requestTopic = $"kafka-reqrep-req-{topicSuffix}";
         string replyTopic = $"kafka-reqrep-rep-{topicSuffix}";
@@ -767,6 +774,7 @@ public class KafkaTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             requestHeaders.RootElement,
             requestCts.Token);
 
@@ -842,6 +850,7 @@ public class KafkaTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             cancellationToken: requestCts.Token);
 
         Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);
@@ -914,6 +923,7 @@ public class KafkaTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             cancellationToken: requestCts.Token);
 
         Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);

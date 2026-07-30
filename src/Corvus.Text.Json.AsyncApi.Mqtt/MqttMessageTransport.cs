@@ -125,6 +125,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -139,7 +140,7 @@ public sealed class MqttMessageTransport : IMessageTransport
             : null;
 
         (byte[] rented, int length) = SerializeToRented(in request);
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -262,6 +263,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         int length,
         ReadOnlyMemory<byte> correlationIdUtf8,
         string? headersBase64,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
@@ -294,9 +296,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 TReply replyPayload;
                 if (reply.PayloadSegment is { Count: > 0 })
                 {
-                    // Cold path — document not disposed; returned values reference its memory
+                    // Cold path — the caller's workspace owns the returned reply document (disposed with it),
+                    // since the returned value is used after this method returns.
                     ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(
                         reply.PayloadSegment.Array!.AsMemory(reply.PayloadSegment.Offset, reply.PayloadSegment.Count));
+                    workspace.TakeOwnership(replyDoc);
                     replyPayload = replyDoc.RootElement;
                 }
                 else
@@ -305,6 +309,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 }
 
                 ParsedJsonDocument<JsonElement>? headersDoc = DecodeHeadersDocument(reply);
+                if (headersDoc is not null)
+                {
+                    workspace.TakeOwnership(headersDoc);
+                }
+
                 JsonElement replyHeaders = headersDoc?.RootElement ?? default;
                 return (replyPayload, replyHeaders);
             }

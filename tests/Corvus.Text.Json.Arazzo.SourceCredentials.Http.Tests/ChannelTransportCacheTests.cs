@@ -144,7 +144,7 @@ public sealed class ChannelTransportCacheTests
             return default;
         }
 
-        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonElement headers = default, CancellationToken cancellationToken = default)
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonWorkspace workspace, JsonElement headers = default, CancellationToken cancellationToken = default)
             where TRequest : struct, Corvus.Text.Json.Internal.IJsonElement<TRequest>
             where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>
             => throw new NotSupportedException();

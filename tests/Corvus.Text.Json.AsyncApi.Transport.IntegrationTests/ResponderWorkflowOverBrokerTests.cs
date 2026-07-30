@@ -126,7 +126,8 @@ public class ResponderWorkflowOverBrokerTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-responder-workflow"u8.ToArray());
+            "corr-responder-workflow"u8.ToArray(),
+            workspace);
 
         JsonElement outputs = await responderTask;
 

@@ -24,6 +24,7 @@ public class CancellationAndConcurrencyTests
     [TestMethod]
     public async Task RequestAsync_CancellationToken_ThrowsOperationCanceledException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         JsonElement request = JsonElement.ParseValue("""{"lumens":100,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
@@ -37,6 +38,7 @@ public class CancellationAndConcurrencyTests
                 "reply/channel"u8.ToArray(),
                 request,
                 "corr-cancel-test"u8.ToArray(),
+                workspace,
                 cancellationToken: cts.Token).AsTask();
 
         // Cancel before reply arrives

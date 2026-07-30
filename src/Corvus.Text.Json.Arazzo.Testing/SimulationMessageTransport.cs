@@ -53,11 +53,16 @@ public sealed class SimulationMessageTransport(MockApiTransport recorder, Simula
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
+        // The reply re-wraps the scenario's own backing document (which outlives the simulation) and the
+        // executor clones it into the run workspace, so this simulation does not take ownership here.
+        _ = workspace;
+
         // The reply comes from the scenario: the next trigger scripted on the REPLY channel. The
         // string conversions sit at the outermost boundary, per the transport contract.
         string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);

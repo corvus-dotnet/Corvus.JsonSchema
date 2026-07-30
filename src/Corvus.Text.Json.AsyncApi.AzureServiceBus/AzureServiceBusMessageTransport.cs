@@ -152,6 +152,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -243,12 +244,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             // Parse reply with error handling
             try
             {
-                // The parsed reply is returned to the caller, which uses it after this method returns, so the
-                // document must not be disposed here - RootElement would fault (this is how the other transports'
-                // RequestAsync behaves too). Ownership of the returned reply follows the caller, not this method.
+                // The parsed reply is returned to the caller and used after this method returns, so its document is
+                // owned by the caller's workspace (disposed when the workspace is) rather than disposed here.
                 ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
-                JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
+                JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties, workspace);
 
                 await replyReceiver.CompleteMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -387,9 +388,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             // Handle
             using (payloadDoc)
+            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
             {
                 TPayload payload = payloadDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties);
+                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
 
                 try
                 {
@@ -456,7 +458,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
     /// <summary>
     /// Subscribes to request messages on a channel and replies to each — the responder counterpart of
-    /// <see cref="RequestAsync{TRequest, TReply}(ReadOnlyMemory{byte}, ReadOnlyMemory{byte}, TRequest, ReadOnlyMemory{byte}, JsonElement, CancellationToken)"/>.
+    /// <see cref="RequestAsync{TRequest, TReply}(ReadOnlyMemory{byte}, ReadOnlyMemory{byte}, TRequest, ReadOnlyMemory{byte}, JsonWorkspace, JsonElement, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// For every request the processor delivers, this reads the native <see cref="ServiceBusReceivedMessage.ReplyTo"/>,
@@ -544,9 +546,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             // Handle the request and publish the reply
             using (requestDoc)
+            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
             {
                 TRequest request = requestDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties);
+                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
 
                 try
                 {
@@ -802,7 +805,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         return writer.WrittenCount;
     }
 
-    private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties)
+    private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties, JsonWorkspace workspace)
     {
         if (applicationProperties.Count == 0)
         {
@@ -821,7 +824,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         writer.WriteEndObject();
         writer.Flush();
 
-        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        // The returned element is used after this method returns (by the caller's handler, or by RequestAsync's
+        // caller), so its document is owned by the caller's workspace rather than disposed here.
+        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        workspace.TakeOwnership(doc);
         return doc.RootElement;
     }
 }

@@ -97,6 +97,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task RequestAsync_CompletesWhenReplyDelivered()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         JsonElement request = JsonElement.ParseValue("""{"question":"ping"}"""u8);
@@ -107,7 +108,7 @@ public class InMemoryMessageTransportTests
                 "request/channel"u8.ToArray(),
                 "reply/channel"u8.ToArray(),
                 request,
-                "corr-123"u8.ToArray()).AsTask();
+                "corr-123"u8.ToArray(), workspace).AsTask();
 
         // Deliver a reply as byte[]
         byte[] replyBytes = Encoding.UTF8.GetBytes("""{"answer":"pong"}""");
@@ -120,6 +121,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task SubscribeReplyAsync_RespondsToRequestInProcess()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         // A responder echoes the request's value back, doubled, as the reply.
@@ -137,7 +139,7 @@ public class InMemoryMessageTransportTests
             "rpc/double"u8.ToArray(),
             "rpc/double/replies"u8.ToArray(),
             request,
-            "corr-rr"u8.ToArray());
+            "corr-rr"u8.ToArray(), workspace);
 
         Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
 
@@ -149,6 +151,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyAsync_RepliesToOneRequestThenUnsubscribes()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         // The one-shot responder wrapper handles exactly one request, replies, and unsubscribes.
@@ -166,7 +169,7 @@ public class InMemoryMessageTransportTests
             "rpc/once"u8.ToArray(),
             "rpc/once/replies"u8.ToArray(),
             request,
-            "corr-once"u8.ToArray());
+            "corr-once"u8.ToArray(), workspace);
 
         await responder;
         Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
@@ -179,7 +182,7 @@ public class InMemoryMessageTransportTests
                 "rpc/once"u8.ToArray(),
                 "rpc/once/replies"u8.ToArray(),
                 second,
-                "corr-once-2"u8.ToArray()).AsTask();
+                "corr-once-2"u8.ToArray(), workspace).AsTask();
         Assert.IsFalse(parked.IsCompleted);
         transport.CompleteRequest("corr-once-2", Encoding.UTF8.GetBytes("""{"result":99}"""));
         (JsonElement parkedReply, JsonElement _) = await parked;
@@ -189,6 +192,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyAsync_RethrowsHandlerFailure()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         ValueTask responder = transport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
@@ -203,7 +207,7 @@ public class InMemoryMessageTransportTests
                 "rpc/boom"u8.ToArray(),
                 "rpc/boom/replies"u8.ToArray(),
                 request,
-                "corr-boom"u8.ToArray()));
+                "corr-boom"u8.ToArray(), workspace));
         Assert.AreEqual("handler failed", requesterEx.Message);
 
         // ...and the captured failure is re-thrown to the awaiting responder.
@@ -214,6 +218,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task RequestAsync_WithoutResponder_StillParksForCompleteRequest()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
@@ -222,7 +227,7 @@ public class InMemoryMessageTransportTests
                 "rpc/none"u8.ToArray(),
                 "rpc/none/replies"u8.ToArray(),
                 request,
-                "corr-none"u8.ToArray()).AsTask();
+                "corr-none"u8.ToArray(), workspace).AsTask();
 
         transport.CompleteRequest("corr-none", Encoding.UTF8.GetBytes("""{"result":7}"""));
 
@@ -298,6 +303,7 @@ public class InMemoryMessageTransportTests
     [TestMethod]
     public async Task CompleteRequest_WithHeaders_ReturnsHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using Testing.InMemoryMessageTransport transport = new();
 
         JsonElement request = JsonElement.ParseValue("""{"req":true}"""u8);
@@ -307,7 +313,7 @@ public class InMemoryMessageTransportTests
                 "req/ch"u8.ToArray(),
                 "rep/ch"u8.ToArray(),
                 request,
-                "corr-headers"u8.ToArray()).AsTask();
+                "corr-headers"u8.ToArray(), workspace).AsTask();
 
         byte[] replyBytes = Encoding.UTF8.GetBytes("""{"ok":true}""");
         byte[] headerBytes = Encoding.UTF8.GetBytes("""{"status":"200"}""");

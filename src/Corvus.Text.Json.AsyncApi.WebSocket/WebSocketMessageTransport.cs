@@ -97,6 +97,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -109,7 +110,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
 
         (byte[] rented, int length) = BuildPublishEnvelopeRented(requestChannel, in request, in headers, correlationId, replyChannel);
 
-        return RequestCoreAsync<TReply>(replyChannel, rented, length, correlationId, cancellationToken);
+        return RequestCoreAsync<TReply>(replyChannel, rented, length, correlationId, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -525,6 +526,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         byte[] envelopeRented,
         int envelopeLength,
         string correlationId,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
@@ -548,7 +550,10 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             // Parse the reply envelope with error handling
             try
             {
+                // One envelope document backs both the returned payload and headers, and both are used after this
+                // method returns, so the caller's workspace owns it (disposed with the workspace).
                 ParsedJsonDocument<WebSocketEnvelope> replyDoc = ParsedJsonDocument<WebSocketEnvelope>.Parse(replyEnvelopeBytes);
+                workspace.TakeOwnership(replyDoc);
                 WebSocketEnvelope replyEnvelope = replyDoc.RootElement;
 
                 JsonElement payloadEl = replyEnvelope.Payload;

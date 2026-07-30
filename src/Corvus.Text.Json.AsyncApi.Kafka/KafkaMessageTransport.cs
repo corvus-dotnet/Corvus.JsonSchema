@@ -122,6 +122,7 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -137,7 +138,7 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
             ? SerializeToOwnedBytes(in headers)
             : null;
 
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, requestBytes, correlationIdUtf8, headerBytes, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, requestBytes, correlationIdUtf8, headerBytes, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -328,6 +329,7 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         byte[] requestBytes,
         ReadOnlyMemory<byte> correlationIdUtf8,
         byte[]? headerBytes,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
@@ -376,12 +378,18 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
             // Parse reply with error handling
             try
             {
-                // Cold path — documents not disposed; returned values reference their memory.
-                // The caller owns the lifetime of the returned elements.
+                // The returned reply and headers are used after this method returns, so the caller's workspace
+                // owns their documents (disposed with the workspace) rather than this method disposing them.
                 ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Message.Value);
+                workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
 
                 ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                if (headersDoc is not null)
+                {
+                    workspace.TakeOwnership(headersDoc);
+                }
+
                 JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
                 return (replyPayload, replyHeaders);

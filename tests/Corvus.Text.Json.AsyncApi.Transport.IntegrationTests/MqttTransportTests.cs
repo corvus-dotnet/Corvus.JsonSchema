@@ -680,6 +680,8 @@ public class MqttTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — create a requester transport
         MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
@@ -732,7 +734,8 @@ public class MqttTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -794,7 +797,8 @@ public class MqttTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert — the responder computed 21 * 2 = 42.
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -858,7 +862,8 @@ public class MqttTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert — the responder computed 21 * 2 = 42.
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -872,6 +877,8 @@ public class MqttTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
             Host = MqttFixture.Host,
@@ -892,6 +899,7 @@ public class MqttTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -900,6 +908,8 @@ public class MqttTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
             Host = MqttFixture.Host,
@@ -923,7 +933,8 @@ public class MqttTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]

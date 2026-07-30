@@ -119,6 +119,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -146,7 +147,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         if (responder is not null)
         {
-            return RespondAsync<TRequest, TReply>(responder, requestBytes, headerBytes, cancellationToken);
+            return RespondAsync<TRequest, TReply>(responder, requestBytes, headerBytes, workspace, cancellationToken);
         }
 
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs = new();
@@ -156,7 +157,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
             this.pendingRequests[correlationId] = tcs;
         }
 
-        return CompleteRequestAsync<TReply>(tcs, cancellationToken);
+        return CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -184,6 +185,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         Delegate responder,
         byte[] requestBytes,
         byte[] headerBytes,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -202,9 +204,11 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
             var handler = (Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>>)responder;
             TReply reply = await handler(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
 
-            // Re-parse the reply into its own GC-backed document so it outlives the handler's workspace.
+            // Re-parse the reply into a document owned by the caller's workspace so it outlives this handler.
             byte[] replyBytes = SerializeToOwnedBytes(in reply);
-            return (ParsedJsonDocument<TReply>.Parse(replyBytes).RootElement, default);
+            ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyBytes);
+            workspace.TakeOwnership(replyDoc);
+            return (replyDoc.RootElement, default);
         }
         finally
         {
@@ -442,22 +446,23 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
     private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
         (byte[] replyBytes, byte[] headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        // Documents are not disposed because the returned values reference their memory.
-        // The backing buffers will be collected by the GC when the caller releases the
-        // returned values. This is acceptable for request/reply (not a streaming hot path)
-        // and matches the InMemory testing transport's semantics.
+        // The returned reply and headers reference their documents' memory, so the caller's workspace owns
+        // those documents (disposed when the workspace is) rather than leaving them to the GC.
         ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyBytes);
+        workspace.TakeOwnership(replyDoc);
         TReply reply = replyDoc.RootElement;
 
         JsonElement headers = default;
         if (headerBytes.Length > 0)
         {
             ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
+            workspace.TakeOwnership(headersDoc);
             headers = headersDoc.RootElement;
         }
 

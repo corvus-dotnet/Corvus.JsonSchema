@@ -153,6 +153,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -168,7 +169,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             ? SerializeToOwnedBytes(in headers)
             : null;
 
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, requestRented, requestLen, correlationId, correlationIdUtf8, headerBytes, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, requestRented, requestLen, correlationId, correlationIdUtf8, headerBytes, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -324,6 +325,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         string correlationId,
         ReadOnlyMemory<byte> correlationIdUtf8,
         byte[]? headerBytes,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
@@ -371,9 +373,15 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             try
             {
                 ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
+                workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
 
                 ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                if (headersDoc is not null)
+                {
+                    workspace.TakeOwnership(headersDoc);
+                }
+
                 JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
                 return (replyPayload, replyHeaders);

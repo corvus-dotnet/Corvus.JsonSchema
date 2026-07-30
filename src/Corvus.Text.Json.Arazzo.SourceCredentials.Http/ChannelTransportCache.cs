@@ -188,12 +188,12 @@ public sealed class ChannelTransportCache : IAsyncDisposable
                 ? transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken)
                 : this.ConnectThenPublishAsync(channelUtf8, payload, context, headers, cancellationToken);
 
-        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonElement headers = default, CancellationToken cancellationToken = default)
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonWorkspace workspace, JsonElement headers = default, CancellationToken cancellationToken = default)
             where TRequest : struct, IJsonElement<TRequest>
             where TReply : struct, IJsonElement<TReply>
             => this.inner is { } transport
-                ? transport.RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken)
-                : this.ConnectThenRequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken);
+                ? transport.RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken)
+                : this.ConnectThenRequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken);
 
         public ValueTask SubscribeAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, Func<TPayload, JsonElement, CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
             where TPayload : struct, IJsonElement<TPayload>
@@ -243,12 +243,12 @@ public sealed class ChannelTransportCache : IAsyncDisposable
             await transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);
         }
 
-        private async ValueTask<(TReply Payload, JsonElement Headers)> ConnectThenRequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonElement headers, CancellationToken cancellationToken)
+        private async ValueTask<(TReply Payload, JsonElement Headers)> ConnectThenRequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonWorkspace workspace, JsonElement headers, CancellationToken cancellationToken)
             where TRequest : struct, IJsonElement<TRequest>
             where TReply : struct, IJsonElement<TReply>
         {
             IMessageTransport transport = await this.ConnectedAsync(cancellationToken).ConfigureAwait(false);
-            return await transport.RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken).ConfigureAwait(false);
+            return await transport.RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken).ConfigureAwait(false);
         }
 
         private async ValueTask ConnectThenSubscribeAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, Func<TPayload, JsonElement, CancellationToken, ValueTask> handler, CancellationToken cancellationToken)

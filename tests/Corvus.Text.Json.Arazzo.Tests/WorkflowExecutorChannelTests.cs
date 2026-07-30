@@ -794,7 +794,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-serve"u8.ToArray());
+            "corr-serve"u8.ToArray(), workspace);
 
         JsonElement outputs = await pending;
 
@@ -877,7 +877,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-cf"u8.ToArray());
+            "corr-cf"u8.ToArray(), workspace);
 
         JsonElement outputs = await pending;
 
@@ -1055,7 +1055,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-tmpl"u8.ToArray());
+            "corr-tmpl"u8.ToArray(), workspace);
 
         await pending;
 
@@ -1131,7 +1131,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-interp"u8.ToArray());
+            "corr-interp"u8.ToArray(), workspace);
 
         await pending;
 
@@ -1206,7 +1206,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-dollar"u8.ToArray());
+            "corr-dollar"u8.ToArray(), workspace);
 
         await pending;
 
@@ -1328,7 +1328,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-replrepl"u8.ToArray());
+            "corr-replrepl"u8.ToArray(), workspace);
 
         await pending;
 
@@ -1409,7 +1409,7 @@ public partial class WorkflowExecutorEndToEndTests
             "requests"u8.ToArray(),
             "replies"u8.ToArray(),
             requestDocument.RootElement,
-            "corr-const"u8.ToArray());
+            "corr-const"u8.ToArray(), workspace);
 
         JsonElement outputs = await pending;
 
