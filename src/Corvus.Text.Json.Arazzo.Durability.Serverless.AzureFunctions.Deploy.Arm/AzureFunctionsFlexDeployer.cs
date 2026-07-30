@@ -36,6 +36,11 @@ public sealed class AzureFunctionsFlexDeployer : IServerlessDeployer
     private static readonly TimeSpan DeploymentPollTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan DeploymentPollDelay = TimeSpan.FromSeconds(5);
 
+    // One Deploy against real cloud can flake (a transient publish error, or a deployment that ends in a failed
+    // state); re-posting the same package is idempotent, so retry a few times with a short backoff before giving up.
+    private const int DeployAttempts = 3;
+    private static readonly TimeSpan DeployRetryDelay = TimeSpan.FromSeconds(15);
+
     private readonly TokenCredential credential;
     private readonly ArmClient armClient;
     private readonly AzureFunctionsFlexDeployerOptions options;
@@ -82,30 +87,55 @@ public sealed class AzureFunctionsFlexDeployer : IServerlessDeployer
             using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
 
-            using var package = new ByteArrayContent(request.NativeBinary.ToArray());
-            package.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+            var publishUri = new Uri($"{scmBase}/api/publish?type=zip&RemoteBuild=false");
+            var invokeUrl = new Uri($"https://{site.Data.DefaultHostName}/{this.options.InvokePath}");
+            byte[] packageBytes = request.NativeBinary.ToArray();
 
-            using HttpResponseMessage response = await httpClient
-                .PostAsync(new Uri($"{scmBase}/api/publish?type=zip&RemoteBuild=false"), package, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (response.StatusCode == HttpStatusCode.Accepted)
+            // Retry the One Deploy: a fresh ByteArrayContent per attempt (HttpContent is single-use), re-posting the
+            // same package until it completes successfully or the attempts are exhausted.
+            ServerlessDeployResult failure = ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' did not run.");
+            for (int attempt = 1; attempt <= DeployAttempts; attempt++)
             {
-                // One Deploy is asynchronous on Flex: wait on the deployment status until it completes.
-                (bool succeeded, string log) = await WaitForDeploymentAsync(httpClient, scmBase, cancellationToken).ConfigureAwait(false);
-                if (!succeeded)
+                string suffix = attempt > 1 ? $" (attempt {attempt})" : string.Empty;
+                try
                 {
-                    return ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' did not complete: {log}");
+                    using var package = new ByteArrayContent(packageBytes);
+                    package.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+                    using HttpResponseMessage response = await httpClient.PostAsync(publishUri, package, cancellationToken).ConfigureAwait(false);
+
+                    if (response.StatusCode == HttpStatusCode.Accepted)
+                    {
+                        // One Deploy is asynchronous on Flex: wait on the deployment status until it completes.
+                        (bool succeeded, string log) = await WaitForDeploymentAsync(httpClient, scmBase, cancellationToken).ConfigureAwait(false);
+                        if (succeeded)
+                        {
+                            return ServerlessDeployResult.Success(invokeUrl.ToString(), $"One-deployed the Flex Consumption Function App '{appName}'{suffix}.");
+                        }
+
+                        failure = ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' did not complete (attempt {attempt}/{DeployAttempts}): {log}");
+                    }
+                    else if (response.IsSuccessStatusCode)
+                    {
+                        return ServerlessDeployResult.Success(invokeUrl.ToString(), $"One-deployed the Flex Consumption Function App '{appName}'{suffix}.");
+                    }
+                    else
+                    {
+                        string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                        failure = ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' failed (attempt {attempt}/{DeployAttempts}): {(int)response.StatusCode} {body}");
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    failure = ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' failed to reach the deployment endpoint (attempt {attempt}/{DeployAttempts}): {ex.Message}");
+                }
+
+                if (attempt < DeployAttempts)
+                {
+                    await Task.Delay(DeployRetryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
-            else if (!response.IsSuccessStatusCode)
-            {
-                string body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                return ServerlessDeployResult.Failure($"Azure Functions Flex deploy of '{appName}' failed: {(int)response.StatusCode} {body}");
-            }
 
-            var invokeUrl = new Uri($"https://{site.Data.DefaultHostName}/{this.options.InvokePath}");
-            return ServerlessDeployResult.Success(invokeUrl.ToString(), $"One-deployed the Flex Consumption Function App '{appName}'.");
+            return failure;
         }
         catch (RequestFailedException ex)
         {
