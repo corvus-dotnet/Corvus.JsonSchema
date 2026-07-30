@@ -40,9 +40,20 @@
     <PackageReference Remove="Testcontainers.Nats" />
     <PackageReference Remove="Testcontainers.RabbitMq" />
     <PackageReference Remove="Testcontainers.Kafka" />
-    <!-- Microsoft.Azure.Cosmos restores on net481 but its buildTransitive targets fail the .NET Framework build
-         unless Newtonsoft.Json is referenced; the net481 host has no source that uses it, so remove it. -->
+    <!-- The net481 host has no source (Compile is stripped above), so it needs none of the backend/SDK runtime
+         packages the Arazzo tests reference. Removing them keeps the net481 build minimal and robust (nothing can
+         break it) and keeps these projects' net481 footprint out of the SBOM. Microsoft.Azure.Cosmos additionally
+         fails the .NET Framework build outright (its buildTransitive targets require Newtonsoft.Json). -->
     <PackageReference Remove="Microsoft.Azure.Cosmos" />
+    <PackageReference Remove="AWSSDK.KeyManagementService" />
+    <PackageReference Remove="AWSSDK.Lambda" />
+    <PackageReference Remove="AWSSDK.SecretsManager" />
+    <PackageReference Remove="Azure.Data.Tables" />
+    <PackageReference Remove="Azure.ResourceManager.AppService" />
+    <PackageReference Remove="Azure.Security.KeyVault.Keys" />
+    <PackageReference Remove="Azure.Storage.Blobs" />
+    <PackageReference Remove="Novell.Directory.Ldap.NETStandard" />
+    <PackageReference Remove="VaultSharp" />
     <!-- The Arazzo durability/backend test projects add these Testcontainers modules; none support net481. -->
     <PackageReference Remove="Testcontainers.Azurite" />
     <PackageReference Remove="Testcontainers.CosmosDb" />
