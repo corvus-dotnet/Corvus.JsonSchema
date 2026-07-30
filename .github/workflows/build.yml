@@ -214,6 +214,17 @@ jobs:
         # comparatively flaky on CI; run it on demand with --filter TestCategory=cosmos. The "azure" category
         # (the real-cloud checkpoint-listener run-to-completion gates) is excluded here too: it needs a live
         # Azure subscription and a deployed listener, so it runs in the dedicated azure-e2e job below.
+        # --max-parallel-test-modules 1 runs the test modules one at a time. Almost every backend here spins its
+        # own container via Testcontainers (Postgres, SQL Server, MySQL, Redis, MongoDB, NATS JetStream, Azure
+        # Storage, LocalStack) alongside the AsyncApi broker suite (Kafka, RabbitMQ). Running them in parallel on a
+        # 2-core runner starves them all: containers become pathologically slow to start and the broker suite hangs
+        # until the step times out. Serialising the modules gives each backend the whole runner, so it starts and
+        # completes cleanly. The trade-off is sequential image pulls, so this step gets a generous timeout.
+        #
+        # --ignore-exit-code 8 suppresses MTP exit code 8 ("zero tests ran"): the solution sweep runs every test
+        # module, and most have no integration-categorised tests, so they legitimately match nothing. Without this,
+        # that exit code propagates up through dotnet-coverage and fails the step (see .zf/config.ps1, which applies
+        # the same suppression to the unit-test sweep).
         run: |
           dotnet-coverage collect \
             --output integration-tests.cobertura.xml \
@@ -223,9 +234,11 @@ jobs:
               -f net10.0 \
               -c Release \
               --no-build \
+              --max-parallel-test-modules 1 \
+              --ignore-exit-code 8 \
               --filter TestCategory=integration&TestCategory!=failing&TestCategory!=cosmos&TestCategory!=azure \
               --report-trx --report-trx-filename integration-tests.trx"
-        timeout-minutes: 30
+        timeout-minutes: 50
         env:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
