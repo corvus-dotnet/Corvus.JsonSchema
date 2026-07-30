@@ -281,13 +281,6 @@ jobs:
             10.0.x
             9.0.x
 
-      - name: Azure login (OIDC)
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
-        with:
-          client-id: ${{ secrets.AZURE_TESTS_E2E_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TESTS_E2E_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_TESTS_E2E_SUBSCRIPTION_ID }}
-
       - name: Build the AOT builder image and the local package feed
         shell: pwsh
         run: |
@@ -303,6 +296,16 @@ jobs:
           dotnet build tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj \
             -f net10.0 -c Release
         timeout-minutes: 30
+
+      # Log in to Azure right before the management-plane work, not before the ~40-minute feed build: a federated
+      # OIDC session cannot refresh its token, so authenticating here keeps it valid across the deploy, the SDK-based
+      # Flex tests (AzureCliCredential), and the teardown, rather than aging out during the build.
+      - name: Azure login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_TESTS_E2E_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TESTS_E2E_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TESTS_E2E_SUBSCRIPTION_ID }}
 
       - name: Deploy the checkpoint listener
         shell: pwsh
