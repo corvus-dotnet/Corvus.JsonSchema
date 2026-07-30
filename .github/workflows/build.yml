@@ -333,7 +333,9 @@ jobs:
           if (Test-Path $state) {
             ./samples/arazzo/Corvus.Text.Json.Arazzo.ServerlessCheckpointListener/deploy/Remove-CheckpointListener.ps1 -StateFile $state
           }
-        timeout-minutes: 20
+        # The Container Apps environment delete alone takes ~15 minutes; give the whole teardown headroom so it does
+        # not get killed mid-delete (which orphaned the Log Analytics workspace on a 20-minute limit).
+        timeout-minutes: 40
 
       - name: Publish Test Results
         uses: dorny/test-reporter@df6247429542221bc30d46a036ee47af1102c451 # v2.7.0

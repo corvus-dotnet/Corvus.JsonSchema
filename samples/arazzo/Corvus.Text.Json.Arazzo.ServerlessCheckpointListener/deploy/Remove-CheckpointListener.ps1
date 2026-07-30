@@ -53,3 +53,8 @@ Remove-AzResource monitor log-analytics workspace delete -g $rg -n $state.worksp
 
 Remove-Item -Path $StateFile -ErrorAction SilentlyContinue
 Write-Host 'Teardown complete.' -ForegroundColor Green
+
+# Teardown is best-effort: a single delete that returns non-zero (already gone, or a slow/transient failure) is
+# surfaced as a warning above, not a failure. Exit 0 so, in an always()/finally CI step, a teardown hiccup does not
+# fail a run whose tests passed; orphaned resources are caught by monitoring the resource group.
+exit 0
