@@ -93,11 +93,28 @@ public class ResponderWorkflowOverBrokerTests
 
         // Start the compiled responder service: it subscribes (request/reply) and awaits one request. The
         // first parameter is the HTTP transport — unused by a channel-only workflow, but the generated
-        // executor null-guards it, so a no-op MockApiTransport is supplied.
+        // executor null-guards it, so a no-op MockApiTransport is supplied. The four leading parameters
+        // (transport, message transport, workspace, inputs) are always present; everything after them
+        // (cancellation token, time provider, and - for durable workflows - the run) is optional, so bind
+        // those from their defaults rather than tracking the exact tail of the generated signature.
         var apiTransport = new MockApiTransport();
+        ParameterInfo[] parameters = execute.GetParameters();
+        object?[] arguments = new object?[parameters.Length];
+        arguments[0] = apiTransport;
+        arguments[1] = responder;
+        arguments[2] = workspace;
+        arguments[3] = inputs.RootElement;
+        for (int i = 4; i < parameters.Length; i++)
+        {
+            arguments[i] = Type.Missing;
+        }
+
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, responder, workspace, inputs.RootElement, default(CancellationToken)])!;
+            BindingFlags.OptionalParamBinding | BindingFlags.InvokeMethod,
+            binder: null,
+            parameters: arguments,
+            culture: null)!;
         System.Threading.Tasks.Task<JsonElement> responderTask = pending.AsTask();
 
         // Let the responder's subscription register on the broker before the requester sends.

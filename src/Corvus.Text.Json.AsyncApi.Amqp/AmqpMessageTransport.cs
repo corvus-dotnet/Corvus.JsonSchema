@@ -361,8 +361,11 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 body: new ReadOnlyMemory<byte>(requestRented, 0, requestLength),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            // Wait for reply
-            BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            // Wait for the correlated reply, bounded by the request timeout so a lost reply surfaces as a fast
+            // cancellation rather than waiting forever (the caller's token still cancels earlier if it fires first).
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(this.options.RequestTimeout);
+            BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
 
             // Parse reply with error handling
             try
@@ -856,13 +859,20 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                                     replyProps.CorrelationId = corrId;
                                 }
 
+                                // Publish the reply on the shared publish channel with CancellationToken.None, not
+                                // this subscription's cts: a one-shot responder (ReceiveOneAndReplyAsync) signals its
+                                // completion the instant the handler returns, so the caller can unsubscribe - which
+                                // cancels cts - while this reply is still in flight. Using cts here let that teardown
+                                // abort the reply, so the requester never received it and (before RequestTimeout)
+                                // waited forever. The publish channel is only torn down on full DisposeAsync, well
+                                // after the reply has gone out, so None is safe.
                                 await this.publishChannel.BasicPublishAsync(
                                     exchange: this.options.ExchangeName,
                                     routingKey: replyTo,
                                     mandatory: false,
                                     basicProperties: replyProps,
                                     body: new ReadOnlyMemory<byte>(replyRented, 0, replyLen),
-                                    cancellationToken: cts.Token).ConfigureAwait(false);
+                                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
                             }
                             finally
                             {

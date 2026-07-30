@@ -55,6 +55,14 @@ public sealed class AmqpTransportOptions : ITransportOptions
     /// </summary>
     public string ConsumerTagPrefix { get; set; } = "corvus-asyncapi";
 
+    /// <summary>
+    /// Gets or sets how long <see cref="AmqpMessageTransport.RequestAsync"/> waits for a correlated reply before it
+    /// fails. Without this bound a lost reply would wait forever; matching the other transports (and Azure Service
+    /// Bus / NATS), the request is cancelled after this timeout so a missing reply surfaces as a fast failure rather
+    /// than a hang. Defaults to 30 seconds.
+    /// </summary>
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
     /// <inheritdoc/>
     public IMessageErrorPolicy? ErrorPolicy { get; set; }
 
