@@ -783,6 +783,10 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         string requestTopic = $"kafka-resp-req-{topicSuffix}";
         string replyTopic = $"kafka-resp-rep-{topicSuffix}";
@@ -809,7 +813,11 @@ public class KafkaTransportTests
                 // Compute a reply from the request: double the supplied number.
                 int n = request.GetProperty("n"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{n * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             });
 
@@ -847,6 +855,10 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         string requestTopic = $"kafka-resp-req-{topicSuffix}-once";
         string replyTopic = $"kafka-resp-rep-{topicSuffix}-once";
@@ -873,7 +885,11 @@ public class KafkaTransportTests
                 // Compute a reply from the request: double the supplied number.
                 int n = request.GetProperty("n"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{n * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             }).AsTask();
 

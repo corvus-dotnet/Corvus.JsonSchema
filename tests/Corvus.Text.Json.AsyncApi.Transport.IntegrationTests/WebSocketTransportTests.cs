@@ -768,6 +768,10 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — a responder transport subscribes to the request channel via SubscribeReplyAsync,
         // and a requester transport subscribes to the reply channel so the relay forwards replies to it.
         WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
@@ -796,7 +800,11 @@ public class WebSocketTransportTests
             {
                 int input = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             });
 
@@ -823,6 +831,10 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — a responder transport handles exactly one request via ReceiveOneAndReplyAsync,
         // and a requester transport subscribes to the reply channel so the relay forwards replies to it.
         WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
@@ -851,7 +863,11 @@ public class WebSocketTransportTests
             {
                 int input = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             }).AsTask();
 

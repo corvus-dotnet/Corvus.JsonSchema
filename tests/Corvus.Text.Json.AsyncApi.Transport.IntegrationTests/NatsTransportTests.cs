@@ -260,6 +260,10 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — model two services: a responder service (its own connection) registers a
         // SubscribeReplyAsync that doubles the supplied number, and a separate requester service
         // (s_transport) calls RequestAsync. The two round-trip through the broker's native request/reply.
@@ -278,9 +282,10 @@ public class NatsTransportTests
                 int value = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
 
-                // The responder owns the lifetime of the parsed reply document; the transport
-                // serializes the returned element synchronously before this scope unwinds.
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element after the handler returns) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             });
 
@@ -306,6 +311,10 @@ public class NatsTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — model two services: a responder service (its own connection) registers a
         // ReceiveOneAndReplyAsync that doubles the supplied number, and a separate requester
         // service (s_transport) calls RequestAsync. The two round-trip through the broker's
@@ -327,9 +336,10 @@ public class NatsTransportTests
                 int value = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
 
-                // The responder owns the lifetime of the parsed reply document; the transport
-                // serializes the returned element synchronously before this scope unwinds.
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element after the handler returns) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             }).AsTask();
 

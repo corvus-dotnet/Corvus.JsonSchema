@@ -746,6 +746,10 @@ public class MqttTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — a Corvus responder transport answers requests via SubscribeReplyAsync,
         // and a separate Corvus requester transport issues the request via RequestAsync.
         MqttMessageTransport responderTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
@@ -773,9 +777,10 @@ public class MqttTransportTests
                 int input = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
 
-                // The responder owns the lifetime of the parsed reply document; the transport
-                // serializes the returned element synchronously before this scope unwinds.
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             });
 
@@ -803,6 +808,10 @@ public class MqttTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — a Corvus responder transport answers a single request via
         // ReceiveOneAndReplyAsync (the primitive used by generated Arazzo responder steps),
         // and a separate Corvus requester transport issues the request via RequestAsync.
@@ -832,9 +841,10 @@ public class MqttTransportTests
                 int input = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
 
-                // The responder owns the lifetime of the parsed reply document; the transport
-                // serializes the returned element synchronously before this scope unwinds.
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
                 ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
                 return ValueTask.FromResult(replyDoc.RootElement);
             }).AsTask();
 

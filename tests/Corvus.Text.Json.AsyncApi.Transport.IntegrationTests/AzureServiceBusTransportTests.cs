@@ -75,6 +75,11 @@ public class AzureServiceBusTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // The reply the handler builds must outlive the handler (the transport serialises it after the handler
+        // returns) yet still be cleaned up deterministically, so the handler hands its document to this workspace,
+        // which is disposed once the round-trip is done - mirroring how a generated responder owns its reply.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — a responder transport hosts the SubscribeReplyAsync handler on the request queue,
         // and a separate requester transport drives RequestAsync. The reply queue is session-enabled
         // so the requester's session receiver (keyed on the correlation ID) correlates the reply.
@@ -101,8 +106,9 @@ public class AzureServiceBusTransportTests
                 (request, headers, ct) =>
                 {
                     int value = request.GetProperty("value"u8).GetInt32();
-                    using ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
                         Encoding.UTF8.GetBytes($$"""{"result":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
                     return ValueTask.FromResult(replyDoc.RootElement);
                 });
 
@@ -135,6 +141,11 @@ public class AzureServiceBusTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // The reply the handler builds must outlive the handler (the transport serialises it after the handler
+        // returns) yet still be cleaned up deterministically, so the handler hands its document to this workspace,
+        // which is disposed once the round-trip is done - mirroring how a generated responder owns its reply.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — mirrors RequestReplyResponderRoundTrip but drives the one-shot
         // ReceiveOneAndReplyAsync primitive instead of the persistent SubscribeReplyAsync.
         AzureServiceBusMessageTransport responderTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
@@ -161,8 +172,9 @@ public class AzureServiceBusTransportTests
                 (request, headers) =>
                 {
                     int value = request.GetProperty("value"u8).GetInt32();
-                    using ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
                         Encoding.UTF8.GetBytes($$"""{"result":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
                     return ValueTask.FromResult(replyDoc.RootElement);
                 }).AsTask();
 

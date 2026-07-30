@@ -19,23 +19,24 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     private readonly AzureServiceBusTransportOptions options;
     private readonly ServiceBusClient client;
     private readonly ServiceBusSender sender;
-    private readonly ServiceBusProcessor? processor;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly byte[] deadLetterSuffixUtf8;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource> subscriptions = new(StringComparer.Ordinal);
+
+    // Each subscription keeps its own processor so Unsubscribe/Dispose can actually stop it. A single shared
+    // processor field could not: a transport may hold several subscriptions, and it was never assigned (created
+    // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
+    private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
     private bool disposed;
 
     private AzureServiceBusMessageTransport(
         AzureServiceBusTransportOptions options,
         ServiceBusClient client,
-        ServiceBusSender sender,
-        ServiceBusProcessor? processor)
+        ServiceBusSender sender)
     {
         this.options = options;
         this.client = client;
         this.sender = sender;
-        this.processor = processor;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
         this.deadLetterSuffixUtf8 = Encoding.UTF8.GetBytes(options.DeadLetterSuffix);
@@ -84,11 +85,8 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         string entityPath = options.UseTopic ? options.TopicName! : options.QueueName!;
         ServiceBusSender sender = client.CreateSender(entityPath);
 
-        // Processor created only when subscribing
-        ServiceBusProcessor? processor = null;
-
         return new ValueTask<AzureServiceBusMessageTransport>(
-            new AzureServiceBusMessageTransport(options, client, sender, processor));
+            new AzureServiceBusMessageTransport(options, client, sender));
     }
 
     /// <inheritdoc/>
@@ -245,7 +243,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             // Parse reply with error handling
             try
             {
-                using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                // The parsed reply is returned to the caller, which uses it after this method returns, so the
+                // document must not be disposed here - RootElement would fault (this is how the other transports'
+                // RequestAsync behaves too). Ownership of the returned reply follows the caller, not this method.
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
                 TReply replyPayload = replyDoc.RootElement;
                 JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
 
@@ -337,7 +338,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = tcs;
+        this.subscriptions[channel] = (tcs, processor);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -494,7 +495,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = tcs;
+        this.subscriptions[channel] = (tcs, processor);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -626,15 +627,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        if (this.subscriptions.TryRemove(channel, out TaskCompletionSource? tcs))
+        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
         {
-            tcs.TrySetResult();
-
-            if (this.processor is not null)
-            {
-                await this.processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
-            }
-
+            subscription.Completion.TrySetResult();
+            await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
+            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
             this.options.Heartbeat?.Stop(channel, "azureservicebus");
         }
     }
@@ -665,11 +662,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         this.disposed = true;
 
-        if (this.processor is not null)
+        foreach ((TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription in this.subscriptions.Values)
         {
-            await this.processor.StopProcessingAsync().ConfigureAwait(false);
-            await this.processor.DisposeAsync().ConfigureAwait(false);
+            subscription.Completion.TrySetResult();
+            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
+            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
         }
+
+        this.subscriptions.Clear();
 
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);

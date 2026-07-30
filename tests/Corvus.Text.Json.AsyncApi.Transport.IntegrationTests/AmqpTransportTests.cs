@@ -865,6 +865,10 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task RequestReplyResponderRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — model two services on the same broker exchange: a responder service and a
         // separate requester service. The reply routes back via the request's ReplyTo/CorrelationId.
         static AmqpTransportOptions Options() => new()
@@ -892,10 +896,11 @@ public class AmqpTransportTests
                 {
                     int value = request.GetProperty("value"u8).GetInt32();
 
-                    // The reply document must outlive the handler: the transport serializes the
-                    // returned JsonElement after the handler completes, so it is not disposed here.
+                    // The reply document must outlive the handler (the transport serialises the returned element
+                    // afterward), so hand it to the test's workspace, which disposes it after the round-trip.
                     ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
                         Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
                     return ValueTask.FromResult(replyDoc.RootElement);
                 });
 
@@ -925,6 +930,10 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — same two-transport setup as RequestReplyResponderRoundTrip, but drives the
         // one-shot primitive ReceiveOneAndReplyAsync that generated Arazzo responder steps call.
         static AmqpTransportOptions Options() => new()
@@ -953,10 +962,11 @@ public class AmqpTransportTests
                 {
                     int value = request.GetProperty("value"u8).GetInt32();
 
-                    // The reply document must outlive the handler: the transport serializes the
-                    // returned JsonElement after the handler completes, so it is not disposed here.
+                    // The reply document must outlive the handler (the transport serialises the returned element
+                    // afterward), so hand it to the test's workspace, which disposes it after the round-trip.
                     ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
                         Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
                     return ValueTask.FromResult(replyDoc.RootElement);
                 }).AsTask();
 
