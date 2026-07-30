@@ -124,10 +124,26 @@ public sealed partial class CliIntegrationTests
         using TempSuite suite = TempSuite.Create(("happy", HappyScenario), ("sad", SadScenario));
         string junitReport = Path.Combine(suite.Root, "out", "junit.xml");
 
-        (int exit, string stdout, _) = await RunCliAsync(
-            "scenarios", "run", "--workflow", suite.WorkflowPath,
-            "--scenarios", Path.Combine(suite.Root, "scenarios", "**", "*.scenario.json"),
-            "--report", $"junit={junitReport}", "--github-annotations");
+        // --github-annotations appends a job-summary table to GITHUB_STEP_SUMMARY. The CLI runs in-process, so point
+        // that variable at a temp file for the duration of the run: this test's deliberately-failing suite must not
+        // append "Arazzo scenarios — 1/2 passed" to the real CI job summary (where it reads as a failure even though
+        // the test itself passes).
+        string summaryFile = Path.Combine(suite.Root, "step-summary.md");
+        string? previousSummary = Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY");
+        Environment.SetEnvironmentVariable("GITHUB_STEP_SUMMARY", summaryFile);
+        int exit;
+        string stdout;
+        try
+        {
+            (exit, stdout, _) = await RunCliAsync(
+                "scenarios", "run", "--workflow", suite.WorkflowPath,
+                "--scenarios", Path.Combine(suite.Root, "scenarios", "**", "*.scenario.json"),
+                "--report", $"junit={junitReport}", "--github-annotations");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GITHUB_STEP_SUMMARY", previousSummary);
+        }
 
         exit.ShouldBe(1, stdout);
         stdout.ShouldContain("✓ happy (completed)");
@@ -135,6 +151,11 @@ public sealed partial class CliIntegrationTests
         stdout.ShouldContain("expected completed; was faulted");
         stdout.ShouldContain("::error title=Scenario 'sad'::outcome:");
         stdout.ShouldContain("1/2 scenarios passed, 1 failed.");
+
+        // The job-summary table went to our temp file, not the real CI job summary.
+        string summary = await File.ReadAllTextAsync(summaryFile);
+        summary.ShouldContain("happy | completed |");
+        summary.ShouldContain("sad | faulted |");
 
         string junit = await File.ReadAllTextAsync(junitReport);
         junit.ShouldContain("failures=\"1\"");
