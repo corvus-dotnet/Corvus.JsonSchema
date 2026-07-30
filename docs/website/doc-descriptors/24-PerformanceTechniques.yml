@@ -1,0 +1,3 @@
+source: PerformanceTechniques.md
+navTitle: "Performance Techniques"
+description: "The UTF-8, byte-native, and allocation model that underpins Corvus.Text.Json's high-performance JSON handling."
