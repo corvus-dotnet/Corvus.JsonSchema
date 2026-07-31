@@ -299,6 +299,13 @@ public class SuiteValidationOfDateStrings
     }
 
     [TestMethod]
+    public void TestInvalidNonAsciiBengaliDigitInMonthField()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-0৪-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestIso8601NonRfc3339YyyymmddWithoutDashes20230328()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"20230328\"");
@@ -331,13 +338,6 @@ public class SuiteValidationOfDateStrings
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-11-28T23:55:45Z\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestYear0000IsALeapYear04000()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0000-02-29\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
@@ -477,6 +477,76 @@ public class SuiteValidationOfDateStrings
     public void TestInvalidAlphabeticCharactersInYearField()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"YYYY-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidThreeDigitMonthN1Digits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-001-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidAlphabeticCharactersInMonthField()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-MM-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidThreeDigitDayN1Digits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01-001\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidAlphabeticCharactersInDayField()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01-DD\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidColonSeparators()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020:01:01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidDotSeparators()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020.01.01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidSpaceSeparators()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020 01 01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidMixedSlashAndHyphenSeparators()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01/01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidDuplicatedFirstHyphen()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020--01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidDuplicatedSecondHyphen()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01--01\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 

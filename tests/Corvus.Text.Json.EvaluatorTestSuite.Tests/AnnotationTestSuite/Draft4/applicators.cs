@@ -78,7 +78,7 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
             "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/apple",
             "title",
-            "{\n                \"#/patternProperties/^a\": \"Bar\"\n              }");
+            "{\n                \"#/patternProperties/%5Ea\": \"Bar\"\n              }");
     }
 
     [TestMethod]

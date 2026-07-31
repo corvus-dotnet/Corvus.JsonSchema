@@ -132,6 +132,9 @@ public class JsonSchemaMatchingStringTests
     [DataRow("user@[IPv6:zzz]", false)]
     [DataRow("user@[]", false)]
     [DataRow("user@[192.0.2.1", false)] // unterminated address-literal
+    [DataRow("\"δοκιμή\"@example.com", true)] // RFC 6531 quoted local part with non-ASCII characters
+    [DataRow("cafe\u0301@example.com", true)] // non-NFC local part
+    [DataRow("user@cafe\u0301.com", true)] // non-NFC domain label
     public void MatchIdnEmail_ValidatesIdnEmail(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -198,6 +201,16 @@ public class JsonSchemaMatchingStringTests
     [DataRow("exam:ple", false)]
     [DataRow("under_score", false)]
     [DataRow("exam!ple", false)]
+    [DataRow("a\u05d0", false)] // Bidi rule: an LTR label may not contain an RTL character
+    [DataRow("0\u0627", false)] // Bidi rule: a label may not start with a digit
+    [DataRow("\u05d00\u0660", false)] // Bidi rule: an RTL label may not mix European and Arabic-Indic digits
+    [DataRow("0a.\u05d0", false)] // Bidi rule applies to every label in a Bidi domain name
+    [DataRow("\u0915\u094d\u200c\u0937x\u200cy", false)] // ZWNJ must satisfy its rule at every occurrence
+    [DataRow("xn--7a", false)] // decodes to U+00A1, a disallowed code point
+    [DataRow("\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc\u00fc", false)] // A-label form is longer than 63 octets
+    [DataRow("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true)]
+    [DataRow("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false)] // label longer than 63 characters
+    [DataRow("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false)] // name longer than 253 characters
     public void MatchIdnHostname_ValidatesIdnHostname(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -942,6 +955,9 @@ public class JsonSchemaMatchingStringTests
     [DataRow("99c17cbb-656f-564a-940f-1a4568f03487", true)]
     [DataRow("99c17cbb-656f-664a-940f-1a4568f03487", true)]
     [DataRow("99c17cbb-656f-f64a-940f-1a4568f03487", true)]
+    [DataRow("2eb8aa08-aa98-11ea-b4aa-73b441d16380-", false)] // trailing content after a complete UUID
+    [DataRow("urn:uuid:2eb8aa08-aa98-11ea-b4aa-73b441d16380", false)]
+    [DataRow("\u09e8eb8aa08-aa98-11ea-b4aa-73b441d16380", false)] // non-ASCII digit
     public void MatchUuid_ValidatesUuid(string value, bool expected)
     {
         var collector = new DummyResultsCollector();

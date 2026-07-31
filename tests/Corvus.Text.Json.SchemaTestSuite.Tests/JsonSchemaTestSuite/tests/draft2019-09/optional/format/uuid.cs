@@ -179,6 +179,27 @@ public class SuiteUuidFormat
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestUrnPrefixedUuidIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"urn:uuid:2eb8aa08-aa98-11ea-b4aa-73b441d16380\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestTrailingHyphenAfterACompleteUuidIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2eb8aa08-aa98-11ea-b4aa-73b441d16380-\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonAsciiDigit২ABengali2IsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"২eb8aa08-aa98-11ea-b4aa-73b441d16380\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

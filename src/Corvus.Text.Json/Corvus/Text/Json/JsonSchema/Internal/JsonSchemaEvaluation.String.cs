@@ -1439,6 +1439,16 @@ public static partial class JsonSchemaEvaluation
         bool hasArabicIndicDigits = false;
         bool hasExtendedArabicIndicDigits = false;
         int runeCount = 0;
+        int labelStart = 0;
+        bool labelHasNonAscii = false;
+        bool labelFirstSet = false;
+        bool labelFirstIsL = false;
+        bool labelFirstIsRal = false;
+        bool labelHasL = false;
+        bool labelHasRal = false;
+        bool labelHasEuropeanDigit = false;
+        bool domainIsBidi = false;
+        bool bidiViolation = false;
         while (i < value.Length)
         {
             // Increment the rune count to make it 1-based
@@ -1446,6 +1456,10 @@ public static partial class JsonSchemaEvaluation
 
             byte byteValue = value[i];
             Rune.DecodeFromUtf8(value.Slice(i), out Rune rune, out int bytesConsumed);
+
+            StrongBidiCategory bidiCategory = rune.Value < 0x80
+                ? (((byteValue | 0x20) >= (byte)'a' && (byteValue | 0x20) <= (byte)'z') ? StrongBidiCategory.StrongLeftToRight : StrongBidiCategory.Other)
+                : CharUnicodeInfo.GetBidiCategory(value, i, out _);
 
             if (i == 0)
             {
@@ -1464,6 +1478,27 @@ public static partial class JsonSchemaEvaluation
             hasArabicIndicDigits |= IsArabicIndicDigit(rune.Value);
             hasExtendedArabicIndicDigits |= IsExtendedArabicIndicDigit(rune.Value);
 
+            bool isDotRune = byteValue == (byte)'.' || rune.Value == 0x3002 || rune.Value == 0xFF0E || rune.Value == 0xFF61;
+
+            if (!isDotRune)
+            {
+                // Track the RFC 5893 Bidi properties of the label. The rules are evaluated at
+                // the end of each label, and enforced only when the domain turns out to be a
+                // Bidi domain name (it contains at least one RTL character anywhere).
+                if (!labelFirstSet)
+                {
+                    labelFirstSet = true;
+                    labelFirstIsL = bidiCategory == StrongBidiCategory.StrongLeftToRight;
+                    labelFirstIsRal = bidiCategory == StrongBidiCategory.StrongRightToLeft;
+                }
+
+                labelHasL |= bidiCategory == StrongBidiCategory.StrongLeftToRight;
+                labelHasRal |= bidiCategory == StrongBidiCategory.StrongRightToLeft;
+                labelHasEuropeanDigit |= (byteValue >= (byte)'0' && byteValue <= (byte)'9') || IsExtendedArabicIndicDigit(rune.Value);
+                labelHasNonAscii |= rune.Value > 0x7F;
+                domainIsBidi |= bidiCategory == StrongBidiCategory.StrongRightToLeft || IsArabicIndicDigit(rune.Value);
+            }
+
             if (wasLastDot)
             {
                 if (!Rune.IsLetter(rune))
@@ -1480,7 +1515,7 @@ public static partial class JsonSchemaEvaluation
 
             if (!Rune.IsLetterOrDigit(rune))
             {
-                if (byteValue == (byte)'.' || rune.Value == 0x3002 || rune.Value == 0xFF0E || rune.Value == 0xFF61)
+                if (isDotRune)
                 {
                     if (hasKatakankaMiddleDot && !hasHiraganaKatakanaOrHan)
                     {
@@ -1494,10 +1529,29 @@ public static partial class JsonSchemaEvaluation
                         return false;
                     }
 
+                    if (labelHasNonAscii && ExceedsALabelLength(value.Slice(labelStart, i - bytesConsumed - labelStart)))
+                    {
+                        // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
+                        return false;
+                    }
+
+                    if (labelFirstSet)
+                    {
+                        bidiViolation |= IsBidiLabelViolation(labelFirstIsL, labelFirstIsRal, labelHasL, labelHasRal, hasArabicIndicDigits, labelHasEuropeanDigit);
+                    }
+
                     hasHiraganaKatakanaOrHan = false;
                     hasKatakankaMiddleDot = false;
                     hasArabicIndicDigits = false;
                     hasExtendedArabicIndicDigits = false;
+                    labelStart = i;
+                    labelHasNonAscii = false;
+                    labelFirstSet = false;
+                    labelFirstIsL = false;
+                    labelFirstIsRal = false;
+                    labelHasL = false;
+                    labelHasRal = false;
+                    labelHasEuropeanDigit = false;
                     wasLastDot = true;
                     previousRune = rune;
                     continue;
@@ -1581,10 +1635,33 @@ public static partial class JsonSchemaEvaluation
                     return false;
                 }
 
+                // ZERO WIDTH NON-JOINER must be preceded by Virama, or occur in a joining
+                // context (RFC 5892 Appendix A.1). This applies at every occurrence.
+                if (rune.Value == 0x200C &&
+                    !IsVirama(previousRune.Value) &&
+                    !IsZwnjInJoiningContext(value, labelStart, i - bytesConsumed, i))
+                {
+                    return false;
+                }
+
                 // If we are Geresh or Gershayim, the previous rune must be Hebrew
                 if ((rune.Value == 0x05F3 || rune.Value == 0x05F4) && !IsHebrew(previousRune.Value))
                 {
                     return false;
+                }
+
+                if (rune.Value > 0x7F && !IsPermittedNonLetterOrDigit(rune.Value))
+                {
+                    System.Globalization.UnicodeCategory category = Rune.GetUnicodeCategory(rune);
+                    if (category != System.Globalization.UnicodeCategory.NonSpacingMark &&
+                        category != System.Globalization.UnicodeCategory.SpacingCombiningMark &&
+                        category != System.Globalization.UnicodeCategory.EnclosingMark)
+                    {
+                        // IDNA2008 disallows punctuation, symbols and other non-letter,
+                        // non-digit, non-mark code points in a U-label, except the contextual
+                        // code points handled above.
+                        return false;
+                    }
                 }
             }
 
@@ -1601,6 +1678,23 @@ public static partial class JsonSchemaEvaluation
         if (hasArabicIndicDigits && hasExtendedArabicIndicDigits)
         {
             // You are not permitted both Arabic Indic AND extended Arabic Indic
+            return false;
+        }
+
+        if (labelHasNonAscii && ExceedsALabelLength(value.Slice(labelStart)))
+        {
+            // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
+            return false;
+        }
+
+        if (labelFirstSet)
+        {
+            bidiViolation |= IsBidiLabelViolation(labelFirstIsL, labelFirstIsRal, labelHasL, labelHasRal, hasArabicIndicDigits, labelHasEuropeanDigit);
+        }
+
+        if (domainIsBidi && bidiViolation)
+        {
+            // RFC 5893 Bidi rule violation in a Bidi domain name
             return false;
         }
 
@@ -1870,7 +1964,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchIdnHostname(ReadOnlySpan<byte> value)
     {
-        if (value.Length > 254)
+        if (value.Length > 253)
         {
             return false;
         }
@@ -2087,7 +2181,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchUuid(ReadOnlySpan<byte> value)
     {
-        return Utf8Parser.TryParse(value, out Guid _, out _);
+        return Utf8Parser.TryParse(value, out Guid _, out int bytesConsumed) && bytesConsumed == value.Length;
     }
 
     private static bool IsArabicIndicDigit(int value) => (value >= 0x0660 && value <= 0x0669);
@@ -2117,6 +2211,213 @@ public static partial class JsonSchemaEvaluation
     }
 
     private static bool IsVirama(int value) => ViramaTable.IndexOf(value) >= 0;
+
+    // The RFC 5892 §2.6 PVALID exceptions and the contextual code points that are given their
+    // own rules in MatchDecodedHostname. These are permitted even though they are not letters,
+    // digits or marks.
+    private static bool IsPermittedNonLetterOrDigit(int value) =>
+        value == 0x00B7 || value == 0x0375 || value == 0x05F3 || value == 0x05F4 ||
+        value == 0x06FD || value == 0x06FE || value == 0x0F0B || value == 0x200C ||
+        value == 0x200D || value == 0x3007 || value == 0x30FB;
+
+    // Joining-type approximations for the ZWNJ contextual rule (RFC 5892 Appendix A.1),
+    // covering the Arabic script where the rule applies in practice.
+    private static bool IsDualJoiningArabic(int value) =>
+        value == 0x0620 || value == 0x0626 || value == 0x0628 ||
+        (value >= 0x062A && value <= 0x062E) ||
+        (value >= 0x0633 && value <= 0x063A) ||
+        (value >= 0x0641 && value <= 0x0647) ||
+        value == 0x0649 || value == 0x064A ||
+        value == 0x067E || value == 0x0686 || value == 0x06A9 || value == 0x06AF || value == 0x06CC;
+
+    private static bool IsRightJoiningArabic(int value) =>
+        (value >= 0x0622 && value <= 0x0625) || value == 0x0627 || value == 0x0629 ||
+        (value >= 0x062F && value <= 0x0632) || value == 0x0648 ||
+        (value >= 0x0688 && value <= 0x0699) || value == 0x06C0 ||
+        (value >= 0x06C3 && value <= 0x06CB) || value == 0x06CD || value == 0x06D2 || value == 0x06D3;
+
+    private static bool IsZwnjInJoiningContext(ReadOnlySpan<byte> value, int labelStart, int zwnjStart, int zwnjEnd)
+    {
+        // RFC 5892 Appendix A.1: ZWNJ is permitted between characters that join across it — a
+        // left- or dual-joining character before it and a right- or dual-joining character
+        // after it, in both directions skipping transparent (non-spacing mark) characters.
+        int index = zwnjStart;
+        bool satisfiedBefore = false;
+        while (index > labelStart)
+        {
+            int start = index - 1;
+            while (start > labelStart && (value[start] & 0xC0) == 0x80)
+            {
+                start--;
+            }
+
+            Rune.DecodeFromUtf8(value.Slice(start), out Rune rune, out _);
+
+            if (Rune.GetUnicodeCategory(rune) == System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                index = start;
+                continue;
+            }
+
+            satisfiedBefore = IsDualJoiningArabic(rune.Value);
+            break;
+        }
+
+        if (!satisfiedBefore)
+        {
+            return false;
+        }
+
+        int forward = zwnjEnd;
+        while (forward < value.Length)
+        {
+            Rune.DecodeFromUtf8(value.Slice(forward), out Rune rune, out int consumed);
+
+            if (Rune.GetUnicodeCategory(rune) == System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                forward += consumed;
+                continue;
+            }
+
+            return IsDualJoiningArabic(rune.Value) || IsRightJoiningArabic(rune.Value);
+        }
+
+        return false;
+    }
+
+    // RFC 5893 §2 Bidi rules, evaluated per label. The first character determines the label
+    // direction (rule 1: it must be L, R or AL); an LTR label may not contain RTL characters
+    // (rule 5); an RTL label may not contain LTR characters (rule 2) and may not mix European
+    // and Arabic-Indic digits (rule 4).
+    private static bool IsBidiLabelViolation(bool labelFirstIsL, bool labelFirstIsRal, bool labelHasL, bool labelHasRal, bool labelHasArabicIndicDigits, bool labelHasEuropeanDigit)
+    {
+        return (!labelFirstIsL && !labelFirstIsRal) ||
+            (labelFirstIsL && labelHasRal) ||
+            (labelFirstIsRal && labelHasL) ||
+            (labelHasArabicIndicDigits && labelHasEuropeanDigit);
+    }
+
+    private static bool ExceedsALabelLength(ReadOnlySpan<byte> label)
+    {
+        // Determines whether the A-label (Punycode) form of this U-label exceeds the RFC 5890
+        // 63-octet label limit, by running the RFC 3492 encoding algorithm counting output
+        // octets without producing the encoded form.
+        Span<int> codePoints = stackalloc int[63];
+        int count = 0;
+        int basicCount = 0;
+        int i = 0;
+
+        while (i < label.Length)
+        {
+            Rune.DecodeFromUtf8(label.Slice(i), out Rune rune, out int consumed);
+            i += consumed;
+
+            if (count == codePoints.Length)
+            {
+                // More than 63 code points cannot fit in 63 octets once encoded.
+                return true;
+            }
+
+            codePoints[count++] = rune.Value;
+
+            if (rune.Value < 0x80)
+            {
+                basicCount++;
+            }
+        }
+
+        // "xn--", the copied basic characters, and the delimiter if there are any.
+        int length = 4 + basicCount + (basicCount > 0 ? 1 : 0);
+
+        if (length > 63)
+        {
+            return true;
+        }
+
+        int handled = basicCount;
+        int delta = 0;
+        int n = 0x80;
+        int bias = 72;
+        bool firstTime = true;
+
+        while (handled < count)
+        {
+            int m = int.MaxValue;
+
+            for (int j = 0; j < count; j++)
+            {
+                if (codePoints[j] >= n && codePoints[j] < m)
+                {
+                    m = codePoints[j];
+                }
+            }
+
+            delta += (m - n) * (handled + 1);
+            n = m;
+
+            for (int j = 0; j < count; j++)
+            {
+                int c = codePoints[j];
+
+                if (c < n)
+                {
+                    delta++;
+                }
+                else if (c == n)
+                {
+                    int q = delta;
+
+                    for (int k = 36; ; k += 36)
+                    {
+                        int t = k <= bias ? 1 : (k >= bias + 26 ? 26 : k - bias);
+
+                        if (q < t)
+                        {
+                            break;
+                        }
+
+                        if (++length > 63)
+                        {
+                            return true;
+                        }
+
+                        q = (q - t) / (36 - t);
+                    }
+
+                    if (++length > 63)
+                    {
+                        return true;
+                    }
+
+                    bias = PunycodeAdapt(delta, handled + 1, firstTime);
+                    firstTime = false;
+                    delta = 0;
+                    handled++;
+                }
+            }
+
+            delta++;
+            n++;
+        }
+
+        return false;
+    }
+
+    private static int PunycodeAdapt(int delta, int numPoints, bool firstTime)
+    {
+        // RFC 3492 §6.1 with the standard base=36, tmin=1, tmax=26, damp=700, skew=38.
+        delta = firstTime ? delta / 700 : delta / 2;
+        delta += delta / numPoints;
+
+        int k = 0;
+        while (delta > 455)
+        {
+            delta /= 35;
+            k += 36;
+        }
+
+        return k + ((36 * delta) / (delta + 38));
+    }
 
     private static bool MatchEmailLocalPart(ReadOnlySpan<byte> segment)
     {
@@ -2217,6 +2518,38 @@ public static partial class JsonSchemaEvaluation
             {
                 return false;
             }
+        }
+
+        if (segment[0] == (byte)'\"')
+        {
+            if (segment.Length < 2 || segment[segment.Length - 1] != (byte)'\"')
+            {
+                return false;
+            }
+
+            int quoted = 1;
+            while (quoted < segment.Length - 1)
+            {
+                byte c = segment[quoted];
+
+                if (c > 0x7F)
+                {
+                    // RFC 6531 extends qtextSMTP with UTF8-non-ascii.
+                    Rune.DecodeFromUtf8(segment.Slice(quoted), out _, out int consumed);
+                    quoted += consumed;
+                    continue;
+                }
+
+                if (AllowedLocalCharactersInQuotedString.IndexOf(c) < 0)
+                {
+                    // Invalid character in quoted string local part
+                    return false;
+                }
+
+                quoted++;
+            }
+
+            return true;
         }
 
         int lastDot = -1;

@@ -117,6 +117,13 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     }
 
     [TestMethod]
+    public void TestNonAsciiDigitInThePrefixIsNotAllowed()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"١/foo\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestIsNotAValidJsonPointer()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0##\"");
@@ -148,6 +155,13 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     public void TestMultiDigitIntegerPrefix()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"120/foo/bar\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestMultiDigitPrefixWithAZeroFollowedByAnotherDigit()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"100\"");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 

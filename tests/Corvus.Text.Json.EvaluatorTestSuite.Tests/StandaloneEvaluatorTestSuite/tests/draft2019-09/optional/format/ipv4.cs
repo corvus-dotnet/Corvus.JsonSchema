@@ -96,6 +96,20 @@ public class SuiteValidationOfIpAddresses
     }
 
     [TestMethod]
+    public void TestA2PartAddressResolvingToARoutableIpInetAtonShorthand()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"127.1\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestA3PartAddressResolvingToARoutableIpInetAtonShorthand()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"127.0.1\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestAnIpAddressAsAnInteger()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0x7f000001\"");
@@ -113,6 +127,20 @@ public class SuiteValidationOfIpAddresses
     public void TestInvalidNonAscii২ABengali2()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1২7.0.0.1\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidFullwidthDigitsNonAscii()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"１９２.１６８.１.１\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidMathematicalBoldDigitsNonAscii()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"𝟏𝟗𝟐.𝟏𝟔𝟖.𝟏.𝟏\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -239,6 +267,13 @@ public class SuiteValidationOfIpAddresses
     public void TestTabCharacterIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1\\t\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAdditionalContentAfterAnEmbeddedNulByte()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1\\u0000.evil.com\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
