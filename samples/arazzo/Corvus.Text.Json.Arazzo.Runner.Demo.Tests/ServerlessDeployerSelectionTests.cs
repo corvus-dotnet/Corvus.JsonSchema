@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
 using Corvus.Text.Json.Arazzo.ServerlessRunner.Demo;
@@ -73,12 +74,44 @@ public sealed class ServerlessDeployerSelectionTests
     }
 
     [TestMethod]
+    public void The_micro_guest_platform_builds_the_micro_guest_deployer()
+    {
+        IServerlessDeployer deployer = ServerlessDeployerSelection.Create(
+            Config(
+                ("Runner:Serverless:Platform", "micro-guest"),
+                ("Runner:MicroGuest:SidecarUrl", "http://127.0.0.1:9411"),
+                ("Runner:MicroGuest:CheckpointSurfaceUrl", "http://172.20.0.10:8199/checkpoints")),
+            new Dictionary<string, string>());
+
+        deployer.ShouldBeOfType<MicroGuestDeployer>();
+    }
+
+    [TestMethod]
+    public void The_micro_guest_platform_names_each_missing_required_key()
+    {
+        (string Key, string Value)[] all =
+        [
+            ("Runner:MicroGuest:SidecarUrl", "http://127.0.0.1:9411"),
+            ("Runner:MicroGuest:CheckpointSurfaceUrl", "http://172.20.0.10:8199/checkpoints"),
+        ];
+        foreach ((string missing, _) in all)
+        {
+            (string, string)[] supplied = [("Runner:Serverless:Platform", "micro-guest"), .. all.Where(k => k.Key != missing)];
+            InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
+                ServerlessDeployerSelection.Create(Config(supplied), new Dictionary<string, string>()));
+            ex.Message.ShouldContain(missing);
+            ex.Message.ShouldContain("micro-guest");
+        }
+    }
+
+    [TestMethod]
     public void An_unknown_platform_is_refused_with_the_known_choices()
     {
         InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
             ServerlessDeployerSelection.Create(Config(("Runner:Serverless:Platform", "gcp")), new Dictionary<string, string>()));
         ex.Message.ShouldContain("gcp");
         ex.Message.ShouldContain("azure-flex");
+        ex.Message.ShouldContain("micro-guest");
     }
 
     private static IConfiguration Config(params (string Key, string Value)[] values)

@@ -6,6 +6,7 @@ using Amazon.Lambda;
 using Amazon.Runtime;
 using Azure.Identity;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
 
@@ -18,10 +19,12 @@ namespace Corvus.Text.Json.Arazzo.ServerlessRunner.Demo;
 /// </summary>
 /// <remarks>
 /// <c>Runner:Serverless:Platform</c> selects the target: <c>lambda</c> (the default; LocalStack in the demo AppHost,
-/// real AWS in production — only the endpoint and credentials differ, ADR 0060) or <c>azure-flex</c> (a real Flex
+/// real AWS in production — only the endpoint and credentials differ, ADR 0060), <c>azure-flex</c> (a real Flex
 /// Consumption Function App deployed by One Deploy with an ARM AAD bearer token, ADR 0061 amendment — there is no
-/// local Azure management-plane emulator, so this platform always targets real Azure). Each platform reads only its
-/// own configuration keys, so a Lambda host needs no Azure settings and vice versa.
+/// local Azure management-plane emulator, so this platform always targets real Azure), or <c>micro-guest</c> (the
+/// runner's own machine, ADR 0063: the warm sidecar snapshots a Hyperlight micro-VM per (environment, version) and
+/// restores it per advance — no cloud is involved and the runner needs a hypervisor). Each platform reads only its
+/// own configuration keys, so a Lambda host needs no Azure or sidecar settings and vice versa.
 /// </remarks>
 public static class ServerlessDeployerSelection
 {
@@ -38,8 +41,9 @@ public static class ServerlessDeployerSelection
         {
             "lambda" => CreateLambda(configuration, functionSourceEnv),
             "azure-flex" => CreateAzureFlex(configuration, functionSourceEnv),
+            "micro-guest" => CreateMicroGuest(configuration, functionSourceEnv),
             _ => throw new InvalidOperationException(
-                $"Runner:Serverless:Platform '{platform}' is not a known serverless platform — use 'lambda' (default) or 'azure-flex'."),
+                $"Runner:Serverless:Platform '{platform}' is not a known serverless platform — use 'lambda' (default), 'azure-flex', or 'micro-guest'."),
         };
     }
 
@@ -81,15 +85,30 @@ public static class ServerlessDeployerSelection
             new DefaultAzureCredential(),
             new AzureFunctionsFlexDeployerOptions
             {
-                SubscriptionId = Required(configuration, "Runner:AzureFlex:SubscriptionId"),
-                ResourceGroupName = Required(configuration, "Runner:AzureFlex:ResourceGroup"),
-                AppNamePrefix = Required(configuration, "Runner:AzureFlex:AppNamePrefix"),
+                SubscriptionId = Required(configuration, "Runner:AzureFlex:SubscriptionId", "azure-flex"),
+                ResourceGroupName = Required(configuration, "Runner:AzureFlex:ResourceGroup", "azure-flex"),
+                AppNamePrefix = Required(configuration, "Runner:AzureFlex:AppNamePrefix", "azure-flex"),
                 FunctionAppSettings = functionSourceEnv,
             });
     }
 
-    private static string Required(IConfiguration configuration, string key)
+    // The micro-guest platform deploys to the runner's OWN machine (ADR 0063): the deployer stages the initrd and
+    // evolves the (environment, version) sandbox over the warm sidecar's local admin surface, and the recorded function
+    // URL is the sidecar's local invoke endpoint. The checkpoint surface must be the runner's routable address — the
+    // guest's host-proxied network denies loopback by design — and no cloud identity is involved.
+    private static MicroGuestDeployer CreateMicroGuest(IConfiguration configuration, IReadOnlyDictionary<string, string> functionSourceEnv)
+    {
+        return new MicroGuestDeployer(
+            new MicroGuestDeployerOptions
+            {
+                SidecarBaseUrl = new Uri(Required(configuration, "Runner:MicroGuest:SidecarUrl", "micro-guest")),
+                CheckpointSurfaceUrl = new Uri(Required(configuration, "Runner:MicroGuest:CheckpointSurfaceUrl", "micro-guest")),
+                GuestEnvironment = functionSourceEnv,
+            });
+    }
+
+    private static string Required(IConfiguration configuration, string key, string platform)
         => configuration[key] is { Length: > 0 } value
             ? value
-            : throw new InvalidOperationException($"{key} is required for the azure-flex serverless platform.");
+            : throw new InvalidOperationException($"{key} is required for the {platform} serverless platform.");
 }
