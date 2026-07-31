@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4a1afb863c17ec21d4eb722cb06c8ecfca58f631/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L209">Utf8JsonReader.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/dbde8d77d69da3c167ef7e473ad04cb9c460d9f9/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L209">Utf8JsonReader.cs</a></p>
 <h2 id="currentstate">CurrentState()</h2>
 <p>Returns the current snapshot of the <a href="/Corvus.JsonSchema/pr-preview/pr-903/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a> state which must be captured by the caller and passed back in to the <a href="/Corvus.JsonSchema/pr-preview/pr-903/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a> ctor with more data. Unlike the <a href="/Corvus.JsonSchema/pr-preview/pr-903/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a>, which is a ref struct, the state can survive across async/await boundaries and hence this type is required to provide support for reading in more data asynchronously before continuing with a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-903/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a>.</p>
 <pre><code class="language-csharp">public JsonReaderState CurrentState { get; }
