@@ -174,6 +174,7 @@ public static class CliApp
                 builds.SetDescription("Observe a version's native serverless builds per (environment, runtime target) — ADR 0055 (catalog:read).");
                 builds.AddCommand<BuildsListCommand>("list").WithDescription("List a version's native build jobs (baseWorkflowId versionNumber; --status Queued|Building|Ready|Failed; --output json).");
                 builds.AddCommand<BuildsGetCommand>("get").WithDescription("Show one build job by target (baseWorkflowId versionNumber environment runtimeIdentifier).");
+                builds.AddCommand<BuildsEnqueueCommand>("enqueue").WithDescription("Queue a build (or rebuild) for a target (baseWorkflowId versionNumber environment runtimeIdentifier; --label); idempotent per target (catalog:write).");
             });
 
             c.AddBranch<CommandSettings>("deployments", deployments =>

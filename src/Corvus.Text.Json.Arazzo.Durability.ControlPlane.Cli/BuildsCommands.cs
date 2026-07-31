@@ -32,6 +32,30 @@ internal sealed class BuildsVersionSettings : RunsSettings
     public string Output { get; init; } = "table";
 }
 
+/// <summary>Settings for enqueuing a native build of a workflow version for one (environment, runtime target).</summary>
+internal sealed class BuildsEnqueueSettings : RunsSettings
+{
+    [CommandArgument(0, "<baseWorkflowId>")]
+    [Description("The base workflow id.")]
+    public string BaseWorkflowId { get; init; } = string.Empty;
+
+    [CommandArgument(1, "<versionNumber>")]
+    [Description("The 1-based version number.")]
+    public int VersionNumber { get; init; }
+
+    [CommandArgument(2, "<environment>")]
+    [Description("The deployment environment the binary targets.")]
+    public string Environment { get; init; } = string.Empty;
+
+    [CommandArgument(3, "<runtimeIdentifier>")]
+    [Description("The runtime identifier (RID) the native binary targets, e.g. linux-x64.")]
+    public string RuntimeIdentifier { get; init; } = string.Empty;
+
+    [CommandOption("--label <LABEL>")]
+    [Description("An optional human-friendly label for the build.")]
+    public string? Label { get; init; }
+}
+
 /// <summary>Settings addressing one native build job by its (environment, runtime target).</summary>
 internal sealed class BuildsTargetSettings : RunsSettings
 {
@@ -115,6 +139,28 @@ internal sealed class BuildsListCommand : AsyncCommand<BuildsVersionSettings>
             while (pageToken is not null);
 
             return OperatorCommandHelpers.Finish(asJson, jsonItems, table, "nativeBuilds");
+        }
+    }
+}
+
+internal sealed class BuildsEnqueueCommand : AsyncCommand<BuildsEnqueueSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, BuildsEnqueueSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiNativeBuildsClient client) = await settings.CreateNativeBuildsClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            // Idempotent per target: re-enqueuing the same (environment, RID) resets that job to Queued (a rebuild).
+            await using EnqueueNativeBuildResponse response = await client.EnqueueNativeBuildAsync(
+                settings.BaseWorkflowId,
+                (Models.VersionNumber.Source)settings.VersionNumber,
+                Models.NativeBuildEnqueue.Build(
+                    environment: settings.Environment,
+                    runtimeIdentifier: settings.RuntimeIdentifier,
+                    buildLabel: settings.Label is { } label ? (Models.JsonString.Source)label : default),
+                cancellationToken);
+            return response.MatchResult(queued => Output.Print(queued.ToString()), Output.Problem, Output.Unexpected);
         }
     }
 }

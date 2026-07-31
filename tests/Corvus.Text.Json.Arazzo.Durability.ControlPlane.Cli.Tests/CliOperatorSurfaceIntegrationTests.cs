@@ -69,6 +69,29 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Builds_enqueue_queues_a_build_the_cli_can_poll()
+    {
+        await using OperatorHost host = await StartOperatorHostAsync();
+        await host.SeedVersionAsync("checkout");
+
+        // Enqueue through the CLI → the queued job comes back (202).
+        (int enqueueExit, string queuedJson, _) = await RunAsync(host, "builds", "enqueue", "checkout", "1", "production", "linux-x64", "--label", "nightly");
+        enqueueExit.ShouldBe(0);
+        queuedJson.ShouldContain("\"status\":\"Queued\"");
+        queuedJson.ShouldContain("\"buildLabel\":\"nightly\"");
+
+        // The enqueued job is visible to the read path.
+        (int getExit, string getJson, _) = await RunAsync(host, "builds", "get", "checkout", "1", "production", "linux-x64");
+        getExit.ShouldBe(0);
+        getJson.ShouldContain("\"status\":\"Queued\"");
+
+        // An unknown version is a problem (404), not a success.
+        (int missExit, _, string missErr) = await RunAsync(host, "builds", "enqueue", "checkout", "99", "production", "linux-x64");
+        missExit.ShouldNotBe(0);
+        missErr.ShouldContain("version-not-found");
+    }
+
+    [TestMethod]
     public async Task Deployments_list_and_get_report_deploy_state_and_function_url()
     {
         await using OperatorHost host = await StartOperatorHostAsync();
