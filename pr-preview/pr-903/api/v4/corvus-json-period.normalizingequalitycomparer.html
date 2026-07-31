@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/dbde8d77d69da3c167ef7e473ad04cb9c460d9f9/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Period.cs#L119">Period.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/e6a7354a3c9773bc119f1a0c0639c6175528ef58/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Period.cs#L119">Period.cs</a></p>
 <h2 id="normalizingequalitycomparer">NormalizingEqualityComparer()</h2>
 <p>Gets an equality comparer which compares periods by first normalizing them - so 24 hours is deemed equal to 1 day, and so on. Note that as per the <a href="/Corvus.JsonSchema/pr-preview/pr-903/api/v4/corvus-json-period.normalize.html"><code>Normalize</code></a> method, years and months are unchanged by normalization - so 12 months does not equal 1 year.</p>
 <pre><code class="language-csharp">public static IEqualityComparer&lt;Period&gt; NormalizingEqualityComparer { get; }
