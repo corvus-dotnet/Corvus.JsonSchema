@@ -1567,6 +1567,14 @@ public static partial class JsonSchemaEvaluation
                     continue;
                 }
 
+                if (rune.Value < 0x80)
+                {
+                    // ASCII other than letters, digits, '.' and '-' (all handled above) is not valid
+                    // in a hostname label; without this, symbols like '[', ':' or '_' would fall
+                    // through the Unicode contextual rules below and be accepted.
+                    return false;
+                }
+
                 // ZERO WIDTH JOINER not preceded by Virama
                 if (rune.Value == 0x200D && !IsVirama(previousRune.Value))
                 {

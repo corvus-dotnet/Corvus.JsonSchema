@@ -99,6 +99,8 @@ public class JsonSchemaMatchingStringTests
     [DataRow("1host", true)]
     [DataRow("hostnam3", true)]
     [DataRow("실례.테스트", false)]
+    [DataRow("xn--4gbwdl.foo_bar", false)] // symbols in labels after the punycode label must still be rejected
+    [DataRow("xn--4gbwdl.foo:bar", false)]
     public void MatchHostname_ValidatesHostname(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -191,6 +193,11 @@ public class JsonSchemaMatchingStringTests
     [DataRow("h0stn4me", true)]
     [DataRow("1host", true)]
     [DataRow("hostnam3", true)]
+    [DataRow("[]", false)]
+    [DataRow("[IPv6:2001:db8::1]", false)] // address-literals are an email domain construct, not a hostname
+    [DataRow("exam:ple", false)]
+    [DataRow("under_score", false)]
+    [DataRow("exam!ple", false)]
     public void MatchIdnHostname_ValidatesIdnHostname(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
