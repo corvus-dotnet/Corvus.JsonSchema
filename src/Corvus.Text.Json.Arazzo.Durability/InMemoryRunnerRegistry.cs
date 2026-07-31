@@ -59,6 +59,20 @@ public sealed class InMemoryRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
+    public ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        lock (this.gate)
+        {
+            return this.entries.TryGetValue(runnerId, out byte[]? bytes)
+                ? new ValueTask<RunnerRegistration?>(RunnerRegistration.FromJson(bytes))
+                : new ValueTask<RunnerRegistration?>((RunnerRegistration?)null);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

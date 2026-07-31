@@ -198,6 +198,23 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand command = connection.CreateCommand();
+
+        // A primary-key point-read on runner_id — never a full SELECT + parse of every registration. The UTF-8 doc is
+        // read back as VARBINARY (CAST) so the deserialize stays bytes-native, exactly as ListAsync reads it.
+        command.CommandText = "SELECT CAST(doc AS VARBINARY(MAX)) FROM runner_registrations WHERE runner_id = @runnerId;";
+        command.Parameters.AddWithValue("@runnerId", runnerId);
+        await using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? RunnerRegistration.FromJson((byte[])reader[0])
+            : null;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);

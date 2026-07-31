@@ -189,6 +189,28 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        var partition = new PartitionKey(runnerId);
+
+        // A keyed, single-partition point-read on the runner id (== the document id and partition key that
+        // RegisterAsync/HeartbeatAsync key on) — never a cross-partition query or a scan of every registration. The
+        // stream API returns the whole envelope document; a NotFound means no runner with that id is registered, so map
+        // it to null rather than letting it throw. Otherwise deserialize the nested canonical registration exactly as
+        // ListAsync does: the raw "doc" value handed to RunnerRegistration.FromJson.
+        using ResponseMessage response = await this.runners.ReadItemStreamAsync(runnerId, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+        return RunnerRegistration.FromJson(CosmosJson.GetRawValue(payload.Memory, "doc"u8));
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         var definition = new QueryDefinition("SELECT * FROM c");

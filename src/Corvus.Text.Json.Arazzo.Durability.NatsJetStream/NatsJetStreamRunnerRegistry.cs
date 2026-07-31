@@ -179,6 +179,23 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+
+        // Keyed point-read: the runner lives under a single KV key (Base64Url(runnerId)), so a direct get on that
+        // key answers without listing/scanning the bucket. A missing key surfaces as null from TryGetAsync.
+        string key = Key(runnerId);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } value })
+        {
+            return null;
+        }
+
+        return RunnerRegistration.FromJson(value);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         var result = new List<RunnerRegistration>();

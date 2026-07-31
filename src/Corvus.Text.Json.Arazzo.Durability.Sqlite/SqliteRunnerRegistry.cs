@@ -203,6 +203,27 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand command = this.connection.CreateCommand();
+            command.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
+            command.Parameters.AddWithValue("@runnerId", runnerId);
+            using SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+                ? RunnerRegistration.FromJson(reader.GetFieldValue<byte[]>(0))
+                : null;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);

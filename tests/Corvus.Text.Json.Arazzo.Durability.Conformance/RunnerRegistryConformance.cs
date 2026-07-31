@@ -97,6 +97,27 @@ public abstract class RunnerRegistryConformance
     }
 
     [TestMethod]
+    public async Task Get_returns_the_runner_by_id()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-1", T0, T0, maxConcurrency: 8), default);
+        await registry.RegisterAsync(Reg("runner-2", T0, T0, maxConcurrency: 4), default);
+
+        RunnerRegistration? got = await registry.GetAsync("runner-1", default);
+        got.ShouldNotBeNull();
+        ((string)got.Value.RunnerId).ShouldBe("runner-1");
+        ((long)got.Value.MaxConcurrency).ShouldBe(8);
+    }
+
+    [TestMethod]
+    public async Task Get_of_unknown_runner_returns_null()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-1", T0, T0), default);
+        (await registry.GetAsync("ghost", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task Heartbeat_of_known_runner_advances_last_seen_and_returns_true()
     {
         IRunnerRegistry registry = await this.NewRegistryAsync();

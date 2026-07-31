@@ -189,6 +189,22 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand command = connection.CreateCommand();
+
+        // A primary-key point-read on runner_id — never a full SELECT + parse of every registration.
+        command.CommandText = "SELECT doc FROM runner_registrations WHERE runner_id = @runnerId;";
+        command.Parameters.AddWithValue("@runnerId", runnerId);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? RunnerRegistration.FromJson((byte[])reader[0])
+            : null;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);

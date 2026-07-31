@@ -201,6 +201,25 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+
+        // Keyed point-read: the runner is a single entity keyed by the fixed PartitionKey and the runner id as its
+        // RowKey, so GetEntityIfExistsAsync fetches exactly that row — never enumerating the partition. An absent
+        // entity (HasValue == false) maps to null; when present, the stored Doc deserializes exactly as ListAsync does.
+        NullableResponse<TableEntity> existing = await this.runners
+            .GetEntityIfExistsAsync<TableEntity>(PartitionKey, runnerId, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        if (!existing.HasValue)
+        {
+            return null;
+        }
+
+        return RunnerRegistration.FromJson(existing.Value!.GetBinary("Doc") ?? []);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey}");

@@ -158,6 +158,22 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // A keyed point-read of this runner's per-runner document key — never the id index — so a single lookup is O(1).
+        RedisValue value = await this.database.StringGetAsync(RunnerKey(runnerId)).ConfigureAwait(false);
+        if (value.IsNullOrEmpty)
+        {
+            return null;
+        }
+
+        return RunnerRegistration.FromJson((byte[])value!);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

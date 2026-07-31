@@ -37,6 +37,35 @@ public interface IRunnerRegistry
     ValueTask<bool> HeartbeatAsync(string runnerId, DateTimeOffset at, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Reads a single registered runner by its id — the keyed point-read behind the ADR 0058 isolation-consistency
+    /// checks (a runner's advertised isolation must not be resolved by listing the whole registry) and the operator surface.
+    /// </summary>
+    /// <param name="runnerId">The id of the runner to read.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The runner's registration, or <see langword="null"/> if no runner with that id is registered.</returns>
+    /// <remarks>
+    /// The default scans <see cref="ListAsync(CancellationToken)"/> — correct, but O(registered runners); it exists so a
+    /// non-store implementation (a test double) need not override it. Every persistent backend overrides it with a native
+    /// point-read on the <c>runnerId</c> key — the same key <see cref="HeartbeatAsync"/> updates — so resolving one runner
+    /// never reads (nor materialises) the whole registry.
+    /// </remarks>
+    async ValueTask<RunnerRegistration?> GetAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(runnerId);
+
+        IReadOnlyList<RunnerRegistration> runners = await this.ListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (RunnerRegistration runner in runners)
+        {
+            if (((JsonElement)runner.RunnerId).EqualsString(runnerId))
+            {
+                return runner;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Lists the currently-registered runners. The full read used by hosting/scan paths and by the default keyset pager;
     /// the paged <see cref="ListAsync(int, JsonString, CancellationToken)"/> is the API list seam.
     /// </summary>
