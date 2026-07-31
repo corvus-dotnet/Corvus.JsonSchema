@@ -65,7 +65,7 @@ sequenceDiagram
   participant F as Cloud function
   participant L as Checkpoint listener (runner)
   participant S as Source API
-  Note over R,F: warm path; a cold start adds init before this
+  Note over R,F: warm path (a cold start adds init before this)
   R->>F: POST invocation (internet)
   F->>L: GET run state (internet)
   F->>S: source call(s)
