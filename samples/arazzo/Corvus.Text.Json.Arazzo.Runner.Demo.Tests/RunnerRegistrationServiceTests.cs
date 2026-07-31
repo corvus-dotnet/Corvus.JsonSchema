@@ -31,6 +31,7 @@ public sealed class RunnerRegistrationServiceTests
             catalog: null!, // registration is exercised elsewhere; its failure path is already non-fatal by design
             new RunnerOptions("runner-under-test", "development"),
             NullLogger<RunnerRegistrationService>.Instance,
+            providedIsolation: RunIsolationModel.InProcess,
             registrar: null,
             heartbeatInterval: TimeSpan.FromMilliseconds(10));
 
@@ -48,6 +49,34 @@ public sealed class RunnerRegistrationServiceTests
         executeTask.IsFaulted.ShouldBeFalse("a transient timeout must not fault (and so stop) the runner host");
 
         await service.StopAsync(CancellationToken.None);
+    }
+
+    [TestMethod]
+    public async Task A_runner_advertising_more_isolation_than_its_backend_provides_refuses_to_start()
+    {
+        // A deploy misconfiguration: the runner advertises Isolated to the control plane but its wired execution backend
+        // provides only InProcess. The advertise-vs-wire fence (ADR 0058) is fatal — the runner refuses to start rather than
+        // register a lie that would pass every control-plane check yet run isolated-required work in-process.
+        using var service = new RunnerRegistrationService(
+            new FlakyRegistry(failures: 0),
+            environments: null!,
+            runnerAuthorizations: null!,
+            catalog: null!,
+            new RunnerOptions("mis-wired-runner", "development", IsolationModel: "Isolated"),
+            NullLogger<RunnerRegistrationService>.Instance,
+            providedIsolation: RunIsolationModel.InProcess,
+            registrar: null,
+            heartbeatInterval: TimeSpan.FromMilliseconds(10));
+
+        // The fence faults ExecuteAsync before it registers; the fault surfaces on the ExecuteTask (a BackgroundService
+        // captures a pre-await throw into its returned task rather than throwing out of StartAsync).
+        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        {
+            await service.StartAsync(CancellationToken.None);
+            await service.ExecuteTask!;
+        });
+        ex.Message.ShouldContain("advertises Isolated");
+        ex.Message.ShouldContain("provides only InProcess");
     }
 
     private sealed class FlakyRegistry(int failures) : IRunnerRegistry
@@ -71,7 +100,7 @@ public sealed class RunnerRegistrationServiceTests
 
         public ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
 
-        public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

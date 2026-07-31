@@ -163,7 +163,8 @@ if (builder.Configuration["Runner:ExecutorTrust:PublicKeyFile"] is { Length: > 0
 
 // Catalogued-run execution: claim a Pending access-approval run and re-enter its baked executor through the real
 // HostedWorkflowResumer, running it against the binder above. The dispatch/resume loops consume it as their resumer.
-WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder).AsResumer();
+var catalogResumerBackend = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder);
+WorkflowResumer catalogResumer = catalogResumerBackend.AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
 // The decision-consumer transport (§8): a dedicated NATS JetStream consumer on access.decision, DeliverPolicy.All so a
@@ -207,6 +208,7 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<SecuredWorkflowCatalog>(),
     sp.GetRequiredService<RunnerOptions>(),
     sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
+    catalogResumerBackend.IsolationModel,
     runnerRegistrar));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 

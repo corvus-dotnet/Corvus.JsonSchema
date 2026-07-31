@@ -229,7 +229,8 @@ if (options.ServesSchedules
 // wiring it here is what makes the separate runner genuinely EXECUTE catalogued runs (it previously only leased them
 // and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer, and the
 // scheduler (when wired) rides the same loops — a schedule run is dispatched, resumed on its due timer, and re-fired.
-WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow).AsResumer();
+var catalogResumerBackend = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow);
+WorkflowResumer catalogResumer = catalogResumerBackend.AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
 // The consumer side of the async KYC verdict exchange (design §8): subscribe to kyc.verdict and, per verdict, resume
@@ -295,6 +296,7 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<SecuredWorkflowCatalog>(),
     sp.GetRequiredService<RunnerOptions>(),
     sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
+    catalogResumerBackend.IsolationModel,
     runnerRegistrar));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 

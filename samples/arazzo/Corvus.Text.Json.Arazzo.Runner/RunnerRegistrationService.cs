@@ -27,14 +27,34 @@ public sealed class RunnerRegistrationService(
     SecuredWorkflowCatalog catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger,
+    RunIsolationModel providedIsolation,
     ControlPlaneRunnerRegistrar? registrar = null,
     TimeSpan? heartbeatInterval = null) : BackgroundService
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
 
+    // The advertised isolation the runner declares to the control plane: only the explicit "Isolated" advertises Isolated;
+    // absent (or anything else) is the in-process default — mirroring how the registration and the start gate interpret it.
+    private static RunIsolationModel ParseIsolationModel(string? isolationModel)
+        => string.Equals(isolationModel, "Isolated", StringComparison.Ordinal) ? RunIsolationModel.Isolated : RunIsolationModel.InProcess;
+
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // ADR 0058 advertise-vs-wire fence, fatal (before the non-fatal registration loop below). The runner advertises
+        // RunnerOptions.IsolationModel to the control plane, but the isolation it ACTUALLY provides is its wired resumer's
+        // (providedIsolation, from the IRunExecutionBackend). A runner that advertises more than it provides — Isolated while
+        // wired to an in-process resumer — would pass every control-plane check yet run isolated-required work in-process.
+        // That is a deploy misconfiguration, not a transient fault, so the runner refuses to start rather than register a lie.
+        // Advertising at or below what it provides is safe (the runner is simply not matched to environments it could not
+        // serve), so only over-advertising is fatal.
+        RunIsolationModel advertised = ParseIsolationModel(options.IsolationModel);
+        if (advertised > providedIsolation)
+        {
+            throw new InvalidOperationException(
+                $"Runner '{options.RunnerId}' advertises {advertised} isolation but its execution backend provides only {providedIsolation} (ADR 0058): a runner must not advertise more isolation than it provides. Set RunnerOptions.IsolationModel to at most {providedIsolation}, or wire an execution backend that provides {advertised}.");
+        }
+
         DateTimeOffset startedAt = DateTimeOffset.UtcNow;
 
         try

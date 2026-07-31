@@ -194,6 +194,7 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<SecuredWorkflowCatalog>(),
     sp.GetRequiredService<RunnerOptions>(),
     sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
+    serverlessBackend.IsolationModel,
     runnerRegistrar));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
