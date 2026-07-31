@@ -228,6 +228,16 @@ internal static class ThrowHelper
     public static void ThrowInvalidAesKeyLength()
         => throw new ArgumentException(SR.InvalidAesKeyLength, "key");
 
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSealedCheckpointSealOnly()
+        => throw new InvalidOperationException(SR.SealedCheckpointSealOnly);
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSealedCheckpointKeyIdMismatch(string sealedTo, string held)
+        => throw new CryptographicException(SR.Format(SR.SealedCheckpointKeyIdMismatch, sealedTo, held));
+
     // ── Transport / dispatch / worker binding ───────────────────────────────────────────────────────────────────────
     public static WorkflowTransportBindingException GetWorkflowRequiresApiSourceException(string workflowId, string source)
         => new(SR.Format(SR.WorkflowRequiresApiSource, workflowId, source));

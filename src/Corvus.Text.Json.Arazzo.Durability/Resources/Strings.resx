@@ -182,6 +182,12 @@
   <data name="InvalidAesKeyLength" xml:space="preserve">
     <value>The AES key must be 16, 24, or 32 bytes (AES-128/192/256).</value>
   </data>
+  <data name="SealedCheckpointSealOnly" xml:space="preserve">
+    <value>This protector holds only the environment's seal key; opening a sealed checkpoint requires the environment's open key, which stays in the tenant's own custody (ADR 0065).</value>
+  </data>
+  <data name="SealedCheckpointKeyIdMismatch" xml:space="preserve">
+    <value>The sealed checkpoint was sealed to key '{0}', but this protector holds key '{1}'.</value>
+  </data>
 
   <!-- Transport / dispatch / worker binding -->
   <data name="WorkflowRequiresApiSource" xml:space="preserve">
