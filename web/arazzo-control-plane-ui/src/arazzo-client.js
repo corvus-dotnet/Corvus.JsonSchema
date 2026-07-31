@@ -651,6 +651,123 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listNativeBuilds` — one page of this version's native build jobs (ADR 0055): the asynchronous Native-AOT builds
+   * of its serverless binary per (environment, runtime target), oldest first, optionally filtered by build status.
+   * Visible to a caller who can read the version (`404` otherwise).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ status?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ nativeBuilds: object[], nextPageToken: string | null }>}
+   */
+  async listNativeBuilds(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/nativeBuilds${qs(search)}`, { signal: query.signal });
+    return { nativeBuilds: result.nativeBuilds ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countNativeBuilds` — the bounded count of this version's native build jobs (ADR 0055), optionally filtered by
+   * status, for a footer or a failed-builds badge; no rows are fetched. `capped: true` once the true total meets or
+   * exceeds the server cap.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ status?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countNativeBuilds(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/nativeBuilds/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
+   * `getNativeBuild` — the native build job for this version's (environment, runtime target) (ADR 0055): its
+   * lifecycle status (`Queued`/`Building`/`Ready`/`Failed`) and, for a failure, the reason — what a client polls
+   * after enqueuing a build.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {string} environment
+   * @param {string} runtimeIdentifier
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The build job view. Throws {@link ProblemError} `404`.
+   */
+  getNativeBuild(baseWorkflowId, versionNumber, environment, runtimeIdentifier, opts = {}) {
+    if (!environment || !runtimeIdentifier) throw new TypeError('getNativeBuild requires an environment and a runtimeIdentifier.');
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/nativeBuilds/${encodeURIComponent(environment)}/${encodeURIComponent(runtimeIdentifier)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `enqueueNativeBuild` — queue an asynchronous Native-AOT build of this version's serverless binary for one runtime
+   * target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment,
+   * runtimeIdentifier) resets that job to `Queued` (a rebuild). Returns the queued job (`202`); poll it with
+   * {@link getNativeBuild}. Requires catalog write.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ environment: string, runtimeIdentifier: string, buildLabel?: string }} request
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The queued build job view. Throws {@link ProblemError} `403`/`404`.
+   */
+  enqueueNativeBuild(baseWorkflowId, versionNumber, request, opts = {}) {
+    if (!request?.environment || !request?.runtimeIdentifier) throw new TypeError('enqueueNativeBuild requires an environment and a runtimeIdentifier.');
+    return this._request('POST', `${this._versionPath(baseWorkflowId, versionNumber)}/nativeBuilds`, { body: request, signal: opts.signal });
+  }
+
+  /**
+   * `listDeployments` — one page of this version's serverless deployments (ADR 0055): the per-(environment, runtime
+   * target) deployments of its signed native binary to a function platform, oldest first, optionally filtered by
+   * deployment status. Read-only: the deploy runs on the runner (ADR 0059); this reports the state the control plane
+   * records. Visible to a caller who can read the version (`404` otherwise).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ status?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ deployments: object[], nextPageToken: string | null }>}
+   */
+  async listDeployments(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/deployments${qs(search)}`, { signal: query.signal });
+    return { deployments: result.deployments ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countDeployments` — the bounded count of this version's serverless deployments (ADR 0055), optionally filtered
+   * by status, for a footer or a failed-deployments badge; no rows are fetched. `capped: true` once the true total
+   * meets or exceeds the server cap.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ status?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countDeployments(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/deployments/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
+   * `getDeployment` — the serverless deployment for this version's (environment, runtime target) (ADR 0055): its
+   * lifecycle status (`Queued`/`Deploying`/`Deployed`/`Failed`), the resulting function invoke URL once deployed,
+   * and, for a failure, the reason.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {string} environment
+   * @param {string} runtimeIdentifier
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The deployment view. Throws {@link ProblemError} `404`.
+   */
+  getDeployment(baseWorkflowId, versionNumber, environment, runtimeIdentifier, opts = {}) {
+    if (!environment || !runtimeIdentifier) throw new TypeError('getDeployment requires an environment and a runtimeIdentifier.');
+    return this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/deployments/${encodeURIComponent(environment)}/${encodeURIComponent(runtimeIdentifier)}`, { signal: opts.signal });
+  }
+
+  /**
    * `getCatalogPackage` — the whole package archive (an opaque binary ZIP).
    * @param {string} baseWorkflowId
    * @param {number} versionNumber

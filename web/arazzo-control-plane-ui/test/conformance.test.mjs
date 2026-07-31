@@ -380,6 +380,74 @@ test('version availability: each client method emits the contract method + templ
   assert.equal(calls[2].path, sub('deleteVersionAvailability'));
 });
 
+test('the contract declares the native-build operations (ADR 0055)', () => {
+  for (const id of ['listNativeBuilds', 'countNativeBuilds', 'getNativeBuild', 'enqueueNativeBuild']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('native builds: each client method emits the contract method + templated path + declared query params', async () => {
+  const { client, calls } = capturing();
+  const sub = (op) => OPS[op].path
+    .replace('{baseWorkflowId}', 'flow').replace('{versionNumber}', '2')
+    .replace('{environment}', 'production').replace('{runtimeIdentifier}', 'linux-x64');
+
+  await client.listNativeBuilds('flow', 2, { status: 'Failed', limit: 10, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listNativeBuilds.method);
+  assert.equal(calls[0].path, sub('listNativeBuilds'));
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listNativeBuilds.queryParams.has(key), `native-build query param '${key}' is declared in the contract`);
+  }
+
+  await client.countNativeBuilds('flow', 2, { status: 'Failed' });
+  assert.equal(calls[1].method, OPS.countNativeBuilds.method);
+  assert.equal(calls[1].path, sub('countNativeBuilds'));
+  for (const key of calls[1].query.keys()) {
+    assert.ok(OPS.countNativeBuilds.queryParams.has(key), `native-build count query param '${key}' is declared in the contract`);
+  }
+
+  await client.getNativeBuild('flow', 2, 'production', 'linux-x64');
+  assert.equal(calls[2].method, OPS.getNativeBuild.method);
+  assert.equal(calls[2].path, sub('getNativeBuild'));
+
+  await client.enqueueNativeBuild('flow', 2, { environment: 'production', runtimeIdentifier: 'linux-x64', buildLabel: 'nightly' });
+  assert.equal(calls[3].method, OPS.enqueueNativeBuild.method);
+  assert.equal(calls[3].path, sub('enqueueNativeBuild'));
+  assert.ok(OPS.enqueueNativeBuild.hasBody, 'enqueueNativeBuild declares a request body');
+  assert.deepEqual(calls[3].body, { environment: 'production', runtimeIdentifier: 'linux-x64', buildLabel: 'nightly' });
+});
+
+test('the contract declares the deployment operations (ADR 0055, read-only — the deploy runs on the runner, ADR 0059)', () => {
+  for (const id of ['listDeployments', 'countDeployments', 'getDeployment']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('deployments: each client method emits the contract method + templated path + declared query params', async () => {
+  const { client, calls } = capturing();
+  const sub = (op) => OPS[op].path
+    .replace('{baseWorkflowId}', 'flow').replace('{versionNumber}', '2')
+    .replace('{environment}', 'production').replace('{runtimeIdentifier}', 'linux-x64');
+
+  await client.listDeployments('flow', 2, { status: 'Deployed', limit: 10, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listDeployments.method);
+  assert.equal(calls[0].path, sub('listDeployments'));
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listDeployments.queryParams.has(key), `deployment query param '${key}' is declared in the contract`);
+  }
+
+  await client.countDeployments('flow', 2, { status: 'Failed' });
+  assert.equal(calls[1].method, OPS.countDeployments.method);
+  assert.equal(calls[1].path, sub('countDeployments'));
+  for (const key of calls[1].query.keys()) {
+    assert.ok(OPS.countDeployments.queryParams.has(key), `deployment count query param '${key}' is declared in the contract`);
+  }
+
+  await client.getDeployment('flow', 2, 'production', 'linux-x64');
+  assert.equal(calls[2].method, OPS.getDeployment.method);
+  assert.equal(calls[2].path, sub('getDeployment'));
+});
+
 test('the contract declares the identity / grantee-resolution operation', () => {
   assert.ok(OPS.searchGrantees, 'operation searchGrantees present in the OpenAPI document');
 });
