@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -37,18 +37,18 @@ public readonly partial struct CorrelatedHeaders
             RequiredBitForCorrelationId;
         private static readonly JsonSchemaPathProvider CorrelationIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/correlationId"u8, buffer, out written);
 
-        private static void MatchCorrelationId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchCorrelationId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                AsyncApiBenchmark.Generated.JsonString.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.CorrelationIdUtf8,
                     evaluationPath: CorrelationIdSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            AsyncApiBenchmark.Generated.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -63,7 +63,7 @@ public readonly partial struct CorrelatedHeaders
 #if NET
         [NotNullWhen(true)]
 #endif
-        out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             if (span.SequenceEqual(JsonPropertyNames.CorrelationIdUtf8))
             {
@@ -129,9 +129,9 @@ public readonly partial struct CorrelatedHeaders
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

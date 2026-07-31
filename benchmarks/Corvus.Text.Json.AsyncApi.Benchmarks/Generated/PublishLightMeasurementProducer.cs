@@ -39,10 +39,10 @@ public sealed class PublishLightMeasurementProducer
     /// </summary>
     /// <param name="payload">The message payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask PublishLightMeasuredAsync(AsyncApiBenchmark.Generated.LightMeasuredPayload.Source payload, CancellationToken cancellationToken = default)
+    public ValueTask PublishLightMeasuredAsync(AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.Source payload, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AsyncApiBenchmark.Generated.LightMeasuredPayload payloadValue = AsyncApiBenchmark.Generated.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
+        AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payloadValue = AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
 
         if (this.validationMode != ValidationMode.None)
         {
@@ -61,7 +61,7 @@ public sealed class PublishLightMeasurementProducer
     {
         try
         {
-            await this.transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);
+            await this.transport.PublishAsync(channelUtf8, payload, context, headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {

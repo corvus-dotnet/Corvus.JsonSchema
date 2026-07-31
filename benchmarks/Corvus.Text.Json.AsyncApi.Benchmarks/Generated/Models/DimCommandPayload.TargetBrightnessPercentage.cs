@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -126,10 +126,10 @@ public readonly partial struct DimCommandPayload
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(TargetBrightnessPercentage value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(TargetBrightnessPercentage value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(TargetBrightnessPercentage value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(TargetBrightnessPercentage value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(TargetBrightnessPercentage value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
@@ -243,10 +243,13 @@ public readonly partial struct DimCommandPayload
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TargetBrightnessPercentage ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<TargetBrightnessPercentage>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -266,10 +269,13 @@ public readonly partial struct DimCommandPayload
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TargetBrightnessPercentage ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<TargetBrightnessPercentage>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -289,10 +295,13 @@ public readonly partial struct DimCommandPayload
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TargetBrightnessPercentage ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<TargetBrightnessPercentage>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -330,9 +339,12 @@ public readonly partial struct DimCommandPayload
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static TargetBrightnessPercentage ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<TargetBrightnessPercentage>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

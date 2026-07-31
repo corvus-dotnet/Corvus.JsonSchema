@@ -41,11 +41,11 @@ public sealed class RequestDimProducer
     /// <param name="payload">The message payload.</param>
     /// <param name="headers">The message headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask PublishDimCommandAsync(AsyncApiBenchmark.Generated.DimCommandPayload.Source payload, AsyncApiBenchmark.Generated.CorrelatedHeaders.Source headers, CancellationToken cancellationToken = default)
+    public ValueTask PublishDimCommandAsync(AsyncApiBenchmark.Generated.Models.DimCommandPayload.Source payload, AsyncApiBenchmark.Generated.Models.CorrelatedHeaders.Source headers, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AsyncApiBenchmark.Generated.DimCommandPayload payloadValue = AsyncApiBenchmark.Generated.DimCommandPayload.CreateBuilder(workspace, payload, 30).RootElement;
-        AsyncApiBenchmark.Generated.CorrelatedHeaders headersValue = AsyncApiBenchmark.Generated.CorrelatedHeaders.CreateBuilder(workspace, headers, 10).RootElement;
+        AsyncApiBenchmark.Generated.Models.DimCommandPayload payloadValue = AsyncApiBenchmark.Generated.Models.DimCommandPayload.CreateBuilder(workspace, payload, 30).RootElement;
+        AsyncApiBenchmark.Generated.Models.CorrelatedHeaders headersValue = AsyncApiBenchmark.Generated.Models.CorrelatedHeaders.CreateBuilder(workspace, headers, 10).RootElement;
 
         if (this.validationMode != ValidationMode.None)
         {
@@ -67,11 +67,11 @@ public sealed class RequestDimProducer
     /// <param name="headers">The request headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload.</returns>
-    public ValueTask<AsyncApiBenchmark.Generated.DimResponsePayload> SendAndReceiveDimCommandAsync(AsyncApiBenchmark.Generated.DimCommandPayload.Source payload, AsyncApiBenchmark.Generated.CorrelatedHeaders.Source headers, CancellationToken cancellationToken = default)
+    public ValueTask<AsyncApiBenchmark.Generated.Models.DimResponsePayload> SendAndReceiveDimCommandAsync(AsyncApiBenchmark.Generated.Models.DimCommandPayload.Source payload, AsyncApiBenchmark.Generated.Models.CorrelatedHeaders.Source headers, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AsyncApiBenchmark.Generated.DimCommandPayload payloadValue = AsyncApiBenchmark.Generated.DimCommandPayload.CreateBuilder(workspace, payload, 30).RootElement;
-        AsyncApiBenchmark.Generated.CorrelatedHeaders headersValue = AsyncApiBenchmark.Generated.CorrelatedHeaders.CreateBuilder(workspace, headers, 10).RootElement;
+        AsyncApiBenchmark.Generated.Models.DimCommandPayload payloadValue = AsyncApiBenchmark.Generated.Models.DimCommandPayload.CreateBuilder(workspace, payload, 30).RootElement;
+        AsyncApiBenchmark.Generated.Models.CorrelatedHeaders headersValue = AsyncApiBenchmark.Generated.Models.CorrelatedHeaders.CreateBuilder(workspace, headers, 10).RootElement;
 
         if (this.validationMode != ValidationMode.None)
         {
@@ -79,7 +79,7 @@ public sealed class RequestDimProducer
             ValidateHeaders(headersValue, this.validationMode);
         }
 
-        return RequestAsyncCore<AsyncApiBenchmark.Generated.DimCommandPayload, AsyncApiBenchmark.Generated.DimResponsePayload>(workspace, ChannelAddressUtf8, null, ReplyChannelAddressUtf8, payloadValue, Corvus.Text.Json.JsonElement.From(headersValue), cancellationToken);
+        return RequestAsyncCore<AsyncApiBenchmark.Generated.Models.DimCommandPayload, AsyncApiBenchmark.Generated.Models.DimResponsePayload>(workspace, ChannelAddressUtf8, null, ReplyChannelAddressUtf8, payloadValue, Corvus.Text.Json.JsonElement.From(headersValue), cancellationToken);
     }
 
     private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, TPayload payload, Corvus.Text.Json.JsonElement headers, MessageContext context, CancellationToken cancellationToken)
@@ -87,7 +87,7 @@ public sealed class RequestDimProducer
     {
         try
         {
-            await this.transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);
+            await this.transport.PublishAsync(channelUtf8, payload, context, headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -104,7 +104,7 @@ public sealed class RequestDimProducer
         System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, "D");
         try
         {
-            var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), headers, cancellationToken).ConfigureAwait(false);
+            var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), workspace, headers, cancellationToken).ConfigureAwait(false);
             return replyPayload;
         }
         finally

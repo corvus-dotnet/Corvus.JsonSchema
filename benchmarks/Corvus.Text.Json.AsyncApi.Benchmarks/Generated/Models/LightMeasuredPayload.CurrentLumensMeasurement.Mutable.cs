@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -617,6 +617,30 @@ public readonly partial struct LightMeasuredPayload
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
             return workspace.CreateBuilder<CurrentLumensMeasurement, Mutable>(this);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CurrentLumensMeasurement> Create(
+            scoped in Source value, int initialCapacity = 1)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CurrentLumensMeasurement>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
         }
     }
 }

@@ -3,6 +3,7 @@
 // </copyright>
 
 using AsyncApiBenchmark.Generated;
+using AsyncApiBenchmark.Generated.Models;
 
 namespace AsyncApiBenchmark.Infrastructure;
 

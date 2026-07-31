@@ -14,7 +14,7 @@ public readonly struct PublishLightMeasurementLightMeasuredMessage
     public const string MessageContentType = "application/json";
 
     /// <summary>Gets the message payload.</summary>
-    public AsyncApiBenchmark.Generated.LightMeasuredPayload Payload { get; init; }
+    public AsyncApiBenchmark.Generated.Models.LightMeasuredPayload Payload { get; init; }
 
     /// <summary>
     /// Validates the message payload and headers against their schemas.

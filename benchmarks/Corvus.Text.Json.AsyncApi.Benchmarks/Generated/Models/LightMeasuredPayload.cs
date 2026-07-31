@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -65,11 +65,11 @@ public readonly partial struct LightMeasuredPayload
     /// Sensor ID.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId Id
+    public AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.SensorId Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.SensorId value))
             {
                 return value;
             }
@@ -89,11 +89,11 @@ public readonly partial struct LightMeasuredPayload
     /// Current lumens measurement.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement Lumens
+    public AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CurrentLumensMeasurement Lumens
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CurrentLumensMeasurement value))
             {
                 return value;
             }
@@ -113,11 +113,11 @@ public readonly partial struct LightMeasuredPayload
     /// ISO 8601 timestamp of the measurement.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.JsonDateTime SentAt
+    public AsyncApiBenchmark.Generated.Models.JsonDateTime SentAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -245,10 +245,13 @@ public readonly partial struct LightMeasuredPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LightMeasuredPayload ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<LightMeasuredPayload>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -268,10 +271,13 @@ public readonly partial struct LightMeasuredPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LightMeasuredPayload ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<LightMeasuredPayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -291,10 +297,13 @@ public readonly partial struct LightMeasuredPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LightMeasuredPayload ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<LightMeasuredPayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -332,9 +341,12 @@ public readonly partial struct LightMeasuredPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static LightMeasuredPayload ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<LightMeasuredPayload>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

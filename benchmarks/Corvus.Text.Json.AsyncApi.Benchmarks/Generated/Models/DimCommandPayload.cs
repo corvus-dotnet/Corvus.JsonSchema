@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -65,11 +65,11 @@ public readonly partial struct DimCommandPayload
     /// Target brightness percentage.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage Percentage
+    public AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage Percentage
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PercentageUtf8, out AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PercentageUtf8, out AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage value))
             {
                 return value;
             }
@@ -86,11 +86,11 @@ public readonly partial struct DimCommandPayload
     /// ISO 8601 timestamp of the command.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.JsonDateTime SentAt
+    public AsyncApiBenchmark.Generated.Models.JsonDateTime SentAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -110,11 +110,11 @@ public readonly partial struct DimCommandPayload
     /// The streetlight to dim.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim StreetlightId
+    public AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim StreetlightId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim value))
             {
                 return value;
             }
@@ -242,10 +242,13 @@ public readonly partial struct DimCommandPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimCommandPayload ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimCommandPayload>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -265,10 +268,13 @@ public readonly partial struct DimCommandPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimCommandPayload ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimCommandPayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -288,10 +294,13 @@ public readonly partial struct DimCommandPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimCommandPayload ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimCommandPayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -329,9 +338,12 @@ public readonly partial struct DimCommandPayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static DimCommandPayload ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimCommandPayload>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

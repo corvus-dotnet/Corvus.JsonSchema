@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -62,11 +62,11 @@ public readonly partial struct DimResponsePayload
     /// The actual brightness applied.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied AppliedPercentage
+    public AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied AppliedPercentage
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AppliedPercentageUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AppliedPercentageUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied value))
             {
                 return value;
             }
@@ -86,11 +86,11 @@ public readonly partial struct DimResponsePayload
     /// Whether the dimming succeeded.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded Status
+    public AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded value))
             {
                 return value;
             }
@@ -110,11 +110,11 @@ public readonly partial struct DimResponsePayload
     /// The streetlight that was dimmed.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed StreetlightId
+    public AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed StreetlightId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed value))
             {
                 return value;
             }
@@ -242,10 +242,13 @@ public readonly partial struct DimResponsePayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimResponsePayload ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimResponsePayload>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -265,10 +268,13 @@ public readonly partial struct DimResponsePayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimResponsePayload ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimResponsePayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -288,10 +294,13 @@ public readonly partial struct DimResponsePayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DimResponsePayload ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimResponsePayload>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -329,9 +338,12 @@ public readonly partial struct DimResponsePayload
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static DimResponsePayload ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<DimResponsePayload>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

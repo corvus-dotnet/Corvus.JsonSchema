@@ -14,10 +14,10 @@ public readonly struct RequestDimDimCommandMessage
     public const string MessageContentType = "application/json";
 
     /// <summary>Gets the message payload.</summary>
-    public AsyncApiBenchmark.Generated.DimCommandPayload Payload { get; init; }
+    public AsyncApiBenchmark.Generated.Models.DimCommandPayload Payload { get; init; }
 
     /// <summary>Gets the message headers.</summary>
-    public AsyncApiBenchmark.Generated.CorrelatedHeaders Headers { get; init; }
+    public AsyncApiBenchmark.Generated.Models.CorrelatedHeaders Headers { get; init; }
 
     /// <summary>
     /// Validates the message payload and headers against their schemas.

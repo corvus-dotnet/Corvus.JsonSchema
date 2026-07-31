@@ -97,11 +97,15 @@ public sealed class BenchmarkTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
+        // The reply is pre-parsed and owned by the benchmark setup, so the caller's workspace
+        // takes no ownership here.
+        _ = workspace;
         // Publish-side: serialize the request
         ArrayBufferWriter<byte> buffer = t_buffer ??= new ArrayBufferWriter<byte>(1024);
         buffer.ResetWrittenCount();
