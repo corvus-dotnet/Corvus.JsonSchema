@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>The micro-guest IServerlessDeployer for the Arazzo micro-guest backend (ADR 0063): the runner bakes a version's verified native guest binary into a Unikraft initrd CPIO and instructs the warm micro-guest sidecar to evolve a snapshotted Hyperlight micro-VM sandbox for the (environment, version), recording the sidecar's local invoke URL as the deployment's function URL. The runner's own machine is the deploy platform; no cloud round-trip is involved.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The IServerlessDeployer seam this project implements lives in the runner-side AOT deploy library (ADR 0059). -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.Aot\Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
+    <!-- The pooled JSON serialization helpers (PersistedJson) the sidecar request bodies are written with. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

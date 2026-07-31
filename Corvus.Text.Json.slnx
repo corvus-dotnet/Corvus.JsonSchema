@@ -93,6 +93,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.Tests/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy.Tests/Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Aot.Tests/Corvus.Text.Json.Arazzo.Durability.Aot.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests.csproj" />
@@ -180,6 +181,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy/Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm/Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy/Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Aot/Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
