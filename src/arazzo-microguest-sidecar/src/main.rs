@@ -36,6 +36,11 @@ struct Args {
     /// HTTP worker threads per surface.
     #[arg(long, default_value_t = 4)]
     workers: usize,
+
+    /// Where sandbox initrd images are staged on disk (mapped copy-on-write into each sandbox; the files
+    /// live for the sandbox's life). Defaults to arazzo-microguest-sidecar under the system temp directory.
+    #[arg(long, env = "ARAZZO_SIDECAR_STATE_DIR")]
+    state_dir: Option<std::path::PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -91,7 +96,11 @@ fn build_factory(args: &Args) -> anyhow::Result<Arc<dyn arazzo_microguest_sideca
         anyhow::bail!("the guest kernel {:?} does not exist", args.kernel);
     }
 
-    Ok(Arc::new(arazzo_microguest_sidecar::hyperlight::HyperlightVmFactory { kernel: args.kernel.clone() }))
+    let state_dir = args
+        .state_dir
+        .clone()
+        .unwrap_or_else(|| std::env::temp_dir().join("arazzo-microguest-sidecar"));
+    Ok(Arc::new(arazzo_microguest_sidecar::hyperlight::HyperlightVmFactory { kernel: args.kernel.clone(), state_dir }))
 }
 
 #[cfg(not(feature = "hyperlight"))]

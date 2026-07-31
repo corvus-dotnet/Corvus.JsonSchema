@@ -464,32 +464,61 @@ pub fn serve(
 #[cfg(feature = "hyperlight")]
 pub mod hyperlight {
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::sync::Arc;
 
     use hyperlight_unikraft::{AllowList, NetworkPolicy, Sandbox};
 
     use crate::{GuestExchange, MicroVm, SandboxSpec, VmFactory};
 
-    /// Builds real sandboxes over the pinned guest kernel.
+    /// Builds real sandboxes over the pinned guest kernel. The staged initrd is written to a file in the
+    /// state directory and the sandbox is built in mapped-initrd mode (`initrd_file`): that is the path the
+    /// ADR 0063 spike proved delivers the frozen argv to the guest, and it maps the image copy-on-write, so
+    /// each restore resets it without holding a second in-memory copy. The file must outlive the sandbox
+    /// (every restore re-maps it); the VM removes it when it is dropped.
     pub struct HyperlightVmFactory {
         pub kernel: PathBuf,
+        pub state_dir: PathBuf,
     }
+
+    static NEXT_IMAGE: AtomicU64 = AtomicU64::new(0);
 
     impl VmFactory for HyperlightVmFactory {
         fn build(&self, spec: &SandboxSpec, _exchange: Arc<GuestExchange>) -> anyhow::Result<Box<dyn MicroVm>> {
+            std::fs::create_dir_all(&self.state_dir)?;
+            let initrd_path = self.state_dir.join(format!(
+                "initrd-{}-{}.cpio",
+                std::process::id(),
+                NEXT_IMAGE.fetch_add(1, Ordering::Relaxed)
+            ));
+            std::fs::write(&initrd_path, &spec.initrd)?;
+
             let policy = NetworkPolicy::AllowList(AllowList::from_hosts(&spec.allowed_hosts)?);
-            let sandbox = Sandbox::builder(&self.kernel)
-                .initrd_bytes(spec.initrd.clone())
+            let built = Sandbox::builder(&self.kernel)
+                .initrd_file(&initrd_path)
                 .args(spec.args.iter().cloned())
                 .heap_size(spec.memory_mib * 1024 * 1024)
                 .network(policy)
-                .build()?;
-            Ok(Box::new(HyperlightVm { sandbox }))
+                .build();
+            match built {
+                Ok(sandbox) => Ok(Box::new(HyperlightVm { sandbox, initrd_path })),
+                Err(error) => {
+                    let _ = std::fs::remove_file(&initrd_path);
+                    Err(error)
+                }
+            }
         }
     }
 
     struct HyperlightVm {
         sandbox: Sandbox,
+        initrd_path: PathBuf,
+    }
+
+    impl Drop for HyperlightVm {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.initrd_path);
+        }
     }
 
     impl MicroVm for HyperlightVm {

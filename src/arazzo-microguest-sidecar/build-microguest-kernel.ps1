@@ -36,7 +36,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host 'Building the micro-guest kernel (kraft-hyperlight build)...'
-& $ContainerCli run --rm -v "${kernelDir}:/work" -w /work $BuilderTag kraft-hyperlight build --plat hyperlight --arch x86_64
+# KRAFTKIT_NO_PROMPT: a config change over an existing .unikraft tree makes kraft prompt, which dies headless.
+& $ContainerCli run --rm -e KRAFTKIT_NO_PROMPT=true -v "${kernelDir}:/work" -w /work $BuilderTag kraft-hyperlight build --plat hyperlight --arch x86_64
 if ($LASTEXITCODE -ne 0) {
     throw "Kernel build failed (exit code $LASTEXITCODE)."
 }
