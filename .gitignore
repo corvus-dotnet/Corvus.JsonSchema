@@ -416,3 +416,4 @@ web/arazzo-control-plane-ui/test/admin-clip.png
 src/arazzo-microguest-sidecar/target/
 src/arazzo-microguest-sidecar/.cargo-registry-cache/
 src/arazzo-microguest-sidecar/kernel/.unikraft/
+src/arazzo-microguest-sidecar/kernel/.config.*
