@@ -47,7 +47,7 @@
 
   <!-- Embed metaschema files as resources (needed for schema vocabulary resolution) -->
   <ItemGroup>
-    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.CodeGenerator\metaschema\**\*.json"
+    <EmbeddedResource Include="..\..\..\..\src\Corvus.Text.Json.Arazzo.Generation\metaschema\**\*.json"
                       Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
