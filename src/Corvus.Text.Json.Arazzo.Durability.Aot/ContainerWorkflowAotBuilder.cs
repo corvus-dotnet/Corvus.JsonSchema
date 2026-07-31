@@ -11,9 +11,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 /// An <see cref="IWorkflowAotBuilder"/> that compiles the assembled host-app by running the build image (ADR 0055). It
 /// writes the host-app to a working directory, mounts it into the container alongside the package feed, runs a single
 /// <c>dotnet publish</c>, and reads back the deploy artifact per target: the single native <c>bootstrap</c> for an AWS
-/// Lambda (Native-AOT) build, or the whole published isolated-worker app zipped for an Azure Functions (ReadyToRun)
-/// build. It builds the Linux targets; a Windows Native-AOT target needs a Windows build host, since Native AOT does
-/// not cross-compile across operating systems.
+/// Lambda (Native-AOT) build, the whole published isolated-worker app zipped for an Azure Functions (ReadyToRun)
+/// build, or the single static <c>guest</c> for a micro-guest (Native-AOT musl) build. The image is per-target too:
+/// the AL2023 image for the cloud Linux targets, the alpine image (<c>aot-builder-alpine.Dockerfile</c>) for the
+/// micro-guest's static musl link (ADR 0063). It builds the Linux targets; a Windows Native-AOT target needs a Windows
+/// build host, since Native AOT does not cross-compile across operating systems.
 /// </summary>
 public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
 {
@@ -67,14 +69,16 @@ public sealed class ContainerWorkflowAotBuilder : IWorkflowAotBuilder
                 return AotBuildResult.Success(ZipDirectory(outputDirectory), log);
             }
 
-            // A runtime-less target publishes a single self-contained native binary named 'bootstrap'.
-            string bootstrapPath = Path.Combine(outputDirectory, "bootstrap");
-            if (!File.Exists(bootstrapPath))
+            // A runtime-less target publishes a single self-contained native binary: the Lambda custom runtime's
+            // 'bootstrap', or the micro-guest's static 'guest' (ADR 0063).
+            string artifactName = hostApp.Target == ServerlessTarget.MicroGuest ? "guest" : "bootstrap";
+            string artifactPath = Path.Combine(outputDirectory, artifactName);
+            if (!File.Exists(artifactPath))
             {
                 return AotBuildResult.Failure(log);
             }
 
-            byte[] binary = await File.ReadAllBytesAsync(bootstrapPath, cancellationToken).ConfigureAwait(false);
+            byte[] binary = await File.ReadAllBytesAsync(artifactPath, cancellationToken).ConfigureAwait(false);
             return AotBuildResult.Success(binary, log);
         }
         finally

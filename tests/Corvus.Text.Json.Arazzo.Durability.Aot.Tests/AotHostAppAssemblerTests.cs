@@ -32,6 +32,13 @@ public sealed class AotHostAppAssemblerTests
         FeedSources = [("local", "/work/local-packages"), ("nuget.org", "https://api.nuget.org/v3/index.json")],
     };
 
+    private static readonly AotHostAppOptions MicroGuestOptions = new()
+    {
+        Target = ServerlessTarget.MicroGuest,
+        RuntimePackageVersion = "5.0.0-local.2",
+        FeedSources = [("local", "/work/local-packages"), ("nuget.org", "https://api.nuget.org/v3/index.json")],
+    };
+
     // A real .NET assembly stands in for the executor: the assembler only reads its name from PE metadata and embeds
     // its bytes, so any valid assembly exercises those paths.
     private static readonly byte[] StandInExecutor = File.ReadAllBytes(typeof(AotHostAppAssembler).Assembly.Location);
@@ -156,6 +163,69 @@ public sealed class AotHostAppAssemblerTests
         project.ShouldNotContain("Amazon.Lambda");
         project.ShouldNotContain("TrimmerRootAssembly");
     }
+
+    [TestMethod]
+    public void Assembles_the_microguest_entry_that_fetches_its_invocation_from_the_sidecar()
+    {
+        AssembledHostApp app = AssembleMicroGuest("linux-musl-x64");
+        app.Target.ShouldBe(ServerlessTarget.MicroGuest);
+
+        string program = FileText(app, "Program.cs");
+        program.ShouldContain($"new BakedHostedWorkflowResolver(new {EntryType}())");
+        program.ShouldContain("ServerlessInvocationHandler");
+        // One advance per snapshot restore: fetch the invocation from the sidecar endpoint baked as argv[1], post the
+        // outcome back, then exit the VM directly (the runtime's shutdown hangs under the unikernel, ADR 0063).
+        program.ShouldContain("GetByteArrayAsync");
+        program.ShouldContain("""[DllImport("*", EntryPoint = "_exit")]""");
+        // The shared Bind() reads ARAZZO_SOURCE__ bindings, seeded from the baked argv rather than deploy-time app settings.
+        program.ShouldContain("ARAZZO_SOURCE__");
+        // The other targets' entries must not leak into the guest.
+        program.ShouldNotContain("LambdaServerlessFunction");
+        program.ShouldNotContain("FunctionsApplication");
+    }
+
+    [TestMethod]
+    public void Assembles_the_microguest_project_as_a_fully_static_native_binary_with_the_guest_knobs()
+    {
+        string project = FileText(AssembleMicroGuest("linux-musl-x64"), "fn.csproj");
+
+        project.ShouldContain("<PublishAot>true</PublishAot>");
+        project.ShouldContain("<AssemblyName>guest</AssemblyName>");
+        project.ShouldContain("<RuntimeIdentifier>linux-musl-x64</RuntimeIdentifier>");
+        project.ShouldContain("<StaticExecutable>true</StaticExecutable>");
+        project.ShouldContain("<LinkerFlavor>lld</LinkerFlavor>");
+        // The two guest-side knobs the ADR 0063 spike proved: the GC heap hard limit (the .NET 10 startup reservation is
+        // fatal on the no-paging kernel) and IPv6 off (the host-proxied socket layer is IPv4-only).
+        project.ShouldContain("""<RuntimeHostConfigurationOption Include="System.GC.HeapHardLimit" Value="33554432" />""");
+        project.ShouldContain("""<RuntimeHostConfigurationOption Include="System.Net.DisableIPv6" Value="true" />""");
+        project.ShouldContain("""<PackageReference Include="Corvus.Text.Json.Arazzo.Durability.Serverless" Version="5.0.0-local.2" />""");
+        project.ShouldContain($"""<TrimmerRootAssembly Include="{StandInExecutorName}" />""");
+        // Cloud-vendor bits must not leak into the guest project.
+        project.ShouldNotContain("Amazon.Lambda");
+        project.ShouldNotContain("AzureFunctionsVersion");
+        project.ShouldNotContain("bootstrap");
+    }
+
+    [TestMethod]
+    public void The_microguest_heap_hard_limit_is_sized_from_the_options()
+    {
+        AotHostAppOptions sized = MicroGuestOptions with { MicroGuestHeapHardLimitBytes = 67108864 };
+
+        string project = FileText(new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), "linux-musl-x64", sized), "fn.csproj");
+
+        project.ShouldContain("""<RuntimeHostConfigurationOption Include="System.GC.HeapHardLimit" Value="67108864" />""");
+    }
+
+    [TestMethod]
+    public void The_microguest_x64_isa_baseline_is_conservative_and_omitted_for_other_architectures()
+    {
+        // The micro-VM's CPUID does not expose the host's full feature set, so x64 pins the baseline ISA; other
+        // architectures take ILC's own baseline.
+        FileText(AssembleMicroGuest("linux-musl-x64"), "fn.csproj").ShouldContain("<IlcInstructionSet>x86-64</IlcInstructionSet>");
+        FileText(AssembleMicroGuest("linux-musl-arm64"), "fn.csproj").ShouldNotContain("IlcInstructionSet");
+    }
+
+    private static AssembledHostApp AssembleMicroGuest(string rid) => new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), rid, MicroGuestOptions);
 
     private static AssembledHostApp AssembleAzure(string rid) => new AotHostAppAssembler().Assemble(StandInExecutor, Manifest(), rid, AzureOptions);
 

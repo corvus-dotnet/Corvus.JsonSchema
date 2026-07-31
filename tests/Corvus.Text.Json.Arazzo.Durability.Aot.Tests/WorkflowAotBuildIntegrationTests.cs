@@ -124,6 +124,61 @@ public sealed class WorkflowAotBuildIntegrationTests
 
     [TestMethod]
     [TestCategory("integration")]
+    public async Task Builds_a_real_workflow_executor_to_a_static_microguest_binary_in_the_alpine_container()
+    {
+        string? feed = Environment.GetEnvironmentVariable("ARAZZO_AOT_LOCAL_FEED");
+        string? runtimeVersion = Environment.GetEnvironmentVariable("ARAZZO_AOT_RUNTIME_VERSION");
+        if (string.IsNullOrEmpty(feed) || string.IsNullOrEmpty(runtimeVersion))
+        {
+            Assert.Inconclusive("Set ARAZZO_AOT_LOCAL_FEED (the local package feed path) and ARAZZO_AOT_RUNTIME_VERSION (its Corvus runtime version), and build the arazzo-aot-builder:net10-alpine image, to run this proof.");
+            return;
+        }
+
+        string image = Environment.GetEnvironmentVariable("ARAZZO_AOT_ALPINE_IMAGE") ?? "arazzo-aot-builder:net10-alpine";
+
+        // 1. Build the same real durable executor IL.
+        var buildLog = new List<string>();
+        WorkflowExecutorArtifact? executor = new WorkflowExecutorProvider(durable: true, progress: buildLog.Add).BuildExecutor(
+            Encoding.UTF8.GetBytes(WorkflowJson),
+            [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))],
+            "integration-hash-microguest");
+        executor.ShouldNotBeNull($"the executor did not build. Provider progress:\n{string.Join("\n", buildLog)}");
+
+        // 2. Assemble the host-app for the micro-guest target (ADR 0063): a fully static Native-AOT musl guest.
+        AssembledHostApp hostApp = new AotHostAppAssembler().Assemble(
+            executor!.Value.Assembly,
+            executor.Value.Manifest,
+            "linux-musl-x64",
+            new AotHostAppOptions
+            {
+                Target = ServerlessTarget.MicroGuest,
+                RuntimePackageVersion = runtimeVersion,
+                FeedSources =
+                [
+                    ("local", "/work/local-packages"),
+                    ("nuget.org", "https://api.nuget.org/v3/index.json"),
+                    ("dotnet-eng", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"),
+                    ("dotnet-libraries", "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-libraries/nuget/v3/index.json"),
+                ],
+            });
+
+        // 3. Native-AOT compile it in the alpine container (the static musl toolchain: clang + lld + musl-dev).
+        var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions
+        {
+            ContainerImage = image,
+            ReadOnlyMounts = [(feed, "/work/local-packages")],
+        });
+
+        AotBuildResult result = await builder.BuildAsync(hostApp, CancellationToken.None);
+
+        // 4. The output is a real, non-trivial ELF executable — the 'guest' artifact the read-back names per target.
+        result.Succeeded.ShouldBeTrue($"micro-guest AOT build failed. Log:\n{result.Log}");
+        result.NativeBinary.Length.ShouldBeGreaterThan(1_000_000);
+        result.NativeBinary.Span[..4].ToArray().ShouldBe([0x7F, (byte)'E', (byte)'L', (byte)'F']);
+    }
+
+    [TestMethod]
+    [TestCategory("integration")]
     public async Task Builds_a_real_workflow_executor_to_an_azure_isolated_worker_app_in_the_container()
     {
         string? feed = Environment.GetEnvironmentVariable("ARAZZO_AOT_LOCAL_FEED");

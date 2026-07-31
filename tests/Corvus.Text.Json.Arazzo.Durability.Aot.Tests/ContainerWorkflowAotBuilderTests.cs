@@ -48,6 +48,19 @@ public sealed class ContainerWorkflowAotBuilderTests
     }
 
     [TestMethod]
+    public void The_microguest_build_publishes_self_contained_like_a_native_target()
+    {
+        var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions { ReadOnlyMounts = [] });
+
+        string command = string.Join(' ', builder.BuildContainerArguments("/tmp/work", "linux-musl-x64", ServerlessTarget.MicroGuest));
+
+        // The static-musl flags live in the generated guest project, so the publish command is the plain Native-AOT
+        // shape; only the builder image (the alpine variant) differs, and that is per-options, not per-argument.
+        command.ShouldContain("dotnet publish /work/fn/fn.csproj -r linux-musl-x64 -c Release -o /work/fn/out");
+        command.ShouldNotContain("--self-contained");
+    }
+
+    [TestMethod]
     public void The_runtime_target_flows_into_the_publish_command()
     {
         var builder = new ContainerWorkflowAotBuilder(new ContainerAotBuilderOptions { ReadOnlyMounts = [] });

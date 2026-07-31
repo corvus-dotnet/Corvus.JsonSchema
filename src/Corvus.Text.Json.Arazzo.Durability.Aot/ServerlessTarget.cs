@@ -23,4 +23,12 @@ public enum ServerlessTarget
     /// vendor-neutral invocation handler.
     /// </summary>
     AzureFunctions,
+
+    /// <summary>
+    /// A Hyperlight micro-VM under a Unikraft guest kernel (the micro-guest backend, ADR 0063), which has no .NET
+    /// runtime — so the host-app is a fully static Native-AOT <c>guest</c> binary (a <c>linux-musl</c> target) that the
+    /// warm sidecar snapshots once and restores per advance: each restore fetches its invocation from the sidecar,
+    /// advances the run, posts the outcome, and exits the VM.
+    /// </summary>
+    MicroGuest,
 }
