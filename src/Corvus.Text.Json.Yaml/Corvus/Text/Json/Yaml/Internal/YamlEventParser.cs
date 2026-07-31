@@ -22,6 +22,11 @@ internal ref struct YamlEventParser
     private int _line;
     private int _column;
     private int _depth;
+
+    // End (0-based) of the last completed node; block collection-ends read it.
+    private int _lastNodeEndLine;
+    private int _lastNodeEndColumn;
+
     private byte[] _scratchBuffer;
     private int _scratchPos;
 
@@ -88,39 +93,45 @@ internal ref struct YamlEventParser
         }
     }
 
-    private bool EmitEvent(YamlEventType type, int line, int column)
+    private bool EmitEvent(YamlEventType type, int line, int column, int endLine, int endColumn)
     {
-        YamlEvent e = new(type, line, column);
+        YamlEvent e = new(type, line, column, endLine, endColumn);
         return _callback(in e);
     }
 
-    private bool EmitDocumentEvent(YamlEventType type, bool isImplicit, int line, int column)
+    private bool EmitDocumentEvent(YamlEventType type, bool isImplicit, int line, int column, int endLine, int endColumn)
     {
-        YamlEvent e = new(type, isImplicit, line, column);
+        YamlEvent e = new(type, isImplicit, line, column, endLine, endColumn);
         return _callback(in e);
     }
 
-    private bool EmitCollectionStartEvent(YamlEventType type, int line, int column, ReadOnlySpan<byte> anchor, ReadOnlySpan<byte> tag, bool isFlowStyle = false)
+    private bool EmitCollectionStartEvent(YamlEventType type, int line, int column, ReadOnlySpan<byte> anchor, ReadOnlySpan<byte> tag, int endLine, int endColumn, bool isFlowStyle = false)
     {
-        YamlEvent e = new(type, anchor, tag, isFlowStyle, line, column);
+        YamlEvent e = new(type, anchor, tag, isFlowStyle, line, column, endLine, endColumn);
         return _callback(in e);
     }
 
-    private bool EmitScalarEvent(int line, int column, ReadOnlySpan<byte> value, YamlScalarStyle style, ReadOnlySpan<byte> anchor, ReadOnlySpan<byte> tag)
+    private bool EmitScalarEvent(int line, int column, ReadOnlySpan<byte> value, YamlScalarStyle style, ReadOnlySpan<byte> anchor, ReadOnlySpan<byte> tag, int endLine, int endColumn)
     {
-        YamlEvent e = new(value, style, anchor, tag, line, column);
+        YamlEvent e = new(value, style, anchor, tag, line, column, endLine, endColumn);
         return _callback(in e);
     }
 
-    private bool EmitAliasEvent(ReadOnlySpan<byte> name, int line, int column)
+    private bool EmitAliasEvent(ReadOnlySpan<byte> name, int line, int column, int endLine, int endColumn)
     {
-        YamlEvent e = YamlEvent.Alias(name, line, column);
+        YamlEvent e = YamlEvent.Alias(name, line, column, endLine, endColumn);
         return _callback(in e);
+    }
+
+    private void RecordNodeEnd(int endLine, int endColumn)
+    {
+        _lastNodeEndLine = endLine;
+        _lastNodeEndColumn = endColumn;
     }
 
     private bool ParseAllDocuments()
     {
-        if (!EmitEvent(YamlEventType.StreamStart, 1, 1)) { return false; }
+        if (!EmitEvent(YamlEventType.StreamStart, 1, 1, 1, 1)) { return false; }
 
         SkipBom();
         SkipWhitespaceAndComments();
@@ -152,7 +163,7 @@ internal ref struct YamlEventParser
             SkipWhitespaceAndComments();
         }
 
-        return EmitEvent(YamlEventType.StreamEnd, _line + 1, _column + 1);
+        return EmitEvent(YamlEventType.StreamEnd, _line + 1, _column + 1, _line + 1, _column + 1);
     }
 
     private bool ParseSingleDocument(bool firstDoc)
@@ -162,7 +173,7 @@ internal ref struct YamlEventParser
 
         if (IsDocumentStart())
         {
-            if (!EmitDocumentEvent(YamlEventType.DocumentStart, false, _line + 1, _column + 1)) { return false; }
+            if (!EmitDocumentEvent(YamlEventType.DocumentStart, false, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
             int docStartLine = _line;
             Advance(3);
@@ -175,7 +186,8 @@ internal ref struct YamlEventParser
             }
             else
             {
-                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                RecordNodeEnd(_line, _column);
+                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
             }
         }
         else
@@ -186,7 +198,7 @@ internal ref struct YamlEventParser
                 ThrowDirectiveWithoutDocumentStart();
             }
 
-            if (!EmitDocumentEvent(YamlEventType.DocumentStart, true, _line + 1, _column + 1)) { return false; }
+            if (!EmitDocumentEvent(YamlEventType.DocumentStart, true, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
             if (_pos < _buffer.Length && !IsDocumentEndOrStart())
             {
@@ -194,7 +206,8 @@ internal ref struct YamlEventParser
             }
             else
             {
-                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                RecordNodeEnd(_line, _column);
+                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
             }
         }
 
@@ -208,7 +221,7 @@ internal ref struct YamlEventParser
 
         if (IsDocumentEnd())
         {
-            if (!EmitDocumentEvent(YamlEventType.DocumentEnd, false, _line + 1, _column + 1)) { return false; }
+            if (!EmitDocumentEvent(YamlEventType.DocumentEnd, false, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
             Advance(3);
 
@@ -224,7 +237,7 @@ internal ref struct YamlEventParser
         }
         else
         {
-            if (!EmitDocumentEvent(YamlEventType.DocumentEnd, true, _line + 1, _column + 1)) { return false; }
+            if (!EmitDocumentEvent(YamlEventType.DocumentEnd, true, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
         }
 
         return true;
@@ -242,7 +255,8 @@ internal ref struct YamlEventParser
 
         if (_pos >= _buffer.Length)
         {
-            return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default);
+            RecordNodeEnd(_line, _column);
+            return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1);
         }
 
         ReadOnlySpan<byte> anchor = default;
@@ -294,7 +308,8 @@ internal ref struct YamlEventParser
         {
             if (_pos >= _buffer.Length)
             {
-                return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, anchor, tag);
+                RecordNodeEnd(_line, _column);
+                return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, anchor, tag, _line + 1, _column + 1);
             }
 
             byte c = _buffer[_pos];
@@ -319,14 +334,16 @@ internal ref struct YamlEventParser
                 // Content strictly below parent indent — always an empty scalar
                 if (_column < parentIndent)
                 {
-                    return EmitScalarEvent(propsLine + 1, propsColumn + 1, default, YamlScalarStyle.Plain, anchor, tag);
+                    RecordNodeEnd(propsLine, propsColumn);
+                    return EmitScalarEvent(propsLine + 1, propsColumn + 1, default, YamlScalarStyle.Plain, anchor, tag, propsLine + 1, propsColumn + 1);
                 }
 
                 // Content at parent indent — empty scalar unless it's a block sequence
                 // entry in a non-sequence context (where '-' starts the value collection)
                 if (_column == parentIndent && (isSeqEntry || !IsBlockSequenceEntry()))
                 {
-                    return EmitScalarEvent(propsLine + 1, propsColumn + 1, default, YamlScalarStyle.Plain, anchor, tag);
+                    RecordNodeEnd(propsLine, propsColumn);
+                    return EmitScalarEvent(propsLine + 1, propsColumn + 1, default, YamlScalarStyle.Plain, anchor, tag, propsLine + 1, propsColumn + 1);
                 }
             }
 
@@ -473,8 +490,9 @@ internal ref struct YamlEventParser
             {
                 int sl = _line; int sc = _column;
                 ReadOnlySpan<byte> value = ReadDoubleQuotedScalar(out byte[]? rented, Math.Max(0, parentIndent + 1));
+                RecordNodeEnd(_line, _column);
 
-                try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.DoubleQuoted, anchor, tag); }
+                try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.DoubleQuoted, anchor, tag, _line + 1, _column + 1); }
                 finally { if (rented != null) { ArrayPool<byte>.Shared.Return(rented); } }
             }
 
@@ -482,14 +500,16 @@ internal ref struct YamlEventParser
             {
                 int sl = _line; int sc = _column;
                 ReadOnlySpan<byte> value = ReadSingleQuotedScalar(out byte[]? rented, Math.Max(0, parentIndent + 1));
+                RecordNodeEnd(_line, _column);
 
-                try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.SingleQuoted, anchor, tag); }
+                try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.SingleQuoted, anchor, tag, _line + 1, _column + 1); }
                 finally { if (rented != null) { ArrayPool<byte>.Shared.Return(rented); } }
             }
 
             if (inFlow && IsFlowEmptyNode())
             {
-                return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, anchor, tag);
+                RecordNodeEnd(_line, _column);
+                return EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, anchor, tag, _line + 1, _column + 1);
             }
 
             return ParsePlainScalar(parentIndent, inFlow, anchor, tag);
@@ -647,7 +667,8 @@ internal ref struct YamlEventParser
 
         while (_pos < _buffer.Length && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos]) && !YamlCharacters.IsFlowIndicator(_buffer[_pos])) { Advance(1); }
 
-        return EmitAliasEvent(_buffer.Slice(start, _pos - start), sl + 1, sc + 1);
+        RecordNodeEnd(_line, _column);
+        return EmitAliasEvent(_buffer.Slice(start, _pos - start), sl + 1, sc + 1, _line + 1, _column + 1);
     }
 
     private void EnsureScratchCapacity(int needed)
@@ -666,7 +687,7 @@ internal ref struct YamlEventParser
     {
         if (!EnterDepth()) { return false; }
 
-        if (!EmitCollectionStartEvent(YamlEventType.MappingStart, _line + 1, _column + 1, anchor, tag)) { return false; }
+        if (!EmitCollectionStartEvent(YamlEventType.MappingStart, _line + 1, _column + 1, anchor, tag, _line + 1, _column + 1)) { return false; }
 
         bool first = true;
 
@@ -701,7 +722,8 @@ internal ref struct YamlEventParser
                 }
                 else
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
 
                 SkipWhitespaceAndComments();
@@ -713,11 +735,13 @@ internal ref struct YamlEventParser
 
                     if (_pos >= _buffer.Length || _column < mappingIndent || IsDocumentEndOrStart())
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        RecordNodeEnd(_line, _column);
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else if (_column == mappingIndent && !IsBlockSequenceEntry())
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        RecordNodeEnd(_line, _column);
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else
                     {
@@ -726,14 +750,16 @@ internal ref struct YamlEventParser
                 }
                 else
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
             }
             else if (_pendingKeyAnchorLength == 0 && _pendingKeyTagLength == 0
                 && _buffer[_pos] == YamlConstants.Colon && (_pos + 1 >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos + 1])))
             {
                 // Empty key — emit empty scalar for the key, then parse value
-                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                RecordNodeEnd(_line, _column);
+                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
 
                 int colonLine = _line;
                 Advance(1);
@@ -741,7 +767,8 @@ internal ref struct YamlEventParser
 
                 if (_pos >= _buffer.Length || IsDocumentEndOrStart())
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else if (_pos < _buffer.Length && _line == colonLine && !IsComment())
                 {
@@ -749,11 +776,13 @@ internal ref struct YamlEventParser
                 }
                 else if (_column < mappingIndent)
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else if (_column == mappingIndent && !IsBlockSequenceEntry())
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else
                 {
@@ -787,15 +816,18 @@ internal ref struct YamlEventParser
                     }
                     else if (_pos >= _buffer.Length || IsDocumentEndOrStart())
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        RecordNodeEnd(_line, _column);
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else if (_column < mappingIndent)
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        RecordNodeEnd(_line, _column);
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else if (_column == mappingIndent && !IsBlockSequenceEntry())
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        RecordNodeEnd(_line, _column);
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else
                     {
@@ -814,7 +846,7 @@ internal ref struct YamlEventParser
             SkipWhitespaceAndComments();
         }
 
-        if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1)) { return false; }
+        if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
         _depth--;
         return true;
@@ -826,7 +858,7 @@ internal ref struct YamlEventParser
 
         int seqIndent = _column;
 
-        if (!EmitCollectionStartEvent(YamlEventType.SequenceStart, _line + 1, _column + 1, anchor, tag)) { return false; }
+        if (!EmitCollectionStartEvent(YamlEventType.SequenceStart, _line + 1, _column + 1, anchor, tag, _line + 1, _column + 1)) { return false; }
 
         while (_pos < _buffer.Length)
         {
@@ -849,7 +881,8 @@ internal ref struct YamlEventParser
 
                 if (_pos >= _buffer.Length || _column <= seqIndent || IsDocumentEndOrStart())
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    RecordNodeEnd(_line, _column);
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else
                 {
@@ -862,7 +895,7 @@ internal ref struct YamlEventParser
             }
         }
 
-        if (!EmitEvent(YamlEventType.SequenceEnd, _line + 1, _column + 1)) { return false; }
+        if (!EmitEvent(YamlEventType.SequenceEnd, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
         _depth--;
         return true;
@@ -874,7 +907,7 @@ internal ref struct YamlEventParser
         int sl = _line; int sc = _column;
         Advance(1);
 
-        if (!EmitCollectionStartEvent(YamlEventType.MappingStart, sl + 1, sc + 1, anchor, tag, isFlowStyle: true)) { return false; }
+        if (!EmitCollectionStartEvent(YamlEventType.MappingStart, sl + 1, sc + 1, anchor, tag, sl + 1, sc + 1, isFlowStyle: true)) { return false; }
 
         SkipWhitespaceAndComments();
         bool needComma = false;
@@ -908,7 +941,7 @@ internal ref struct YamlEventParser
                 }
                 else
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
             }
             else
@@ -918,7 +951,7 @@ internal ref struct YamlEventParser
                     && (_pos + 1 >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos + 1]) || YamlCharacters.IsFlowIndicator(_buffer[_pos + 1])))
                 {
                     // Empty key — emit null scalar, colon will be consumed below
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else
                 {
@@ -935,7 +968,7 @@ internal ref struct YamlEventParser
 
                 if (_pos >= _buffer.Length || _buffer[_pos] == YamlConstants.Comma || _buffer[_pos] == YamlConstants.CloseBrace)
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else
                 {
@@ -944,7 +977,7 @@ internal ref struct YamlEventParser
             }
             else
             {
-                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
             }
 
             SkipWhitespaceAndComments();
@@ -955,7 +988,8 @@ internal ref struct YamlEventParser
 
         Advance(1);
 
-        if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1)) { return false; }
+        RecordNodeEnd(_line, _column);
+        if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
         _depth--;
         return true;
@@ -967,7 +1001,7 @@ internal ref struct YamlEventParser
         int sl = _line; int sc = _column;
         Advance(1);
 
-        if (!EmitCollectionStartEvent(YamlEventType.SequenceStart, sl + 1, sc + 1, anchor, tag, isFlowStyle: true)) { return false; }
+        if (!EmitCollectionStartEvent(YamlEventType.SequenceStart, sl + 1, sc + 1, anchor, tag, sl + 1, sc + 1, isFlowStyle: true)) { return false; }
 
         SkipWhitespaceAndComments();
 
@@ -1026,7 +1060,7 @@ internal ref struct YamlEventParser
             if (isImplicitMapping)
             {
                 int ml = _line; int mc = _column;
-                if (!EmitCollectionStartEvent(YamlEventType.MappingStart, ml + 1, mc + 1, default, default, isFlowStyle: true)) { return false; }
+                if (!EmitCollectionStartEvent(YamlEventType.MappingStart, ml + 1, mc + 1, default, default, ml + 1, mc + 1, isFlowStyle: true)) { return false; }
 
                 if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.QuestionMark && (_pos + 1 >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos + 1])))
                 {
@@ -1039,13 +1073,13 @@ internal ref struct YamlEventParser
                     }
                     else
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                 }
                 else if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Colon)
                 {
                     // Empty key
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
                 else
                 {
@@ -1061,7 +1095,7 @@ internal ref struct YamlEventParser
 
                     if (_pos >= _buffer.Length || _buffer[_pos] == YamlConstants.Comma || _buffer[_pos] == YamlConstants.CloseBracket || _buffer[_pos] == YamlConstants.CloseBrace)
                     {
-                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                        if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                     }
                     else
                     {
@@ -1070,10 +1104,11 @@ internal ref struct YamlEventParser
                 }
                 else
                 {
-                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default)) { return false; }
+                    if (!EmitScalarEvent(_line + 1, _column + 1, default, YamlScalarStyle.Plain, default, default, _line + 1, _column + 1)) { return false; }
                 }
 
-                if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1)) { return false; }
+                RecordNodeEnd(_line, _column);
+                if (!EmitEvent(YamlEventType.MappingEnd, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
             }
             else
             {
@@ -1088,7 +1123,8 @@ internal ref struct YamlEventParser
 
         Advance(1);
 
-        if (!EmitEvent(YamlEventType.SequenceEnd, _line + 1, _column + 1)) { return false; }
+        RecordNodeEnd(_line, _column);
+        if (!EmitEvent(YamlEventType.SequenceEnd, _line + 1, _column + 1, _line + 1, _column + 1)) { return false; }
 
         _depth--;
         return true;
@@ -1100,6 +1136,7 @@ internal ref struct YamlEventParser
         int written = 0;
         Span<byte> output = rentedBuffer;
         int sl = _line; int sc = _column;
+        int el = _line; int ec = _column;
 
         // YAML spec: in flow context, - ? as first char require a following ns-plain-safe char
         // (: is excluded here because it serves as value indicator in flow mappings)
@@ -1211,11 +1248,13 @@ internal ref struct YamlEventParser
                 EnsureOutputCapacity(ref output, ref rentedBuffer, written, 1);
                 output[written++] = c;
                 Advance(1);
+                if (!YamlCharacters.IsWhitespace(c)) { el = _line; ec = _column; }
             }
 
             while (written > 0 && YamlCharacters.IsWhitespace(output[written - 1])) { written--; }
 
-            return EmitScalarEvent(sl + 1, sc + 1, output.Slice(0, written), YamlScalarStyle.Plain, anchor, tag);
+            RecordNodeEnd(el, ec);
+            return EmitScalarEvent(sl + 1, sc + 1, output.Slice(0, written), YamlScalarStyle.Plain, anchor, tag, el + 1, ec + 1);
         }
         finally
         {
@@ -1444,6 +1483,7 @@ internal ref struct YamlEventParser
     {
         byte indicator = _buffer[_pos];
         int sl = _line; int sc = _column;
+        int el = _line; int ec = _column;
         Advance(1);
         bool literal = indicator == YamlConstants.Pipe;
         byte chomping = 0;
@@ -1611,6 +1651,8 @@ internal ref struct YamlEventParser
                     output[written++] = _buffer[_pos];
                     Advance(1);
                 }
+
+                el = _line; ec = _column;
             }
 
             if (chomping == YamlConstants.Plus)
@@ -1627,7 +1669,8 @@ internal ref struct YamlEventParser
             }
 
             YamlScalarStyle style = literal ? YamlScalarStyle.Literal : YamlScalarStyle.Folded;
-            return EmitScalarEvent(sl + 1, sc + 1, output.Slice(0, written), style, anchor, tag);
+            RecordNodeEnd(el, ec);
+            return EmitScalarEvent(sl + 1, sc + 1, output.Slice(0, written), style, anchor, tag, el + 1, ec + 1);
         }
         finally
         {

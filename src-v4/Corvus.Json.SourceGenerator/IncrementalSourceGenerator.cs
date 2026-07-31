@@ -224,6 +224,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 "Draft7" => CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
                 "Draft6" => CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
                 "Draft4" => CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+                "OpenApi20" => CodeGeneration.OpenApi20.VocabularyAnalyser.DefaultVocabulary,
                 "OpenApi30" => CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
                 "Corvus202012" => Corvus202012Vocab,
                 _ => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
@@ -383,6 +384,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         // And register the custom vocabulary for Corvus extensions.
         vocabularyRegistry.RegisterVocabularies(CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);

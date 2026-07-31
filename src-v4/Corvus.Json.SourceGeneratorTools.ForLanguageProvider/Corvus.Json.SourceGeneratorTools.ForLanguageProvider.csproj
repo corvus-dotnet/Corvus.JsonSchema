@@ -52,6 +52,9 @@
     <Compile Include="..\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration\CorvusVocabulary\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.CorvusVocabulary\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
+    <Compile Include="..\Corvus.Json.CodeGeneration.OpenApi20\Corvus.Json.CodeGeneration\OpenApi20\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi20\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
     <Compile Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration\OpenApi30\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
@@ -69,6 +72,9 @@
     </Compile>
     <Compile Include="..\Corvus.Json.JsonSchema.Draft7\Draft7\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.Draft7\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Corvus.Json.JsonSchema.OpenApi20\OpenApi20\**\*.cs">
+      <Link>Corvus.Json.CodeGeneration.OpenApi20\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
     <Compile Include="..\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>

@@ -58,4 +58,10 @@ public enum ParameterStyle : byte
     /// field as defined in RFC 6265. New in OpenAPI 3.2.
     /// </summary>
     Cookie = 7,
+
+    /// <summary>
+    /// Tab-separated array values in query strings. Not defined by OpenAPI 3.x;
+    /// used for OpenAPI 2.0 (Swagger) <c>collectionFormat: tsv</c> parameters.
+    /// </summary>
+    TabDelimited = 8,
 }

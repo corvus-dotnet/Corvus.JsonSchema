@@ -26,13 +26,17 @@ public readonly ref struct YamlEvent
     /// Initializes a new instance of the <see cref="YamlEvent"/> struct.
     /// </summary>
     /// <param name="type">The event type.</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
-    internal YamlEvent(YamlEventType type, int line, int column)
+    /// <param name="line">The 1-based start line number.</param>
+    /// <param name="column">The 1-based start column number.</param>
+    /// <param name="endLine">The 1-based end line number.</param>
+    /// <param name="endColumn">The 1-based end column number.</param>
+    internal YamlEvent(YamlEventType type, int line, int column, int endLine, int endColumn)
     {
         this.Type = type;
         this.Line = line;
         this.Column = column;
+        this.EndLine = endLine;
+        this.EndColumn = endColumn;
         this.Value = default;
         this.ScalarStyle = default;
         this.Anchor = default;
@@ -48,13 +52,17 @@ public readonly ref struct YamlEvent
     /// <param name="type">The event type (<see cref="YamlEventType.DocumentStart"/>
     /// or <see cref="YamlEventType.DocumentEnd"/>).</param>
     /// <param name="isImplicit">Whether the document boundary is implicit.</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
-    internal YamlEvent(YamlEventType type, bool isImplicit, int line, int column)
+    /// <param name="line">The 1-based start line number.</param>
+    /// <param name="column">The 1-based start column number.</param>
+    /// <param name="endLine">The 1-based end line number.</param>
+    /// <param name="endColumn">The 1-based end column number.</param>
+    internal YamlEvent(YamlEventType type, bool isImplicit, int line, int column, int endLine, int endColumn)
     {
         this.Type = type;
         this.Line = line;
         this.Column = column;
+        this.EndLine = endLine;
+        this.EndColumn = endColumn;
         this.Value = default;
         this.ScalarStyle = default;
         this.Anchor = default;
@@ -71,19 +79,26 @@ public readonly ref struct YamlEvent
     /// or <see cref="YamlEventType.SequenceStart"/>).</param>
     /// <param name="anchor">The anchor name, if any.</param>
     /// <param name="tag">The tag text, if any.</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
+    /// <param name="isFlowStyle">Whether the collection uses flow style.</param>
+    /// <param name="line">The 1-based start line number.</param>
+    /// <param name="column">The 1-based start column number.</param>
+    /// <param name="endLine">The 1-based end line number.</param>
+    /// <param name="endColumn">The 1-based end column number.</param>
     internal YamlEvent(
         YamlEventType type,
         ReadOnlySpan<byte> anchor,
         ReadOnlySpan<byte> tag,
         bool isFlowStyle,
         int line,
-        int column)
+        int column,
+        int endLine,
+        int endColumn)
     {
         this.Type = type;
         this.Line = line;
         this.Column = column;
+        this.EndLine = endLine;
+        this.EndColumn = endColumn;
         this.Value = default;
         this.ScalarStyle = default;
         this.Anchor = anchor;
@@ -96,21 +111,25 @@ public readonly ref struct YamlEvent
     /// Initializes a new instance of the <see cref="YamlEvent"/> struct for alias events.
     /// </summary>
     /// <param name="aliasName">The anchor name referenced by the alias (without leading <c>*</c>).</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
-    internal static YamlEvent Alias(ReadOnlySpan<byte> aliasName, int line, int column)
+    /// <param name="line">The 1-based start line number.</param>
+    /// <param name="column">The 1-based start column number.</param>
+    /// <param name="endLine">The 1-based end line number.</param>
+    /// <param name="endColumn">The 1-based end column number.</param>
+    internal static YamlEvent Alias(ReadOnlySpan<byte> aliasName, int line, int column, int endLine, int endColumn)
     {
-        return new YamlEvent(aliasName, line, column);
+        return new YamlEvent(aliasName, line, column, endLine, endColumn);
     }
 
     /// <summary>
     /// Initializes a new instance for alias events (private, used by <see cref="Alias"/>).
     /// </summary>
-    private YamlEvent(ReadOnlySpan<byte> aliasName, int line, int column)
+    private YamlEvent(ReadOnlySpan<byte> aliasName, int line, int column, int endLine, int endColumn)
     {
         this.Type = YamlEventType.Alias;
         this.Line = line;
         this.Column = column;
+        this.EndLine = endLine;
+        this.EndColumn = endColumn;
         this.Value = aliasName;
         this.ScalarStyle = default;
         this.Anchor = default;
@@ -158,15 +177,19 @@ public readonly ref struct YamlEvent
     /// <param name="scalarStyle">The scalar style.</param>
     /// <param name="anchor">The anchor name, if any.</param>
     /// <param name="tag">The tag text, if any.</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
+    /// <param name="line">The 1-based start line number.</param>
+    /// <param name="column">The 1-based start column number.</param>
+    /// <param name="endLine">The 1-based end line number.</param>
+    /// <param name="endColumn">The 1-based end column number.</param>
     internal YamlEvent(
         ReadOnlySpan<byte> value,
         YamlScalarStyle scalarStyle,
         ReadOnlySpan<byte> anchor,
         ReadOnlySpan<byte> tag,
         int line,
-        int column)
+        int column,
+        int endLine,
+        int endColumn)
     {
         this.Type = YamlEventType.Scalar;
         this.Value = value;
@@ -175,6 +198,8 @@ public readonly ref struct YamlEvent
         this.Tag = tag;
         this.Line = line;
         this.Column = column;
+        this.EndLine = endLine;
+        this.EndColumn = endColumn;
         this.IsImplicit = false;
         this.IsFlowStyle = false;
     }
@@ -222,6 +247,16 @@ public readonly ref struct YamlEvent
     /// Gets the 1-based column number where this event starts.
     /// </summary>
     public int Column { get; }
+
+    /// <summary>
+    /// Gets the 1-based line number one position past the end of this event's content.
+    /// </summary>
+    public int EndLine { get; }
+
+    /// <summary>
+    /// Gets the 1-based column number one position past the end of this event's content.
+    /// </summary>
+    public int EndColumn { get; }
 
     /// <summary>
     /// Gets a value indicating whether the document start or end is implicit (no explicit

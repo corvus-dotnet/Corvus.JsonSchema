@@ -66,6 +66,7 @@ dotnet run
 | [039](039-AsyncApiAuthentication/) | AsyncAPI Authentication | Azure Identity, OAuth2, Bearer, API Key, mTLS, composite auth patterns |
 | [040](040-PatternPropertyMatcher/) | Pattern Property Matcher | `patternProperties`, generated `MatchesPattern*`, `TryAsPattern*`, visitor dispatch |
 | [041](041-Toon/) | TOON | Parse TOON to JSON, convert JSON to TOON, path expansion, key folding, UTF-8 output |
+| [042](042-OpenApi20Client/) | OpenAPI 2.0 Client | Swagger 2.0 client generation: body/formData params, collectionFormat, host/basePath |
 
 ## Related documentation
 

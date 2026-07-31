@@ -125,4 +125,7 @@
   <Folder Name="/041-Toon/">
     <Project Path="041-Toon\Toon.csproj" />
   </Folder>
+  <Folder Name="/042-OpenApi20Client/">
+    <Project Path="042-OpenApi20Client\OpenApi20Client.csproj" />
+  </Folder>
 </Solution>

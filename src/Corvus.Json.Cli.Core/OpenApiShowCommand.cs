@@ -7,6 +7,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi20;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
@@ -62,6 +63,7 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
         // List operations
         OperationSummary[] operations = specVersion switch
         {
+            "2.0" => OpenApi20CodeGenerator.ListOperations(specRoot, filter),
             "3.0" => OpenApi30CodeGenerator.ListOperations(specRoot, filter),
             "3.2" => OpenApi32CodeGenerator.ListOperations(specRoot, filter),
             _ => OpenApi31CodeGenerator.ListOperations(specRoot, filter),
@@ -79,6 +81,7 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
         {
             TagInfo[] tags = specVersion switch
             {
+                "2.0" => OpenApi20CodeGenerator.ListTags(specRoot),
                 "3.0" => OpenApi30CodeGenerator.ListTags(specRoot),
                 "3.2" => OpenApi32CodeGenerator.ListTags(specRoot),
                 _ => OpenApi31CodeGenerator.ListTags(specRoot),

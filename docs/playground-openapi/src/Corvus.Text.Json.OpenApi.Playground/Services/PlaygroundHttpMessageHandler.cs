@@ -12,11 +12,24 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         string path = request.RequestUri?.AbsolutePath ?? "/";
+
+        // HttpClientTransport (since V5.2.4) preserves the base address path prefix,
+        // so requests arrive as /v1/pets (basic and Swagger 2.0 samples) or /v2/pets
+        // (advanced sample). Strip the version segment so the route table below stays
+        // sample-neutral.
+        if (path.StartsWith("/v1/", StringComparison.Ordinal) || path.StartsWith("/v2/", StringComparison.Ordinal))
+        {
+            path = path[3..];
+        }
+
         HttpResponseMessage response = (request.Method.Method, path) switch
         {
             ("GET", "/pets") => JsonResponse(HttpStatusCode.OK, AdvancedPetList, ("x-total-count", "2"), ("x-next", "/pets?limit=10&cursor=next")),
             ("POST", "/pets") => JsonResponse(HttpStatusCode.Created, AdvancedPet),
             ("GET", "/pets/pet-123") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
+
+            // The Swagger 2.0 sample's formData operation
+            ("POST", "/pets/pet-123") => JsonResponse(HttpStatusCode.OK, """{ "id": 123, "name": "Fido II", "tag": "dog" }"""),
 
             ("GET", string p) when p.StartsWith("/pets/batch/", StringComparison.Ordinal) => JsonResponse(HttpStatusCode.OK, AdvancedPetList),
             ("GET", "/pets/pet-42") => JsonResponse(HttpStatusCode.OK, AdvancedPet),

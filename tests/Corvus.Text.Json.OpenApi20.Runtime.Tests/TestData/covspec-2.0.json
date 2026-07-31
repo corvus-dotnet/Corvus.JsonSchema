@@ -1,0 +1,156 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "Coverage Spec", "version": "1.0.0" },
+  "host": "api.example.com",
+  "basePath": "/v1",
+  "schemes": [ "http", "https" ],
+  "consumes": [ "application/json" ],
+  "produces": [ "application/json", "application/xml" ],
+  "securityDefinitions": {
+    "basicAuth": { "type": "basic" },
+    "apiKeyAuth": { "type": "apiKey", "name": "X-Api-Key", "in": "header" },
+    "oauthImplicit": {
+      "type": "oauth2",
+      "flow": "implicit",
+      "authorizationUrl": "https://auth.example.com/authorize",
+      "scopes": { "read": "Read access", "write": "Write access" }
+    },
+    "oauthAccessCode": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://auth.example.com/authorize",
+      "tokenUrl": "https://auth.example.com/token",
+      "scopes": { "admin": "Admin access" }
+    }
+  },
+  "security": [ { "basicAuth": [] } ],
+  "parameters": {
+    "SharedLimit": {
+      "name": "limit",
+      "in": "query",
+      "type": "integer",
+      "format": "int32",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "SharedBody": {
+      "name": "payload",
+      "in": "body",
+      "required": true,
+      "schema": { "$ref": "#/definitions/Widget" }
+    }
+  },
+  "responses": {
+    "SharedError": {
+      "description": "Shared error response",
+      "schema": { "$ref": "#/definitions/Error" }
+    }
+  },
+  "paths": {
+    "/widgets": {
+      "parameters": [
+        { "name": "tenant", "in": "query", "type": "string", "pattern": "^[a-z]+$" }
+      ],
+      "get": {
+        "operationId": "listWidgets",
+        "tags": [ "widgets" ],
+        "parameters": [
+          { "name": "csvTags", "in": "query", "type": "array", "collectionFormat": "csv", "items": { "type": "string" } },
+          { "name": "ssvTags", "in": "query", "type": "array", "collectionFormat": "ssv", "items": { "type": "string" } },
+          { "name": "tsvTags", "in": "query", "type": "array", "collectionFormat": "tsv", "items": { "type": "string" } },
+          { "name": "pipeTags", "in": "query", "type": "array", "collectionFormat": "pipes", "items": { "type": "string" } },
+          { "name": "multiTags", "in": "query", "type": "array", "collectionFormat": "multi", "items": { "type": "string" } },
+          { "name": "defaultTags", "in": "query", "type": "array", "items": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": { "type": "array", "items": { "$ref": "#/definitions/Widget" } },
+            "headers": {
+              "X-Total-Count": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "default": { "$ref": "#/responses/SharedError" }
+        }
+      },
+      "post": {
+        "operationId": "createWidget",
+        "tags": [ "widgets" ],
+        "security": [ { "oauthAccessCode": [ "admin" ] }, {} ],
+        "parameters": [
+          { "$ref": "#/parameters/SharedBody" }
+        ],
+        "responses": {
+          "201": { "description": "created", "schema": { "$ref": "#/definitions/Widget" } }
+        }
+      }
+    },
+    "/widgets/{widgetId}/render": {
+      "get": {
+        "operationId": "renderWidget",
+        "tags": [ "widgets" ],
+        "deprecated": true,
+        "schemes": [ "http" ],
+        "produces": [ "application/octet-stream" ],
+        "parameters": [
+          { "name": "widgetId", "in": "path", "required": true, "type": "string" },
+          { "name": "sections", "in": "path", "required": true, "type": "array", "collectionFormat": "ssv", "items": { "type": "string" } },
+          { "name": "X-Trace", "in": "header", "type": "string" }
+        ],
+        "responses": {
+          "200": { "description": "the rendered widget image", "schema": { "type": "file" } }
+        }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "operationId": "uploadBundle",
+        "tags": [ "uploads" ],
+        "consumes": [ "multipart/form-data" ],
+        "parameters": [
+          { "name": "archive", "in": "formData", "required": true, "type": "file" },
+          { "name": "labels", "in": "formData", "type": "array", "collectionFormat": "tsv", "items": { "type": "string" } },
+          { "name": "notes", "in": "formData", "type": "string" }
+        ],
+        "responses": {
+          "204": { "description": "accepted" }
+        }
+      }
+    },
+    "/legacy": {
+      "post": {
+        "parameters": [
+          { "$ref": "#/parameters/SharedLimit" },
+          { "name": "flags", "in": "formData", "type": "array", "collectionFormat": "pipes", "items": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "ok", "schema": { "$ref": "#/definitions/weird key!~0x" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Widget": {
+      "type": "object",
+      "required": [ "id" ],
+      "properties": {
+        "id": { "type": "string" },
+        "size": { "type": "integer", "format": "int32", "minimum": 0, "exclusiveMinimum": true },
+        "kind": { "$ref": "#/definitions/weird key!~0x" }
+      },
+      "discriminator": "kind",
+      "x-nullable": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "integer" },
+        "message": { "type": "string", "x-nullable": true }
+      }
+    },
+    "weird key!~x": {
+      "type": "string",
+      "enum": [ "alpha", "beta" ]
+    }
+  }
+}

@@ -85,6 +85,12 @@ internal sealed class OpenApiCallbackServerCommand : AsyncCommand<OpenApiGenerat
         // Detect or use specified version
         string specVersion = OpenApiCommandHelpers.DetectSpecVersion(specRoot, settings.SpecVersion);
 
+        if (specVersion is "2.0")
+        {
+            AnsiConsole.MarkupLine("[red]OpenAPI 2.0 (Swagger) does not define callbacks or webhooks; nothing to generate.[/]");
+            return 1;
+        }
+
         // Build filter from --include-path / --exclude-path / --filter
         OperationFilter? filter = OpenApiCommandHelpers.BuildFilter(settings);
 
@@ -227,6 +233,7 @@ internal sealed class OpenApiCallbackServerCommand : AsyncCommand<OpenApiGenerat
         Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
         Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
         IVocabulary defaultVocabulary = specVersion switch
         {

@@ -10,6 +10,7 @@ public static class SampleRegistry
         [
             new("petstore-client", "Petstore Client (Basic)"),
             new("petstore-advanced", "Petstore Extended (Advanced)"),
+            new("petstore-swagger", "Petstore (Swagger 2.0)"),
         ];
     }
 

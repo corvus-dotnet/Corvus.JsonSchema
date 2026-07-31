@@ -9,6 +9,8 @@
         <ModulePath>.*OpenApi31\.Runtime\.Tests\.dll$</ModulePath>
         <ModulePath>.*OpenApi30\.Server\.Runtime\.Tests\.dll$</ModulePath>
         <ModulePath>.*OpenApi30\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi20\.Server\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi20\.Runtime\.Tests\.dll$</ModulePath>
       </Include>
     </ModulePaths>
     <Sources>
