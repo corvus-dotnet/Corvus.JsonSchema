@@ -50,16 +50,10 @@ public sealed class NatsJetStreamEnvironmentAdministratorStoreConformanceTests :
     protected override async ValueTask<IEnvironmentAdministratorStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_environment_administrators");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamEnvironmentAdministratorStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_environment_administrators"],
+            () => NatsJetStreamEnvironmentAdministratorStore.PrepareAsync(connection));
         return await NatsJetStreamEnvironmentAdministratorStore.ConnectAsync(connection, timeProvider);
     }
 }

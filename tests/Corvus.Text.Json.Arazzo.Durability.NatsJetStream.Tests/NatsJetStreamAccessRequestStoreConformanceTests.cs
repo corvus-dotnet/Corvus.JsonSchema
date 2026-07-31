@@ -50,16 +50,10 @@ public sealed class NatsJetStreamAccessRequestStoreConformanceTests : AccessRequ
     protected override async ValueTask<IAccessRequestStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_access_requests");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamAccessRequestStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_access_requests"],
+            () => NatsJetStreamAccessRequestStore.PrepareAsync(connection));
         return await NatsJetStreamAccessRequestStore.ConnectAsync(connection, timeProvider);
     }
 }

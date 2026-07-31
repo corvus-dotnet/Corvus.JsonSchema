@@ -50,16 +50,10 @@ public sealed class NatsJetStreamSecurityPolicyStoreConformanceTests : SecurityP
     protected override async ValueTask<ISecurityPolicyStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_security");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamSecurityPolicyStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_security"],
+            () => NatsJetStreamSecurityPolicyStore.PrepareAsync(connection));
         return await NatsJetStreamSecurityPolicyStore.ConnectAsync(connection, timeProvider);
     }
 }

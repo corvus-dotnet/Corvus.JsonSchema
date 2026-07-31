@@ -50,17 +50,10 @@ public sealed class NatsJetStreamDraftRunStoreConformanceTests : DraftRunStoreCo
     protected override async ValueTask<IDraftRunStore> CreateStoreAsync()
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_draftruns");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        // Provision the bucket then open for operation over the caller-owned connection.
-        await NatsJetStreamDraftRunStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_draftruns"],
+            () => NatsJetStreamDraftRunStore.PrepareAsync(connection));
         return await NatsJetStreamDraftRunStore.ConnectAsync(connection);
     }
 }

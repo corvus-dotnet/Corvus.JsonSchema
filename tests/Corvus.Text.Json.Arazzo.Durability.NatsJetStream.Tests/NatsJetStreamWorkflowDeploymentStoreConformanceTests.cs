@@ -51,16 +51,10 @@ public sealed class NatsJetStreamWorkflowDeploymentStoreConformanceTests : Workf
     protected override async ValueTask<IWorkflowDeploymentStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_workflow_deployments");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamWorkflowDeploymentStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_workflow_deployments"],
+            () => NatsJetStreamWorkflowDeploymentStore.PrepareAsync(connection));
         return await NatsJetStreamWorkflowDeploymentStore.ConnectAsync(connection, timeProvider);
     }
 }

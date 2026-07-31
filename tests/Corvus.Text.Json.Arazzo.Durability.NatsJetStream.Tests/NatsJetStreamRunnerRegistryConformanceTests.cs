@@ -50,17 +50,10 @@ public sealed class NatsJetStreamRunnerRegistryConformanceTests : RunnerRegistry
     protected override async ValueTask<IRunnerRegistry> CreateRegistryAsync()
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_runners");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        // Provision the bucket then open for operation over the caller-owned connection.
-        await NatsJetStreamRunnerRegistry.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_runners"],
+            () => NatsJetStreamRunnerRegistry.PrepareAsync(connection));
         return await NatsJetStreamRunnerRegistry.ConnectAsync(connection);
     }
 }

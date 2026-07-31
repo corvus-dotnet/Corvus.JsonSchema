@@ -51,16 +51,10 @@ public sealed class NatsJetStreamNativeBuildJobStoreConformanceTests : NativeBui
     protected override async ValueTask<INativeBuildJobStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_native_build_jobs");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamNativeBuildJobStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_native_build_jobs"],
+            () => NatsJetStreamNativeBuildJobStore.PrepareAsync(connection));
         return await NatsJetStreamNativeBuildJobStore.ConnectAsync(connection, timeProvider);
     }
 }

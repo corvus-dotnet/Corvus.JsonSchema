@@ -50,16 +50,10 @@ public sealed class NatsJetStreamSourceCredentialStoreConformanceTests : SourceC
     protected override async ValueTask<ISourceCredentialStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_source_credentials");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamSourceCredentialStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_source_credentials"],
+            () => NatsJetStreamSourceCredentialStore.PrepareAsync(connection));
         return await NatsJetStreamSourceCredentialStore.ConnectAsync(connection, timeProvider);
     }
 }

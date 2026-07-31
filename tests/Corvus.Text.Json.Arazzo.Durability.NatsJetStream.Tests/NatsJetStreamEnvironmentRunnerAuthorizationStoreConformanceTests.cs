@@ -51,16 +51,10 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStoreConformanceT
     protected override async ValueTask<IEnvironmentRunnerAuthorizationStore> CreateStoreAsync()
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_runner_authorizations");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamEnvironmentRunnerAuthorizationStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_runner_authorizations"],
+            () => NatsJetStreamEnvironmentRunnerAuthorizationStore.PrepareAsync(connection));
         return await NatsJetStreamEnvironmentRunnerAuthorizationStore.ConnectAsync(connection);
     }
 }

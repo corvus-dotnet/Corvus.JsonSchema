@@ -51,16 +51,10 @@ public sealed class NatsJetStreamAvailabilityStoreConformanceTests : Availabilit
     protected override async ValueTask<IAvailabilityStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_availability");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamAvailabilityStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_availability"],
+            () => NatsJetStreamAvailabilityStore.PrepareAsync(connection));
         return await NatsJetStreamAvailabilityStore.ConnectAsync(connection, timeProvider);
     }
 }

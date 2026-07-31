@@ -50,16 +50,10 @@ public sealed class NatsJetStreamObservedIdentityStoreConformanceTests : Observe
     protected override async ValueTask<IObservedIdentityStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_observed_identities");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamObservedIdentityStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_observed_identities"],
+            () => NatsJetStreamObservedIdentityStore.PrepareAsync(connection));
         return await NatsJetStreamObservedIdentityStore.ConnectAsync(connection, timeProvider);
     }
 }

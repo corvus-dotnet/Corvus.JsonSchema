@@ -51,16 +51,10 @@ public sealed class NatsJetStreamSourceStoreConformanceTests : SourceStoreConfor
     protected override async ValueTask<ISourceStore> CreateStoreAsync(TimeProvider timeProvider)
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        try
-        {
-            await kv.DeleteStoreAsync("arazzo_sources");
-        }
-        catch (NatsJSApiException)
-        {
-            // The bucket (JetStream stream) does not exist yet — nothing to reset.
-        }
-
-        await NatsJetStreamSourceStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_sources"],
+            () => NatsJetStreamSourceStore.PrepareAsync(connection));
         return await NatsJetStreamSourceStore.ConnectAsync(connection, timeProvider);
     }
 }

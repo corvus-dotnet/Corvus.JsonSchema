@@ -63,20 +63,10 @@ public sealed class NatsJetStreamResumeClaimTests
     private static async ValueTask<IWorkflowStateStore> CreateStoreAsync()
     {
         var kv = new NatsKVContext(new NatsJSContext(connection));
-        foreach (string bucket in new[] { "arazzo_runs", "arazzo_leases" })
-        {
-            try
-            {
-                await kv.DeleteStoreAsync(bucket);
-            }
-            catch (NatsJSApiException)
-            {
-                // The bucket (JetStream stream) does not exist yet — nothing to reset.
-            }
-        }
-
-        // Provision the buckets then open for operation over the caller-owned connection.
-        await NatsJetStreamWorkflowStateStore.PrepareAsync(connection);
+        await NatsKvTestReset.ResetAndProvisionAsync(
+            kv,
+            ["arazzo_runs", "arazzo_leases"],
+            () => NatsJetStreamWorkflowStateStore.PrepareAsync(connection));
         return await NatsJetStreamWorkflowStateStore.ConnectAsync(connection);
     }
 }
