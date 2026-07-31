@@ -261,6 +261,12 @@ public static class ControlPlaneEndpointExtensions
         // build worker drives each job Queued -> Building -> Ready | Failed. Uses the store hoisted above.
         var nativeBuildsHandler = new ArazzoControlPlaneNativeBuildsHandler(buildStore, catalog, access, auditLogger: auditLogger);
 
+        // The deployments API (ADR 0055): read-only observation of a version's serverless deployments per (environment,
+        // runtime target) — their lifecycle state and resulting function invoke URL. The deploy itself runs on the runner
+        // (ADR 0059); the control plane only records and reports the state a background deploy worker drives. Reach-gated to
+        // the version (catalog:read). Uses the deployment store hoisted above (shared with the catalog dispatch-ready gate).
+        var deploymentsHandler = new ArazzoControlPlaneDeploymentsHandler(deploymentStore, catalog, access);
+
         // The runner-authorization API (§5.5): which runners may serve an environment. A runner enters Pending on
         // registration and is dispatchable only once an administrator of the TARGET environment authorizes it (revocable).
         // Governed by the environment's administrators; the approver inbox spans the environments the caller administers.
@@ -292,6 +298,7 @@ public static class ControlPlaneEndpointExtensions
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore),
             availabilityHandler,
             nativeBuildsHandler,
+            deploymentsHandler,
             credentialsHandler,
             workspaceHandler,
             gitHubHandler,

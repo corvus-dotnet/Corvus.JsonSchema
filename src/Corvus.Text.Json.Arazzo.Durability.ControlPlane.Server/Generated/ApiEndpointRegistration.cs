@@ -31,6 +31,7 @@ public static class ApiEndpointRegistration
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="nativeBuildsHandler">The handler for ApiNativeBuilds operations.</param>
+    /// <param name="deploymentsHandler">The handler for ApiDeployments operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
     /// <param name="githubHandler">The handler for ApiGithub operations.</param>
@@ -45,9 +46,9 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
     {
-        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, nativeBuildsHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, schedulesHandler, administratorsHandler, providersHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, nativeBuildsHandler, deploymentsHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, schedulesHandler, administratorsHandler, providersHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -60,6 +61,7 @@ public static class ApiEndpointRegistration
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="nativeBuildsHandler">The handler for ApiNativeBuilds operations.</param>
+    /// <param name="deploymentsHandler">The handler for ApiDeployments operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
     /// <param name="githubHandler">The handler for ApiGithub operations.</param>
@@ -75,7 +77,7 @@ public static class ApiEndpointRegistration
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __GetAccessGrantsEndpoint = app.MapGet("/access/grants", async (HttpContext context) =>
@@ -5931,6 +5933,413 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetNativeBuildEndpoint);
+
+        IEndpointConventionBuilder __ListDeploymentsEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DeploymentStatus StatusValue = default;
+                if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
+                {
+                    string StatusRaw = StatusQueryVal[0]!;
+                    StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DeploymentStatus>(StatusRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
+                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
+                {
+                    string LimitRaw = LimitQueryVal[0]!;
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
+                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
+                {
+                    string PageTokenRaw = PageTokenQueryVal[0]!;
+                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'status' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListDeploymentsParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                    Status = StatusValue,
+                    Limit = LimitValue,
+                    PageToken = PageTokenValue,
+                }
+                ;
+
+                ListDeploymentsResult result = await deploymentsHandler.HandleListDeploymentsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listDeployments",
+                methodName: "ListDeployments",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments",
+                tags: new[] { "deployments" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListDeploymentsEndpoint);
+
+        IEndpointConventionBuilder __CountDeploymentsEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DeploymentStatus StatusValue = default;
+                if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
+                {
+                    string StatusRaw = StatusQueryVal[0]!;
+                    StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DeploymentStatus>(StatusRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'status' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CountDeploymentsParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                    Status = StatusValue,
+                }
+                ;
+
+                CountDeploymentsResult result = await deploymentsHandler.HandleCountDeploymentsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countDeployments",
+                methodName: "CountDeployments",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/count",
+                tags: new[] { "deployments" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountDeploymentsEndpoint);
+
+        IEndpointConventionBuilder __GetDeploymentEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/{environment}/{runtimeIdentifier}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RuntimeIdentifierValue = default;
+                if (context.Request.RouteValues.TryGetValue("runtimeIdentifier", out object? RuntimeIdentifierRouteVal) && RuntimeIdentifierRouteVal is string RuntimeIdentifierRaw)
+                {
+                    RuntimeIdentifierValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RuntimeIdentifierRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (RuntimeIdentifierValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'runtimeIdentifier' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RuntimeIdentifierValue.IsUndefined() && !RuntimeIdentifierValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'runtimeIdentifier' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetDeploymentParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                    Environment = EnvironmentValue,
+                    RuntimeIdentifier = RuntimeIdentifierValue,
+                }
+                ;
+
+                GetDeploymentResult result = await deploymentsHandler.HandleGetDeploymentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getDeployment",
+                methodName: "GetDeployment",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/{environment}/{runtimeIdentifier}",
+                tags: new[] { "deployments" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetDeploymentEndpoint);
 
         IEndpointConventionBuilder __ListCredentialsEndpoint = app.MapGet("/credentials", async (HttpContext context) =>
         {
@@ -16250,6 +16659,36 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetNativeBuild</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GetNativeBuildOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListDeployments</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListDeploymentsOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListDeployments</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListDeploymentsOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountDeployments</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountDeploymentsOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountDeployments</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountDeploymentsOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetDeployment</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetDeploymentOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetDeployment</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetDeploymentOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.

@@ -82,6 +82,10 @@
     "description": "Build a workflow version's native serverless binary asynchronously, one build per runtime target in an environment (ADR 0055). Enqueuing a build is idempotent per (environment, runtime target): re-requesting the same target resets its build to queued (a rebuild). A background worker drives each job queued -> building -> ready | failed, and a client polls it; producing the native binary is a prerequisite to making a version available in a serverless environment. Enqueuing requires catalog write, and reading a version's builds is reach-scoped to the workflow (capability scopes catalog:read / catalog:write)."
   },
   {
+    "name": "deployments",
+    "description": "Observe a workflow version's serverless deployments (ADR 0055): the per-(environment, runtime target) deployment of its signed native binary to a function platform, driven by a runner-side deploy worker queued -> deploying -> deployed | failed, and the resulting function invoke URL. This surface is read-only on the control plane — deploying runs on the runner, which holds the environment's cloud credentials (ADR 0059), and the control plane records and reports the deployment state the runner drives. Reading a version's deployments is reach-scoped to the workflow (capability scope catalog:read)."
+  },
+  {
     "name": "accessRequests",
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   },
@@ -1113,6 +1117,75 @@
         ],
         "responses": {
           "200": { "description": "The native build job.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NativeBuildView" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments": {
+      "get": {
+        "operationId": "listDeployments",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["deployments"],
+        "summary": "List a workflow version's serverless deployments",
+        "description": "Returns a page of serverless deployments for this version (ADR 0055) — the per-(environment, runtime target) deployments of its signed native binary to a function platform, ordered oldest first, optionally filtered by deployment status. Read-only: deploying runs on the runner (ADR 0059); this reports the state the control plane records. Visible to a caller who can read the workflow version (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/DeploymentStatusQuery" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The deployments.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeploymentList" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/count": {
+      "get": {
+        "operationId": "countDeployments",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["deployments"],
+        "summary": "Count a workflow version's serverless deployments",
+        "description": "Counts this version's serverless deployments (ADR 0055), optionally filtered by status, bounded by the server's cap — no rows are returned (for a list footer or a work badge such as the number of failed deployments). Visible to a caller who can read the workflow version (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/DeploymentStatusQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching deployments.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/deployments/{environment}/{runtimeIdentifier}": {
+      "get": {
+        "operationId": "getDeployment",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["deployments"],
+        "summary": "Get a serverless deployment for a runtime target",
+        "description": "Returns the serverless deployment for this version's (environment, runtime target) (ADR 0055): its lifecycle status (queued, deploying, deployed, or failed), the resulting function invoke URL once deployed, and, for a failure, the reason. 404 if the version has no deployment for that target.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" },
+          { "$ref": "#/components/parameters/RuntimeIdentifierPath" }
+        ],
+        "responses": {
+          "200": { "description": "The serverless deployment.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeploymentView" } } } },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
@@ -5061,6 +5134,13 @@
         "description": "Restrict to native build jobs in this lifecycle state.",
         "schema": { "$ref": "#/components/schemas/NativeBuildStatus" }
       },
+      "DeploymentStatusQuery": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "description": "Restrict to serverless deployments in this lifecycle state.",
+        "schema": { "$ref": "#/components/schemas/DeploymentStatus" }
+      },
       "StatusQuery": {
         "name": "status",
         "in": "query",
@@ -8508,6 +8588,44 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["nativeBuilds"]
+      },
+      "DeploymentStatus": {
+        "type": "string",
+        "description": "The lifecycle state of a serverless deployment (ADR 0055).",
+        "enum": ["Queued", "Deploying", "Deployed", "Failed"]
+      },
+      "DeploymentView": {
+        "type": "object",
+        "description": "A serverless deployment (ADR 0055): the state of an asynchronous deployment of a workflow version's signed native binary to a function platform for one runtime target in one environment, the resulting function invoke URL, and the deployment's lifecycle state. Read-only on the control plane — the deploy runs on the runner (ADR 0059).",
+        "properties": {
+          "id": { "type": "string", "description": "The deployment's stable id, derived from its target tuple." },
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version is being deployed." },
+          "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The 1-based version number being deployed." },
+          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "runtimeIdentifier": { "type": "string", "description": "The runtime identifier (RID) the native binary targets." },
+          "status": { "$ref": "#/components/schemas/DeploymentStatus" },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the deployment was enqueued." },
+          "startedAt": { "type": "string", "format": "date-time", "description": "When a worker started deploying; absent if not started." },
+          "completedAt": { "type": "string", "format": "date-time", "description": "When the deployment completed; absent if not completed." },
+          "failureReason": { "type": "string", "description": "Why the deployment failed; present only for a failed deployment." },
+          "functionUrl": { "type": "string", "description": "The deployed function's invoke URL; present only once the deployment reaches Deployed." },
+          "claimedBy": { "type": "string", "description": "The worker that claimed the deployment; absent if unclaimed." },
+          "leaseExpiresAt": { "type": "string", "format": "date-time", "description": "When the claiming worker's advisory lease expires (ADR 0056); present only while Deploying." },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["id", "baseWorkflowId", "versionNumber", "environment", "runtimeIdentifier", "status", "createdAt", "etag"]
+      },
+      "DeploymentList": {
+        "type": "object",
+        "description": "A page of serverless deployments (ADR 0055) for a workflow version, ordered oldest first.",
+        "properties": {
+          "deployments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DeploymentView" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["deployments"]
       },
       "GranteeKind": {
         "type": "string",
