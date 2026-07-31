@@ -358,3 +358,59 @@ describe('<arazzo-catalog> panel', () => {
     ok(true);
   });
 });
+
+// The Serverless section (ADR 0055): the version's native builds + deployments per (environment, runtime
+// target), with the queue-build action (the build is control-plane-side; the deploy runs on the runner, ADR 0059).
+describe('<arazzo-catalog-detail> serverless section', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  it('renders the built + deployed version with its function URL (read-only without catalog:write)', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const builds = await waitFor(() => el.shadowRoot.querySelector('[part="serverless-builds"]'));
+    equal(builds.querySelector('.srv-badge').textContent, 'Ready', 'the seeded build is Ready');
+    ok([...builds.querySelectorAll('.tag')].some((t) => t.textContent === 'release'), 'the build label renders');
+    const deploys = el.shadowRoot.querySelector('[part="serverless-deployments"]');
+    equal(deploys.querySelector('.srv-badge').textContent, 'Deployed', 'the seeded deployment is Deployed');
+    ok(deploys.querySelector('.srv-url').textContent.includes('lambda-url'), 'the invoke URL renders');
+    ok(!el.shadowRoot.querySelector('.srv-queue'), 'no queue action without catalog:write');
+    ok(!el.shadowRoot.querySelector('.srv-rebuild'), 'no rebuild action without catalog:write');
+  });
+
+  it('surfaces a failed build with its reason', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const builds = await waitFor(() => el.shadowRoot.querySelector('[part="serverless-builds"]'));
+    equal(builds.querySelector('.srv-badge').textContent, 'Failed', 'the seeded build failed');
+    ok(builds.querySelector('.srv-fail').textContent.includes('IL3050'), 'the failure reason renders');
+  });
+
+  it('shows the empty state with the queue action for an unbuilt version (catalog:write)', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read catalog:write' });
+    mount(el);
+    const body = await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.srv-body');
+      return b && b.querySelector('.srv-queue') ? b : null;
+    });
+    ok(body.textContent.includes('No serverless builds or deployments'), 'empty state renders');
+  });
+
+  it('queues a build through the kit dialog and re-lists it Queued', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read catalog:write' });
+    mount(el);
+    const queue = await waitFor(() => el.shadowRoot.querySelector('.srv-queue'));
+    queue.click();
+    const dlg = await waitFor(() => {
+      const d = el.shadowRoot.querySelector('arazzo-input-dialog');
+      return d?.shadowRoot.querySelector('.in-field') ? d : null;
+    });
+    dlg.shadowRoot.querySelector('.in-field[data-key="environment"]').value = 'staging';
+    dlg.shadowRoot.querySelector('.in-field[data-key="runtimeIdentifier"]').value = 'linux-arm64';
+    dlg.shadowRoot.querySelector('.in-field[data-key="buildLabel"]').value = 'spike';
+    dlg.shadowRoot.querySelector('.confirm').click();
+    const row = await waitFor(() => el.shadowRoot.querySelector('.srv-row[data-env="staging"][data-rid="linux-arm64"]'));
+    equal(row.querySelector('.srv-badge').textContent, 'Queued', 'the queued job re-lists as Queued');
+    ok([...row.querySelectorAll('.tag')].some((t) => t.textContent === 'spike'), 'the new build label renders');
+  });
+});

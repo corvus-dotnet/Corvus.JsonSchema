@@ -1088,6 +1088,43 @@ function seedAvailabilityEntries() {
   ];
 }
 
+/**
+ * Serverless native builds (ADR 0055), seeded so the catalog detail's Serverless section has real lifecycle states:
+ * nightly-reconcile v3 built Ready for production (and deployed, below), and adopt-pet v1 carrying the Failed build
+ * (an AOT-cleanliness gap) an operator investigates. Ids derive from the target tuple, as the store derives them.
+ */
+function seedNativeBuilds() {
+  const hour = 60 * 60000;
+  const b = (baseWorkflowId, versionNumber, environment, runtimeIdentifier, status, extra = {}) => ({
+    id: `${baseWorkflowId}-v${versionNumber}-${environment}-${runtimeIdentifier}`,
+    baseWorkflowId, versionNumber, environment, runtimeIdentifier, status,
+    createdAt: iso(-30 * hour), etag: nextEtag(), ...extra,
+  });
+  return [
+    b('nightly-reconcile', 3, 'production', 'linux-x64', 'Ready', {
+      buildLabel: 'release', startedAt: iso(-30 * hour + 60000), completedAt: iso(-30 * hour + 6 * 60000), claimedBy: 'build-worker-1',
+    }),
+    b('adopt-pet', 1, 'production', 'linux-x64', 'Failed', {
+      startedAt: iso(-8 * hour), completedAt: iso(-8 * hour + 4 * 60000), claimedBy: 'build-worker-1',
+      failureReason: 'Native AOT compile failed: IL3050 — dynamic code generation in a referenced serializer.',
+    }),
+  ];
+}
+
+/**
+ * Serverless deployments (ADR 0055), read-only on the control plane — the deploy runs on the runner (ADR 0059) and
+ * this is the state it reported. A deployment exists only where a build reached Ready, as in the real pipeline.
+ */
+function seedDeployments() {
+  const hour = 60 * 60000;
+  return [{
+    id: 'nightly-reconcile-v3-production-linux-x64',
+    baseWorkflowId: 'nightly-reconcile', versionNumber: 3, environment: 'production', runtimeIdentifier: 'linux-x64',
+    status: 'Deployed', createdAt: iso(-29 * hour), startedAt: iso(-29 * hour + 60000), completedAt: iso(-29 * hour + 3 * 60000),
+    claimedBy: 'deploy-worker-1', functionUrl: 'https://k3x2mzqa4b.lambda-url.eu-west-2.on.aws/', etag: nextEtag(),
+  }];
+}
+
 function seedAvailabilityRequests() {
   const hr = 60 * 60 * 1000;
   // Cross-environment "promotion" requests (§7.8) that line up with the source/credential matrix so the readiness gate is
@@ -1302,6 +1339,8 @@ export function createMockControlPlane(options = {}) {
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const availabilityRequests = options.availabilityRequestsSeed ? structuredClone(options.availabilityRequestsSeed) : seedAvailabilityRequests();
   const availabilityEntries = options.availabilityEntriesSeed ? structuredClone(options.availabilityEntriesSeed) : seedAvailabilityEntries();
+  const nativeBuilds = options.nativeBuildsSeed ? structuredClone(options.nativeBuildsSeed) : seedNativeBuilds();
+  const deployments = options.deploymentsSeed ? structuredClone(options.deploymentsSeed) : seedDeployments();
   const securityRules = options.securityRulesSeed ? structuredClone(options.securityRulesSeed) : seedSecurityRules();
   const securityOrderings = options.securityOrderingsSeed ? structuredClone(options.securityOrderingsSeed) : seedSecurityOrderings();
   const securityBindings = options.securityBindingsSeed ? structuredClone(options.securityBindingsSeed) : seedSecurityBindings();
@@ -2119,6 +2158,66 @@ export function createMockControlPlane(options = {}) {
       if (method === 'GET') return searchCatalog(params);
       if (method === 'POST') return addCatalogVersion(form);
       if (method === 'PURGE') return purgeCatalog();
+      return problem(405, 'Method not allowed');
+    }
+
+    // Serverless builds & deployments (ADR 0055): version-scoped list/count/get, and enqueue for builds. Deployments
+    // are read-only here exactly as on the real control plane — the deploy runs on the runner (ADR 0059).
+    const srvMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)\/(nativeBuilds|deployments)(?:\/(.+))?$/);
+    if (srvMatch) {
+      const base = decodeURIComponent(srvMatch[1]);
+      const n = Number(srvMatch[2]);
+      const kind = srvMatch[3];
+      const sub = srvMatch[4];
+      const v = findVersion(base, n);
+      if (!v || !reachAdmits(v.securityTags ?? securityTagsForBase(v.baseWorkflowId))) {
+        return problem(404, 'Workflow version not found', `No version ${n} of workflow '${base}' exists, or it is outside your reach.`);
+      }
+      const store = kind === 'nativeBuilds' ? nativeBuilds : deployments;
+      const mine = store.filter((r) => r.baseWorkflowId === base && r.versionNumber === n);
+      if (!sub) {
+        if (method === 'GET') {
+          const status = params.get('status');
+          const rows = mine.filter((r) => !status || r.status === status);
+          const limit = Number(params.get('limit')) || rows.length;
+          return json(kind === 'nativeBuilds'
+            ? { nativeBuilds: rows.slice(0, limit), nextPageToken: null }
+            : { deployments: rows.slice(0, limit), nextPageToken: null });
+        }
+        if (method === 'POST' && kind === 'nativeBuilds') {
+          const environment = body?.environment;
+          const runtimeIdentifier = body?.runtimeIdentifier;
+          if (!environment || !runtimeIdentifier) return problem(400, 'Invalid request', 'environment and runtimeIdentifier are required.');
+          // Idempotent per target: re-queuing an existing target resets it to Queued (a rebuild), as the store does.
+          let job = mine.find((r) => r.environment === environment && r.runtimeIdentifier === runtimeIdentifier);
+          if (!job) {
+            job = { id: `${base}-v${n}-${environment}-${runtimeIdentifier}`, baseWorkflowId: base, versionNumber: n, environment, runtimeIdentifier };
+            nativeBuilds.push(job);
+          }
+          job.status = 'Queued';
+          job.createdAt = iso(0);
+          job.etag = nextEtag();
+          delete job.startedAt; delete job.completedAt; delete job.failureReason; delete job.claimedBy;
+          if (body.buildLabel) job.buildLabel = body.buildLabel; else delete job.buildLabel;
+          return json(job, 202);
+        }
+        return problem(405, 'Method not allowed');
+      }
+      if (sub === 'count' && method === 'GET') {
+        const status = params.get('status');
+        const count = mine.filter((r) => !status || r.status === status).length;
+        return json({ count: Math.min(count, 100), capped: count > 100 });
+      }
+      const targetMatch = sub.match(/^([^/]+)\/([^/]+)$/);
+      if (targetMatch && method === 'GET') {
+        const environment = decodeURIComponent(targetMatch[1]);
+        const rid = decodeURIComponent(targetMatch[2]);
+        const row = mine.find((r) => r.environment === environment && r.runtimeIdentifier === rid);
+        if (row) return json(row);
+        return kind === 'nativeBuilds'
+          ? problem(404, 'Native build not found', `No native build of version ${n} of workflow '${base}' exists for '${rid}' in environment '${environment}'.`)
+          : problem(404, 'Deployment not found', `No deployment of version ${n} of workflow '${base}' exists for '${rid}' in environment '${environment}'.`);
+      }
       return problem(405, 'Method not allowed');
     }
 

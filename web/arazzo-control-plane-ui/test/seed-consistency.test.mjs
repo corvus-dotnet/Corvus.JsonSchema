@@ -138,6 +138,33 @@ if (adoptNode.kind === 'file') {
   if (!(branches.branches ?? []).length) flag('github', 'no branches served');
 }
 
+// ---- serverless (ADR 0055): every seeded build/deployment must reference a resolvable version + environment, and a
+// deployment exists only where a build reached Ready (the real pipeline never deploys an unbuilt target) ----
+{
+  const environments = items(await get('/environments?limit=100')).map((e) => e.name);
+  const versionRows = [];
+  for (const c of items(catalog)) {
+    for (const v of await versionsOf(c.baseWorkflowId)) versionRows.push(v);
+  }
+  const hasVersion = (base, n) => versionRows.some((v) => v.baseWorkflowId === base && v.versionNumber === n);
+  const allBuilds = [];
+  for (const v of versionRows) {
+    const { nativeBuilds = [] } = await get(`/catalog/${v.baseWorkflowId}/versions/${v.versionNumber}/nativeBuilds`);
+    const { deployments = [] } = await get(`/catalog/${v.baseWorkflowId}/versions/${v.versionNumber}/deployments`);
+    allBuilds.push(...nativeBuilds);
+    for (const row of [...nativeBuilds, ...deployments]) {
+      if (!hasVersion(row.baseWorkflowId, row.versionNumber)) flag('serverless', `row '${row.id}' references unknown version ${row.baseWorkflowId} v${row.versionNumber}`);
+      if (!environments.includes(row.environment)) flag('serverless', `row '${row.id}' references unknown environment '${row.environment}'`);
+    }
+    for (const d of deployments) {
+      const built = nativeBuilds.some((b) => b.environment === d.environment && b.runtimeIdentifier === d.runtimeIdentifier && b.status === 'Ready');
+      if (!built) flag('serverless', `deployment '${d.id}' has no Ready build for its target — the pipeline cannot reach this state`);
+      if (d.status === 'Deployed' && !d.functionUrl) flag('serverless', `deployment '${d.id}' is Deployed but carries no functionUrl`);
+    }
+  }
+  if (!allBuilds.some((b) => b.status === 'Failed' && b.failureReason)) flag('serverless', 'no Failed build with a failureReason is seeded — the failure surface has nothing to show');
+}
+
 test('the seeded demo world is internally consistent', () => {
   assert.deepEqual(findings, [], `seed inconsistencies:\n${findings.join('\n')}`);
 });

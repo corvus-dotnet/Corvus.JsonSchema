@@ -21,6 +21,7 @@ import './access-request-dialog.js';
 import './availability-request-dialog.js';
 import './availability-matrix.js';
 import './credential-dialog.js';
+import './input-dialog.js';
 import './workflow-compare.js';
 
 /**
@@ -222,6 +223,20 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .avail-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; }
         .avail-env { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
         .avail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        /* The serverless section (ADR 0055): builds + deployments per (environment, runtime target). */
+        .srv-body { display: grid; gap: 10px; }
+        .srv-group h5 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+        .srv-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--_border); }
+        .srv-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .srv-target { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+        .srv-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; background: var(--_muted); }
+        .srv-ok { background: var(--arazzo-status-completed, #2a8a4a); }
+        .srv-bad { background: var(--arazzo-status-faulted, #d4351c); }
+        .srv-run { background: var(--arazzo-status-running, #b88207); }
+        .srv-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .srv-fail { font-size: 12px; color: var(--arazzo-status-faulted, #d4351c); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .srv-grow { flex: 1; }
+        .srv-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
@@ -230,6 +245,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .verbar:not(:has(.vswitch:not([hidden]))) { display: none; }
         .security { padding: 0 14px 14px; }
         .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+        .serverless { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
+        .serverless h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
       </style>
       <div class="panel" part="panel">
@@ -246,6 +263,11 @@ class ArazzoCatalogDetail extends ArazzoElement {
         </div>
         <div class="body"></div>
         <div class="security" part="security" hidden></div>
+        <!-- A persistent sibling BELOW the security section (not body content): its rows arrive late (two list
+             fetches), and content growing ABOVE the administrators panel would shift that panel's grantee-picker
+             mid-interaction (its anchored popover ends up re-anchored to an off-viewport input). Nothing renders
+             below this section, so its late growth is inert. -->
+        <div class="serverless" part="serverless" hidden></div>
       </div>
       <arazzo-credential-dialog></arazzo-credential-dialog>
       <arazzo-workflow-compare></arazzo-workflow-compare>
@@ -327,9 +349,12 @@ class ArazzoCatalogDetail extends ArazzoElement {
     if (!body) return;
     this.renderVersionSwitch();
 
-    // The Security section is a persistent sibling of the body (not rebuilt here), so it is hidden until a
-    // version has loaded; renderSecurity shows + configures it on the success path.
-    if (this._error || (this._loading && !this._version)) this.$('.security').hidden = true;
+    // The Security and Serverless sections are persistent siblings of the body (not rebuilt here), so they are
+    // hidden until a version has loaded; renderSecurity/renderServerless show + configure them on the success path.
+    if (this._error || (this._loading && !this._version)) {
+      this.$('.security').hidden = true;
+      this.$('.serverless').hidden = true;
+    }
 
     if (this._error) {
       badge.style.display = 'none';
@@ -391,6 +416,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     this.wireSources(v);
     this.loadSourceBindings(v);
     this.loadPromotion(v);
+    this.renderServerless(v);
     this.loadMatrix(v);
     this.renderActions(v);
     this.renderSecurity(v);
@@ -655,6 +681,121 @@ class ArazzoCatalogDetail extends ArazzoElement {
     }
     dlg.client = this.client;
     dlg.open({ baseWorkflowId: v.baseWorkflowId, versionNumber: v.versionNumber, lockWorkflow: true });
+  }
+
+  /** Show + seed the persistent serverless host for this version, then load its rows. */
+  renderServerless(v) {
+    const host = this.$('.serverless');
+    if (!host) return;
+    host.hidden = false;
+    if (!host.firstElementChild) {
+      host.innerHTML = `<h4>Serverless — builds &amp; deployments</h4><div class="srv-body"></div>`;
+    }
+    host.querySelector('.srv-body').innerHTML = '<span class="muted">Loading…</span>';
+    this.loadServerless(v);
+  }
+
+  /**
+   * The version's serverless state (ADR 0055): its native builds and deployments per (environment, runtime target).
+   * Builds are queued here (the build is a control-plane operation); deployments are read-only — the deploy runs on
+   * the runner, which holds the environment's cloud credentials (ADR 0059), so this reports the state it drives.
+   */
+  async loadServerless(v) {
+    const host = this.$('.srv-body');
+    if (!host) return;
+    if (!this.client) { host.innerHTML = '<span class="muted">—</span>'; return; }
+    let builds = [];
+    let deployments = [];
+    try {
+      const [buildPage, deployPage] = await Promise.all([
+        this.client.listNativeBuilds(v.baseWorkflowId, v.versionNumber, { limit: 200 }),
+        this.client.listDeployments(v.baseWorkflowId, v.versionNumber, { limit: 200 }),
+      ]);
+      builds = buildPage.nativeBuilds;
+      deployments = deployPage.deployments;
+    } catch {
+      host.innerHTML = '<span class="muted">Serverless state unavailable.</span>';
+      return;
+    }
+
+    const canBuild = this.hasScope('catalog:write');
+    const badge = (status, ok, bad) => `<span class="srv-badge ${status === ok ? 'srv-ok' : status === bad ? 'srv-bad' : 'srv-run'}">${escapeHtml(status)}</span>`;
+    const when = (row) => {
+      const at = row.completedAt || row.startedAt || row.createdAt;
+      return at ? `<span class="muted" title="${escapeHtml(absoluteTime(at))}">${escapeHtml(relativeTime(at))}</span>` : '';
+    };
+    const target = (row) => `<span class="srv-target">${escapeHtml(row.environment)} · ${escapeHtml(row.runtimeIdentifier)}</span>`;
+
+    const buildRows = builds.map((b) => `
+      <div class="srv-row" data-env="${escapeHtml(b.environment)}" data-rid="${escapeHtml(b.runtimeIdentifier)}">
+        ${target(b)} ${badge(b.status, 'Ready', 'Failed')}
+        ${b.buildLabel ? `<span class="tag">${escapeHtml(b.buildLabel)}</span>` : ''}
+        ${b.failureReason ? `<span class="srv-fail" title="${escapeHtml(b.failureReason)}">${escapeHtml(b.failureReason)}</span>` : ''}
+        <span class="srv-grow"></span>
+        ${when(b)}
+        ${canBuild ? `<button class="ghost srv-rebuild" type="button" data-env="${escapeHtml(b.environment)}" data-rid="${escapeHtml(b.runtimeIdentifier)}" title="Queue a rebuild for this target">Rebuild</button>` : ''}
+      </div>`).join('');
+    const deployRows = deployments.map((d) => `
+      <div class="srv-row">
+        ${target(d)} ${badge(d.status, 'Deployed', 'Failed')}
+        ${d.functionUrl ? `<span class="srv-url" title="${escapeHtml(d.functionUrl)}">${escapeHtml(d.functionUrl)}</span>` : ''}
+        ${d.failureReason ? `<span class="srv-fail" title="${escapeHtml(d.failureReason)}">${escapeHtml(d.failureReason)}</span>` : ''}
+        <span class="srv-grow"></span>
+        ${when(d)}
+      </div>`).join('');
+
+    const empty = builds.length === 0 && deployments.length === 0
+      ? `<span class="muted">No serverless builds or deployments for this version.</span>` : '';
+    const action = canBuild ? `<div class="srv-actions"><button class="ghost srv-queue" type="button">Queue build…</button></div>` : '';
+    host.innerHTML = `
+      ${empty}
+      ${builds.length ? `<div class="srv-group" part="serverless-builds"><h5>Builds</h5>${buildRows}</div>` : ''}
+      ${deployments.length ? `<div class="srv-group" part="serverless-deployments"><h5>Deployments</h5>${deployRows}</div>` : ''}
+      ${action}
+    `;
+    host.querySelector('.srv-queue')?.addEventListener('click', (e) => this.queueBuild(v, e.currentTarget));
+    host.querySelectorAll('.srv-rebuild').forEach((btn) => btn.addEventListener('click', (e) => {
+      const b = e.currentTarget;
+      this.enqueueBuild(v, b, { environment: b.dataset.env, runtimeIdentifier: b.dataset.rid });
+    }));
+  }
+
+  /** Ask for the build target (environment + runtime identifier), then queue the build (ADR 0055). */
+  async queueBuild(v, trigger) {
+    let dlg = this.$('arazzo-input-dialog');
+    if (!dlg) {
+      dlg = document.createElement('arazzo-input-dialog');
+      this.$('.panel').appendChild(dlg);
+    }
+    const answer = await dlg.ask({
+      title: 'Queue a native build',
+      message: 'Build (or rebuild) this version’s serverless binary for one runtime target in one environment. Re-queuing an existing target resets it to Queued.',
+      fields: [
+        { key: 'environment', label: 'Environment', placeholder: 'production' },
+        { key: 'runtimeIdentifier', label: 'Runtime identifier (RID)', placeholder: 'linux-x64' },
+        { key: 'buildLabel', label: 'Label (optional)', placeholder: 'nightly' },
+      ],
+      confirmLabel: 'Queue build',
+    });
+    if (!answer?.environment || !answer?.runtimeIdentifier) return;
+    await this.enqueueBuild(v, trigger, {
+      environment: answer.environment,
+      runtimeIdentifier: answer.runtimeIdentifier,
+      ...(answer.buildLabel ? { buildLabel: answer.buildLabel } : {}),
+    });
+  }
+
+  /** Queue the build under the busy affordance and re-list the section (the job comes back Queued). */
+  async enqueueBuild(v, trigger, request) {
+    await this.runAction(trigger, async () => {
+      try {
+        await this.client.enqueueNativeBuild(v.baseWorkflowId, v.versionNumber, request);
+        this.emit('build-queued', { baseWorkflowId: v.baseWorkflowId, versionNumber: v.versionNumber, ...request });
+        await this.loadServerless(v);
+      } catch (err) {
+        this.emit('error', { problem: err.problem || { title: err.message, status: err.status }, error: err });
+      }
+    });
   }
 
   renderDownloads() {
