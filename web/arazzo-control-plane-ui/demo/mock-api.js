@@ -944,6 +944,10 @@ function seedEnvironments() {
     e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
   environments[1].managementTags = [{ key: 'sys:group', value: 'env-admins' }];
+  // Staging REQUIRES Isolated execution (ADR 0058) — the runners panel's isolation-posture subject. Its isolated
+  // runner (runner-eu-2) is seeded Pending, so the posture reads uncovered until an operator authorizes it: the
+  // cross-surface story an operator resolves in the console.
+  environments[1].requiredIsolation = 'Isolated';
   environments[2].requireEvidence = true;
   // Development-class (§18): drafts may execute here as debug runs.
   const dev = e('development', 'Development', 'Developer sandbox — working-copy drafts may run here as debug runs (§18).');
@@ -1238,10 +1242,12 @@ function seedRunners() {
       { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
       { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
     ], 18 * 1000, 6 * 60 * min), // healthy: heartbeat 18s ago, up 6h
-    r('runner-eu-2', 'staging', 'https://runner-eu-2.svc.internal:8443', 4, ['http'], [
+    // Advertises Isolated (ADR 0058): staging requires isolated execution, and this runner's serverless backend
+    // provides it — the posture strip's covered example.
+    { ...r('runner-eu-2', 'staging', 'https://runner-eu-2.svc.internal:8443', 4, ['http'], [
       { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
       { baseWorkflowId: 'onboard-customer', versionNumber: 1, hash: 'sha256:onboard-v1', loaded: false }, // still loading
-    ], 32 * 1000, 2 * 60 * min),
+    ], 32 * 1000, 2 * 60 * min), isolationModel: 'Isolated' },
     r('runner-us-1', 'production', 'https://runner-us-1.svc.internal:8443', 8, ['http', 'kafka'], [
       { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
     ], 4 * min, 12 * 60 * min), // STALE: last heartbeat 4 minutes ago

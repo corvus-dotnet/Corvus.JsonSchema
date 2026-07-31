@@ -119,7 +119,7 @@ class ArazzoRunners extends ArazzoElement {
     try {
       // The page and the reach-scoped bounded total load together; a failed count degrades to the page length (below)
       // rather than failing the panel — the registry list still renders.
-      const [page, total, roster] = await Promise.all([
+      const [page, total, roster, envPage, fleet] = await Promise.all([
         client.listRunners({ pageToken: this._currentToken, limit: this.pageSize }),
         client.countRunners().catch(() => null),
         // The §5.5 roster decides whether a registered runner may actually be DISPATCHED; showing
@@ -128,6 +128,12 @@ class ArazzoRunners extends ArazzoElement {
         // each interesting status is asked for explicitly.
         Promise.all(['Authorized', 'Pending', 'Revoked'].map((status) =>
           client.listRunnerAuthorizations({ status, limit: 200 }).catch(() => null))),
+        // The isolation posture (ADR 0058): which environments REQUIRE Isolated execution, matched below
+        // against the fleet's advertised isolation. Best-effort — a caller without environments:read
+        // simply sees no posture strip.
+        client.listEnvironments({ limit: 200 }).catch(() => null),
+        // Posture must judge the whole fleet, not the current page, so a bounded full list rides along.
+        client.listRunners({ limit: 200 }).catch(() => null),
       ]);
       if (seq !== this._reqSeq) return;
       this._auth = new Map();
@@ -140,6 +146,8 @@ class ArazzoRunners extends ArazzoElement {
       this._nextPageToken = page.nextPageToken;
       this._total = total ? total.count : null;
       this._totalCapped = total ? total.capped : false;
+      this._environments = envPage ? envPage.environments : null;
+      this._fleet = fleet ? fleet.runners : page.runners;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._runners.length, hasMore: !!this._nextPageToken });
@@ -200,6 +208,11 @@ class ArazzoRunners extends ArazzoElement {
         .health.stale { color: #b45309; }
         .health .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
         .rgrow { flex: 1; }
+        .posture { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--_border); font-size: 12px; }
+        .posture .plabel { color: var(--_muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
+        .pos-chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+        .pos-ok { color: var(--arazzo-status-completed, #1a7f37); }
+        .pos-bad { color: var(--arazzo-status-faulted, #d4351c); }
         .rmeta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 5px; color: var(--_muted); font-size: 12px; }
         .rmeta b { color: var(--_text); font-weight: 600; }
         .badges { display: inline-flex; gap: 4px; flex-wrap: wrap; }
@@ -221,6 +234,7 @@ class ArazzoRunners extends ArazzoElement {
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
+        <div class="posture" part="posture" hidden></div>
         <div class="err"></div>
         <div class="list" part="list"></div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
@@ -231,10 +245,37 @@ class ArazzoRunners extends ArazzoElement {
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
   }
 
+  /**
+   * The isolation posture strip (ADR 0058): for each environment REQUIRING Isolated execution, whether a live,
+   * Authorized runner ADVERTISING Isolated serves it — the coverage a run needing isolation actually dispatches on.
+   * Judged over the bounded whole-fleet list, not the current page. Hidden when no environment requires isolation
+   * or the caller cannot read environments.
+   */
+  renderPosture() {
+    const host = this.$('.posture');
+    if (!host) return;
+    const isolated = (this._environments || []).filter((e) => e.requiredIsolation === 'Isolated');
+    if (isolated.length === 0) { host.hidden = true; host.innerHTML = ''; return; }
+    const now = Date.now();
+    const chips = isolated.map((e) => {
+      const covered = (this._fleet || []).some((r) => r.environment === e.name
+        && r.isolationModel === 'Isolated'
+        && !this.isStale(r, now)
+        && this._auth?.get(`${r.runnerId}@${r.environment}`) === 'Authorized');
+      const hint = covered
+        ? `A live, authorized runner advertising Isolated serves ${e.name}; isolated-required runs can dispatch.`
+        : `No live, authorized runner advertising Isolated serves ${e.name} — runs pinned there cannot dispatch until one does.`;
+      return `<span class="pos-chip ${covered ? 'pos-ok' : 'pos-bad'}" title="${escapeHtml(hint)}">${escapeHtml(e.name)} ${covered ? '✓ isolated' : '✗ no isolated runner'}</span>`;
+    }).join('');
+    host.innerHTML = `<span class="plabel">Isolation posture</span>${chips}`;
+    host.hidden = false;
+  }
+
   renderBody() {
     const err = this.$('.err');
     const list = this.$('.list');
     if (!list) return;
+    this.renderPosture();
 
     err.innerHTML = this._error
       ? `<div class="error-banner"><span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span></div>`
@@ -300,6 +341,7 @@ class ArazzoRunners extends ArazzoElement {
           <span>heartbeat <b>${escapeHtml(relativeTime(r.lastSeenAt))}</b></span>
           <span>up <b title="${escapeHtml(absoluteTime(r.startedAt))}">${escapeHtml(relativeTime(r.startedAt))}</b></span>
           <span>concurrency <b>${escapeHtml(r.maxConcurrency)}</b></span>
+          <span title="The execution isolation this runner advertises (ADR 0058); unstated defaults to InProcess.">isolation <b>${escapeHtml(r.isolationModel || 'InProcess')}</b></span>
           ${transports.length ? `<span class="badges">${transports.map((t) => `<span class="badge">${escapeHtml(t)}</span>`).join('')}</span>` : ''}
         </div>
         <div class="hosted">${hostedHtml}</div>

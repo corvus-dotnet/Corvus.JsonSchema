@@ -99,3 +99,56 @@ describe('<arazzo-runners> authorization state', () => {
     ok(chip.title.length > 0, 'the chip explains itself');
   });
 });
+
+// The isolation posture strip (ADR 0058): per environment REQUIRING Isolated, whether a live Authorized runner
+// advertising Isolated serves it. Seeded uncovered (staging's isolated runner is Pending) — authorizing it is the
+// operator action that flips coverage.
+describe('<arazzo-runners> isolation posture', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  function panelWith(options) {
+    const mock = createMockControlPlane({ latencyMs: 0, ...options });
+    const p = document.createElement('arazzo-runners');
+    p.setAttribute('stale-after', '90');
+    p.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    return p;
+  }
+
+  it('surfaces an isolated-required environment with no authorized isolated runner as uncovered', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const posture = el.shadowRoot.querySelector('.posture');
+    ok(!posture.hidden, 'the posture strip shows (staging requires Isolated)');
+    const chip = posture.querySelector('.pos-chip');
+    ok(chip.classList.contains('pos-bad'), 'staging is uncovered — its isolated runner is only Pending');
+    ok(chip.textContent.includes('staging'), 'the chip names the environment');
+  });
+
+  it('shows coverage once the isolated runner is Authorized for the environment', async () => {
+    const hr = 60 * 60 * 1000;
+    el = panelWith({
+      runnerAuthorizationsSeed: [{
+        environment: 'staging', runnerId: 'runner-eu-2', status: 'Authorized',
+        createdBy: 'runner-eu-2', createdAt: new Date(Date.now() - hr).toISOString(), etag: '"1"',
+        decidedBy: 'boss', decidedAt: new Date().toISOString(), reason: 'Vetted isolated host.',
+      }],
+    });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const chip = await waitFor(() => el.shadowRoot.querySelector('.posture .pos-chip'));
+    ok(chip.classList.contains('pos-ok'), 'staging is covered by the live, authorized, isolated runner');
+    ok(chip.textContent.includes('✓'), 'the chip reads as coverage');
+  });
+
+  it('shows each runner\'s advertised isolation, defaulting InProcess when unstated (ADR 0058)', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const eu2 = [...el.shadowRoot.querySelectorAll('.runner')].find((r) => r.textContent.includes('runner-eu-2'));
+    ok(eu2.textContent.includes('Isolated'), 'the isolated runner advertises Isolated');
+    const eu1 = [...el.shadowRoot.querySelectorAll('.runner')].find((r) => r.textContent.includes('runner-eu-1'));
+    ok(eu1.textContent.includes('InProcess'), 'an unstated advertisement renders as the InProcess default');
+  });
+});
