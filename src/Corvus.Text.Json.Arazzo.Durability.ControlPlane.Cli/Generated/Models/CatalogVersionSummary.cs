@@ -262,6 +262,27 @@ public readonly partial struct CatalogVersionSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>executorBuildError</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Why the workflow executor could not be built at catalog-add time, present only when &#39;runnable&#39; is false because the executor failed to build (a malformed workflow, an unsupported cross-document source, or a compilation error). The version is still catalogued; this surfaces the cause rather than a bare not-runnable.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ExecutorBuildError
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExecutorBuildErrorUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>hash</c> property.
     /// </summary>
     /// <remarks>
@@ -1046,6 +1067,11 @@ public readonly partial struct CatalogVersionSummary
         public const string Evidence = "evidence";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutorBuildError"/>.
+        /// </summary>
+        public const string ExecutorBuildError = "executorBuildError";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Hash"/>.
         /// </summary>
         public const string Hash = "hash";
@@ -1144,6 +1170,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the JSON property name for <see cref="Evidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> EvidenceUtf8 => "evidence"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutorBuildError"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutorBuildErrorUtf8 => "executorBuildError"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Hash"/>.
@@ -1252,6 +1283,11 @@ public readonly partial struct CatalogVersionSummary
         public static ReadOnlySpan<byte> Evidence => "evidence"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ExecutorBuildError"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutorBuildError => "executorBuildError"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Hash"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Hash => "hash"u8;
@@ -1357,6 +1393,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the pre-baked property name blob for <see cref="Evidence"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Evidence => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x76, 0x69, 0x64, 0x65, 0x6E, 0x63, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExecutorBuildError"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutorBuildError => [0x45, 0x01, 0x00, 0x00, 0x22, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x6F, 0x72, 0x42, 0x75, 0x69, 0x6C, 0x64, 0x45, 0x72, 0x72, 0x6F, 0x72, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Hash"/>.

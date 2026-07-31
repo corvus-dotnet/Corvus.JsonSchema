@@ -45,7 +45,9 @@ public readonly partial struct EnvironmentCreate
         private static readonly JsonSchemaPathProvider DisplayNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/displayName"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ManagementTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/managementTags"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RequiredIsolationSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requiredIsolation"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RequireEvidenceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requireEvidence"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RuntimeIdentifierSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runtimeIdentifier"u8, buffer, out written);
 
         private static void MatchAllowsDraftRuns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -129,10 +131,25 @@ public readonly partial struct EnvironmentCreate
             requiredBitBuffer[RequiredOffsetForName] |= RequiredBitForName;
         }
 
-        private static void MatchRequireEvidence(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRequiredIsolation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate.RequiredIsolationEntity.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RequiredIsolationUtf8,
+                    evaluationPath: RequiredIsolationSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate.RequiredIsolationEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+            context.CommitChildContext(childContext5.IsMatch, ref childContext5);
+        }
+
+        private static void MatchRequireEvidence(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext6 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -140,8 +157,23 @@ public readonly partial struct EnvironmentCreate
                     JsonPropertyNames.RequireEvidenceUtf8,
                     evaluationPath: RequireEvidenceSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
-            context.CommitChildContext(childContext5.IsMatch, ref childContext5);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
+            context.CommitChildContext(childContext6.IsMatch, ref childContext6);
+        }
+
+        private static void MatchRuntimeIdentifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext7 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RuntimeIdentifierUtf8,
+                    evaluationPath: RuntimeIdentifierSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
@@ -152,7 +184,9 @@ public readonly partial struct EnvironmentCreate
                 (static () => JsonPropertyNames.DisplayNameUtf8, MatchDisplayName),
                 (static () => JsonPropertyNames.ManagementTagsUtf8, MatchManagementTags),
                 (static () => JsonPropertyNames.NameUtf8, MatchName),
+                (static () => JsonPropertyNames.RequiredIsolationUtf8, MatchRequiredIsolation),
                 (static () => JsonPropertyNames.RequireEvidenceUtf8, MatchRequireEvidence),
+                (static () => JsonPropertyNames.RuntimeIdentifierUtf8, MatchRuntimeIdentifier),
             ]);
         }
 

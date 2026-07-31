@@ -163,6 +163,26 @@ public static class CliApp
                 availability.AddCommand<AvailabilityListVersionsCommand>("versions").WithDescription("List the workflow versions available in an environment (environment; --output json).");
             });
 
+            c.AddBranch<CommandSettings>("runners", runners =>
+            {
+                runners.SetDescription("Observe the runner roster — the registered execution hosts, their environment, advertised isolation, and liveness (runs:read).");
+                runners.AddCommand<RunnersListCommand>("list").WithDescription("List registered runners with their environment, isolation, liveness, and hosted-version count (--output json).");
+            });
+
+            c.AddBranch<CommandSettings>("builds", builds =>
+            {
+                builds.SetDescription("Observe a version's native serverless builds per (environment, runtime target) — ADR 0055 (catalog:read).");
+                builds.AddCommand<BuildsListCommand>("list").WithDescription("List a version's native build jobs (baseWorkflowId versionNumber; --status Queued|Building|Ready|Failed; --output json).");
+                builds.AddCommand<BuildsGetCommand>("get").WithDescription("Show one build job by target (baseWorkflowId versionNumber environment runtimeIdentifier).");
+            });
+
+            c.AddBranch<CommandSettings>("deployments", deployments =>
+            {
+                deployments.SetDescription("Observe a version's serverless deployments per (environment, runtime target) — read-only; the deploy runs on the runner (ADR 0055/0059; catalog:read).");
+                deployments.AddCommand<DeploymentsListCommand>("list").WithDescription("List a version's deployments with status and function URL (baseWorkflowId versionNumber; --status Queued|Deploying|Deployed|Failed; --output json).");
+                deployments.AddCommand<DeploymentsGetCommand>("get").WithDescription("Show one deployment by target (baseWorkflowId versionNumber environment runtimeIdentifier).");
+            });
+
             c.AddBranch<CommandSettings>("schedules", schedules =>
             {
                 schedules.SetDescription("Manage durable schedules — a cadence that starts a target workflow on each occurrence (#896); reuses the runs:read / runs:write scopes. Creating one needs a runner serving schedules in the target environment.");

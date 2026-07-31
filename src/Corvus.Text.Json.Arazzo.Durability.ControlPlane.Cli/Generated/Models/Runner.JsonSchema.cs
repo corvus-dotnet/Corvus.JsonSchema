@@ -80,6 +80,7 @@ public readonly partial struct Runner
         private static readonly JsonSchemaPathProvider AddressSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/address"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider HostedVersionsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/hostedVersions"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider IsolationModelSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/isolationModel"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LastSeenAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lastSeenAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider MaxConcurrencySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/maxConcurrency"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ReachTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/reachTags"u8, buffer, out written);
@@ -147,10 +148,25 @@ public readonly partial struct Runner
             requiredBitBuffer[RequiredOffsetForHostedVersions] |= RequiredBitForHostedVersions;
         }
 
-        private static void MatchLastSeenAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchIsolationModel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.IsolationModelEntity.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.IsolationModelUtf8,
+                    evaluationPath: IsolationModelSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.IsolationModelEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+        }
+
+        private static void MatchLastSeenAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext4 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -158,8 +174,8 @@ public readonly partial struct Runner
                     JsonPropertyNames.LastSeenAtUtf8,
                     evaluationPath: LastSeenAtSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            context.CommitChildContext(childContext4.IsMatch, ref childContext4);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -172,7 +188,7 @@ public readonly partial struct Runner
         private static void MatchMaxConcurrency(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext4 =
+            JsonSchemaContext childContext5 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -180,8 +196,8 @@ public readonly partial struct Runner
                     JsonPropertyNames.MaxConcurrencyUtf8,
                     evaluationPath: MaxConcurrencySchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
-            context.CommitChildContext(childContext4.IsMatch, ref childContext4);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+            context.CommitChildContext(childContext5.IsMatch, ref childContext5);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -194,7 +210,7 @@ public readonly partial struct Runner
         private static void MatchReachTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext5 =
+            JsonSchemaContext childContext6 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.RunnerSecurityTagArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -202,14 +218,14 @@ public readonly partial struct Runner
                     JsonPropertyNames.ReachTagsUtf8,
                     evaluationPath: ReachTagsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.RunnerSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
-            context.CommitChildContext(childContext5.IsMatch, ref childContext5);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.RunnerSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
+            context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
         private static void MatchRunnerId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext6 =
+            JsonSchemaContext childContext7 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -217,8 +233,8 @@ public readonly partial struct Runner
                     JsonPropertyNames.RunnerIdUtf8,
                     evaluationPath: RunnerIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
-            context.CommitChildContext(childContext6.IsMatch, ref childContext6);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -231,7 +247,7 @@ public readonly partial struct Runner
         private static void MatchServesSchedules(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext7 =
+            JsonSchemaContext childContext8 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -239,14 +255,14 @@ public readonly partial struct Runner
                     JsonPropertyNames.ServesSchedulesUtf8,
                     evaluationPath: ServesSchedulesSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
-            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
+            context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
         private static void MatchStartedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext8 =
+            JsonSchemaContext childContext9 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -254,8 +270,8 @@ public readonly partial struct Runner
                     JsonPropertyNames.StartedAtUtf8,
                     evaluationPath: StartedAtSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
-            context.CommitChildContext(childContext8.IsMatch, ref childContext8);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
+            context.CommitChildContext(childContext9.IsMatch, ref childContext9);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -268,7 +284,7 @@ public readonly partial struct Runner
         private static void MatchTransports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext9 =
+            JsonSchemaContext childContext10 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.JsonStringArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -276,8 +292,8 @@ public readonly partial struct Runner
                     JsonPropertyNames.TransportsUtf8,
                     evaluationPath: TransportsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
-            context.CommitChildContext(childContext9.IsMatch, ref childContext9);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -293,6 +309,7 @@ public readonly partial struct Runner
                 (static () => JsonPropertyNames.AddressUtf8, MatchAddress),
                 (static () => JsonPropertyNames.EnvironmentUtf8, MatchEnvironment),
                 (static () => JsonPropertyNames.HostedVersionsUtf8, MatchHostedVersions),
+                (static () => JsonPropertyNames.IsolationModelUtf8, MatchIsolationModel),
                 (static () => JsonPropertyNames.LastSeenAtUtf8, MatchLastSeenAt),
                 (static () => JsonPropertyNames.MaxConcurrencyUtf8, MatchMaxConcurrency),
                 (static () => JsonPropertyNames.ReachTagsUtf8, MatchReachTags),

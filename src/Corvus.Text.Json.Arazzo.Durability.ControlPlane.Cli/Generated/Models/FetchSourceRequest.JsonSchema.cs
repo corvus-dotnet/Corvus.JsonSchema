@@ -40,21 +40,21 @@ public readonly partial struct FetchSourceRequest
 
         private const uint RequiredBitMask0 =
             RequiredBitForUrl;
-        private static readonly JsonSchemaPathProvider CredentialSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/credential"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider AuthSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/auth"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider UrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/url"u8, buffer, out written);
 
-        private static void MatchCredential(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchAuth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchCredentialReference.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchAuth.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.CredentialUtf8,
-                    evaluationPath: CredentialSchemaEvaluationPath);
+                    JsonPropertyNames.AuthUtf8,
+                    evaluationPath: AuthSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchCredentialReference.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchAuth.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -83,7 +83,7 @@ public readonly partial struct FetchSourceRequest
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.CredentialUtf8, MatchCredential),
+                (static () => JsonPropertyNames.AuthUtf8, MatchAuth),
                 (static () => JsonPropertyNames.UrlUtf8, MatchUrl),
             ]);
         }

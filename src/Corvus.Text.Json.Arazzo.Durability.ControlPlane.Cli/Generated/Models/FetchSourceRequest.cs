@@ -159,19 +159,19 @@ public readonly partial struct FetchSourceRequest
     }
 
     /// <summary>
-    /// Gets the (optional) <c>credential</c> property.
-    /// FetchCredentialReference
+    /// Gets the (optional) <c>auth</c> property.
+    /// FetchAuth
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Authenticate the fetch with a registered source credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing (404 when absent or outside the caller&#39;s reach).
+    /// Authenticate the fetch (ADR 0052) with EXACTLY ONE of: provider (the caller&#39;s connection to a configured connected provider — user identity), secret (a one-shot header credential — bearer/PAT, API key, or Basic — used for this single fetch, never stored or logged), or binding (a registered &#167;13 workload credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing: 404 when absent or outside the caller&#39;s reach). Omit for an anonymous fetch.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchCredentialReference Credential
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchAuth Auth
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchCredentialReference value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.FetchAuth value))
             {
                 return value;
             }
@@ -648,9 +648,9 @@ public readonly partial struct FetchSourceRequest
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Credential"/>.
+        /// Gets the JSON property name for <see cref="Auth"/>.
         /// </summary>
-        public const string Credential = "credential";
+        public const string Auth = "auth";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Url"/>.
@@ -658,9 +658,9 @@ public readonly partial struct FetchSourceRequest
         public const string Url = "url";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Credential"/>.
+        /// Gets the JSON property name for <see cref="Auth"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CredentialUtf8 => "credential"u8;
+        public static ReadOnlySpan<byte> AuthUtf8 => "auth"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Url"/>.
@@ -674,9 +674,9 @@ public readonly partial struct FetchSourceRequest
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Credential"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Auth"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Credential => "credential"u8;
+        public static ReadOnlySpan<byte> Auth => "auth"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Url"/>.
@@ -691,9 +691,9 @@ public readonly partial struct FetchSourceRequest
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Credential"/>.
+        /// Gets the pre-baked property name blob for <see cref="Auth"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Credential => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x22];
+        public static ReadOnlySpan<byte> Auth => [0x65, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Url"/>.

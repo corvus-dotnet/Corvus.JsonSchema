@@ -180,6 +180,43 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiDebugRunsClient(transport));
     }
 
+    /// <summary>Builds the runner-roster API client (and the HTTP client / transport it owns) for this invocation. The
+    /// roster is the read-only registry of registered execution hosts and their health (design §5).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and runners API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiRunnersClient Client)> CreateRunnersClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiRunnersClient(transport));
+    }
+
+    /// <summary>Builds the native-builds API client (and the HTTP client / transport it owns) for this invocation — the
+    /// asynchronous Native-AOT builds of a version's serverless binary per (environment, runtime target) (ADR 0055).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and native-builds API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiNativeBuildsClient Client)> CreateNativeBuildsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiNativeBuildsClient(transport));
+    }
+
+    /// <summary>Builds the deployments API client (and the HTTP client / transport it owns) for this invocation — the
+    /// read-only observation of a version's serverless deployments per (environment, runtime target); the deploy itself
+    /// runs on the runner (ADR 0055 / ADR 0059).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and deployments API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiDeploymentsClient Client)> CreateDeploymentsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiDeploymentsClient(transport));
+    }
+
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
 
     /// <summary>

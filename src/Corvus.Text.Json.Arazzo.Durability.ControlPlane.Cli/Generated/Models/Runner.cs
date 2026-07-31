@@ -228,6 +228,27 @@ public readonly partial struct Runner
     }
 
     /// <summary>
+    /// Gets the (optional) <c>isolationModel</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The run isolation this runner&#39;s execution backend provides (ADR 0058): InProcess or Isolated. Absent means InProcess. The start gate matches a target environment&#39;s requiredIsolation against this (Isolated is stronger than InProcess).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.IsolationModelEntity IsolationModel
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsolationModelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.IsolationModelEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>lastSeenAt</c> property.
     /// </summary>
     /// <remarks>
@@ -848,6 +869,11 @@ public readonly partial struct Runner
         public const string HostedVersions = "hostedVersions";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public const string IsolationModel = "isolationModel";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="LastSeenAt"/>.
         /// </summary>
         public const string LastSeenAt = "lastSeenAt";
@@ -896,6 +922,11 @@ public readonly partial struct Runner
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersionsUtf8 => "hostedVersions"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModelUtf8 => "isolationModel"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="LastSeenAt"/>.
@@ -954,6 +985,11 @@ public readonly partial struct Runner
         public static ReadOnlySpan<byte> HostedVersions => "hostedVersions"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModel => "isolationModel"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="LastSeenAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> LastSeenAt => "lastSeenAt"u8;
@@ -1009,6 +1045,11 @@ public readonly partial struct Runner
         /// Gets the pre-baked property name blob for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersions => [0x05, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x65, 0x64, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IsolationModel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsolationModel => [0x05, 0x01, 0x00, 0x00, 0x22, 0x69, 0x73, 0x6F, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x4D, 0x6F, 0x64, 0x65, 0x6C, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="LastSeenAt"/>.
