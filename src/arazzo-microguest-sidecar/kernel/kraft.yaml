@@ -1,0 +1,103 @@
+# The Arazzo micro-guest kernel (ADR 0063): Unikraft on the Hyperlight platform with the ELF loader executing
+# the baked .NET Native-AOT guest at /bin/guest. This is the exact kconfig the ADR 0063 spike proved for a
+# .NET 10 static musl guest, including the three guest-side findings: no paging (so the GC heap must be
+# hard-limited at publish), LCPU+DEVFS randomness (the upstream examples' CMDLINE_SEED never receives a seed
+# from this host), and host-proxied IPv4-only sockets (LIBHOSTSOCK; IPv6 is disabled at publish).
+# Build it with ../build-microguest-kernel.ps1 (kraft-hyperlight in the pinned kernel-builder container).
+specification: '0.6'
+name: arazzo-microguest
+
+unikraft:
+  source: https://github.com/unikraft/unikraft.git
+  version: plat-hyperlight
+  kconfig:
+    # Platform
+    CONFIG_PLAT_HYPERLIGHT: 'y'
+    CONFIG_PAGING: 'n'
+    CONFIG_LIBUKVMEM: 'n'
+    CONFIG_LIBUKINTCTLR_HYPERLIGHT: 'y'
+    CONFIG_HYPERLIGHT_MAX_GUEST_LOG_LEVEL: 7
+    CONFIG_LIBUKPRINT_KLVL_CRIT: 'y'
+    CONFIG_LIBUKPRINT_PRINT_TIME: 'n'
+    CONFIG_LIBUKPRINT_PRINT_SRCNAME: 'n'
+    CONFIG_LIBUKBOOT_BANNER_NONE: 'y'
+    CONFIG_OPTIMIZE_SIZE: 'y'
+    CONFIG_OPTIMIZE_PIE: 'y'
+
+    # VFS and initrd
+    CONFIG_LIBVFSCORE: 'y'
+    CONFIG_LIBVFSCORE_AUTOMOUNT_CI: 'y'
+    CONFIG_LIBVFSCORE_AUTOMOUNT_CI_CUSTOM: 'y'
+    CONFIG_LIBVFSCORE_AUTOMOUNT_CI0_MP: '/'
+    CONFIG_LIBVFSCORE_AUTOMOUNT_CI0_DRIVER: 'cpiovfs'
+    CONFIG_LIBVFSCORE_AUTOMOUNT_CI0_UKOPTS_IFINITRD0: 'y'
+    CONFIG_LIBCPIOVFS: 'y'
+    CONFIG_LIBUKCPIO: 'y'
+
+    # ELF loader — the Native-AOT guest binary at the path the deployer's initrd places it
+    CONFIG_APPELFLOADER: 'y'
+    CONFIG_APPELFLOADER_VFSEXEC: 'y'
+    CONFIG_APPELFLOADER_CUSTOMAPPNAME: 'n'
+    CONFIG_APPELFLOADER_VFSEXEC_ENVPATH: 'n'
+    CONFIG_APPELFLOADER_VFSEXEC_PATH: '/bin/guest'
+    CONFIG_APPELFLOADER_VFSEXEC_EXECBIT_CHECK: 'n'
+    CONFIG_LIBPOSIX_ENVIRON_ENVP0: 'PATH=/bin'
+    CONFIG_LIBELF: 'y'
+
+    # Random number support — seed the CSPRNG from the CPU (RDRAND/RDSEED); the
+    # upstream examples' CMDLINE_SEED never receives a seed from this host, which
+    # leaves getrandom failing and Guid.NewGuid throwing in the guest.
+    CONFIG_LIBUKRANDOM_LCPU: 'y'
+    CONFIG_LIBUKRANDOM_GETRANDOM: 'y'
+    CONFIG_LIBUKRANDOM_DEVFS: 'y'
+
+    # Stack size (order 9 = 2MB)
+    CONFIG_STACK_SIZE_PAGE_ORDER: 9
+
+    # Threading (NativeAOT GC uses threads) + signals
+    CONFIG_LIBUKBOOT_MAINTHREAD: 'y'
+    CONFIG_LIBPOSIX_PROCESS_ARCH_PRCTL: 'y'
+    CONFIG_LIBPOSIX_PROCESS_MULTITHREADING: 'y'
+    CONFIG_LIBPOSIX_PROCESS_SIGNAL: 'y'
+    CONFIG_LIBPOSIX_FUTEX: 'y'
+    CONFIG_LIBUKSCHED: 'y'
+    CONFIG_LIBUKSCHEDCOOP: 'y'
+    CONFIG_LIBUKMPI: 'y'
+    CONFIG_LIBUKLOCK: 'y'
+    CONFIG_LIBUKLOCK_SEMAPHORE: 'y'
+    CONFIG_LIBUKLOCK_MUTEX: 'y'
+
+    # TLS
+    CONFIG_LIBCONTEXT: 'y'
+    CONFIG_LIBCONTEXT_CLEAR_TBSS: 'y'
+
+    # mmap (NativeAOT GC)
+    CONFIG_LIBUKMMAP: 'y'
+
+    # Event/polling support (sockets)
+    CONFIG_LIBPOSIX_POLL: 'y'
+    CONFIG_LIBPOSIX_EVENTFD: 'y'
+    CONFIG_LIBPOSIX_FDIO: 'y'
+    CONFIG_LIBPOSIX_FDTAB: 'y'
+    CONFIG_LIBUKFILE: 'y'
+
+    # devfs + /dev/hcall (host-proxied networking)
+    CONFIG_LIBDEVFS: 'y'
+    CONFIG_LIBDEVFS_AUTOMOUNT: 'y'
+    CONFIG_HYPERLIGHT_HCALL: 'y'
+
+    # Networking: host-proxied sockets
+    CONFIG_LIBPOSIX_SOCKET: 'y'
+    CONFIG_LIBHOSTSOCK: 'y'
+
+libraries:
+  app-elfloader:
+    source: https://github.com/unikraft/app-elfloader.git
+    version: plat-hyperlight
+  libelf:
+    source: https://github.com/unikraft/lib-libelf.git
+    version: staging
+
+targets:
+  - architecture: x86_64
+    platform: hyperlight

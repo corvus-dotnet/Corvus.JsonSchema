@@ -1,0 +1,31 @@
+# The Arazzo micro-guest sidecar (ADR 0063): the warm companion process that holds an evolved, snapshotted
+# Hyperlight/Unikraft micro-VM sandbox per (environment, version) and restores it hermetically per advance.
+# Everything upstream is pre-1.0, so the hyperlight-unikraft dependency is pinned exactly and the committed
+# Cargo.lock is the build's source of truth; upgrades are deliberate, tested moves (ADR 0063 consequences).
+#
+# The `hyperlight` feature gates the real VM behind the VmFactory seam, so the HTTP surfaces and the sandbox
+# lifecycle machinery unit-test without KVM: `cargo test --no-default-features`.
+[package]
+name = "arazzo-microguest-sidecar"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[features]
+default = ["hyperlight"]
+hyperlight = ["dep:hyperlight-unikraft"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+hyperlight-unikraft = { version = "=0.12.1", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+
+[dev-dependencies]
+ureq = { version = "2", default-features = false }
+
+[profile.release]
+strip = true
