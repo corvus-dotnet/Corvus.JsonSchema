@@ -200,7 +200,11 @@ public static class ControlPlaneEndpointExtensions
         // The data plane is reach-filtered (the environment store, hoisted above); governance is current-administrator-gated
         // (the administration service over the environment-administrator store), and creating an environment grants the
         // creator administration.
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger);
+        // The runner-authorization store (§5.5), resolved once and shared: the runner-authorizations handler owns its
+        // lifecycle, and the environments handler consults it (with the runner registry) to fence an isolation-floor raise
+        // (ADR 0058) — refusing to raise an environment's requiredIsolation while an under-isolated runner stays authorized.
+        IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore);
 
         // The kit surfaces that key token custody by principal read the authenticated principal through the
         // accessor in the modes whose access binding carries none (ScopesOnly).
@@ -260,8 +264,7 @@ public static class ControlPlaneEndpointExtensions
         // The runner-authorization API (§5.5): which runners may serve an environment. A runner enters Pending on
         // registration and is dispatchable only once an administrator of the TARGET environment authorizes it (revocable).
         // Governed by the environment's administrators; the approver inbox spans the environments the caller administers.
-        // Defaults to an in-memory store.
-        IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
+        // The store itself was resolved above (shared with the environments isolation-raise fence).
 
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all

@@ -8,6 +8,7 @@ using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 using AdminKind = Corvus.Text.Json.Arazzo.Durability.Security.EnvironmentAdministrators.AdministratorIdentity.KindEntity;
@@ -44,6 +45,13 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly string actor;
     private readonly ILogger? auditLogger;
 
+    // The runner registry and runner-authorization roster, used only to fence an isolation-floor raise (ADR 0058): raising
+    // requiredIsolation to Isolated is refused while a runner that advertises less is still authorized for the environment.
+    // Both null on a minimal host that does not wire runner authorization; the raise then proceeds unfenced (the register-time
+    // and authorize-time isolation floors still apply on that host).
+    private readonly IRunnerRegistry? runners;
+    private readonly IEnvironmentRunnerAuthorizationStore? runnerAuthorizations;
+
     // The audited resource kind for every governance write on this surface (design §850).
     private const string TargetKind = "environment";
 
@@ -64,7 +72,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null)
+    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
@@ -76,6 +84,8 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         this.observed = observed;
         this.actor = actor;
         this.auditLogger = auditLogger;
+        this.runners = runners;
+        this.runnerAuthorizations = runnerAuthorizations;
     }
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the configured actor.
@@ -248,6 +258,18 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 return UpdateEnvironmentResult.BadRequest(
                     Problem("management-out-of-reach", "Management scope out of reach", 400, "The environment's management tags are outside your own management reach."), workspace);
             }
+        }
+
+        // ADR 0058 isolation-floor fence: raising requiredIsolation to Isolated must not strand a runner that is already
+        // authorized for this environment but advertises less — the register-time and authorize-time floors cannot retract an
+        // existing grant, so the raise itself is refused (409) until the administrator revokes or replaces those runners.
+        // Evaluated only when the update sets requiredIsolation to Isolated; an environment with no under-isolated authorized
+        // runner (or one already Isolated) raises freely, and the roster read is env-scoped, never a fleet-wide scan.
+        if (body.RequiredIsolation.IsNotUndefined() && ((JsonElement)body.RequiredIsolation).ValueEquals("Isolated"u8)
+            && await this.FirstUnderIsolatedAuthorizedRunnerAsync(name, cancellationToken).ConfigureAwait(false) is { } strandedRunner)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "environment.update", this.AuditActor(), TargetKind, name, "refused-isolation-raise-strands-runner");
+            return UpdateEnvironmentResult.Conflict(InsufficientIsolationRaiseProblem(name, strandedRunner), workspace);
         }
 
         using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags, (JsonElement)body.RequireEvidence, (JsonElement)body.AllowsDraftRuns, (JsonElement)body.RequiredIsolation, (JsonElement)body.RuntimeIdentifier);
@@ -833,12 +855,42 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         public ControlPlaneAccess Access { get; } = access;
     }
 
+    // ADR 0058 isolation-floor fence: the first still-authorized runner for the environment whose advertised isolation does
+    // not meet Isolated, or null if every authorized runner qualifies (or the guard is not wired on this host). The Authorized
+    // roster is env-scoped — bounded by the runners serving this one environment, never a fleet-wide scan — and each runner's
+    // advertised isolation is a keyed registry point-read.
+    private async ValueTask<string?> FirstUnderIsolatedAuthorizedRunnerAsync(string environment, CancellationToken cancellationToken)
+    {
+        if (this.runners is null || this.runnerAuthorizations is null)
+        {
+            return null;
+        }
+
+        using PooledDocumentList<EnvironmentRunnerAuthorization> authorized = await this.runnerAuthorizations
+            .ListAsync(new RunnerAuthorizationQuery(RunnerAuthorizationStatus.Authorized, Environment: environment), cancellationToken)
+            .ConfigureAwait(false);
+        foreach (EnvironmentRunnerAuthorization authorization in authorized)
+        {
+            string runnerId = authorization.RunnerIdValue;
+            if (await this.runners.GetAsync(runnerId, cancellationToken).ConfigureAwait(false) is { } registration
+                && !registration.ProvidesIsolation(RunIsolationModel.Isolated))
+            {
+                return runnerId;
+            }
+        }
+
+        return null;
+    }
+
     // ── problem documents ──────────────────────────────────────────────────────────────────────────────────────────
     private static Models.ProblemDetails.Source NotFoundProblem(string name)
         => Problem("environment-not-found", "Environment not found", 404, $"No environment named '{name}' exists, or it is outside your reach.");
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string name)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of environment '{name}'.");
+
+    private static Models.ProblemDetails.Source InsufficientIsolationRaiseProblem(string name, string runnerId)
+        => Problem("insufficient-isolation-raise", "Runner below the raised isolation floor", 409, $"Runner '{runnerId}' is authorized for environment '{name}' but advertises less than Isolated isolation (ADR 0058); revoke it (or replace it with an Isolated-backed runner) before raising the environment's requiredIsolation to Isolated.");
 
     private static Models.ProblemDetails.Source ConflictProblem(EnvironmentAdministrationConflictException ex)
         => Problem("administration-conflict", "Administration changed concurrently", 409, ex.Message);
