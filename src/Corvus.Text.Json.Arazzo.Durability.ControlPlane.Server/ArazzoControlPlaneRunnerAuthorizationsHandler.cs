@@ -208,6 +208,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // the runners:register scope plus the later administrator authorization, not by the runner's own reach. Unknown
         // environment is 404.
         SecurityTagSet reachTags;
+        RunIsolationModel requiredIsolation;
         using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false))
         {
             if (environmentDoc is null)
@@ -216,6 +217,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             }
 
             reachTags = environmentDoc.RootElement.ManagementTagsValue;
+            requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
         }
 
         // Record the runner's liveness registration (the runner's self-description, with the server stamping environment,
@@ -223,6 +225,19 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // creates the Pending row and stamps the principal on first registration, returns the existing row unchanged when the
         // same principal re-registers, and throws when a different principal already owns this runnerId (→ 409).
         RunnerRegistration registration = BuildRegistration(body, environment, reachTags, DateTimeOffset.UtcNow);
+
+        // ADR 0058 isolation floor, enforced at the door: a runner whose advertised isolation does not meet the
+        // environment's requiredIsolation is refused registration outright, so it never enters the registry and can
+        // therefore never be authorized nor claim a run. This closes the gap where an InProcess runner admitted into an
+        // Isolated environment would silently run isolated-required work in-process (dispatch itself is isolation-blind).
+        // The authoritative match still runs at the start gate (ArazzoControlPlaneCatalogHandler); this refusal stops the
+        // misconfiguration before it can reach dispatch.
+        if (!registration.ProvidesIsolation(requiredIsolation))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-insufficient-isolation");
+            return RegisterRunnerResult.Conflict(InsufficientIsolationProblem(environment, requiredIsolation, registration.IsolationModelValue), workspace);
+        }
+
         await this.runners.RegisterAsync(registration, cancellationToken).ConfigureAwait(false);
 
         try
@@ -682,6 +697,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private static Models.ProblemDetails.Source UnidentifiedPrincipalProblem()
         => Problem("unidentified-machine-principal", "Unidentified machine principal", 409, "The registration token carries no machine principal (design §16.4); a runner must authenticate as a machine principal (client-credentials, private-key-JWT, or mTLS) to register.");
+
+    private static Models.ProblemDetails.Source InsufficientIsolationProblem(string environment, RunIsolationModel required, RunIsolationModel advertised)
+        => Problem("insufficient-isolation", "Insufficient runner isolation", 409, $"This runner advertises {advertised} isolation, but environment '{environment}' requires {required} isolation (ADR 0058); register a runner with a {required} execution backend to serve this environment.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(
