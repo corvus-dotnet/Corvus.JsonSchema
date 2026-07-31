@@ -224,5 +224,23 @@ production deployer against it, checks the platform loaded our function (its `in
 down every resource it created (zero cost between runs). It skips unless `ARAZZO_AZURE_SUBSCRIPTION_ID` and
 `ARAZZO_AZURE_RESOURCE_GROUP` are set (with the Azure CLI authenticated); no subscription identifiers are in source.
 
-The remaining work this design admits: execution-host **isolation hardening**, and the **operator surface** (web + CLI)
-for builds, deployments, and isolation.
+## The operator surface
+
+The control and visibility over this pipeline, all landed:
+
+- **REST.** A version's builds are the `nativeBuilds` operations; its deployments are the read-only `deployments`
+  operations (`GET .../versions/{n}/deployments`, `/count`, `/{environment}/{runtimeIdentifier}`), reach-gated to the
+  version, keyset-paged, status-filterable. Deployments are read-only on the control plane by design — the deploy runs
+  on the runner, which holds the environment's cloud credentials (ADR 0059); the control plane records and reports the
+  state the deploy worker drives.
+- **CLI.** `arazzo-runs runners list` (the roster with advertised isolation and liveness), `builds list/get/enqueue`,
+  and `deployments list/get` (status + function invoke URL).
+- **Console.** The catalog version detail's "Serverless — builds & deployments" section (build/deploy rows per target,
+  queue-a-build, failure reasons, invoke URLs), and the runners panel's isolation-posture strip: per environment
+  requiring `Isolated`, whether a live, authorized runner advertising `Isolated` serves it.
+- **Host wiring.** Deployer selection is a host-wiring concern (ADR 0061): the serverless runner picks its platform
+  from `Runner:Serverless:Platform` — `lambda` (default) or `azure-flex` (the One Deploy path over the runner's ambient
+  Azure identity) — with the same deploy worker, verification, and queue driving either.
+
+Execution-host **isolation hardening** also landed: register-time, authorize-time, and environment-update admission
+checks plus the runner's advertise-vs-wire startup fence (ADR 0058).

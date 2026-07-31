@@ -1,9 +1,10 @@
 # Arazzo workflow execution host: design
 
 How a catalogued workflow becomes a compiled assembly stored with the catalog, and how a hosting service loads
-and runs it. The build side and the runner have shipped, along with the pluggable-backend seam and the governed
-isolation advertise-and-match that selects an out-of-process backend (§ below). The first such backend
-(serverless) is proven; broadening the set to more targets and its operator surface remains in progress.
+and runs it. The build side and the runner have shipped, along with the pluggable-backend seam, the governed
+isolation advertise-and-match that selects an out-of-process backend (§ below), and the operator surface over
+builds, deployments, and isolation (REST + CLI + console). The first such backend (serverless) is proven;
+broadening the set to more targets remains in progress.
 
 The decisions are the engine and runner ADRs, [0017](../adr/0017-code-generate-the-executor.md) (generate
 the executor), [0023](../adr/0023-two-process-store-as-queue.md) (two processes sharing the store),
@@ -183,8 +184,11 @@ provides (`isolationModel`) in its registration, and the start gate matches the 
 that a live runner hosts the version, so a run that requires isolation is admitted only where an isolated runner
 can take it. The one-environment-per-runner, admin-authorized model is the security anchor for any out-of-process
 backend. A function or guest executes with the environment's credentials, so it must be provisioned for and
-authorized in exactly that environment. Broadening the backend set (micro-guest, container-per-run) and the
-operator surface for it remains in progress.
+authorized in exactly that environment. The operator surface over this machinery has shipped: the control plane
+reports builds (`nativeBuilds`) and deployments (`deployments`, read-only — the deploy runs on the runner,
+ADR 0059) per (environment, runtime target), the CLI's `runners`/`builds`/`deployments` branches list and queue
+them, and the console's catalog detail and runners panel surface deploy state and isolation posture. Broadening
+the backend set (micro-guest, container-per-run) remains in progress.
 
 ## The trigger surface
 
@@ -262,10 +266,10 @@ The build side (executor provider and packaging), the loader and `IHostedWorkflo
 dispatcher, the message and schedule triggers, control-plane authorization, source credentials, and row security
 have all shipped. The paused demo work (`samples/arazzo/.../docs/live-execution.md`) was the manual prototype
 this design productionised behind the catalog. The pluggable-backend seam, the first out-of-process backend
-(serverless, [ADR 0055](../adr/0055-serverless-backend-aot-from-signed-executor.md)), and the governed isolation
-advertise-and-match that selects it ([ADR 0058](../adr/0058-run-isolation-governed-by-environment-matched-at-start.md))
-have landed; broadening the backend set and its operator surface remains in progress. The decisions themselves are
-recorded in ADRs 0017, 0022 to 0029, and 0055 to 0058; this guide no longer restates them.
+(serverless, [ADR 0055](../adr/0055-serverless-backend-aot-from-signed-executor.md)), the governed isolation
+advertise-and-match that selects it ([ADR 0058](../adr/0058-run-isolation-governed-by-environment-matched-at-start.md)),
+and the operator surface (REST + CLI + console) have landed; broadening the backend set remains in progress. The
+decisions themselves are recorded in ADRs 0017, 0022 to 0029, and 0055 to 0058; this guide no longer restates them.
 
 ## See also
 

@@ -10,7 +10,7 @@ so this page does not restate them and cannot drift from them.
 
 ## Operation groups
 
-The surface is about 150 operations across **17 tag groups**. Most groups follow the same shape, a keyset-paged
+The surface is about 150 operations across **19 tag groups**. Most groups follow the same shape, a keyset-paged
 `list` ([ADR 0035](../adr/0035-keyset-pagination-everywhere.md)) with a bounded `count`
 ([ADR 0036](../adr/0036-bounded-count-contract.md)), a `get`, and `create` / `update` / `delete`, so the table
 below gives each group's job rather than its operations. Read the contract for the current operation set.
@@ -21,6 +21,9 @@ below gives each group's job rather than its operations. Read the contract for t
 | `catalog` | Publish and read versioned, runnable workflow definitions: add, list, get, update, and delete versions; download the package and its addressable documents (workflow, sources, schemas, executor assembly and manifest); validate inputs; start a run. See [the catalog guide](../guides/catalog.md). |
 | `runners` | Read the registered runners that host and execute catalog versions. |
 | `runnerAuthorizations` | Authorize which runners may serve a deployment environment: register, authorize, revoke, quarantine. See [ADR 0027](../adr/0027-runner-environment-binding.md). |
+| `nativeBuilds` | Build a version's native serverless binary asynchronously, one build per (environment, runtime target): enqueue (idempotent per target), list, count, poll. See [ADR 0055](../adr/0055-serverless-backend-aot-from-signed-executor.md). |
+| `deployments` | Observe a version's serverless deployments per (environment, runtime target): list, count, get — read-only, with the resulting function invoke URL; the deploy itself runs on the runner. See [ADR 0059](../adr/0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md). |
+| `providers` | Connected OAuth/OIDC providers through which user-identity acts authenticate as the user: registry with connection state, brokered sign-in, disconnect. See [ADR 0052](../adr/0052-source-fetch-authenticates-as-the-user.md). |
 | `schedules` | Durable schedules that trigger a workflow run on a cadence: list, create, get, delete, run-now. |
 | `security` | Author the row-security policy, rules and claim-to-rule bindings, and read the access-grant overview. See [the identity and authorization guide](../guides/identity-and-authorization.md). |
 | `credentials` | Manage source credential bindings: references and non-secret metadata only, never secret material. See [the source-credentials guide](../guides/source-credentials.md). |
