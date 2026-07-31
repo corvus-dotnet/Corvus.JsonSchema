@@ -34,3 +34,7 @@ https://endjin\.com
 
 # learn.microsoft.com intermittently returns 429 (rate limiting) in CI
 https://learn\.microsoft\.com
+
+# www.asyncapi.com resets the connection ("Connection reset by peer") for the
+# automated checker in CI, though the tutorial links resolve fine in a browser.
+https://www\.asyncapi\.com
