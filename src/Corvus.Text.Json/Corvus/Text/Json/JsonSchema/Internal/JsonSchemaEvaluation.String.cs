@@ -1629,24 +1629,94 @@ public static partial class JsonSchemaEvaluation
         // Domain part
         segment = value.Slice(atIndex + 1);
 
-        if (segment.Length > 2)
+        if (segment[0] == (byte)'[')
         {
-            if (segment[0] == (byte)'[' && segment[segment.Length - 1] == (byte)']')
-            {
-                // This is an address literal, so we need to validate the inside of the brackets as an IP address
-                ReadOnlySpan<byte> addressLiteral = segment.Slice(1, segment.Length - 2);
-                if (addressLiteral.StartsWith("IPv6:"u8))
-                {
-                    return MatchIPV6(addressLiteral.Slice(5));
-                }
-                else
-                {
-                    return MatchIPV4(addressLiteral);
-                }
-            }
+            return MatchAddressLiteral(segment);
         }
 
         return MatchHostname(segment);
+    }
+
+    /// <summary>
+    /// Validates that an email domain segment is a valid RFC 5321 address-literal.
+    /// </summary>
+    /// <param name="segment">The UTF-8 encoded domain segment, including the enclosing brackets.</param>
+    /// <returns><see langword="true"/> if the segment is a valid address-literal; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// RFC 5321 §4.1.3: <c>address-literal = "[" ( IPv4-address-literal / IPv6-address-literal / General-address-literal ) "]"</c>.
+    /// General-address-literal tags are not accepted here; only IPv4 and IPv6 literals validate, matching the
+    /// JSON Schema test suite's expectations for the <c>email</c> and <c>idn-email</c> formats.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool MatchAddressLiteral(ReadOnlySpan<byte> segment)
+    {
+        if (segment.Length < 3 || segment[segment.Length - 1] != (byte)']')
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> addressLiteral = segment.Slice(1, segment.Length - 2);
+
+        if (addressLiteral.StartsWith("IPv6:"u8))
+        {
+            return MatchIPV6(addressLiteral.Slice(5));
+        }
+
+        return MatchIPV4AddressLiteral(addressLiteral);
+    }
+
+    /// <summary>
+    /// Validates that a value is a valid RFC 5321 IPv4-address-literal.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded value to validate, without the enclosing brackets.</param>
+    /// <returns><see langword="true"/> if the value is a valid IPv4-address-literal; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// RFC 5321 §4.1.3: <c>IPv4-address-literal = Snum 3("." Snum)</c> where <c>Snum = 1*3DIGIT</c> representing a
+    /// decimal value in the range 0 through 255. Unlike the RFC 3986 dec-octet rule used for the <c>ipv4</c> format,
+    /// Snum permits leading zeros, and they do not change the base — so this cannot be delegated to
+    /// <see cref="IPAddressParser.IsValidIPV4(ReadOnlySpan{byte}, bool)"/> in either canonical mode (which rejects
+    /// leading zeros) or non-canonical mode (which treats a leading zero as octal and accepts hex and shortened forms).
+    /// </remarks>
+    private static bool MatchIPV4AddressLiteral(ReadOnlySpan<byte> value)
+    {
+        int dots = 0;
+        int digits = 0;
+        int octetValue = 0;
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            byte current = value[i];
+
+            if (current == (byte)'.')
+            {
+                if (digits == 0 || dots == 3)
+                {
+                    return false;
+                }
+
+                dots++;
+                digits = 0;
+                octetValue = 0;
+                continue;
+            }
+
+            uint digit = (uint)(current - (byte)'0');
+
+            if (digit > 9 || digits == 3)
+            {
+                return false;
+            }
+
+            digits++;
+            octetValue = (octetValue * 10) + (int)digit;
+
+            if (octetValue > 255)
+            {
+                return false;
+            }
+        }
+
+        return dots == 3 && digits != 0;
     }
 
     /// <summary>
@@ -1773,6 +1843,13 @@ public static partial class JsonSchemaEvaluation
 
         // Domain part
         segment = value.Slice(atIndex + 1);
+
+        if (segment[0] == (byte)'[')
+        {
+            // RFC 6531 extends only the local part; the RFC 5321 address-literal production is unchanged.
+            // This must not fall through to MatchIdnHostname, which does not reject '[', ':' or ']'.
+            return MatchAddressLiteral(segment);
+        }
 
         return MatchIdnHostname(segment);
     }

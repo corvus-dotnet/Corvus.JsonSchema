@@ -58,6 +58,16 @@ public class JsonSchemaMatchingStringTests
     [DataRow("u:ser@example.com", false)]
     [DataRow("invalid-email", false)]
     [DataRow("用户@例子.广告", false)]
+    [DataRow("user@[127.0.0.1]", true)]
+    [DataRow("user@[01.0.0.1]", true)] // RFC 5321 Snum permits leading zeros
+    [DataRow("user@[192.0.2.300]", false)]
+    [DataRow("user@[IPv6:2001:db8::1]", true)]
+    [DataRow("user@[IPv6:zzz]", false)]
+    [DataRow("user@[]", false)]
+    [DataRow("user@[192.0.2.1", false)] // unterminated address-literal
+    [DataRow("user@[0x7f.0.0.1]", false)] // Snum is decimal only
+    [DataRow("user@[1.2.3]", false)] // Snum requires exactly four octets
+    [DataRow("user@[1.2.3.4.5]", false)]
     public void MatchEmail_ValidatesEmail(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -113,6 +123,13 @@ public class JsonSchemaMatchingStringTests
     [DataRow("Dörte@Sörensen.example.com", true)]
     [DataRow("مثال@موقع.عر", true)]
     [DataRow("jo@\u0640\u07fa", false)]
+    [DataRow("\u03b4\u03bf\u03ba\u03b9\u03bc\u03ae@[192.0.2.1]", true)]
+    [DataRow("\u03b4\u03bf\u03ba\u03b9\u03bc\u03ae@[IPv6:2001:db8::1]", true)]
+    [DataRow("user@[192.0.2.300]", false)]
+    [DataRow("user@[01.0.0.1]", true)] // RFC 5321 Snum permits leading zeros
+    [DataRow("user@[IPv6:zzz]", false)]
+    [DataRow("user@[]", false)]
+    [DataRow("user@[192.0.2.1", false)] // unterminated address-literal
     public void MatchIdnEmail_ValidatesIdnEmail(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
