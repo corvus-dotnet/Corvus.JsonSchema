@@ -188,6 +188,46 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task Authorizing_a_runner_that_no_longer_meets_a_raised_isolation_floor_is_refused()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+
+        // The environment starts InProcess, so an in-process runner registers cleanly (Pending).
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // An administrator later raises the environment's isolation floor to Isolated (ADR 0058).
+        (await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"requiredIsolation":"Isolated"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Authorizing the now-under-isolated runner is refused (belt-and-braces for the register-time floor): it advertises
+        // InProcess but the environment now requires Isolated, so it must not be granted dispatch authorization.
+        var refused = await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using Stj.JsonDocument problem = await ReadJsonAsync(refused);
+        problem.RootElement.GetProperty("type").GetString().ShouldEndWith("insufficient-isolation");
+
+        // The runner stays unauthorized — the refusal did not flip it to Authorized.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? auth = await runnerAuth.GetAsync("production", "runner-1", default);
+        auth!.RootElement.IsAuthorized.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Authorizing_an_isolated_runner_into_an_isolated_environment_succeeds()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"secure","requiredIsolation":"Isolated"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        const string isolatedBody = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/secure/runners", isolatedBody, "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The runner meets the Isolated floor, so authorization proceeds normally.
+        using Stj.JsonDocument authorized = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/secure/runners/runner-1/authorization", "acme"));
+        authorized.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+    }
+
+    [TestMethod]
     public async Task Re_registering_with_the_same_principal_keeps_the_authorization()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();

@@ -157,6 +157,25 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), principal: null, cancellationToken).ConfigureAwait(false);
         }
 
+        // ADR 0058 isolation floor at authorize time — belt-and-braces for the register-time floor. A runner passes the
+        // register-time floor as it stood when it registered; if an administrator later raises the environment's
+        // requiredIsolation, a runner that no longer meets it must not be granted (nor keep, on a re-authorize) dispatch
+        // authorization. Only a registered runner has a known isolation to check (a keyed point-read, never a scan);
+        // pre-authorization allow-lists a runnerId before any runner has registered, so its floor is enforced later at
+        // register-time. The environment requiring only InProcess can never fail this, so the registry is not read then.
+        if (!preAuthorized)
+        {
+            RunIsolationModel requiredIsolation = await this.ResolveRequiredIsolationAsync(environment, cancellationToken).ConfigureAwait(false);
+            if (requiredIsolation != RunIsolationModel.InProcess
+                && await this.runners.GetAsync(runnerId, cancellationToken).ConfigureAwait(false) is { } registration
+                && !registration.ProvidesIsolation(requiredIsolation))
+            {
+                fetched.Dispose();
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-insufficient-isolation");
+                return AuthorizeRunnerResult.Conflict(InsufficientIsolationProblem(environment, requiredIsolation, registration.IsolationModelValue), workspace);
+            }
+        }
+
         // Idempotent — authorizing an already-Authorized runner returns the existing record (status compared string-free).
         if (fetched.RootElement.IsAuthorized)
         {
@@ -675,6 +694,15 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     {
         writer.WritePropertyName(name);
         value.WriteTo(writer);
+    }
+
+    // The environment's minimum run isolation (ADR 0058), resolved as the trusted System identity — the runner-authorization
+    // gate has already established the caller administers this environment, and the floor itself is not reach-sensitive.
+    // A missing environment resolves to the InProcess default (the caller-facing not-found is raised by the governance gate).
+    private async ValueTask<RunIsolationModel> ResolveRequiredIsolationAsync(string environment, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        return environmentDoc?.RootElement.RequiredIsolationValue ?? RunIsolationModel.InProcess;
     }
 
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
