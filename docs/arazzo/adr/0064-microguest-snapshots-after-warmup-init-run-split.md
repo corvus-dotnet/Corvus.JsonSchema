@@ -1,0 +1,34 @@
+# ADR 0064. The micro-guest snapshots after guest warm-up: init once, restore-and-run per advance
+
+Date: 2026-07-31. Status: **Accepted**. Scope: the planned evolution of the micro-guest advance path — where the sandbox snapshot is taken, how the guest entry splits, and the conditions under which the change lands. This captures agreed intent ahead of implementation: the work is sequenced after the micro-guest live gate exists, as its own measured piece. Builds on the micro-guest backend ([ADR 0063](0063-microguest-backend-hyperlight-unikraft-warm-snapshot.md)), the runner-as-secure-boundary model ([ADR 0059](0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md)), and the checkpoint-callback contract ([ADR 0062](0062-authenticated-serverless-checkpoint-callbacks.md)).
+
+## Context
+
+**Where the time goes today.** ADR 0063's model snapshots after kernel boot and ELF load but before any application code runs, so every advance is a hermetic restore (~30–60 ms measured) plus a complete guest run — and "complete run" includes the .NET Native-AOT runtime starting from scratch inside the restored VM. The first live end-to-end runs (2026-07-31) measured 0.4–0.8 s per advance, dominated by that per-advance application start (roughly 400–700 ms), not by the restore.
+
+**How that compares with the cloud backends.** A warm AWS Lambda or Azure Functions invocation costs only tens of milliseconds of platform overhead — but it gets that by *reusing a live process* across invocations, which is precisely what the micro-guest refuses: its per-advance pristine VM is the isolation property the backend exists to provide. The comparison flips on the checkpoint path, and the reason is architectural rather than any Hyperlight capability. The run's durable state is owned by the lease-holding runner, and a serverless function holds no store credentials by design (ADR 0059), so every checkpoint must travel to the runner. A cloud function executes in the vendor's datacenter, so each of its checkpoint callbacks is an internet round-trip to the runner's public listener (ADR 0062) — a chatty multi-step advance multiplies that. The micro-guest executes on the runner's own machine, so the same checkpoint call — same `HttpWorkflowStateStore`, same contract, same durable store write at the runner — crosses the VM boundary onto the same host and never leaves it (the guest's host-proxied socket layer means the *host* opens the connection, pinned by the sandbox's egress allowlist). The cloud targets isolate by distance; Hyperlight isolates by hypervisor boundary, and the boundary is cheap enough to keep the compute next to the state owner. Nothing short of handing the function store credentials (breaking the secure-boundary model) or relocating the runner into the vendor's network changes this for the cloud targets.
+
+**The upstream lever.** hyperlight-unikraft explicitly supports the pattern this ADR adopts: multi-function guest dispatch (register an `init` for one-time warm-up and a `run` for per-call work) and snapshot-after-warm-up (`snapshot_now`), so each restore returns the VM to the *warmed* state rather than the freshly-booted one.
+
+## Decision
+
+**1. The guest entry splits into `init` and `run`.** `init` performs everything invocation-independent: runtime start, constructing the baked resolver, the invocation handler, and the pooled HTTP machinery. `run` performs one advance: fetch the invocation from the sidecar's guest surface, advance the run (checkpointing to the runner), post the outcome, halt. The sidecar evolves the sandbox, calls `init` once, snapshots, and then serves each advance as restore-plus-`run`.
+
+**2. The isolation semantics of ADR 0063 are unchanged.** The snapshot captures only pre-invocation warm-up state — argv is already frozen at evolve, per-run data still arrives over the allowlisted guest surface per advance, and every advance still starts from an identical, pristine (now warmed) VM state. Nothing from any previous run survives into the next.
+
+**3. The target is a restore-dominated advance.** Advance cost ≈ the ~tens-of-milliseconds restore plus the run's own work, below a warm cloud invocation's platform overhead — while keeping both the hypervisor boundary per advance and the machine-local checkpoint path the cloud targets cannot have.
+
+**4. The work is sequenced after the micro-guest live gate, as its own measured piece.** The gate is the regression net for a change to the guest contract; before-and-after advance latency on the same gate hardware is part of the piece's exit criteria. Until it lands, ADR 0063's boot-snapshot model stands.
+
+**5. Three verifications are ship-blockers for the piece:**
+
+- **Dispatch support for a plain ELF guest.** The library's `init`/`run` dispatch is documented for guests that register named functions; whether the ELF-loader path can expose that split to an ordinary Native-AOT binary must be proven first — if it cannot, the split waits on an upstream contribution rather than a fork.
+- **Entropy must not replay.** A restore returns the guest CSPRNG to its snapshotted state, so identical random sequences would repeat across advances; `run` must re-seed from hardware (RDRAND) or the kernel must reseed on restore before this ships. The same verification must document today's per-boot-seeded behavior, which shares the property in weaker form.
+- **No live connection may be captured warm.** The pooled HTTP machinery constructed in `init` must be proven connection-free at snapshot time (connections open lazily per run); a socket captured in the snapshot would be restored dead and every advance would pay its failure.
+
+## Consequences
+
+- Per-advance latency drops from app-start-dominated (0.4–0.8 s measured) to restore-dominated (~tens of ms targeted), making the micro-guest faster than a warm cloud invocation for real advances — which also pay per-checkpoint internet round-trips the micro-guest does not — with stronger per-advance isolation than either.
+- The guest entry template (the assembler's micro-guest target) and the sidecar's evolve/invoke sequence both change together — a guest-contract revision, versioned and landed as one piece; the deployer's wire contract and the recorded `WorkflowDeployment` shape are untouched.
+- The snapshot grows from "booted kernel" to "warmed runtime", enlarging the replayed state; the entropy and connection verifications above become permanent live-gate assertions, not one-off checks.
+- The measured comparison (micro-guest vs warm/cold cloud advance) becomes part of the backend documentation, replacing platform-typical figures with numbers from this repository's own gates.

@@ -79,6 +79,8 @@ The template to follow for a full, fork-bearing ADR is
 | [0060](0060-local-serverless-deploy-emulated-with-localstack.md) | Local serverless deploy is emulated with LocalStack, and one Lambda deployer serves local development and production | Accepted |
 | [0061](0061-azure-functions-serverless-target-isolated-worker-readytorun.md) | The Azure Functions serverless target is a ReadyToRun isolated worker | Accepted |
 | [0062](0062-authenticated-serverless-checkpoint-callbacks.md) | Authenticated serverless checkpoint callbacks use a run-scoped bearer token | Accepted |
+| [0063](0063-microguest-backend-hyperlight-unikraft-warm-snapshot.md) | The micro-guest execution backend runs the AOT executor in a Hyperlight micro-VM restored from a warm snapshot | Accepted |
+| [0064](0064-microguest-snapshots-after-warmup-init-run-split.md) | The micro-guest snapshots after guest warm-up: init once, restore-and-run per advance | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog
