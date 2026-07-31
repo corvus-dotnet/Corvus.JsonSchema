@@ -81,6 +81,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0062](0062-authenticated-serverless-checkpoint-callbacks.md) | Authenticated serverless checkpoint callbacks use a run-scoped bearer token | Accepted |
 | [0063](0063-microguest-backend-hyperlight-unikraft-warm-snapshot.md) | The micro-guest execution backend runs the AOT executor in a Hyperlight micro-VM restored from a warm snapshot | Accepted |
 | [0064](0064-microguest-snapshots-after-warmup-init-run-split.md) | The micro-guest snapshots after guest warm-up: init once, restore-and-run per advance | Accepted |
+| [0065](0065-mutual-distrust-checkpoints-sealed-to-the-environment.md) | Mutual distrust between the control plane and the runner: checkpoints are sealed to the environment | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog
