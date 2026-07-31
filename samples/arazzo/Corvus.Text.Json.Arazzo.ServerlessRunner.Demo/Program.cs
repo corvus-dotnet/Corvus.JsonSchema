@@ -15,8 +15,6 @@
 //     into the shared state store under the lease this runner holds.
 // It registers as an Isolated runner (ADR 0058), so the control-plane dispatch matches an Isolated environment's runs to
 // it. A worker process (the minimal web surface exists only for the §5.4 health probe, the checkpoint callback, and OTel).
-using Amazon.Lambda;
-using Amazon.Runtime;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -25,9 +23,9 @@ using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Runner;
+using Corvus.Text.Json.Arazzo.ServerlessRunner.Demo;
 using Npgsql;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -94,24 +92,6 @@ string trustKeyId = builder.Configuration["Runner:ExecutorTrust:KeyId"] ?? "araz
 IExecutorPackageVerifier verifier = TrustStoreExecutorPackageVerifier.FromPem(
     new Dictionary<string, string>(StringComparer.Ordinal) { [trustKeyId] = await File.ReadAllTextAsync(trustKeyFile) });
 
-// The runner's cloud identity: an IAmazonLambda pointed at LocalStack (the demo's AWS analogue, ADR 0060) or, in
-// production, at real AWS with the runner's own IAM identity. This is the SAME deployer code either way — only the
-// endpoint and credentials differ (ADR 0060). Dummy static credentials are correct for LocalStack Community (it ignores
-// IAM); a real deployment omits ServiceUrl and lets the AWS SDK resolve the runner's ambient identity.
-string lambdaServiceUrl = builder.Configuration["Runner:Lambda:ServiceUrl"]
-    ?? throw new InvalidOperationException("Runner:Lambda:ServiceUrl (the LocalStack edge endpoint, or the AWS endpoint) is required — the AppHost injects LocalStack's.");
-var lambdaConfig = new AmazonLambdaConfig
-{
-    ServiceURL = lambdaServiceUrl,
-    AuthenticationRegion = builder.Configuration["Runner:Lambda:Region"] ?? "us-east-1",
-};
-var lambdaClient = new AmazonLambdaClient(
-    new BasicAWSCredentials(
-        builder.Configuration["Runner:Lambda:AccessKey"] ?? "test",
-        builder.Configuration["Runner:Lambda:SecretKey"] ?? "test"),
-    lambdaConfig);
-builder.Services.AddSingleton<IAmazonLambda>(lambdaClient);
-
 // The checkpoint base URL the invoked function calls back to — this host, at a URL reachable from the LocalStack Lambda
 // container (the AppHost injects host.containers.internal:<port>). Read early: it drives BOTH the run-execution backend
 // (below) AND this host's own listen address — the runner must bind 0.0.0.0 (not loopback), or the Lambda container
@@ -133,17 +113,14 @@ foreach (IConfigurationSection source in builder.Configuration.GetSection("Runne
     }
 }
 
-// The deploy service the deploy worker drives: verify the native artifact, then deploy it via the Lambda deployer. The
-// execution-role ARN is a dummy against LocalStack (which ignores IAM); a real deployment supplies the function's role.
+// The deploy service the deploy worker drives: verify the native artifact, then deploy it via the configured platform's
+// deployer — deployer selection is a host-wiring concern (ADR 0061). Runner:Serverless:Platform picks 'lambda' (the
+// default; LocalStack here, real AWS in production, the runner's own cloud identity either way — ADR 0059/0060) or
+// 'azure-flex' (a real Flex Consumption Function App via One Deploy with the runner's ambient Azure identity — ADR 0061
+// amendment; Azure has no local management-plane emulator). Dispatch, the queue, and the worker are platform-blind.
 var deployService = new WorkflowDeployService(
     verifier,
-    new LambdaServerlessDeployer(
-        lambdaClient,
-        new LambdaDeployerOptions
-        {
-            ExecutionRoleArn = builder.Configuration["Runner:Lambda:ExecutionRoleArn"] ?? "arn:aws:iam::000000000000:role/lambda-role",
-            FunctionEnvironment = functionSourceEnv,
-        }));
+    ServerlessDeployerSelection.Create(builder.Configuration, functionSourceEnv));
 builder.Services.AddSingleton(deployService);
 builder.Services.AddWorkflowDeployWorker(new WorkflowDeployWorkerOptions
 {

@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Aot\Corvus.Text.Json.Arazzo.Durability.Aot.csproj" />
     <!-- The AWS Lambda deploy target (ADR 0055/0060): the IServerlessDeployer wired to LocalStack (or real AWS). -->
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy\Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm\Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm.csproj" />
     <!-- The serverless run-execution backend (invoke-the-function resumer), the deployed-function URL resolver, and the
          /runs/{id}/checkpoint callback surface the invoked function saves back through (ADR 0055). -->
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
