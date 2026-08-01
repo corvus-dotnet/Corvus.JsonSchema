@@ -76,7 +76,7 @@ Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` d
 
   `submittedBytes` is `header ‖ runner region ‖ salt ‖ nonce ‖ tag ‖ ciphertext ‖ MAC` — every region the runner writes, in that order.
 
-  **At sequence 0 there is no runner region**: the genesis row is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed. Its digest is therefore taken over that row's own authenticated bytes — `digest₀ = SHA-256(len‖"checkpoint-digest-genesis" ‖ len‖(sealed inputs ciphertext ‖ initiator signature))` — the initiator signature being the only tenant-side authenticator that exists at genesis. Conformance covers six writers, not five: the five checkpoint authors plus the genesis row. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. It never covers the server-owned control-plane region, which is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
+  **At sequence 0 there is no runner region**: the genesis row is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed. Its digest is therefore taken over that row's own authenticated bytes — `digest₀ = SHA-256(len‖"checkpoint-digest-genesis" ‖ len‖ciphertext ‖ len‖signature)` — the initiator signature being the only tenant-side authenticator that exists at genesis. Conformance covers six writers, not five: the five checkpoint authors plus the genesis row. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. It never covers the server-owned control-plane region, which is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
 
   `runId` is part of the runner-authored region, so the MAC and the digest are run-identifying on their own rather than relying on the AEAD's AAD and the anchor key alone.
 
@@ -163,6 +163,7 @@ AnchorRecord = {
   runId:            RunId,          -- 32 lowercase hex
   environmentId:    EnvironmentId,
   state:            Live | Terminal,
+  disposition:      None | Completed | Abandoned,   -- None while Live
   epochHighWater:   OrderingKey,
   committed:        Mark,
   pending:          Mark | none,
@@ -233,13 +234,29 @@ Discard(W, R)  ≡  R.pending ≠ none
 
 Finalize(W, R) ≡  R.pending = none                 -- promote first if one is outstanding
                 ∧ W.state = Terminal
+                ∧ W.disposition = Completed
                 ∧ W.committed = R.committed
                 ∧ W.pending = none
                 ∧ W.epochHighWater = R.epochHighWater
                 ∧ W.reanchorCounter = R.reanchorCounter
 
-ReAnchor(W, R) ≡  R.state = W.state = Live
-                ∧ W.reanchorCounter = R.reanchorCounter + 1
+Abandon(W, R)  ≡  R.pending ≠ none                 -- Finalize's counterpart for a faulted run
+                ∧ R.state = Live
+                ∧ W.state = Terminal
+                ∧ W.disposition = Abandoned        -- see below: this is what makes it distinguishable
+                ∧ W.committed = R.committed
+                ∧ W.pending = none
+                ∧ W.epochHighWater = R.epochHighWater
+                ∧ W.reanchorCounter = R.reanchorCounter
+                -- Finalize requires no outstanding pending, but the fault rows that
+                -- motivate Abandon (10 and 12) all carry one, and a same-incarnation
+                -- row 12 is deliberately not re-anchorable — so without this clause no
+                -- legal write could ever clear it, and the record would stay Live
+                -- forever, which is the outcome Abandon exists to prevent.
+
+ReAnchor(W, R) ≡  (R = absent ∨ R.state = Live)     -- a LOST anchor is the primary case
+                ∧ W.state = Live
+                ∧ W.reanchorCounter = (R = absent ? 0 : R.reanchorCounter + 1)
                 ∧ W.committed.key = (attestedIncarnation, 0)
                 ∧ W.epochHighWater = W.committed.key
                 ∧ W.pending = none
@@ -248,15 +265,21 @@ ReAnchor(W, R) ≡  R.state = W.state = Live
                 -- write; the store cannot verify signatures.
 ```
 
+**Two discriminators exist because writing the conformance suite proved they had to.** `Abandon` and a `Finalize` issued over an outstanding `pending` produce the *same record shape*, and a store that could not tell them apart would let a writer silently drop an in-flight save by calling it a completion — the hole `Finalize`'s `R.pending = none` conjunct was added to close. The `disposition` field separates them, and makes an abandonment visible and auditable rather than inferable. Likewise `Create` and a `ReAnchor` recovering a *lost* record both write against `R = absent`: they are separated by the counter (a create pins 0, a recovery pins 1) and by the sequence (row 3 covers a missing anchor at genesis, so a recovery applies only beyond it), rather than by inferring intent.
+
+Note what the counter cannot do in that second case: the record that held it is the thing that was lost, so it fences nothing. The fence for a lost-anchor recovery is the operator attestation itself — rate-limited and audited — and the specification says so rather than implying a protection that is not there.
+
 `committed` therefore advances only by `Promote` or `PromoteAndPrepare` of a `pending` that matches in key, sequence, **and** digest, or by `Create` on an absent record with `seq = 0`. No single write can advance `committed` to an arbitrary value, which is the primitive that would otherwise destroy a run.
 
 `ReAnchor` pins the epoch component to `0` because an incarnation change resets the control plane's epoch counter: carrying the pre-restore epoch forward would floor the run above every grant the post-restore control plane can issue, and no later `Prepare` would ever be accepted.
 
-**Enforcement of A5 and the incarnation bound.** `attestedIncarnation` is a second key in the same tenant store, and requiring the store to read it atomically with a whole-record CAS would make it a policy engine. The clauses above are therefore written as the *writer's* obligation: the runner reads `attestedIncarnation` and constructs a conforming write, and the store enforces only the single-record conjuncts. Where the tenant's store does support a two-key conditional write, it enforces the incarnation conjuncts too; where it does not, a violation is caught at the next open, because a record whose `committed.key.incarnation` exceeds the attested value fails the table's incarnation test.
+**Enforcement of A5 and the incarnation bound.** `attestedIncarnation` is a second key in the same tenant store, and requiring the store to read it atomically with a whole-record CAS would make it a policy engine. The clauses above are therefore written as the *writer's* obligation: the runner reads `attestedIncarnation` and constructs a conforming write, and the store enforces only the single-record conjuncts. Where the tenant's store does support a two-key conditional write, it enforces the incarnation conjuncts too; where it does not, a violation is caught at the next open by table row 5a. Without that row the backstop would not exist: a record whose incarnation exceeds the attested value would match the steady-state row and proceed, while its high-water mark sat above every ordering key an honest `Prepare` could construct — a permanent per-run stall.
 
 ### Decision table at open
 
-`S` is read as: parse the row, verify the runner MAC, take the sequence and ordering key **from the MAC-verified region** (never from the server-supplied projection, which is unauthenticated and would otherwise let the control plane relabel an honest row onto a fault), then compute `digest(S)`. Evaluate the rows **in order** and take the first match. `genesis` means `S.seq = 0`.
+**The genesis row is the one exception to everything below.** It is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed, so it has no runner region and *cannot* have a runner MAC — the `envelope-mac` subkey derives from the environment payload key, which the control plane does not hold. Its layout is `[header][sealed inputs ciphertext][initiator signature]`, its authenticator is the initiator signature verified against the key pinned in the runner's own configuration, and its sequence is 0 by definition rather than by being read out of a region. Row 5 therefore does not apply at `S.seq = 0`: "no runner MAC" is the genesis row's correct state, not a failure.
+
+For every other row, `S` is read as: parse the row, verify the runner MAC, take the sequence and ordering key **from the MAC-verified region** (never from the server-supplied projection, which is unauthenticated and would otherwise let the control plane relabel an honest row onto a fault), then compute `digest(S)`. Evaluate the rows **in order** and take the first match. `genesis` means `S.seq = 0`.
 
 `restored` abbreviates `A.committed.key.incarnation < attestedIncarnation` — a restore has been attested since this anchor was last written, so a store that has moved backwards is explained.
 
@@ -266,7 +289,8 @@ ReAnchor(W, R) ≡  R.state = W.state = Live
 | 2 | missing | absent | **NotFound** — benign; no such run |
 | 3 | missing | at `genesis` | **Create** — first claim; the runner writes `committed = (leaseKey, 0, digest(S))` |
 | 4 | missing | `seq > 0` | **HardFault(AnchorLost)** — re-anchorable |
-| 5 | any | unparseable, or runner MAC invalid | **HardFault(Unreadable)** — re-anchorable (an older runner meeting a newer framing version is an honest cause) |
+| 5 | any | unparseable, or (beyond genesis) runner MAC invalid | **HardFault(Unreadable)** — re-anchorable (an older runner meeting a newer framing version is an honest cause) |
+| 5a | `committed.key.incarnation > attestedIncarnation`, or `S`'s region incarnation ≠ `attestedIncarnation` | any | **HardFault(UnattestedIncarnation)** — re-anchorable |
 | 6 | present | absent | **HardFault(RollbackToNothing)** — re-anchorable iff `restored` |
 | 7 | `pending = none` | `seq = committed.seq`, digest matches | **Proceed** |
 | 8 | `pending = none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — re-anchorable iff `restored` |
@@ -289,8 +313,10 @@ The `restored` qualifier is what makes an attested restore recoverable: after on
 | `Promote` | lease holder | `Promote(W, R)` | a save acknowledged with no successor staged, or at open by table row 9 |
 | `Discard` | lease holder | `Discard(W, R)` | at open by table row 11 only |
 | `Finalize` | lease holder | `Finalize(W, R)` | after the terminal checkpoint's promote (two writes; a crash between them lands on row 7) |
-| `Abandon` | operator, applied by the lease holder | `Finalize(W, R)` plus a valid operator signature | disposal of a run whose open hard-faults, as part of decision 12's envelope-only cancel and purge |
+| `Abandon` | operator, applied by the lease holder | `Abandon(W, R)` plus a valid operator signature | disposal of a run whose open hard-faults, as part of decision 12's envelope-only cancel and purge |
 | `ReAnchor` | operator, applied by the lease holder | `ReAnchor(W, R)` plus a valid operator signature over the decision-6 tuple | recovery from a re-anchorable fault, or an attested restore |
+
+**`PromoteAndPrepare` and `Prepare` carry writer obligations the store cannot check.** Neither has a store-side conjunct, because the anchor store cannot see the run row: a `PromoteAndPrepare` issued before the staged save is acknowledged as persisted is *accepted*, and leaves `committed` one ahead of the store — table row 13, which is not re-anchorable within an incarnation, so an honest writer bug becomes a permanently dead run. Promote only on acknowledgement. `Prepare` additionally requires `R.pending = none` at the writer, since re-preparing over an outstanding save replaces the record of what is in flight and drives the next open to row 10.
 
 **A `409` is not an abandonment.** A superseded save forces a re-open and a fresh evaluation of the table, which lands on row 9 when the runner's own resend was the write that persisted. Treating it as abandonment and issuing `Discard` would leave the store one ahead of the anchor — row 14, a hard fault on a merely dropped acknowledgement, which is exactly what the byte-identical-resend rule exists to prevent. `Discard` has no store-side conjunct and the anchor store cannot see the run row, so an erroneous `Discard` is *accepted*: it is permitted only from table row 11.
 
@@ -302,13 +328,13 @@ The `restored` qualifier is what makes an attested restore recoverable: after on
 
 Each of these is mechanical, and together they are the anchor's acceptance criteria:
 
-1. The five acceptance predicates, each with accepting and rejecting cases, including that a bare `committed` advance and an out-of-order `pending` are both rejected.
+1. All eight acceptance clauses, each with accepting and rejecting cases, including that `Finalize` and `Abandon` are distinguishable and that `Create` and a lost-anchor `ReAnchor` are, including that a bare `committed` advance and an out-of-order `pending` are both rejected.
 2. Invariants A1–A4 hold after every accepted write, over a randomized operation sequence; A5 holds for every write a conforming *writer* constructs, and a record violating it is caught at the next open by the table's incarnation test.
 3. Every `(A, S)` pair in the product above matches at least one table row, and the first match yields the specified outcome. (Rows overlap by construction — a `Terminal` record satisfies `pending = none` — so first-match, not uniqueness, is the property.)
-4. The digest is computed over the pinned `submittedBytes` layout and nothing else, byte-for-byte, across all five writers.
+4. The digest is computed over the pinned `submittedBytes` layout and nothing else, byte-for-byte, across the five checkpoint writers; and the genesis digest over its own pinned layout, making six writers in total.
 5. A replayed `ReAnchor` (a previously valid signed record) is rejected on the counter, and a `ReAnchor` over a `Terminal` record is rejected outright.
 6. A `409` on a byte-identical resend leads to a re-open that resolves on row 9, never to a `Discard`.
-7. A crash injected between `Create` and the first `Prepare`, between `Prepare` and dispatch, between dispatch and acknowledgement, between acknowledgement and `Promote`, between `Promote` and `Finalize`, and during `ReAnchor` each leaves a state the table resolves without a hard fault.
+7. A crash injected between `Create` and the first `Prepare`, between `Prepare` and dispatch, between dispatch and acknowledgement, between acknowledgement and `Promote`, between `PromoteAndPrepare` and dispatch, between `Promote` and `Finalize`, and during `ReAnchor` each leaves a state the table resolves without a hard fault.
 
 ## Ownership
 
