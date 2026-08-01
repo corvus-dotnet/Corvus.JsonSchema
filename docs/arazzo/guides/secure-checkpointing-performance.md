@@ -8,10 +8,11 @@ The headline: **the symmetric cryptography is not the cost.** A checkpoint's who
 
 | Stage | Budget |
 |---|---|
-| Runner-side CPU: serialize, split, encrypt, MAC, chain link (1 KB checkpoint) | ≤ 50 µs, **0 bytes allocated** |
+| Runner-side CPU: serialize, split, encrypt, MAC (1 KB checkpoint) | ≤ 50 µs, **0 bytes allocated** |
 | Of which symmetric crypto | ≤ 5 µs (AES-256-GCM ~0.3–1 µs/KB, SHA-256 ~0.5 µs, HMAC ~0.2 µs, HKDF ~2 µs) |
 | Runner API server-side, excluding the store | ≤ 200 µs (cached token verify + binding snapshot hit + framing validation) |
 | Store CAS | **exactly one round trip**; ≤ 2 ms p50, ≤ 10 ms p99 on a co-located Postgres |
+| Tenant anchor write | **one round trip** (the next pending batched with the previous promote) |
 | Checkpoint hop, runner co-located with the control plane | ≤ 5 ms p50, ≤ 20 ms p99 |
 | Checkpoint hop, cloud-serverless guest across the internet | gate on **one round trip per checkpoint**, not an absolute number |
 | KMS or Key Vault calls per checkpoint | **0** (alarm if wrap-calls ÷ checkpoints exceeds ~0.01) |
@@ -22,7 +23,7 @@ The headline: **the symmetric cryptography is not the cost.** A checkpoint's who
 
 ### Collapse the round trips
 
-**Claim returns the row.** Dispatch currently does query-claimable, then acquire-lease, then load — three store round trips before a step runs, which the ADR turns into three authenticated HTTP hops. Make one runner-API verb return a bounded keyset page of *claimed* runs, each carrying the whole row: envelope, payload ciphertext, salt, sequence, etag, lease token and expiry, and the chain tip **as a hint** (the authoritative tip is the tenant-side anchor). Server-side it is one statement per backend (a Postgres CTE returning the claimed rows; an extension of the Redis Lua script; a Cosmos stored procedure). Three hops become one — 2 round trips saved per advance, which is 2–4 ms co-located and 60–200 ms for a serverless runner across the internet.
+**Claim returns the row.** Dispatch currently does query-claimable, then acquire-lease, then load — three store round trips before a step runs, which the ADR turns into three authenticated HTTP hops. Make one runner-API verb return a bounded keyset page of *claimed* runs, each carrying the whole row: envelope, payload ciphertext, salt, sequence, etag, and lease token and expiry. Server-side it is one statement per backend (a Postgres CTE returning the claimed rows; an extension of the Redis Lua script; a Cosmos stored procedure). Three hops become one — 2 round trips saved per advance, which is 2–4 ms co-located and 60–200 ms for a serverless runner across the internet.
 
 Because reading is now how a lease is acquired, **this is a bulk read path** and the ADR treats it as one: cap the batch, subject it to the same per-tenant rate limit and audit record as the re-key sweep, and have the caller declare its intended concurrency so claims beyond it are refused. It also burns an epoch per run touched, which is a lease-denial primitive against the tenant's own other runners. Never carry key material in the response.
 
@@ -30,7 +31,7 @@ Because reading is now how a lease is acquired, **this is a bulk read path** and
 
 **Warm, multiplexed transport.** Every runner-side client in the tree today is a bare `HttpClient` or default `SocketsHttpHandler`: HTTP/1.1, no connection lifetime, no keep-alive policy. Use one shared handler per process with `PooledConnectionLifetime` around five minutes, an idle timeout longer than the dispatch poll interval, `EnableMultipleHttp2Connections`, keep-alive pings on active requests, and `RequestVersionOrHigher` so HTTP/3 is taken where the ingress offers it. Issue a cheap health call at startup so the first checkpoint never pays the handshake. First-write-after-idle drops from about three round trips to one.
 
-**Coalesce interim writes.** Interim saves are fire-and-forget but now authenticated and failure-significant. Keep at most one *undispatched* interim write per run and replace it when a newer one arrives, with a hard floor (at least every K milliseconds, and always the terminal write). **The coalescing buffer holds plaintext only: sequence assignment, chain linking, and encryption all happen at dispatch time.** This is not the same as the server's supersession drop, and the difference matters — the server never accepts a gap, so a pre-encrypted write dropped client-side would fix a sequence and a chain parent that never persist, and every subsequent write would be rejected and un-renumberable without re-encryption. Per-environment, default off, because it trades crash-replay granularity.
+**Coalesce interim writes.** Interim saves are fire-and-forget but now authenticated and failure-significant. Keep at most one *undispatched* interim write per run and replace it when a newer one arrives, with a hard floor (at least every K milliseconds, and always the terminal write). **The coalescing buffer holds plaintext only: sequence assignment and encryption both happen at dispatch time.** This is not the same as the server's supersession drop — the server never accepts a gap, so a pre-encrypted write dropped client-side would fix a sequence that never persists, and every subsequent write would be rejected and un-renumberable without re-encryption. Per-environment, default off, because it trades crash-replay granularity.
 
 **Cache the catalog locally.** Packages are immutable and content-hashed, so cache them on disk and revalidate with `If-None-Match`; after the first pull of a version the runner never re-downloads it. Authorize **by path per request** (a revoked runner gets `404`, not `304`), resolve the path to a content hash in the cheap cacheable metadata response, and key the on-disk cache by **that hash** — then verify the hash and the artifact signature on every load from cache, and check the hash against the tenant's promoted-hash allowlist. A path-keyed cache whose bodies are never re-hashed cannot enforce that allowlist and never notices a locally tampered file, which would defeat the one pre-phase-C defence against a malicious control plane substituting executor content.
 
@@ -41,7 +42,7 @@ This is the single highest-value item. The envelope protector today generates a 
 Keep the fresh-key property but *derive* the key instead of wrapping it: generate a fresh 32-byte random salt and compute the data key with `HKDF.Expand` from the environment payload key, storing the salt where the wrapped key sits today. Two rules from ADR 0065 decision 5 are load-bearing and neither is optional:
 
 - **The info is fully length-framed and labelled**: `len‖"data-key" ‖ len‖environmentId ‖ len‖keyId ‖ len‖runId ‖ uint64(sequence) ‖ salt`. Unframed concatenation lets two different `(keyId, runId)` pairs derive the same key, and with a counter nonce that is a repeated `(key, nonce)` pair — a full GCM break yielding forgery. `environmentId` is present because the ADR's encryption context requires it, and the label because a tenant-registered `keyId` must not be able to collide a data key with a subkey.
-- **A fresh salt for every encryption *operation*, not per logical checkpoint.** Re-encrypting the same checkpoint after a `409` (the chain tip changed, so the AAD changed) with a cached salt restarts the counter nonce under the same derived key. The counter nonce is only safe because this rule holds; test it by re-encrypting after a simulated `409` and asserting a distinct salt.
+- **A fresh salt for every encryption *operation*, not per logical checkpoint.** Re-encrypting the same checkpoint after a `409` with a cached salt restarts the counter nonce under the same derived key. The counter nonce is only safe because this rule holds; test it by re-encrypting after a simulated `409` and asserting a distinct salt.
 
 Where the environment key must stay non-exportable in an HSM, the runner unwraps a per-run intermediate **directly against the HSM** and derives per checkpoint from it, so KMS calls drop from per-checkpoint to per-run. **Key material never travels over the runner API** — a per-lease intermediate carried in a claim response would put a key that opens every checkpoint of that lease in the hands of the party the design exists to exclude, and would break the per-run encryption context besides. A conformance test asserts that no runner-API response body carries key material.
 
@@ -77,13 +78,13 @@ That holds only while nothing else re-serializes them, which is a real constrain
 
 Framing also gives the control-plane-authored fields their own region, so cancel and resume requests never touch the MAC'd bytes. Ownership is explicit: the runner submits only its own region plus the crypto regions, the server owns the control-plane region and never rewrites the runner's octets, and the two are joined at read time. And it removes base64 wherever a backend accepts binary — Cosmos currently base64s the checkpoint, inflating high-entropy ciphertext 33% on the wire, in request units, and at rest.
 
-### Chain link and subkeys
+### The anchor, and subkeys
 
-Compute the chain link as a single SHA-256 over the ciphertext already sitting in the row buffer, immediately after encryption, into a `stackalloc` — it cannot be computed during serialization because it is over the ciphertext, but it is one ~0.5 µs pass. Carry the tip as an inline 32-byte field threaded the way the coordinator threads etags today, and persist it in the **tenant-side anchor** (a runner-host-local or tenant-KV `runId → (epoch, sequence, tip)` record written before each save) so a restart or a sibling runner re-anchors legitimately. It must not be persisted only in the control plane's store: that would have the rollback adversary supplying both the row and the value used to judge it. A tip returned by the runner API is a hint; a mismatch against the anchor is a hard fault.
+The tenant anchor is now the freshness mechanism (the payload chain is deleted — ADR 0065 decision 6), and it is a **second durable write on the checkpoint hot path**: `pending(epoch, sequence + 1)` before the save, promoted to `committed` on acknowledgement. Budget it — one tenant-side round trip per checkpoint, well under a millisecond for a co-located anchor store but not free, and its unavailability stalls checkpointing. Batch the promote of the previous checkpoint with the pending write of the next, so the steady state is one anchor round trip per checkpoint rather than two.
 
-Worth a crypto sign-off as a stronger variant: use the previous checkpoint's GCM tag as the link. It is already computed, is a function of the whole ciphertext, AAD, and key, and cannot be produced by a party without the key — unlike a public SHA-256 anyone holding the ciphertext can recompute. Its 128-bit width should not be relied on for collision resistance against the key holder, and that should be stated rather than assumed.
+Derive the four per-generation subkeys (`wrap`, `envelope-mac`, `wait-index`, `checkpoint-token`) **once per key generation** into an immutable key ring over a single pinned buffer (pinned so rotation can reliably zero it), held in a frozen dictionary keyed by key id so prior generations stay openable. Only `data-key` is per encryption, because only it takes the run, sequence, and salt. Use the static `HashData` overloads — no HMAC instances, no allocation.
 
-Derive the wait-index and MAC subkeys **once per key generation** into an immutable key ring over a single pinned buffer (pinned so rotation can reliably zero it), held in a frozen dictionary keyed by key id so prior generations stay openable. Use the static `HashData` overloads — no HMAC instances, no allocation.
+The row buffer's lifetime follows the byte-identical retry rule: it is owned by the in-flight save and returned to the pool only when that sequence is acknowledged, superseded, or abandoned. Budget pool pressure as in-flight concurrency times row size; at most one save per run is in flight by construction.
 
 ### Store-side
 
@@ -124,7 +125,9 @@ Each of these looks like an optimization and is a security regression.
 - Enabling pre-encryption compression by default. It shrinks payloads 3–5× but makes ciphertext length a function of plaintext *content* (the CRIME/BREACH class), and checkpoints are guest-driven. Per-environment opt-in, off by default, mutually exclusive with length-bucket padding, documented beside the other visibility residues.
 - Caching "this row verified recently" to skip the MAC.
 - Resolving a binding-cache miss to a distinguishable error or a `403` instead of failing closed to `404` — an existence oracle reintroduced through a caching decision.
-- Holding the chain tip only in process memory with no persisted anchor, and then "fixing" the resulting false alarms by trusting the row on a cold open — which silently removes the rollback detection the ADR retains while prevention is deferred.
+- Making the anchor runner-host-local. Leases fail over between hosts, so a host-local anchor bricks every run its host was carrying; it is a tenant-owned replicated record.
+- "Fixing" a missing or mismatched anchor by trusting the row on a cold open — that silently removes the rollback detection the anchor exists to provide. The only recovery is the audited, operator-key-gated re-anchor.
+- Re-encrypting on retry instead of resending the retained bytes: a fresh salt yields different ciphertext, so an honest dropped response faults the run.
 - Emitting the blind wait key, a correlation id, or per-run payload sizes as telemetry tags.
 
 ## What to measure
