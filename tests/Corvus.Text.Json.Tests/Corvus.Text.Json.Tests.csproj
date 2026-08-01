@@ -76,6 +76,7 @@
     <Compile Include="MigrationEquivalenceTests\EqualityEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\EnumConstEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\FormattingEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\MatchEveryEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\MutationEquivalenceTests.cs" />
     <Compile Include="VersionTrackingTests.cs" />
     <Compile Include="Utf8UriEscapeTests.cs" />

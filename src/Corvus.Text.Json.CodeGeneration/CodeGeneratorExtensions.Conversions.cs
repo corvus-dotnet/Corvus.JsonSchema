@@ -798,6 +798,7 @@ internal static partial class CodeGeneratorExtensions
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++, forMutable);
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++, forMutable);
+                    AppendMatchEveryCompositionMethod(generator, typeDeclaration, subschema, matchOverloadIndex++, forMutable);
                 }
             }
         }
@@ -1027,6 +1028,147 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("return defaultMatch(this", includeContext ? ", context" : string.Empty, ");")
+                .PopMemberScope()
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendMatchEveryCompositionMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, IReadOnlyCollection<TypeDeclaration> subschema, int matchOverloadIndex, bool forMutable)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // No matcher if any of the subschema are a built-in JsonAny type, as we can always match that.
+            if (subschema.Any(s => s.IsBuiltInJsonAnyType()))
+            {
+                return;
+            }
+
+            string scopeName = $"Match{matchOverloadIndex}";
+
+            generator
+                .ReserveNameIfNotReserved("MatchEvery")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                """);
+
+            // Reserve the parameter names we are going to require, and the local we emit in the body.
+            generator
+                .ReserveNameIfNotReserved("accumulator", childScope: scopeName)
+                .ReserveNameIfNotReserved("defaultMatch", childScope: scopeName)
+                .ReserveNameIfNotReserved("matched", childScope: scopeName);
+
+            string[] parameterNames = new string[subschema.Count];
+
+            int i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (match.IsBuiltInJsonNotAnyType())
+                {
+                    // You can never match the built in NotAny type.
+                    continue;
+                }
+
+                // This is the parameter name for the match match method.
+                string matchTypeName = match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName();
+                string matchParamName = generator.GetUniqueParameterNameInScope(match.ReducedTypeDeclaration().ReducedType.DotnetTypeName(), childScope: scopeName, prefix: "match");
+
+                parameterNames[i++] = matchParamName;
+
+                generator
+                    .AppendLineIndent("/// <param name=\"", matchParamName, "\">Match a <see cref=\"", matchTypeName, "\"/>.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"defaultMatch\">Match any other value. Called only when no other match function was called.</param>")
+                .AppendLineIndent("/// <returns>The accumulator returned by the last match function called.</returns>")
+                .AppendLineIndent("public TAccumulator MatchEvery<TAccumulator>(")
+                .PushMemberScope(scopeName, ScopeType.Method)
+                .PushIndent()
+                .AppendIndent("TAccumulator accumulator");
+
+            i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                TypeDeclaration t = match.ReducedTypeDeclaration().ReducedType;
+
+                if (t.IsBuiltInJsonNotAnyType())
+                {
+                    continue;
+                }
+
+                generator
+                    .AppendLine(",")
+                    .AppendIndent(
+                        "Matcher<",
+                        t.FullyQualifiedDotnetTypeName(),
+                        ", TAccumulator, TAccumulator> ",
+                        parameterNames[i++]);
+            }
+
+            generator
+                .AppendLine(",")
+                .AppendLineIndent(
+                    "Matcher<",
+                    typeDeclaration.FullyQualifiedDotnetTypeName(),
+                    forMutable ? ".Mutable" : "",
+                    ", TAccumulator, TAccumulator> defaultMatch)")
+                .PopIndent()
+                .AppendLineIndent("{")
+                .PushIndent()
+                .AppendLineIndent("bool matched = false;");
+
+            i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                TypeDeclaration matchType = match.ReducedTypeDeclaration().ReducedType;
+                string matchTypeName = matchType.FullyQualifiedDotnetTypeName();
+
+                if (matchType.IsBuiltInJsonNotAnyType())
+                {
+                    // You can never match the built in NotAny type.
+                    continue;
+                }
+
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (", matchTypeName, ".", generator.JsonSchemaClassName(matchTypeName), ".Evaluate(_parent, _idx))")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("matched = true;")
+                        .AppendLineIndent("accumulator = ", parameterNames[i], "(", matchTypeName, forMutable ? ".Mutable" : "", ".From(this), accumulator);")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+
+                i++;
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return matched ? accumulator : defaultMatch(this, accumulator);")
                 .PopMemberScope()
                 .PopIndent()
                 .AppendLineIndent("}");

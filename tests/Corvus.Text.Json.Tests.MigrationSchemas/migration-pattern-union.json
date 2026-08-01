@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    { "type": "string" },
+    { "$ref": "#/$defs/patternValue" }
+  ],
+  "$defs": {
+    "patternValue": {
+      "type": "string",
+      "pattern": "^corvus-[0-9]+$"
+    }
+  }
+}

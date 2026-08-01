@@ -5156,6 +5156,7 @@ internal static partial class CodeGeneratorExtensions
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                    AppendMatchEveryCompositionMethod(generator, typeDeclaration, subschema, matchOverloadIndex++);
                 }
             }
         }
@@ -5353,6 +5354,125 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("return defaultMatch(this", includeContext ? ", context" : string.Empty, ");")
+                .PopMemberScope()
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static void AppendMatchEveryCompositionMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, IReadOnlyCollection<TypeDeclaration> subschema, int matchOverloadIndex)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
+            string scopeName = $"Match{matchOverloadIndex}";
+
+            generator
+                .ReserveNameIfNotReserved("MatchEvery")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                """);
+
+            // Reserve the parameter names we are going to require, and the local we emit in the body.
+            generator
+                .ReserveNameIfNotReserved("accumulator", childScope: scopeName)
+                .ReserveNameIfNotReserved("defaultMatch", childScope: scopeName)
+                .ReserveNameIfNotReserved("matched", childScope: scopeName);
+
+            string[] parameterNames = new string[subschema.Count];
+
+            int i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                // This is the parameter name for the match match method.
+                string matchTypeName = match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName();
+                string matchParamName = generator.GetUniqueParameterNameInScope(match.ReducedTypeDeclaration().ReducedType.DotnetTypeName(), childScope: scopeName, prefix: "match");
+
+                parameterNames[i++] = matchParamName;
+
+                generator
+                    .AppendLineIndent("/// <param name=\"", matchParamName, "\">Match a <see cref=\"", matchTypeName, "\"/>.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"defaultMatch\">Match any other value. Called only when no other match function was called.</param>")
+                .AppendLineIndent("/// <returns>The accumulator returned by the last match function called.</returns>")
+                .AppendLineIndent("public TAccumulator MatchEvery<TAccumulator>(")
+                .PushMemberScope(scopeName, ScopeType.Method)
+                .PushIndent()
+                .AppendIndent("TAccumulator accumulator");
+
+            i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                generator
+                    .AppendLine(",")
+                    .AppendIndent(
+                        "Matcher<",
+                        match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName(),
+                        ", TAccumulator, TAccumulator> ",
+                        parameterNames[i++]);
+            }
+
+            generator
+                .AppendLine(",")
+                .AppendLineIndent(
+                    "Matcher<",
+                    typeDeclaration.FullyQualifiedDotnetTypeName(),
+                    ", TAccumulator, TAccumulator> defaultMatch)")
+                .PopIndent()
+                .AppendLineIndent("{")
+                .PushIndent()
+                .AppendLineIndent("bool matched = false;");
+
+            i = 0;
+            foreach (TypeDeclaration match in subschema)
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                string matchTypeName = match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName();
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent(
+                        matchTypeName,
+                        " ",
+                        parameterNames[i],
+                        "Value = this.As<",
+                        matchTypeName,
+                        ">();")
+                    .AppendLineIndent("if (", parameterNames[i], "Value.IsValid())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("matched = true;")
+                        .AppendLineIndent("accumulator = ", parameterNames[i], "(", parameterNames[i], "Value, accumulator);")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+                i++;
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return matched ? accumulator : defaultMatch(this, accumulator);")
                 .PopMemberScope()
                 .PopIndent()
                 .AppendLineIndent("}");
