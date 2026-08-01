@@ -74,7 +74,9 @@ Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` d
   [header][runner region][salt][nonce][tag][ciphertext][MAC][control-plane region]
   ```
 
-  `submittedBytes` is `header ‖ runner region ‖ salt ‖ nonce ‖ tag ‖ ciphertext ‖ MAC` — every region the runner writes, in that order. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. It never covers the server-owned control-plane region, which is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
+  `submittedBytes` is `header ‖ runner region ‖ salt ‖ nonce ‖ tag ‖ ciphertext ‖ MAC` — every region the runner writes, in that order.
+
+  **At sequence 0 there is no runner region**: the genesis row is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed. Its digest is therefore taken over that row's own authenticated bytes — `digest₀ = SHA-256(len‖"checkpoint-digest-genesis" ‖ len‖(sealed inputs ciphertext ‖ initiator signature))` — the initiator signature being the only tenant-side authenticator that exists at genesis. Conformance covers six writers, not five: the five checkpoint authors plus the genesis row. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. It never covers the server-owned control-plane region, which is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
 
   `runId` is part of the runner-authored region, so the MAC and the digest are run-identifying on their own rather than relying on the AEAD's AAD and the anchor key alone.
 
@@ -93,11 +95,11 @@ Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` d
   | any | sequence above `committed` with no matching `pending` | anchor lost a write, or an unknown writer | hard fault |
   | `committed(e, n, d)` | row absent, or `404` | rollback to nothing | hard fault |
   | `terminal` | any | the run finished | refuse to claim |
-  | missing | any store row, including genesis | anchor lost, or a completed run replayed | hard fault |
+  | missing | store beyond genesis | anchor lost, or a completed run replayed | hard fault |
 
   Rows are evaluated **in order** — `terminal` first, then `missing`, then the `committed`/`pending` predicates — so a terminal run whose store row was re-presented is a routine refusal rather than a security incident on every claim attempt. In the steady state a promote follows the save's acknowledgement; at recovery time (table row 2) it requires the stored row to *match* the pending record on epoch **and** digest, so an acknowledgement that diverged from what was actually stored is caught at the next open by row 4. A promote never lowers `epochHighWater` — otherwise a runner could promote its own lower epoch over a higher-epoch row written by a second holder, re-opening the window the epoch exists to close. A missing entry is a fault rather than a licence to trust the row; trusting the row on a cold open is exactly what removes the detection.
 
-  **Re-anchor** is the single recovery path, for a lost anchor and for a restore (where the store legitimately moves below every anchor). It is an operation, not a permission: the tenant operator is shown `(anchor committed, store epoch, store sequence, store digest, incarnation, and whether the store is below, lateral to, or above the anchor)`, signs that exact tuple — which includes a **strictly monotonic per-run re-anchor counter** — with the operator key of decision 8, and the anchor is set to it. The runner refuses a re-anchor whose counter is not above the last it accepted: without it, two validly-signed records for the same run at the same incarnation both verify forever, and replaying the older one rolls the anchor back under an operator's own signature. **A detected rollback or substitution within the same incarnation is not re-anchorable** — signing it away is blessing the attack, and a control plane that rolls a run back must not be able to make signing the only route back to liveness. Re-anchors are rate-limited and audited per run rather than capped at one per incarnation, so a second honest anchor incident is still recoverable.
+  **Re-anchor** is the single recovery path, for a lost anchor and for a restore (where the store legitimately moves below every anchor). It is an operation, not a permission: the tenant operator is shown `(anchor committed, store epoch, store sequence, store digest, incarnation, and whether the store is below, lateral to, or above the anchor)`, signs that exact tuple — length-framed like every other authenticated structure here, naming `runId` and `environmentId`, and including a **strictly monotonic per-run re-anchor counter** — with the operator key of decision 8, and the anchor is set to it. The runner refuses a re-anchor whose counter is not above the last it accepted: without it, two validly-signed records for the same run at the same incarnation both verify forever, and replaying the older one rolls the anchor back under an operator's own signature. **A detected rollback or substitution within the same incarnation is not re-anchorable** — signing it away is blessing the attack, and a control plane that rolls a run back must not be able to make signing the only route back to liveness. Re-anchors are rate-limited and audited per run rather than capped at one per incarnation, so a second honest anchor incident is still recoverable.
 
   **The incarnation is tenant-attested, not control-plane-asserted.** The rule above turns on whether the store moved because of a restore or because of an attack, and the incarnation is the discriminator — so a control plane that could simply advance it would manufacture the rollback and then supply the excuse that makes it signable. The tenant's anchor store holds the current incarnation as an environment-scoped value, and three rules govern it:
 
@@ -170,6 +172,8 @@ AnchorRecord = {
 
 Environment-scoped, in the same tenant store: `attestedIncarnation: uint64`, written only by the operator-attested event of decision 6.
 
+The **runner-authored region** carries, at minimum and in fixed order: `runId`, `sequence`, the ordering key `(incarnation, epoch)`, `keyId`, the AEAD algorithm id, the cursor, status, blind wait key, fault code, retry counters, timing, the journal skeleton, and the security tags. Pinning the field set matters because the digest covers the region: it is what makes the table's digest-only tests carry the epoch and the sequence, so a conforming implementation cannot omit them and silently weaken row 9.
+
 ### Invariants
 
 Every stored record satisfies:
@@ -182,13 +186,22 @@ Every stored record satisfies:
 
 ### Acceptance predicate
 
-A write `W` against stored record `R` is accepted if and only if exactly one of the following holds. This is the whole of what the anchor store enforces; it is a key-value store with compare-and-swap over the whole record, not a policy engine.
+A write `W` against stored record `R` is accepted if and only if exactly one of the following holds. This is the whole of what the anchor store enforces: a key-value store with compare-and-swap over the whole record, not a policy engine. Every clause additionally requires `W.runId = R.runId` and `W.environmentId = R.environmentId` (the record identity is immutable, and every clause is a whole-record replace).
 
 ```
+Create(W, R)   ≡  R = absent                        -- create-if-absent
+                ∧ W.committed.seq = 0
+                ∧ W.committed.key.incarnation = attestedIncarnation
+                ∧ W.epochHighWater = W.committed.key
+                ∧ W.pending = none
+                ∧ W.state = Live
+                ∧ W.reanchorCounter = 0
+
 Prepare(W, R)  ≡  W.committed = R.committed
                 ∧ W.pending ≠ none
                 ∧ W.pending.seq = R.committed.seq + 1
                 ∧ W.pending.key ≥ R.epochHighWater
+                ∧ W.pending.key.incarnation = attestedIncarnation
                 ∧ W.epochHighWater = W.pending.key
                 ∧ W.state = R.state = Live
                 ∧ W.reanchorCounter = R.reanchorCounter
@@ -200,6 +213,17 @@ Promote(W, R)  ≡  R.pending ≠ none
                 ∧ W.state = R.state = Live
                 ∧ W.reanchorCounter = R.reanchorCounter
 
+PromoteAndPrepare(W, R)
+               ≡  R.pending ≠ none                 -- the fused steady-state write
+                ∧ W.committed = R.pending
+                ∧ W.pending ≠ none
+                ∧ W.pending.seq = R.pending.seq + 1
+                ∧ W.pending.key ≥ R.epochHighWater
+                ∧ W.pending.key.incarnation = attestedIncarnation
+                ∧ W.epochHighWater = W.pending.key
+                ∧ W.state = R.state = Live
+                ∧ W.reanchorCounter = R.reanchorCounter
+
 Discard(W, R)  ≡  R.pending ≠ none
                 ∧ W.committed = R.committed
                 ∧ W.pending = none
@@ -207,68 +231,84 @@ Discard(W, R)  ≡  R.pending ≠ none
                 ∧ W.state = R.state = Live
                 ∧ W.reanchorCounter = R.reanchorCounter
 
-Finalize(W, R) ≡  W.state = Terminal
+Finalize(W, R) ≡  R.pending = none                 -- promote first if one is outstanding
+                ∧ W.state = Terminal
                 ∧ W.committed = R.committed
                 ∧ W.pending = none
                 ∧ W.epochHighWater = R.epochHighWater
                 ∧ W.reanchorCounter = R.reanchorCounter
 
-ReAnchor(W, R) ≡  W.reanchorCounter = R.reanchorCounter + 1
-                ∧ W.committed.key.incarnation = attestedIncarnation
-                ∧ W.pending = none
+ReAnchor(W, R) ≡  R.state = W.state = Live
+                ∧ W.reanchorCounter = R.reanchorCounter + 1
+                ∧ W.committed.key = (attestedIncarnation, 0)
                 ∧ W.epochHighWater = W.committed.key
-                -- the sole write exempt from the epochHighWater floor;
-                -- the operator signature over W is verified by the RUNNER at open,
-                -- not by the store, which cannot verify signatures.
+                ∧ W.pending = none
+                -- the sole write exempt from the epochHighWater floor. The operator
+                -- signature over W is verified by the RUNNER before it applies the
+                -- write; the store cannot verify signatures.
 ```
 
-`committed` therefore never advances except by `Promote` of a `pending` that is byte-identical in key, sequence, and digest — a bare `committed` advance is not an accepted write, so no single write can destroy a run.
+`committed` therefore advances only by `Promote` or `PromoteAndPrepare` of a `pending` that matches in key, sequence, **and** digest, or by `Create` on an absent record with `seq = 0`. No single write can advance `committed` to an arbitrary value, which is the primitive that would otherwise destroy a run.
+
+`ReAnchor` pins the epoch component to `0` because an incarnation change resets the control plane's epoch counter: carrying the pre-restore epoch forward would floor the run above every grant the post-restore control plane can issue, and no later `Prepare` would ever be accepted.
+
+**Enforcement of A5 and the incarnation bound.** `attestedIncarnation` is a second key in the same tenant store, and requiring the store to read it atomically with a whole-record CAS would make it a policy engine. The clauses above are therefore written as the *writer's* obligation: the runner reads `attestedIncarnation` and constructs a conforming write, and the store enforces only the single-record conjuncts. Where the tenant's store does support a two-key conditional write, it enforces the incarnation conjuncts too; where it does not, a violation is caught at the next open, because a record whose `committed.key.incarnation` exceeds the attested value fails the table's incarnation test.
 
 ### Decision table at open
 
-Given the anchor record `A` (or its absence) and the store row `S` (or its absence), the runner evaluates **in order** and takes the first match. `genesis` means `S.seq = 0`.
+`S` is read as: parse the row, verify the runner MAC, take the sequence and ordering key **from the MAC-verified region** (never from the server-supplied projection, which is unauthenticated and would otherwise let the control plane relabel an honest row onto a fault), then compute `digest(S)`. Evaluate the rows **in order** and take the first match. `genesis` means `S.seq = 0`.
+
+`restored` abbreviates `A.committed.key.incarnation < attestedIncarnation` — a restore has been attested since this anchor was last written, so a store that has moved backwards is explained.
 
 | # | `A` | `S` | Outcome |
 |---|---|---|---|
 | 1 | `state = Terminal` | any | **RefuseClaim** — the run finished |
 | 2 | missing | absent | **NotFound** — benign; no such run |
-| 3 | missing | at `genesis` | **Create** — first claim of a fresh run; the runner computes `digest(S)` and writes `committed = (leaseKey, 0, digest(S))` |
+| 3 | missing | at `genesis` | **Create** — first claim; the runner writes `committed = (leaseKey, 0, digest(S))` |
 | 4 | missing | `seq > 0` | **HardFault(AnchorLost)** — re-anchorable |
-| 5 | present | absent | **HardFault(RollbackToNothing)** — not re-anchorable |
-| 6 | `pending = none` | `seq = committed.seq`, digest matches | **Proceed** |
-| 7 | `pending = none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — not re-anchorable |
-| 8 | `pending ≠ none` | `seq = pending.seq`, digest matches | **Promote**, then Proceed |
-| 9 | `pending ≠ none` | `seq = pending.seq`, digest differs | **HardFault(Divergence)** — re-anchorable; this is the displaced-holder race |
-| 10 | `pending ≠ none` | `seq = committed.seq`, digest matches | **Discard**, then Proceed |
-| 11 | `pending ≠ none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — not re-anchorable |
-| 12 | present | `seq < committed.seq` | **HardFault(Rollback)** — not re-anchorable |
-| 13 | present | `seq > (pending ? pending.seq : committed.seq)` | **HardFault(AnchorLostWrite)** — re-anchorable |
+| 5 | any | unparseable, or runner MAC invalid | **HardFault(Unreadable)** — re-anchorable (an older runner meeting a newer framing version is an honest cause) |
+| 6 | present | absent | **HardFault(RollbackToNothing)** — re-anchorable iff `restored` |
+| 7 | `pending = none` | `seq = committed.seq`, digest matches | **Proceed** |
+| 8 | `pending = none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — re-anchorable iff `restored` |
+| 9 | `pending ≠ none` | `seq = pending.seq`, digest matches | **Promote**, then Proceed |
+| 10 | `pending ≠ none` | `seq = pending.seq`, digest differs | **HardFault(Divergence)** — re-anchorable |
+| 11 | `pending ≠ none` | `seq = committed.seq`, digest matches | **Discard**, then Proceed |
+| 12 | `pending ≠ none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — re-anchorable iff `restored` |
+| 13 | present | `seq < committed.seq` | **HardFault(Rollback)** — re-anchorable iff `restored` |
+| 14 | present | `seq > (pending ? pending.seq : committed.seq)` | **HardFault(AnchorLostWrite)** — re-anchorable |
 
-Rows 1–13 are total over `{Terminal, missing, committed-only, committed+pending} × {absent, genesis, any seq}`: rows 1–5 dispose of the terminal, missing, and absent-store cases, and rows 6–13 partition the remaining space by `S.seq` relative to `committed.seq` and `pending.seq`, then by digest equality. **Re-anchorable** and **not re-anchorable** are the two fault classes of decision 6: a fault that could arise from an honest race or a lost write is recoverable by the signed re-anchor, and one whose only cause is substitution or rollback within an incarnation is not.
+The `restored` qualifier is what makes an attested restore recoverable: after one, every run legitimately lands on row 6, 8, 12, or 13, and without the qualifier the governing table would declare the environment permanently unrecoverable. Within a single incarnation those four rows have no honest cause and stay closed, which is the property decision 6 requires.
 
 ### Transitions
 
 | Transition | Writer | Precondition | When |
 |---|---|---|---|
 | `Create` | lease holder | table row 3 | first claim of a run |
-| `Prepare` | lease holder | `Prepare(W, R)` | immediately before dispatching a save |
-| `Promote` | lease holder | `Promote(W, R)` | on the save's acknowledgement (steady state), or at open by table row 8 |
-| `Discard` | lease holder | `Discard(W, R)` | at open by table row 10, or on an abandoned save |
-| `Finalize` | lease holder | `Finalize(W, R)` | the terminal checkpoint's promote |
-| `ReAnchor` | operator, applied by the lease holder | `ReAnchor(W, R)` and a valid operator signature over the decision-6 tuple including `reanchorCounter` | recovery from a re-anchorable fault, or an attested restore |
+| `Prepare` | lease holder | `Prepare(W, R)` | before dispatching a save, when no `pending` is outstanding |
+| `PromoteAndPrepare` | lease holder | `PromoteAndPrepare(W, R)` | the steady state: acknowledge the previous save and stage the next in one write |
+| `Promote` | lease holder | `Promote(W, R)` | a save acknowledged with no successor staged, or at open by table row 9 |
+| `Discard` | lease holder | `Discard(W, R)` | at open by table row 11 only |
+| `Finalize` | lease holder | `Finalize(W, R)` | after the terminal checkpoint's promote (two writes; a crash between them lands on row 7) |
+| `Abandon` | operator, applied by the lease holder | `Finalize(W, R)` plus a valid operator signature | disposal of a run whose open hard-faults, as part of decision 12's envelope-only cancel and purge |
+| `ReAnchor` | operator, applied by the lease holder | `ReAnchor(W, R)` plus a valid operator signature over the decision-6 tuple | recovery from a re-anchorable fault, or an attested restore |
 
-**The run's lease holder is the sole writer in every row.** The listener, the trigger host, and the re-key sweep produce checkpoints but write the anchor through the lease holder, which is also the single dispatcher for the run — that pairing is the per-run single-flight interlock, and it is what keeps rows 9 and 13 rare rather than routine.
+**A `409` is not an abandonment.** A superseded save forces a re-open and a fresh evaluation of the table, which lands on row 9 when the runner's own resend was the write that persisted. Treating it as abandonment and issuing `Discard` would leave the store one ahead of the anchor — row 14, a hard fault on a merely dropped acknowledgement, which is exactly what the byte-identical-resend rule exists to prevent. `Discard` has no store-side conjunct and the anchor store cannot see the run row, so an erroneous `Discard` is *accepted*: it is permitted only from table row 11.
+
+**`Abandon` exists because the control plane cannot write the tenant's anchor.** Decision 12 disposes of a hard-faulted run envelope-only, with no anchor advance — which would strand the record `Live` forever, and at `committed.seq = 0` would let the control plane re-present the retained genesis row and match row 11, replaying the whole run. The tenant closes the record instead.
+
+**The lease holder is the sole writer in every row**, and is also the run's sole dispatcher; that pairing is the per-run single-flight interlock. The anchor store cannot verify a lease token, so this is an obligation on the tenant's own processes rather than something the store enforces: what actually fences a displaced holder is `Prepare`'s `≥ R.epochHighWater` floor, together with the control plane's lease check on the save.
 
 ### What the conformance suite asserts
 
 Each of these is mechanical, and together they are the anchor's acceptance criteria:
 
 1. The five acceptance predicates, each with accepting and rejecting cases, including that a bare `committed` advance and an out-of-order `pending` are both rejected.
-2. Invariants A1–A5 hold after every accepted write, over a randomized operation sequence.
-3. Every `(A, S)` pair in the product above matches exactly one table row, and the first match is the one taken.
+2. Invariants A1–A4 hold after every accepted write, over a randomized operation sequence; A5 holds for every write a conforming *writer* constructs, and a record violating it is caught at the next open by the table's incarnation test.
+3. Every `(A, S)` pair in the product above matches at least one table row, and the first match yields the specified outcome. (Rows overlap by construction — a `Terminal` record satisfies `pending = none` — so first-match, not uniqueness, is the property.)
 4. The digest is computed over the pinned `submittedBytes` layout and nothing else, byte-for-byte, across all five writers.
-5. A replayed `ReAnchor` (a previously valid signed record) is rejected on the counter.
-6. A crash injected between `Prepare` and dispatch, between dispatch and acknowledgement, and between acknowledgement and `Promote` each leaves a state that the table resolves without a hard fault.
+5. A replayed `ReAnchor` (a previously valid signed record) is rejected on the counter, and a `ReAnchor` over a `Terminal` record is rejected outright.
+6. A `409` on a byte-identical resend leads to a re-open that resolves on row 9, never to a `Discard`.
+7. A crash injected between `Create` and the first `Prepare`, between `Prepare` and dispatch, between dispatch and acknowledgement, between acknowledgement and `Promote`, between `Promote` and `Finalize`, and during `ReAnchor` each leaves a state the table resolves without a hard fault.
 
 ## Ownership
 
@@ -287,6 +327,8 @@ flowchart LR
   end
   subgraph TA["TENANT A — runner host (tenant-owned)"]
     RA["Runner A: payload key + seal keypair + cloud credentials + source secrets"]
+    AN[("Tenant anchor store — replicated, holding the high-water mark the control plane cannot rewrite")]
+    RA --- AN
     LA["Checkpoint listener A (split, encrypt, MAC)"]
     TH["Trigger host A (seals inputs for message-started runs)"]
     BA["Backends: ALC | serverless invoker | micro-guest sidecar — NO key material"]
@@ -333,16 +375,19 @@ sequenceDiagram
   participant I as Initiator (CLI / tenant trigger host)
   participant CP as Control plane (runner API + store)
   participant R as Tenant runner + listener
+  participant A as Tenant anchor store
   participant G as Guest (backend, no key material)
   participant S as Tenant source API
   I->>I: pin the seal-key fingerprint, seal and sign inputs (AAD binds env + workflow + version + keyId + runId)
   I->>CP: start run (ciphertext inputs)
   R->>CP: claim (machine principal, lease grant carries a monotonic epoch)
+  R->>A: Create or open: read anchor, evaluate the decision table
   R->>R: open sealed inputs, validate against the version's input schema
   R->>G: invoke (ALC call, function URL, or micro-VM restore)
   G->>S: source call(s)
   G->>R: checkpoint back (Model B, ADR 0062 — to the TENANT's listener)
   R->>R: split, encrypt payload (fresh data key, AAD = run + env + keyId + sequence), one MAC over region + ciphertext hash
+  R->>A: PromoteAndPrepare (acknowledge the previous save, stage this one)
   R->>CP: save (proposed sequence validated as persisted+1, single-row CAS, 409 if superseded)
   Note over CP: governance reads and acts on the ENVELOPE of every run, payload-touching verbs are requests the runner applies
 ```
@@ -372,6 +417,7 @@ Seven rounds of adversarial review shaped the decisions above. What remains, sta
 - **For sealed environments some read surfaces degrade to envelope-only**: the step-journal read, the outputs disclosure tier, and any schedule surface that reads a spec from run payload. "No verb is lost" applies to the mutating verbs, not to payload reads — and any future convenience that has the runner push a decrypted journal to the console reverses this entire decision.
 - **Restore and migration are a reset of every freshness mechanism**, mitigated by the incarnation id but requiring the operational discipline that the id is advanced out of band and never restored from the backup it invalidates — and requiring an audited re-anchor per run, so a restore is a tenant-visible rollback window rather than a transparent event.
 - **The tenant anchor is on the checkpoint hot path and is a tenant-side availability dependency**: its unavailability stalls checkpointing, and its loss faults the affected runs until an audited re-anchor. It is the price of having a high-water mark the control plane cannot rewrite.
+- **The re-anchorability split is adversary-selectable.** A digest mismatch at `pending.seq` is recoverable while one at `committed.seq` is not, and a `pending` is outstanding on essentially every in-flight checkpoint — so a control plane holding two genuine branches substitutes at the recoverable coordinate and presents the operator with an opaque digest to sign. A runner that still holds the bytes it dispatched can say which branch is its own; across a crash or a handover it cannot.
 - **Incarnation attestation is procedural, not evidentiary.** The operator attesting a restore has no tenant-side proof one occurred; the control converts an automatic rollback bypass into one requiring a plausible operational story.
 - **A message delivered with no correlation id no longer broadcasts to every run on the channel.** Today's predicate treats a null on either side as a wildcard; a blind index cannot represent the delivered-null direction, so such a message matches only the channel-only sentinel.
 - **Availability inverts relative to ADR 0023.** The control plane is on the hot path of every checkpoint of every tenant: an outage stalls execution and expires leases. The runner API is scaled and available ahead of governance, leases survive a blip without a mass re-claim storm, and any non-2xx on an interim save (other than a `429` quota hold) fails the advance rather than being dropped.
