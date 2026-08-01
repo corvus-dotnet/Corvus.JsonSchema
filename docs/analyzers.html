@@ -424,11 +424,12 @@ mutable.SetProperty(&quot;age&quot;, element);
 <hr />
 <h2 id="ctj003-match-lambda-should-be-static">CTJ003 — Match lambda should be static</h2>
 <p><strong>Severity:</strong> Info · <strong>Code fix:</strong> ✅ Yes (non-capturing) · <strong>Category:</strong> Usage</p>
-<p>The <code>Match&lt;TOut&gt;</code> method on schema-generated union/oneOf types accepts lambda callbacks for each variant. If a lambda does not capture any local variables, it should be marked <code>static</code> to avoid allocating a delegate instance on every call.</p>
-<p>This analyzer inspects each lambda argument to <code>Match&lt;TOut&gt;</code> and reports:</p>
+<p>The <code>Match&lt;TOut&gt;</code> and <code>MatchEvery&lt;TAccumulator&gt;</code> methods on schema-generated union types accept lambda callbacks for each variant. If a lambda does not capture any local variables, it should be marked <code>static</code> to avoid allocating a delegate instance on every call.</p>
+<p>This analyzer inspects each lambda argument to <code>Match&lt;TOut&gt;</code> and <code>MatchEvery&lt;TAccumulator&gt;</code> and reports:</p>
 <ul>
 <li><strong>Non-capturing lambdas</strong> — suggests adding the <code>static</code> modifier.</li>
-<li><strong>Capturing lambdas</strong> — suggests switching to <code>Match&lt;TContext, TResult&gt;</code> to pass captured state as an explicit context parameter, avoiding closure allocation.</li>
+<li><strong>Capturing lambdas passed to <code>Match</code></strong> — suggests switching to <code>Match&lt;TContext, TResult&gt;</code> to pass captured state as an explicit context parameter, avoiding closure allocation.</li>
+<li><strong>Capturing lambdas passed to <code>MatchEvery</code></strong> — suggests threading the captured state through the accumulator instead.</li>
 </ul>
 <pre><code class="language-csharp">// Before — CTJ003 fires (non-capturing)
 string result = value.Match(
@@ -455,7 +456,7 @@ string result = value.Match(
     static (string ctx, JsonNumber n) =&gt; ctx + n.ToString());
 </code></pre>
 <blockquote>
-<p><strong>Note:</strong> The code fix only applies the <code>static</code> modifier for non-capturing lambdas. Capturing-lambda refactoring to <code>Match&lt;TContext, TResult&gt;</code> requires manual changes.</p>
+<p><strong>Note:</strong> The code fix only applies the <code>static</code> modifier for non-capturing lambdas. Capturing-lambda refactoring to <code>Match&lt;TContext, TResult&gt;</code>, or to an accumulator-threaded <code>MatchEvery</code>, requires manual changes.</p>
 </blockquote>
 <hr />
 <h2 id="ctj004-missing-dispose-on-parsedjsondocument">CTJ004 — Missing dispose on ParsedJsonDocument</h2>
