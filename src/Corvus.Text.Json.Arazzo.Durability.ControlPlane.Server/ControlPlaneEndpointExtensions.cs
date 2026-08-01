@@ -126,7 +126,7 @@ public static class ControlPlaneEndpointExtensions
         // context, so an unscoped read cannot exist to be misused. With no policy (Open/ScopesOnly) the access binding
         // yields AccessContext.System throughout. The current principal is read via IHttpContextAccessor.
         ControlPlaneAccess access = effectivePolicy is null
-            ? new ControlPlaneAccess()
+            ? new ControlPlaneAccess(endpoints.ServiceProvider.GetService<IHttpContextAccessor>())
             : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
 
         // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
