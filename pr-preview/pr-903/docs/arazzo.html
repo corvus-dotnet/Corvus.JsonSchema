@@ -338,12 +338,12 @@ path.</p>
 </tr>
 </tbody>
 </table>
-<p>The deep documentation set lives under <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/README.md"><code>docs/arazzo/</code></a>: Architecture Decision Records for the
+<p>The deep documentation set lives under <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/README.md"><code>docs/arazzo/</code></a>: Architecture Decision Records for the
 <em>why</em>, implementation guides for the <em>how</em>, and reference material (the REST contract, the glossary, and the
 use-case and observability catalogs).</p>
 <h2 id="the-pipeline">The pipeline</h2>
 <p>Authoring, generating, and running are three stages. This is the essence; the
-<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/authoring-generating-running.md">authoring, generating, and running guide</a> walks each in full.</p>
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/authoring-generating-running.md">authoring, generating, and running guide</a> walks each in full.</p>
 <p><strong>Author</strong> an Arazzo <code>1.1.0</code> document (JSON or YAML). It names the sources it orchestrates and one or more
 workflows, each with typed <code>inputs</code> and an ordered list of steps.</p>
 <pre><code class="language-json">{
@@ -394,10 +394,10 @@ products the executor already built are the checkpoint.</p>
 content-hashed workflow versions, compiles each to a runnable executor at catalog-add, runs them (in-process or on
 a separate runner that claims durable runs through the store), promotes versions across environments through an
 approval flow, and enforces a two-plane access model (capability scopes for what an action is, row-level reach for
-which rows it touches). See the <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/catalog.md">catalog</a>,
-<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/running-a-runner.md">running a runner</a>,
-<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/identity-and-authorization.md">authorization and identity</a>, and
-<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/reference/control-plane-rest-api.md">REST API reference</a> for the detail.</p>
+which rows it touches). See the <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/catalog.md">catalog</a>,
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/running-a-runner.md">running a runner</a>,
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/identity-and-authorization.md">authorization and identity</a>, and
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/reference/control-plane-rest-api.md">REST API reference</a> for the detail.</p>
 <h2 id="documentation-map">Documentation map</h2>
 <table>
 <thead>
@@ -408,31 +408,31 @@ which rows it touches). See the <a href="https://github.com/corvus-dotnet/Corvus
 </thead>
 <tbody>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/README.md"><code>docs/arazzo/README.md</code></a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/README.md"><code>docs/arazzo/README.md</code></a></td>
 <td>The map of the whole documentation set.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/authoring-generating-running.md">Authoring, generating, and running</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/authoring-generating-running.md">Authoring, generating, and running</a></td>
 <td>The end-to-end engine pipeline.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/durability-and-state-stores.md">Durability and state stores</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/durability-and-state-stores.md">Durability and state stores</a></td>
 <td>Checkpoints, resume, and writing a state-store backend.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/catalog.md">The catalog</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/catalog.md">The catalog</a></td>
 <td>Packaging, publishing, and promoting versions.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/identity-and-authorization.md">Authorization and identity</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/identity-and-authorization.md">Authorization and identity</a></td>
 <td>The two-plane access model, row security, and the entitlement lifecycle.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/guides/platform-conventions.md">Platform conventions</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/guides/platform-conventions.md">Platform conventions</a></td>
 <td>The high-performance JSON, pagination, and api-first codegen conventions the control plane follows.</td>
 </tr>
 <tr>
-<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/26a6c6e87c6651923a96c8a5b37459d6a2ed3721/docs/arazzo/adr/README.md">ADR index</a></td>
+<td><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0319649bc7646fd6515fb35041ed385334120424/docs/arazzo/adr/README.md">ADR index</a></td>
 <td>Every design decision and its rationale.</td>
 </tr>
 </tbody>
