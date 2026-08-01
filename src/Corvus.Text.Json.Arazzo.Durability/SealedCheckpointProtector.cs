@@ -98,6 +98,52 @@ public sealed class SealedCheckpointProtector : EnvelopeCheckpointProtector, IDi
         return new SealedCheckpointKeyPair(ecdh.ExportSubjectPublicKeyInfo(), ecdh.ExportPkcs8PrivateKey());
     }
 
+    /// <summary>
+    /// Reads the key id out of a protected checkpoint blob when (and only when) it is structurally a sealed
+    /// envelope this protector produced: the envelope framing's wrapped-key blob must satisfy every length
+    /// invariant of the sealed layout exactly. A blob from any other protector fails the structural check, so a
+    /// router can distinguish sealed state (routed by key id) from baseline-protected state (handed to the
+    /// deployment's fallback protector).
+    /// </summary>
+    /// <param name="protectedCheckpoint">The protected checkpoint blob as stored.</param>
+    /// <param name="keyId">On return, the key id the envelope names, when the blob is a sealed envelope.</param>
+    /// <returns>Whether the blob is structurally a sealed envelope.</returns>
+    public static bool TryReadSealedKeyId(ReadOnlySpan<byte> protectedCheckpoint, out string keyId)
+    {
+        keyId = string.Empty;
+
+        // The base envelope framing: int32-BE wrappedLength || wrapped || nonce(12) || tag(16) || ciphertext.
+        if (protectedCheckpoint.Length < 4)
+        {
+            return false;
+        }
+
+        int wrappedLength = BinaryPrimitives.ReadInt32BigEndian(protectedCheckpoint[..4]);
+        if (wrappedLength <= 0 || protectedCheckpoint.Length < 4 + wrappedLength + NonceSize + TagSize)
+        {
+            return false;
+        }
+
+        // The sealed wrapped-key layout: keyIdLen(1) || keyId || epkLen(2 BE) || epk || nonce(12) || tag(16) ||
+        // wrapped 32-byte data key — every length must agree exactly.
+        ReadOnlySpan<byte> wrapped = protectedCheckpoint.Slice(4, wrappedLength);
+        int keyIdLength = wrapped[0];
+        if (keyIdLength == 0 || wrapped.Length < KeyIdLengthPrefixSize + keyIdLength + EpkLengthPrefixSize)
+        {
+            return false;
+        }
+
+        int epkLength = BinaryPrimitives.ReadUInt16BigEndian(wrapped.Slice(KeyIdLengthPrefixSize + keyIdLength, EpkLengthPrefixSize));
+        if (epkLength == 0
+            || wrapped.Length != KeyIdLengthPrefixSize + keyIdLength + EpkLengthPrefixSize + epkLength + NonceSize + TagSize + 32)
+        {
+            return false;
+        }
+
+        keyId = Encoding.UTF8.GetString(wrapped.Slice(KeyIdLengthPrefixSize, keyIdLength));
+        return true;
+    }
+
     /// <summary>Clears the in-memory copy of the open key.</summary>
     public void Dispose()
     {

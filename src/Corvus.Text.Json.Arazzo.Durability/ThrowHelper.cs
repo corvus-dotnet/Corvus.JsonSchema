@@ -238,6 +238,11 @@ internal static class ThrowHelper
     public static void ThrowSealedCheckpointKeyIdMismatch(string sealedTo, string held)
         => throw new CryptographicException(SR.Format(SR.SealedCheckpointKeyIdMismatch, sealedTo, held));
 
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSealedCheckpointNoOpenKey(string keyId)
+        => throw new CryptographicException(SR.Format(SR.SealedCheckpointNoOpenKey, keyId));
+
     // ── Transport / dispatch / worker binding ───────────────────────────────────────────────────────────────────────
     public static WorkflowTransportBindingException GetWorkflowRequiresApiSourceException(string workflowId, string source)
         => new(SR.Format(SR.WorkflowRequiresApiSource, workflowId, source));

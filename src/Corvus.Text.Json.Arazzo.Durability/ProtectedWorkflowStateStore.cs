@@ -29,6 +29,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     private readonly IWorkflowDispatchIndex? innerDispatch;
     private readonly IWorkflowLeaseAdministration? innerLeaseAdmin;
     private readonly ICheckpointProtector protector;
+    private readonly IEnvironmentAwareCheckpointProtector? environmentAwareProtector;
 
     /// <summary>Initializes a new instance of the <see cref="ProtectedWorkflowStateStore"/> class.</summary>
     /// <param name="inner">The backend store to wrap.</param>
@@ -42,6 +43,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         this.innerDispatch = inner as IWorkflowDispatchIndex;
         this.innerLeaseAdmin = inner as IWorkflowLeaseAdministration;
         this.protector = protector;
+        this.environmentAwareProtector = protector as IEnvironmentAwareCheckpointProtector;
     }
 
     /// <inheritdoc/>
@@ -62,7 +64,12 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         WorkflowEtag expected,
         CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, id, cancellationToken).ConfigureAwait(false);
+        // An environment-aware protector (ADR 0065) routes the save by the run's environment from the index
+        // projection; a plain protector applies uniformly. Reads stay environment-less either way — a sealed
+        // envelope names the key it was sealed to and routes itself.
+        ReadOnlyMemory<byte> protectedCheckpoint = this.environmentAwareProtector is { } environmentAware
+            ? await environmentAware.ProtectAsync(checkpointUtf8, id, index.Environment, cancellationToken).ConfigureAwait(false)
+            : await this.protector.ProtectAsync(checkpointUtf8, id, cancellationToken).ConfigureAwait(false);
         return await this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
     }
 

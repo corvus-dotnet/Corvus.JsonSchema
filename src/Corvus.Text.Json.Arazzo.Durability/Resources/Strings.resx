@@ -188,6 +188,9 @@
   <data name="SealedCheckpointKeyIdMismatch" xml:space="preserve">
     <value>The sealed checkpoint was sealed to key '{0}', but this protector holds key '{1}'.</value>
   </data>
+  <data name="SealedCheckpointNoOpenKey" xml:space="preserve">
+    <value>No open key is registered for checkpoint key '{0}'; this process cannot read state sealed to it (ADR 0065).</value>
+  </data>
 
   <!-- Transport / dispatch / worker binding -->
   <data name="WorkflowRequiresApiSource" xml:space="preserve">
