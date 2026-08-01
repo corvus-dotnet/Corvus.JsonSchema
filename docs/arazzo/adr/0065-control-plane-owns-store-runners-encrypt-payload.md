@@ -41,7 +41,7 @@ The **stored region is opaque octets**. No backend may parse, patch, or re-emit 
 
 **5. Payload encryption is envelope encryption under a per-encryption data key.** The environment's payload key is a **derivation** key, never a direct AES-GCM key: each encryption derives a fresh data key (see the table below), and the salt occupies the row region a wrapped key would. Wrapping survives only for a deployment whose payload key is non-exportable in an HSM, where the runner unwraps a per-run intermediate directly against the HSM into a `wrappedKey` row region; every wrap and unwrap there carries an encryption context of `(environmentId, runId, keyId)`, enforced by the protector conformance suite. The three per-generation subkeys are **always** derived from the environment payload key and never from a per-run intermediate, so an HSM deployment that cannot derive them is not a supported sealed-environment configuration.
 
-Derivation is specified once, normatively, because four scattered statements of it in an earlier draft disagreed with each other. Every field is length-framed and every label is distinct; **`environmentId` is present in all five**, so two environments of one tenant that register the same `keyId` never collide:
+Derivation is specified once, normatively, because four scattered statements of it in an earlier draft disagreed with each other. Every field is length-framed and every label is distinct; **`environmentId` is present in all four**, so two environments of one tenant that register the same `keyId` never collide:
 
 | Label | Info |
 |---|---|
@@ -50,7 +50,7 @@ Derivation is specified once, normatively, because four scattered statements of 
 | `wait-index` | `len‖"wait-index" ‖ len‖environmentId ‖ len‖keyId` |
 | `checkpoint-token` | `len‖"checkpoint-token" ‖ len‖environmentId ‖ len‖keyId` |
 
-Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` derive the *same* key — and with a counter nonce that is a repeated `(key, nonce)` pair over different plaintexts, which yields the GCM authentication subkey and hence payload forgery. The three subkeys that omit `runId` are derived once per key generation and cached; only `data-key` is per encryption. The wait index is stored keyed by `(environmentId, keyId, index)`.
+Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` derive the *same* key — and with a counter nonce that is a repeated `(key, nonce)` pair over different plaintexts, which yields the GCM authentication subkey and hence payload forgery. The three subkeys that omit `runId` are derived once per key generation and cached; only `data-key` is per encryption. The wait index is stored keyed by `(environmentId, keyId, index)`. `keyId` is tenant-registered and therefore arrives from outside the runner's trust boundary, so registration bounds its length (256 characters), as does the derivation itself. The derivation buffer is sized from these identifiers, and an unbounded one turns a malformed registration into a stack overflow, which kills the process rather than failing the write.
 
 **A fresh 32-byte salt for every *encryption operation*, never per logical checkpoint and never per retry.** Re-encrypting after a `409` with a cached salt restarts the counter nonce under the same derived key: same trap, same break. A counter nonce is permitted only because this rule holds.
 
@@ -76,7 +76,7 @@ Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` d
 
   `submittedBytes` is `header ‖ runner region ‖ salt ‖ nonce ‖ tag ‖ ciphertext ‖ MAC` — every region the runner writes, in that order.
 
-  **At sequence 0 there is no runner region**: the genesis row is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed. Its digest is therefore taken over that row's own authenticated bytes — `digest₀ = SHA-256(len‖"checkpoint-digest-genesis" ‖ len‖ciphertext ‖ len‖signature)` — the initiator signature being the only tenant-side authenticator that exists at genesis. Conformance covers six writers, not five: the five checkpoint authors plus the genesis row. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. It never covers the server-owned control-plane region, which is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
+  **At sequence 0 there is no runner region**: the genesis row is written by the control plane from the initiator's sealed, signed inputs, before any runner has claimed. Its digest is therefore taken over that row's own authenticated bytes — `digest₀ = SHA-256(len‖"checkpoint-digest-genesis" ‖ len‖ciphertext ‖ len‖signature)` — the initiator signature being the only tenant-side authenticator that exists at genesis. Conformance covers six writers, not five: the five checkpoint authors plus the genesis row. The **header is inside the MAC'd region's coverage and inside `submittedBytes`**: it carries the framing version and the AEAD algorithm id, and an algorithm selector outside the MAC would be exactly the downgrade primitive decision 4 forbids, arriving with the second algorithm that makes it exploitable. The control-plane region is last and is in neither: it is joined at read time and is not the runner's to commit to. The wide extent is deliberate — it makes a salt or nonce substitution a digest mismatch at promote rather than an opaque decryption failure later. Every variable-length field is length-framed, including the submitted bytes themselves, and the whole construction is asserted by the protector conformance suite.
 
   `runId` is part of the runner-authored region, so the MAC and the digest are run-identifying on their own rather than relying on the AEAD's AAD and the anchor key alone.
 
@@ -335,6 +335,17 @@ Each of these is mechanical, and together they are the anchor's acceptance crite
 5. A replayed `ReAnchor` (a previously valid signed record) is rejected on the counter, and a `ReAnchor` over a `Terminal` record is rejected outright.
 6. A `409` on a byte-identical resend leads to a re-open that resolves on row 9, never to a `Discard`.
 7. A crash injected between `Create` and the first `Prepare`, between `Prepare` and dispatch, between dispatch and acknowledgement, between acknowledgement and `Promote`, between `PromoteAndPrepare` and dispatch, between `Promote` and `Finalize`, and during `ReAnchor` each leaves a state the table resolves without a hard fault.
+
+### The executable form
+
+The acceptance predicate, the decision table, and the derivation table are not only specified here. They exist as pure functions in `Corvus.Text.Json.Arazzo.Durability/Anchoring` (`AnchorAcceptance.Classify`, `AnchorOpen.Evaluate`, `CheckpointDerivation`, and `CheckpointDigest`), with the assertions above as `AnchorSpecificationConformanceTests` and `CheckpointDerivationConformanceTests`. A store binding conforms by delegating to them rather than by reimplementing the prose, which is what keeps the five checkpoint writers byte-identical.
+
+Writing that form found two defects in this specification that ten rounds of adversarial review had not. Both were ambiguities that only became visible once the states had to be *distinguished by a machine* rather than described.
+
+- `Abandon` and a `Finalize` issued over an outstanding `pending` produced identical records, so no store could tell the two apart, and a writer could silently drop an in-flight save while appearing to close the run cleanly. `AnchorDisposition` now separates them.
+- `Create` and a lost-anchor `ReAnchor` both write against an absent record, so the clause admitting one admitted the other, and a replayed create could masquerade as recovery. They are now separated by the re-anchor counter (0 against 1) together with `committed.seq > 0`.
+
+Both are corrected above. The general lesson is recorded because it will recur. Prose review converges on *plausibility*, and a concurrent state machine can be entirely plausible while still holding two states it cannot tell apart. Only an implementation is forced to decide.
 
 ## Ownership
 
