@@ -30,6 +30,7 @@ does not, and links them for the rest.
 | [`running-a-runner.md`](guides/running-a-runner.md) | Deploying and operating an execution host. **(done)** |
 | [`serverless-aot-build-and-deploy.md`](guides/serverless-aot-build-and-deploy.md) | Building a version's Native-AOT binary from its signed executor IL, and the deployment invariants (engine-version pin, feed retention, RID-keyed targets). **(build path done; publish and dispatch in progress)** |
 | [`execution-backend-tradeoffs.md`](guides/execution-backend-tradeoffs.md) | The execution backends side by side: isolation by distance versus isolation by boundary, the anatomy and cost of an advance, checkpoint locality, and choosing a backend. **(done)** |
+| [`secure-checkpointing-performance.md`](guides/secure-checkpointing-performance.md) | Implementing ADR 0065 without paying for it twice: the per-checkpoint budget, the optimizations that preserve each security property, the costs that are unavoidable because they are the design, and the plausible optimizations that are security regressions. **(done)** |
 | [`durability-and-state-stores.md`](guides/durability-and-state-stores.md) | The checkpoint model, resume, and writing an `IWorkflowStateStore` backend. **(done)** |
 
 ### Access, identity, and credentials
