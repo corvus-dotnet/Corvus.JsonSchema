@@ -82,7 +82,7 @@ Without framing, `(keyId "k1", runId "0abc")` and `(keyId "k10", runId "abc")` d
 
   A **signed re-anchor replaces the whole record**, `epochHighWater` included, and is the one write exempt from the floor — without that exemption the CAS would refuse precisely the operation that recovers from a restore, since a restored store's ordering key is necessarily below the mark. The re-anchor record carries the operator signature, and the *runner* verifies it at open against the operator key pinned in its own configuration (decision 8), which is where signature checking belongs. Without that, a displaced holder can overwrite a newer holder's `pending` and drive the next open into a hard fault — a control-plane-triggerable brick. The single-flight property the write-ahead log depends on is a **client-side** rule (one undispatched save per run, per decision 1's coalescing), not the server's `persisted + 1` acceptance rule, which bounds what is *accepted* rather than what is *dispatched* — which is exactly why a `409` path exists.
 
-  The record is a write-ahead log, and its states are what make honest failure recoverable rather than fatal:
+  The record is a write-ahead log. The prose below conveys the intent; the schema, the acceptance predicate, the exhaustive decision table, and the transitions are specified normatively in [the tenant-anchor specification](#normative-specification-the-tenant-anchor) later in this document, which governs where the two differ.
 
   | Anchor | Store | Meaning | Action |
   |---|---|---|---|
@@ -146,6 +146,129 @@ Purge is described by enumeration, because a compliance reader needs precision: 
 **13. Sequencing, and what each phase does and does not deliver.** Phase A: the runner API, machine-principal authentication and principal-derived leases, non-disclosing refusals and quotas, the validated sequence and single-row CAS with `409` on supersession, the listener re-platforming, and the retirement of runner store credentials. Phase B: the envelope/payload split, envelope-encrypted payloads with the epoch and the tenant anchor, the unified MAC, blind indexes, client-side input sealing, and runner-mediated payload resume. Phase C: executor provenance under mutual distrust.
 
 **Phase A carries no cryptography, so it leaves the control plane the sole custodian of every tenant's plaintext** — with runners stripped of even the distributed custody they had. The gate against deploying on phase A alone cannot be a startup flag, because multi-tenancy is emergent from the data rather than declared in configuration: a deployment that legitimately runs single-tenant and later onboards a second tenant does so long after construction. It is therefore a **write-time data invariant** — creating an environment or a binding belonging to a second distinct owner group is refused while any **tenant-owned** environment lacks a registered payload key. The platform's own `system` environment is excluded from that count, since decision 10 makes it permanently unsealed: counting it would refuse every second-tenant onboarding forever. The invariant applies in every mode that admits more than one owner group, including the mode documented as single-tenant — otherwise a second owner group there gets neither reach isolation nor the encryption gate.
+
+## Normative specification: the tenant anchor
+
+Decision 6 describes the anchor in prose. Eight rounds of adversarial review found every remaining blocker in that prose — not because the mechanism is wrong, but because a concurrent state machine described in English acquires a contradiction with each edit. This section is the anchor's normative form: schema, invariants, a single acceptance predicate, an exhaustive decision table, and the transitions. Where this section and the prose differ, **this section governs**, and it is the artefact the conformance suite executes.
+
+### Types
+
+```
+OrderingKey = (incarnation: uint64, epoch: uint64)      -- compared lexicographically
+Mark        = { key: OrderingKey, seq: uint64, digest: byte[32] }
+
+AnchorRecord = {
+  runId:            RunId,          -- 32 lowercase hex
+  environmentId:    EnvironmentId,
+  state:            Live | Terminal,
+  epochHighWater:   OrderingKey,
+  committed:        Mark,
+  pending:          Mark | none,
+  reanchorCounter:  uint64
+}
+```
+
+Environment-scoped, in the same tenant store: `attestedIncarnation: uint64`, written only by the operator-attested event of decision 6.
+
+### Invariants
+
+Every stored record satisfies:
+
+- **A1** `committed.seq ≥ 0` and `committed.key ≤ epochHighWater`.
+- **A2** `pending ≠ none ⟹ pending.seq = committed.seq + 1`.
+- **A3** `pending ≠ none ⟹ committed.key ≤ pending.key ≤ epochHighWater`.
+- **A4** `state = Terminal ⟹ pending = none`.
+- **A5** `committed.key.incarnation ≤ attestedIncarnation` and likewise for `pending`.
+
+### Acceptance predicate
+
+A write `W` against stored record `R` is accepted if and only if exactly one of the following holds. This is the whole of what the anchor store enforces; it is a key-value store with compare-and-swap over the whole record, not a policy engine.
+
+```
+Prepare(W, R)  ≡  W.committed = R.committed
+                ∧ W.pending ≠ none
+                ∧ W.pending.seq = R.committed.seq + 1
+                ∧ W.pending.key ≥ R.epochHighWater
+                ∧ W.epochHighWater = W.pending.key
+                ∧ W.state = R.state = Live
+                ∧ W.reanchorCounter = R.reanchorCounter
+
+Promote(W, R)  ≡  R.pending ≠ none
+                ∧ W.committed = R.pending          -- key, seq AND digest, all three
+                ∧ W.pending = none
+                ∧ W.epochHighWater = R.epochHighWater
+                ∧ W.state = R.state = Live
+                ∧ W.reanchorCounter = R.reanchorCounter
+
+Discard(W, R)  ≡  R.pending ≠ none
+                ∧ W.committed = R.committed
+                ∧ W.pending = none
+                ∧ W.epochHighWater = R.epochHighWater
+                ∧ W.state = R.state = Live
+                ∧ W.reanchorCounter = R.reanchorCounter
+
+Finalize(W, R) ≡  W.state = Terminal
+                ∧ W.committed = R.committed
+                ∧ W.pending = none
+                ∧ W.epochHighWater = R.epochHighWater
+                ∧ W.reanchorCounter = R.reanchorCounter
+
+ReAnchor(W, R) ≡  W.reanchorCounter = R.reanchorCounter + 1
+                ∧ W.committed.key.incarnation = attestedIncarnation
+                ∧ W.pending = none
+                ∧ W.epochHighWater = W.committed.key
+                -- the sole write exempt from the epochHighWater floor;
+                -- the operator signature over W is verified by the RUNNER at open,
+                -- not by the store, which cannot verify signatures.
+```
+
+`committed` therefore never advances except by `Promote` of a `pending` that is byte-identical in key, sequence, and digest — a bare `committed` advance is not an accepted write, so no single write can destroy a run.
+
+### Decision table at open
+
+Given the anchor record `A` (or its absence) and the store row `S` (or its absence), the runner evaluates **in order** and takes the first match. `genesis` means `S.seq = 0`.
+
+| # | `A` | `S` | Outcome |
+|---|---|---|---|
+| 1 | `state = Terminal` | any | **RefuseClaim** — the run finished |
+| 2 | missing | absent | **NotFound** — benign; no such run |
+| 3 | missing | at `genesis` | **Create** — first claim of a fresh run; the runner computes `digest(S)` and writes `committed = (leaseKey, 0, digest(S))` |
+| 4 | missing | `seq > 0` | **HardFault(AnchorLost)** — re-anchorable |
+| 5 | present | absent | **HardFault(RollbackToNothing)** — not re-anchorable |
+| 6 | `pending = none` | `seq = committed.seq`, digest matches | **Proceed** |
+| 7 | `pending = none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — not re-anchorable |
+| 8 | `pending ≠ none` | `seq = pending.seq`, digest matches | **Promote**, then Proceed |
+| 9 | `pending ≠ none` | `seq = pending.seq`, digest differs | **HardFault(Divergence)** — re-anchorable; this is the displaced-holder race |
+| 10 | `pending ≠ none` | `seq = committed.seq`, digest matches | **Discard**, then Proceed |
+| 11 | `pending ≠ none` | `seq = committed.seq`, digest differs | **HardFault(Substitution)** — not re-anchorable |
+| 12 | present | `seq < committed.seq` | **HardFault(Rollback)** — not re-anchorable |
+| 13 | present | `seq > (pending ? pending.seq : committed.seq)` | **HardFault(AnchorLostWrite)** — re-anchorable |
+
+Rows 1–13 are total over `{Terminal, missing, committed-only, committed+pending} × {absent, genesis, any seq}`: rows 1–5 dispose of the terminal, missing, and absent-store cases, and rows 6–13 partition the remaining space by `S.seq` relative to `committed.seq` and `pending.seq`, then by digest equality. **Re-anchorable** and **not re-anchorable** are the two fault classes of decision 6: a fault that could arise from an honest race or a lost write is recoverable by the signed re-anchor, and one whose only cause is substitution or rollback within an incarnation is not.
+
+### Transitions
+
+| Transition | Writer | Precondition | When |
+|---|---|---|---|
+| `Create` | lease holder | table row 3 | first claim of a run |
+| `Prepare` | lease holder | `Prepare(W, R)` | immediately before dispatching a save |
+| `Promote` | lease holder | `Promote(W, R)` | on the save's acknowledgement (steady state), or at open by table row 8 |
+| `Discard` | lease holder | `Discard(W, R)` | at open by table row 10, or on an abandoned save |
+| `Finalize` | lease holder | `Finalize(W, R)` | the terminal checkpoint's promote |
+| `ReAnchor` | operator, applied by the lease holder | `ReAnchor(W, R)` and a valid operator signature over the decision-6 tuple including `reanchorCounter` | recovery from a re-anchorable fault, or an attested restore |
+
+**The run's lease holder is the sole writer in every row.** The listener, the trigger host, and the re-key sweep produce checkpoints but write the anchor through the lease holder, which is also the single dispatcher for the run — that pairing is the per-run single-flight interlock, and it is what keeps rows 9 and 13 rare rather than routine.
+
+### What the conformance suite asserts
+
+Each of these is mechanical, and together they are the anchor's acceptance criteria:
+
+1. The five acceptance predicates, each with accepting and rejecting cases, including that a bare `committed` advance and an out-of-order `pending` are both rejected.
+2. Invariants A1–A5 hold after every accepted write, over a randomized operation sequence.
+3. Every `(A, S)` pair in the product above matches exactly one table row, and the first match is the one taken.
+4. The digest is computed over the pinned `submittedBytes` layout and nothing else, byte-for-byte, across all five writers.
+5. A replayed `ReAnchor` (a previously valid signed record) is rejected on the counter.
+6. A crash injected between `Prepare` and dispatch, between dispatch and acknowledgement, and between acknowledgement and `Promote` each leaves a state that the table resolves without a hard fault.
 
 ## Ownership
 
