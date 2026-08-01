@@ -159,6 +159,128 @@ public readonly partial struct Environment
             });
     }
 
+    /// <summary>
+    /// Builds a draft that appends a newly registered key generation (ADR 0065), echoing every other mutable value
+    /// and copying the existing generations bytes-to-bytes.
+    /// </summary>
+    /// <param name="stored">The stored environment.</param>
+    /// <param name="keyId">The generation's id.</param>
+    /// <param name="sealPublicKey">The public seal key, base64url SPKI.</param>
+    /// <param name="algorithm">The seal key's signature algorithm.</param>
+    /// <param name="registeredBy">The registering actor.</param>
+    /// <param name="registeredAt">The registration instant.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithKeyRegistered(
+        in Environment stored, string keyId, string sealPublicKey, string algorithm, string registeredBy, DateTimeOffset registeredAt)
+        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey, algorithm, registeredBy, registeredAt, reason: null, retire: false));
+
+    /// <summary>
+    /// Builds a draft that marks a generation Retired (ADR 0065). Retirement is recorded rather than removed, so a
+    /// checkpoint written under the generation stays attributable.
+    /// </summary>
+    /// <param name="stored">The stored environment.</param>
+    /// <param name="keyId">The generation to retire.</param>
+    /// <param name="retiredBy">The retiring actor.</param>
+    /// <param name="retiredAt">The retirement instant.</param>
+    /// <param name="reason">An optional note.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithKeyRetired(
+        in Environment stored, string keyId, string retiredBy, DateTimeOffset retiredAt, string? reason)
+        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: null, algorithm: null, retiredBy, retiredAt, reason, retire: true));
+
+    private static ParsedJsonDocument<Environment> DraftWithKeyMutation(in KeyMutation mutation)
+        => PersistedJson.ToPooledDocument<Environment, KeyMutation>(
+            mutation,
+            static (Utf8JsonWriter writer, in KeyMutation m) =>
+            {
+                writer.WriteStartObject();
+                WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, m.Name);
+                WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, m.DisplayName);
+                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, m.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, m.RequireEvidence);
+                WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, m.AllowsDraftRuns);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, m.RequiredIsolation);
+                WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, m.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, m.ManagementTags);
+
+                writer.WritePropertyName(JsonPropertyNames.KeyGenerationsUtf8);
+                writer.WriteStartArray();
+
+                // An environment that has registered nothing has no keyGenerations property at all, and enumerating
+                // an undefined array throws rather than yielding nothing. Absent and empty are the same thing here.
+                foreach (EnvironmentKeyGeneration generation in Enumerate(m.Existing))
+                {
+                    if (m.Retire && generation.KeyId.ValueEquals(m.KeyId))
+                    {
+                        WriteRetired(writer, generation, m);
+                    }
+                    else
+                    {
+                        // Untouched generations are copied verbatim: never reformatted, never re-realised.
+                        ((JsonElement)generation).WriteTo(writer);
+                    }
+                }
+
+                if (!m.Retire)
+                {
+                    WriteRegistered(writer, m);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+
+    /// <summary>
+    /// Enumerates a generation set that may be absent. An environment which has registered nothing carries no
+    /// <c>keyGenerations</c> property, and the generated array throws on enumeration when it is undefined, so every
+    /// reader would otherwise need this guard.
+    /// </summary>
+    /// <param name="generations">The (possibly absent) set.</param>
+    /// <returns>The generations, or nothing.</returns>
+    public static IEnumerable<EnvironmentKeyGeneration> Enumerate(EnvironmentKeyGenerationArray generations)
+    {
+        if (((JsonElement)generations).ValueKind != JsonValueKind.Array)
+        {
+            yield break;
+        }
+
+        foreach (EnvironmentKeyGeneration generation in generations.EnumerateArray())
+        {
+            yield return generation;
+        }
+    }
+
+    private static void WriteRegistered(Utf8JsonWriter writer, in KeyMutation m)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.KeyIdUtf8, m.KeyId);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.SealPublicKeyUtf8, m.SealPublicKey!);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.AlgorithmUtf8, m.Algorithm!);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.StateUtf8, "Active");
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredByUtf8, m.Actor);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredAtUtf8, m.At);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteRetired(Utf8JsonWriter writer, in EnvironmentKeyGeneration generation, in KeyMutation m)
+    {
+        writer.WriteStartObject();
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.KeyIdUtf8, (JsonElement)generation.KeyId);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.SealPublicKeyUtf8, (JsonElement)generation.SealPublicKey);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.AlgorithmUtf8, (JsonElement)generation.Algorithm);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.StateUtf8, "Retired");
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.RegisteredByUtf8, (JsonElement)generation.RegisteredBy);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.RegisteredAtUtf8, (JsonElement)generation.RegisteredAt);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RetiredByUtf8, m.Actor);
+        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RetiredAtUtf8, m.At);
+        if (m.Reason is { } reason)
+        {
+            writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.ReasonUtf8, reason);
+        }
+
+        writer.WriteEndObject();
+    }
+
     /// <summary>Builds a draft environment from primitive values — the cold-path / test convenience over the bytes-native
     /// <see cref="Draft(in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>: the name and optional
     /// display name/description are written straight into the draft document (the genuine construction leaf), plus the
@@ -314,6 +436,62 @@ public readonly partial struct Environment
         {
             ThrowHelper.ThrowEnvironmentRequiresNonEmptyName();
         }
+    }
+
+    // One key mutation, with every echoed value read once from the stored environment.
+    private readonly struct KeyMutation
+    {
+        public KeyMutation(in Environment stored, string keyId, string? sealPublicKey, string? algorithm, string actor, DateTimeOffset at, string? reason, bool retire)
+        {
+            this.Name = (JsonElement)stored.Name;
+            this.DisplayName = (JsonElement)stored.DisplayName;
+            this.Description = (JsonElement)stored.Description;
+            this.ManagementTags = (JsonElement)stored.ManagementTags;
+            this.RequireEvidence = (JsonElement)stored.RequireEvidence;
+            this.AllowsDraftRuns = (JsonElement)stored.AllowsDraftRuns;
+            this.RequiredIsolation = (JsonElement)stored.RequiredIsolation;
+            this.RuntimeIdentifier = (JsonElement)stored.RuntimeIdentifier;
+            this.Existing = stored.KeyGenerations;
+            this.KeyId = keyId;
+            this.SealPublicKey = sealPublicKey;
+            this.Algorithm = algorithm;
+            this.Actor = actor;
+            this.At = at;
+            this.Reason = reason;
+            this.Retire = retire;
+        }
+
+        public JsonElement Name { get; }
+
+        public JsonElement DisplayName { get; }
+
+        public JsonElement Description { get; }
+
+        public JsonElement ManagementTags { get; }
+
+        public JsonElement RequireEvidence { get; }
+
+        public JsonElement AllowsDraftRuns { get; }
+
+        public JsonElement RequiredIsolation { get; }
+
+        public JsonElement RuntimeIdentifier { get; }
+
+        public EnvironmentKeyGenerationArray Existing { get; }
+
+        public string KeyId { get; }
+
+        public string? SealPublicKey { get; }
+
+        public string? Algorithm { get; }
+
+        public string Actor { get; }
+
+        public DateTimeOffset At { get; }
+
+        public string? Reason { get; }
+
+        public bool Retire { get; }
     }
 
     // The key-generation draft context: every mutable value echoed from the stored environment, plus the new set.

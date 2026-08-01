@@ -276,6 +276,7 @@ public static class ControlPlaneEndpointExtensions
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
         var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, auditLogger);
+        var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditLogger: auditLogger);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
@@ -306,6 +307,7 @@ public static class ControlPlaneEndpointExtensions
             sourcesHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,
+            environmentKeysHandler,
             schedulesHandler,
             administratorsHandler,
             providersHandler,

@@ -82,8 +82,8 @@
         },
         "sealPublicKey": {
           "type": "string",
-          "contentEncoding": "base64url",
-          "description": "The public seal key (SPKI) run-start inputs are wrapped to. Not a secret."
+          "contentEncoding": "base64",
+          "description": "The public seal key (base64 SPKI) run-start inputs are wrapped to. Not a secret."
         },
         "algorithm": {
           "type": "string",

@@ -98,6 +98,10 @@
     "description": "Authorize which runners may serve a deployment environment (design §5.5). Receiving an environment's runs means receiving its credentials, so a runner may not self-assert into an environment: it enters Pending on registration and is dispatchable only once an administrator of that environment authorizes it. An administrator can quarantine a faulted runner to exclude it from new dispatch while its in-flight runs drain (reinstating it later without re-registration), or revoke a compromised runner to remove it permanently and fence its in-flight work. Listing an environment's runners and deciding them are governed by that environment's administrators (scopes environments:read / environments:write); the cross-environment approver inbox spans every environment the caller administers, mirroring the §15.4 availability-request inbox."
   },
   {
+    "name": "environmentKeys",
+    "description": "Register, list, and retire an environment's checkpoint key generations (ADR 0065). A generation names the payload-key id a sealed environment's checkpoint payloads carry, and the public seal key run-start inputs are wrapped to. The symmetric payload key stays in the tenant's custody and never reaches the control plane, so registration proves possession of the private seal half rather than of the payload key: it establishes that a tenant controls a registered pair for the environment, and a missing payload key is caught at runtime by the runner failing closed rather than writing cleartext. Governed by the environment's administrators (scopes environments:read / environments:write)."
+  },
+  {
     "name": "identity",
     "description": "Resolve real grantees (person/team/role/workflow) to their exact deployment-stamped identity for the view/operate/administer grant pickers (design §16.5.4), and report the caller's own identity. Read-only: resolution uses a pluggable directory and a store-indexed typeahead of identities the control plane has already observed, so the picker never hand-assembles a {dimension,value} tuple that could silently match no one."
   }
@@ -3572,6 +3576,117 @@
         }
       }
     },
+    "/environments/{name}/keys": {
+      "post": {
+        "operationId": "registerEnvironmentKey",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentKeys"],
+        "summary": "Register a key generation for an environment",
+        "description": "Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnvironmentKeyRegistration" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The registered generation. Returned for a replayed registration as well as a new one.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvironmentKeyView" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "get": {
+        "operationId": "listEnvironmentKeys",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentKeys"],
+        "summary": "List an environment's key generations",
+        "description": "Returns a keyset page of the environment's key generations, Active and Retired, ordered by keyId. Public seal keys are not secrets; the payload key never appears here because the control plane never holds it.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["Active", "Retired"] },
+            "description": "Only generations in this state."
+          },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of key generations.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvironmentKeyList" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/environments/{name}/keys/{keyId}/retirement": {
+      "post": {
+        "operationId": "retireEnvironmentKey",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentKeys"],
+        "summary": "Retire a key generation",
+        "description": "Marks the generation Retired (ADR 0065). Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable. Idempotent: retiring an already-Retired generation returns the existing record. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such generation exists).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/EnvironmentKeyIdPath" }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EnvironmentKeyRetirementNote" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The generation, now Retired.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvironmentKeyView" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/sources": {
       "get": {
         "operationId": "listSources",
@@ -5254,6 +5369,13 @@
         "required": true,
         "description": "The runner's stable identifier.",
         "schema": { "type": "string" }
+      },
+      "EnvironmentKeyIdPath": {
+        "name": "keyId",
+        "in": "path",
+        "required": true,
+        "description": "The key generation's tenant-chosen id.",
+        "schema": { "type": "string", "maxLength": 256 }
       },
       "WorkingCopyIdPath": {
         "name": "id",
@@ -8415,6 +8537,55 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["environments"]
+      },
+      "EnvironmentKeyRegistration": {
+        "type": "object",
+        "description": "A request to register a key generation for an environment (ADR 0065). Self-authenticating: the registrant signs the framed tuple (\"environment-key-registration\", environment, keyId, sealPublicKey, notBefore) with the private half of sealPublicKey, and the server verifies against the presented key. There is no server-issued challenge to fetch first, because the signed content fully determines the effect, so replaying a registration re-registers the identical generation and changes nothing. Every field is length-framed before signing, so a different split of the same bytes cannot yield the same signature.",
+        "required": ["keyId", "sealPublicKey", "algorithm", "notBefore", "signature"],
+        "properties": {
+          "keyId": { "type": "string", "maxLength": 256, "description": "The generation's id, chosen by the tenant. Checkpoint payloads name it. Bounded in length because it is tenant-supplied and reaches key derivation, where an unbounded identifier sizes a stack allocation." },
+          "sealPublicKey": { "type": "string", "format": "byte", "description": "The generation's public seal key (base64, SPKI). The control plane wraps run-start inputs to it and holds neither the private half nor the symmetric payload key." },
+          "algorithm": { "type": "string", "enum": ["ES256"], "description": "The seal key's signature algorithm. ES256 is ECDSA over P-256 with SHA-256, matching the executor-package signing already in use. Carried explicitly rather than inferred from the key, so a second algorithm cannot later arrive as a silent downgrade." },
+          "notBefore": { "type": "string", "format": "date-time", "description": "The instant the registration was signed. Inside the signed tuple and checked against a freshness window, so a captured registration cannot be presented indefinitely." },
+          "signature": { "type": "string", "format": "byte", "description": "The signature (base64) over the framed tuple, made with the private half of sealPublicKey. This is the proof of possession. It establishes that the registrant controls the seal pair; it does not, and cannot, prove a payload key exists, since that key is symmetric and must never reach the control plane." }
+        },
+        "additionalProperties": false
+      },
+      "EnvironmentKeyView": {
+        "type": "object",
+        "description": "A registered key generation for an environment (ADR 0065). Registering a new generation is a rotation. A generation is Active until retired, and the tenancy invariant reads 'at least one Active generation', so an environment whose only generation is Retired counts as having none. The environment is not repeated in the body: it is already the path that scopes the resource, and omitting it makes this view congruent with the persisted generation, so the response projects whole-document rather than field by field.",
+        "properties": {
+          "keyId": { "type": "string", "description": "The generation's id." },
+          "sealPublicKey": { "type": "string", "format": "byte", "description": "The public seal key (base64, SPKI). Not a secret." },
+          "algorithm": { "type": "string", "enum": ["ES256"], "description": "The seal key's signature algorithm." },
+          "state": { "type": "string", "enum": ["Active", "Retired"], "description": "Whether the generation is current. Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable." },
+          "registeredBy": { "type": "string", "description": "The actor that registered the generation." },
+          "registeredAt": { "type": "string", "format": "date-time", "description": "When the generation was registered." },
+          "retiredBy": { "type": "string", "description": "The actor that retired the generation, if it is Retired." },
+          "retiredAt": { "type": "string", "format": "date-time", "description": "When the generation was retired, if it is Retired." },
+          "reason": { "type": "string", "description": "An optional note recorded with the retirement." }
+        },
+        "required": ["keyId", "sealPublicKey", "algorithm", "state", "registeredBy", "registeredAt"]
+      },
+      "EnvironmentKeyList": {
+        "type": "object",
+        "description": "A keyset page of an environment's key generations, ordered by keyId.",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnvironmentKeyView" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["keys"]
+      },
+      "EnvironmentKeyRetirementNote": {
+        "type": "object",
+        "description": "An optional note recorded with a key retirement.",
+        "properties": {
+          "reason": { "type": "string", "maxLength": 1024, "description": "Why the generation was retired." }
+        },
+        "additionalProperties": false
       },
       "SourceSecurityTag": {
         "type": "object",
