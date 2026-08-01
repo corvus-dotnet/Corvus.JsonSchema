@@ -79,9 +79,58 @@ public static partial class Validate
     internal static readonly Regex IdnEmailMatchPattern = CreateIdnEmailMatchPattern();
 
     /// <summary>
+    /// Gets the pattern for matching the local part of an IDN Email.
+    /// </summary>
+    internal static readonly Regex IdnEmailLocalPartPattern = CreateIdnEmailLocalPartPattern();
+
+    /// <summary>
+    /// Gets the pattern for an RFC 5321 IPv4-address-literal (Snum-based, permitting leading zeros).
+    /// </summary>
+    internal static readonly Regex IdnEmailAddressLiteralIpV4Pattern = CreateIdnEmailAddressLiteralIpV4Pattern();
+
+    /// <summary>
     /// Gets the standard IDN mapping.
     /// </summary>
     internal static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
+
+    /// <summary>
+    /// Determines whether an idn-email value with an address-literal domain is valid.
+    /// </summary>
+    /// <param name="email">The email address to validate.</param>
+    /// <returns><see langword="true"/> if the value is a valid email with an address-literal domain.</returns>
+    /// <remarks>
+    /// RFC 6531 extends only the local part of a mailbox; the RFC 5321 §4.1.3 address-literal production is
+    /// unchanged, so idn-email accepts the same literals as email. Only IPv4 and IPv6 literals are accepted,
+    /// matching the JSON Schema test suite's expectations. The IdnMapping-based domain normalization used for
+    /// hostname domains cannot handle literals: with UseStd3AsciiRules it throws on '[' and ']'.
+    /// </remarks>
+    internal static bool IsIdnEmailAddressLiteralMatch(string email)
+    {
+        int atIndex = email.LastIndexOf('@');
+
+        if (atIndex < 1 || atIndex >= email.Length - 2 ||
+            email[atIndex + 1] != '[' || email[email.Length - 1] != ']')
+        {
+            return false;
+        }
+
+        if (!IdnEmailLocalPartPattern.IsMatch(email.Substring(0, atIndex)))
+        {
+            return false;
+        }
+
+        string literal = email.Substring(atIndex + 2, email.Length - atIndex - 3);
+
+        if (literal.StartsWith("IPv6:", StringComparison.Ordinal))
+        {
+            string ipv6 = literal.Substring(5);
+            return StandardIPAddress.IPAddressParser(ipv6, null, out IPAddress address) &&
+                address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
+                !ZoneIdExpression.IsMatch(ipv6);
+        }
+
+        return IdnEmailAddressLiteralIpV4Pattern.IsMatch(literal);
+    }
 
     /// <summary>
     /// Validate a string type value.
@@ -1282,9 +1331,18 @@ public static partial class Validate
 
         try
         {
-            // Normalize the domain
-            email = IdnEmailReplacePattern.Replace(email, DomainMapper);
-            isMatch = IdnEmailMatchPattern.IsMatch(email);
+            int atIndex = email.LastIndexOf('@');
+            if (atIndex >= 0 && atIndex < email.Length - 1 && email[atIndex + 1] == '[')
+            {
+                // RFC 6531 extends only the local part; RFC 5321 address-literals are unchanged.
+                isMatch = IsIdnEmailAddressLiteralMatch(email);
+            }
+            else
+            {
+                // Normalize the domain
+                email = IdnEmailReplacePattern.Replace(email, DomainMapper);
+                isMatch = IdnEmailMatchPattern.IsMatch(email);
+            }
 
             // Examines the domain part of the email and normalizes it.
             static string DomainMapper(Match match)
@@ -4167,7 +4225,7 @@ public static partial class Validate
     [GeneratedRegex("%.*$", RegexOptions.Compiled)]
     private static partial Regex CreateZoneIdExpression();
 
-    [GeneratedRegex("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-z0-9])?|\\[(((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))\\])$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled)]
     private static partial Regex CreateEmailPattern();
 
     [GeneratedRegex("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript)]
@@ -4196,12 +4254,18 @@ public static partial class Validate
 
     [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled)]
     private static partial Regex CreateIdnEmailMatchPattern();
+
+    [GeneratedRegex("^[^@\\s]+$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailLocalPartPattern();
+
+    [GeneratedRegex("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailAddressLiteralIpV4Pattern();
 #else
     private static Regex CreateIpV4Pattern() => new("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled);
 
     private static Regex CreateZoneIdExpression() => new("%.*$", RegexOptions.Compiled);
 
-    private static Regex CreateEmailPattern() => new("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))\\])$", RegexOptions.Compiled);
+    private static Regex CreateEmailPattern() => new("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled);
 
     private static Regex CreateDurationPattern() => new("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript);
 
@@ -4220,6 +4284,10 @@ public static partial class Validate
     private static Regex CreateIdnEmailReplacePattern() => new("(@)(.+)$", RegexOptions.Compiled);
 
     private static Regex CreateIdnEmailMatchPattern() => new("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled);
+
+    private static Regex CreateIdnEmailLocalPartPattern() => new("^[^@\\s]+$", RegexOptions.Compiled);
+
+    private static Regex CreateIdnEmailAddressLiteralIpV4Pattern() => new("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled);
 #endif
 
 #if NET8_0_OR_GREATER

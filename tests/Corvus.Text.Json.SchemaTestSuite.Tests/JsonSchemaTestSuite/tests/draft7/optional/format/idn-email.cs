@@ -88,6 +88,34 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestANonAsciiLocalPartWithAnAsciiDomainIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"δοκιμή@example.com\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestANonAsciiQuotedLocalPartIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\\"δοκιμή\\\"@example.com\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestADomainLabelThatIsNotInUnicodeNfcIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"user@cafe\\u0301.com\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestALocalPartThatIsNotInUnicodeNfcIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"cafe\\u0301@example.com\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
