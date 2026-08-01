@@ -169,7 +169,7 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
 - **Implicit conversions** to and from .NET primitive types
 - **Mutable builder** via `CreateBuilder(JsonWorkspace)` for in-place modification
 - **Immutable document factory** via `Create(...)`, returning a self-contained `ParsedJsonDocument<T>` built in a single pass — the create-but-don't-modify counterpart to `CreateBuilder`
-- **Pattern matching** via `Match()` for `oneOf`/`anyOf` discriminated unions
+- **Pattern matching** via `Match()` for `oneOf`/`anyOf` discriminated unions, and `MatchEvery()` on `anyOf` compositions to visit every matching subschema with an accumulator
 - **Equality** operators and `GetHashCode()`
 
 All generated types are `readonly struct` values — they are lightweight indexes into pooled JSON data, not heap-allocated objects.

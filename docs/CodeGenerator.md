@@ -274,7 +274,7 @@ The tool generates:
 - **Implicit conversions**: `(string)person.Name` extracts the .NET value
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip
-- **Pattern matching**: `Match()` methods for `oneOf`/`anyOf` discriminated unions
+- **Pattern matching**: `Match()` methods for `oneOf`/`anyOf` discriminated unions, plus `MatchEvery()` on `anyOf` compositions to visit every matching subschema, threading an accumulator through the calls
 - **Serialization**: `WriteTo(Utf8JsonWriter)` for zero-allocation output
 
 ## Schema Draft Support

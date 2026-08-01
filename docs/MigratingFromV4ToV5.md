@@ -1086,6 +1086,24 @@ string result = v5.Match(
     static (in MigrationUnion v, in string ctx) => $"{ctx}:none");
 ```
 
+### Matching every `anyOf` arm with `MatchEvery`
+
+`Match` dispatches to the first subschema that matches, in declaration order. For an `anyOf` whose arms overlap (for example a bare string arm followed by a pattern-constrained string arm), the bare string arm always wins and the more specific arm is unreachable. That is correct for `anyOf` validation, but it makes value-based dispatch on the more specific arm impossible.
+
+Both V4 and V5 additionally generate `MatchEvery` on `anyOf` compositions. It calls the match function for every subschema that matches, in declaration order, threading an accumulator through the calls, and returns the final accumulator. `defaultMatch` receives the seed accumulator only when no subschema matched.
+
+```csharp
+// Identical shape in V4 and V5 — an anyOf of a bare string
+// and a string constrained by a pattern
+string result = value.MatchEvery(
+    "none",
+    static (in JsonString s, in string acc) => $"string:{(string)s}",
+    static (in MigrationPatternUnion.PatternValue p, in string acc) => $"pattern:{(string)p}",
+    static (in MigrationPatternUnion v, in string acc) => acc);
+```
+
+A plain string produces `string:hello`. A value matching the pattern visits both arms and produces `pattern:...`, because the more specific arm runs last. Any other value returns the seed, `none`. Because the accumulator threads through every call, it can also collect results across arms, or carry context that `Match` would need a closure or a context parameter for.
+
 ---
 
 ## Enum Types
