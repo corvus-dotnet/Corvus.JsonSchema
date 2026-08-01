@@ -287,6 +287,27 @@ public readonly partial struct EnvironmentUpdate
         }
 
         /// <summary>
+        /// Gets the (optional) <c>checkpointKey</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The environment&#39;s registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment&#39;s runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Mutable CheckpointKey
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckpointKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>description</c> property.
         /// </summary>
         /// <remarks>
@@ -492,6 +513,87 @@ public readonly partial struct EnvironmentUpdate
         {
             CheckValidInstance();
             bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AllowsDraftRunsUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>checkpointKey</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetCheckpointKey(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CheckpointKeyUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckpointKeyUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckpointKey, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>checkpointKey</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetCheckpointKey<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CheckpointKeyUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckpointKeyUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckpointKey, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>checkpointKey</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveCheckpointKey()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CheckpointKeyUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -1133,12 +1235,13 @@ public readonly partial struct EnvironmentUpdate
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg6;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1153,7 +1256,7 @@ public readonly partial struct EnvironmentUpdate
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1162,6 +1265,7 @@ public readonly partial struct EnvironmentUpdate
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1182,7 +1286,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1207,7 +1311,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1232,7 +1336,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1257,7 +1361,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1282,7 +1386,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1311,12 +1415,13 @@ public readonly partial struct EnvironmentUpdate
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg6;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1329,7 +1434,7 @@ public readonly partial struct EnvironmentUpdate
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1339,6 +1444,7 @@ public readonly partial struct EnvironmentUpdate
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1357,7 +1463,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1382,7 +1488,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1407,7 +1513,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1432,7 +1538,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1457,7 +1563,7 @@ public readonly partial struct EnvironmentUpdate
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1492,6 +1598,7 @@ public readonly partial struct EnvironmentUpdate
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source checkpointKey = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default,
@@ -1500,6 +1607,7 @@ public readonly partial struct EnvironmentUpdate
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
         {
             allowsDraftRuns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowsDraftRuns, ref builder);
+            checkpointKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckpointKey, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
             displayName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayName, ref builder);
             managementTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManagementTags, ref builder);
@@ -1513,6 +1621,7 @@ public readonly partial struct EnvironmentUpdate
         /// </summary>
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source checkpointKey = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default,
@@ -1520,7 +1629,7 @@ public readonly partial struct EnvironmentUpdate
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
         {
-            Create(ref _builder, allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+            Create(ref _builder, allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
         }
 
         /// <summary>
@@ -1530,6 +1639,7 @@ public readonly partial struct EnvironmentUpdate
             in TContext context,
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> checkpointKey = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default,
@@ -1541,6 +1651,7 @@ public readonly partial struct EnvironmentUpdate
         #endif
         {
             allowsDraftRuns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowsDraftRuns, ref builder);
+            checkpointKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckpointKey, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
             displayName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayName, ref builder);
             managementTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManagementTags, ref builder);
@@ -1555,6 +1666,7 @@ public readonly partial struct EnvironmentUpdate
         public void Create<TContext>(
             in TContext context,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> checkpointKey = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default,
@@ -1565,7 +1677,7 @@ public readonly partial struct EnvironmentUpdate
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+            Create(context, ref _builder, allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
         }
 
         /// <summary>
@@ -1670,11 +1782,12 @@ public readonly partial struct EnvironmentUpdate
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
 
@@ -1690,14 +1803,15 @@ public readonly partial struct EnvironmentUpdate
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
     }
@@ -1735,6 +1849,7 @@ public readonly partial struct EnvironmentUpdate
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="allowsDraftRuns">The value of the <c>"allowsDraftRuns"</c> property.</param>
+    /// <param name="checkpointKey">The value of the <c>"checkpointKey"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
     /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
     /// <param name="managementTags">The value of the <c>"managementTags"</c> property.</param>
@@ -1742,9 +1857,9 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="requireEvidence">The value of the <c>"requireEvidence"</c> property.</param>
     /// <param name="runtimeIdentifier">The value of the <c>"runtimeIdentifier"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source checkpointKey = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
     {
-        return new Source(allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+        return new Source(allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
     }
 
     /// <summary>
@@ -1753,6 +1868,7 @@ public readonly partial struct EnvironmentUpdate
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="allowsDraftRuns">The value of the <c>"allowsDraftRuns"</c> property.</param>
+    /// <param name="checkpointKey">The value of the <c>"checkpointKey"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
     /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
     /// <param name="managementTags">The value of the <c>"managementTags"</c> property.</param>
@@ -1760,12 +1876,12 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="requireEvidence">The value of the <c>"requireEvidence"</c> property.</param>
     /// <param name="runtimeIdentifier">The value of the <c>"runtimeIdentifier"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> checkpointKey = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+        return new Source<TContext>(context, allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
     }
 
     /// <summary>
@@ -1862,6 +1978,7 @@ public readonly partial struct EnvironmentUpdate
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="allowsDraftRuns">The value of the property.</param>
+    /// <param name="checkpointKey">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="displayName">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
@@ -1870,13 +1987,13 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="runtimeIdentifier">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source checkpointKey = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+        ovb.Create(allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1890,6 +2007,7 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="allowsDraftRuns">The value of the property.</param>
+    /// <param name="checkpointKey">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="displayName">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
@@ -1898,7 +2016,7 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="runtimeIdentifier">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> checkpointKey = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1907,7 +2025,7 @@ public readonly partial struct EnvironmentUpdate
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+        ovb.Create(context, allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2009,6 +2127,7 @@ public readonly partial struct EnvironmentUpdate
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
     /// <param name="allowsDraftRuns">The value of the property.</param>
+    /// <param name="checkpointKey">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="displayName">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
@@ -2017,7 +2136,7 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="runtimeIdentifier">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<EnvironmentUpdate> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<EnvironmentUpdate> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source checkpointKey = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -2025,7 +2144,7 @@ public readonly partial struct EnvironmentUpdate
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+            ovb.Create(allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2043,6 +2162,7 @@ public readonly partial struct EnvironmentUpdate
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The value of the property.</param>
     /// <param name="allowsDraftRuns">The value of the property.</param>
+    /// <param name="checkpointKey">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="displayName">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
@@ -2051,7 +2171,7 @@ public readonly partial struct EnvironmentUpdate
     /// <param name="runtimeIdentifier">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<EnvironmentUpdate> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<EnvironmentUpdate> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source allowsDraftRuns = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.Source<TContext> checkpointKey = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source displayName = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source<TContext> managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.Source requiredIsolation = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source requireEvidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runtimeIdentifier = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2062,7 +2182,7 @@ public readonly partial struct EnvironmentUpdate
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, allowsDraftRuns, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
+            ovb.Create(context, allowsDraftRuns, checkpointKey, description, displayName, managementTags, requiredIsolation, requireEvidence, runtimeIdentifier);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

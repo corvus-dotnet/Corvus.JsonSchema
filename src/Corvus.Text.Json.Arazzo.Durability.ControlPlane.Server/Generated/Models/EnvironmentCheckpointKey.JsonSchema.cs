@@ -23,165 +23,91 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement mutable metadata for an existing environment (its name and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// The environment&#39;s registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment&#39;s runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct EnvironmentUpdate
-    : IJsonElement<EnvironmentUpdate>
+public readonly partial struct EnvironmentCheckpointKey
+    : IJsonElement<EnvironmentCheckpointKey>
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaPathProvider AllowsDraftRunsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/allowsDraftRuns"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider CheckpointKeySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/checkpointKey/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider DescriptionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/description"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider DisplayNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/displayName"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider ManagementTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/managementTags"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RequiredIsolationSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requiredIsolation"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RequireEvidenceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requireEvidence"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RuntimeIdentifierSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runtimeIdentifier"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyKeyIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("keyId"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyKeyIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("keyId"u8, buffer, out written);
 
-        private static void MatchAllowsDraftRuns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private const int RequiredOffsetForKeyId = 0;
+        private const uint RequiredBitForKeyId = 0b00000000000000000000000000000001;
+
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertySealKeyPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("sealKey"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertySealKeyNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("sealKey"u8, buffer, out written);
+
+        private const int RequiredOffsetForSealKey = 0;
+        private const uint RequiredBitForSealKey = 0b00000000000000000000000000000010;
+
+        private const uint RequiredBitMask0 =
+            RequiredBitForKeyId | RequiredBitForSealKey;
+        private static readonly JsonSchemaPathProvider KeyIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/keyId"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider SealKeySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sealKey"u8, buffer, out written);
+
+        private static void MatchKeyId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.AllowsDraftRunsUtf8,
-                    evaluationPath: AllowsDraftRunsSchemaEvaluationPath);
+                    JsonPropertyNames.KeyIdUtf8,
+                    evaluationPath: KeyIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForKeyId] |= RequiredBitForKeyId;
         }
 
-        private static void MatchCheckpointKey(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static void MatchSealKey(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.CheckpointKeyUtf8,
-                    evaluationPath: CheckpointKeySchemaEvaluationPath);
+                    JsonPropertyNames.SealKeyUtf8,
+                    evaluationPath: SealKeySchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForSealKey] |= RequiredBitForSealKey;
         }
 
-        private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.DescriptionUtf8,
-                    evaluationPath: DescriptionSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
-        }
-
-        private static void MatchDisplayName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext3 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.DisplayNameUtf8,
-                    evaluationPath: DisplayNameSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
-        }
-
-        private static void MatchManagementTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext4 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.ManagementTagsUtf8,
-                    evaluationPath: ManagementTagsSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
-            context.CommitChildContext(childContext4.IsMatch, ref childContext4);
-        }
-
-        private static void MatchRequiredIsolation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext5 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.RequiredIsolationUtf8,
-                    evaluationPath: RequiredIsolationSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate.RequiredIsolationEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
-            context.CommitChildContext(childContext5.IsMatch, ref childContext5);
-        }
-
-        private static void MatchRequireEvidence(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext6 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.RequireEvidenceUtf8,
-                    evaluationPath: RequireEvidenceSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
-            context.CommitChildContext(childContext6.IsMatch, ref childContext6);
-        }
-
-        private static void MatchRuntimeIdentifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext7 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.RuntimeIdentifierUtf8,
-                    evaluationPath: RuntimeIdentifierSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
-            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
-                (static () => JsonPropertyNames.AllowsDraftRunsUtf8, MatchAllowsDraftRuns),
-                (static () => JsonPropertyNames.CheckpointKeyUtf8, MatchCheckpointKey),
-                (static () => JsonPropertyNames.DescriptionUtf8, MatchDescription),
-                (static () => JsonPropertyNames.DisplayNameUtf8, MatchDisplayName),
-                (static () => JsonPropertyNames.ManagementTagsUtf8, MatchManagementTags),
-                (static () => JsonPropertyNames.RequiredIsolationUtf8, MatchRequiredIsolation),
-                (static () => JsonPropertyNames.RequireEvidenceUtf8, MatchRequireEvidence),
-                (static () => JsonPropertyNames.RuntimeIdentifierUtf8, MatchRuntimeIdentifier),
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
+                (static () => JsonPropertyNames.KeyIdUtf8, MatchKeyId),
+                (static () => JsonPropertyNames.SealKeyUtf8, MatchSealKey),
             ]);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -189,17 +115,17 @@ public readonly partial struct EnvironmentUpdate
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/EnvironmentUpdate"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/EnvironmentCheckpointKey"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/EnvironmentUpdate";
+        public const string SchemaLocation = "/components/schemas/EnvironmentCheckpointKey";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/EnvironmentUpdate"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/EnvironmentCheckpointKey"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -227,9 +153,11 @@ public readonly partial struct EnvironmentUpdate
                     return;
                 }
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
             }
             else
             {
+                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
                 int objectValidation_propertyCount = 0;
 
                 var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
@@ -238,9 +166,9 @@ public readonly partial struct EnvironmentUpdate
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {
@@ -249,6 +177,38 @@ public readonly partial struct EnvironmentUpdate
                     }
 
                     objectValidation_propertyCount++;
+                }
+
+                // Do a quick test to see if we have all of the required bits set in each element
+                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
+                {
+                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyKeyIdPresent, "keyId"u8, "required"u8);
+                    context.EvaluatedKeywordForProperty(true, 1, RequiredPropertySealKeyPresent, "sealKey"u8, "required"u8);
+                }
+                else if (!context.HasCollector)
+                {
+                    context.EvaluatedBooleanSchema(false);
+                    return;
+                }
+                else
+                {
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForKeyId] & RequiredBitForKeyId) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyKeyIdNotPresent, "keyId"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyKeyIdPresent, "keyId"u8, "required"u8);
+                    }
+
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForSealKey] & RequiredBitForSealKey) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 1, RequiredPropertySealKeyNotPresent, "sealKey"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertySealKeyPresent, "sealKey"u8, "required"u8);
+                    }
                 }
             }
         }

@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A deployment environment to create (design &#167;7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator&#39;s internal tenant tag and rejects a set the creator&#39;s reach does not admit).
+/// The environment&#39;s registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment&#39;s runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct EnvironmentCreate
+public readonly partial struct EnvironmentCheckpointKey
 #if NET8_0_OR_GREATER
-    : IJsonElement<EnvironmentCreate>,
+    : IJsonElement<EnvironmentCheckpointKey>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<EnvironmentCreate>,
+    : IJsonElement<EnvironmentCheckpointKey>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct EnvironmentCreate
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="EnvironmentCreate"/> struct.
+    /// Initializes a new instance of the <see cref="EnvironmentCheckpointKey"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal EnvironmentCreate(IJsonDocument parent, int idx)
+    internal EnvironmentCheckpointKey(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct EnvironmentCreate
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static EnvironmentCreate DefaultInstance { get; }
+    public static EnvironmentCheckpointKey DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,126 +159,21 @@ public readonly partial struct EnvironmentCreate
     }
 
     /// <summary>
-    /// Gets the (optional) <c>allowsDraftRuns</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Development-class flag (workflow-designer design &#167;18): when true, working-copy DRAFTS may execute here as debug runs, using this environment&#39;s credential bindings. Absent/false — only published, availability-granted versions run here.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean AllowsDraftRuns
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowsDraftRunsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>checkpointKey</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The environment&#39;s registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment&#39;s runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey CheckpointKey
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckpointKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>description</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// An optional human description.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Description
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>displayName</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// An optional human-friendly display name; defaults to the name when absent.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DisplayName
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisplayNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>managementTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Security tags (&#167;14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate.EnvironmentSecurityTagArray ManagementTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate.EnvironmentSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>name</c> property.
+    /// Gets the <c>keyId</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The environment&#39;s stable name and identity (e.g. production, staging, DEV-MWA-1); credentials and runs key on it.
+    /// The identifier the environment&#39;s sealed envelopes name (1-255 UTF-8 bytes); rotation registers a new id alongside its new seal key.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Name
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString KeyId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -288,60 +183,21 @@ public readonly partial struct EnvironmentCreate
     }
 
     /// <summary>
-    /// Gets the (optional) <c>requiredIsolation</c> property.
+    /// Gets the <c>sealKey</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets.
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate.RequiredIsolationEntity RequiredIsolation
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequiredIsolationUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate.RequiredIsolationEntity value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>requireEvidence</c> property.
-    /// </summary>
-    /// <remarks>
     /// <para>
-    /// Whether promotion into this environment requires green publish evidence (workflow-designer design &#167;4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted.
+    /// The public seal key: a base64-encoded P-256 SubjectPublicKeyInfo.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean RequireEvidence
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString SealKey
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequireEvidenceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>runtimeIdentifier</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. &#39;linux-x64&#39; (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RuntimeIdentifier
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RuntimeIdentifierUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -384,7 +240,7 @@ public readonly partial struct EnvironmentCreate
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentCreate left, in EnvironmentCreate right)
+    public static bool operator ==(in EnvironmentCheckpointKey left, in EnvironmentCheckpointKey right)
     {
         return left.Equals(right);
     }
@@ -397,7 +253,7 @@ public readonly partial struct EnvironmentCreate
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentCreate left, in EnvironmentCreate right)
+    public static bool operator !=(in EnvironmentCheckpointKey left, in EnvironmentCheckpointKey right)
     {
         return !left.Equals(right);
     }
@@ -410,7 +266,7 @@ public readonly partial struct EnvironmentCreate
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentCreate left, in JsonElement right)
+    public static bool operator ==(in EnvironmentCheckpointKey left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -423,7 +279,7 @@ public readonly partial struct EnvironmentCreate
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentCreate left, in JsonElement right)
+    public static bool operator !=(in EnvironmentCheckpointKey left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -434,7 +290,7 @@ public readonly partial struct EnvironmentCreate
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(EnvironmentCreate instance)
+    public static implicit operator JsonElement(EnvironmentCheckpointKey instance)
     {
         return JsonElement.From(instance);
     }
@@ -445,9 +301,9 @@ public readonly partial struct EnvironmentCreate
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator EnvironmentCreate(JsonElement instance)
+    public static implicit operator EnvironmentCheckpointKey(JsonElement instance)
     {
-        return EnvironmentCreate.From(instance);
+        return EnvironmentCheckpointKey.From(instance);
     }
 
     /// <summary>
@@ -456,7 +312,7 @@ public readonly partial struct EnvironmentCreate
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentCreate From<T>(in T instance)
+    public static EnvironmentCheckpointKey From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -481,10 +337,10 @@ public readonly partial struct EnvironmentCreate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentCreate ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static EnvironmentCheckpointKey ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentCreate>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<EnvironmentCheckpointKey>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -507,10 +363,10 @@ public readonly partial struct EnvironmentCreate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentCreate ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static EnvironmentCheckpointKey ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentCreate>(json, options);
+        return JsonElementHelpers.ParseValue<EnvironmentCheckpointKey>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -533,10 +389,10 @@ public readonly partial struct EnvironmentCreate
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentCreate ParseValue(string json, JsonDocumentOptions options = default)
+    public static EnvironmentCheckpointKey ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentCreate>(json, options);
+        return JsonElementHelpers.ParseValue<EnvironmentCheckpointKey>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -576,10 +432,10 @@ public readonly partial struct EnvironmentCreate
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static EnvironmentCreate ParseValue(ref Utf8JsonReader reader)
+    public static EnvironmentCheckpointKey ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentCreate>(ref reader);
+        return JsonElementHelpers.ParseValue<EnvironmentCheckpointKey>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -621,16 +477,16 @@ public readonly partial struct EnvironmentCreate
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out EnvironmentCreate? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out EnvironmentCheckpointKey? result)
     {
-        return JsonElementHelpers.TryParseValue<EnvironmentCreate>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<EnvironmentCheckpointKey>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new EnvironmentCreate(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new EnvironmentCheckpointKey(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -720,11 +576,11 @@ public readonly partial struct EnvironmentCreate
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static EnvironmentCreate IJsonElement<EnvironmentCreate>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static EnvironmentCheckpointKey IJsonElement<EnvironmentCheckpointKey>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"EnvironmentCreate: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"EnvironmentCheckpointKey: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -739,11 +595,11 @@ public readonly partial struct EnvironmentCreate
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="EnvironmentCreate"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="EnvironmentCheckpointKey"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="EnvironmentCreate"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="EnvironmentCheckpointKey"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -752,10 +608,10 @@ public readonly partial struct EnvironmentCreate
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public EnvironmentCreate Clone()
+    public EnvironmentCheckpointKey Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<EnvironmentCreate>(_idx);
+        return _parent.CloneElement<EnvironmentCheckpointKey>(_idx);
     }
 
     /// <summary>
@@ -763,7 +619,7 @@ public readonly partial struct EnvironmentCreate
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="EnvironmentCreate"/> that lives for the lifetime of its
+    /// An immutable <see cref="EnvironmentCheckpointKey"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -777,12 +633,12 @@ public readonly partial struct EnvironmentCreate
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public EnvironmentCreate Freeze()
+    public EnvironmentCheckpointKey Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<EnvironmentCreate>(_idx);
+            return mutable.FreezeElement<EnvironmentCheckpointKey>(_idx);
         }
 
         return this;
@@ -794,94 +650,24 @@ public readonly partial struct EnvironmentCreate
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// Gets the JSON property name for <see cref="KeyId"/>.
         /// </summary>
-        public const string AllowsDraftRuns = "allowsDraftRuns";
+        public const string KeyId = "keyId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CheckpointKey"/>.
+        /// Gets the JSON property name for <see cref="SealKey"/>.
         /// </summary>
-        public const string CheckpointKey = "checkpointKey";
+        public const string SealKey = "sealKey";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
+        /// Gets the JSON property name for <see cref="KeyId"/>.
         /// </summary>
-        public const string Description = "description";
+        public static ReadOnlySpan<byte> KeyIdUtf8 => "keyId"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DisplayName"/>.
+        /// Gets the JSON property name for <see cref="SealKey"/>.
         /// </summary>
-        public const string DisplayName = "displayName";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public const string ManagementTags = "managementTags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Name"/>.
-        /// </summary>
-        public const string Name = "name";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequiredIsolation"/>.
-        /// </summary>
-        public const string RequiredIsolation = "requiredIsolation";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequireEvidence"/>.
-        /// </summary>
-        public const string RequireEvidence = "requireEvidence";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RuntimeIdentifier"/>.
-        /// </summary>
-        public const string RuntimeIdentifier = "runtimeIdentifier";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> AllowsDraftRunsUtf8 => "allowsDraftRuns"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CheckpointKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKeyUtf8 => "checkpointKey"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DisplayName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DisplayNameUtf8 => "displayName"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Name"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequiredIsolation"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequiredIsolationUtf8 => "requiredIsolation"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequireEvidence"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequireEvidenceUtf8 => "requireEvidence"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RuntimeIdentifier"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RuntimeIdentifierUtf8 => "runtimeIdentifier"u8;
+        public static ReadOnlySpan<byte> SealKeyUtf8 => "sealKey"u8;
     }
 
     /// <summary>
@@ -890,49 +676,14 @@ public readonly partial struct EnvironmentCreate
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="KeyId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AllowsDraftRuns => "allowsDraftRuns"u8;
+        public static ReadOnlySpan<byte> KeyId => "keyId"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CheckpointKey"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="SealKey"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKey => "checkpointKey"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => "description"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DisplayName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DisplayName => "displayName"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Name"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Name => "name"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="RequiredIsolation"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequiredIsolation => "requiredIsolation"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="RequireEvidence"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequireEvidence => "requireEvidence"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="RuntimeIdentifier"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RuntimeIdentifier => "runtimeIdentifier"u8;
+        public static ReadOnlySpan<byte> SealKey => "sealKey"u8;
     }
 
     /// <summary>
@@ -942,48 +693,13 @@ public readonly partial struct EnvironmentCreate
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="AllowsDraftRuns"/>.
+        /// Gets the pre-baked property name blob for <see cref="KeyId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AllowsDraftRuns => [0x15, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
+        public static ReadOnlySpan<byte> KeyId => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x49, 0x64, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CheckpointKey"/>.
+        /// Gets the pre-baked property name blob for <see cref="SealKey"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKey => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x68, 0x65, 0x63, 0x6B, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x4B, 0x65, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DisplayName"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DisplayName => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x4E, 0x61, 0x6D, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Name"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="RequiredIsolation"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequiredIsolation => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x49, 0x73, 0x6F, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="RequireEvidence"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequireEvidence => [0x15, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x45, 0x76, 0x69, 0x64, 0x65, 0x6E, 0x63, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="RuntimeIdentifier"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RuntimeIdentifier => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x74, 0x69, 0x6D, 0x65, 0x49, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x22];
+        public static ReadOnlySpan<byte> SealKey => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x61, 0x6C, 0x4B, 0x65, 0x79, 0x22];
     }
 }

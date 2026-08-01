@@ -34,6 +34,10 @@
       "type": "string",
       "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires 'Isolated' execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an 'InProcess' environment. Mutable."
     },
+    "checkpointKey": {
+      "description": "The environment's registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment's runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Absent on an unsealed environment. Mutable as a pair: registering a new keyId+sealKey is a rotation.",
+      "$ref": "#/$defs/EnvironmentCheckpointKeyInfo"
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
@@ -64,6 +68,23 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "EnvironmentCheckpointKeyInfo": {
+      "title": "EnvironmentCheckpointKeyInfo",
+      "type": "object",
+      "description": "The environment checkpoint key registration (ADR 0065): the key id sealed envelopes name, and the public seal key.",
+      "required": ["keyId", "sealKey"],
+      "properties": {
+        "keyId": {
+          "type": "string",
+          "description": "The identifier the environment's sealed envelopes name (1-255 UTF-8 bytes); rotation registers a new id alongside its new seal key."
+        },
+        "sealKey": {
+          "type": "string",
+          "description": "The public seal key: a base64-encoded P-256 SubjectPublicKeyInfo."
+        }
+      },
+      "additionalProperties": false
+    },
     "SecurityTagInfo": {
       "title": "SecurityTagInfo",
       "type": "object",
