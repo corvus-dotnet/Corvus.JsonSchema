@@ -14,6 +14,7 @@ using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Keycloak;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -104,13 +105,19 @@ await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.Postgr
 var metadata = new WorkflowSchemaMetadataProvider();
 PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
 
-// At rest (§14, backlog #861): checkpoints — step outputs included — are application-encrypted before the backend
-// ever sees them. The key arrives from deployment configuration: the AppHost generates one per composition boot
-// (the demo resets its data each run, so an ephemeral key is exactly right; a durable deployment sources it from
-// its KMS/secret store instead). Absent the key (bare host runs, tests), the store runs unwrapped.
-IWorkflowStateStore stateStore = builder.Configuration["ControlPlane:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
-    ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
-    : postgresStateStore;
+// At rest (§14) and sealing (ADR 0065): every run pinned to a sealed environment is sealed to that environment's
+// registered seal key — the control plane holds seal keys ONLY (resolved from the environment records), so it writes
+// the initial run document but can never read tenant run state back; the open keys live in each tenant's custody on
+// their runners. The baseline below is the at-rest posture for unsealed environments and unpinned runs: the AppHost's
+// per-boot AES key when configured (the demo resets its data each run, so an ephemeral key is exactly right; a durable
+// deployment sources it from its KMS/secret store), otherwise pass-through — exactly the previous unwrapped posture.
+PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
+ICheckpointProtector checkpointBaseline = builder.Configuration["ControlPlane:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
+    ? new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey))
+    : PassthroughCheckpointProtector.Instance;
+IWorkflowStateStore stateStore = new ProtectedWorkflowStateStore(
+    postgresStateStore,
+    new EnvironmentCheckpointProtector(checkpointBaseline, new EnvironmentStoreSealKeyResolver(environmentStore).ResolveAsync));
 // Executor-package signing (#879): when the AppHost provisions a control-plane signing vault, sign each compiled
 // executor's manifest with its HashiCorp Vault Transit key at catalog-add. The private key stays in that vault (the
 // sign runs server-side), a vault the RUNNER cannot reach — the runner verifies with only the exported public key it
@@ -226,7 +233,6 @@ PostgresSourceCredentialStore sourceCredentials = await PostgresSourceCredential
 // once the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
 PostgresDraftRunStore draftRunStore = await PostgresDraftRunStore.ConnectAsync(dataSource);
 PostgresDraftRunTraceStore draftRunTraceStore = await PostgresDraftRunTraceStore.ConnectAsync(dataSource);
-PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 
 // The durable working-copy store (workflow-designer design §4.1): a designer's in-progress edits survive a restart and
 // are shared across control-plane instances, rather than living only in memory. One of the nine fanned-out backends.
