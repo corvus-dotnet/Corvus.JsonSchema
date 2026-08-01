@@ -365,6 +365,39 @@ public class FormatValidationTests
     }
 
     [TestMethod]
+    [DataRow("user@[127.0.0.1]", true)]
+    [DataRow("user@[01.0.0.1]", true)] // RFC 5321 Snum permits leading zeros
+    [DataRow("user@[010.0.0.1]", true)]
+    [DataRow("user@[192.0.2.300]", false)]
+    [DataRow("user@[IPv6:2001:db8::1]", true)]
+    [DataRow("user@[IPv6:zzz]", false)]
+    [DataRow("user@[]", false)]
+    [DataRow("user@[192.0.2.1", false)] // unterminated address-literal
+    [DataRow("user@EXAMPLE.COM", true)]
+    public void TypeEmail_AddressLiterals(string value, bool expected)
+    {
+        JsonString jsonValue = new(value);
+        ValidationContext result = Validate.TypeEmail(jsonValue, ValidationContext.ValidContext, ValidationLevel.Flag);
+        Assert.AreEqual(expected, result.IsValid);
+    }
+
+    [TestMethod]
+    [DataRow("δοκιμή@[192.0.2.1]", true)]
+    [DataRow("δοκιμή@[IPv6:2001:db8::1]", true)]
+    [DataRow("user@[192.0.2.300]", false)]
+    [DataRow("user@[01.0.0.1]", true)] // RFC 5321 Snum permits leading zeros
+    [DataRow("user@[010.0.0.1]", true)]
+    [DataRow("user@[IPv6:zzz]", false)]
+    [DataRow("user@[]", false)]
+    [DataRow("user@[192.0.2.1", false)] // unterminated address-literal
+    public void TypeIdnEmail_AddressLiterals(string value, bool expected)
+    {
+        JsonString jsonValue = new(value);
+        ValidationContext result = Validate.TypeIdnEmail(jsonValue, ValidationContext.ValidContext, ValidationLevel.Flag);
+        Assert.AreEqual(expected, result.IsValid);
+    }
+
+    [TestMethod]
     public void TypeInt128_Valid_IsValid()
     {
         JsonNumber value = new(42);

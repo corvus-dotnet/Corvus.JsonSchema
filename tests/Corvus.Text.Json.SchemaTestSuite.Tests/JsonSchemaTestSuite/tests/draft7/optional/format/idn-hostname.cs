@@ -89,9 +89,16 @@ public class SuiteValidationOfInternationalizedHostNames
     }
 
     [TestMethod]
-    public void TestAHostNameWithAComponentTooLong()
+    public void TestASingleLabelOf63CharactersIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실례례테스트례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례테스트례례실례.테스트\"");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestASingleLabelOf64CharactersIsTooLong()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -414,6 +421,90 @@ public class SuiteValidationOfInternationalizedHostNames
     public void TestEmptyString()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestZeroWidthNonJoinerMustPassAtEveryOccurrence()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0915\\u094d\\u200c\\u0937x\\u200cy\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestBidiDomainNameWithADigitFirstLabelIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0a.\\u05d0\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestLabelStartingWithADigitBeforeARightToLeftLetterIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0\\u0627\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestLeftToRightLabelContainingARightToLeftLetterIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a\\u05d0\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestRightToLeftLabelMixingBothDigitTypesIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u05d00\\u0660\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToADisallowedCodePointIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"xn--7a\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToABidiRuleViolationIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"xn--0ca24w\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAULabelWhoseALabelFormIsLongerThan63OctetsIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestEmptyLabelBetweenTwoDotsIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a..b\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestANameLongerThan253CharactersIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToOnlyAsciiIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"xn--example-\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonCanonicalPunycodeThatDoesNotReEncodeToItselfIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"xn---9uc\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 

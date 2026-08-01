@@ -96,6 +96,20 @@ public class SuiteValidationOfIpAddresses
     }
 
     [TestMethod]
+    public void TestA2PartAddressResolvingToARoutableIpInetAtonShorthand()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"127.1\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestA3PartAddressResolvingToARoutableIpInetAtonShorthand()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"127.0.1\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestAnIpAddressAsAnInteger()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0x7f000001\"");
@@ -113,6 +127,20 @@ public class SuiteValidationOfIpAddresses
     public void TestInvalidNonAscii২ABengali2()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1২7.0.0.1\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidFullwidthDigitsNonAscii()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"１９２.１６８.１.１\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidMathematicalBoldDigitsNonAscii()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"𝟏𝟗𝟐.𝟏𝟔𝟖.𝟏.𝟏\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -239,6 +267,13 @@ public class SuiteValidationOfIpAddresses
     public void TestTabCharacterIsInvalid()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"192.168.0.1\\t\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAdditionalContentAfterAnEmbeddedNulByte()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"192.168.0.1\\u0000.evil.com\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 

@@ -34,6 +34,55 @@ public static class JsonSchemaAnnotationProducer
 {
     private static ReadOnlySpan<byte> HashPrefix => "#"u8;
 
+    private static bool IsUriFragmentSafe(byte value)
+    {
+        // RFC 3986: fragment = *( pchar / "/" / "?" ) where pchar is unreserved, sub-delims,
+        // ':' or '@'. Everything else (including '^', '%' itself, and non-ASCII bytes) must be
+        // percent-encoded in an absolute keyword location.
+        return (value >= (byte)'a' && value <= (byte)'z') ||
+            (value >= (byte)'A' && value <= (byte)'Z') ||
+            (value >= (byte)'0' && value <= (byte)'9') ||
+            "-._~!$&'()*+,;=:@/?"u8.IndexOf(value) >= 0;
+    }
+
+    private static int GetUriFragmentEncodedLength(ReadOnlySpan<byte> source)
+    {
+        int length = source.Length;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            if (!IsUriFragmentSafe(source[i]))
+            {
+                length += 2;
+            }
+        }
+
+        return length;
+    }
+
+    private static void UriFragmentEncode(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        int written = 0;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte current = source[i];
+
+            if (IsUriFragmentSafe(current))
+            {
+                destination[written++] = current;
+            }
+            else
+            {
+                destination[written++] = (byte)'%';
+                destination[written++] = HexUpper(current >> 4);
+                destination[written++] = HexUpper(current & 0xF);
+            }
+        }
+
+        static byte HexUpper(int nibble) => (byte)(nibble < 10 ? '0' + nibble : 'A' + nibble - 10);
+    }
+
     /// <summary>
     /// Determines whether a byte is the start of a valid JSON value
     /// (string, number, true, false, null, array, or object).
@@ -272,8 +321,8 @@ public static class JsonSchemaAnnotationProducer
         /// <param name="writer">The writer to which the property will be written.</param>
         public void WriteSchemaLocationPropertyTo(Utf8JsonWriter writer)
         {
-            // Build "#" + schemaLocation as the property name.
-            int totalLength = 1 + this.schemaLocation.Length;
+            // Build "#" + the URI-fragment-encoded schemaLocation as the property name.
+            int totalLength = 1 + GetUriFragmentEncodedLength(this.schemaLocation);
 
             byte[]? rented = null;
             Span<byte> propertyName = totalLength <= JsonConstants.StackallocByteThreshold
@@ -283,7 +332,7 @@ public static class JsonSchemaAnnotationProducer
             try
             {
                 HashPrefix.CopyTo(propertyName);
-                this.schemaLocation.CopyTo(propertyName[1..]);
+                UriFragmentEncode(this.schemaLocation, propertyName[1..]);
 
                 writer.WritePropertyName(propertyName[..totalLength]);
                 writer.WriteRawValue(this.value, skipInputValidation: true);
@@ -318,10 +367,33 @@ public static class JsonSchemaAnnotationProducer
         /// <summary>
         /// Gets the schema location as a string, with the '#' prefix.
         /// </summary>
-        /// <returns>The schema location text.</returns>
+        /// <returns>The schema location text, URI-fragment encoded.</returns>
         public string GetSchemaLocationText()
         {
-            return "#" + JsonReaderHelper.GetTextFromUtf8(this.schemaLocation);
+            int encodedLength = GetUriFragmentEncodedLength(this.schemaLocation);
+
+            if (encodedLength == this.schemaLocation.Length)
+            {
+                return "#" + JsonReaderHelper.GetTextFromUtf8(this.schemaLocation);
+            }
+
+            byte[]? rented = null;
+            Span<byte> encoded = encodedLength <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented = ArrayPool<byte>.Shared.Rent(encodedLength));
+
+            try
+            {
+                UriFragmentEncode(this.schemaLocation, encoded);
+                return "#" + JsonReaderHelper.GetTextFromUtf8(encoded[..encodedLength]);
+            }
+            finally
+            {
+                if (rented is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
         }
 
         /// <summary>
