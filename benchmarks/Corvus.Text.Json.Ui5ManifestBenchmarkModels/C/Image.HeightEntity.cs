@@ -739,5 +739,37 @@ public readonly partial struct Image
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
+        /// <param name="matchBlockElementHeight">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight, TAccumulator, TAccumulator> matchBlockElementHeight,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchJsonString(Corvus.Ui5ManifestBenchmark.Current.JsonString.From(this), accumulator);
+            }
+
+            if (Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchBlockElementHeight(Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }

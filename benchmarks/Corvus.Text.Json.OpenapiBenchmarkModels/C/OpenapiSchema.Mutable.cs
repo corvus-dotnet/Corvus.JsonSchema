@@ -1645,6 +1645,46 @@ public readonly partial struct OpenapiSchema
         }
 
         /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchRequiredPaths">Match a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths"/>.</param>
+        /// <param name="matchRequiredComponents">Match a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents"/>.</param>
+        /// <param name="matchRequiredWebhooks">Match a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths, TAccumulator, TAccumulator> matchRequiredPaths,
+            Matcher<Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents, TAccumulator, TAccumulator> matchRequiredComponents,
+            Matcher<Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks, TAccumulator, TAccumulator> matchRequiredWebhooks,
+            Matcher<Corvus.OpenapiBenchmark.Current.OpenapiSchema.Mutable, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredPaths(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredComponents(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredWebhooks(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks.Mutable.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
+
+        /// <summary>
         /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>

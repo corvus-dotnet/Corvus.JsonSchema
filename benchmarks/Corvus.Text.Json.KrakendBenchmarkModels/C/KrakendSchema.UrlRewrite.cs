@@ -840,6 +840,38 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchRequiredLiteral">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral"/>.</param>
+        /// <param name="matchRequiredRegexp">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral, TAccumulator, TAccumulator> matchRequiredLiteral,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp, TAccumulator, TAccumulator> matchRequiredRegexp,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredLiteral(Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral.From(this), accumulator);
+            }
+
+            if (Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredRegexp(Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
+
+        /// <summary>
         /// Provides UTF8 and string versions of the JSON property names on the object.
         /// </summary>
         public static class JsonPropertyNames

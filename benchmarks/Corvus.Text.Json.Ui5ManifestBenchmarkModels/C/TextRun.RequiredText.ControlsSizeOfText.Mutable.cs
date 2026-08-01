@@ -520,6 +520,38 @@ public readonly partial struct TextRun
                 }
 
                 /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchFontSize">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.FontSize"/>.</param>
+                /// <param name="matchJsonNull">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.FontSize, TAccumulator, TAccumulator> matchFontSize,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.Ui5ManifestBenchmark.Current.FontSize.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchFontSize(Corvus.Ui5ManifestBenchmark.Current.FontSize.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.Ui5ManifestBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonNull(Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
+
+                /// <summary>
                 /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.FontSize.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>

@@ -1284,5 +1284,109 @@ public readonly partial struct CmakePresetsSchema
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonBoolean"/>.</param>
+        /// <param name="matchRequiredTypeAndValue">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue"/>.</param>
+        /// <param name="matchRequiredConditionAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType"/>.</param>
+        /// <param name="matchRequiredLhsAndRhsAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType"/>.</param>
+        /// <param name="matchConditionRequiredLhsAndRhsAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType"/>.</param>
+        /// <param name="matchRequiredListAndStringEntityAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType"/>.</param>
+        /// <param name="matchConditionRequiredListAndStringEntityAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType"/>.</param>
+        /// <param name="matchRequiredRegexAndStringEntityAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType"/>.</param>
+        /// <param name="matchConditionRequiredRegexAndStringEntityAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType"/>.</param>
+        /// <param name="matchRequiredConditionsAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType"/>.</param>
+        /// <param name="matchConditionRequiredConditionsAndType">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.JsonBoolean, TAccumulator, TAccumulator> matchJsonBoolean,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue, TAccumulator, TAccumulator> matchRequiredTypeAndValue,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType, TAccumulator, TAccumulator> matchRequiredConditionAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType, TAccumulator, TAccumulator> matchRequiredLhsAndRhsAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType, TAccumulator, TAccumulator> matchConditionRequiredLhsAndRhsAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType, TAccumulator, TAccumulator> matchRequiredListAndStringEntityAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType, TAccumulator, TAccumulator> matchConditionRequiredListAndStringEntityAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType, TAccumulator, TAccumulator> matchRequiredRegexAndStringEntityAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType, TAccumulator, TAccumulator> matchConditionRequiredRegexAndStringEntityAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType, TAccumulator, TAccumulator> matchRequiredConditionsAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType, TAccumulator, TAccumulator> matchConditionRequiredConditionsAndType,
+            Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.CmakePresetsBenchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchJsonBoolean(Corvus.CmakePresetsBenchmark.Current.JsonBoolean.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredTypeAndValue(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredConditionAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredLhsAndRhsAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchConditionRequiredLhsAndRhsAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredListAndStringEntityAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchConditionRequiredListAndStringEntityAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredRegexAndStringEntityAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchConditionRequiredRegexAndStringEntityAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredConditionsAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.From(this), accumulator);
+            }
+
+            if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchConditionRequiredConditionsAndType(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }

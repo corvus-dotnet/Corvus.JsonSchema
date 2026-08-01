@@ -864,6 +864,38 @@ public readonly partial struct Column
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchColumn">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Column"/>.</param>
+            /// <param name="matchFallbackOption">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.Column, TAccumulator, TAccumulator> matchColumn,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.FallbackOption, TAccumulator, TAccumulator> matchFallbackOption,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.Column.FallbackEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.Ui5ManifestBenchmark.Current.Column.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchColumn(Corvus.Ui5ManifestBenchmark.Current.Column.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.Ui5ManifestBenchmark.Current.FallbackOption.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchFallbackOption(Corvus.Ui5ManifestBenchmark.Current.FallbackOption.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Column.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

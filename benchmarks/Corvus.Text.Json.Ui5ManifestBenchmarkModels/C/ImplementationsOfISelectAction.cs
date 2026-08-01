@@ -960,4 +960,52 @@ public readonly partial struct ImplementationsOfISelectAction
 
         return defaultMatch(this);
     }
+
+    /// <summary>
+    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+    /// </summary>
+    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+    /// <param name="matchRequiredType">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType"/>.</param>
+    /// <param name="matchImplementationsOfISelectActionRequiredType">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType"/>.</param>
+    /// <param name="matchImplementationsOfISelectActionRequiredType1">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1"/>.</param>
+    /// <param name="matchImplementationsOfISelectActionRequiredType2">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2"/>.</param>
+    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+    /// <returns>The accumulator returned by the last match function called.</returns>
+    public TAccumulator MatchEvery<TAccumulator>(
+        TAccumulator accumulator,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType, TAccumulator, TAccumulator> matchRequiredType,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType, TAccumulator, TAccumulator> matchImplementationsOfISelectActionRequiredType,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1, TAccumulator, TAccumulator> matchImplementationsOfISelectActionRequiredType1,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2, TAccumulator, TAccumulator> matchImplementationsOfISelectActionRequiredType2,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction, TAccumulator, TAccumulator> defaultMatch)
+    {
+        bool matched = false;
+
+        if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchRequiredType(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.From(this), accumulator);
+        }
+
+        if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchImplementationsOfISelectActionRequiredType(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.From(this), accumulator);
+        }
+
+        if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchImplementationsOfISelectActionRequiredType1(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.From(this), accumulator);
+        }
+
+        if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchImplementationsOfISelectActionRequiredType2(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.From(this), accumulator);
+        }
+
+        return matched ? accumulator : defaultMatch(this, accumulator);
+    }
 }

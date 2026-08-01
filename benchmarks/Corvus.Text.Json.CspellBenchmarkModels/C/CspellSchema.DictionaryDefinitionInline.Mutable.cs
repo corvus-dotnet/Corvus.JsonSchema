@@ -753,6 +753,46 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchDictionaryDefinitionInlineWords">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords"/>.</param>
+            /// <param name="matchDictionaryDefinitionInlineIgnoreWords">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords"/>.</param>
+            /// <param name="matchDictionaryDefinitionInlineFlagWords">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords, TAccumulator, TAccumulator> matchDictionaryDefinitionInlineWords,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords, TAccumulator, TAccumulator> matchDictionaryDefinitionInlineIgnoreWords,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords, TAccumulator, TAccumulator> matchDictionaryDefinitionInlineFlagWords,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchDictionaryDefinitionInlineWords(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchDictionaryDefinitionInlineIgnoreWords(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchDictionaryDefinitionInlineFlagWords(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

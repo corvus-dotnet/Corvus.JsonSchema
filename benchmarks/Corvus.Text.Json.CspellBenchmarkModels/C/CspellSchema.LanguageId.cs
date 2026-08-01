@@ -747,5 +747,45 @@ public readonly partial struct CspellSchema
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchLanguageIdSingle">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle"/>.</param>
+        /// <param name="matchLanguageIdMultiple">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple"/>.</param>
+        /// <param name="matchLanguageIdMultipleNeg">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle, TAccumulator, TAccumulator> matchLanguageIdSingle,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple, TAccumulator, TAccumulator> matchLanguageIdMultiple,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg, TAccumulator, TAccumulator> matchLanguageIdMultipleNeg,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.LanguageId, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchLanguageIdSingle(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchLanguageIdMultiple(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchLanguageIdMultipleNeg(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }

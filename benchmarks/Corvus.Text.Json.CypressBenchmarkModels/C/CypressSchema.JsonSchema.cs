@@ -1040,13 +1040,13 @@ public readonly partial struct CypressSchema
                 }
             }
 
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf0_context);
-            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
-
             allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
             context.ApplyEvaluated(ref hoistedAllOf1_context);
             context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
+
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf0_context);
+            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
 
             context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
         }

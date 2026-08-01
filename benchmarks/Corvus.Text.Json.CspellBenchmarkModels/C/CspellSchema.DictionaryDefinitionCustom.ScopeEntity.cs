@@ -746,6 +746,38 @@ public readonly partial struct CspellSchema
 
                 return defaultMatch(this);
             }
+
+            /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchCustomDictionaryScope">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope"/>.</param>
+            /// <param name="matchCustomDictionaryScopeArray">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope, TAccumulator, TAccumulator> matchCustomDictionaryScope,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray, TAccumulator, TAccumulator> matchCustomDictionaryScopeArray,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCustomDictionaryScope(Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCustomDictionaryScopeArray(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
         }
     }
 }

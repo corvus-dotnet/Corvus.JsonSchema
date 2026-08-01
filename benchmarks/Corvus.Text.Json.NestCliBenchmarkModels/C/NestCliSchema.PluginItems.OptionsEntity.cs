@@ -805,6 +805,46 @@ public readonly partial struct NestCliSchema
 
                 return defaultMatch(this);
             }
+
+            /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchPluginOptions">Match a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions"/>.</param>
+            /// <param name="matchGraphQlPluginOptions">Match a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions"/>.</param>
+            /// <param name="matchSwaggerPluginOptions">Match a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions, TAccumulator, TAccumulator> matchPluginOptions,
+                Matcher<Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions, TAccumulator, TAccumulator> matchGraphQlPluginOptions,
+                Matcher<Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions, TAccumulator, TAccumulator> matchSwaggerPluginOptions,
+                Matcher<Corvus.NestCliBenchmark.Current.NestCliSchema.PluginItems.OptionsEntity, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchPluginOptions(Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.From(this), accumulator);
+                }
+
+                if (Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchGraphQlPluginOptions(Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.From(this), accumulator);
+                }
+
+                if (Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchSwaggerPluginOptions(Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
         }
     }
 }

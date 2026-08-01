@@ -763,6 +763,46 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     /// <summary>
+                    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                    /// </summary>
+                    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                    /// <param name="matchAnyOf0Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity"/>.</param>
+                    /// <param name="matchAnyOf1Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity"/>.</param>
+                    /// <param name="matchAnyOf2Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity"/>.</param>
+                    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                    /// <returns>The accumulator returned by the last match function called.</returns>
+                    public TAccumulator MatchEvery<TAccumulator>(
+                        TAccumulator accumulator,
+                        Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity, TAccumulator, TAccumulator> matchAnyOf0Entity,
+                        Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity, TAccumulator, TAccumulator> matchAnyOf1Entity,
+                        Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity, TAccumulator, TAccumulator> matchAnyOf2Entity,
+                        Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue, TAccumulator, TAccumulator> defaultMatch)
+                    {
+                        bool matched = false;
+
+                        if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf0Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf2Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity.From(this), accumulator);
+                        }
+
+                        return matched ? accumulator : defaultMatch(this, accumulator);
+                    }
+
+                    /// <summary>
                     /// Provides UTF8 and string versions of the JSON property names on the object.
                     /// </summary>
                     public static class JsonPropertyNames

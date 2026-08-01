@@ -689,5 +689,37 @@ public readonly partial struct CspellSchema
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchVersionLatest">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest"/>.</param>
+        /// <param name="matchVersionLegacy">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest, TAccumulator, TAccumulator> matchVersionLatest,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy, TAccumulator, TAccumulator> matchVersionLegacy,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Version, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchVersionLatest(Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchVersionLegacy(Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }
