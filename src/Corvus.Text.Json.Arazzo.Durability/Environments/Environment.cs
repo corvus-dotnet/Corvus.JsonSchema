@@ -115,6 +115,50 @@ public readonly partial struct Environment
             });
     }
 
+    /// <summary>
+    /// Builds a draft that changes <em>only</em> the key generations (ADR 0065), echoing every other mutable value
+    /// from the stored environment bytes-to-bytes.
+    /// </summary>
+    /// <remarks>
+    /// This exists because <see cref="WriteUpdated"/> takes displayName and description from the draft alone, so a
+    /// minimal draft carrying just the generations would blank them. Registering or retiring a key is a partial
+    /// update expressed through a full-replace write path, and echoing the stored values here keeps that knowledge in
+    /// one place rather than in the key handler, which has no business knowing the environment's field list.
+    /// </remarks>
+    /// <param name="stored">The stored environment to echo.</param>
+    /// <param name="keyGenerations">The complete new generation set.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithKeyGenerations(in Environment stored, in EnvironmentKeyGenerationArray keyGenerations)
+    {
+        KeyGenerationElements state = new(
+            (JsonElement)stored.Name,
+            (JsonElement)stored.DisplayName,
+            (JsonElement)stored.Description,
+            (JsonElement)stored.ManagementTags,
+            (JsonElement)stored.RequireEvidence,
+            (JsonElement)stored.AllowsDraftRuns,
+            (JsonElement)stored.RequiredIsolation,
+            (JsonElement)stored.RuntimeIdentifier,
+            (JsonElement)keyGenerations);
+
+        return PersistedJson.ToPooledDocument<Environment, KeyGenerationElements>(
+            state,
+            static (Utf8JsonWriter writer, in KeyGenerationElements s) =>
+            {
+                writer.WriteStartObject();
+                WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, s.Name);
+                WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, s.DisplayName);
+                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, s.RequireEvidence);
+                WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
+                WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, s.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, s.ManagementTags);
+                WriteValueIfPresent(writer, JsonPropertyNames.KeyGenerationsUtf8, s.KeyGenerations);
+                writer.WriteEndObject();
+            });
+    }
+
     /// <summary>Builds a draft environment from primitive values — the cold-path / test convenience over the bytes-native
     /// <see cref="Draft(in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>: the name and optional
     /// display name/description are written straight into the draft document (the genuine construction leaf), plus the
@@ -218,6 +262,12 @@ public readonly partial struct Environment
         // stored tags forward bytes-to-bytes.
         WriteValuePreferringDraft(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags, (JsonElement)this.ManagementTags);
 
+        // Key generations (ADR 0065): replace-or-carry, exactly like managementTags. The key endpoints are the only
+        // caller that supplies them, through DraftWithKeyGenerations; every other update path builds its draft with a
+        // Draft overload that cannot emit them, so an ordinary rename or re-description carries the stored generations
+        // forward and cannot silently drop the last active one the tenancy invariant reads.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.KeyGenerationsUtf8, (JsonElement)draft.KeyGenerations, (JsonElement)this.KeyGenerations);
+
         // created-* audit carried forward bytes-to-bytes (copy the stored tokens verbatim — no parse/reformat).
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedByUtf8, (JsonElement)this.CreatedBy);
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedAtUtf8, (JsonElement)this.CreatedAt);
@@ -264,6 +314,37 @@ public readonly partial struct Environment
         {
             ThrowHelper.ThrowEnvironmentRequiresNonEmptyName();
         }
+    }
+
+    // The key-generation draft context: every mutable value echoed from the stored environment, plus the new set.
+    private readonly struct KeyGenerationElements(
+        JsonElement name,
+        JsonElement displayName,
+        JsonElement description,
+        JsonElement managementTags,
+        JsonElement requireEvidence,
+        JsonElement allowsDraftRuns,
+        JsonElement requiredIsolation,
+        JsonElement runtimeIdentifier,
+        JsonElement keyGenerations)
+    {
+        public JsonElement Name { get; } = name;
+
+        public JsonElement DisplayName { get; } = displayName;
+
+        public JsonElement Description { get; } = description;
+
+        public JsonElement ManagementTags { get; } = managementTags;
+
+        public JsonElement RequireEvidence { get; } = requireEvidence;
+
+        public JsonElement AllowsDraftRuns { get; } = allowsDraftRuns;
+
+        public JsonElement RequiredIsolation { get; } = requiredIsolation;
+
+        public JsonElement RuntimeIdentifier { get; } = runtimeIdentifier;
+
+        public JsonElement KeyGenerations { get; } = keyGenerations;
     }
 
     // The bytes-to-bytes draft context: the request body's already-parsed JSON values plus the resolved tag set.

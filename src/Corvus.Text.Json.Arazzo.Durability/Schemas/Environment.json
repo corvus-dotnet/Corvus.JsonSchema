@@ -39,6 +39,11 @@
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
       "items": { "$ref": "#/$defs/SecurityTagInfo" }
     },
+    "keyGenerations": {
+      "type": "array",
+      "description": "The environment's registered checkpoint key generations (ADR 0065). Each names the payload-key id this environment's checkpoint payloads carry and the public seal key run-start inputs are wrapped to; the symmetric payload key itself stays in the tenant's custody and is never stored here. Held on the environment rather than in a separate store because the tenancy invariant asks 'does every tenant-owned environment have an ACTIVE generation', which is then one scan rather than a scan plus a per-environment lookup. Registering a new generation is a rotation. Absent on an environment that has registered none.",
+      "items": { "$ref": "#/$defs/EnvironmentKeyGeneration" }
+    },
     "createdBy": {
       "type": "string",
       "description": "The actor that created the environment."
@@ -64,6 +69,57 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "EnvironmentKeyGeneration": {
+      "title": "EnvironmentKeyGeneration",
+      "type": "object",
+      "description": "One registered checkpoint key generation (ADR 0065). Registration proves possession of the private seal half, so a generation cannot be conjured by writing a string; it does not prove the symmetric payload key exists, which is unprovable to a party that must never hold it and is instead enforced at runtime by the runner failing closed rather than writing cleartext.",
+      "required": ["keyId", "sealPublicKey", "algorithm", "state", "registeredBy", "registeredAt"],
+      "properties": {
+        "keyId": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "The generation's tenant-chosen id, named by this environment's checkpoint payloads. Bounded in length because it is tenant-supplied and reaches key derivation, where an unbounded identifier sizes a stack allocation."
+        },
+        "sealPublicKey": {
+          "type": "string",
+          "contentEncoding": "base64url",
+          "description": "The public seal key (SPKI) run-start inputs are wrapped to. Not a secret."
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": ["ES256"],
+          "description": "The seal key's signature algorithm. ES256 is ECDSA over P-256 with SHA-256, matching the executor-package signing already in use. Stored explicitly rather than inferred from the key, so a second algorithm cannot later arrive as a silent downgrade."
+        },
+        "state": {
+          "type": "string",
+          "enum": ["Active", "Retired"],
+          "description": "Whether the generation is current. The tenancy invariant counts ACTIVE generations, so an environment whose only generation is Retired counts as having none. Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable."
+        },
+        "registeredBy": {
+          "type": "string",
+          "description": "The actor that registered the generation."
+        },
+        "registeredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the generation was registered."
+        },
+        "retiredBy": {
+          "type": "string",
+          "description": "The actor that retired the generation, if it is Retired."
+        },
+        "retiredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the generation was retired, if it is Retired."
+        },
+        "reason": {
+          "type": "string",
+          "description": "An optional note recorded with the retirement."
+        }
+      },
+      "additionalProperties": false
+    },
     "SecurityTagInfo": {
       "title": "SecurityTagInfo",
       "type": "object",
