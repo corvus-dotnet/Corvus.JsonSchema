@@ -1410,6 +1410,134 @@ public readonly partial struct JsconfigSchema
 
                         return defaultMatch(this);
                     }
+
+                    /// <summary>
+                    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                    /// </summary>
+                    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                    /// <param name="matchAnyOf0Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity"/>.</param>
+                    /// <param name="matchAnyOf1Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity"/>.</param>
+                    /// <param name="matchAnyOf10Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity"/>.</param>
+                    /// <param name="matchAnyOf11Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity"/>.</param>
+                    /// <param name="matchAnyOf12Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity"/>.</param>
+                    /// <param name="matchAnyOf13Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity"/>.</param>
+                    /// <param name="matchAnyOf2Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity"/>.</param>
+                    /// <param name="matchAnyOf3Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity"/>.</param>
+                    /// <param name="matchAnyOf4Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity"/>.</param>
+                    /// <param name="matchAnyOf5Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity"/>.</param>
+                    /// <param name="matchAnyOf6Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity"/>.</param>
+                    /// <param name="matchAnyOf7Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity"/>.</param>
+                    /// <param name="matchAnyOf8Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity"/>.</param>
+                    /// <param name="matchAnyOf9Entity">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity"/>.</param>
+                    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                    /// <returns>The accumulator returned by the last match function called.</returns>
+                    public TAccumulator MatchEvery<TAccumulator>(
+                        TAccumulator accumulator,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity, TAccumulator, TAccumulator> matchAnyOf0Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity, TAccumulator, TAccumulator> matchAnyOf1Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity, TAccumulator, TAccumulator> matchAnyOf10Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity, TAccumulator, TAccumulator> matchAnyOf11Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity, TAccumulator, TAccumulator> matchAnyOf12Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity, TAccumulator, TAccumulator> matchAnyOf13Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity, TAccumulator, TAccumulator> matchAnyOf2Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity, TAccumulator, TAccumulator> matchAnyOf3Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity, TAccumulator, TAccumulator> matchAnyOf4Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity, TAccumulator, TAccumulator> matchAnyOf5Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity, TAccumulator, TAccumulator> matchAnyOf6Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity, TAccumulator, TAccumulator> matchAnyOf7Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity, TAccumulator, TAccumulator> matchAnyOf8Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity, TAccumulator, TAccumulator> matchAnyOf9Entity,
+                        Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity, TAccumulator, TAccumulator> defaultMatch)
+                    {
+                        bool matched = false;
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf0Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf1Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf10Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf11Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf12Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf13Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf2Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf3Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf4Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf5Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf6Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf7Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf8Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.From(this), accumulator);
+                        }
+
+                        if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.JsonSchema.Evaluate(_parent, _idx))
+                        {
+                            matched = true;
+                            accumulator = matchAnyOf9Entity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.From(this), accumulator);
+                        }
+
+                        return matched ? accumulator : defaultMatch(this, accumulator);
+                    }
                 }
             }
         }

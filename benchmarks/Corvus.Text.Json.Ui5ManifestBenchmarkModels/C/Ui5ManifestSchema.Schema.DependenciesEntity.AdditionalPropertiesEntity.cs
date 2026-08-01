@@ -840,6 +840,38 @@ public readonly partial struct Ui5ManifestSchema
 
                     return defaultMatch(this);
                 }
+
+                /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchSchema">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema"/>.</param>
+                /// <param name="matchStringArray">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.StringArray"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema, TAccumulator, TAccumulator> matchSchema,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.StringArray, TAccumulator, TAccumulator> matchStringArray,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.DependenciesEntity.AdditionalPropertiesEntity, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchSchema(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.From(this), accumulator);
+                    }
+
+                    if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.StringArray.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchStringArray(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.StringArray.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
             }
         }
     }

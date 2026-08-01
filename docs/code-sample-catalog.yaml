@@ -591,16 +591,16 @@ main-docs:
       - {index: 0, language: xml, lines: [9, 11]}
       - {index: 1, language: csharp, lines: [46, 52], category: compilable, verified: false}
       - {index: 2, language: csharp, lines: [66, 73], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [90, 100], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [104, 117], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [131, 137], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [151, 157], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [167, 173], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [183, 192], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [204, 210], category: fragment, verified: false}
-      - {index: 10, language: csharp, lines: [233, 243], category: fragment, verified: false}
-      - {index: 11, language: csharp, lines: [261, 268], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [272, 278], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [91, 101], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [105, 118], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [132, 138], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [152, 158], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [168, 174], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [184, 193], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [205, 211], category: fragment, verified: false}
+      - {index: 10, language: csharp, lines: [234, 244], category: fragment, verified: false}
+      - {index: 11, language: csharp, lines: [262, 269], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [273, 279], category: compilable, verified: false}
   - path: "docs/AnnotationSystem.md"
     blocks:
       - {index: 0, language: csharp, lines: [31, 50], category: compilable, verified: false}
@@ -1163,24 +1163,25 @@ main-docs:
       - {index: 58, language: csharp, lines: [1035, 1045], category: fragment, verified: false}
       - {index: 59, language: csharp, lines: [1053, 1067], category: compilable, verified: false}
       - {index: 60, language: csharp, lines: [1071, 1087], category: compilable, verified: false}
-      - {index: 61, language: csharp, lines: [1095, 1105], category: fragment, verified: false}
-      - {index: 62, language: csharp, lines: [1109, 1113], category: compilable, verified: false}
-      - {index: 63, language: csharp, lines: [1117, 1132], category: compilable, verified: false}
-      - {index: 64, language: csharp, lines: [1148, 1153], category: v4-before, verified: false}
-      - {index: 65, language: csharp, lines: [1159, 1165], category: fragment, verified: false}
-      - {index: 66, language: csharp, lines: [1171, 1175], category: compilable, verified: false}
-      - {index: 67, language: , lines: [1179, 1186]}
-      - {index: 68, language: bash, lines: [1196, 1210]}
-      - {index: 69, language: csharp, lines: [1222, 1226], category: compilable, verified: false}
-      - {index: 70, language: xml, lines: [1237, 1249]}
-      - {index: 71, language: xml, lines: [1253, 1265]}
-      - {index: 72, language: csharp, lines: [1277, 1289], category: compilable, verified: false}
-      - {index: 73, language: csharp, lines: [1295, 1317], category: compilable, verified: false}
-      - {index: 74, language: csharp, lines: [1321, 1330], category: compilable, verified: false}
-      - {index: 75, language: csharp, lines: [1336, 1344], category: compilable, verified: false}
-      - {index: 76, language: csharp, lines: [1355, 1362], category: compilable, verified: false}
-      - {index: 77, language: csharp, lines: [1370, 1385], category: compilable, verified: false}
-      - {index: 78, language: csharp, lines: [1393, 1410], category: compilable, verified: false}
+      - {index: 61, language: csharp, lines: [1095, 1103], category: fragment, verified: false}
+      - {index: 62, language: csharp, lines: [1113, 1123], category: compilable, verified: false}
+      - {index: 63, language: csharp, lines: [1127, 1131], category: compilable, verified: false}
+      - {index: 64, language: csharp, lines: [1135, 1150], category: v4-before, verified: false}
+      - {index: 65, language: csharp, lines: [1166, 1171], category: fragment, verified: false}
+      - {index: 66, language: csharp, lines: [1177, 1183], category: compilable, verified: false}
+      - {index: 67, language: csharp, lines: [1189, 1193], category: compilable, verified: false}
+      - {index: 68, language: , lines: [1197, 1204]}
+      - {index: 69, language: bash, lines: [1214, 1228]}
+      - {index: 70, language: csharp, lines: [1240, 1244], category: compilable, verified: false}
+      - {index: 71, language: xml, lines: [1255, 1267]}
+      - {index: 72, language: xml, lines: [1271, 1283]}
+      - {index: 73, language: csharp, lines: [1295, 1307], category: compilable, verified: false}
+      - {index: 74, language: csharp, lines: [1313, 1335], category: compilable, verified: false}
+      - {index: 75, language: csharp, lines: [1339, 1348], category: compilable, verified: false}
+      - {index: 76, language: csharp, lines: [1354, 1362], category: compilable, verified: false}
+      - {index: 77, language: csharp, lines: [1373, 1380], category: compilable, verified: false}
+      - {index: 78, language: csharp, lines: [1388, 1403], category: compilable, verified: false}
+      - {index: 79, language: csharp, lines: [1411, 1428], category: compilable, verified: false}
   - path: "docs/MigrationAnalyzers.md"
     blocks:
       - {index: 0, language: xml, lines: [11, 13]}
@@ -1364,12 +1365,13 @@ main-docs:
       - {index: 20, language: powershell, lines: [251, 257]}
       - {index: 21, language: powershell, lines: [263, 265]}
       - {index: 22, language: powershell, lines: [302, 305]}
-      - {index: 23, language: powershell, lines: [313, 343]}
-      - {index: 24, language: powershell, lines: [347, 350]}
-      - {index: 25, language: powershell, lines: [360, 362]}
-      - {index: 26, language: powershell, lines: [372, 374]}
-      - {index: 27, language: powershell, lines: [378, 381]}
-      - {index: 28, language: powershell, lines: [399, 405]}
+      - {index: 23, language: powershell, lines: [313, 345]}
+      - {index: 24, language: powershell, lines: [353, 359]}
+      - {index: 25, language: powershell, lines: [363, 366]}
+      - {index: 26, language: powershell, lines: [376, 378]}
+      - {index: 27, language: powershell, lines: [388, 390]}
+      - {index: 28, language: powershell, lines: [394, 397]}
+      - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 25]}

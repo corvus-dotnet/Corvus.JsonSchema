@@ -888,6 +888,38 @@ public readonly partial struct Draft04Schema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes"/>.</param>
+            /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes, TAccumulator, TAccumulator> matchSimpleTypes,
+                Matcher<Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray, TAccumulator, TAccumulator> matchSimpleTypesArray,
+                Matcher<Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchSimpleTypes(Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchSimpleTypesArray(Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.SimpleTypesArray.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

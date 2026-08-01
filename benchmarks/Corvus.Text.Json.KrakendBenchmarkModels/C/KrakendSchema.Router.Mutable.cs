@@ -1458,6 +1458,38 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchRequiredMaxRate">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate"/>.</param>
+            /// <param name="matchRequiredClientMaxRate">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate, TAccumulator, TAccumulator> matchRequiredMaxRate,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate, TAccumulator, TAccumulator> matchRequiredClientMaxRate,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchRequiredMaxRate(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchRequiredClientMaxRate(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

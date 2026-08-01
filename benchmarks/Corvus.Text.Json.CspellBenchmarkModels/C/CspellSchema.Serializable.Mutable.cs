@@ -929,6 +929,62 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchJsonNumber">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNumber"/>.</param>
+            /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
+            /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CspellBenchmark.Current.JsonBoolean"/>.</param>
+            /// <param name="matchJsonNull">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNull"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.CspellBenchmark.Current.JsonObject"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CspellBenchmark.Current.JsonNumber, TAccumulator, TAccumulator> matchJsonNumber,
+                Matcher<Corvus.CspellBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                Matcher<Corvus.CspellBenchmark.Current.JsonBoolean, TAccumulator, TAccumulator> matchJsonBoolean,
+                Matcher<Corvus.CspellBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                Matcher<Corvus.CspellBenchmark.Current.JsonObject, TAccumulator, TAccumulator> matchJsonObject,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CspellBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonNumber(Corvus.CspellBenchmark.Current.JsonNumber.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonString(Corvus.CspellBenchmark.Current.JsonString.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonBoolean(Corvus.CspellBenchmark.Current.JsonBoolean.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonNull(Corvus.CspellBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonObject(Corvus.CspellBenchmark.Current.JsonObject.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonNumber.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

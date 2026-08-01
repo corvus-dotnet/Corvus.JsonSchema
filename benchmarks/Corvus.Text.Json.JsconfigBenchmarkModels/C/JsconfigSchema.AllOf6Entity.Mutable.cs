@@ -852,6 +852,54 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchFilesDefinition">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition"/>.</param>
+            /// <param name="matchExcludeDefinition">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition"/>.</param>
+            /// <param name="matchIncludeDefinition">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition"/>.</param>
+            /// <param name="matchReferencesDefinition">Match a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition, TAccumulator, TAccumulator> matchFilesDefinition,
+                Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition, TAccumulator, TAccumulator> matchExcludeDefinition,
+                Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition, TAccumulator, TAccumulator> matchIncludeDefinition,
+                Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition, TAccumulator, TAccumulator> matchReferencesDefinition,
+                Matcher<Corvus.JsconfigBenchmark.Current.JsconfigSchema.AllOf6Entity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchFilesDefinition(Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchExcludeDefinition(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchIncludeDefinition(Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchReferencesDefinition(Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

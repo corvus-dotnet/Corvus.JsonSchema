@@ -768,6 +768,46 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchCostMapDefReplace">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace"/>.</param>
+            /// <param name="matchCostMapDefInsDel">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel"/>.</param>
+            /// <param name="matchCostMapDefSwap">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace, TAccumulator, TAccumulator> matchCostMapDefReplace,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel, TAccumulator, TAccumulator> matchCostMapDefInsDel,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap, TAccumulator, TAccumulator> matchCostMapDefSwap,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostMapDef.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCostMapDefReplace(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCostMapDefInsDel(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCostMapDefSwap(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

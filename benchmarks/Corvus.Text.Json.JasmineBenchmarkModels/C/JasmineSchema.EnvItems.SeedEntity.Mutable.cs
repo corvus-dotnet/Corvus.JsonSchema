@@ -597,6 +597,46 @@ public readonly partial struct JasmineSchema
                 }
 
                 /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchJsonString">Match a <see cref="Corvus.JasmineBenchmark.Current.JsonString"/>.</param>
+                /// <param name="matchJsonNumber">Match a <see cref="Corvus.JasmineBenchmark.Current.JsonNumber"/>.</param>
+                /// <param name="matchJsonNull">Match a <see cref="Corvus.JasmineBenchmark.Current.JsonNull"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.JasmineBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                    Matcher<Corvus.JasmineBenchmark.Current.JsonNumber, TAccumulator, TAccumulator> matchJsonNumber,
+                    Matcher<Corvus.JasmineBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                    Matcher<Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.JasmineBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonString(Corvus.JasmineBenchmark.Current.JsonString.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.JasmineBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonNumber(Corvus.JasmineBenchmark.Current.JsonNumber.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.JasmineBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonNull(Corvus.JasmineBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
+
+                /// <summary>
                 /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonString.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>

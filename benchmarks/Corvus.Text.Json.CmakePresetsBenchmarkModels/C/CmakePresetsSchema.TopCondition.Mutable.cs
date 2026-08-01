@@ -943,6 +943,38 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchCondition">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition"/>.</param>
+            /// <param name="matchJsonNull">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonNull"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition, TAccumulator, TAccumulator> matchCondition,
+                Matcher<Corvus.CmakePresetsBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TopCondition.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchCondition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CmakePresetsBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonNull(Corvus.CmakePresetsBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

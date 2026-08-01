@@ -968,6 +968,46 @@ public readonly partial struct AnsibleMetaSchema
         }
 
         /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchRequiredRole">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole"/>.</param>
+        /// <param name="matchRequiredSrc">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc"/>.</param>
+        /// <param name="matchRequiredName">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole, TAccumulator, TAccumulator> matchRequiredRole,
+            Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc, TAccumulator, TAccumulator> matchRequiredSrc,
+            Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName, TAccumulator, TAccumulator> matchRequiredName,
+            Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredRole(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole.From(this), accumulator);
+            }
+
+            if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredSrc(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc.From(this), accumulator);
+            }
+
+            if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredName(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
+
+        /// <summary>
         /// Provides UTF8 and string versions of the JSON property names on the object.
         /// </summary>
         public static class JsonPropertyNames

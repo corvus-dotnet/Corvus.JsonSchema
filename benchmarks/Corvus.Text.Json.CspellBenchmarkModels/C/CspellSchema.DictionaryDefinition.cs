@@ -997,5 +997,61 @@ public readonly partial struct CspellSchema
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchDictionaryDefinitionPreferred">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred"/>.</param>
+        /// <param name="matchDictionaryDefinitionCustom">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom"/>.</param>
+        /// <param name="matchDictionaryDefinitionAugmented">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented"/>.</param>
+        /// <param name="matchDictionaryDefinitionInline">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline"/>.</param>
+        /// <param name="matchDictionaryDefinitionAlternate">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred, TAccumulator, TAccumulator> matchDictionaryDefinitionPreferred,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom, TAccumulator, TAccumulator> matchDictionaryDefinitionCustom,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented, TAccumulator, TAccumulator> matchDictionaryDefinitionAugmented,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline, TAccumulator, TAccumulator> matchDictionaryDefinitionInline,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate, TAccumulator, TAccumulator> matchDictionaryDefinitionAlternate,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinition, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchDictionaryDefinitionPreferred(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchDictionaryDefinitionCustom(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchDictionaryDefinitionAugmented(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchDictionaryDefinitionInline(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchDictionaryDefinitionAlternate(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }

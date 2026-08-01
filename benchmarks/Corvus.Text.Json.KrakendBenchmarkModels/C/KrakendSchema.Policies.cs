@@ -989,6 +989,46 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchRequiredReq">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq"/>.</param>
+        /// <param name="matchRequiredResp">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp"/>.</param>
+        /// <param name="matchRequiredJwt">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq, TAccumulator, TAccumulator> matchRequiredReq,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp, TAccumulator, TAccumulator> matchRequiredResp,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt, TAccumulator, TAccumulator> matchRequiredJwt,
+            Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Policies, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredReq(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredReq.From(this), accumulator);
+            }
+
+            if (Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredResp(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredResp.From(this), accumulator);
+            }
+
+            if (Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredJwt(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequiredJwt.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
+
+        /// <summary>
         /// Provides UTF8 and string versions of the JSON property names on the object.
         /// </summary>
         public static class JsonPropertyNames

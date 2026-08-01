@@ -331,6 +331,7 @@ $schemas = @(
     @{ Schema = "migration-status-enum.json";   RootType = "MigrationStatusEnum" },
     @{ Schema = "migration-tuple.json";         RootType = "MigrationTuple" },
     @{ Schema = "migration-union.json";         RootType = "MigrationUnion" },
+    @{ Schema = "migration-pattern-union.json"; RootType = "MigrationPatternUnion" },
     @{ Schema = "migration-with-defaults.json"; RootType = "MigrationWithDefaults" }
 )
 
@@ -338,8 +339,23 @@ foreach ($s in $schemas) {
     & $toolPath (Join-Path $schemaPath $s.Schema) `
         --rootNamespace "Corvus.Text.Json.Tests.MigrationModels.V5" `
         --outputPath $outputPath `
-        --outputRootTypeName $s.RootType
+        --outputRootTypeName $s.RootType `
+        --engine V5
 }
+```
+
+The `--engine V5` flag is required: the legacy `Corvus.Json.CodeGenerator` tool defaults to the V4 engine.
+
+## Regenerating V4 migration model types
+
+The `Corvus.Text.Json.Tests.MigrationModels.V4` project contains the V4-generated equivalents of the same schemas, one self-contained folder per model (e.g. `migrationunion/`). Regenerate a model with the same tool, targeting the model's folder:
+
+```powershell
+& $toolPath "tests\Corvus.Text.Json.Tests.MigrationSchemas\migration-pattern-union.json" `
+    --rootNamespace "Corvus.Text.Json.Tests.MigrationModels.V4" `
+    --outputPath "tests\Corvus.Text.Json.Tests.MigrationModels.V4\migrationpatternunion" `
+    --outputRootTypeName "MigrationPatternUnion" `
+    --engine V4
 ```
 
 After regenerating, rebuild and run the migration equivalence tests to verify:

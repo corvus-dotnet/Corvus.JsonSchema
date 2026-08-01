@@ -488,6 +488,46 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
+            /// <param name="matchJsonString1">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
+            /// <param name="matchPredefinedPatterns">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.CspellBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                Matcher<Corvus.CspellBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString1,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns, TAccumulator, TAccumulator> matchPredefinedPatterns,
+                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.PatternRef.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.CspellBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonString(Corvus.CspellBenchmark.Current.JsonString.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonString1(Corvus.CspellBenchmark.Current.JsonString.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchPredefinedPatterns(Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

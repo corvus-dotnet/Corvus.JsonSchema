@@ -56,6 +56,12 @@ namespace TestLib
             Matcher<JsonString, TIn, TOut> match0,
             Matcher<JsonNumber, TIn, TOut> match1,
             Matcher<JsonElement, TIn, TOut> defaultMatch) => default;
+
+        public TOut MatchEvery<TOut>(
+            TOut accumulator,
+            Matcher<JsonString, TOut, TOut> match0,
+            Matcher<JsonNumber, TOut, TOut> match1,
+            Matcher<JsonElement, TOut, TOut> defaultMatch) => default;
     }
 }
 ";
@@ -81,9 +87,9 @@ namespace TestApp
 
         await Verify.VerifyAnalyzerAsync(
             testCode,
-            Verify.Diagnostic().WithLocation(0).WithArguments("consider adding the 'static' modifier"),
-            Verify.Diagnostic().WithLocation(1).WithArguments("consider adding the 'static' modifier"),
-            Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
+            Verify.Diagnostic().WithLocation(0).WithArguments("Match", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(1).WithArguments("Match", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(2).WithArguments("Match", "consider adding the 'static' modifier"));
     }
 
     [TestMethod]
@@ -130,9 +136,9 @@ namespace TestApp
 
         await Verify.VerifyAnalyzerAsync(
             testCode,
-            Verify.Diagnostic().WithLocation(0).WithArguments("consider adding the 'static' modifier"),
-            Verify.Diagnostic().WithLocation(1).WithArguments("consider using Match<TContext, TResult> to avoid closure allocation"),
-            Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
+            Verify.Diagnostic().WithLocation(0).WithArguments("Match", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(1).WithArguments("Match", "consider using Match<TContext, TResult> to avoid closure allocation"),
+            Verify.Diagnostic().WithLocation(2).WithArguments("Match", "consider adding the 'static' modifier"));
     }
 
     [TestMethod]
@@ -157,9 +163,9 @@ namespace TestApp
 
         await Verify.VerifyAnalyzerAsync(
             testCode,
-            Verify.Diagnostic().WithLocation(0).WithArguments("consider adding the 'static' modifier"),
-            Verify.Diagnostic().WithLocation(1).WithArguments("consider using Match<TContext, TResult> to avoid closure allocation"),
-            Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
+            Verify.Diagnostic().WithLocation(0).WithArguments("Match", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(1).WithArguments("Match", "consider using Match<TContext, TResult> to avoid closure allocation"),
+            Verify.Diagnostic().WithLocation(2).WithArguments("Match", "consider adding the 'static' modifier"));
     }
 
     [TestMethod]
@@ -200,9 +206,9 @@ namespace TestApp
             CompilerDiagnostics = CompilerDiagnostics.None,
         };
 
-        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(0).WithArguments("consider adding the 'static' modifier"));
-        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(1).WithArguments("consider adding the 'static' modifier"));
-        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(0).WithArguments("Match", "consider adding the 'static' modifier"));
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(1).WithArguments("Match", "consider adding the 'static' modifier"));
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(2).WithArguments("Match", "consider adding the 'static' modifier"));
         await test.RunAsync();
     }
 
@@ -229,6 +235,130 @@ namespace TestApp
 }";
 
         await Verify.VerifyAnalyzerAsync(testCode);
+    }
+
+    [TestMethod]
+    public async Task MatchEvery_NonStaticNonCapturingLambdas_FiresCTJ003()
+    {
+        const string testCode = Stubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        string M()
+        {
+            var element = new TestLib.JsonElement();
+            return element.MatchEvery<string>(
+                ""seed"",
+                {|#0:(in TestLib.JsonString s, in string acc) => s.ToString()|},
+                {|#1:(in TestLib.JsonNumber n, in string acc) => n.ToString()|},
+                {|#2:(in TestLib.JsonElement e, in string acc) => acc|});
+        }
+    }
+}";
+
+        await Verify.VerifyAnalyzerAsync(
+            testCode,
+            Verify.Diagnostic().WithLocation(0).WithArguments("MatchEvery", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(1).WithArguments("MatchEvery", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(2).WithArguments("MatchEvery", "consider adding the 'static' modifier"));
+    }
+
+    [TestMethod]
+    public async Task MatchEvery_CapturingLambda_FiresCTJ003WithAccumulatorMessage()
+    {
+        const string testCode = Stubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        string M()
+        {
+            int threshold = 10;
+            var element = new TestLib.JsonElement();
+            return element.MatchEvery<string>(
+                ""seed"",
+                {|#0:(in TestLib.JsonString s, in string acc) => s.ToString()|},
+                {|#1:(in TestLib.JsonNumber n, in string acc) => n > threshold ? ""high"" : ""low""|},
+                {|#2:(in TestLib.JsonElement e, in string acc) => acc|});
+        }
+    }
+}";
+
+        await Verify.VerifyAnalyzerAsync(
+            testCode,
+            Verify.Diagnostic().WithLocation(0).WithArguments("MatchEvery", "consider adding the 'static' modifier"),
+            Verify.Diagnostic().WithLocation(1).WithArguments("MatchEvery", "consider threading captured state through the accumulator to avoid closure allocation"),
+            Verify.Diagnostic().WithLocation(2).WithArguments("MatchEvery", "consider adding the 'static' modifier"));
+    }
+
+    [TestMethod]
+    public async Task MatchEvery_AlreadyStaticLambdas_NoDiagnostic()
+    {
+        const string testCode = Stubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        string M()
+        {
+            var element = new TestLib.JsonElement();
+            return element.MatchEvery<string>(
+                ""seed"",
+                static (in TestLib.JsonString s, in string acc) => s.ToString(),
+                static (in TestLib.JsonNumber n, in string acc) => n.ToString(),
+                static (in TestLib.JsonElement e, in string acc) => acc);
+        }
+    }
+}";
+
+        await Verify.VerifyAnalyzerAsync(testCode);
+    }
+
+    [TestMethod]
+    public async Task CodeFix_AddsStaticToNonCapturingMatchEveryLambdas()
+    {
+        var test = new CodeFixTest
+        {
+            TestCode = Stubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        string M()
+        {
+            var element = new TestLib.JsonElement();
+            return element.MatchEvery<string>(
+                ""seed"",
+                {|#0:(in TestLib.JsonString s, in string acc) => s.ToString()|},
+                {|#1:(in TestLib.JsonNumber n, in string acc) => n.ToString()|},
+                {|#2:(in TestLib.JsonElement e, in string acc) => acc|});
+        }
+    }
+}",
+            FixedCode = Stubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        string M()
+        {
+            var element = new TestLib.JsonElement();
+            return element.MatchEvery<string>(
+                ""seed"",
+                static (in TestLib.JsonString s, in string acc) => s.ToString(),
+                static (in TestLib.JsonNumber n, in string acc) => n.ToString(),
+                static (in TestLib.JsonElement e, in string acc) => acc);
+        }
+    }
+}",
+            CompilerDiagnostics = CompilerDiagnostics.None,
+        };
+
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(0).WithArguments("MatchEvery", "consider adding the 'static' modifier"));
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(1).WithArguments("MatchEvery", "consider adding the 'static' modifier"));
+        test.ExpectedDiagnostics.Add(Verify.Diagnostic().WithLocation(2).WithArguments("MatchEvery", "consider adding the 'static' modifier"));
+        await test.RunAsync();
     }
 
     [TestMethod]

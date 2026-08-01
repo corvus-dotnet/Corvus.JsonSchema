@@ -1102,6 +1102,46 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchRequiredAudience">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience"/>.</param>
+            /// <param name="matchRequiredAudienceAndCredentialsFile">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile"/>.</param>
+            /// <param name="matchRequiredAudienceAndCredentialsJson">Match a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience, TAccumulator, TAccumulator> matchRequiredAudience,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile, TAccumulator, TAccumulator> matchRequiredAudienceAndCredentialsFile,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson, TAccumulator, TAccumulator> matchRequiredAudienceAndCredentialsJson,
+                Matcher<Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchRequiredAudience(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchRequiredAudienceAndCredentialsFile(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsFile.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchRequiredAudienceAndCredentialsJson(Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudienceAndCredentialsJson.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.RequiredAudience.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

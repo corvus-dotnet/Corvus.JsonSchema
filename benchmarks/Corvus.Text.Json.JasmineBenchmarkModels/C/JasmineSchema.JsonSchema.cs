@@ -345,6 +345,14 @@ public readonly partial struct JasmineSchema
                 }
             }
 
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf2_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf2_context);
+            context.CommitChildContext(hoistedAllOf2_context.IsMatch, ref hoistedAllOf2_context);
+
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf1_context);
+            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
+
             if ((~(hoistedAllOf0_requiredBits[0]) & HoistedAllOf0RequiredBitMask0) == 0)
             {
                 hoistedAllOf0_context.EvaluatedKeywordForProperty(true, 0, HoistedAllOf0RequiredPropertySpecDirPresent, "spec_dir"u8, "required"u8);
@@ -378,14 +386,6 @@ public readonly partial struct JasmineSchema
             allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
             context.ApplyEvaluated(ref hoistedAllOf0_context);
             context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf1_context);
-            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf2_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf2_context);
-            context.CommitChildContext(hoistedAllOf2_context.IsMatch, ref hoistedAllOf2_context);
 
             context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
         }
