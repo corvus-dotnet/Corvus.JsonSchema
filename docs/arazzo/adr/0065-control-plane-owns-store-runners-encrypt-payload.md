@@ -106,17 +106,17 @@ The control plane owns the store, the APIs, the catalog and build pipeline, disp
 ```mermaid
 flowchart TB
   subgraph RAPI["Runner API — server-side enforcement"]
-    AUTH["1: authenticate the machine principal (IdP; no platform-minted secret)"]
+    AUTH["1: authenticate the machine principal (IdP, no platform-minted secret)"]
     BIND["2: resolve environment bindings (30s cache, ADR 0027 fence, system-binding exclusion)"]
     SCOPE["3: refuse anything outside them as 404 (ADR 0004), by path not content hash"]
-    LEASE["4: derive lease ownership from the principal; gate load on a held lease"]
-    CAS["5: single-row CAS on (etag, validated sequence); 409 on supersession"]
+    LEASE["4: derive lease ownership from the principal, gate load on a held lease"]
+    CAS["5: single-row CAS on (etag, validated sequence), 409 on supersession"]
     AUTH --> BIND --> SCOPE --> LEASE --> CAS
   end
   subgraph ROW["A sealed environment's run row, at rest"]
     ENV["Envelope (closed schema): cursor, status, blind wait key, fault CODE, security tags, epoch, sequence"]
     MAC["One HMAC over canonical runner region + H(payload ciphertext) — the two are inseparable"]
-    PAY["Payload: per-checkpoint data key wrapped to tenant A's key; AAD = run + env + keyId + previous-ciphertext hash"]
+    PAY["Payload: per-checkpoint data key wrapped to tenant A's key. AAD = run + env + keyId + previous-ciphertext hash"]
     ENV --- MAC --- PAY
   end
   RAPI --> ROW
@@ -135,14 +135,14 @@ sequenceDiagram
   participant S as Tenant source API
   I->>I: pin the environment seal-key fingerprint, seal inputs (AAD binds env + workflow + version + nonce)
   I->>CP: start run (ciphertext inputs)
-  R->>CP: claim (machine principal; lease grant carries a monotonic epoch)
+  R->>CP: claim (machine principal, lease grant carries a monotonic epoch)
   R->>R: open sealed inputs, validate against the version's input schema
   R->>G: invoke (ALC call, function URL, or micro-VM restore)
   G->>S: source call(s)
   G->>R: checkpoint back (Model B, ADR 0062 — to the TENANT's listener)
-  R->>R: split; encrypt payload (fresh data key, AAD chains to previous ciphertext); one MAC over region + ciphertext hash
-  R->>CP: save (proposed sequence validated as persisted+1; single-row CAS; 409 if superseded)
-  Note over CP: governance reads and acts on the ENVELOPE of every run; payload-touching verbs are requests the runner applies
+  R->>R: split, encrypt payload (fresh data key, AAD chains to previous ciphertext), one MAC over region + ciphertext hash
+  R->>CP: save (proposed sequence validated as persisted+1, single-row CAS, 409 if superseded)
+  Note over CP: governance reads and acts on the ENVELOPE of every run, payload-touching verbs are requests the runner applies
 ```
 
 ## Tenant-side data minimization (outside this platform's scope)
