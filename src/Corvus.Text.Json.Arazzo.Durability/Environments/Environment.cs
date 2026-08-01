@@ -80,9 +80,6 @@ public readonly partial struct Environment
     /// means the in-process default; absent on update leaves the stored requirement unchanged).</param>
     /// <param name="runtimeIdentifier">The serverless build-target RID value (ADR 0055) (or undefined — absent on
     /// create means the <c>linux-x64</c> default; absent on update leaves the stored target unchanged).</param>
-    /// <param name="checkpointKey">The checkpoint seal-key registration value (ADR 0065), a <c>{keyId, sealKey}</c>
-    /// object (or undefined — absent on create means the environment is unsealed; absent on update leaves the stored
-    /// registration unchanged, so rotation is an update that includes the new pair).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
     public static ParsedJsonDocument<Environment> Draft(
@@ -93,10 +90,9 @@ public readonly partial struct Environment
         in JsonElement requireEvidence = default,
         in JsonElement allowsDraftRuns = default,
         in JsonElement requiredIsolation = default,
-        in JsonElement runtimeIdentifier = default,
-        in JsonElement checkpointKey = default)
+        in JsonElement runtimeIdentifier = default)
     {
-        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier, checkpointKey);
+        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -109,7 +105,6 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
                 WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, s.RuntimeIdentifier);
-                WriteValueIfPresent(writer, JsonPropertyNames.CheckpointKeyUtf8, s.CheckpointKey);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -176,7 +171,6 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, (JsonElement)draft.AllowsDraftRuns);
         WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation);
         WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier);
-        WriteValueIfPresent(writer, JsonPropertyNames.CheckpointKeyUtf8, (JsonElement)draft.CheckpointKey);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -218,10 +212,6 @@ public readonly partial struct Environment
         // Serverless build-target RID (ADR 0055): same replace-or-carry semantics — an update that omits it leaves the
         // environment's target unchanged.
         WriteValuePreferringDraft(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier, (JsonElement)this.RuntimeIdentifier);
-
-        // Checkpoint seal-key registration (ADR 0065): replace-or-carry as one atomic {keyId, sealKey} pair — an update
-        // that includes it is a rotation; an update that omits it leaves the stored registration unchanged.
-        WriteValuePreferringDraft(writer, JsonPropertyNames.CheckpointKeyUtf8, (JsonElement)draft.CheckpointKey, (JsonElement)this.CheckpointKey);
 
         // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
         // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
@@ -285,8 +275,7 @@ public readonly partial struct Environment
         JsonElement requireEvidence,
         JsonElement allowsDraftRuns,
         JsonElement requiredIsolation,
-        JsonElement runtimeIdentifier,
-        JsonElement checkpointKey)
+        JsonElement runtimeIdentifier)
     {
         public JsonElement Name { get; } = name;
 
@@ -303,7 +292,5 @@ public readonly partial struct Environment
         public JsonElement RequiredIsolation { get; } = requiredIsolation;
 
         public JsonElement RuntimeIdentifier { get; } = runtimeIdentifier;
-
-        public JsonElement CheckpointKey { get; } = checkpointKey;
     }
 }

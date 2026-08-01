@@ -40,30 +40,16 @@ string connectionString = builder.Configuration.GetConnectionString("workflowsto
     ?? throw new InvalidOperationException("ConnectionStrings:workflowstore (the shared Postgres database) is required — run the serverless runner under the AppHost.");
 NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 
-// The shared state store. At rest (§14) and sealing (ADR 0065): runs pinned to a sealed environment are sealed to
-// that environment's key. This runner registers its environments' open keys from ITS OWN configuration (the tenant's
-// custody, Runner:CheckpointOpenKeys:<keyId> = base64 PKCS#8) and seals new checkpoints with the same keys; the
+// The shared state store. At rest (§14): the SAME per-boot checkpoint-protection key the control plane holds — every
+// process touching the shared state store must wrap it identically, or one side writes what the other cannot read. The
 // serverless function checkpoints back through THIS host's endpoint, so this host owns the wrap on that write path.
-// The baseline (unsealed environments) is the deployment's shared at-rest key, otherwise pass-through.
 PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
-PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
-ICheckpointProtector checkpointBaseline = builder.Configuration["Runner:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
-    ? new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey))
-    : PassthroughCheckpointProtector.Instance;
-List<KeyValuePair<string, ReadOnlyMemory<byte>>> checkpointOpenKeys = [];
-foreach (IConfigurationSection openKeyEntry in builder.Configuration.GetSection("Runner:CheckpointOpenKeys").GetChildren())
-{
-    if (openKeyEntry.Value is { Length: > 0 } openKey)
-    {
-        checkpointOpenKeys.Add(new(openKeyEntry.Key, Convert.FromBase64String(openKey)));
-    }
-}
-
-IWorkflowStateStore stateStore = new ProtectedWorkflowStateStore(
-    postgresStateStore,
-    new EnvironmentCheckpointProtector(checkpointBaseline, new EnvironmentStoreSealKeyResolver(environments).ResolveAsync, checkpointOpenKeys));
+IWorkflowStateStore stateStore = builder.Configuration["Runner:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
+    ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
+    : postgresStateStore;
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource);
 PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
+PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);
 
 // The workflow-deployment queue the deploy worker drains and the run-execution backend resolves function URLs from — the

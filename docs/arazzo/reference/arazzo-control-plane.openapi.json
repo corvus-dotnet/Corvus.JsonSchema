@@ -8348,15 +8348,6 @@
         },
         "required": ["key", "value"]
       },
-      "EnvironmentCheckpointKey": {
-        "type": "object",
-        "description": "The environment's registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment's runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.",
-        "properties": {
-          "keyId": { "type": "string", "description": "The identifier the environment's sealed envelopes name (1-255 UTF-8 bytes); rotation registers a new id alongside its new seal key." },
-          "sealKey": { "type": "string", "description": "The public seal key: a base64-encoded P-256 SubjectPublicKeyInfo." }
-        },
-        "required": ["keyId", "sealKey"]
-      },
       "EnvironmentCreate": {
         "type": "object",
         "description": "A deployment environment to create (design §7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
@@ -8368,7 +8359,6 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Development-class flag (workflow-designer design \u00a718): when true, working-copy DRAFTS may execute here as debug runs, using this environment's credential bindings. Absent/false \u2014 only published, availability-granted versions run here." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
-          "checkpointKey": { "$ref": "#/components/schemas/EnvironmentCheckpointKey" },
           "managementTags": {
             "type": "array",
             "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
@@ -8387,7 +8377,6 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Replacement draft-run permission (workflow-designer design \u00a718); absent leaves the environment's setting unchanged." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
-          "checkpointKey": { "$ref": "#/components/schemas/EnvironmentCheckpointKey" },
           "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
@@ -8402,7 +8391,6 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Whether working-copy drafts may execute here as debug runs (workflow-designer design \u00a718). Absent means false." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
-          "checkpointKey": { "$ref": "#/components/schemas/EnvironmentCheckpointKey" },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",

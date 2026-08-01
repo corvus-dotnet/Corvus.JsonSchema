@@ -175,50 +175,6 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
-    public async Task The_checkpoint_key_round_trips_and_rotation_replaces_the_pair_atomically()
-    {
-        await using Scoped host = await StartAsync(new TenantPolicy());
-
-        // A sealed environment (ADR 0065): run state written for it is sealed to this registered public key; the
-        // open (private) key stays in the tenant's custody and never appears on this surface.
-        HttpResponseMessage created = await host.SendJsonAsync(
-            HttpMethod.Post, "/environments", """{"name":"sealed-prod","checkpointKey":{"keyId":"acme-2026-08","sealKey":"c2VhbC1rZXktc3BraQ=="}}""", Write);
-        created.StatusCode.ShouldBe(HttpStatusCode.Created);
-        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
-        {
-            doc.RootElement.GetProperty("checkpointKey").GetProperty("keyId").GetString().ShouldBe("acme-2026-08");
-            doc.RootElement.GetProperty("checkpointKey").GetProperty("sealKey").GetString().ShouldBe("c2VhbC1rZXktc3BraQ==");
-        }
-
-        // An update that omits it leaves the registration unchanged (replace-or-carry).
-        HttpResponseMessage updated = await host.SendJsonAsync(
-            HttpMethod.Put, "/environments/sealed-prod", """{"displayName":"Sealed production"}""", Write);
-        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument doc = await ReadJsonAsync(updated))
-        {
-            doc.RootElement.GetProperty("checkpointKey").GetProperty("keyId").GetString().ShouldBe("acme-2026-08");
-        }
-
-        // An update that includes it is a rotation: the {keyId, sealKey} pair replaces atomically.
-        HttpResponseMessage rotated = await host.SendJsonAsync(
-            HttpMethod.Put, "/environments/sealed-prod", """{"checkpointKey":{"keyId":"acme-2026-09","sealKey":"cm90YXRlZC1zcGtp"}}""", Write);
-        rotated.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument doc = await ReadJsonAsync(rotated))
-        {
-            doc.RootElement.GetProperty("checkpointKey").GetProperty("keyId").GetString().ShouldBe("acme-2026-09");
-            doc.RootElement.GetProperty("checkpointKey").GetProperty("sealKey").GetString().ShouldBe("cm90YXRlZC1zcGtp");
-        }
-
-        // An unsealed environment simply has no registration.
-        HttpResponseMessage plain = await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"open-dev"}""", Write);
-        plain.StatusCode.ShouldBe(HttpStatusCode.Created);
-        using (Stj.JsonDocument doc = await ReadJsonAsync(plain))
-        {
-            doc.RootElement.TryGetProperty("checkpointKey", out _).ShouldBeFalse();
-        }
-    }
-
-    [TestMethod]
     public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

@@ -42,27 +42,12 @@ NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 // catalog (to learn which versions to host) and claims/leases/advances runs against the shared state store.
 PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
 
-// At rest (§14) and sealing (ADR 0065): runs pinned to a sealed environment are sealed to that environment's key.
-// This runner registers the open (private) keys for the environments it serves from ITS OWN configuration — the
-// tenant's custody, never the control plane — under Runner:CheckpointOpenKeys:<keyId> (base64 PKCS#8), and it seals
-// new checkpoints with the same keys. The baseline is the deployment's shared at-rest key for unsealed environments
-// (the AppHost's per-boot key), otherwise pass-through.
-PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
-ICheckpointProtector checkpointBaseline = builder.Configuration["Runner:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
-    ? new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey))
-    : PassthroughCheckpointProtector.Instance;
-List<KeyValuePair<string, ReadOnlyMemory<byte>>> checkpointOpenKeys = [];
-foreach (IConfigurationSection openKeyEntry in builder.Configuration.GetSection("Runner:CheckpointOpenKeys").GetChildren())
-{
-    if (openKeyEntry.Value is { Length: > 0 } openKey)
-    {
-        checkpointOpenKeys.Add(new(openKeyEntry.Key, Convert.FromBase64String(openKey)));
-    }
-}
-
-IWorkflowStateStore stateStore = new ProtectedWorkflowStateStore(
-    postgresStateStore,
-    new EnvironmentCheckpointProtector(checkpointBaseline, new EnvironmentStoreSealKeyResolver(environments).ResolveAsync, checkpointOpenKeys));
+// At rest (§14, backlog #861): the SAME checkpoint-protection key the control plane holds — every process
+// that touches the shared state store must wrap it identically, or one side writes what the other cannot
+// read. The AppHost hands both the identical per-boot key.
+IWorkflowStateStore stateStore = builder.Configuration["Runner:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
+    ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
+    : postgresStateStore;
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource);
 PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 
@@ -70,9 +55,9 @@ PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(data
 // (reference + metadata, never the secret), and the runner reads it to learn which Vault references to resolve.
 PostgresSourceCredentialStore credentials = await PostgresSourceCredentialStore.ConnectAsync(dataSource);
 
-// The §7.7 environments registry (constructed above, before the state-store wrap: the sealing router resolves each
-// environment's seal-key registration from it): the runner reads the environment it serves to inherit its reach
-// (managementTags → the registration's reachTags, design §5.5). The control plane owns writes.
+// The §7.7 environments registry, shared with the control plane: the runner reads the environment it serves to
+// inherit its reach (managementTags → the registration's reachTags, design §5.5). The control plane owns writes.
+PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 
 // The §5.5 runner-authorization store, shared with the control plane: registering only records this runner's intent
 // to serve its environment (an idempotent Pending authorization); an administrator of that environment authorizes it

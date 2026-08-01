@@ -188,8 +188,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 (JsonElement)body.RequireEvidence,
                 (JsonElement)body.AllowsDraftRuns,
                 (JsonElement)body.RequiredIsolation,
-                (JsonElement)body.RuntimeIdentifier,
-                (JsonElement)body.CheckpointKey);
+                (JsonElement)body.RuntimeIdentifier);
             ParsedJsonDocument<Environment> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
             // Create-grants-admin (§7.7): materialize the administration record with the creator's resolved identity as the
@@ -273,7 +272,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             return UpdateEnvironmentResult.Conflict(InsufficientIsolationRaiseProblem(name, strandedRunner), workspace);
         }
 
-        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags, (JsonElement)body.RequireEvidence, (JsonElement)body.AllowsDraftRuns, (JsonElement)body.RequiredIsolation, (JsonElement)body.RuntimeIdentifier, (JsonElement)body.CheckpointKey);
+        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags, (JsonElement)body.RequireEvidence, (JsonElement)body.AllowsDraftRuns, (JsonElement)body.RequiredIsolation, (JsonElement)body.RuntimeIdentifier);
         ParsedJsonDocument<Environment>? updated = await this.store.UpdateAsync(name, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (updated is not { } e)
         {

@@ -180,27 +180,6 @@ public readonly partial struct EnvironmentCreate
     }
 
     /// <summary>
-    /// Gets the (optional) <c>checkpointKey</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The environment&#39;s registered checkpoint seal key (ADR 0065): run state written for this environment is sealed to this public key, so any writer (the control plane at run start, the environment&#39;s runners per checkpoint) can seal, but only a holder of the tenant-custodied open (private) key — which the platform never sees — can read. Registering a new keyId+sealKey pair is a rotation; the key id names the keypair each sealed envelope was written to.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey CheckpointKey
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckpointKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCheckpointKey value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the (optional) <c>description</c> property.
     /// </summary>
     /// <remarks>
@@ -799,11 +778,6 @@ public readonly partial struct EnvironmentCreate
         public const string AllowsDraftRuns = "allowsDraftRuns";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CheckpointKey"/>.
-        /// </summary>
-        public const string CheckpointKey = "checkpointKey";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public const string Description = "description";
@@ -842,11 +816,6 @@ public readonly partial struct EnvironmentCreate
         /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AllowsDraftRunsUtf8 => "allowsDraftRuns"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CheckpointKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKeyUtf8 => "checkpointKey"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
@@ -895,11 +864,6 @@ public readonly partial struct EnvironmentCreate
         public static ReadOnlySpan<byte> AllowsDraftRuns => "allowsDraftRuns"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CheckpointKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKey => "checkpointKey"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Description => "description"u8;
@@ -945,11 +909,6 @@ public readonly partial struct EnvironmentCreate
         /// Gets the pre-baked property name blob for <see cref="AllowsDraftRuns"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AllowsDraftRuns => [0x15, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CheckpointKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CheckpointKey => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x68, 0x65, 0x63, 0x6B, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x4B, 0x65, 0x79, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Description"/>.
