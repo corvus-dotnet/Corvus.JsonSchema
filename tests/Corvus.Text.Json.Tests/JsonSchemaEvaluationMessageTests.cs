@@ -1397,12 +1397,12 @@ public class JsonSchemaEvaluationMessageTests
         Span<byte> largeBuffer = stackalloc byte[512];
         JsonSchemaEvaluation.ExpectedItemCountEqualsValue(5, largeBuffer, out int fullWritten);
 
-        // Buffer = prefix + 1: room for opening quote but not for the integer digit
-        // AppendQuotedInteger: after writing opening quote, TryFormat has 0 bytes → fails (lines 252-255)
+        // Buffer with room for the space and opening quote but not for the integer digit
+        // AppendQuotedInteger: after writing space + opening quote, TryFormat has 0 bytes → fails
         Span<byte> buffer = stackalloc byte[512];
 
-        // The full message is: "prefix'5'" — prefix + opening quote (1) + digit (1) + closing quote (1) = prefix + 3
-        // Use prefix + 1 to allow only the opening quote
+        // The full message is: "prefix '5'" — space (1) + opening quote (1) + digit (1) + closing quote (1)
+        // Trim the digit and closing quote to allow only the space and opening quote
         int prefixPlusQuote = fullWritten - 2; // minus digit and closing quote
         buffer = buffer.Slice(0, prefixPlusQuote);
 
@@ -1484,6 +1484,66 @@ public class JsonSchemaEvaluationMessageTests
 
     #endregion
 
+    #region Exact message format (issue #910)
+
+    [TestMethod]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountEquals), "Expected the item count to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountNotEquals), "Expected the item count not to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountGreaterThan), "Expected the item count to be greater than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountGreaterThanOrEquals), "Expected the item count to be greater than or equal to '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountLessThan), "Expected the item count to be less than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedItemCountLessThanOrEquals), "Expected the item count to be less than or equal to '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountEquals), "Expected the contains count to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountNotEquals), "Expected the contains count not to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountGreaterThan), "Expected the contains count to be greater than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountGreaterThanOrEquals), "Expected the contains count to be greater than or equal to '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountLessThan), "Expected the contains count to be less than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedContainsCountLessThanOrEquals), "Expected the contains count to be less than or equal to '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountEquals), "Expected the property count to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountNotEquals), "Expected the property count not to equal '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountGreaterThan), "Expected the property count to be greater than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountGreaterThanOrEquals), "Expected the property count to be greater than or equal to '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountLessThan), "Expected the property count to be less than '3'")]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedPropertyCountLessThanOrEquals), "Expected the property count to be less than or equal to '3'")]
+    [DataRow("ExpectedStringLengthEquals", "Expected the length of the value to equal '3'")]
+    [DataRow("ExpectedStringLengthNotEquals", "Expected the length of the value not to equal '3'")]
+    [DataRow("ExpectedStringLengthGreaterThan", "Expected the length of the value to be greater than '3'")]
+    [DataRow("ExpectedStringLengthGreaterThanOrEquals", "Expected the length of the value to be greater than or equal to '3'")]
+    [DataRow("ExpectedStringLengthLessThan", "Expected the length of the value to be less than '3'")]
+    [DataRow("ExpectedStringLengthLessThanOrEquals", "Expected the length of the value to be less than or equal to '3'")]
+    public void IntMessageProvider_WritesSpaceSeparatedQuotedValue(string fieldName, string expected)
+    {
+        JsonSchemaMessageProvider<int> provider = GetIntProvider(fieldName);
+        Span<byte> buffer = stackalloc byte[256];
+
+        bool result = provider(3, buffer, out int written);
+
+        Assert.IsTrue(result);
+        string output = Encoding.UTF8.GetString(buffer.Slice(0, written).ToArray());
+        Assert.AreEqual(expected, output);
+    }
+
+    [TestMethod]
+    [DataRow(nameof(JsonSchemaEvaluation.ExpectedEquals), "The value was expected to be equal to '10'")]
+    [DataRow("ExpectedNotEquals", "The value was expected to be not equal to '10'")]
+    [DataRow("ExpectedGreaterThan", "The value was expected to be greater than '10'")]
+    [DataRow("ExpectedGreaterThanOrEquals", "The value was expected to be greater than or equal to '10'")]
+    [DataRow("ExpectedLessThan", "The value was expected to be less than '10'")]
+    [DataRow("ExpectedLessThanOrEquals", "The value was expected to be less than or equal to '10'")]
+    public void NumberComparisonMessageProvider_WritesExpectedMessage(string fieldName, string expected)
+    {
+        JsonSchemaMessageProvider<string> provider = GetStringProvider(fieldName);
+        Span<byte> buffer = stackalloc byte[256];
+
+        bool result = provider("10", buffer, out int written);
+
+        Assert.IsTrue(result);
+        string output = Encoding.UTF8.GetString(buffer.Slice(0, written).ToArray());
+        Assert.AreEqual(expected, output);
+    }
+
+    #endregion
+
     #region Helper methods
 
     private static JsonSchemaMessageProvider GetParameterlessProvider(string fieldName)
@@ -1495,9 +1555,16 @@ public class JsonSchemaEvaluationMessageTests
 
     private static JsonSchemaMessageProvider<int> GetIntProvider(string fieldName)
     {
-        System.Reflection.FieldInfo field = typeof(JsonSchemaEvaluation).GetField(fieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        System.Reflection.FieldInfo field = typeof(JsonSchemaEvaluation).GetField(fieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?? throw new InvalidOperationException($"Field '{fieldName}' not found on JsonSchemaEvaluation");
         return (JsonSchemaMessageProvider<int>)(field.GetValue(null) ?? throw new InvalidOperationException($"Field '{fieldName}' value is null"));
+    }
+
+    private static JsonSchemaMessageProvider<string> GetStringProvider(string fieldName)
+    {
+        System.Reflection.FieldInfo field = typeof(JsonSchemaEvaluation).GetField(fieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+            ?? throw new InvalidOperationException($"Field '{fieldName}' not found on JsonSchemaEvaluation");
+        return (JsonSchemaMessageProvider<string>)(field.GetValue(null) ?? throw new InvalidOperationException($"Field '{fieldName}' value is null"));
     }
 
     #endregion

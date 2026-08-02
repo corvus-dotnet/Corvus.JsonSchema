@@ -60,6 +60,7 @@
     <AdditionalFiles Include="case-insensitive-enum-2020-12.json" />
     <AdditionalFiles Include="reserved-property-names-2020-12.json" />
     <AdditionalFiles Include="string-maxlength-enum-2020-12.json" />
+    <AdditionalFiles Include="global-namespace-model-2020-12.json" />
     <AdditionalFiles Include="simple-object-2020-12.yaml" />
     <AdditionalFiles Include="app-config-2020-12.yaml" />
   </ItemGroup>

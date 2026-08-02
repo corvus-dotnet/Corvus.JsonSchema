@@ -1,5 +1,15 @@
 # Version History
 
+## V5.2.13
+
+V5.2.13 fixes two defects in the schema validation error messages and makes the source generator work for structs declared in the global namespace.
+
+### Bug fixes
+
+- **Integer-valued validation messages restore the space before the quoted value** — Every message family whose expected value is an integer (`minLength`/`maxLength`, `minItems`/`maxItems`, `minContains`/`maxContains`, `minProperties`/`maxProperties`, across all six comparison variants) emitted text like `Expected the item count to be greater than or equal to'3'`. The messages are composed from a resource string that deliberately ends without trailing whitespace plus an appender that writes the quoted expected value; the string-valued appender wrote the separator space but the integer-valued appender did not. The integer appender now writes the same leading space, and exact-format tests pin all 24 affected message providers. See [#910](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/910).
+- **`exclusiveMaximum` failures report the correct comparison direction** — The `JsonSchema_ExpectedLessThan` resource read "The value was expected to be greater than", so a failed less-than comparison reported the opposite direction. Both copies of the resource (the main library and the JsonLogic source generator) now read "less than". See [#910](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/910).
+- **The source generator emits types for structs declared in the global namespace** — A `[JsonSchemaTypeGenerator]` struct declared outside any namespace generated nothing, silently: the generator's syntactic pre-filter required the struct's parent to be a namespace declaration, so a global-namespace target never entered the pipeline and no diagnostic was reported. The filter now accepts a compilation-unit parent, the target namespace maps to the empty string (as the query-language source generators already do), and the C# emission omits the namespace declaration and the leading dot in fully qualified names when the namespace is empty. The default namespace used for shared generated types prefers the first non-empty target namespace, so a global-namespace target cannot capture it. Generated output for namespaced targets is byte-for-byte unchanged. See [#906](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/906).
+
 ## V5.2.12
 
 V5.2.12 adds `MatchEvery()` to generated `anyOf` types in both the V4 and V5 engines: an accumulator-threading counterpart to `Match()` that visits every matching subschema instead of only the first.

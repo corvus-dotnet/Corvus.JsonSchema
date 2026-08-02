@@ -446,9 +446,11 @@ public static class TypeDeclarationExtensions
         if (!typeDeclaration.TryGetMetadata(FullyQualifiedDotnetTypeNameKey, out string? fqdntn))
         {
             TypeDeclaration? parent = typeDeclaration.Parent();
-            fqdntn = parent is null
-                ? $"{typeDeclaration.DotnetNamespace()}.{typeDeclaration.DotnetTypeName()}"
-                : $"{parent.FullyQualifiedDotnetTypeName()}.{typeDeclaration.DotnetTypeName()}";
+            fqdntn = parent is not null
+                ? $"{parent.FullyQualifiedDotnetTypeName()}.{typeDeclaration.DotnetTypeName()}"
+                : typeDeclaration.DotnetNamespace() is { Length: > 0 } ns
+                    ? $"{ns}.{typeDeclaration.DotnetTypeName()}"
+                    : typeDeclaration.DotnetTypeName();
 
             typeDeclaration.SetMetadata(FullyQualifiedDotnetTypeNameKey, fqdntn);
         }
