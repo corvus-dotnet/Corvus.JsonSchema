@@ -92,7 +92,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(GetStyledQuirkyResult.Ok(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
 
     public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(ExportDataResult.Ok("export-data"u8.ToArray()));
+        => new(ExportDataResult.Ok("export-data"u8.ToArray(), workspace, eTag: "\"export-1\"", xExportSequence: 7));
 
     public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {

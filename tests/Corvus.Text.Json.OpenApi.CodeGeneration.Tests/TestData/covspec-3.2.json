@@ -294,7 +294,7 @@
                 }
               },
               "X-Request-Id": {
-                "description": "Request correlation ID (no schema â€” raw string)"
+                "description": "Request correlation ID (no schema \u00e2\u20ac\u201d raw string)"
               },
               "X-Tags": {
                 "schema": {
@@ -584,6 +584,21 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "The exported representation's entity tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Export-Sequence": {
+                "description": "The export's monotonic sequence.",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
                 }
               }
             }

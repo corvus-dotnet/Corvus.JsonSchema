@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Net;
 using System.Text;
 using CanonTests32.Server;
@@ -661,6 +662,20 @@ public class GeneratedServerEndToEndTests
     {
         HttpResponseMessage response = await client!.GetAsync("/export");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task ExportData_CarriesItsResponseHeaders()
+    {
+        // A binary response body AND response headers together. The factory for that combination emitted a required
+        // parameter after an optional one and did not compile at all, so nothing downstream of it was ever exercised;
+        // compiling again is necessary but not sufficient, and this asserts the header values reach the wire.
+        HttpResponseMessage response = await client!.GetAsync("/export");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("\"export-1\"", response.Headers.ETag?.ToString());
+        Assert.AreEqual("7", response.Headers.GetValues("X-Export-Sequence").Single());
+        Assert.AreEqual("export-data", await response.Content.ReadAsStringAsync());
     }
 
     [TestMethod]

@@ -7765,14 +7765,14 @@ public sealed class OpenApi32CodeGenerator
             return sb.ToString();
         }
 
-        string TrailingParams()
+        // The workspace is REQUIRED and contentType is optional, so the workspace has to precede it: emitting the
+        // header parameters as one trailing block put a required parameter after an optional one (CS1737), which the
+        // JSON factories never hit because they have no optional parameter before the workspace.
+        string RequiredParams() => hasRespHeaders ? ", JsonWorkspace workspace" : string.Empty;
+
+        string OptionalHeaderParams()
         {
             StringBuilder sb = new();
-            if (hasRespHeaders)
-            {
-                sb.Append(", JsonWorkspace workspace");
-            }
-
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
                 sb.Append($", {typeName}.Source {fieldName} = default");
@@ -7795,14 +7795,15 @@ public sealed class OpenApi32CodeGenerator
         }
 
         string headerCtorArgs = HeaderCtorArgs();
-        string trailingParams = TrailingParams();
+        string requiredParams = RequiredParams();
+        string optionalHeaderParams = OptionalHeaderParams();
 
         // Buffered overload — copies the supplied bytes to the response stream when invoked.
         w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
         w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
         EmitHeaderDocs();
         w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
-        w.WriteLine($"public static {structName} {factoryName}(ReadOnlyMemory<byte> body, string? contentType = \"application/octet-stream\"{trailingParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
+        w.WriteLine($"public static {structName} {factoryName}(ReadOnlyMemory<byte> body{requiredParams}, string? contentType = \"application/octet-stream\"{optionalHeaderParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
 
         w.WriteLine();
 
@@ -7812,7 +7813,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
         EmitHeaderDocs();
         w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
-        w.WriteLine($"public static {structName} {factoryName}(Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"application/octet-stream\"{trailingParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: writeBody);");
+        w.WriteLine($"public static {structName} {factoryName}(Func<Stream, CancellationToken, ValueTask> writeBody{requiredParams}, string? contentType = \"application/octet-stream\"{optionalHeaderParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: writeBody);");
     }
 
     private void EmitServerStreamingResultFactories(
