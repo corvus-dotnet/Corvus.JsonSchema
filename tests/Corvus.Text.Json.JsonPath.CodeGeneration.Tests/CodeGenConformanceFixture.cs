@@ -36,7 +36,11 @@ public sealed class CodeGenConformanceFixture : IDisposable
     private static readonly Lazy<(IEnumerable<MetadataReference> References, CSharpParseOptions ParseOptions)>
         CompilationContext = new(BuildCompilationContext);
 
-    private static readonly TimeSpan CompilationTimeout = TimeSpan.FromSeconds(30);
+    // Generous by design. This budget exists to fail a HUNG pipeline rather than to assert compile speed, and a
+    // wall-clock assertion is load-dependent by construction: at 30s these tests failed nondeterministically during a
+    // full-solution run, where many projects compile in parallel and Roslyn is saturating every core. A hang is still
+    // caught just as surely at five minutes, and a loaded machine no longer reports one that is not there.
+    private static readonly TimeSpan CompilationTimeout = TimeSpan.FromMinutes(5);
 
     /// <inheritdoc/>
     public void Dispose()
