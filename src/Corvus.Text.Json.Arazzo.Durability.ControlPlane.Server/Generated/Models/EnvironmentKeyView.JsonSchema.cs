@@ -218,14 +218,14 @@ public readonly partial struct EnvironmentKeyView
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyView.ThePublicSealKeyBase64SpkiNotASecret.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.SealPublicKeyUtf8,
                     evaluationPath: SealPublicKeySchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyView.ThePublicSealKeyBase64SpkiNotASecret.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
 
             if (!context.HasCollector && !context.IsMatch)

@@ -56,6 +56,9 @@ public static class EnvironmentKeyPossession
     /// <summary>The algorithm identifier for ECDSA over P-256 with SHA-256, matching the executor-package signer.</summary>
     public const string EcdsaP256Sha256 = "ES256";
 
+    /// <summary>Gets <see cref="EcdsaP256Sha256"/> pre-encoded, so the request's UTF-8 is matched span-to-span.</summary>
+    public static ReadOnlySpan<byte> EcdsaP256Sha256Utf8 => "ES256"u8;
+
     /// <summary>How far in the past a signing instant may sit and still be accepted.</summary>
     public static readonly TimeSpan DefaultFreshnessWindow = TimeSpan.FromMinutes(5);
 
@@ -78,7 +81,7 @@ public static class EnvironmentKeyPossession
     public static EnvironmentKeyPossessionResult Verify(
         string environment,
         string keyId,
-        string algorithm,
+        ReadOnlySpan<byte> algorithm,
         ReadOnlySpan<byte> sealPublicKey,
         DateTimeOffset notBefore,
         ReadOnlySpan<byte> signature,
@@ -89,7 +92,10 @@ public static class EnvironmentKeyPossession
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(keyId);
 
-        if (!string.Equals(algorithm, EcdsaP256Sha256, StringComparison.Ordinal))
+        // Compared span-to-span against the pre-encoded name. The algorithm arrives as UTF-8 in the request body and is
+        // matched against a fixed literal, so realizing it as a managed string to call string.Equals would put an
+        // allocation between two byte ends for a comparison neither end needs.
+        if (!algorithm.SequenceEqual(EcdsaP256Sha256Utf8))
         {
             return EnvironmentKeyPossessionResult.AlgorithmUnsupported;
         }

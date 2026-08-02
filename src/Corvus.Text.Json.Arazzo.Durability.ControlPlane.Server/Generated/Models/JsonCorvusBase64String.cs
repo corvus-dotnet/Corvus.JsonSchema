@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A request to register a key generation for an environment (ADR 0065). Self-authenticating: the registrant signs the framed tuple (&quot;environment-key-registration&quot;, environment, keyId, sealPublicKey, notBefore) with the private half of sealPublicKey, and the server verifies against the presented key. There is no server-issued challenge to fetch first, because the signed content fully determines the effect, so replaying a registration re-registers the identical generation and changes nothing. Every field is length-framed before signing, so a different split of the same bytes cannot yield the same signature.
+/// The public seal key (base64, SPKI). Not a secret.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct EnvironmentKeyRegistration
+public readonly partial struct JsonCorvusBase64String
 #if NET8_0_OR_GREATER
-    : IJsonElement<EnvironmentKeyRegistration>,
+    : IJsonElement<JsonCorvusBase64String>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<EnvironmentKeyRegistration>,
+    : IJsonElement<JsonCorvusBase64String>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct EnvironmentKeyRegistration
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="EnvironmentKeyRegistration"/> struct.
+    /// Initializes a new instance of the <see cref="JsonCorvusBase64String"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal EnvironmentKeyRegistration(IJsonDocument parent, int idx)
+    internal JsonCorvusBase64String(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,143 +57,28 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static EnvironmentKeyRegistration DefaultInstance { get; }
+    public static JsonCorvusBase64String DefaultInstance { get; }
 
-    /// <summary>
-    /// Gets the <c>algorithm</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The seal key&#39;s signature algorithm. ES256 is ECDSA over P-256 with SHA-256, matching the executor-package signing already in use. Carried explicitly rather than inferred from the key, so a second algorithm cannot later arrive as a silent downgrade.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity Algorithm
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AlgorithmUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity value))
-            {
-                return value;
-            }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
 
-            return default;
-        }
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
 
-    /// <summary>
-    /// Gets the <c>keyId</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The generation&#39;s id, chosen by the tenant. Checkpoint payloads name it. Bounded in length because it is tenant-supplied and reaches key derivation, where an unbounded identifier sizes a stack allocation.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity KeyId
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity value))
-            {
-                return value;
-            }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
 
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>notBefore</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The instant the registration was signed. Inside the signed tuple and checked against a freshness window, so a captured registration cannot be presented indefinitely.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime NotBefore
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NotBeforeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>sealPublicKey</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The generation&#39;s public seal key (base64, SPKI). The control plane wraps run-start inputs to it and holds neither the private half nor the symmetric payload key.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String SealPublicKey
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealPublicKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>signature</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The signature (base64) over the framed tuple, made with the private half of sealPublicKey. This is the proof of possession. It establishes that the registrant controls the seal pair; it does not, and cannot, prove a payload key exists, since that key is symmetric and must never reach the control plane.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String Signature
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the number of properties in the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public int GetPropertyCount()
-    {
-        CheckValidInstance();
-        return _parent.GetPropertyCount(_idx);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator string(JsonCorvusBase64String value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -203,7 +88,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentKeyRegistration left, in EnvironmentKeyRegistration right)
+    public static bool operator ==(in JsonCorvusBase64String left, in JsonCorvusBase64String right)
     {
         return left.Equals(right);
     }
@@ -216,7 +101,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentKeyRegistration left, in EnvironmentKeyRegistration right)
+    public static bool operator !=(in JsonCorvusBase64String left, in JsonCorvusBase64String right)
     {
         return !left.Equals(right);
     }
@@ -229,7 +114,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentKeyRegistration left, in JsonElement right)
+    public static bool operator ==(in JsonCorvusBase64String left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -242,7 +127,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentKeyRegistration left, in JsonElement right)
+    public static bool operator !=(in JsonCorvusBase64String left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -253,7 +138,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(EnvironmentKeyRegistration instance)
+    public static implicit operator JsonElement(JsonCorvusBase64String instance)
     {
         return JsonElement.From(instance);
     }
@@ -264,9 +149,9 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator EnvironmentKeyRegistration(JsonElement instance)
+    public static implicit operator JsonCorvusBase64String(JsonElement instance)
     {
-        return EnvironmentKeyRegistration.From(instance);
+        return JsonCorvusBase64String.From(instance);
     }
 
     /// <summary>
@@ -275,7 +160,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentKeyRegistration From<T>(in T instance)
+    public static JsonCorvusBase64String From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -300,10 +185,10 @@ public readonly partial struct EnvironmentKeyRegistration
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentKeyRegistration ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static JsonCorvusBase64String ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentKeyRegistration>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<JsonCorvusBase64String>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -326,10 +211,10 @@ public readonly partial struct EnvironmentKeyRegistration
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentKeyRegistration ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static JsonCorvusBase64String ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentKeyRegistration>(json, options);
+        return JsonElementHelpers.ParseValue<JsonCorvusBase64String>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -352,10 +237,10 @@ public readonly partial struct EnvironmentKeyRegistration
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentKeyRegistration ParseValue(string json, JsonDocumentOptions options = default)
+    public static JsonCorvusBase64String ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentKeyRegistration>(json, options);
+        return JsonElementHelpers.ParseValue<JsonCorvusBase64String>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -395,10 +280,10 @@ public readonly partial struct EnvironmentKeyRegistration
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static EnvironmentKeyRegistration ParseValue(ref Utf8JsonReader reader)
+    public static JsonCorvusBase64String ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentKeyRegistration>(ref reader);
+        return JsonElementHelpers.ParseValue<JsonCorvusBase64String>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -440,16 +325,16 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out EnvironmentKeyRegistration? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out JsonCorvusBase64String? result)
     {
-        return JsonElementHelpers.TryParseValue<EnvironmentKeyRegistration>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<JsonCorvusBase64String>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new EnvironmentKeyRegistration(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new JsonCorvusBase64String(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -462,6 +347,57 @@ public readonly partial struct EnvironmentKeyRegistration
         where T : struct, IJsonElement
     {
         return JsonElementHelpers.DeepEquals(this, other);
+    }
+
+    /// <summary>
+    /// Compare with a UTF-8 string.
+    /// </summary>
+    /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+    }
+
+    /// <summary>
+    /// Compare with a string.
+    /// </summary>
+    /// <param ref="utf8Text">The text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(ReadOnlySpan<char> text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, text, isPropertyName: false);
+    }
+
+    /// <summary>
+    /// Compare with a string.
+    /// </summary>
+    /// <param ref="utf8Text">The text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(string text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, text, isPropertyName: false);
     }
 
     /// <inheritdoc/>
@@ -539,11 +475,11 @@ public readonly partial struct EnvironmentKeyRegistration
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static EnvironmentKeyRegistration IJsonElement<EnvironmentKeyRegistration>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static JsonCorvusBase64String IJsonElement<JsonCorvusBase64String>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"EnvironmentKeyRegistration: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"JsonCorvusBase64String: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -558,11 +494,11 @@ public readonly partial struct EnvironmentKeyRegistration
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="EnvironmentKeyRegistration"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="JsonCorvusBase64String"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="EnvironmentKeyRegistration"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="JsonCorvusBase64String"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -571,10 +507,10 @@ public readonly partial struct EnvironmentKeyRegistration
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public EnvironmentKeyRegistration Clone()
+    public JsonCorvusBase64String Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<EnvironmentKeyRegistration>(_idx);
+        return _parent.CloneElement<JsonCorvusBase64String>(_idx);
     }
 
     /// <summary>
@@ -582,7 +518,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="EnvironmentKeyRegistration"/> that lives for the lifetime of its
+    /// An immutable <see cref="JsonCorvusBase64String"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -596,133 +532,14 @@ public readonly partial struct EnvironmentKeyRegistration
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public EnvironmentKeyRegistration Freeze()
+    public JsonCorvusBase64String Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<EnvironmentKeyRegistration>(_idx);
+            return mutable.FreezeElement<JsonCorvusBase64String>(_idx);
         }
 
         return this;
-    }
-
-    /// <summary>
-    /// Provides UTF8 and string versions of the JSON property names on the object.
-    /// </summary>
-    public static class JsonPropertyNames
-    {
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Algorithm"/>.
-        /// </summary>
-        public const string Algorithm = "algorithm";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="KeyId"/>.
-        /// </summary>
-        public const string KeyId = "keyId";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="NotBefore"/>.
-        /// </summary>
-        public const string NotBefore = "notBefore";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SealPublicKey"/>.
-        /// </summary>
-        public const string SealPublicKey = "sealPublicKey";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Signature"/>.
-        /// </summary>
-        public const string Signature = "signature";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Algorithm"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> AlgorithmUtf8 => "algorithm"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="KeyId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> KeyIdUtf8 => "keyId"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="NotBefore"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> NotBeforeUtf8 => "notBefore"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SealPublicKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SealPublicKeyUtf8 => "sealPublicKey"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Signature"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SignatureUtf8 => "signature"u8;
-    }
-
-    /// <summary>
-    /// Provides escaped UTF-8 versions of the JSON property names on the object.
-    /// </summary>
-    private static class JsonPropertyNamesEscaped
-    {
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Algorithm"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Algorithm => "algorithm"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="KeyId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> KeyId => "keyId"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="NotBefore"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> NotBefore => "notBefore"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SealPublicKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SealPublicKey => "sealPublicKey"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Signature"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Signature => "signature"u8;
-    }
-
-    /// <summary>
-    /// Provides pre-baked property name blobs for fast builder property storage.
-    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
-    /// </summary>
-    private static class JsonPropertyNamesPrebaked
-    {
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Algorithm"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Algorithm => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x67, 0x6F, 0x72, 0x69, 0x74, 0x68, 0x6D, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="KeyId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> KeyId => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x49, 0x64, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="NotBefore"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> NotBefore => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x74, 0x42, 0x65, 0x66, 0x6F, 0x72, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SealPublicKey"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SealPublicKey => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x61, 0x6C, 0x50, 0x75, 0x62, 0x6C, 0x69, 0x63, 0x4B, 0x65, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Signature"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Signature => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x69, 0x67, 0x6E, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22];
     }
 }

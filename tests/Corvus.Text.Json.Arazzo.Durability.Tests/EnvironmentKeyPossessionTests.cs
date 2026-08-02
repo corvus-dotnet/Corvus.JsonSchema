@@ -25,7 +25,7 @@ public sealed class EnvironmentKeyPossessionTests
         byte[] spki = key.ExportSubjectPublicKeyInfo();
 
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, Sign(key, "acme-prod", "k1", spki, Now), Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, Sign(key, "acme-prod", "k1", spki, Now), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.Verified);
     }
 
@@ -39,7 +39,7 @@ public sealed class EnvironmentKeyPossessionTests
         byte[] signedForStaging = Sign(key, "acme-staging", "k1", spki, Now);
 
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, signedForStaging, Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, signedForStaging, Now)
             .ShouldBe(EnvironmentKeyPossessionResult.SignatureInvalid);
     }
 
@@ -55,7 +55,7 @@ public sealed class EnvironmentKeyPossessionTests
         byte[] spki = key.ExportSubjectPublicKeyInfo();
         byte[] signature = Sign(key, "e1", "0abc", spki, Now);
 
-        EnvironmentKeyPossession.Verify("e10", "abc", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, signature, Now)
+        EnvironmentKeyPossession.Verify("e10", "abc", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, signature, Now)
             .ShouldBe(EnvironmentKeyPossessionResult.SignatureInvalid);
     }
 
@@ -69,7 +69,7 @@ public sealed class EnvironmentKeyPossessionTests
         byte[] spki = presented.ExportSubjectPublicKeyInfo();
 
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, Sign(other, "acme-prod", "k1", spki, Now), Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, Sign(other, "acme-prod", "k1", spki, Now), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.SignatureInvalid);
     }
 
@@ -81,12 +81,12 @@ public sealed class EnvironmentKeyPossessionTests
 
         DateTimeOffset stale = Now - TimeSpan.FromHours(1);
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, stale, Sign(key, "acme-prod", "k1", spki, stale), Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, stale, Sign(key, "acme-prod", "k1", spki, stale), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.NotFresh);
 
         DateTimeOffset future = Now + TimeSpan.FromHours(1);
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, future, Sign(key, "acme-prod", "k1", spki, future), Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, future, Sign(key, "acme-prod", "k1", spki, future), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.NotFresh);
     }
 
@@ -98,7 +98,7 @@ public sealed class EnvironmentKeyPossessionTests
 
         DateTimeOffset slightlyAhead = Now + TimeSpan.FromSeconds(30);
         EnvironmentKeyPossession.Verify(
-            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, slightlyAhead, Sign(key, "acme-prod", "k1", spki, slightlyAhead), Now)
+            "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, slightlyAhead, Sign(key, "acme-prod", "k1", spki, slightlyAhead), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.Verified);
     }
 
@@ -108,7 +108,7 @@ public sealed class EnvironmentKeyPossessionTests
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         byte[] spki = key.ExportSubjectPublicKeyInfo();
 
-        EnvironmentKeyPossession.Verify("acme-prod", "k1", "ES512", spki, Now, Sign(key, "acme-prod", "k1", spki, Now), Now)
+        EnvironmentKeyPossession.Verify("acme-prod", "k1", "ES512"u8, spki, Now, Sign(key, "acme-prod", "k1", spki, Now), Now)
             .ShouldBe(EnvironmentKeyPossessionResult.AlgorithmUnsupported);
     }
 
@@ -117,12 +117,12 @@ public sealed class EnvironmentKeyPossessionTests
     {
         // A registration arrives from outside the trust boundary, so malformed key material must be a refusal and
         // never an unhandled CryptographicException surfacing as a 500.
-        EnvironmentKeyPossession.Verify("acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, [1, 2, 3], Now, [4, 5, 6], Now)
+        EnvironmentKeyPossession.Verify("acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, [1, 2, 3], Now, [4, 5, 6], Now)
             .ShouldBe(EnvironmentKeyPossessionResult.KeyUnreadable);
 
         using ECDsa p384 = ECDsa.Create(ECCurve.NamedCurves.nistP384);
         byte[] spki = p384.ExportSubjectPublicKeyInfo();
-        EnvironmentKeyPossession.Verify("acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, new byte[64], Now)
+        EnvironmentKeyPossession.Verify("acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, new byte[64], Now)
             .ShouldBe(EnvironmentKeyPossessionResult.KeyUnreadable);
     }
 
@@ -134,11 +134,11 @@ public sealed class EnvironmentKeyPossessionTests
         byte[] spki = key.ExportSubjectPublicKeyInfo();
 
         EnvironmentKeyPossession.Verify(
-            new string('e', 100_000), "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, new byte[64], Now)
+            new string('e', 100_000), "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, new byte[64], Now)
             .ShouldBe(EnvironmentKeyPossessionResult.IdentifierTooLong);
 
         EnvironmentKeyPossession.Verify(
-            "acme-prod", new string('k', 100_000), EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, new byte[64], Now)
+            "acme-prod", new string('k', 100_000), EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, new byte[64], Now)
             .ShouldBe(EnvironmentKeyPossessionResult.IdentifierTooLong);
     }
 
@@ -154,7 +154,7 @@ public sealed class EnvironmentKeyPossessionTests
         for (int i = 0; i < 3; i++)
         {
             EnvironmentKeyPossession.Verify(
-                "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256, spki, Now, signature, Now + TimeSpan.FromMinutes(i))
+                "acme-prod", "k1", EnvironmentKeyPossession.EcdsaP256Sha256Utf8, spki, Now, signature, Now + TimeSpan.FromMinutes(i))
                 .ShouldBe(EnvironmentKeyPossessionResult.Verified);
         }
     }

@@ -180,6 +180,31 @@ public sealed class ControlPlaneEnvironmentKeysApiTests
         listed.RootElement.GetProperty("keys").GetArrayLength().ShouldBe(1, "an unrelated environment update must not drop the generations");
     }
 
+    [TestMethod]
+    public async Task A_base64_signature_whose_text_reads_as_a_number_is_not_rejected()
+    {
+        // Regression. sealPublicKey and signature were declared "format": "byte", which OpenAPI 3.0 reads as base64
+        // but a 2020-12 schema reads as the NUMERIC byte format. The generated validator therefore parsed the base64
+        // TEXT as a number and asserted it fits 0-255, so a legitimate registration was refused whenever its
+        // signature happened to start with digits reading past 255 — about one registration in twelve, at random,
+        // while asserting nothing whatever about the other eleven. This is a body that was refused.
+        await using Scoped host = await StartAsync();
+        await CreateEnvironmentAsync(host, "production", "acme");
+
+        HttpResponseMessage response = await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", NumericLookingRegistration, "acme");
+
+        // The signing instant is long past, so this is refused as stale — but on the freshness check, never on the
+        // shape of its base64.
+        string detail = await response.Content.ReadAsStringAsync();
+        detail.Contains("failed schema validation", StringComparison.Ordinal).ShouldBeFalse(detail);
+    }
+
+    // A captured registration whose signature begins "9mYF..." — the exact body the numeric byte-range assertion
+    // refused. Kept verbatim rather than regenerated, so the regression is pinned by a value known to trip it.
+    private const string NumericLookingRegistration = """
+        {"keyId":"k2","sealPublicKey":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2+qQlT7NBno+HipZW0d89svzT6A8nXY3oidOPofha9HijMRg4OUvVs5NRssODYx6VVBsRB66dJmMUmt9Sn6xuw==","algorithm":"ES256","notBefore":"2026-08-02T13:02:20.2691245+00:00","signature":"9mYFqtMCr/iu3JlKe4e6lOHA5Jm9X1A7isg9EvS+akOAOuMH4FlBJ0dqQTD/0k95qTKWo2rAn/YuHUHjPX4c2g=="}
+        """;
+
     private static string Registration(ECDsa key, string environment, string keyId, ECDsa? signWith = null)
     {
         byte[] spki = key.ExportSubjectPublicKeyInfo();

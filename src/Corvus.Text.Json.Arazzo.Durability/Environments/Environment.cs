@@ -116,6 +116,52 @@ public readonly partial struct Environment
     }
 
     /// <summary>
+    /// Builds a draft for the control plane's own internal environment, carrying the platform marker (ADR 0065) that
+    /// excludes it from the tenancy invariant's owner-group count.
+    /// </summary>
+    /// <param name="name">The environment name.</param>
+    /// <param name="displayName">The optional display name (omitted when <see langword="null"/>).</param>
+    /// <param name="description">The optional description (omitted when <see langword="null"/>).</param>
+    /// <param name="managementTags">The resolved management tags (omitted when empty).</param>
+    /// <returns>A pooled, disposable draft document.</returns>
+    /// <remarks>
+    /// This is a separate factory rather than a flag on <see cref="Draft(string, string?, string?, SecurityTagSet)"/>
+    /// because the marker's whole value is that no request can produce it. A parameter on the shared factory would sit
+    /// one argument away from the API handler's create path, where the exclusion it grants is exactly what an attacker
+    /// wants. The marker is what excludes the row from the count; the management tags still scope who may see and
+    /// manage it, so they are carried exactly as for any other environment.
+    /// </remarks>
+    public static ParsedJsonDocument<Environment> DraftPlatform(string name, string? displayName, string? description, SecurityTagSet managementTags)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return PersistedJson.ToPooledDocument<Environment, (string Name, string? Display, string? Desc, SecurityTagSet Tags)>(
+            (name, displayName, description, managementTags),
+            static (Utf8JsonWriter writer, in (string Name, string? Display, string? Desc, SecurityTagSet Tags) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString(JsonPropertyNames.NameUtf8, s.Name);
+                if (s.Display is { } display)
+                {
+                    writer.WriteString(JsonPropertyNames.DisplayNameUtf8, display);
+                }
+
+                if (s.Desc is { } description)
+                {
+                    writer.WriteString(JsonPropertyNames.DescriptionUtf8, description);
+                }
+
+                if (!s.Tags.IsEmpty)
+                {
+                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
+                    s.Tags.WriteTo(writer);
+                }
+
+                writer.WriteBoolean(JsonPropertyNames.PlatformUtf8, true);
+                writer.WriteEndObject();
+            });
+    }
+
+    /// <summary>
     /// Builds a draft that changes <em>only</em> the key generations (ADR 0065), echoing every other mutable value
     /// from the stored environment bytes-to-bytes.
     /// </summary>
@@ -171,7 +217,7 @@ public readonly partial struct Environment
     /// <param name="registeredAt">The registration instant.</param>
     /// <returns>A pooled draft document.</returns>
     public static ParsedJsonDocument<Environment> DraftWithKeyRegistered(
-        in Environment stored, string keyId, string sealPublicKey, string algorithm, string registeredBy, DateTimeOffset registeredAt)
+        in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string registeredBy, DateTimeOffset registeredAt)
         => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey, algorithm, registeredBy, registeredAt, reason: null, retire: false));
 
     /// <summary>
@@ -186,7 +232,7 @@ public readonly partial struct Environment
     /// <returns>A pooled draft document.</returns>
     public static ParsedJsonDocument<Environment> DraftWithKeyRetired(
         in Environment stored, string keyId, string retiredBy, DateTimeOffset retiredAt, string? reason)
-        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: null, algorithm: null, retiredBy, retiredAt, reason, retire: true));
+        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: default, algorithm: default, retiredBy, retiredAt, reason, retire: true));
 
     private static ParsedJsonDocument<Environment> DraftWithKeyMutation(in KeyMutation mutation)
         => PersistedJson.ToPooledDocument<Environment, KeyMutation>(
@@ -237,16 +283,50 @@ public readonly partial struct Environment
     /// </summary>
     /// <param name="generations">The (possibly absent) set.</param>
     /// <returns>The generations, or nothing.</returns>
-    public static IEnumerable<EnvironmentKeyGeneration> Enumerate(EnvironmentKeyGenerationArray generations)
+    /// <remarks>
+    /// Returns a struct enumerable, not an <see cref="IEnumerable{T}"/>. The generated array already enumerates
+    /// through a struct (<c>ArrayEnumerator</c>), so expressing this guard as a <c>yield</c> iterator would put a
+    /// heap-allocated state machine, plus an interface-dispatched enumerator, on every path that reads or rewrites a
+    /// generation set — including the document write path, which runs per registration and per retirement.
+    /// </remarks>
+    public static KeyGenerationSet Enumerate(EnvironmentKeyGenerationArray generations) => new(generations);
+
+    /// <summary>A present-or-absent view over a generation set, enumerated without allocating.</summary>
+    public readonly struct KeyGenerationSet
     {
-        if (((JsonElement)generations).ValueKind != JsonValueKind.Array)
+        private readonly EnvironmentKeyGenerationArray generations;
+        private readonly bool present;
+
+        internal KeyGenerationSet(EnvironmentKeyGenerationArray generations)
         {
-            yield break;
+            this.generations = generations;
+            this.present = ((JsonElement)generations).ValueKind == JsonValueKind.Array;
         }
 
-        foreach (EnvironmentKeyGeneration generation in generations.EnumerateArray())
+        /// <summary>Gets an enumerator over the generations (empty when the set is absent).</summary>
+        /// <returns>The enumerator.</returns>
+        public Enumerator GetEnumerator()
+            => this.present ? new Enumerator(this.generations.EnumerateArray()) : default;
+
+        /// <summary>Enumerates the generations. Yields nothing when the set is absent, in which case the underlying
+        /// enumerator is never touched.</summary>
+        public struct Enumerator
         {
-            yield return generation;
+            private ArrayEnumerator<EnvironmentKeyGeneration> inner;
+            private readonly bool present;
+
+            internal Enumerator(ArrayEnumerator<EnvironmentKeyGeneration> inner)
+            {
+                this.inner = inner;
+                this.present = true;
+            }
+
+            /// <summary>Gets the generation at the current position.</summary>
+            public readonly EnvironmentKeyGeneration Current => this.inner.Current;
+
+            /// <summary>Advances to the next generation.</summary>
+            /// <returns><see langword="true"/> if there is one.</returns>
+            public bool MoveNext() => this.present && this.inner.MoveNext();
         }
     }
 
@@ -254,8 +334,8 @@ public readonly partial struct Environment
     {
         writer.WriteStartObject();
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.KeyIdUtf8, m.KeyId);
-        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.SealPublicKeyUtf8, m.SealPublicKey!);
-        writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.AlgorithmUtf8, m.Algorithm!);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.SealPublicKeyUtf8, m.SealPublicKey);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.AlgorithmUtf8, m.Algorithm);
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.StateUtf8, "Active");
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredByUtf8, m.Actor);
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredAtUtf8, m.At);
@@ -338,6 +418,10 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation);
         WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
+
+        // Platform marker (ADR 0065): create is the ONLY moment it can be set, and only DraftPlatform emits it. Every
+        // API-facing draft is built by a Draft overload that cannot, so no request body can reach this.
+        WriteValueIfPresent(writer, JsonPropertyNames.PlatformUtf8, (JsonElement)draft.Platform);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
@@ -359,6 +443,12 @@ public readonly partial struct Environment
 
         // Immutable identity carried forward from the stored environment bytes-to-bytes, never from the draft.
         WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, (JsonElement)this.Name);
+
+        // Platform marker (ADR 0065): read from the STORED environment, never the draft — deliberately not
+        // replace-or-carry like the mutable values below. The marker excludes a row from the owner-group count, so a
+        // draft that could set it would let an update opt a tenant environment out of the tenancy invariant, and one
+        // that could clear it would let an update opt the platform's own environment in.
+        WriteValueIfPresent(writer, JsonPropertyNames.PlatformUtf8, (JsonElement)this.Platform);
 
         // Mutable content carried bytes-to-bytes from the draft.
         WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, (JsonElement)draft.DisplayName);
@@ -441,7 +531,7 @@ public readonly partial struct Environment
     // One key mutation, with every echoed value read once from the stored environment.
     private readonly struct KeyMutation
     {
-        public KeyMutation(in Environment stored, string keyId, string? sealPublicKey, string? algorithm, string actor, DateTimeOffset at, string? reason, bool retire)
+        public KeyMutation(in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string actor, DateTimeOffset at, string? reason, bool retire)
         {
             this.Name = (JsonElement)stored.Name;
             this.DisplayName = (JsonElement)stored.DisplayName;
@@ -481,9 +571,9 @@ public readonly partial struct Environment
 
         public string KeyId { get; }
 
-        public string? SealPublicKey { get; }
+        public JsonElement SealPublicKey { get; }
 
-        public string? Algorithm { get; }
+        public JsonElement Algorithm { get; }
 
         public string Actor { get; }
 

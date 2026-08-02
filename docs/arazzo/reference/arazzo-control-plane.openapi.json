@@ -8544,10 +8544,10 @@
         "required": ["keyId", "sealPublicKey", "algorithm", "notBefore", "signature"],
         "properties": {
           "keyId": { "type": "string", "maxLength": 256, "description": "The generation's id, chosen by the tenant. Checkpoint payloads name it. Bounded in length because it is tenant-supplied and reaches key derivation, where an unbounded identifier sizes a stack allocation." },
-          "sealPublicKey": { "type": "string", "format": "byte", "description": "The generation's public seal key (base64, SPKI). The control plane wraps run-start inputs to it and holds neither the private half nor the symmetric payload key." },
+          "sealPublicKey": { "type": "string", "contentEncoding": "base64", "description": "The generation's public seal key (base64, SPKI). The control plane wraps run-start inputs to it and holds neither the private half nor the symmetric payload key." },
           "algorithm": { "type": "string", "enum": ["ES256"], "description": "The seal key's signature algorithm. ES256 is ECDSA over P-256 with SHA-256, matching the executor-package signing already in use. Carried explicitly rather than inferred from the key, so a second algorithm cannot later arrive as a silent downgrade." },
           "notBefore": { "type": "string", "format": "date-time", "description": "The instant the registration was signed. Inside the signed tuple and checked against a freshness window, so a captured registration cannot be presented indefinitely." },
-          "signature": { "type": "string", "format": "byte", "description": "The signature (base64) over the framed tuple, made with the private half of sealPublicKey. This is the proof of possession. It establishes that the registrant controls the seal pair; it does not, and cannot, prove a payload key exists, since that key is symmetric and must never reach the control plane." }
+          "signature": { "type": "string", "contentEncoding": "base64", "description": "The signature (base64) over the framed tuple, made with the private half of sealPublicKey. This is the proof of possession. It establishes that the registrant controls the seal pair; it does not, and cannot, prove a payload key exists, since that key is symmetric and must never reach the control plane." }
         },
         "additionalProperties": false
       },
@@ -8556,7 +8556,7 @@
         "description": "A registered key generation for an environment (ADR 0065). Registering a new generation is a rotation. A generation is Active until retired, and the tenancy invariant reads 'at least one Active generation', so an environment whose only generation is Retired counts as having none. The environment is not repeated in the body: it is already the path that scopes the resource, and omitting it makes this view congruent with the persisted generation, so the response projects whole-document rather than field by field.",
         "properties": {
           "keyId": { "type": "string", "description": "The generation's id." },
-          "sealPublicKey": { "type": "string", "format": "byte", "description": "The public seal key (base64, SPKI). Not a secret." },
+          "sealPublicKey": { "type": "string", "contentEncoding": "base64", "description": "The public seal key (base64, SPKI). Not a secret." },
           "algorithm": { "type": "string", "enum": ["ES256"], "description": "The seal key's signature algorithm." },
           "state": { "type": "string", "enum": ["Active", "Retired"], "description": "Whether the generation is current. Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable." },
           "registeredBy": { "type": "string", "description": "The actor that registered the generation." },

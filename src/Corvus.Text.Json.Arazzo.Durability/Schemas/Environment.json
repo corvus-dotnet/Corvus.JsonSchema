@@ -44,6 +44,11 @@
       "description": "The environment's registered checkpoint key generations (ADR 0065). Each names the payload-key id this environment's checkpoint payloads carry and the public seal key run-start inputs are wrapped to; the symmetric payload key itself stays in the tenant's custody and is never stored here. Held on the environment rather than in a separate store because the tenancy invariant asks 'does every tenant-owned environment have an ACTIVE generation', which is then one scan rather than a scan plus a per-environment lookup. Registering a new generation is a rotation. Absent on an environment that has registered none.",
       "items": { "$ref": "#/$defs/EnvironmentKeyGeneration" }
     },
+    "platform": {
+      "type": "boolean",
+      "description": "Whether this is the control plane's own internal environment, created by the system-workflow installer rather than by a tenant (ADR 0065). The tenancy invariant excludes it from the owner-group count, since decision 10 makes it permanently unsealed and counting it would refuse every second-tenant onboarding forever. The marker is the identification, never the name: a name is chosen by the party the exclusion defends against, so an environment named 'system' under a second owner group would otherwise evade the count. It is unforgeable because no request body can carry it — the create API's model has no such property, and only the installer's draft path emits it. Absent (false) on every tenant environment.",
+      "readOnly": true
+    },
     "createdBy": {
       "type": "string",
       "description": "The actor that created the environment."

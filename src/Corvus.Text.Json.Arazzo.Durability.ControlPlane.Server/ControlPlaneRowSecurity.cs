@@ -31,6 +31,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public abstract class ControlPlaneRowSecurityPolicy
 {
     private byte[]? internalTagPrefixUtf8;
+    private byte[]? ownerGroupTagKeyUtf8;
 
     // A shell with no mandated rules reserves only the prefix (its documented degenerate form), so the default
     // validation below refuses the reserved keyspace through the same validator, and reports the same message, that a
@@ -112,6 +113,28 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// <summary>The reserved internal tag prefix as UTF-8 — computed once per instance from <see cref="InternalTagPrefix"/>
     /// and cached, so the span-based <see cref="TryDescribeUsageGrant"/> never re-encodes it per tag.</summary>
     protected ReadOnlySpan<byte> InternalTagPrefixUtf8 => this.internalTagPrefixUtf8 ??= Encoding.UTF8.GetBytes(this.InternalTagPrefix);
+
+    /// <summary>Gets the internal tag key an owner group is stamped under (ADR 0065) as UTF-8 — this policy's reserved
+    /// prefix followed by the <c>tenant</c> dimension, e.g. <c>sys:tenant</c>.</summary>
+    /// <remarks>
+    /// Derived from immutable configuration, so it is built once per policy instance rather than per request or per
+    /// row: the tenancy scan compares it against every environment's tags, and re-encoding a fixed key on that path
+    /// would allocate once per row to reproduce a value that never changes. Built without an intermediate concatenated
+    /// string for the same reason.
+    /// </remarks>
+    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.ownerGroupTagKeyUtf8 ??= BuildOwnerGroupTagKey(this.InternalTagPrefix);
+
+    /// <summary>The dimension an owner group is stamped under, after the reserved prefix.</summary>
+    private static ReadOnlySpan<byte> OwnerGroupDimensionUtf8 => "tenant"u8;
+
+    private static byte[] BuildOwnerGroupTagKey(string internalTagPrefix)
+    {
+        int prefixLength = Encoding.UTF8.GetByteCount(internalTagPrefix);
+        byte[] key = new byte[prefixLength + OwnerGroupDimensionUtf8.Length];
+        Encoding.UTF8.GetBytes(internalTagPrefix, key);
+        OwnerGroupDimensionUtf8.CopyTo(key.AsSpan(prefixLength));
+        return key;
+    }
 
     // The stack budget for a built internal-tag key (prefix + dimension); both are short identifiers, so this is never
     // exceeded in practice — a longer dimension falls back to a pooled rent.
@@ -289,6 +312,10 @@ internal sealed class ControlPlaneAccess
     // requests: a shell with no mandated rules is immutable and holds only the prefix.
     private static readonly SecurityShell DefaultReservedKeyspace = new([]);
 
+    // The owner-group tag key for a deployment with no policy to configure a prefix. A static literal rather than a
+    // built array: with no policy the prefix cannot differ from the default, so there is nothing to derive.
+    private static ReadOnlySpan<byte> DefaultOwnerGroupTagKeyUtf8 => "sys:tenant"u8;
+
     private readonly IHttpContextAccessor? httpContextAccessor;
     private readonly ControlPlaneRowSecurityPolicy? policy;
 
@@ -401,6 +428,11 @@ internal sealed class ControlPlaneAccess
     /// preserve a version's internal tags across an admin re-tag (§14.2). Falls back to the default when unscoped (no
     /// internal tags are stamped then, so the prefix is not exercised).</summary>
     public string InternalTagPrefix => this.policy?.InternalTagKeyPrefix ?? SecurityShell.DefaultInternalPrefix;
+
+    /// <summary>Gets the internal tag key an owner group is stamped under (ADR 0065) as UTF-8, e.g. <c>sys:tenant</c> —
+    /// the key the tenancy scan matches each environment's tags against. Cached by the policy, or the default keyspace's
+    /// when the deployment stamps nothing, so the scan never re-encodes it.</summary>
+    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.policy is { } p ? p.OwnerGroupTagKeyUtf8 : DefaultOwnerGroupTagKeyUtf8;
 
     /// <summary>Maps source credential usage grants to internal usage tags (empty when unscoped).</summary>
     /// <param name="grants">The operator-supplied usage grants.</param>

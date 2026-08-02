@@ -178,7 +178,11 @@ public sealed class SystemWorkflowInstaller
         }
         else
         {
-            using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.Draft(
+            // DraftPlatform, not Draft: this is the control plane's own environment, and ADR 0065's tenancy invariant
+            // excludes it from the owner-group count by an unforgeable marker rather than by its name. Naming it would
+            // be no exclusion at all, since the name is chosen by whoever installs and an environment called "system"
+            // under a second owner group would evade the count.
+            using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.DraftPlatform(
                 options.Environment,
                 options.EnvironmentDisplayName,
                 options.EnvironmentDescription,

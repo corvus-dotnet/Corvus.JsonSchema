@@ -213,7 +213,13 @@ public sealed class ControlPlaneOwnershipStampingTests
                     request.Headers.Add(TenantAuthHandler.TenantHeader, tenant);
                 }
 
-                return await client.SendAsync(request);
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                // Drain the body before returning. The server writes the response from pooled documents the workspace
+                // owns, and TestServer streams it, so leaving it unread lets the next request reuse buffers this one is
+                // still serializing from — which surfaces as an unrelated test failing intermittently.
+                await response.Content.LoadIntoBufferAsync();
+                return response;
             }
         }
     }

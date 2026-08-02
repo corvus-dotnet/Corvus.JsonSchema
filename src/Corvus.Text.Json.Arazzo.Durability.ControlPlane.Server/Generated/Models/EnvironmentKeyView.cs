@@ -328,11 +328,11 @@ public readonly partial struct EnvironmentKeyView
     /// The public seal key (base64, SPKI). Not a secret.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyView.ThePublicSealKeyBase64SpkiNotASecret SealPublicKey
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String SealPublicKey
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealPublicKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyView.ThePublicSealKeyBase64SpkiNotASecret value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealPublicKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String value))
             {
                 return value;
             }

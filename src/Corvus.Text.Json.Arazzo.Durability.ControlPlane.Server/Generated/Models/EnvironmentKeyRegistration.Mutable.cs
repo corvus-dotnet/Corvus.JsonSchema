@@ -249,11 +249,11 @@ public readonly partial struct EnvironmentKeyRegistration
         /// The generation&#39;s public seal key (base64, SPKI). The control plane wraps run-start inputs to it and holds neither the private half nor the symmetric payload key.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Mutable SealPublicKey
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Mutable SealPublicKey
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealPublicKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealPublicKeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Mutable value))
                 {
                     return value;
                 }
@@ -273,11 +273,11 @@ public readonly partial struct EnvironmentKeyRegistration
         /// The signature (base64) over the framed tuple, made with the private half of sealPublicKey. This is the proof of possession. It establishes that the registrant controls the seal pair; it does not, and cannot, prove a payload key exists, since that key is symmetric and must never reach the control plane.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Mutable Signature
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Mutable Signature
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Mutable value))
                 {
                     return value;
                 }
@@ -412,7 +412,7 @@ public readonly partial struct EnvironmentKeyRegistration
         /// Set the <c>sealPublicKey</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSealPublicKey(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source value)
+        public void SetSealPublicKey(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source value)
         {
             CheckValidInstance();
 
@@ -443,7 +443,7 @@ public readonly partial struct EnvironmentKeyRegistration
         /// Set the <c>signature</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSignature(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source value)
+        public void SetSignature(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source value)
         {
             CheckValidInstance();
 
@@ -627,8 +627,8 @@ public readonly partial struct EnvironmentKeyRegistration
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -643,7 +643,7 @@ public readonly partial struct EnvironmentKeyRegistration
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source arg5)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -926,8 +926,8 @@ public readonly partial struct EnvironmentKeyRegistration
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source sealPublicKey,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source signature)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source sealPublicKey,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source signature)
         {
             algorithm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Algorithm, ref builder);
             keyId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyId, ref builder);
@@ -943,8 +943,8 @@ public readonly partial struct EnvironmentKeyRegistration
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source sealPublicKey,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source signature)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source sealPublicKey,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source signature)
         {
             Create(ref _builder, algorithm, keyId, notBefore, sealPublicKey, signature);
         }
@@ -981,7 +981,7 @@ public readonly partial struct EnvironmentKeyRegistration
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1027,7 +1027,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="sealPublicKey">The value of the <c>"sealPublicKey"</c> property.</param>
     /// <param name="signature">The value of the <c>"signature"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source sealPublicKey, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source signature)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source sealPublicKey, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source signature)
     {
         return new Source(algorithm, keyId, notBefore, sealPublicKey, signature);
     }
@@ -1132,7 +1132,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="signature">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source signature, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source signature, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1246,7 +1246,7 @@ public readonly partial struct EnvironmentKeyRegistration
     /// <param name="signature">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<EnvironmentKeyRegistration> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SealPublicKeyEntity.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.SignatureEntity.Source signature, int initialCapacity = 30)
+    public static ParsedJsonDocument<EnvironmentKeyRegistration> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.AlgorithmEntity.Source algorithm, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration.KeyIdEntity.Source keyId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source notBefore, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String.Source signature, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
