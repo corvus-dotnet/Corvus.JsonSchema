@@ -56,6 +56,31 @@ public sealed class RedisEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         return 1
         """;
 
+    // The deployment's single tenancy-ledger hash (ADR 0065): field `doc` holds the document bytes, field `etag` the
+    // concurrency token the compare-and-swap tests. A hash rather than two keys so the compare and the swap touch one
+    // key, which is also what keeps the script slot-safe.
+    private const string TenancyLedgerKey = Prefix + "tenancy";
+
+    // Write the ledger only if no row exists. KEYS: ledger hash. ARGV: document bytes, new etag.
+    // Returns 1 on success, 0 if a row already exists (another governed write got there first).
+    private const string TenancyInsertScript =
+        """
+        if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end
+        redis.call('HSET', KEYS[1], 'doc', ARGV[1], 'etag', ARGV[2])
+        return 1
+        """;
+
+    // Replace the ledger only if it still carries the etag the caller decided against — the compare and the swap in one
+    // atomic script. KEYS: ledger hash. ARGV: document bytes, new etag, expected etag.
+    // Returns 1 on success, 0 if another governed write landed first (including a row that has since vanished, where
+    // HGET answers false and the comparison fails).
+    private const string TenancyCommitScript =
+        """
+        if redis.call('HGET', KEYS[1], 'etag') ~= ARGV[3] then return 0 end
+        redis.call('HSET', KEYS[1], 'doc', ARGV[1], 'etag', ARGV[2])
+        return 1
+        """;
+
     // Remove the environment and prune it from the two index sets, atomically. KEYS: bind key, name index, all index.
     // ARGV: discriminator, all-index member.
     private const string DeleteScript =
@@ -300,6 +325,28 @@ public sealed class RedisEnvironmentStore : IEnvironmentStore, IAsyncDisposable
 
         await this.database.ScriptEvaluateAsync(DeleteScript, keys, argv).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RedisValue stored = await this.database.HashGetAsync(TenancyLedgerKey, "doc").ConfigureAwait(false);
+        return stored.IsNull ? null : PersistedJson.ToPooledDocument<TenancyLedger>((byte[])stored!);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        cancellationToken.ThrowIfCancellationRequested();
+        WorkflowEtag etag = NewEtag();
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), etag);
+        RedisKey[] keys = [TenancyLedgerKey];
+        RedisResult result = current.IsUndefined()
+            ? await this.database.ScriptEvaluateAsync(TenancyInsertScript, keys, [json, etag.Value!]).ConfigureAwait(false)
+            : await this.database.ScriptEvaluateAsync(TenancyCommitScript, keys, [json, etag.Value!, current.EtagValue.Value!]).ConfigureAwait(false);
+        return (long)result == 1;
     }
 
     /// <inheritdoc/>

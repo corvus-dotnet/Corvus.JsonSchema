@@ -39,16 +39,6 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
     // The page size for the owner-group scan.
     //
-    // This scan is O(environments): the store exposes no aggregate that could answer "are there two distinct owner
-    // groups" in the query, and the owner group is a value inside a JSON tag array, so there is nothing to push down
-    // without a per-backend JSON predicate. Worse, the cheap ANSWER is the expensive case — a single-tenant deployment
-    // never finds a second group, so it reads every row before concluding "no". It is bounded only by running solely
-    // when the cheaper local predicate (this is the last ACTIVE generation) already holds.
-    //
-    // The resolution is the CAS'd owner-group row of ADR 0065's phase A create gate, which turns this into one keyed
-    // read; the scan is what stands in until that row exists. It is not the shape to build on.
-    private const int OwnerGroupScanPageSize = 200;
-
     // A P-256 SPKI decodes to ~91 bytes and an IEEE P1363 signature to 64, so both sit well inside this in practice;
     // the length is caller-supplied, so anything larger falls back to the pool rather than the stack.
     private const int StackDecodeThreshold = 256;
@@ -403,60 +393,19 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         }
     }
 
-    // Whether the deployment holds environments belonging to more than one owner group. Read at SYSTEM reach and over
-    // every environment, not the caller's: the invariant is a property of the deployment, and counting only what this
-    // administrator can see would let a second owner group hide behind the very reach isolation the count is meant to
-    // decide about. Bounded at two, so it stops at the first environment that proves the answer.
+    // Whether the deployment holds environments belonging to more than one owner group (ADR 0065). One row read, not a
+    // scan: the tenancy ledger is the deployment's serialized census of admitted owner groups, so the question the
+    // create gate compare-and-swaps against is the same question answered here, from the same row.
+    //
+    // Reading the ledger rather than scanning environments also refuses earlier. A create that has admitted its group
+    // but not yet written its environment row is invisible to a scan and present in the ledger, so a retirement racing
+    // it now sees the second group instead of missing it. The remaining window is a retirement that reads the ledger
+    // before that admission commits; it is not closed by this row, and the ADR records it rather than implying it away.
     private async ValueTask<bool> MoreThanOneOwnerGroupAsync(CancellationToken cancellationToken)
     {
-        // Declared with an explicit try/finally rather than `using var`: a using local is implicitly read-only, and
-        // calling a mutating method on a read-only struct local runs it against a defensive copy, so the probe would
-        // observe every page and remember nothing.
-        OwnerGroupProbe probe = default;
-        ParsedJsonDocument<JsonString>? token = null;
-        try
-        {
-            while (true)
-            {
-                using EnvironmentPage page = await this.environments.ListAsync(
-                    AccessContext.System, OwnerGroupScanPageSize, token?.RootElement ?? default, cancellationToken).ConfigureAwait(false);
-
-                if (probe.Observe(page.Environments, this.access.OwnerGroupTagKeyUtf8))
-                {
-                    return true;
-                }
-
-                ReadOnlySpan<byte> next = page.NextPageToken.Span;
-                if (next.IsEmpty)
-                {
-                    return false;
-                }
-
-                // The page's continuation token is pooled and freed when the page disposes at the end of this
-                // iteration, so it cannot be carried straight into the next call. Copy it into a pooled document that
-                // owns its own buffer, and release the previous one.
-                token?.Dispose();
-                token = QuoteToken(next);
-            }
-        }
-        finally
-        {
-            probe.Dispose();
-            token?.Dispose();
-        }
-    }
-
-    // Wraps a continuation token's UTF-8 as a JSON string value in a pooled document the caller owns. The token is
-    // base64url, so it needs no JSON escaping and the quoting is two bytes; the rented buffer is handed to the
-    // document, which returns it on dispose.
-    private static ParsedJsonDocument<JsonString> QuoteToken(ReadOnlySpan<byte> token)
-    {
-        int length = token.Length + 2;
-        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
-        rented[0] = (byte)'"';
-        token.CopyTo(rented.AsSpan(1));
-        rented[token.Length + 1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(rented.AsMemory(0, length), rented);
+        using ParsedJsonDocument<TenancyLedger>? ledger =
+            await this.environments.GetTenancyLedgerAsync(cancellationToken).ConfigureAwait(false);
+        return ledger?.RootElement.OwnerGroupCount > 1;
     }
 
     // The gate must read the environment to decide visibility, and every authorized caller then works on that same

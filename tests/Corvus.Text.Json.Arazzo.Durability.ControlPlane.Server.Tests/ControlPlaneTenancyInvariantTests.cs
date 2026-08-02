@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -142,6 +143,51 @@ public sealed class ControlPlaneTenancyInvariantTests
         (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
     }
 
+    [TestMethod]
+    public async Task Two_simultaneous_creates_introducing_different_owner_groups_cannot_both_commit()
+    {
+        // The race the tenancy ledger exists to close, driven deterministically rather than by hoping two threads
+        // interleave. A second create for a DIFFERENT owner group is run to completion inside the first one's
+        // compare-and-swap, so both requests decided against the same empty deployment. The first must then lose its
+        // swap, decide again against the state the second left, and be refused.
+        Host? host = null;
+        var interleaved = new InterleavedTenancyStore(
+            new InMemoryEnvironmentStore(),
+            async () => (await host!.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created));
+
+        host = await StartAsync(ControlPlaneSecurityMode.ScopesOnly, environments: interleaved);
+        await using (host)
+        {
+            HttpResponseMessage refused = await host.PostAsync("/environments", """{"name":"production"}""", "acme");
+
+            refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await refused.Content.ReadAsStringAsync()).ShouldContain("tenancy-invariant");
+            interleaved.Interleaved.ShouldBeTrue();
+
+            // And the losing request left nothing behind: one owner group, one environment.
+            using EnvironmentPage page = await interleaved.ListAsync(AccessContext.System, 100, default, default);
+            page.Environments.Select(e => e.NameValue).ShouldBe(["staging"]);
+        }
+    }
+
+    [TestMethod]
+    public async Task An_admitted_owner_group_is_re_evaluated_on_its_next_create()
+    {
+        // Admission is recorded before the environment is written, so a create that fails afterwards leaves a group in
+        // the ledger with nothing behind it. That is only safe because being in the ledger is not a standing exemption:
+        // the rule runs on every write, so an admitted group is refused exactly when a new one would be.
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy());
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+        (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Admitted while everything was sealed. The environment it creates is unsealed by construction.
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.PostAsync("/environments", """{"name":"dev"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
     private static string Registration(ECDsa key, string environment, string keyId)
     {
         byte[] spki = key.ExportSubjectPublicKeyInfo();
@@ -178,6 +224,43 @@ public sealed class ControlPlaneTenancyInvariantTests
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());
+    }
+
+    // Runs another request to completion inside the FIRST tenancy compare-and-swap, so two creates provably decided
+    // against the same state. Everything else delegates, so the deployment under test is the real one.
+    private sealed class InterleavedTenancyStore(IEnvironmentStore inner, Func<Task> interleave) : IEnvironmentStore
+    {
+        private int armed = 1;
+
+        public bool Interleaved => this.armed == 0;
+
+        public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+        {
+            if (Interlocked.Exchange(ref this.armed, 0) == 1)
+            {
+                await interleave();
+            }
+
+            return await inner.TryCommitTenancyLedgerAsync(current, admitting, actor, cancellationToken);
+        }
+
+        public ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+            => inner.GetTenancyLedgerAsync(cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<Environment>> AddAsync(Environment draft, string actor, CancellationToken cancellationToken)
+            => inner.AddAsync(draft, actor, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<Environment>?> GetAsync(string name, AccessContext context, CancellationToken cancellationToken)
+            => inner.GetAsync(name, context, cancellationToken);
+
+        public ValueTask<EnvironmentPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+            => inner.ListAsync(context, limit, pageToken, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<Environment>?> UpdateAsync(string name, Environment draft, WorkflowEtag expectedEtag, string actor, AccessContext context, CancellationToken cancellationToken)
+            => inner.UpdateAsync(name, draft, expectedEtag, actor, context, cancellationToken);
+
+        public ValueTask<bool> DeleteAsync(string name, WorkflowEtag expectedEtag, AccessContext context, CancellationToken cancellationToken)
+            => inner.DeleteAsync(name, expectedEtag, context, cancellationToken);
     }
 
     private sealed class TenantIdentityPolicy : ControlPlaneRowSecurityPolicy

@@ -328,6 +328,93 @@ public abstract class EnvironmentStoreConformance
         (await store.GetAsync("production", Scope("globex"), default)).ShouldNotBeNull();
     }
 
+    [TestMethod]
+    public async Task A_deployment_starts_with_no_tenancy_ledger()
+    {
+        // Absence is the first governed write's compare-and-swap expectation, so it has to be distinguishable from an
+        // empty ledger rather than synthesised into one.
+        IEnvironmentStore store = await this.NewStoreAsync();
+
+        (await store.GetTenancyLedgerAsync(default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_first_tenancy_commit_wins_and_a_second_one_against_absence_loses()
+    {
+        // Two writers that both read "no ledger" is exactly the race the row exists to close: whichever commits first
+        // takes the row, and the other is told it lost rather than silently overwriting the winner.
+        IEnvironmentStore store = await this.NewStoreAsync();
+
+        (await store.TryCommitTenancyLedgerAsync(default, "acme"u8.ToArray(), "alice", default)).ShouldBeTrue();
+        (await store.TryCommitTenancyLedgerAsync(default, "zeus"u8.ToArray(), "bob", default)).ShouldBeFalse();
+
+        using ParsedJsonDocument<TenancyLedger>? ledger = await store.GetTenancyLedgerAsync(default);
+        ledger.ShouldNotBeNull();
+        ledger!.RootElement.OwnerGroupCount.ShouldBe(1);
+        ledger.RootElement.Admits("acme"u8).ShouldBeTrue();
+        ledger.RootElement.Admits("zeus"u8).ShouldBeFalse();
+        ((string)ledger.RootElement.LastUpdatedBy).ShouldBe("alice");
+    }
+
+    [TestMethod]
+    public async Task A_tenancy_commit_against_a_stale_ledger_loses()
+    {
+        // The interlock proper: a writer that decided against one state cannot land that decision on another.
+        IEnvironmentStore store = await this.NewStoreAsync();
+        (await store.TryCommitTenancyLedgerAsync(default, "acme"u8.ToArray(), "alice", default)).ShouldBeTrue();
+
+        using ParsedJsonDocument<TenancyLedger>? stale = await store.GetTenancyLedgerAsync(default);
+        stale.ShouldNotBeNull();
+
+        // Someone else commits against the same state first.
+        (await store.TryCommitTenancyLedgerAsync(stale!.RootElement, "zeus"u8.ToArray(), "bob", default)).ShouldBeTrue();
+
+        // The stale writer now loses, and its group is not admitted behind the winner's back.
+        (await store.TryCommitTenancyLedgerAsync(stale.RootElement, "hera"u8.ToArray(), "carol", default)).ShouldBeFalse();
+
+        using ParsedJsonDocument<TenancyLedger>? ledger = await store.GetTenancyLedgerAsync(default);
+        ledger!.RootElement.OwnerGroupCount.ShouldBe(2);
+        ledger.RootElement.Admits("acme"u8).ShouldBeTrue();
+        ledger.RootElement.Admits("zeus"u8).ShouldBeTrue();
+        ledger.RootElement.Admits("hera"u8).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_tenancy_commit_carries_the_admitted_groups_forward()
+    {
+        // The row is a census, not a latest-writer marker, so every earlier group survives each commit.
+        IEnvironmentStore store = await this.NewStoreAsync();
+        foreach (string group in new[] { "acme", "zeus", "hera" })
+        {
+            using ParsedJsonDocument<TenancyLedger>? read = await store.GetTenancyLedgerAsync(default);
+            TenancyLedger current = read?.RootElement ?? default;
+            (await store.TryCommitTenancyLedgerAsync(current, System.Text.Encoding.UTF8.GetBytes(group), "alice", default)).ShouldBeTrue();
+        }
+
+        using ParsedJsonDocument<TenancyLedger>? ledger = await store.GetTenancyLedgerAsync(default);
+        ledger!.RootElement.OwnerGroupCount.ShouldBe(3);
+        ledger.RootElement.Admits("acme"u8).ShouldBeTrue();
+        ledger.RootElement.Admits("zeus"u8).ShouldBeTrue();
+        ledger.RootElement.Admits("hera"u8).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task The_tenancy_ledger_is_not_an_environment()
+    {
+        // Every backend holds the ledger somewhere its environment reads can see, so the contract is that they cannot:
+        // a ledger row leaking into the list would be parsed as an environment.
+        IEnvironmentStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "production");
+        (await store.TryCommitTenancyLedgerAsync(default, "acme"u8.ToArray(), "alice", default)).ShouldBeTrue();
+
+        using (EnvironmentPage page = await store.ListAsync(AccessContext.System, 1000, default, default))
+        {
+            page.Environments.Select(e => e.NameValue).ShouldBe(["production"]);
+        }
+
+        (await store.CountAsync(AccessContext.System, 100, default)).Count.ShouldBe(1);
+    }
+
     // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as (mirroring HTTP).
     private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
     {

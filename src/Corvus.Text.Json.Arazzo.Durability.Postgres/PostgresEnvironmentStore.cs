@@ -334,6 +334,45 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        select.CommandText = "SELECT Document FROM EnvironmentTenancyLedger WHERE Id = 1;";
+        await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? PersistedJson.ToPooledDocument<TenancyLedger>(reader.GetFieldValue<byte[]>(0))
+            : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        WorkflowEtag etag = NewEtag();
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), etag);
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand commit = connection.CreateCommand();
+
+        // One statement carries the whole predicate, so the compare and the swap cannot be interleaved. The insert form
+        // is ON CONFLICT DO NOTHING rather than a plain INSERT, so a lost race reads as a zero row count exactly like a
+        // lost update rather than as a driver exception.
+        if (current.IsUndefined())
+        {
+            commit.CommandText = "INSERT INTO EnvironmentTenancyLedger (Id, Etag, Document) VALUES (1, @etag, @doc) ON CONFLICT (Id) DO NOTHING;";
+        }
+        else
+        {
+            commit.CommandText = "UPDATE EnvironmentTenancyLedger SET Etag = @etag, Document = @doc WHERE Id = 1 AND Etag = @expected;";
+            commit.Parameters.AddWithValue("expected", current.EtagValue.Value!);
+        }
+
+        commit.Parameters.AddWithValue("etag", etag.Value!);
+        commit.Parameters.AddWithValue("doc", json);
+        return await commit.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 1;
+    }
+
     private static async ValueTask ProvisionAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand schema = connection.CreateCommand();
@@ -386,5 +425,10 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         );
         CREATE INDEX IF NOT EXISTS ix_environmentsecuritytags_owner ON EnvironmentSecurityTags (Name, Tags);
         CREATE INDEX IF NOT EXISTS ix_environmentsecuritytags_kv ON EnvironmentSecurityTags (TagKey, TagValue);
+        CREATE TABLE IF NOT EXISTS EnvironmentTenancyLedger (
+            Id INTEGER NOT NULL PRIMARY KEY CHECK (Id = 1),
+            Etag TEXT NOT NULL,
+            Document BYTEA NOT NULL
+        );
         """;
 }

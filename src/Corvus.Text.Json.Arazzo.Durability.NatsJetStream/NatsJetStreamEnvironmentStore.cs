@@ -37,6 +37,10 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
     private const string Bucket = "arazzo_environments";
     private const string KeyPrefix = "env.";
 
+    // The deployment's single tenancy-ledger key (ADR 0065). Deliberately outside KeyPrefix: every environment scan
+    // filters on that prefix, so the ledger shares the bucket without ever appearing as a candidate environment.
+    private const string TenancyLedgerKey = "tenancy.ledger";
+
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
     private readonly TimeProvider timeProvider;
@@ -362,6 +366,52 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         }
 
         return (null, null);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        NatsKVEntry<byte[]>? found = await this.TryGetAsync(TenancyLedgerKey, cancellationToken).ConfigureAwait(false);
+        return found?.Value is { } json ? PersistedJson.ToPooledDocument<TenancyLedger>(json) : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        if (current.IsUndefined())
+        {
+            try
+            {
+                // Optimistic create: it fails if the key already holds a live value, which is "no row must exist".
+                await this.store.CreateAsync(TenancyLedgerKey, json, cancellationToken: cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+            catch (NatsKVException)
+            {
+                return false;
+            }
+        }
+
+        // The bucket's revision is the swap token and the stored etag is what the caller decided against. Both windows
+        // are covered: a writer landing before this read is caught by the etag check, and one landing between the read
+        // and the update is caught by the revision CAS.
+        NatsKVEntry<byte[]>? found = await this.TryGetAsync(TenancyLedgerKey, cancellationToken).ConfigureAwait(false);
+        if (found is not { } entry || entry.Value is not { } stored || !TenancyLedgerSerialization.CarriesEtagOf(stored, current))
+        {
+            return false;
+        }
+
+        try
+        {
+            await this.store.UpdateAsync(TenancyLedgerKey, json, entry.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (NatsKVException)
+        {
+            return false;
+        }
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)

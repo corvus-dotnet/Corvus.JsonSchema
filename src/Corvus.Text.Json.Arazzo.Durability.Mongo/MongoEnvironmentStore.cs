@@ -31,6 +31,7 @@ public sealed class MongoEnvironmentStore : IEnvironmentStore, IAsyncDisposable
     private readonly bool ownsClient;
     private readonly TimeProvider timeProvider;
     private readonly IMongoCollection<BsonDocument> environments;
+    private readonly IMongoCollection<BsonDocument> tenancyLedger;
 
     private MongoEnvironmentStore(IMongoClient client, string databaseName, bool ownsClient, TimeProvider timeProvider)
     {
@@ -39,6 +40,10 @@ public sealed class MongoEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         this.timeProvider = timeProvider;
         IMongoDatabase database = client.GetDatabase(databaseName);
         this.environments = database.GetCollection<BsonDocument>("environments");
+
+        // Its own collection rather than a reserved _id in `environments`: that collection's first list page filters on
+        // nothing, so a ledger row would be streamed as a candidate environment and parsed as one.
+        this.tenancyLedger = database.GetCollection<BsonDocument>("environmenttenancyledger");
     }
 
     /// <summary>Provisions the store's indexes over a connection string.</summary>
@@ -270,6 +275,53 @@ public sealed class MongoEnvironmentStore : IEnvironmentStore, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        BsonDocument? row = await this.tenancyLedger
+            .Find(Builders<BsonDocument>.Filter.Eq("_id", TenancyLedgerId))
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        return row is null ? null : PersistedJson.ToPooledDocument<TenancyLedger>(row["doc"].AsBsonBinaryData.Bytes);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        WorkflowEtag etag = NewEtag();
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), etag);
+        var row = new BsonDocument
+        {
+            { "_id", TenancyLedgerId },
+            { "etag", etag.Value! },
+            { "doc", new BsonBinaryData(json) },
+        };
+
+        // One server-side operation carries the whole predicate, so the compare and the swap cannot be interleaved: the
+        // unique _id for the first write, and an etag-matching replace thereafter.
+        if (current.IsUndefined())
+        {
+            try
+            {
+                await this.tenancyLedger.InsertOneAsync(row, options: null, cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return false;
+            }
+        }
+
+        ReplaceOneResult replaced = await this.tenancyLedger.ReplaceOneAsync(
+            Builders<BsonDocument>.Filter.And(
+                Builders<BsonDocument>.Filter.Eq("_id", TenancyLedgerId),
+                Builders<BsonDocument>.Filter.Eq("etag", current.EtagValue.Value!)),
+            row,
+            (ReplaceOptions?)null,
+            cancellationToken).ConfigureAwait(false);
+        return replaced.ModifiedCount == 1;
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)
@@ -279,6 +331,10 @@ public sealed class MongoEnvironmentStore : IEnvironmentStore, IAsyncDisposable
 
         return default;
     }
+
+    // The tenancy ledger's fixed _id: there is exactly one row per deployment, and the unique _id is what makes the
+    // first write's compare-and-swap ("no row must exist") a single server-side operation.
+    private const string TenancyLedgerId = "tenancy";
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 

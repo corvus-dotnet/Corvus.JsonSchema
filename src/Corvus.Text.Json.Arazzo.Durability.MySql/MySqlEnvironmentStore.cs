@@ -348,6 +348,45 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        select.CommandText = "SELECT Document FROM EnvironmentTenancyLedger WHERE Id = 1;";
+        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? PersistedJson.ToPooledDocument<TenancyLedger>(reader.GetFieldValue<byte[]>(0))
+            : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        WorkflowEtag etag = NewEtag();
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), etag);
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand commit = connection.CreateCommand();
+
+        // One statement carries the whole predicate, so the compare and the swap cannot be interleaved. The insert form
+        // is INSERT IGNORE rather than a plain INSERT, so a lost race reads as a zero row count exactly like a lost
+        // update rather than as a driver exception.
+        if (current.IsUndefined())
+        {
+            commit.CommandText = "INSERT IGNORE INTO EnvironmentTenancyLedger (Id, Etag, Document) VALUES (1, @etag, @doc);";
+        }
+        else
+        {
+            commit.CommandText = "UPDATE EnvironmentTenancyLedger SET Etag = @etag, Document = @doc WHERE Id = 1 AND Etag = @expected;";
+            commit.Parameters.AddWithValue("@expected", current.EtagValue.Value!);
+        }
+
+        commit.Parameters.AddWithValue("@etag", etag.Value!);
+        commit.Parameters.AddWithValue("@doc", json);
+        return await commit.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 1;
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // The fixed-length, deterministic row-addressing key for an environment: a SHA-256 hex digest over the identity
@@ -406,6 +445,11 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
             TagValue VARCHAR(191) NOT NULL,
             INDEX IX_EnvironmentSecurityTags_owner (Name, TagsHash),
             INDEX IX_EnvironmentSecurityTags_kv (TagKey, TagValue)
+        );
+        CREATE TABLE IF NOT EXISTS EnvironmentTenancyLedger (
+            Id INT NOT NULL PRIMARY KEY,
+            Etag VARCHAR(255) NOT NULL,
+            Document LONGBLOB NOT NULL
         );
         """;
 }

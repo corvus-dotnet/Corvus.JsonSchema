@@ -98,4 +98,31 @@ public interface IEnvironmentStore
     /// <returns><see langword="true"/> if an environment the caller may write was deleted; <see langword="false"/> if none existed.</returns>
     /// <exception cref="EnvironmentConflictException">The expected etag no longer matches.</exception>
     ValueTask<bool> DeleteAsync(string name, WorkflowEtag expectedEtag, AccessContext context, CancellationToken cancellationToken);
+
+    /// <summary>Reads the deployment's single <see cref="TenancyLedger"/> row (ADR 0065), or <see langword="null"/> when
+    /// no governed write has committed one yet. Not reach-filtered and takes no <see cref="AccessContext"/>: it is
+    /// deployment-wide bookkeeping behind the tenancy gate, never a resource the API returns.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The ledger as a pooled document the caller must dispose, or <see langword="null"/> if no row exists.</returns>
+    ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken);
+
+    /// <summary>Commits the deployment's <see cref="TenancyLedger"/> under compare-and-swap: the already-admitted groups
+    /// carried forward from <paramref name="current"/> plus <paramref name="admitting"/>, under a freshly stamped etag.
+    /// Answers <see langword="false"/> — rather than throwing — when the swap is lost, because a lost swap is the
+    /// expected outcome of two governed writes racing and the caller re-decides against the new state.</summary>
+    /// <param name="current">The ledger this write read and decided against, exactly as
+    /// <see cref="GetTenancyLedgerAsync"/> returned it. The compare-and-swap predicate is its etag; passing an
+    /// <strong>undefined</strong> value means "no row must exist", which is how the first governed write commits. There is
+    /// deliberately no unconditional overwrite: unconditional is precisely what the gate must not permit, so the
+    /// expectation is derived from the read rather than passed alongside it where the two could disagree.</param>
+    /// <param name="admitting">The owner group this write introduces, as UTF-8. An empty value admits nothing and
+    /// commits the already-admitted set unchanged under a fresh etag.</param>
+    /// <param name="actor">The authenticated identity whose governed write this is (for audit).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> when the row was committed; <see langword="false"/> when another governed write
+    /// landed first, in which case the caller re-reads and re-decides.</returns>
+    /// <remarks>The ledger is read synchronously (bytes-to-bytes), so the caller's pooled document may be disposed once
+    /// the call returns. Every implementation must make the predicate atomic with the write — a read-then-write pair that
+    /// merely checks the etag first is not a compare-and-swap, and this row exists only to close that race.</remarks>
+    ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken);
 }

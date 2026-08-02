@@ -53,9 +53,14 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly IEnvironmentRunnerAuthorizationStore? runnerAuthorizations;
     private readonly ControlPlaneSecurityMode securityMode;
 
-    // See TenancyInvariantRefusesAsync: the scan is O(environments) for the same reason the key handler's is, and the
-    // CAS'd owner-group row that replaces it is the next piece of phase A.
+    // See AnyUnsealedTenantEnvironmentAsync. The owner-group question is one ledger row, but the sealing question is a
+    // scan, so it is paged rather than read whole and it runs only on the rare path that introduces an owner group.
     private const int TenancyScanPageSize = 200;
+
+    // How many times an introducing create re-decides after losing the ledger's compare-and-swap. Bounded rather than
+    // unbounded because each attempt is a full re-decision including a possible scan, and a caller that loses this many
+    // in a row is better served by a 409 it can retry than by a request that keeps working.
+    private const int TenancyCommitAttempts = 4;
 
     // The audited resource kind for every governance write on this surface (design §850).
     private const string TargetKind = "environment";
@@ -182,11 +187,22 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         }
 
         // ADR 0065 tenancy invariant: refuse a write that would introduce a second owner group while phase A leaves
-        // the control plane sole custodian of every tenant's plaintext.
-        if (await this.TenancyInvariantRefusesAsync(managementTags, cancellationToken).ConfigureAwait(false))
+        // the control plane sole custodian of every tenant's plaintext. Admitting the group commits the ledger row
+        // BEFORE the environment is created, so a create that then fails leaves a group recorded as admitted with no
+        // environment behind it. That is the direction to fail in: the ledger over-counts, which over-refuses, and the
+        // group gains nothing by it because the rule is re-evaluated on every write rather than skipped for a group
+        // already present.
+        TenancyAdmission admission = await this.TenancyInvariantAdmitsAsync(managementTags, cancellationToken).ConfigureAwait(false);
+        if (admission != TenancyAdmission.Admitted)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.create", this.AuditActor(), TargetKind, (string)body.Name, "refused-tenancy-invariant");
-            return CreateEnvironmentResult.Conflict(TenancyInvariantProblem(), workspace);
+            // Contention and refusal are both 409s, but they are not the same answer, and the refusal's wording tells an
+            // operator their deployment cannot yet serve a second owner group. Saying that to a caller who simply lost a
+            // race would send them to investigate a condition that does not hold.
+            bool contended = admission == TenancyAdmission.Contended;
+            GovernanceAudit.Mutation(
+                this.auditLogger, "environment.create", this.AuditActor(), TargetKind, (string)body.Name,
+                contended ? "refused-tenancy-interlock-contended" : "refused-tenancy-invariant");
+            return CreateEnvironmentResult.Conflict(contended ? TenancyInterlockProblem() : TenancyInvariantProblem(), workspace);
         }
 
         string name = (string)body.Name;
@@ -581,7 +597,21 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     // when unscoped, so the current-administrator membership check refuses every governance mutation.
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
 
-    // ADR 0065's write-time tenancy invariant, evaluated on the paths that introduce an owner group.
+    // What the tenancy gate decided. Contention is separated from refusal because they are different answers with the
+    // same status code, and reporting one as the other sends an operator to investigate the wrong thing.
+    private enum TenancyAdmission
+    {
+        /// <summary>The write may proceed; any owner group it introduces is committed to the ledger.</summary>
+        Admitted,
+
+        /// <summary>The invariant refuses this write.</summary>
+        Refused,
+
+        /// <summary>Every compare-and-swap attempt lost to another governed write. Nothing was decided or changed.</summary>
+        Contended,
+    }
+
+    // ADR 0065's write-time tenancy invariant, serialized on the deployment's single tenancy-ledger row.
     //
     // The rule differs by whether the mode isolates reach, because the gate's premise is that encryption compensates
     // for shared infrastructure, and that premise holds only where reach isolation already prevents a cross-owner read
@@ -590,23 +620,22 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     // reach, so a second group is refused only while some tenant-owned environment holds no ACTIVE key. Open
     // authenticates nobody, so there is no owner group to distinguish and the invariant is vacuous by construction.
     //
-    // RESIDUAL RACE, deliberately recorded rather than implied away: this reads the population and decides, so two
-    // concurrent creates introducing two DIFFERENT owner groups can both observe a single-group deployment and both
-    // commit. Closing it needs the distinct groups held in one row that every introducing write compare-and-swaps,
-    // which is the next piece of phase A. Until that row exists this refuses the sequential case and not the
-    // simultaneous one.
-    private async ValueTask<bool> TenancyInvariantRefusesAsync(SecurityTagSet managementTags, CancellationToken cancellationToken)
+    // The ledger is what makes the decision a gate rather than an observation. Reading the population and deciding
+    // would let two concurrent creates introducing two DIFFERENT owner groups both observe a single-group deployment
+    // and both commit; here the introduction is only ever committed by a compare-and-swap against the row that was
+    // read, so at most one of the two lands and the loser decides again against the state the winner left behind.
+    private async ValueTask<TenancyAdmission> TenancyInvariantAdmitsAsync(SecurityTagSet managementTags, CancellationToken cancellationToken)
     {
         if (this.securityMode == ControlPlaneSecurityMode.Open)
         {
-            return false;
+            return TenancyAdmission.Admitted;
         }
 
         byte[]? owner = null;
         int ownerLength = 0;
         try
         {
-            // The caller's own owner group, copied out of the resolved tag set before any scan begins.
+            // The caller's own owner group, copied out of the resolved tag set before any store call begins.
             SecurityTagSet.Utf8Enumerator tags = managementTags.EnumerateUtf8();
             try
             {
@@ -630,51 +659,40 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             // A caller with no owner group introduces none, so there is nothing for the invariant to refuse.
             if (owner is null)
             {
-                return false;
+                return TenancyAdmission.Admitted;
             }
 
-            OwnerGroupProbe probe = OwnerGroupProbe.SeededWith(owner.AsSpan(0, ownerLength));
-            try
+            ReadOnlyMemory<byte> ownerGroup = owner.AsMemory(0, ownerLength);
+            bool scopesOnly = this.securityMode == ControlPlaneSecurityMode.ScopesOnly;
+            for (int attempt = 0; attempt < TenancyCommitAttempts; ++attempt)
             {
-                bool scopesOnly = this.securityMode == ControlPlaneSecurityMode.ScopesOnly;
-                ParsedJsonDocument<JsonString>? token = null;
-                try
+                using ParsedJsonDocument<TenancyLedger>? ledger =
+                    await this.store.GetTenancyLedgerAsync(cancellationToken).ConfigureAwait(false);
+                TenancyLedger current = ledger?.RootElement ?? default;
+                bool introduces = current.Introduces(ownerGroup.Span, out int distinctAfterwards);
+
+                if (distinctAfterwards > 1
+                    && (scopesOnly || await this.AnyUnsealedTenantEnvironmentAsync(cancellationToken).ConfigureAwait(false)))
                 {
-                    while (true)
-                    {
-                        using EnvironmentPage page = await this.store.ListAsync(
-                            AccessContext.System, TenancyScanPageSize, token?.RootElement ?? default, cancellationToken).ConfigureAwait(false);
-
-                        // The key span is read AFTER the await rather than held across it: a ReadOnlySpan cannot live
-                        // across an await boundary, and the property hands back the policy's cached UTF-8 either way.
-                        probe.Observe(page.Environments, this.access.OwnerGroupTagKeyUtf8);
-
-                        // ScopesOnly needs only "is someone else here"; the reach-isolating modes also need to know
-                        // whether anything is unsealed, so they keep reading until both are settled.
-                        if (probe.MoreThanOne && (scopesOnly || probe.AnyUnsealedTenantEnvironment))
-                        {
-                            return true;
-                        }
-
-                        ReadOnlySpan<byte> next = page.NextPageToken.Span;
-                        if (next.IsEmpty)
-                        {
-                            return false;
-                        }
-
-                        token?.Dispose();
-                        token = QuoteToken(next);
-                    }
+                    return TenancyAdmission.Refused;
                 }
-                finally
+
+                // Already admitted: this write changes no owner group, so it takes no interlock. The decision above
+                // still ran, which is what stops an entry admitted earlier from becoming a standing exemption.
+                if (!introduces)
                 {
-                    token?.Dispose();
+                    return TenancyAdmission.Admitted;
+                }
+
+                if (await this.store.TryCommitTenancyLedgerAsync(current, ownerGroup, this.AuditActor(), cancellationToken).ConfigureAwait(false))
+                {
+                    return TenancyAdmission.Admitted;
                 }
             }
-            finally
-            {
-                probe.Dispose();
-            }
+
+            // Every attempt lost its compare-and-swap. Refusing is the direction to fail in, since admitting on
+            // exhaustion would make sustained contention the way through the gate.
+            return TenancyAdmission.Contended;
         }
         finally
         {
@@ -682,6 +700,45 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             {
                 ArrayPool<byte>.Shared.Return(owner);
             }
+        }
+    }
+
+    // Whether any tenant-owned environment holds no ACTIVE key generation. Read at SYSTEM reach and over every
+    // environment, not the caller's: the invariant is a property of the deployment, and looking only at what this
+    // administrator can see would let an unsealed environment hide behind the very reach isolation it is being asked
+    // about. Stops at the first environment that proves the answer.
+    private async ValueTask<bool> AnyUnsealedTenantEnvironmentAsync(CancellationToken cancellationToken)
+    {
+        ParsedJsonDocument<JsonString>? token = null;
+        try
+        {
+            while (true)
+            {
+                using EnvironmentPage page = await this.store.ListAsync(
+                    AccessContext.System, TenancyScanPageSize, token?.RootElement ?? default, cancellationToken).ConfigureAwait(false);
+
+                // The key span is read AFTER the await rather than held across it: a ReadOnlySpan cannot live across an
+                // await boundary, and the property hands back the policy's cached UTF-8 either way.
+                if (TenantEnvironmentSealing.AnyUnsealed(page.Environments, this.access.OwnerGroupTagKeyUtf8))
+                {
+                    return true;
+                }
+
+                ReadOnlySpan<byte> next = page.NextPageToken.Span;
+                if (next.IsEmpty)
+                {
+                    return false;
+                }
+
+                // The page's continuation token is pooled and freed when the page disposes at the end of this
+                // iteration, so it cannot be carried straight into the next call.
+                token?.Dispose();
+                token = QuoteToken(next);
+            }
+        }
+        finally
+        {
+            token?.Dispose();
         }
     }
 
@@ -696,6 +753,14 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         rented[token.Length + 1] = (byte)'"';
         return ParsedJsonDocument<JsonString>.Parse(rented.AsMemory(0, length), rented);
     }
+
+    // Nothing was written, so the caller is told to retry rather than told about a condition that does not hold.
+    private static Models.ProblemDetails.Source TenancyInterlockProblem()
+        => Problem(
+            "tenancy-interlock-contended",
+            "Tenancy interlock contended",
+            409,
+            "Another governed write settled the deployment's owner groups while this request was being decided, repeatedly. Nothing was changed. Retry the request.");
 
     private static Models.ProblemDetails.Source TenancyInvariantProblem()
         => Problem(

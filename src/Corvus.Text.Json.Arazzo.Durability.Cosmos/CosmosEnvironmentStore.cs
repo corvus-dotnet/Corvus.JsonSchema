@@ -35,20 +35,30 @@ public sealed class CosmosEnvironmentStore : IEnvironmentStore, IAsyncDisposable
 {
     private const string ContainerId = "workflow_environments";
 
+    // The tenancy ledger's own container (ADR 0065). Not a reserved item in `workflow_environments`: that container's
+    // list query is an unfiltered `SELECT c.doc FROM c`, so a ledger item there would be streamed as a candidate
+    // environment and parsed as one.
+    private const string TenancyContainerId = "environment_tenancy";
+    private const string TenancyItemId = "tenancy";
+
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container container;
+    private readonly Container tenancyContainer;
     private readonly TimeProvider timeProvider;
     private readonly bool ownsClient;
 
-    private CosmosEnvironmentStore(CosmosClient client, Container container, TimeProvider timeProvider, bool ownsClient)
+    private CosmosEnvironmentStore(CosmosClient client, Container container, Container tenancyContainer, TimeProvider timeProvider, bool ownsClient)
     {
         this.client = client;
         this.container = container;
+        this.tenancyContainer = tenancyContainer;
         this.timeProvider = timeProvider;
         this.ownsClient = ownsClient;
     }
+
+    private static PartitionKey TenancyPartitionKey => new(TenancyItemId);
 
     /// <summary>The Cosmos client options the store relies on (none; it uses the stream APIs + Corvus.Text.Json).</summary>
     /// <returns>The Cosmos client options used by the connection-string overloads.</returns>
@@ -281,6 +291,75 @@ public sealed class CosmosEnvironmentStore : IEnvironmentStore, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        using ResponseMessage read = await this.tenancyContainer
+            .ReadItemStreamAsync(TenancyItemId, TenancyPartitionKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        read.EnsureSuccessStatusCode();
+        using CosmosJson.RentedResponse envelope = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(envelope.Memory, DocProperty);
+        return doc.IsEmpty ? null : PersistedJson.ToPooledDocument<TenancyLedger>(doc.Span);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        if (current.IsUndefined())
+        {
+            // The item id is fixed, so "no row must exist" is the container's own uniqueness: a lost race is a 409.
+            using Stream create = TenancyEnvelopeStream(json);
+            using ResponseMessage created = await this.tenancyContainer
+                .CreateItemStreamAsync(create, TenancyPartitionKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (created.StatusCode == HttpStatusCode.Conflict)
+            {
+                return false;
+            }
+
+            created.EnsureSuccessStatusCode();
+            return true;
+        }
+
+        // Point-read for the native _etag, then replace conditional on it. Both windows are covered: a writer landing
+        // before the read is caught by the stored ledger no longer carrying the etag the caller decided against, and
+        // one landing between the read and the replace is caught by the If-Match (412).
+        using ResponseMessage read = await this.tenancyContainer
+            .ReadItemStreamAsync(TenancyItemId, TenancyPartitionKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        read.EnsureSuccessStatusCode();
+        using (CosmosJson.RentedResponse envelope = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false))
+        {
+            ReadOnlyMemory<byte> stored = CosmosJson.GetRawValue(envelope.Memory, DocProperty);
+            if (stored.IsEmpty || !TenancyLedgerSerialization.CarriesEtagOf(stored.Span, current))
+            {
+                return false;
+            }
+        }
+
+        var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
+        using Stream replacement = TenancyEnvelopeStream(json);
+        using ResponseMessage replaced = await this.tenancyContainer
+            .ReplaceItemStreamAsync(replacement, TenancyItemId, TenancyPartitionKey, options, cancellationToken).ConfigureAwait(false);
+        if (replaced.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
+        {
+            return false;
+        }
+
+        replaced.EnsureSuccessStatusCode();
+        return true;
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient)
@@ -340,14 +419,31 @@ public sealed class CosmosEnvironmentStore : IEnvironmentStore, IAsyncDisposable
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties(ContainerId, "/pk"), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(TenancyContainerId, "/pk"), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     private static CosmosEnvironmentStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient)
     {
         Database database = client.GetDatabase(databaseName);
         Container container = database.GetContainer(ContainerId);
-        return new CosmosEnvironmentStore(client, container, timeProvider ?? TimeProvider.System, ownsClient);
+        Container tenancy = database.GetContainer(TenancyContainerId);
+        return new CosmosEnvironmentStore(client, container, tenancy, timeProvider ?? TimeProvider.System, ownsClient);
     }
+
+    // The tenancy-ledger envelope: the same id/pk/doc shape the environment envelope uses, with the document embedded
+    // verbatim as nested JSON rather than base64-wrapped.
+    private static Stream TenancyEnvelopeStream(byte[] doc)
+        => CosmosJson.WriteToStream(
+            doc,
+            static (Utf8JsonWriter writer, in byte[] d) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id"u8, TenancyItemId);
+                writer.WriteString("pk"u8, TenancyItemId);
+                writer.WritePropertyName("doc"u8);
+                writer.WriteRawValue(d, skipInputValidation: true);
+                writer.WriteEndObject();
+            });
 
     // The tag discriminator (the item-id seed and keyset tie-breaker) recomputed from a candidate's own immutable tags —
     // the projection only carried the doc, and the environment holds its management tags, so the discriminator is

@@ -31,16 +31,23 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
 {
     private const string EnvironmentsTable = "arazzoEnvironments";
+
+    // The tenancy ledger's own table (ADR 0065). Not a reserved partition in the environments table: the list path
+    // queries that table for keys without a partition filter, so a ledger entity there would be a candidate row.
+    private const string TenancyTable = "arazzoEnvironmentTenancy";
+    private const string TenancyKey = "tenancy";
     private const string DocColumn = "Doc";
     private const string NameColumn = "Name";
     private const string DiscriminatorColumn = "Tags";
 
     private readonly TableClient environments;
+    private readonly TableClient tenancy;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageEnvironmentStore(TableClient environments, TimeProvider timeProvider)
+    private AzureStorageEnvironmentStore(TableClient environments, TableClient tenancy, TimeProvider timeProvider)
     {
         this.environments = environments;
+        this.tenancy = tenancy;
         this.timeProvider = timeProvider;
     }
 
@@ -62,6 +69,7 @@ public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(EnvironmentsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(TenancyTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned table.</summary>
@@ -85,7 +93,10 @@ public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
         ArgumentNullException.ThrowIfNull(tableService);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<AzureStorageEnvironmentStore>(
-            new AzureStorageEnvironmentStore(tableService.GetTableClient(EnvironmentsTable), timeProvider ?? TimeProvider.System));
+            new AzureStorageEnvironmentStore(
+                tableService.GetTableClient(EnvironmentsTable),
+                tableService.GetTableClient(TenancyTable),
+                timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>
@@ -263,6 +274,58 @@ public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
 
         await this.environments.DeleteEntityAsync(PartitionKey(name), RowKey(discriminator!), ETag.All, cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        NullableResponse<TableEntity> row = await this.tenancy
+            .GetEntityIfExistsAsync<TableEntity>(TenancyKey, TenancyKey, [DocColumn], cancellationToken).ConfigureAwait(false);
+        return row.HasValue && row.Value!.GetBinary(DocColumn) is { } json
+            ? PersistedJson.ToPooledDocument<TenancyLedger>(json)
+            : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        var entity = new TableEntity(TenancyKey, TenancyKey) { [DocColumn] = json };
+        if (current.IsUndefined())
+        {
+            // The single entity key makes "no row must exist" the table's own uniqueness: a lost race is a 409.
+            try
+            {
+                await this.tenancy.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                return false;
+            }
+        }
+
+        // Read for the native entity ETag, then update conditional on it. Both windows are covered: a writer landing
+        // before the read is caught by the stored ledger no longer carrying the etag the caller decided against, and one
+        // landing between the read and the update is caught by the If-Match (412).
+        NullableResponse<TableEntity> stored = await this.tenancy
+            .GetEntityIfExistsAsync<TableEntity>(TenancyKey, TenancyKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (!stored.HasValue || stored.Value!.GetBinary(DocColumn) is not { } storedJson
+            || !TenancyLedgerSerialization.CarriesEtagOf(storedJson, current))
+        {
+            return false;
+        }
+
+        try
+        {
+            await this.tenancy.UpdateEntityAsync(entity, stored.Value.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 412)
+        {
+            return false;
+        }
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));

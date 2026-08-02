@@ -154,8 +154,8 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         using ParsedJsonDocument<Environment> tenant = Environment.Draft("production", null, null, SecurityTagSet.Empty);
         using ParsedJsonDocument<Environment> platform = Environment.DraftPlatform("system", null, null, SecurityTagSet.Empty);
 
-        OwnerGroupProbe.IsPlatform(tenant.RootElement).ShouldBeFalse();
-        OwnerGroupProbe.IsPlatform(platform.RootElement).ShouldBeTrue();
+        TenantEnvironmentSealing.IsPlatform(tenant.RootElement).ShouldBeFalse();
+        TenantEnvironmentSealing.IsPlatform(platform.RootElement).ShouldBeTrue();
     }
 
     private static string Registration(ECDsa key, string environment, string keyId)

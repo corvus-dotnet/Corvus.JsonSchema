@@ -26,6 +26,7 @@ public sealed class InMemoryEnvironmentStore : IEnvironmentStore
     private readonly Lock gate = new();
     private readonly Dictionary<(string Name, string Tags), byte[]> environments = new();
     private readonly TimeProvider timeProvider;
+    private byte[]? tenancyLedger;
     private long etagSequence;
 
     /// <summary>Initializes a new instance of the <see cref="InMemoryEnvironmentStore"/> class.</summary>
@@ -189,6 +190,42 @@ public sealed class InMemoryEnvironmentStore : IEnvironmentStore
             }
 
             this.environments.Remove(key);
+            return new ValueTask<bool>(true);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        lock (this.gate)
+        {
+            return new ValueTask<ParsedJsonDocument<TenancyLedger>?>(
+                this.tenancyLedger is null ? null : PersistedJson.ToPooledDocument<TenancyLedger>(this.tenancyLedger));
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        lock (this.gate)
+        {
+            // The compare-and-swap, atomic with the write because the lock spans both: the stored row must be exactly
+            // the one the caller decided against — absent when the caller read no row, and carrying the same etag when
+            // it read one. Anything else means another governed write landed first.
+            bool storedIsAbsent = this.tenancyLedger is null;
+            if (storedIsAbsent != current.IsUndefined())
+            {
+                return new ValueTask<bool>(false);
+            }
+
+            if (!storedIsAbsent && !TenancyLedgerSerialization.CarriesEtagOf(this.tenancyLedger!, current))
+            {
+                return new ValueTask<bool>(false);
+            }
+
+            this.tenancyLedger = TenancyLedgerSerialization.SerializeCommitted(
+                current, admitting, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
             return new ValueTask<bool>(true);
         }
     }

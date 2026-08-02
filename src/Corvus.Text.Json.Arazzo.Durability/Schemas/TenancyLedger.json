@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TenancyLedger",
+  "description": "The deployment's single serialization row for ADR 0065's tenancy invariant: the distinct owner groups that have been admitted to hold an environment here. There is exactly one of these per deployment. Every write the invariant governs (a create that would introduce an owner group, and a retirement of an environment's last active key generation) compare-and-swaps it, so two simultaneous writes cannot both observe a single-group deployment and both commit. It is the census as well as the interlock: reading it answers 'how many distinct owner groups are there' in one row rather than a scan of every environment.",
+  "type": "object",
+  "required": ["ownerGroups", "etag"],
+  "properties": {
+    "ownerGroups": {
+      "type": "array",
+      "description": "The distinct owner-group values admitted so far, in admission order. Append-only: deleting the last environment of an owner group does NOT remove it. Removal cannot be made race-free against a concurrent create (the scan proving absence and the compare-and-swap removing the entry are not one operation), and the exposure the invariant guards against is that a second group's data was once held in the clear on shared infrastructure, which deleting a row does not undo. The consequence is deliberate over-refusal rather than under-refusal, which is the direction a gate must fail in. The platform environment's group is never admitted here, and a principal carrying no owner-group claim introduces none.",
+      "items": { "type": "string" }
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor whose governed write last committed this row."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this row was last committed."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token, and the whole of the interlock. A governed write reads the row, decides, and commits against the etag it read; a lost compare-and-swap means another governed write landed first, and the decision is taken again against the new state rather than carried over."
+    }
+  },
+  "additionalProperties": false
+}

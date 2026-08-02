@@ -257,6 +257,47 @@ public sealed class SqlServerEnvironmentStore : IEnvironmentStore, IAsyncDisposa
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
+    /// <inheritdoc/>
+    public async ValueTask<ParsedJsonDocument<TenancyLedger>?> GetTenancyLedgerAsync(CancellationToken cancellationToken)
+    {
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        select.CommandText = "SELECT Document FROM EnvironmentTenancyLedger WHERE Id = 1;";
+        await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? PersistedJson.ToPooledDocument<TenancyLedger>(reader.GetFieldValue<byte[]>(0))
+            : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryCommitTenancyLedgerAsync(TenancyLedger current, ReadOnlyMemory<byte> admitting, string actor, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        WorkflowEtag etag = NewEtag();
+        byte[] json = TenancyLedgerSerialization.SerializeCommitted(current, admitting, actor, this.timeProvider.GetUtcNow(), etag);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand commit = connection.CreateCommand();
+
+        // One statement carries the whole predicate, so the compare and the swap cannot be interleaved. The insert form
+        // is conditional on the row's absence rather than a plain INSERT relying on the primary key, so a lost race
+        // reads as a zero row count exactly like a lost update rather than as a driver exception.
+        if (current.IsUndefined())
+        {
+            commit.CommandText =
+                "INSERT INTO EnvironmentTenancyLedger (Id, Etag, Document) SELECT 1, @etag, @doc " +
+                "WHERE NOT EXISTS (SELECT 1 FROM EnvironmentTenancyLedger WITH (UPDLOCK, HOLDLOCK) WHERE Id = 1);";
+        }
+        else
+        {
+            commit.CommandText = "UPDATE EnvironmentTenancyLedger SET Etag = @etag, Document = @doc WHERE Id = 1 AND Etag = @expected;";
+            commit.Parameters.AddWithValue("@expected", current.EtagValue.Value!);
+        }
+
+        commit.Parameters.AddWithValue("@etag", etag.Value!);
+        commit.Parameters.AddWithValue("@doc", json);
+        return await commit.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 1;
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // Appends the §14.2 read-reach predicate: a correlated EXISTS over EnvironmentSecurityTags mirroring the caller's
@@ -368,6 +409,16 @@ public sealed class SqlServerEnvironmentStore : IEnvironmentStore, IAsyncDisposa
             );
             CREATE INDEX IX_EnvironmentSecurityTags_owner ON EnvironmentSecurityTags (Name, TagsHash);
             CREATE INDEX IX_EnvironmentSecurityTags_kv ON EnvironmentSecurityTags (TagKey, TagValue);
+        END;
+        IF OBJECT_ID(N'EnvironmentTenancyLedger', N'U') IS NULL
+        BEGIN
+            CREATE TABLE EnvironmentTenancyLedger (
+                Id INT NOT NULL,
+                Etag NVARCHAR(255) NOT NULL,
+                Document VARBINARY(MAX) NOT NULL,
+                CONSTRAINT PK_EnvironmentTenancyLedger PRIMARY KEY (Id),
+                CONSTRAINT CK_EnvironmentTenancyLedger_Singleton CHECK (Id = 1)
+            );
         END;
         """;
 }
