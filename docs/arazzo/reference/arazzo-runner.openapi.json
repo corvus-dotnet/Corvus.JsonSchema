@@ -1,0 +1,490 @@
+{
+  "openapi": "3.2.0",
+  "$self": "https://corvus-oss.org/arazzo/runner/openapi.json",
+  "info": {
+    "title": "Arazzo Workflow Runner API",
+    "summary": "The only path from a runner to durable run state.",
+    "description": "The surface every runner store interaction goes through (ADR 0065). Before it, a runner held store credentials and claimed, leased, and checkpointed against the store directly; a compromised or curious runner could therefore read and write another tenant's rows, and tenant separation rested on runner-resident code. Here the control plane owns the store exclusively and a runner holds no store credential at all.\n\nIt is a **separate document and a separately deployable component** from the governance API, not a section of it. ADR 0023's point survives: execution load never rides the governance request path, and the runner API is scaled and kept available ahead of governance, which is a security-adjacent requirement rather than a capacity preference.\n\n## Authentication\n\nNo platform credential is minted for a runner. It authenticates with the machine principal it already has (client credentials, private-key JWT, or mTLS through the deployment's IdP), so decommissioning a host leaves no long-lived platform-issued secret behind. The principal's environment bindings are resolved per request from a bounded cache, which is what gives the runner revocation fence its effect. **Lease ownership derives from the authenticated principal.** A client-supplied owner is rejected rather than trusted, and revocation expires leases by principal, so a compromised runner cannot rename itself into another's leases.\n\n## Refusals\n\nRefusals are non-disclosing. An operation naming a run outside the runner's bindings answers `404`, indistinguishable from a run that does not exist, so this surface cannot be used to enumerate another tenant's runs. Only a capability failure answers `403`. The one place a runner must not read `404` as benign is a run it holds a non-terminal anchor entry for: there the row was deleted or is being withheld, and the runner faults rather than continuing.\n\nQuota rejections answer `429` and name the quota and its counter, so a runner holds and backs off rather than faulting an advance whose external calls have already landed. That hold is bounded by a total hold time and an attempt cap; past those the advance fails like any other non-2xx, because an unbounded hold would be a silent stall primitive.\n\n## What never appears here\n\nNo response body carries key material. A per-lease or per-run key handed back in a claim would put a key that opens every checkpoint of that lease into the hands of the party this design exists to exclude.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "{scheme}://{host}/arazzo/runner/v1",
+      "description": "The runner API host: a separately scalable component sharing the store with the governance API.",
+      "variables": {
+        "scheme": {
+          "enum": ["https", "http"],
+          "default": "https"
+        },
+        "host": {
+          "default": "localhost:8081"
+        }
+      }
+    }
+  ],
+  "security": [
+    { "oauth2": ["runner:execute"] },
+    { "openIdConnect": ["runner:execute"] },
+    { "mtls": [] }
+  ],
+  "tags": [
+    {
+      "name": "claims",
+      "summary": "Claiming runs",
+      "description": "Taking a claimable run and its lease in one operation. The runner never queries the store's dispatch index itself."
+    },
+    {
+      "name": "leases",
+      "summary": "Lease renewal and release",
+      "description": "A lease is the run's single-dispatcher interlock. Its owner is the authenticated principal, and its grant carries the server-minted epoch a checkpoint is written under."
+    },
+    {
+      "name": "checkpoints",
+      "summary": "Checkpoint load and save",
+      "description": "The run row, read and written under a held lease. The checkpoint document is opaque octets to this API: it is carried as a stream rather than embedded in JSON, both because a base64 wrap would inflate the hottest path in the system by a third and because a sealed environment's payload is ciphertext the control plane cannot parse."
+    }
+  ],
+  "paths": {
+    "/claims": {
+      "post": {
+        "operationId": "claimRun",
+        "tags": ["claims"],
+        "summary": "Claim a run and take its lease",
+        "description": "Takes the first claimable run the runner can execute and returns it with a fresh lease grant. One operation rather than a query followed by an acquire: the store's dispatch index is not a runner-visible surface, and a two-step form would race between the query and the acquire, wasting lease attempts on runs another runner had already taken.\n\nClaimable means a Pending run, a Running run whose lease has expired (an orphan left by a crashed runner, which must be reclaimable or an interrupted run would never resume), or one marked resume-claimable. The candidate set is intersected server-side with the environments the principal is bound to, so a runner cannot claim a run pinned to an environment it does not serve. The environment is never a request parameter for that reason.\n\nAnswers `204` when nothing is claimable, which is the common case for an idle runner and is not an error.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ClaimRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A run was claimed and its lease granted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClaimedRun" }
+              }
+            }
+          },
+          "204": { "description": "Nothing is claimable for this runner right now." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/QuotaExceeded" }
+        }
+      }
+    },
+    "/runs/{runId}/lease/renewal": {
+      "post": {
+        "operationId": "renewLease",
+        "tags": ["leases"],
+        "summary": "Renew a held lease",
+        "description": "Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner.\n\nThe epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant.",
+        "parameters": [
+          { "$ref": "#/components/parameters/RunIdPath" },
+          { "$ref": "#/components/parameters/LeaseTokenHeader" }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LeaseRenewal" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The extended lease grant.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LeaseGrant" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/LeaseLost" },
+          "429": { "$ref": "#/components/responses/QuotaExceeded" }
+        }
+      }
+    },
+    "/runs/{runId}/lease": {
+      "delete": {
+        "operationId": "releaseLease",
+        "tags": ["leases"],
+        "summary": "Release a held lease",
+        "description": "Hands the run back so another runner may claim it without waiting for the lease to expire. Idempotent: releasing a lease that has already expired or been released answers `204`, since the desired state is reached either way. A token that names a lease currently held by a different principal answers `404` rather than `403`, so this cannot be used to probe which runs another tenant holds.",
+        "parameters": [
+          { "$ref": "#/components/parameters/RunIdPath" },
+          { "$ref": "#/components/parameters/LeaseTokenHeader" }
+        ],
+        "responses": {
+          "204": { "description": "The lease is no longer held." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/runs/{runId}/checkpoint": {
+      "get": {
+        "operationId": "loadCheckpoint",
+        "tags": ["checkpoints"],
+        "summary": "Load a run's checkpoint",
+        "description": "Returns the run's checkpoint document as opaque octets, with the etag to condition the next save on and the sequence the store has persisted. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.\n\nA run with no checkpoint yet answers `404`, as does one outside the runner's bindings. A runner holding a non-terminal anchor entry for the run must treat that `404` as a fault rather than as a fresh run.",
+        "parameters": [
+          { "$ref": "#/components/parameters/RunIdPath" },
+          { "$ref": "#/components/parameters/LeaseTokenHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The checkpoint document.",
+            "headers": {
+              "ETag": {
+                "description": "The etag the checkpoint was read at. Pass it as If-Match on the next save.",
+                "schema": { "type": "string" }
+              },
+              "X-Arazzo-Checkpoint-Seq": {
+                "description": "The sequence the store has persisted. The next save must propose exactly this plus one.",
+                "schema": { "type": "integer", "format": "int64", "minimum": 0 }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "contentEncoding": "binary" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/LeaseLost" },
+          "429": { "$ref": "#/components/responses/QuotaExceeded" }
+        }
+      },
+      "put": {
+        "operationId": "saveCheckpoint",
+        "tags": ["checkpoints"],
+        "summary": "Save a run's checkpoint",
+        "description": "Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.\n\nThe compare-and-swap predicate is the etag **and** the persisted sequence together. A save that loses it answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.\n\nA retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.",
+        "parameters": [
+          { "$ref": "#/components/parameters/RunIdPath" },
+          { "$ref": "#/components/parameters/LeaseTokenHeader" },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "The etag the checkpoint was last read or written at. Use `*` for the first save of a run, which must not already exist.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-Arazzo-Checkpoint-Seq",
+            "in": "header",
+            "required": true,
+            "description": "The proposed sequence. Accepted only when it is exactly the persisted sequence plus one.",
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": { "type": "string", "contentEncoding": "binary" }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The checkpoint is durable.",
+            "headers": {
+              "ETag": {
+                "description": "The new etag, to condition the next save on.",
+                "schema": { "type": "string" }
+              },
+              "X-Arazzo-Checkpoint-Seq": {
+                "description": "The accepted sequence, equal to the proposed one.",
+                "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/CheckpointSuperseded" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "429": { "$ref": "#/components/responses/QuotaExceeded" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "The machine principal's own token. Client credentials only: there is no interactive flow here, because a runner is never a person. The authorization server is the deployment's, and the URL below is a placeholder.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://login.example.com/oauth2/token",
+            "scopes": {
+              "runner:execute": "Claim runs, hold leases, and load and save checkpoints for the environments this principal is bound to."
+            }
+          }
+        }
+      },
+      "openIdConnect": {
+        "type": "openIdConnect",
+        "description": "OpenID Connect discovery for the same machine principals. The URL below is a placeholder.",
+        "openIdConnectUrl": "https://login.example.com/.well-known/openid-configuration"
+      },
+      "mtls": {
+        "type": "mutualTLS",
+        "description": "Mutual TLS, where the deployment identifies runners by client certificate rather than by bearer token. The certificate subject is the machine principal."
+      }
+    },
+    "parameters": {
+      "RunIdPath": {
+        "name": "runId",
+        "in": "path",
+        "required": true,
+        "description": "The run id.",
+        "schema": { "type": "string", "minLength": 1, "maxLength": 256 }
+      },
+      "LeaseTokenHeader": {
+        "name": "X-Arazzo-Lease",
+        "in": "header",
+        "required": true,
+        "description": "The token from the lease grant. Every operation on a run presents it, and the server checks that the lease is current and that its owner is this principal. The owner is never taken from the request.",
+        "schema": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request is malformed.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The principal lacks the capability. Reserved for capability failures alone: anything out of the principal's environment bindings answers 404 instead, so this response never reveals that a run exists.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "No such run, or one outside this principal's environment bindings. The two are deliberately indistinguishable. A runner holding a non-terminal anchor entry for the run treats this as a fault rather than a benign miss.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "LeaseLost": {
+        "description": "The presented lease is no longer current: it expired, was released, or was revoked, and the run may already be held by another runner.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" },
+            "examples": {
+              "leaseLost": {
+                "summary": "The lease expired mid-advance",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/runner/problems/lease-lost",
+                  "title": "Lease is no longer held",
+                  "status": 409,
+                  "detail": "The lease for run 'adopt-42' expired at 2026-08-02T11:04:07Z."
+                }
+              }
+            }
+          }
+        }
+      },
+      "CheckpointSuperseded": {
+        "description": "The proposed sequence is not the persisted sequence plus one, or the etag no longer matches. Nothing was written. The accepted sequence is carried so the runner can tell a duplicate resend from a genuine divergence without a second round trip.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/CheckpointSupersededProblem" },
+            "examples": {
+              "superseded": {
+                "summary": "Another writer advanced the run first",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/runner/problems/checkpoint-superseded",
+                  "title": "Checkpoint superseded",
+                  "status": 409,
+                  "detail": "Sequence 7 was proposed; the store has persisted 7 and accepts 8 next.",
+                  "acceptedSequence": 8
+                }
+              }
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The checkpoint exceeds the deployment's body-size cap.",
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+          }
+        }
+      },
+      "QuotaExceeded": {
+        "description": "A per-tenant quota is exhausted. Retryable, and distinguishable from a fault for exactly that reason: the runner holds and backs off rather than failing an advance whose external calls have already landed. The hold is bounded by a total time and an attempt cap.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/QuotaProblem" },
+            "examples": {
+              "checkpointRate": {
+                "summary": "The environment's checkpoint rate is exhausted",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/runner/problems/quota-exceeded",
+                  "title": "Quota exceeded",
+                  "status": 429,
+                  "detail": "The checkpoint rate for environment 'production' is exhausted.",
+                  "quota": "checkpointRatePerEnvironment",
+                  "counter": "production"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ClaimRequest": {
+        "type": "object",
+        "description": "What the runner can execute. The environment is absent by design: it is resolved from the principal's bindings, because a client-supplied environment would be a request to claim another tenant's work.",
+        "required": ["hostedVersions"],
+        "properties": {
+          "hostedVersions": {
+            "type": "array",
+            "description": "The versioned workflow ids ({base}-v{n}) this runner has baked and can execute. A run for a version absent from this list is not offered, since claiming work the runner cannot execute would strand it until the lease expired.",
+            "items": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "minItems": 1,
+            "maxItems": 1000
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "description": "The requested lease duration. The server bounds it; a request above the deployment's maximum is granted the maximum rather than refused.",
+            "minimum": 1,
+            "maximum": 3600
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClaimedRun": {
+        "type": "object",
+        "description": "The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease.",
+        "required": ["runId", "workflowId", "environment", "lease"],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "The claimed run's id."
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "The versioned workflow id the run executes, from the runner's own hostedVersions."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment the run is pinned to. Echoed so the runner can select the right credentials and bindings, never taken from the request."
+          },
+          "lease": { "$ref": "#/components/schemas/LeaseGrant" }
+        },
+        "additionalProperties": false
+      },
+      "LeaseRenewal": {
+        "type": "object",
+        "description": "An optional renewal request body. Carries no owner: the owner is the authenticated principal.",
+        "properties": {
+          "leaseSeconds": {
+            "type": "integer",
+            "description": "The requested extension. The server bounds it as it does at claim.",
+            "minimum": 1,
+            "maximum": 3600
+          }
+        },
+        "additionalProperties": false
+      },
+      "LeaseGrant": {
+        "type": "object",
+        "description": "A lease over one run. The owner is not a member: it is the authenticated principal, so there is nothing here a compromised runner could rewrite to impersonate another.",
+        "required": ["token", "expiresAt", "epoch"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token to present on every subsequent operation for this run."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the lease lapses and the run becomes claimable again. Renew before this."
+          },
+          "epoch": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The grant's epoch, minted server-side and monotonic. The runner writes it into the checkpoint it authors. A checkpoint whose epoch is above the current grant is refused (a row minted under a grant this holder never held) and one below the run's high-water epoch is refused as a rollback.",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "description": "An RFC 9457 problem detail.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" }
+        }
+      },
+      "CheckpointSupersededProblem": {
+        "type": "object",
+        "description": "A superseded save, carrying the sequence the store will accept next.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" },
+          "acceptedSequence": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The sequence the store will accept next, which is its persisted sequence plus one.",
+            "minimum": 1
+          }
+        }
+      },
+      "QuotaProblem": {
+        "type": "object",
+        "description": "A quota rejection, naming the quota and the counter it was measured against so a runner can back off against the right dimension rather than globally.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" },
+          "quota": {
+            "type": "string",
+            "description": "The quota that rejected the request."
+          },
+          "counter": {
+            "type": "string",
+            "description": "The counter the quota was measured against, for example the environment or tenant it applies to."
+          }
+        }
+      }
+    }
+  }
+}

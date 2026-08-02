@@ -67,6 +67,7 @@ does not, and links them for the rest.
 |-----------|--------|
 | [`reference/control-plane-rest-api.md`](reference/control-plane-rest-api.md) | The REST surface: operation groups, the scope model, authentication, resume modes. |
 | [`reference/arazzo-control-plane.openapi.json`](reference/arazzo-control-plane.openapi.json) | The OpenAPI 3.2 contract, the source of truth clients and the CLI are generated from. |
+| [`reference/arazzo-runner.openapi.json`](reference/arazzo-runner.openapi.json) | The OpenAPI 3.2 contract for the runner API (ADR 0065): the only path from a runner to durable run state, served as a separately deployable component. |
 | [`reference/control-plane-use-cases.md`](reference/control-plane-use-cases.md) | The use-case catalog: the jobs each persona brings to each surface, with stable ids. |
 | [`reference/control-plane-observability-coverage.md`](reference/control-plane-observability-coverage.md) | The observability coverage catalog: the span, metric, and audit log each governed action emits, per surface. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
