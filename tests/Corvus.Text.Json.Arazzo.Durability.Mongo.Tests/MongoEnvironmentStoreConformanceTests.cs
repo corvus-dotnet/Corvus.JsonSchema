@@ -46,6 +46,10 @@ public sealed class MongoEnvironmentStoreConformanceTests : EnvironmentStoreConf
     {
         await client.GetDatabase(DatabaseName).DropCollectionAsync("environments");
 
+        // The tenancy ledger is a singleton document in its own collection, so it has to go with the environments it
+        // counts. Leaving it would make every test after the first see a deployment that already admitted a group.
+        await client.GetDatabase(DatabaseName).DropCollectionAsync("environmenttenancyledger");
+
         // Provision the indexes then open for operation over the caller-owned client.
         await MongoEnvironmentStore.PrepareAsync(client, DatabaseName);
         return await MongoEnvironmentStore.ConnectAsync(client, DatabaseName, timeProvider);

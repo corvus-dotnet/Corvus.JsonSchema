@@ -50,7 +50,9 @@ public sealed class MySqlEnvironmentStoreConformanceTests : EnvironmentStoreConf
         await using (MySqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using MySqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS Environments;";
+            // The tenancy ledger is a singleton row, so it has to be dropped with the environments it counts.
+            // Leaving it would make every test after the first see a deployment that already admitted an owner group.
+            reset.CommandText = "DROP TABLE IF EXISTS Environments; DROP TABLE IF EXISTS EnvironmentTenancyLedger;";
             await reset.ExecuteNonQueryAsync();
         }
 

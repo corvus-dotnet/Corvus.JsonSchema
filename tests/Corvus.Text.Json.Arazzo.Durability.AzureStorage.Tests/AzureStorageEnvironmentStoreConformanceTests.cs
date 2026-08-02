@@ -22,6 +22,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 public sealed class AzureStorageEnvironmentStoreConformanceTests : EnvironmentStoreConformance
 {
     private const string EnvironmentsTable = "arazzoEnvironments";
+
+    // The tenancy ledger's own table. It is a singleton row, so it has to be cleared with the environments it counts:
+    // leaving it would make every test after the first see a deployment that already admitted an owner group.
+    private const string TenancyTable = "arazzoEnvironmentTenancy";
     private static AzuriteContainer container = null!;
 
     [ClassInitialize]
@@ -48,10 +52,13 @@ public sealed class AzureStorageEnvironmentStoreConformanceTests : EnvironmentSt
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageEnvironmentStore.PrepareAsync(tableService);
 
-        TableClient client = tableService.GetTableClient(EnvironmentsTable);
-        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+        foreach (string table in new[] { EnvironmentsTable, TenancyTable })
         {
-            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            TableClient client = tableService.GetTableClient(table);
+            await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+            {
+                await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            }
         }
 
         return await AzureStorageEnvironmentStore.ConnectAsync(tableService, timeProvider);
