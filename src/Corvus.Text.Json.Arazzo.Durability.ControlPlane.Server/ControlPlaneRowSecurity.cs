@@ -287,15 +287,16 @@ internal sealed class ControlPlaneAccess
     /// modes that authenticate without scoping reach (ADR 0016's <c>ScopesOnly</c>, and <c>Open</c> where there is no
     /// principal to see).
     /// </summary>
-    /// <param name="httpContextAccessor">The accessor used to read the current request's principal; may be absent.</param>
+    /// <param name="httpContextAccessor">The accessor used to read the current request's principal.</param>
     /// <remarks>
     /// Reach is unaffected: with no policy, <see cref="Current"/> still resolves to <see cref="AccessContext.System"/>
     /// and <see cref="InternalTags"/> is still empty. What this adds is that a handler can identify <em>who</em> is
     /// acting. Without it, an audit actor in <c>ScopesOnly</c> degrades to a constant, and ownership cannot be
     /// determined at all, which is what made ADR 0065's tenancy invariant unevaluable in that mode.
     /// </remarks>
-    public ControlPlaneAccess(IHttpContextAccessor? httpContextAccessor)
+    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor)
     {
+        ArgumentNullException.ThrowIfNull(httpContextAccessor);
         this.httpContextAccessor = httpContextAccessor;
     }
 

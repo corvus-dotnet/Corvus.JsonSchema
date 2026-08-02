@@ -125,9 +125,15 @@ public static class ControlPlaneEndpointExtensions
         // handlers gate every read/write/purge by the principal's per-verb reach — the client operations require a
         // context, so an unscoped read cannot exist to be misused. With no policy (Open/ScopesOnly) the access binding
         // yields AccessContext.System throughout. The current principal is read via IHttpContextAccessor.
-        ControlPlaneAccess access = effectivePolicy is null
-            ? new ControlPlaneAccess(endpoints.ServiceProvider.GetService<IHttpContextAccessor>())
-            : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
+        // Open authenticates nobody, so there is no principal to read and no accessor to require. Every other mode
+        // authenticates, so the accessor is a hard requirement there: without it a handler cannot name the actor it
+        // records, and ownership cannot be determined at all. Missing registration fails construction here rather
+        // than degrading silently at the first request, matching how ADR 0016 validates the mode/policy pairing.
+        ControlPlaneAccess access = securityMode == ControlPlaneSecurityMode.Open
+            ? new ControlPlaneAccess()
+            : effectivePolicy is null
+                ? new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>())
+                : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
 
         // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
         // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo

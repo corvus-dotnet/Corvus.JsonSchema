@@ -130,6 +130,9 @@ public sealed class ControlPlaneAuthorizationTests
             .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
 
+        // Every mode that authenticates needs the accessor, so a handler can name the acting principal.
+        builder.Services.AddHttpContextAccessor();
+
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
