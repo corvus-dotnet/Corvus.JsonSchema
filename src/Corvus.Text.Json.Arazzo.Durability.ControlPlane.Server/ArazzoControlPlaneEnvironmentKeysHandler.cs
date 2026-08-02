@@ -37,8 +37,16 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
     private const string TargetKind = "environment-key";
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
-    // The page size for the owner-group scan. The scan stops at the first page proving a second group exists, so this
-    // bounds the work of the single-owner-group case, which is the one that reads every environment.
+    // The page size for the owner-group scan.
+    //
+    // This scan is O(environments): the store exposes no aggregate that could answer "are there two distinct owner
+    // groups" in the query, and the owner group is a value inside a JSON tag array, so there is nothing to push down
+    // without a per-backend JSON predicate. Worse, the cheap ANSWER is the expensive case — a single-tenant deployment
+    // never finds a second group, so it reads every row before concluding "no". It is bounded only by running solely
+    // when the cheaper local predicate (this is the last ACTIVE generation) already holds.
+    //
+    // The resolution is the CAS'd owner-group row of ADR 0065's phase A create gate, which turns this into one keyed
+    // read; the scan is what stands in until that row exists. It is not the shape to build on.
     private const int OwnerGroupScanPageSize = 200;
 
     // A P-256 SPKI decodes to ~91 bytes and an IEEE P1363 signature to 64, so both sit well inside this in practice;
@@ -134,7 +142,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         string environment = (string)parameters.Name;
         string keyId = (string)parameters.Body.KeyId;
 
-        GovernanceGate gate = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
+        (GovernanceGate gate, ParsedJsonDocument<Environment>? authorized) = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
         if (gate == GovernanceGate.NotFound)
         {
             return RegisterEnvironmentKeyResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
@@ -146,6 +154,9 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             return RegisterEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
+        // The gate read this row to decide, and hands it on; it is non-null exactly on the Authorized path.
+        ParsedJsonDocument<Environment> stored = authorized!;
+
         // The base64 key and signature are decoded straight out of the request's UTF-8 into pooled buffers, and the
         // algorithm is matched span-to-span. Realizing any of them as managed strings (and letting
         // Convert.FromBase64String allocate the decoded arrays) would put four allocations between a UTF-8 body and
@@ -154,16 +165,12 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
         if (possession != EnvironmentKeyPossessionResult.Verified)
         {
+            stored.Dispose();
+
             // The refusal reason is diagnostic, not disclosing: every value here is one the caller supplied, so
             // naming which check failed tells them nothing they did not already know.
             GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.CallerActor(), TargetKind, KeyKey(environment, keyId), $"refused-{possession}");
             return RegisterEnvironmentKeyResult.BadRequest(PossessionProblem(environment, keyId, possession), workspace);
-        }
-
-        ParsedJsonDocument<Environment>? stored = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (stored is null)
-        {
-            return RegisterEnvironmentKeyResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
         }
 
         // Replay is deliberately not an error. The signed tuple determines the effect, so re-presenting it names the
@@ -206,7 +213,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         string environment = (string)parameters.Name;
         string keyId = (string)parameters.KeyId;
 
-        GovernanceGate gate = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
+        (GovernanceGate gate, ParsedJsonDocument<Environment>? authorized) = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
         if (gate == GovernanceGate.NotFound)
         {
             return RetireEnvironmentKeyResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
@@ -218,11 +225,8 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             return RetireEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
-        ParsedJsonDocument<Environment>? stored = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (stored is null)
-        {
-            return RetireEnvironmentKeyResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
-        }
+        // The gate read this row to decide, and hands it on; it is non-null exactly on the Authorized path.
+        ParsedJsonDocument<Environment> stored = authorized!;
 
         if (Find(stored.RootElement, keyId) is not { } target)
         {
@@ -455,18 +459,37 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         return ParsedJsonDocument<JsonString>.Parse(rented.AsMemory(0, length), rented);
     }
 
-    private async ValueTask<GovernanceGate> AuthorizeEnvironmentAdminAsync(string environment, CancellationToken cancellationToken)
+    // The gate must read the environment to decide visibility, and every authorized caller then works on that same
+    // row, so it hands the document on rather than disposing it and leaving the caller to fetch the identical row a
+    // second time. An authorized write cost two reads of one row before this; it now costs one.
+    //
+    // Ownership: the caller owns the returned document on the Authorized path ONLY, and disposes it (or gives it to
+    // the workspace). Nothing is returned on the other paths, so there is no document to leak on a refusal.
+    private async ValueTask<(GovernanceGate Gate, ParsedJsonDocument<Environment>? Environment)> AuthorizeEnvironmentAdminAsync(
+        string environment, CancellationToken cancellationToken)
     {
-        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (environmentDoc is null)
         {
-            return GovernanceGate.NotFound;
+            return (GovernanceGate.NotFound, null);
         }
 
-        using ParsedJsonDocument<EnvironmentAdministrators>? record = await this.administration.GetAdministratorsAsync(environment, cancellationToken).ConfigureAwait(false);
-        return record?.RootElement.IsAdministeredBy(this.CallerIdentity()) == true
-            ? GovernanceGate.Authorized
-            : GovernanceGate.Forbidden;
+        try
+        {
+            using ParsedJsonDocument<EnvironmentAdministrators>? record = await this.administration.GetAdministratorsAsync(environment, cancellationToken).ConfigureAwait(false);
+            if (record?.RootElement.IsAdministeredBy(this.CallerIdentity()) != true)
+            {
+                environmentDoc.Dispose();
+                return (GovernanceGate.Forbidden, null);
+            }
+        }
+        catch
+        {
+            environmentDoc.Dispose();
+            throw;
+        }
+
+        return (GovernanceGate.Authorized, environmentDoc);
     }
 
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
