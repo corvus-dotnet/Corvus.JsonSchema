@@ -243,12 +243,13 @@ public static partial class JsonSchemaEvaluation
 
     private static bool AppendQuotedInteger(int value, Span<byte> buffer, ref int written)
     {
-        if (buffer.Length < 3)
+        if (buffer.Length - written < 4)
         {
             written = 0;
             return false;
         }
 
+        buffer[written++] = (byte)' ';
         buffer[written++] = (byte)'\'';
         if (!Utf8Formatter.TryFormat(value, buffer.Slice(written), out int bytesWritten))
         {
