@@ -75,10 +75,12 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         using ECDsa first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
+        // The keys come first: the create gate refuses a second owner group while any tenant environment is unsealed,
+        // so seeding zeus before sealing production would fail here for a reason this test is not about.
         await CreateEnvironmentAsync(host, "production", "acme");
-        await CreateEnvironmentAsync(host, "staging", "zeus");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
         await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        await CreateEnvironmentAsync(host, "staging", "zeus");
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -87,26 +89,42 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
     }
 
     [TestMethod]
-    public async Task An_environment_whose_only_generation_is_retired_does_not_hold_the_count()
+    public async Task A_retired_generation_does_not_count_as_the_other_active_one()
     {
-        // "At least one ACTIVE generation", not "at least one generation". Retire the only generation while
-        // single-tenant (allowed), then register and retire a second one after the second owner group arrives: the
-        // second retirement must be refused, because the retired first generation protects nothing.
+        // The ACTIVE predicate at the retirement gate. With k1 retired and k2 active, k2 IS the last active
+        // generation, so retiring it must be refused even though the environment still holds two generations.
         await using Host host = await StartAsync();
         using ECDsa first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
+        await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        await CreateEnvironmentAsync(host, "staging", "zeus");
+
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        await CreateEnvironmentAsync(host, "staging", "zeus");
-        // Asserted, not fired and forgotten. An unasserted setup call that silently fails turns the real assertion
-        // below into a test of the wrong thing — which is exactly how the base64 schema defect stayed hidden.
-        HttpResponseMessage registered = await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
-        registered.StatusCode.ShouldBe(HttpStatusCode.OK, await registered.Content.ReadAsStringAsync());
-
         (await host.PostAsync("/environments/production/keys/k2/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
+    public async Task The_two_gates_compose_so_an_unsealed_multi_tenant_state_is_unreachable()
+    {
+        // The create gate refuses a second owner group while anything is unsealed; the retirement gate refuses
+        // unsealing while a second owner group exists. Neither ordering reaches "two owner groups, nothing sealed",
+        // which is the state phase A exists to keep out. Asserted through the API rather than argued in prose.
+        await using Host host = await StartAsync();
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+        await CreateEnvironmentAsync(host, "production", "acme");
+
+        // Order one: try to onboard the second group first. Refused, because production holds no active key.
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Order two: seal, onboard, then try to unseal. The onboarding succeeds and the unsealing is refused.
+        (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [TestMethod]

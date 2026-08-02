@@ -29,9 +29,41 @@ public struct OwnerGroupProbe : IDisposable
     private int firstLength;
     private bool seenFirst;
     private bool foundSecond;
+    private bool foundUnsealed;
 
-    /// <summary>Gets a value indicating whether environments belonging to two different owner groups have been seen.</summary>
+    /// <summary>
+    /// Creates a probe already holding <paramref name="ownerGroup"/> as the first group seen, so that
+    /// <see cref="MoreThanOne"/> answers "does any environment belong to a group other than this one".
+    /// </summary>
+    /// <param name="ownerGroup">The reference owner group, as unescaped UTF-8.</param>
+    /// <returns>The seeded probe, which the caller disposes.</returns>
+    /// <remarks>
+    /// The create gate asks a relative question ("is someone else already here") and the retirement gate asks an
+    /// absolute one ("is anyone else here at all"). Seeding turns the first into the second, so both run the same scan
+    /// and cannot drift apart in what they count.
+    /// </remarks>
+    public static OwnerGroupProbe SeededWith(ReadOnlySpan<byte> ownerGroup)
+    {
+        OwnerGroupProbe probe = default;
+        if (!ownerGroup.IsEmpty)
+        {
+            probe.Remember(ownerGroup);
+        }
+
+        return probe;
+    }
+
+    /// <summary>Gets a value indicating whether environments belonging to two different owner groups have been seen.
+    /// On a probe from <see cref="SeededWith"/>, that means a group other than the seeded one exists.</summary>
     public readonly bool MoreThanOne => this.foundSecond;
+
+    /// <summary>Gets a value indicating whether any tenant-owned environment holds no ACTIVE key generation.</summary>
+    /// <remarks>
+    /// An environment carrying no owner group is not tenant-owned and is not counted: it belongs to nobody the gate
+    /// can name, so requiring it to be sealed would block onboarding on a row no tenant claims. The platform
+    /// environment is excluded for the separate reason that decision 10 makes it permanently unsealed.
+    /// </remarks>
+    public readonly bool AnyUnsealedTenantEnvironment => this.foundUnsealed;
 
     /// <summary>
     /// Observes one batch of environments, returning whether a second distinct owner group is now known.
@@ -49,8 +81,11 @@ public struct OwnerGroupProbe : IDisposable
         ArgumentNullException.ThrowIfNull(environments);
 
         // Indexed rather than foreach: enumerating an IReadOnlyList<T> goes through the interface and allocates an
-        // enumerator per page, which is one allocation per page for a scan whose whole point is to stay cheap.
-        for (int i = 0; i < environments.Count && !this.foundSecond; ++i)
+        // enumerator per page, which is one allocation per page for a scan whose whole point is to stay cheap. The
+        // page is walked in full rather than stopping at the first second-group hit, because a caller may still need
+        // the sealed answer; deciding when to stop PAGING is the caller's, since the two gates stop on different
+        // conditions.
+        for (int i = 0; i < environments.Count; ++i)
         {
             Environment environment = environments[i];
             if (!IsPlatform(environment))
@@ -79,10 +114,13 @@ public struct OwnerGroupProbe : IDisposable
     public static bool IsPlatform(in Environment environment)
         => environment.Platform.IsNotUndefined() && (bool)environment.Platform;
 
+    private static ReadOnlySpan<byte> ActiveUtf8 => "Active"u8;
+
     // Folds one environment's owner group into the probe. The tag value is read, compared, and copied entirely inside
     // the enumeration: CurrentValue may point into the enumerator's pooled unescape scratch, which Dispose returns.
     private void Observe(in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
     {
+        bool tenantOwned = false;
         SecurityTagSet.Utf8Enumerator e = environment.ManagementTagsValue.EnumerateUtf8();
         try
         {
@@ -93,6 +131,7 @@ public struct OwnerGroupProbe : IDisposable
                     continue;
                 }
 
+                tenantOwned = true;
                 if (!this.seenFirst)
                 {
                     this.Remember(e.CurrentValue);
@@ -102,13 +141,33 @@ public struct OwnerGroupProbe : IDisposable
                     this.foundSecond = true;
                 }
 
-                return;
+                break;
             }
         }
         finally
         {
             e.Dispose();
         }
+
+        if (tenantOwned && !this.foundUnsealed && !HasActiveGeneration(environment))
+        {
+            this.foundUnsealed = true;
+        }
+    }
+
+    // Whether the environment holds at least one ACTIVE generation. Retired generations protect nothing, so an
+    // environment whose only generations are retired counts as unsealed.
+    private static bool HasActiveGeneration(in Environment environment)
+    {
+        foreach (Environment.EnvironmentKeyGeneration generation in Environment.Enumerate(environment.KeyGenerations))
+        {
+            if (generation.State.ValueEquals(ActiveUtf8))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void Remember(ReadOnlySpan<byte> ownerGroup)

@@ -51,6 +51,11 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     // and authorize-time isolation floors still apply on that host).
     private readonly IRunnerRegistry? runners;
     private readonly IEnvironmentRunnerAuthorizationStore? runnerAuthorizations;
+    private readonly ControlPlaneSecurityMode securityMode;
+
+    // See TenancyInvariantRefusesAsync: the scan is O(environments) for the same reason the key handler's is, and the
+    // CAS'd owner-group row that replaces it is the next piece of phase A.
+    private const int TenancyScanPageSize = 200;
 
     // The audited resource kind for every governance write on this surface (design §850).
     private const string TargetKind = "environment";
@@ -72,7 +77,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null)
+    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ControlPlaneSecurityMode securityMode = ControlPlaneSecurityMode.Open)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
@@ -86,6 +91,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         this.auditLogger = auditLogger;
         this.runners = runners;
         this.runnerAuthorizations = runnerAuthorizations;
+        this.securityMode = securityMode;
     }
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the configured actor.
@@ -173,6 +179,14 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         {
             return CreateEnvironmentResult.BadRequest(
                 Problem("management-out-of-reach", "Management scope out of reach", 400, "The environment's management tags are outside your own management reach."), workspace);
+        }
+
+        // ADR 0065 tenancy invariant: refuse a write that would introduce a second owner group while phase A leaves
+        // the control plane sole custodian of every tenant's plaintext.
+        if (await this.TenancyInvariantRefusesAsync(managementTags, cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "environment.create", this.AuditActor(), TargetKind, (string)body.Name, "refused-tenancy-invariant");
+            return CreateEnvironmentResult.Conflict(TenancyInvariantProblem(), workspace);
         }
 
         string name = (string)body.Name;
@@ -566,6 +580,129 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     // The caller's deployment identity (the internal tags the row-security policy stamps for the current principal). Empty
     // when unscoped, so the current-administrator membership check refuses every governance mutation.
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
+
+    // ADR 0065's write-time tenancy invariant, evaluated on the paths that introduce an owner group.
+    //
+    // The rule differs by whether the mode isolates reach, because the gate's premise is that encryption compensates
+    // for shared infrastructure, and that premise holds only where reach isolation already prevents a cross-owner read
+    // through the API. ScopesOnly grants unrestricted reach, so a second owner group reads the first's runs through
+    // the governance API whatever is encrypted at rest, and is refused outright. Scoped and RowSecurityOnly isolate
+    // reach, so a second group is refused only while some tenant-owned environment holds no ACTIVE key. Open
+    // authenticates nobody, so there is no owner group to distinguish and the invariant is vacuous by construction.
+    //
+    // RESIDUAL RACE, deliberately recorded rather than implied away: this reads the population and decides, so two
+    // concurrent creates introducing two DIFFERENT owner groups can both observe a single-group deployment and both
+    // commit. Closing it needs the distinct groups held in one row that every introducing write compare-and-swaps,
+    // which is the next piece of phase A. Until that row exists this refuses the sequential case and not the
+    // simultaneous one.
+    private async ValueTask<bool> TenancyInvariantRefusesAsync(SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (this.securityMode == ControlPlaneSecurityMode.Open)
+        {
+            return false;
+        }
+
+        byte[]? owner = null;
+        int ownerLength = 0;
+        try
+        {
+            // The caller's own owner group, copied out of the resolved tag set before any scan begins.
+            SecurityTagSet.Utf8Enumerator tags = managementTags.EnumerateUtf8();
+            try
+            {
+                ReadOnlySpan<byte> ownerKey = this.access.OwnerGroupTagKeyUtf8;
+                while (tags.MoveNext())
+                {
+                    if (tags.CurrentKey.SequenceEqual(ownerKey) && !tags.CurrentValue.IsEmpty)
+                    {
+                        owner = ArrayPool<byte>.Shared.Rent(tags.CurrentValue.Length);
+                        tags.CurrentValue.CopyTo(owner);
+                        ownerLength = tags.CurrentValue.Length;
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                tags.Dispose();
+            }
+
+            // A caller with no owner group introduces none, so there is nothing for the invariant to refuse.
+            if (owner is null)
+            {
+                return false;
+            }
+
+            OwnerGroupProbe probe = OwnerGroupProbe.SeededWith(owner.AsSpan(0, ownerLength));
+            try
+            {
+                bool scopesOnly = this.securityMode == ControlPlaneSecurityMode.ScopesOnly;
+                ParsedJsonDocument<JsonString>? token = null;
+                try
+                {
+                    while (true)
+                    {
+                        using EnvironmentPage page = await this.store.ListAsync(
+                            AccessContext.System, TenancyScanPageSize, token?.RootElement ?? default, cancellationToken).ConfigureAwait(false);
+
+                        // The key span is read AFTER the await rather than held across it: a ReadOnlySpan cannot live
+                        // across an await boundary, and the property hands back the policy's cached UTF-8 either way.
+                        probe.Observe(page.Environments, this.access.OwnerGroupTagKeyUtf8);
+
+                        // ScopesOnly needs only "is someone else here"; the reach-isolating modes also need to know
+                        // whether anything is unsealed, so they keep reading until both are settled.
+                        if (probe.MoreThanOne && (scopesOnly || probe.AnyUnsealedTenantEnvironment))
+                        {
+                            return true;
+                        }
+
+                        ReadOnlySpan<byte> next = page.NextPageToken.Span;
+                        if (next.IsEmpty)
+                        {
+                            return false;
+                        }
+
+                        token?.Dispose();
+                        token = QuoteToken(next);
+                    }
+                }
+                finally
+                {
+                    token?.Dispose();
+                }
+            }
+            finally
+            {
+                probe.Dispose();
+            }
+        }
+        finally
+        {
+            if (owner is not null)
+            {
+                ArrayPool<byte>.Shared.Return(owner);
+            }
+        }
+    }
+
+    // Wraps a continuation token's UTF-8 as a JSON string value in a pooled document the caller owns. The page's own
+    // token is pooled and freed when the page disposes, so it cannot be carried into the next call as it stands.
+    private static ParsedJsonDocument<JsonString> QuoteToken(ReadOnlySpan<byte> token)
+    {
+        int length = token.Length + 2;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        rented[0] = (byte)'"';
+        token.CopyTo(rented.AsSpan(1));
+        rented[token.Length + 1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(rented.AsMemory(0, length), rented);
+    }
+
+    private static Models.ProblemDetails.Source TenancyInvariantProblem()
+        => Problem(
+            "tenancy-invariant",
+            "Second owner group refused",
+            409,
+            "This deployment cannot yet serve a second owner group: it holds tenant data in the clear, and an environment without an active checkpoint key offers nothing to protect it. Register a key generation for every environment first.");
 
     // ── environment-summary list projection (congruent whole-document From) ─────────────────────────────────────────
     private static void BuildEnvironments(in IReadOnlyList<Environment> environments, ref Models.EnvironmentList.EnvironmentSummaryArray.Builder array)
