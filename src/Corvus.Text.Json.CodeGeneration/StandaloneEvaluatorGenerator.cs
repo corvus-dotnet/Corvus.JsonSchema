@@ -4298,8 +4298,12 @@ internal static partial class StandaloneEvaluatorGenerator
 
     private static void EmitNamespaceOpen(GenerationContext ctx, string ns)
     {
-        ctx.AppendLine($"namespace {ns};");
-        ctx.AppendLine();
+        // An empty namespace means the global namespace: no namespace declaration is emitted.
+        if (ns.Length != 0)
+        {
+            ctx.AppendLine($"namespace {ns};");
+            ctx.AppendLine();
+        }
     }
 
     private static void EmitClassOpen(GenerationContext ctx, string className)

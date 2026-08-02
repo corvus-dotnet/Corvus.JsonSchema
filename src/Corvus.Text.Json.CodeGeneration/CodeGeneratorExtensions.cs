@@ -392,11 +392,17 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        return generator
-            .Append("namespace ")
-            .Append(ns)
-            .AppendLine(";")
-            .PushMemberScope(ns, ScopeType.TypeContainer);
+        // An empty namespace means the global namespace: no namespace declaration
+        // is emitted, but the member scope is still pushed so that Begin/End pairing holds.
+        if (ns.Length != 0)
+        {
+            generator
+                .Append("namespace ")
+                .Append(ns)
+                .AppendLine(";");
+        }
+
+        return generator.PushMemberScope(ns, ScopeType.TypeContainer);
     }
 
     /// <summary>

@@ -477,7 +477,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
             name = currentName;
         }
 
-        fullyQualifiedName = $"{options.DefaultNamespace}.{name}";
+        fullyQualifiedName = options.DefaultNamespace.Length == 0 ? name : $"{options.DefaultNamespace}.{name}";
         namedTypes.NamedTypeMap.Add(key, fullyQualifiedName);
 
         if (rootNamespaceGenerator is null)
@@ -497,9 +497,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
                     "global::System.Buffers.Text",
                     "global::System.Runtime.CompilerServices",
                     "global::Corvus.Text.Json",
-                    "global::Corvus.Text.Json.Internal")
+                    "global::Corvus.Text.Json.Internal");
 
-                .AppendLineIndent("namespace " + options.DefaultNamespace, ";");
+            if (options.DefaultNamespace.Length != 0)
+            {
+                rootNamespaceGenerator.AppendLineIndent("namespace " + options.DefaultNamespace, ";");
+            }
         }
 
         emitter(rootNamespaceGenerator, name);
