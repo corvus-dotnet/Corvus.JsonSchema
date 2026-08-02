@@ -75,6 +75,11 @@ public static class ControlPlaneEndpointExtensions
     /// An optional predicate deciding whether a requester is eligible to self-elevate a request (§16.5.3); when it
     /// returns <see langword="true"/> the request is auto-approved without a human approver. Default: never eligible.
     /// </param>
+    /// <param name="ownerGroupClaimType">The claim type carrying the caller's owner group (default <c>tenant</c>), used
+    /// to stamp ownership in a mode that authenticates but configures no <paramref name="rowSecurity"/> policy — a
+    /// policy, where present, derives identity itself and this is not consulted. Pass <see langword="null"/> to stamp no
+    /// ownership. A principal carrying no such claim also stamps none, which means the deployment cannot tell owner
+    /// groups apart and therefore has one (ADR 0065).</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// Authentication is always the host's concern: the control plane depends only on a <c>ClaimsPrincipal</c>
@@ -92,7 +97,8 @@ public static class ControlPlaneEndpointExtensions
         WorkflowApprovalOptions? workflowApproval = null,
         Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null,
         INativeBuildJobStore? nativeBuildJobStore = null,
-        IWorkflowDeploymentStore? workflowDeploymentStore = null)
+        IWorkflowDeploymentStore? workflowDeploymentStore = null,
+        string? ownerGroupClaimType = "tenant")
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -129,10 +135,13 @@ public static class ControlPlaneEndpointExtensions
         // authenticates, so the accessor is a hard requirement there: without it a handler cannot name the actor it
         // records, and ownership cannot be determined at all. Missing registration fails construction here rather
         // than degrading silently at the first request, matching how ADR 0016 validates the mode/policy pairing.
+        // Ownership is stamped independently of reach (ADR 0065): where there is no policy to derive an identity from,
+        // the owner-group claim supplies one, so a mode that authenticates can still say which owner group created a
+        // row. Where there IS a policy, it owns the answer and the claim is not consulted.
         ControlPlaneAccess access = securityMode == ControlPlaneSecurityMode.Open
             ? new ControlPlaneAccess()
             : effectivePolicy is null
-                ? new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>())
+                ? new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), ownerGroupClaimType)
                 : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
 
         // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a

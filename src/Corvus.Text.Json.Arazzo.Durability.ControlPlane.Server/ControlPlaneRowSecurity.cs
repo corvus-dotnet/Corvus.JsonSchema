@@ -32,6 +32,11 @@ public abstract class ControlPlaneRowSecurityPolicy
 {
     private byte[]? internalTagPrefixUtf8;
 
+    // A shell with no mandated rules reserves only the prefix (its documented degenerate form), so the default
+    // validation below refuses the reserved keyspace through the same validator, and reports the same message, that a
+    // shell-backed deployment uses. Built once per policy instance from this policy's own configured prefix.
+    private SecurityShell? reservedKeyspace;
+
     /// <summary>
     /// Resolves the caller's access grant from the authenticated principal. The grant's per-verb reach scopes
     /// every list/search and gates each single-row read/write/purge — there is no unscoped path. Return
@@ -63,16 +68,22 @@ public abstract class ControlPlaneRowSecurityPolicy
     public virtual IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal) => [];
 
     /// <summary>
-    /// Validates user-supplied security tags before a row is created (e.g. rejecting the reserved internal prefix
-    /// via <see cref="SecurityShell.ValidateUserTags(SecurityTagSet)"/>). The default accepts everything.
+    /// Validates user-supplied security tags before a row is created. The default refuses any tag whose key carries
+    /// this policy's reserved internal prefix; override to add rules of your own.
     /// </summary>
     /// <param name="userTags">The security tags supplied through the user-facing API, as a (typically non-owning)
-    /// <see cref="SecurityTagSet"/> over the request body — string-free so the default (and the prefix-rejection
-    /// validator) need not materialize a tag list.</param>
+    /// <see cref="SecurityTagSet"/> over the request body — string-free so the default need not materialize a tag list
+    /// (the offending key becomes a string only on the rejection path).</param>
     /// <exception cref="ArgumentException">A user tag is not permitted (e.g. it uses the reserved internal prefix).</exception>
+    /// <remarks>
+    /// This default used to accept everything, leaving the reserved keyspace guarded only by whatever the deployment's
+    /// policy happened to do. That keyspace carries the deployment's own stamps — the identity the §7.7/§15
+    /// administrator gate matches and, under ADR 0065, the owner group — so a client that can write into it can name
+    /// itself into someone else's. Refusing it is the policy-independent floor; a deployment opts out deliberately by
+    /// overriding, not by omission.
+    /// </remarks>
     public virtual void ValidateUserTags(SecurityTagSet userTags)
-    {
-    }
+        => (this.reservedKeyspace ??= new SecurityShell([], this.InternalTagPrefix)).ValidateUserTags(userTags);
 
     /// <summary>Whether a security-tag key (as unescaped UTF-8) is deployment-internal — its key carries the reserved
     /// prefix. The span-based check used to strip internal tags from client responses (§14.2), so it never materializes
@@ -274,6 +285,10 @@ public abstract class ControlPlaneRowSecurityPolicy
 /// </summary>
 internal sealed class ControlPlaneAccess
 {
+    // With no policy there is no configured prefix, so the reserved keyspace is the default one. Shared across
+    // requests: a shell with no mandated rules is immutable and holds only the prefix.
+    private static readonly SecurityShell DefaultReservedKeyspace = new([]);
+
     private readonly IHttpContextAccessor? httpContextAccessor;
     private readonly ControlPlaneRowSecurityPolicy? policy;
 
@@ -288,16 +303,29 @@ internal sealed class ControlPlaneAccess
     /// principal to see).
     /// </summary>
     /// <param name="httpContextAccessor">The accessor used to read the current request's principal.</param>
+    /// <param name="ownerGroupClaimType">The claim type carrying the caller's owner group, or <see langword="null"/> to
+    /// stamp no ownership.</param>
     /// <remarks>
-    /// Reach is unaffected: with no policy, <see cref="Current"/> still resolves to <see cref="AccessContext.System"/>
-    /// and <see cref="InternalTags"/> is still empty. What this adds is that a handler can identify <em>who</em> is
-    /// acting. Without it, an audit actor in <c>ScopesOnly</c> degrades to a constant, and ownership cannot be
-    /// determined at all, which is what made ADR 0065's tenancy invariant unevaluable in that mode.
+    /// <para>Reach is unaffected: with no policy, <see cref="Current"/> still resolves to
+    /// <see cref="AccessContext.System"/>. What this adds is that a handler can identify <em>who</em> is acting.
+    /// Without it, an audit actor in <c>ScopesOnly</c> degrades to a constant, and ownership cannot be determined at
+    /// all, which is what made ADR 0065's tenancy invariant unevaluable in that mode.</para>
+    /// <para>Ownership and reach are different questions (ADR 0065), so <see cref="InternalTags"/> resolves the owner
+    /// group from <paramref name="ownerGroupClaimType"/> here even though the deployment supplied no policy. A
+    /// principal carrying no such claim stamps nothing: the deployment cannot tell owner groups apart, so it has one,
+    /// and stamping the subject instead would make every individual user its own tenant.</para>
+    /// <para>This is expressed as a real (internal) policy rather than as a special case beside a null one. Every
+    /// member that reads the deployment's identity conventions — is this key internal, strip its prefix, describe it
+    /// as a grant, resolve a grantee — short-circuits when there is no policy, on the premise that a deployment
+    /// without one stamps no internal tags. Stamping an owner group falsifies that premise, and a stamp the response
+    /// filter no longer recognises as internal is a stamp it stops stripping. A policy whose reach is
+    /// <see cref="AccessContext.System"/> keeps every one of those members on its normal path.</para>
     /// </remarks>
-    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor)
+    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor, string? ownerGroupClaimType)
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
         this.httpContextAccessor = httpContextAccessor;
+        this.policy = string.IsNullOrEmpty(ownerGroupClaimType) ? null : new OwnerClaimPolicy(ownerGroupClaimType);
     }
 
     /// <summary>Initializes a scoped instance backed by a deployment policy.</summary>
@@ -321,14 +349,38 @@ internal sealed class ControlPlaneAccess
     /// <returns>The caller's access grant.</returns>
     public AccessContext Current() => this.policy is null ? AccessContext.System : this.policy.Resolve(this.Principal);
 
-    /// <summary>Returns the internal tags to stamp onto a row the current principal creates.</summary>
-    /// <returns>The internal tags; empty when unscoped or none configured.</returns>
+    /// <summary>Returns the internal tags to stamp onto a row the current principal creates — the caller's deployment
+    /// identity, which is also what the §7.7/§15 current-administrator gate matches against.</summary>
+    /// <returns>The internal tags; empty when the deployment authenticates nobody, or when an authenticated principal
+    /// carries no owner-group claim.</returns>
+    /// <remarks>
+    /// A deployment-supplied policy owns the answer outright (it may stamp several dimensions, and a deployment that
+    /// has one has already said how identity is derived). Only in its absence does the owner-group claim supply one,
+    /// through the internal policy the constructor builds, so the two paths cannot disagree about who owns a row.
+    /// </remarks>
     public IReadOnlyList<SecurityTag> InternalTags() => this.policy?.GetInternalTags(this.Principal) ?? [];
 
-    /// <summary>Validates user-supplied security tags for the current principal (no-op when unscoped).</summary>
+    /// <summary>Validates user-supplied security tags for the current principal: the reserved internal keyspace is
+    /// refused whatever the deployment's posture, then the policy applies any further rules of its own.</summary>
     /// <param name="userTags">The user-supplied security tags.</param>
     /// <exception cref="ArgumentException">A user tag is not permitted.</exception>
-    public void ValidateUserTags(SecurityTagSet userTags) => this.policy?.ValidateUserTags(userTags);
+    /// <remarks>
+    /// The prefix check cannot be left to the policy. With no policy this was a no-op, so a client could supply
+    /// <c>sys:tenant=…</c> in a create body and have it stamped verbatim — naming itself into another owner group. In
+    /// the reach-enforcing modes the reach check caught that as a side effect (a tag outside your own reach is refused),
+    /// but <c>ScopesOnly</c> grants unrestricted reach, so nothing caught it there. The keyspace belongs to the
+    /// deployment in every mode, so the refusal belongs here rather than in an optional collaborator.
+    /// </remarks>
+    public void ValidateUserTags(SecurityTagSet userTags)
+    {
+        if (this.policy is { } p)
+        {
+            p.ValidateUserTags(userTags);
+            return;
+        }
+
+        DefaultReservedKeyspace.ValidateUserTags(userTags);
+    }
 
     /// <summary>Whether a security-tag key (as unescaped UTF-8) is deployment-internal and must be stripped from client
     /// responses (§14.2). An unscoped deployment stamps no internal tags, so nothing is internal.</summary>
@@ -423,6 +475,32 @@ internal sealed class ControlPlaneAccess
         var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
         workspace.TakeOwnership(stripped);
         return stripped.RootElement;
+    }
+
+    /// <summary>
+    /// The identity conventions a deployment gets when it authenticates but supplies no row-security policy: reach
+    /// stays unrestricted, and the caller's owner group is read from a declared claim (ADR 0065). Everything else —
+    /// the reserved prefix, tag validation, grant description, grantee resolution — is the base policy's default, so
+    /// the owner stamp is treated as internal everywhere a deployment-supplied policy's stamp would be.
+    /// </summary>
+    /// <param name="claimType">The claim type carrying the caller's owner group.</param>
+    private sealed class OwnerClaimPolicy(string claimType) : ControlPlaneRowSecurityPolicy
+    {
+        // The dimension an owner group is stamped under. Fixed rather than derived from the claim type, so an owner
+        // group read from a claim named 'tid' or 'org' still lands on the house 'tenant' dimension a §16.5.4 team
+        // grant names; otherwise a grant and the stamp it is meant to match would key on different dimensions. Both
+        // operands are compile-time constants, so this folds to the literal "sys:tenant".
+        private const string OwnerGroupTagKey = SecurityShell.DefaultInternalPrefix + "tenant";
+
+        /// <inheritdoc/>
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
+
+        /// <inheritdoc/>
+        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal)
+        {
+            string? owner = principal?.FindFirst(claimType)?.Value;
+            return string.IsNullOrEmpty(owner) ? [] : [new SecurityTag(OwnerGroupTagKey, owner)];
+        }
     }
 
     // Whether the set carries any deployment-internal tag (string-free span scan).
