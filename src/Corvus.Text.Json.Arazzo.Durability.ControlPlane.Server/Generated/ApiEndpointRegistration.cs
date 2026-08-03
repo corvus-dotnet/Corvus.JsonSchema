@@ -12280,7 +12280,7 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __AuthorizeRunnerEndpoint = app.MapPost("/environments/{name}/runners/{runnerId}/authorization", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationGrant>? bodyDoc = null;
             try
             {
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
@@ -12333,7 +12333,7 @@ public static class ApiEndpointRegistration
                 {
                     try
                     {
-                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationGrant>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
                     catch
                     {

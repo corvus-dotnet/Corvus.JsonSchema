@@ -91,24 +91,63 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
-    public async Task Authorizing_a_runner_that_never_registered_pre_authorizes_it()
+    public async Task Authorizing_a_runner_that_never_registered_pre_authorizes_the_named_principal()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        // Pre-authorization (§5.5): the admin allow-lists a runner that has NOT registered yet → an Authorized record is
-        // created directly, attributed to the admin (createdBy + decidedBy = acme), rather than 404-ing.
-        using Stj.JsonDocument preauth = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-expected/authorization", "acme"));
+        // Pre-authorization (§5.5, hardened by ADR 0065 decision 2): the admin allow-lists a runner that has NOT
+        // registered yet → an Authorized record is created directly, attributed to the admin (createdBy + decidedBy =
+        // acme), rather than 404-ing. It names the machine principal that will register, so the record is bound from the
+        // moment it exists.
+        using Stj.JsonDocument preauth = await ReadJsonAsync(await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/environments/production/runners/runner-expected/authorization",
+            """{"expectedPrincipal":"svc-runner-a"}""",
+            "acme"));
         preauth.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
         preauth.RootElement.GetProperty("runnerId").GetString().ShouldBe("runner-expected");
         preauth.RootElement.GetProperty("createdBy").GetString().ShouldBe("acme");
         preauth.RootElement.GetProperty("decidedBy").GetString().ShouldBe("acme");
+        preauth.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
 
-        // When the runner later registers with a matching id, EnsurePendingAsync leaves the Authorized row unchanged, so
-        // the pre-authorized runner is dispatchable immediately with no second approval.
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization> afterRegister = await runnerAuth.EnsurePendingAsync("production", "runner-expected", "runner-expected", null, default);
+        // When the named runner later registers, the Authorized row is left unchanged, so it is dispatchable at once
+        // with no second approval.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> afterRegister = await runnerAuth.EnsurePendingAsync("production", "runner-expected", "runner-expected", "svc-runner-a", default);
         afterRegister.RootElement.IsAuthorized.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Pre_authorizing_without_naming_a_principal_is_refused()
+    {
+        // ADR 0065 decision 2: allow-listing a bare runner id hands the authorization to whichever principal registers
+        // first, and the id is chosen by an administrator rather than derived from anything secret. The decision must
+        // name who it is for.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-expected/authorization", "acme"))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // Nothing was created, so the id is still free for a properly named pre-authorization.
+        (await runnerAuth.GetAsync("production", "runner-expected", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Authorizing_a_registered_runner_needs_no_expected_principal()
+    {
+        // The name is only needed where there is nothing to compare against. A runner that has registered already proved
+        // which principal owns its id, so requiring the administrator to repeat it would be ceremony.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument authorized = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme"));
+        authorized.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        authorized.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
     }
 
     [TestMethod]
@@ -328,6 +367,25 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task A_refused_registration_leaves_the_victims_registry_row_untouched()
+    {
+        // ADR 0065 decision 2: an authorization row must exist before any registry row is written. The principal fence
+        // lives on the authorization, so writing the liveness row first means a foreign principal overwrites the
+        // victim's registration — its hosted versions, concurrency, isolation, and last-seen — and only then gets its
+        // 409. The refusal has to leave nothing behind.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1", maxConcurrency: 4), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1", maxConcurrency: 99), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        RunnerRegistration? registered = await host.Registry.GetAsync("runner-1", default);
+        registered.ShouldNotBeNull();
+        ((int)registered!.Value.MaxConcurrency).ShouldBe(4);
+    }
+
+    [TestMethod]
     public async Task Registering_for_an_unknown_environment_is_not_found()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
@@ -338,25 +396,33 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
-    public async Task A_pre_authorized_runner_registering_stays_authorized_without_binding_a_principal()
+    public async Task The_pre_authorized_principal_registers_into_it_and_no_other_can()
     {
+        // The squatting window ADR 0065 decision 2 closes: between an administrator's pre-authorization and the runner's
+        // arrival, the id must not be claimable by anyone else.
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/environments/production/runners/runner-expected/authorization",
+            """{"expectedPrincipal":"svc-runner-a"}""",
+            "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // The administrator pre-authorizes the runnerId by name (no principal bound yet).
-        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-expected/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Anyone else presenting that id is refused, and leaves no registry row behind.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-expected"), "svc-runner-b"))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await host.Registry.GetAsync("runner-expected", default)).ShouldBeNull();
 
-        // The runner registers presenting a principal: it is accepted and the row stays Authorized, but the pre-authorized
-        // row is never bound — its trust remains the administrator's name-based allow-listing (the documented §16.4 residual).
+        // The named principal registers into its own pre-authorization and is dispatchable at once.
         using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-expected"), "svc-runner-a"));
         registered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
-        registered.RootElement.TryGetProperty("principal", out _).ShouldBeFalse();
+        registered.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
     }
 
     // A minimal RunnerRegistrationRequest body: the runner's self-description (the server stamps environment/reachTags/lastSeenAt).
-    private static string RegisterBody(string runnerId)
-        => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[]}""";
+    private static string RegisterBody(string runnerId, int maxConcurrency = 4)
+        => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":{{maxConcurrency}},"transports":[],"hostedVersions":[]}""";
 
     [TestMethod]
     public async Task Revoking_an_authorized_runner_as_an_administrator_makes_it_revoked()

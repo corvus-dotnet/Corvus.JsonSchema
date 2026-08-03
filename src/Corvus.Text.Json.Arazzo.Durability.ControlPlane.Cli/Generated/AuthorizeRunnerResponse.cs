@@ -34,6 +34,11 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentRunnerAuthorizationView OkBody { get; private set; }
 
     /// <summary>
+    /// Gets the 400 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails BadRequestBody { get; private set; }
+
+    /// <summary>
     /// Gets the 403 response body.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ForbiddenBody { get; private set; }
@@ -67,6 +72,14 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
             var okDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentRunnerAuthorizationView>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
+            return response;
+        }
+
+        if (statusCode == 400)
+        {
+            var badRequestDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = badRequestDoc;
+            response.BadRequestBody = badRequestDoc.RootElement;
             return response;
         }
 
@@ -107,6 +120,23 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         if (this.StatusCode == 200)
         {
             result = this.OkBody;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to get the 400 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 400.</returns>
+    public bool TryGetBadRequest(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
+    {
+        if (this.StatusCode == 400)
+        {
+            result = this.BadRequestBody;
             return true;
         }
 
@@ -171,6 +201,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// </summary>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="matchOk">Handler for the 200 response.</param>
+    /// <param name="matchBadRequest">Handler for the 400 response.</param>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
@@ -178,6 +209,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentRunnerAuthorizationView, TResult> matchOk,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadRequest,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchConflict,
@@ -186,6 +218,11 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         if (this.StatusCode == 200)
         {
             return matchOk(this.OkBody);
+        }
+
+        if (this.StatusCode == 400)
+        {
+            return matchBadRequest(this.BadRequestBody);
         }
 
         if (this.StatusCode == 403)
@@ -214,6 +251,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="context">The context to pass to the handler.</param>
     /// <param name="matchOk">Handler for the 200 response.</param>
+    /// <param name="matchBadRequest">Handler for the 400 response.</param>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
@@ -222,6 +260,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentRunnerAuthorizationView, TContext, TResult> matchOk,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadRequest,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchConflict,
@@ -231,6 +270,11 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         if (this.StatusCode == 200)
         {
             return matchOk(this.OkBody, context);
+        }
+
+        if (this.StatusCode == 400)
+        {
+            return matchBadRequest(this.BadRequestBody, context);
         }
 
         if (this.StatusCode == 403)
@@ -268,6 +312,14 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
                     ThrowHelper.ThrowResponseBodyValidationFailed(200, SchemaValidationDetail.FormatResults(collector));
                 }
             }
+            else if (this.StatusCode == 400)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.BadRequestBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(400, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
             else if (this.StatusCode == 403)
             {
                 using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -300,6 +352,13 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
                 if (!this.OkBody.EvaluateSchema())
                 {
                     ThrowHelper.ThrowResponseBodyValidationFailed(200);
+                }
+            }
+            else if (this.StatusCode == 400)
+            {
+                if (!this.BadRequestBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(400);
                 }
             }
             else if (this.StatusCode == 403)

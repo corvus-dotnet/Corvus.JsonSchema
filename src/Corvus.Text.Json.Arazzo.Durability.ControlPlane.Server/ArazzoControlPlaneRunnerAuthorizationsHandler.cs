@@ -152,9 +152,17 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         bool preAuthorized = fetched is null;
         if (fetched is null)
         {
-            // Pre-authorization binds no machine principal (principal: null): the administrator is allow-listing a runnerId by
-            // name before any runner has authenticated a registration, so no verified §16.4 identity exists to stamp yet.
-            fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), principal: null, cancellationToken).ConfigureAwait(false);
+            // ADR 0065 decision 2: a pre-authorization names the machine principal it is allow-listing, never a bare id.
+            // Allow-listing an id alone hands the authorization to whichever principal registers first, and the id is
+            // chosen by an administrator rather than derived from anything secret, so it is guessable by anyone who can
+            // see how the deployment names its runners. Naming the principal makes the decision specific.
+            if (ExpectedPrincipal(parameters.Body) is not { } expectedPrincipal)
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-unnamed-pre-authorization");
+                return AuthorizeRunnerResult.BadRequest(UnnamedPreAuthorizationProblem(environment, runnerId), workspace);
+            }
+
+            fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), expectedPrincipal, cancellationToken).ConfigureAwait(false);
         }
 
         // ADR 0058 isolation floor at authorize time — belt-and-braces for the register-time floor. A runner passes the
@@ -257,21 +265,35 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RegisterRunnerResult.Conflict(InsufficientIsolationProblem(environment, requiredIsolation, registration.IsolationModelValue), workspace);
         }
 
-        await this.runners.RegisterAsync(registration, cancellationToken).ConfigureAwait(false);
-
+        // ADR 0065 decision 2: the authorization row is written FIRST, because the principal fence lives on it. Writing
+        // the liveness row first meant a foreign principal overwrote the victim's registration — its hosted versions,
+        // concurrency, isolation, and last-seen — and only then collected its 409, so the refusal left the damage behind.
+        // Ordering it this way makes a refused registration leave nothing at all.
+        ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization;
         try
         {
-            ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
-                await this.authorizations.EnsurePendingAsync(environment, runnerId, principal, principal, cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), authorization.RootElement.IsAuthorized ? "registered-authorized" : "registered-pending");
-            workspace.TakeOwnership(authorization);
-            return RegisterRunnerResult.Ok(ToView(authorization.RootElement), workspace);
+            authorization = await this.authorizations.EnsurePendingAsync(environment, runnerId, principal, principal, cancellationToken).ConfigureAwait(false);
         }
         catch (RunnerPrincipalConflictException)
         {
             GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-principal-conflict");
             return RegisterRunnerResult.Conflict(PrincipalConflictProblem(environment, runnerId), workspace);
         }
+
+        try
+        {
+            await this.runners.RegisterAsync(registration, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The authorization is the caller's only claim on the id and it survives; the pooled document does not.
+            authorization.Dispose();
+            throw;
+        }
+
+        GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), authorization.RootElement.IsAuthorized ? "registered-authorized" : "registered-pending");
+        workspace.TakeOwnership(authorization);
+        return RegisterRunnerResult.Ok(ToView(authorization.RootElement), workspace);
     }
 
     /// <inheritdoc/>
@@ -580,6 +602,14 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private static string? NoteReason(Models.RunnerAuthorizationDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
 
+    private static string? NoteReason(Models.RunnerAuthorizationGrant body)
+        => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
+
+    // The machine principal a pre-authorization allow-lists. Absent means the decision named none, which is refused when
+    // there is no row yet and irrelevant when there is: an already-registered runner has proved which principal owns its id.
+    private static string? ExpectedPrincipal(Models.RunnerAuthorizationGrant body)
+        => body.IsNotUndefined() && body.ExpectedPrincipal.IsNotUndefined() ? (string)body.ExpectedPrincipal : null;
+
     // A single-document response wraps the stored element with no materialization: EnvironmentRunnerAuthorizationView is
     // congruent with the persisted EnvironmentRunnerAuthorization (identical property names, types, and required set), so
     // From() is a pointer reinterpret and the body serializes the backing verbatim. The wrapped value references the pooled
@@ -710,6 +740,13 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private static Models.ProblemDetails.Source RunnerNotFoundProblem(string environment, string runnerId)
         => Problem("runner-authorization-not-found", "Runner authorization not found", 404, $"No runner '{runnerId}' has registered for environment '{environment}'.");
+
+    private static Models.ProblemDetails.Source UnnamedPreAuthorizationProblem(string environment, string runnerId)
+        => Problem(
+            "unnamed-pre-authorization",
+            "Pre-authorization must name a principal",
+            400,
+            $"No runner '{runnerId}' has registered for environment '{environment}', so this authorization pre-authorizes one. Name the machine principal it will register with in 'expectedPrincipal': allow-listing the id alone would hand the authorization to whichever principal registered first.");
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string environment)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of environment '{environment}'.");

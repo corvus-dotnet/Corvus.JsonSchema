@@ -156,8 +156,15 @@ The residual mechanics this guide owns, beyond the decision:
   private-key JWT, or mTLS), and the control plane binds the authorization to the trusted principal it derives
   from the token, not to a self-asserted `runnerId`; a registration presenting a principal that differs from the
   one already bound to a `runnerId` is refused (`409`). Both admission orders share the record: pre-authorization
-  (an administrator allow-lists a `runnerId`, an `Authorized` row with no bound principal) and
-  register-then-approve.
+  and register-then-approve.
+- **A pre-authorization names the principal it allow-lists.** An administrator authorizing a `runnerId` that has
+  not registered yet supplies `expectedPrincipal`, and the record is bound from the moment it exists. Allow-listing
+  the id alone would hand the authorization to whichever principal registered first, and the id is chosen by an
+  administrator rather than derived from anything secret, so it is guessable by anyone who knows how the deployment
+  names its runners. An unnamed pre-authorization is refused (`400`).
+- **A refused registration leaves nothing behind.** The authorization row is written before the liveness row,
+  because the principal fence lives on the authorization. The other order let a foreign principal overwrite the
+  victim's registration before collecting its `409`.
 - **Run-to-environment pinning.** `startCatalogWorkflowRun` takes a required `environment`, validated against
   the version's availability and the caller's reach; the run record and the dispatch index carry it, and the
   runner resolves that environment's credentials. Dispatch then admits a run pinned to environment E only to a
