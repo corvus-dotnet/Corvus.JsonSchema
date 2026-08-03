@@ -54,7 +54,9 @@ public sealed class WorkflowCheckpointEndpointsTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await response.Content.ReadAsByteArrayAsync()).ShouldBe(checkpoint);
         response.Headers.ETag.ShouldNotBeNull();
-        response.Headers.GetValues(SeqHeader).Single().ShouldBe("0");
+        // The row's own sequence, not a process-local counter: the load reads it from the stored document, so a fresh
+        // instance reports what the run has actually reached rather than zero.
+        response.Headers.GetValues(SeqHeader).Single().ShouldBe("1");
     }
 
     [TestMethod]
@@ -73,18 +75,23 @@ public sealed class WorkflowCheckpointEndpointsTests
     }
 
     [TestMethod]
-    public async Task Post_of_a_stale_sequence_is_a_benign_no_op()
+    public async Task Post_of_a_superseded_sequence_is_refused_and_names_the_accepted_one()
     {
         await using Host host = await Host.StartAsync();
-        byte[] newer = RealCheckpoint(WorkflowRunStatus.Running, cursor: 2);
-        byte[] older = RealCheckpoint(WorkflowRunStatus.Running, cursor: 1);
+        byte[] first = RealCheckpoint(WorkflowRunStatus.Running, cursor: 1, sequence: 1);
+        byte[] resend = RealCheckpoint(WorkflowRunStatus.Running, cursor: 2, sequence: 1);
 
-        (await host.PostCheckpointAsync(Run.Value, newer, sequence: 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.PostCheckpointAsync(Run.Value, first, sequence: 1)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-        // A late, lower-sequenced arrival still returns success (the caller only cares that the terminal committed) but
-        // does not regress the stored state.
-        (await host.PostCheckpointAsync(Run.Value, older, sequence: 1)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await host.Store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(newer);
+        // ADR 0065 decision 6: never a 204. This used to answer success on the grounds that the caller only cares
+        // whether the terminal committed, but a save reported as durable when it was dropped is indistinguishable from
+        // one that landed, and that is exactly what lets a runner's anchor commit to a checkpoint the store never took.
+        HttpResponseMessage refused = await host.PostCheckpointAsync(Run.Value, resend, sequence: 1);
+
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        refused.Headers.GetValues(SeqHeader).Single().ShouldBe("2");
+        (await refused.Content.ReadAsStringAsync()).ShouldContain("\"acceptedSequence\":2");
+        (await host.Store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(first);
     }
 
     [TestMethod]
@@ -142,7 +149,10 @@ public sealed class WorkflowCheckpointEndpointsTests
         loaded.ShouldNotBeNull();
         loaded!.Value.Utf8.ToArray().ShouldBe(initial);
 
-        byte[] advanced = RealCheckpoint(WorkflowRunStatus.Completed, cursor: 2);
+        // The advance carries the NEXT sequence. In production WorkflowRun seeds its series from the checkpoint it
+        // loaded and increments, so this is what a real function sends; the server accepts only persisted plus one, so
+        // re-sending 1 here would be refused exactly as a duplicate would.
+        byte[] advanced = RealCheckpoint(WorkflowRunStatus.Completed, cursor: 2, sequence: 2);
         await functionStore.SaveAsync(Run, advanced, ProjectIndex(advanced), default, default);
         await functionStore.FlushAsync(default);
 

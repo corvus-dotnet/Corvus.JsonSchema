@@ -118,10 +118,19 @@ public static class WorkflowCheckpointEndpoints
                     return;
                 }
 
-                CheckpointSaveOutcome outcome = await coordinator.SaveAsync(id, checkpointUtf8, index, sequence, context.RequestAborted).ConfigureAwait(false);
-                context.Response.StatusCode = outcome == CheckpointSaveOutcome.Conflict
-                    ? StatusCodes.Status409Conflict
-                    : StatusCodes.Status204NoContent; // Applied or Superseded — both succeed from the caller's view.
+                CheckpointSaveResult result = await coordinator.SaveAsync(id, checkpointUtf8, index, sequence, context.RequestAborted).ConfigureAwait(false);
+                context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
+                if (result.Outcome == CheckpointSaveOutcome.Applied)
+                {
+                    context.Response.StatusCode = StatusCodes.Status204NoContent;
+                    return;
+                }
+
+                // ADR 0065 decision 6: a superseded save answers 409 carrying the accepted sequence, never a 204. The
+                // two used to be the same response on the grounds that both "succeed from the caller's view", which is
+                // exactly the confusion the ADR forbids — a caller told its write is durable when it was dropped
+                // records a checkpoint the store does not hold, and nothing later can reconcile the two.
+                await WriteSupersededAsync(context, result).ConfigureAwait(false);
             }
             finally
             {
@@ -247,6 +256,23 @@ public static class WorkflowCheckpointEndpoints
             ArrayPool<byte>.Shared.Return(rented);
             throw;
         }
+    }
+
+    // The superseded response. It carries the accepted sequence in the body as well as the header so a caller can tell
+    // a duplicate resend (its own sequence is one behind) from a genuine divergence (it is further behind, or ahead)
+    // without a second round trip. The problem type matches the runner API contract's.
+    private static Task WriteSupersededAsync(HttpContext context, CheckpointSaveResult result)
+    {
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+        context.Response.ContentType = "application/problem+json";
+
+        // Every interpolated value is a fixed string or an integer, so this document needs no JSON escaping.
+        return context.Response.WriteAsync(
+            $"{{\"type\":\"https://corvus-oss.org/arazzo/runner/problems/checkpoint-superseded\"," +
+            $"\"title\":\"Checkpoint superseded\",\"status\":409," +
+            $"\"detail\":\"The proposed sequence was not the persisted sequence plus one. Nothing was written.\"," +
+            $"\"acceptedSequence\":{result.AcceptedSequence.ToString(CultureInfo.InvariantCulture)}}}",
+            context.RequestAborted);
     }
 
     private static Task WriteProblemAsync(HttpContext context, int status, string detail)

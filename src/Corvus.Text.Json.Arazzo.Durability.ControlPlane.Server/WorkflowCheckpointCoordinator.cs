@@ -83,6 +83,9 @@ public sealed class WorkflowCheckpointCoordinator
             // from the state the function just loaded. The applied sequence carries across advances on this runner so a
             // reused function instance keeps stamping monotonically.
             slot.Etag = checkpoint.Value.Etag;
+            slot.LastAppliedSequence = WorkflowCheckpointSerializer.TryReadSequence(checkpoint.Value.Utf8, out long persisted)
+                ? persisted
+                : 0;
             slot.Seeded = true;
             appliedSequence = slot.LastAppliedSequence;
         }
@@ -104,44 +107,49 @@ public sealed class WorkflowCheckpointCoordinator
     /// <param name="index">The index projected from the same bytes.</param>
     /// <param name="sequence">The save's monotonic per-run write-sequence.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The outcome — applied, superseded (a benign stale/out-of-order drop), or a conflict.</returns>
-    public async ValueTask<CheckpointSaveOutcome> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, long sequence, CancellationToken cancellationToken)
+    /// <returns>The outcome, and the sequence the store will accept next.</returns>
+    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, long sequence, CancellationToken cancellationToken)
     {
         RunSlot slot = this.GetSlot(id.Value);
         await slot.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (sequence <= slot.LastAppliedSequence)
-            {
-                // A stale or out-of-order fire-and-forget arrival: the single stored slot already holds this sequence or
-                // a newer one, so applying older bytes would regress it. Drop it — a lost interim checkpoint is a safe
-                // idempotent replay at worst, and the terminal always carries the highest sequence so it is never
-                // dropped here.
-                return CheckpointSaveOutcome.Superseded;
-            }
-
             if (!slot.Seeded)
             {
                 // No load preceded this save (a fresh run with no persisted checkpoint, or a slot swept between load and
-                // save). Seed the etag from the store so the write is conditioned correctly: None creates a new entry, a
-                // real etag overwrites the existing one.
+                // save). Seed the etag AND the persisted sequence from the store, so the write is conditioned correctly
+                // and the acceptance rule is evaluated against what the row actually holds rather than against a
+                // process-local counter that a restart reset to zero.
                 WorkflowCheckpoint? existing = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
                 slot.Etag = existing?.Etag ?? WorkflowEtag.None;
+                slot.LastAppliedSequence = existing is { } row && WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted)
+                    ? persisted
+                    : 0;
                 slot.Seeded = true;
+            }
+
+            // ADR 0065 decision 6: the server validates rather than assigns, accepting only the persisted sequence plus
+            // one. Both a stale arrival and a gap are refused, and the caller is told which sequence is accepted.
+            long accepted = slot.LastAppliedSequence + 1;
+            if (sequence != accepted)
+            {
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Superseded, accepted);
             }
 
             try
             {
                 slot.Etag = await this.store.SaveAsync(id, checkpointUtf8, index, slot.Etag, cancellationToken).ConfigureAwait(false);
                 slot.LastAppliedSequence = sequence;
-                return CheckpointSaveOutcome.Applied;
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Applied, sequence + 1);
             }
             catch (WorkflowConflictException)
             {
                 // The sole-writer invariant is broken (a lost or stolen lease, or a peer advancing the run): do not
                 // advance the slot, and surface the conflict so the run's outcome is not reported on this write — it
-                // stays claimable for idempotent re-invocation.
-                return CheckpointSaveOutcome.Conflict;
+                // stays claimable for idempotent re-invocation. The slot is now untrustworthy, so drop its seeding and
+                // let the next save re-read the row rather than deciding against a stale sequence.
+                slot.Seeded = false;
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
             }
         }
         finally
@@ -223,13 +231,22 @@ public sealed class WorkflowCheckpointCoordinator
 /// <param name="LastAppliedSequence">The highest write-sequence the coordinator has applied for this run, so the function continues past it.</param>
 public readonly record struct CheckpointLoad(ReadOnlyMemory<byte> Checkpoint, WorkflowEtag Etag, long LastAppliedSequence);
 
+/// <summary>The outcome of one checkpoint save, and the sequence the store will accept next.</summary>
+/// <param name="Outcome">What happened to the save.</param>
+/// <param name="AcceptedSequence">The sequence the store will accept next, which is its persisted sequence plus one.
+/// Carried on every outcome so a refused caller can tell a duplicate resend from a genuine divergence without a second
+/// round trip.</param>
+public readonly record struct CheckpointSaveResult(CheckpointSaveOutcome Outcome, long AcceptedSequence);
+
 /// <summary>The outcome of terminating a checkpoint save.</summary>
 public enum CheckpointSaveOutcome
 {
     /// <summary>The checkpoint was written to the store and is now the run's durable state.</summary>
     Applied,
 
-    /// <summary>The save was stale or out of order (its sequence was already met or exceeded) and was dropped as a benign no-op.</summary>
+    /// <summary>The proposed sequence was not the persisted sequence plus one, so nothing was written. The caller is
+    /// told, and told which sequence would be accepted: a superseded save reported as success is indistinguishable
+    /// from a durable write, which is what would let a runner's anchor commit to a checkpoint the store never took.</summary>
     Superseded,
 
     /// <summary>The store rejected the write on an etag conflict, signalling a broken sole-writer invariant; the run stays claimable.</summary>

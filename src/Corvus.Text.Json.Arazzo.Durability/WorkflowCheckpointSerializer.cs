@@ -465,18 +465,55 @@ public static class WorkflowCheckpointSerializer
     /// </remarks>
     public static bool TryReadSequence(ReadOnlyMemory<byte> checkpointUtf8, out long sequence)
     {
-        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
-        if (document.RootElement.TryGetProperty("sequence"u8, out JsonElement element)
-            && element.ValueKind == JsonValueKind.Number
-            && element.TryGetInt64(out long value))
+        try
         {
-            sequence = value;
-            return true;
+            // A forward-only scan that stops at the property, NOT a document parse. Parsing builds the metadata index
+            // for the whole checkpoint — step outputs, journal, tags — to read one integer, on the write that happens
+            // most often in the system. `sequence` is written fifth, so this reads a handful of tokens and returns;
+            // Skip() steps over any nested value without indexing it.
+            var reader = new Utf8JsonReader(checkpointUtf8.Span);
+            if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+            {
+                sequence = 0;
+                return false;
+            }
+
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                bool isSequence = reader.ValueTextEquals(SequenceUtf8);
+                if (!reader.Read())
+                {
+                    break;
+                }
+
+                if (isSequence)
+                {
+                    return reader.TokenType == JsonTokenType.Number
+                        ? reader.TryGetInt64(out sequence)
+                        : Absent(out sequence);
+                }
+
+                reader.Skip();
+            }
+        }
+        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
+        {
+            // Bytes that are not a checkpoint at all carry no sequence, which is what this reports. A Try method that
+            // threw on malformed input would turn a corrupt or foreign row into an exception on the load path, where
+            // the caller is asking a question it is entitled to get "no" for. Everything else still propagates.
         }
 
         sequence = 0;
         return false;
+
+        static bool Absent(out long sequence)
+        {
+            sequence = 0;
+            return false;
+        }
     }
+
+    private static ReadOnlySpan<byte> SequenceUtf8 => "sequence"u8;
 
     /// <summary>
     /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the

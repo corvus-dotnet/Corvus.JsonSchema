@@ -45,6 +45,15 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void Bytes_that_are_not_a_checkpoint_read_as_no_sequence_rather_than_throwing()
+    {
+        // A Try method that threw on malformed input would turn a corrupt or foreign row into an exception on the load
+        // path, where the caller is asking a question it is entitled to be told "no" to.
+        Assert.IsFalse(WorkflowCheckpointSerializer.TryReadSequence(new byte[] { 1, 2, 3 }, out long sequence));
+        Assert.AreEqual(0L, sequence);
+    }
+
+    [TestMethod]
     public void A_document_without_a_sequence_reads_as_absent_rather_than_zero()
     {
         // Zero is a legitimate sequence for a genesis row, so "no sequence here" must be distinguishable from "sequence
