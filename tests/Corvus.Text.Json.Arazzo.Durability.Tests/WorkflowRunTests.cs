@@ -19,6 +19,36 @@ public sealed class WorkflowRunTests
     private static readonly TestTimeProvider Time = new(new DateTimeOffset(2026, 2, 2, 0, 0, 0, TimeSpan.Zero));
 
     [TestMethod]
+    public async Task A_resumed_run_continues_the_write_sequence()
+    {
+        // ADR 0065 decision 6: the server accepts only the persisted sequence plus one, so a run that restarted its
+        // series after a reload would propose sequences the store had already passed and have every save refused as
+        // superseded until it caught up. The series belongs to the run, not to the process that happens to hold it.
+        var store = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
+
+        using (var run = WorkflowRun.CreateNew(store, "run-seq", "wf", doc.RootElement, "development", Time))
+        {
+            await run.EnqueueAsync(default);
+            await run.CheckpointAsync(1, default);
+        }
+
+        WorkflowCheckpoint stored = (await store.LoadAsync("run-seq", default))!.Value;
+        WorkflowCheckpointSerializer.TryReadSequence(stored.Utf8, out long persisted).ShouldBeTrue();
+        persisted.ShouldBe(2);
+
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, "run-seq", Time))
+        {
+            resumed.ShouldNotBeNull();
+            await resumed!.CheckpointAsync(2, default);
+        }
+
+        WorkflowCheckpoint after = (await store.LoadAsync("run-seq", default))!.Value;
+        WorkflowCheckpointSerializer.TryReadSequence(after.Utf8, out long continued).ShouldBeTrue();
+        continued.ShouldBe(3);
+    }
+
+    [TestMethod]
     public void A_fresh_run_starts_empty()
     {
         var store = new InMemoryWorkflowStateStore();

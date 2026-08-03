@@ -18,6 +18,42 @@ public sealed class WorkflowCheckpointSerializerTests
     private static readonly DateTimeOffset CreatedAt = new(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
 
     [TestMethod]
+    public void The_write_sequence_round_trips_through_the_document()
+    {
+        // ADR 0065 decision 6: the server accepts only the persisted sequence plus one, so the persisted sequence has
+        // to be recoverable from the row. Holding it only in the writer's memory loses it across a restart and hides it
+        // from a second instance entirely, which turns the freshness check into a per-process opinion.
+        using var retryCounters = PooledUtf8Map<int>.Rent(1);
+        var correlationTokens = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(1);
+
+        byte[] bytes = WorkflowCheckpointSerializer.Serialize(
+            "run-1",
+            "petWorkflow",
+            WorkflowRunStatus.Running,
+            cursor: 3,
+            sequence: 42,
+            CreatedAt,
+            retryCounters,
+            correlationTokens,
+            default,
+            stepOutputs,
+            outputs: default);
+
+        Assert.IsTrue(WorkflowCheckpointSerializer.TryReadSequence(bytes, out long sequence));
+        Assert.AreEqual(42L, sequence);
+    }
+
+    [TestMethod]
+    public void A_document_without_a_sequence_reads_as_absent_rather_than_zero()
+    {
+        // Zero is a legitimate sequence for a genesis row, so "no sequence here" must be distinguishable from "sequence
+        // zero". Conflating them would let a malformed row present itself as the start of a run.
+        Assert.IsFalse(WorkflowCheckpointSerializer.TryReadSequence("""{"runId":"run-1"}"""u8.ToArray(), out long sequence));
+        Assert.AreEqual(0L, sequence);
+    }
+
+    [TestMethod]
     public void Round_trips_a_running_checkpoint()
     {
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -36,6 +72,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "petWorkflow",
             WorkflowRunStatus.Running,
             cursor: 3,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             correlationTokens,
@@ -88,6 +125,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "petWorkflow",
             WorkflowRunStatus.Faulted,
             cursor: 2,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -120,6 +158,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "wf",
             WorkflowRunStatus.Running,
             cursor: 1,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -147,6 +186,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "wf",
             WorkflowRunStatus.Completed,
             cursor: 9,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -172,6 +212,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "wf",
             WorkflowRunStatus.Pending,
             cursor: 0,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -252,6 +293,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "wf",
             WorkflowRunStatus.Suspended,
             cursor: 2,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -281,6 +323,7 @@ public sealed class WorkflowCheckpointSerializerTests
             "wf",
             WorkflowRunStatus.Running,
             cursor: 1,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),

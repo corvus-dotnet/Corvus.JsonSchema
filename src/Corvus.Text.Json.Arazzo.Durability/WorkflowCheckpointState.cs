@@ -21,6 +21,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         string workflowId,
         WorkflowRunStatus status,
         int cursor,
+        long sequence,
         DateTimeOffset createdAt,
         PooledUtf8Map<int> retryCounters,
         Dictionary<string, byte[]> correlationTokens,
@@ -43,6 +44,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.RunId = runId;
         this.WorkflowId = workflowId;
         this.Status = status;
+        this.Sequence = sequence;
         this.Cursor = cursor;
         this.CreatedAt = createdAt;
         this.RetryCounters = retryCounters;
@@ -74,6 +76,11 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the cursor (state-machine index of the next step to run).</summary>
     public int Cursor { get; }
+
+    /// <summary>Gets the per-run write sequence this checkpoint was persisted at (ADR 0065 decision 6). A resumed run
+    /// continues from it, so the sequence stays monotonic across the run's whole life rather than restarting whenever
+    /// the run is rehydrated.</summary>
+    public long Sequence { get; }
 
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }

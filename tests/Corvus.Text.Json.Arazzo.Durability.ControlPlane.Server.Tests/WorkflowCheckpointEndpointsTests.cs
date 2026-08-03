@@ -152,7 +152,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
-    private static byte[] RealCheckpoint(WorkflowRunStatus status, int cursor = 0)
+    private static byte[] RealCheckpoint(WorkflowRunStatus status, int cursor = 0, long sequence = 1)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -161,6 +161,7 @@ public sealed class WorkflowCheckpointEndpointsTests
             "petWorkflow",
             status,
             cursor,
+            sequence,
             new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
             retryCounters,
             new Dictionary<string, byte[]>(),

@@ -45,6 +45,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private WorkflowPauseConfig? pause;
     private int pauseStartCursor;
     private DateTimeOffset? resumeRequestedAt;
+    private long sequence;
 
     // ADR 0050: the per-step journal, accumulated by RecordStep and persisted in the checkpoint. Capped so a
     // pathological goto-loop cannot bloat the checkpoint; past the cap the oldest entries are dropped and the run
@@ -108,6 +109,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             ? new List<WorkflowStepJournalEntry>(restoredJournal)
             : [];
         this.journalTruncated = resumedState?.JournalTruncated ?? false;
+
+        // ADR 0065 decision 6: continue the persisted write sequence rather than restarting it. A resumed run that
+        // began again at zero would propose sequences the store had already passed, and every save would be refused as
+        // superseded until the series caught up.
+        this.sequence = resumedState?.Sequence ?? 0;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -566,11 +572,16 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         // One clock read stamps both records, so the checkpoint's own updatedAt and the index entry cannot drift.
         DateTimeOffset updatedAt = this.timeProvider.GetUtcNow();
 
+        // The run's own write sequence advances once per persisted checkpoint and is carried in the document, so a
+        // resumed run continues the series rather than restarting it (ADR 0065 decision 6).
+        long sequence = ++this.sequence;
+
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
             this.Id,
             this.WorkflowId,
             this.Status,
             this.Cursor,
+            sequence,
             this.createdAt,
             this.retryCounts,
             this.CorrelationTokens,

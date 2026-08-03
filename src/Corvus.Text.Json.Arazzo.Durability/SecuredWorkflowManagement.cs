@@ -737,12 +737,16 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 // Carry the immutable run-creation metadata (correlation id, pinned environment, tags) through the
                 // mutation — the run does not change environment when it is remediated, and dropping it here would make
                 // the run unclaimable (§5.5: a runner claims only runs pinned to exactly its environment).
+                // The stored write sequence is carried forward unchanged. This is a control-plane remediation, not a
+                // runner save (ADR 0065 decision 7), so it must not consume a sequence the runner is about to propose:
+                // advancing it here would refuse the runner's next legitimate save as superseded.
                 DateTimeOffset mutatedAt = this.timeProvider.GetUtcNow();
                 mutated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
                     WorkflowRunStatus.Faulted,
                     cursor,
+                    state.Sequence,
                     state.CreatedAt,
                     state.RetryCounters,
                     state.CorrelationTokens,

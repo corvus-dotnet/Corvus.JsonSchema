@@ -59,6 +59,7 @@ public sealed class WorkflowWorkerTests
             "wf",
             WorkflowRunStatus.Completed,
             cursor: 0,
+            sequence: 1,
             Start,
             retryCounters,
             new Dictionary<string, byte[]>(),

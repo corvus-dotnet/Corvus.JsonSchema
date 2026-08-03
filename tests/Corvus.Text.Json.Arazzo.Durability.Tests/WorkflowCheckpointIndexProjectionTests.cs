@@ -202,6 +202,7 @@ public sealed class WorkflowCheckpointIndexProjectionTests
             "petWorkflow",
             status,
             cursor: 1,
+            sequence: 1,
             CreatedAt,
             retryCounters,
             new Dictionary<string, byte[]>(),

@@ -57,6 +57,7 @@ public static class WorkflowCheckpointSerializer
         string workflowId,
         WorkflowRunStatus status,
         int cursor,
+        long sequence,
         DateTimeOffset createdAt,
         PooledUtf8Map<int> retryCounters,
         IReadOnlyDictionary<string, byte[]> correlationTokens,
@@ -93,6 +94,12 @@ public static class WorkflowCheckpointSerializer
             writer.WriteString("workflowId"u8, workflowId);
             writer.WriteString("status"u8, StatusName(status));
             writer.WriteNumber("cursor"u8, cursor);
+
+            // The per-run write sequence (ADR 0065 decision 6). It lives in the document rather than in the writer's
+            // memory because the server validates a proposed save against the PERSISTED value, and a value held only in
+            // memory is lost on restart and invisible to a second instance. It is authored here, by the party that
+            // authors the checkpoint, which is also where phase B's MAC'd runner region carries it.
+            writer.WriteNumber("sequence"u8, sequence);
             writer.WriteString("createdAt"u8, createdAt);
             if (updatedAt is { } stamped)
             {
@@ -281,6 +288,9 @@ public static class WorkflowCheckpointSerializer
             string workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
             WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
             int cursor = root.GetProperty("cursor"u8).GetInt32();
+            long sequence = root.TryGetProperty("sequence"u8, out JsonElement sequenceElement) && sequenceElement.TryGetInt64(out long persistedSequence)
+                ? persistedSequence
+                : 0;
             DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
                 ? createdAtElement.GetDateTimeOffset()
                 : default;
@@ -424,7 +434,7 @@ public static class WorkflowCheckpointSerializer
 
             bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.GetBoolean();
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated);
         }
         catch
         {
@@ -433,6 +443,39 @@ public static class WorkflowCheckpointSerializer
             document.Dispose();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Reads just the per-run write sequence from a stored checkpoint (ADR 0065 decision 6), without projecting the
+    /// index or materialising the run's working state.
+    /// </summary>
+    /// <param name="checkpointUtf8">The stored checkpoint document to read the sequence from.</param>
+    /// <param name="sequence">The sequence the document carries, or zero when it carries none.</param>
+    /// <returns><see langword="true"/> when the document carries a sequence.</returns>
+    /// <remarks>
+    /// <para>
+    /// This runs on the save path of every checkpoint, which is the hottest write in the system, so it reads one
+    /// property rather than reusing <see cref="ProjectIndex(ReadOnlyMemory{byte})"/> — that walks tags, journal, wait,
+    /// and fault, none of which the freshness check reads.
+    /// </para>
+    /// <para>
+    /// Absence is reported rather than folded into zero. Zero is a legitimate sequence for a genesis row, so a
+    /// document with no sequence at all has to stay distinguishable from one at the start of its run.
+    /// </para>
+    /// </remarks>
+    public static bool TryReadSequence(ReadOnlyMemory<byte> checkpointUtf8, out long sequence)
+    {
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
+        if (document.RootElement.TryGetProperty("sequence"u8, out JsonElement element)
+            && element.ValueKind == JsonValueKind.Number
+            && element.TryGetInt64(out long value))
+        {
+            sequence = value;
+            return true;
+        }
+
+        sequence = 0;
+        return false;
     }
 
     /// <summary>
