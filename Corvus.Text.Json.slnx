@@ -118,6 +118,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Directories.Google.Tests/Corvus.Text.Json.Arazzo.Directories.Google.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests/Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests/Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests/Corvus.Text.Json.Arazzo.SourceCredentials.Http.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
@@ -210,6 +211,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.AzureStorage/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.AzureStorage.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Runner.Server/Corvus.Text.Json.Arazzo.Durability.Runner.Server.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Runner.Client/Corvus.Text.Json.Arazzo.Durability.Runner.Client.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Execution/Corvus.Text.Json.Arazzo.Execution.csproj" />
