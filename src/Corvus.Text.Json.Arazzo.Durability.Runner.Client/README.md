@@ -33,6 +33,27 @@ if (await runner.TryClaimAsync(hostedVersions) is { } claimed)
 }
 ```
 
+## The dispatch loop
+
+`RunnerApiDispatcher` is that cycle as a loop, and is the API-backed counterpart to `WorkflowDispatcher`. Both present
+the same `DispatchClaimableAsync(hostedVersions, resumer, cancellationToken)`, so a runner switching to the API keeps
+its executor untouched.
+
+```csharp
+var dispatcher = new RunnerApiDispatcher(runner);
+int dispatched = await dispatcher.DispatchClaimableAsync(hostedVersions, resumer, stoppingToken);
+```
+
+What it does **not** take is the point. There is no environment parameter, because the candidate set is intersected
+with the principal's bindings server-side. There is no dispatch-authorization gate, because a revoked runner resolves
+to no bindings and is offered nothing. There is no claimability re-check, because claiming is one operation rather
+than a query followed by a lease. Each of those was a check a runner previously made about itself.
+
+A pass is bounded (`MaximumRunsPerPass`, default 16) so a backlog cannot monopolise the runner, and it ends early if a
+run comes back claimable without having advanced, rather than spinning on a run that is making no progress. Release
+runs on every exit path including cancellation, because cancellation is how a runner shuts down and that is exactly
+when giving the lease back matters.
+
 ## The lease token never leaves the client
 
 `TryClaimAsync` returns what a runner needs to act on — the run, its workflow, its environment, and when the lease

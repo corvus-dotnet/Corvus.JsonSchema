@@ -242,6 +242,27 @@ resume worker: poll, take a per-run lease (CAS, skip if held and unexpired), res
 the transports, and run. An optional doorbell (Postgres `LISTEN/NOTIFY`, or the message transport) can wake
 runners to poll sooner; it is only a latency hint, so a missed notification never costs correctness.
 
+**A runner without store credentials dispatches the same way.** Under [ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md)
+the runner holds no store handle, so `RunnerApiDispatcher` runs that cycle over the runner API instead.
+`WorkflowDispatcher` and `RunnerApiDispatcher` present the same operation, `DispatchClaimableAsync`, taking the
+runner's hosted versions and a `WorkflowResumer`, and a run resumes through `ArazzoRunnerClient.Checkpoints` exactly
+as it would over a database-backed store. The executor cannot tell the difference.
+
+What the API-backed dispatcher does **not** take is the interesting part, because each absent parameter is now
+enforced server-side rather than dropped.
+
+| `WorkflowDispatcher` takes | `RunnerApiDispatcher` does not, because |
+| --- | --- |
+| the runner's environment | the candidate set is intersected with the principal's bindings, so there is no environment for a runner to state, and none to state wrongly |
+| a dispatch-authorization gate | a check the runner made about itself was only ever as good as its willingness to make it. A revoked runner now resolves to no bindings and is offered nothing |
+| a claimability re-check under lease | querying an index and then leasing was two steps that could disagree. Claiming is one operation, and the server re-reads under the lease before offering the run |
+
+Two behaviours differ deliberately. A lease lost mid-advance is caught rather than raised, because the run belongs
+to whoever holds it now and this runner's writes were refused rather than applied, so it moves on to the next claim.
+Release runs on an uncancelled token, because cancellation is how a runner shuts down and that is exactly when
+releasing matters most. Passing the caller's token through would skip the release on every run in flight and strand
+each one until its lease lapsed.
+
 **Resume shares the path.** `WorkflowWorker` polls the wait index for due timers and delivered messages and
 calls the same contract through `HostedWorkflowResumer.ResumeAsync`; one `workflowId -> IHostedWorkflow`
 resolver serves new-run dispatch, orphan reclaim, and wait-resume.

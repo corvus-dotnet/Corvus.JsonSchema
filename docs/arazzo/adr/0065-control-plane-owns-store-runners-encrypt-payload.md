@@ -454,6 +454,7 @@ sequenceDiagram
   R->>R: split, encrypt payload (fresh data key, AAD = run + env + keyId + sequence), one MAC over region + ciphertext hash
   R->>A: PromoteAndPrepare (acknowledge the previous save, stage this one)
   R->>CP: save (proposed sequence validated as persisted+1, single-row CAS, 409 if superseded)
+  R->>CP: release (the lease is given back rather than waited out, including on shutdown)
   Note over CP: governance reads and acts on the ENVELOPE of every run, payload-touching verbs are requests the runner applies
 ```
 
