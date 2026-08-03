@@ -212,6 +212,39 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+
+        // The predicate is the same either way: this run's lease, carrying this token, held by this owner, and unexpired.
+        // Its three conjuncts are the three ways a presented lease stops being current — superseded, stolen, and lapsed
+        // (an administrative fence expires in place, so it lands on the third).
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("_id", lease.RunId.Value),
+            Builders<BsonDocument>.Filter.Eq("token", lease.Token),
+            Builders<BsonDocument>.Filter.Eq("owner", lease.Owner),
+            Builders<BsonDocument>.Filter.Gt("expiresAt", now.ToUnixTimeMilliseconds()));
+
+        if (extension == TimeSpan.Zero)
+        {
+            BsonDocument? current = await this.leases.Find(filter).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            return current is null
+                ? null
+                : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(current["expiresAt"].ToInt64()));
+        }
+
+        DateTimeOffset extendedTo = now + extension;
+        UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update.Set("expiresAt", extendedTo.ToUnixTimeMilliseconds());
+
+        // MatchedCount, not ModifiedCount: an extension that lands on the millisecond already stored modifies nothing,
+        // and the lease it names is still current.
+        UpdateResult result = await this.leases.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return result.MatchedCount > 0 ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo) : null;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(

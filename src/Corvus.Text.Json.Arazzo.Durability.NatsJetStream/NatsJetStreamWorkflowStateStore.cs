@@ -200,6 +200,45 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } current })
+        {
+            return null;
+        }
+
+        // The three ways a presented lease stops being current — superseded, stolen, and lapsed (an administrative fence
+        // expires in place, so it lands on the third).
+        (string currentOwner, string currentToken, long currentExpiresAt) = LeaseCodec.Decode(current);
+        if (currentToken != lease.Token || currentOwner != lease.Owner || currentExpiresAt <= now.ToUnixTimeMilliseconds())
+        {
+            return null;
+        }
+
+        if (extension == TimeSpan.Zero)
+        {
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt));
+        }
+
+        DateTimeOffset extendedTo = now + extension;
+        byte[] value = LeaseCodec.Encode(lease.Owner, lease.Token, extendedTo.ToUnixTimeMilliseconds());
+        try
+        {
+            await this.leases.UpdateAsync(lease.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+        }
+        catch (NatsKVException)
+        {
+            // The lease was released or advanced between the read and the update.
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);

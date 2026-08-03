@@ -191,6 +191,9 @@ public sealed class WorkflowWorkerTests
         public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowLease?>(null);
 
+        public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+            => ValueTask.FromResult<WorkflowLease?>(null);
+
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => default;
 
         public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => default;
@@ -208,6 +211,9 @@ public sealed class WorkflowWorkerTests
 
         public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(id, owner, "token", Start + ttl));
+
+        public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+            => ValueTask.FromResult<WorkflowLease?>(null);
 
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => default;
 

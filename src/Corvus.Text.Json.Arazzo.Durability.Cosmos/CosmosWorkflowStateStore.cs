@@ -254,6 +254,55 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        var partition = new PartitionKey(lease.RunId.Value);
+        using ResponseMessage read = await this.leases.ReadItemStreamAsync(lease.RunId.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (read.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        read.EnsureSuccessStatusCode();
+        using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
+        LeaseDocument existing = LeaseDocument.FromJson(payload.Memory);
+
+        // The three ways a presented lease stops being current — superseded, stolen, and lapsed (an administrative fence
+        // expires in place, so it lands on the third). The token and owner are compared against the stored document's
+        // own bytes, so neither is realised as a string to answer a boolean.
+        if (!existing.Token.ValueEquals(lease.Token)
+            || !existing.Owner.ValueEquals(lease.Owner)
+            || existing.ExpiresAtValue <= now.ToUnixTimeMilliseconds())
+        {
+            return null;
+        }
+
+        if (extension == TimeSpan.Zero)
+        {
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(existing.ExpiresAtValue));
+        }
+
+        DateTimeOffset extendedTo = now + extension;
+        var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
+        using Stream replaceStream = CosmosJson.WriteToStream(
+            (Id: lease.RunId.Value, Owner: lease.Owner, Token: lease.Token, ExpiresAt: extendedTo.ToUnixTimeMilliseconds()),
+            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt) ctx)
+                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt));
+        using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
+        if (replaced.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
+        {
+            // The lease was released or advanced between the read and the replace.
+            return null;
+        }
+
+        replaced.EnsureSuccessStatusCode();
+        return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         var partition = new PartitionKey(lease.RunId.Value);

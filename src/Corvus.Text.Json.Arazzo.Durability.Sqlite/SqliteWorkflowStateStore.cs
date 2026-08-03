@@ -218,6 +218,50 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        long nowMs = now.ToUnixTimeMilliseconds();
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // The predicate is the same either way: this run's lease, carrying this token, held by this owner, and
+            // unexpired. Its three conjuncts are the three ways a presented lease stops being current — superseded,
+            // stolen, and lapsed (an administrative fence expires in place, so it lands on the third).
+            if (extension == TimeSpan.Zero)
+            {
+                using SqliteCommand select = this.connection.CreateCommand();
+                select.CommandText = "SELECT ExpiresAt FROM WorkflowLeases WHERE RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now;";
+                select.Parameters.AddWithValue("@id", lease.RunId.Value);
+                select.Parameters.AddWithValue("@token", lease.Token);
+                select.Parameters.AddWithValue("@owner", lease.Owner);
+                select.Parameters.AddWithValue("@now", nowMs);
+                object? current = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                return current is long expiresAtMs
+                    ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs))
+                    : null;
+            }
+
+            DateTimeOffset extendedTo = now + extension;
+            using SqliteCommand update = this.connection.CreateCommand();
+            update.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @expiresAt WHERE RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now;";
+            update.Parameters.AddWithValue("@id", lease.RunId.Value);
+            update.Parameters.AddWithValue("@token", lease.Token);
+            update.Parameters.AddWithValue("@owner", lease.Owner);
+            update.Parameters.AddWithValue("@expiresAt", extendedTo.ToUnixTimeMilliseconds());
+            update.Parameters.AddWithValue("@now", nowMs);
+            int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return affected > 0 ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo) : null;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);

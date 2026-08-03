@@ -71,6 +71,25 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return 0
         """;
 
+    // Extend only the lease we still hold, and report its expiry either way. The three conjuncts are the three ways a
+    // presented lease stops being current — superseded, stolen, and lapsed (an administrative fence expires in place, so
+    // it lands on the third). An extension of 0 verifies without writing, which is what an operation performed under a
+    // lease needs. KEYS: lease hash. ARGV: owner, token, extended expiry, now, whether to write.
+    private const string ExtendLeaseScript =
+        """
+        local owner = redis.call('HGET', KEYS[1], 'owner')
+        local token = redis.call('HGET', KEYS[1], 'token')
+        local exp = redis.call('HGET', KEYS[1], 'expires_at')
+        if (not owner) or (owner ~= ARGV[1]) or (token ~= ARGV[2]) or (tonumber(exp) <= tonumber(ARGV[4])) then
+            return -1
+        end
+        if ARGV[5] == '1' then
+            redis.call('HSET', KEYS[1], 'expires_at', ARGV[3])
+            return tonumber(ARGV[3])
+        end
+        return tonumber(exp)
+        """;
+
     // Release only if we still hold the lease. KEYS: lease hash. ARGV: token.
     private const string ReleaseLeaseScript =
         """
@@ -213,6 +232,23 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             [LeaseKey(id.Value)],
             [owner, token, expiresAt.ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds()]).ConfigureAwait(false);
         return (long)result == 1 ? new WorkflowLease(id, owner, token, expiresAt) : null;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        bool write = extension > TimeSpan.Zero;
+        RedisResult result = await this.database.ScriptEvaluateAsync(
+            ExtendLeaseScript,
+            [LeaseKey(lease.RunId.Value)],
+            [lease.Owner, lease.Token, (now + extension).ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds(), write ? "1" : "0"]).ConfigureAwait(false);
+
+        long expiresAtMs = (long)result;
+        return expiresAtMs < 0 ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs));
     }
 
     /// <inheritdoc/>

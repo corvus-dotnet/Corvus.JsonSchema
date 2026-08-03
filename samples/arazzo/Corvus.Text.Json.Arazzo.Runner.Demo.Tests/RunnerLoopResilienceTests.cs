@@ -145,6 +145,8 @@ public sealed class RunnerLoopResilienceTests
 
         public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken) => throw new NotSupportedException();
 
+        public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken) => throw new NotSupportedException();
+
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => throw new NotSupportedException();

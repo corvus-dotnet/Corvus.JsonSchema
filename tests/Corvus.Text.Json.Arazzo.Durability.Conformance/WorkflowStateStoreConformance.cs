@@ -183,6 +183,119 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Extending_a_held_lease_keeps_it_out_of_a_peers_reach_for_longer()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+
+        WorkflowLease? extended = await store.TryExtendLeaseAsync(held, TimeSpan.FromMinutes(5), default);
+
+        extended.ShouldNotBeNull();
+        extended.Value.Token.ShouldBe(held.Token);
+        extended.Value.ExpiresAt.ShouldBe(T0 + TimeSpan.FromMinutes(5));
+
+        // Past the original expiry the run would have been reclaimable; the extension is what keeps it held, so this is
+        // what proves the write landed rather than merely being reported.
+        clock.Advance(TimeSpan.FromSeconds(31));
+        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromSeconds(30), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Verifying_a_held_lease_reports_its_expiry_without_moving_it()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+
+        WorkflowLease? verified = await store.TryExtendLeaseAsync(held, TimeSpan.Zero, default);
+
+        verified.ShouldNotBeNull();
+        verified.Value.ExpiresAt.ShouldBe(held.ExpiresAt);
+
+        // A zero extension must not keep the lease alive: an operation performed under a lease verifies it, and if that
+        // silently renewed it, a crashed holder's run would never be reclaimed.
+        clock.Advance(TimeSpan.FromSeconds(31));
+        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromSeconds(30), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task An_expired_lease_is_not_extended()
+    {
+        // The case AcquireLeaseAsync cannot serve: it re-acquires for the same owner, so it would mint a fresh lease over
+        // one that had lapsed — on a run another runner may already have taken.
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+
+        clock.Advance(TimeSpan.FromSeconds(31));
+
+        (await store.TryExtendLeaseAsync(held, TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await store.TryExtendLeaseAsync(held, TimeSpan.Zero, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_superseded_lease_is_not_extended()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        WorkflowLease displaced = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+
+        clock.Advance(TimeSpan.FromSeconds(31));
+        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+
+        // The displaced holder's token is no longer the current one, so its renewal fails rather than taking the run back
+        // from the runner that legitimately reclaimed it.
+        (await store.TryExtendLeaseAsync(displaced, TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_lease_presented_under_another_owner_is_not_extended()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+
+        // Lease ownership is the server's to decide, not the caller's to assert (ADR 0065 decision 2): presenting a valid
+        // token under a different owner renews nothing.
+        (await store.TryExtendLeaseAsync(held with { Owner = "worker-b" }, TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Extending_a_lease_for_an_unleased_run_returns_null()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        (await store.TryExtendLeaseAsync(new WorkflowLease("never", "owner", "token", default), TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task An_administratively_expired_lease_is_not_extended()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        if (store is not IWorkflowLeaseAdministration admin)
+        {
+            Assert.Inconclusive("This store does not implement IWorkflowLeaseAdministration (the §5.5 revocation fence).");
+            return;
+        }
+
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "revoked-runner", TimeSpan.FromMinutes(5), default))!.Value;
+        await admin.ExpireLeasesForOwnerAsync("revoked-runner", default);
+
+        // The fence would be worth nothing if the fenced runner could renew its way back in.
+        (await store.TryExtendLeaseAsync(held, TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_negative_extension_is_rejected()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+
+        await Should.ThrowAsync<ArgumentOutOfRangeException>(
+            async () => await store.TryExtendLeaseAsync(held, TimeSpan.FromSeconds(-1), default));
+    }
+
+    [TestMethod]
     public async Task Expiring_an_owners_leases_frees_its_runs_for_a_peer_immediately()
     {
         var clock = new TestClock(T0);

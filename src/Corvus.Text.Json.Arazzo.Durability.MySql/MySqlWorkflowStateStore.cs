@@ -271,6 +271,43 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        long nowMs = now.ToUnixTimeMilliseconds();
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        // The predicate is the same either way: this run's lease, carrying this token, held by this owner, and unexpired.
+        // Its three conjuncts are the three ways a presented lease stops being current — superseded, stolen, and lapsed
+        // (an administrative fence expires in place, so it lands on the third).
+        if (extension == TimeSpan.Zero)
+        {
+            return await ReadCurrentLeaseAsync(connection, lease, nowMs, cancellationToken).ConfigureAwait(false);
+        }
+
+        DateTimeOffset extendedTo = now + extension;
+        await using MySqlCommand update = connection.CreateCommand();
+        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        update.Parameters.AddWithValue("@id", lease.RunId.Value);
+        update.Parameters.AddWithValue("@token", lease.Token);
+        update.Parameters.AddWithValue("@owner", lease.Owner);
+        update.Parameters.AddWithValue("@expires_at", extendedTo.ToUnixTimeMilliseconds());
+        update.Parameters.AddWithValue("@now", nowMs);
+        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        if (affected > 0)
+        {
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+        }
+
+        // A connection string carrying UseAffectedRows reports rows *changed* rather than rows matched, so an extension
+        // that lands on the millisecond already stored writes nothing and reports zero. Re-read under the same predicate
+        // rather than reporting a lease lost that the store still holds.
+        return await ReadCurrentLeaseAsync(connection, lease, nowMs, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -552,6 +589,21 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     private static string EscapeLike(string value)
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    // Reads the presented lease back under the currency predicate, returning it with the stored expiry.
+    private static async ValueTask<WorkflowLease?> ReadCurrentLeaseAsync(MySqlConnection connection, WorkflowLease lease, long nowMs, CancellationToken cancellationToken)
+    {
+        await using MySqlCommand select = connection.CreateCommand();
+        select.CommandText = "SELECT expires_at FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        select.Parameters.AddWithValue("@id", lease.RunId.Value);
+        select.Parameters.AddWithValue("@token", lease.Token);
+        select.Parameters.AddWithValue("@owner", lease.Owner);
+        select.Parameters.AddWithValue("@now", nowMs);
+        object? current = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return current is long expiresAtMs
+            ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs))
+            : null;
+    }
 
     private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
         => this.dataSource.OpenConnectionAsync(cancellationToken);

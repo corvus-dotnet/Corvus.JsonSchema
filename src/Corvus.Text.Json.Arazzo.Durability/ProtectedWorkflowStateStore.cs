@@ -84,6 +84,10 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         => this.inner.AcquireLeaseAsync(id, owner, ttl, cancellationToken);
 
     /// <inheritdoc/>
+    public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+        => this.inner.TryExtendLeaseAsync(lease, extension, cancellationToken);
+
+    /// <inheritdoc/>
     public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
         => this.inner.ReleaseLeaseAsync(lease, cancellationToken);
 

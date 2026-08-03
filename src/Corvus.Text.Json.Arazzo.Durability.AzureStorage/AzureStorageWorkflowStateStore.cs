@@ -227,6 +227,53 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, lease.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (existing is not { HasValue: true, Value: { } current })
+        {
+            return null;
+        }
+
+        // The three ways a presented lease stops being current — superseded, stolen, and lapsed (an administrative fence
+        // expires in place, so it lands on the third).
+        long currentExpiresAt = current.GetInt64("ExpiresAt") ?? 0;
+        if (current.GetString("Token") != lease.Token
+            || current.GetString("Owner") != lease.Owner
+            || currentExpiresAt <= now.ToUnixTimeMilliseconds())
+        {
+            return null;
+        }
+
+        if (extension == TimeSpan.Zero)
+        {
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt));
+        }
+
+        DateTimeOffset extendedTo = now + extension;
+        var extended = new TableEntity(LeasePartition, lease.RunId.Value)
+        {
+            ["Owner"] = lease.Owner,
+            ["Token"] = lease.Token,
+            ["ExpiresAt"] = extendedTo.ToUnixTimeMilliseconds(),
+        };
+
+        try
+        {
+            await this.leases.UpdateEntityAsync(extended, current.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+        }
+        catch (RequestFailedException ex) when (ex.Status is 404 or 412)
+        {
+            // The lease was released or advanced between the read and the update.
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, lease.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);

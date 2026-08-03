@@ -93,6 +93,34 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     }
 
     /// <inheritdoc/>
+    public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        lock (this.gate)
+        {
+            if (!this.leases.TryGetValue(lease.RunId.Value, out LeaseRecord existing)
+                || existing.Token != lease.Token
+                || existing.Owner != lease.Owner
+                || existing.ExpiresAt <= now)
+            {
+                return ValueTask.FromResult<WorkflowLease?>(null);
+            }
+
+            if (extension == TimeSpan.Zero)
+            {
+                return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, existing.ExpiresAt));
+            }
+
+            DateTimeOffset expiresAt = now + extension;
+            this.leases[lease.RunId.Value] = existing with { ExpiresAt = expiresAt };
+            return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, expiresAt));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
