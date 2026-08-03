@@ -4,13 +4,14 @@
 
 using System.Collections.Concurrent;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// The runner-side terminus of the serverless checkpoint surface (ADR 0055): it turns a baked function's opaque,
-/// fire-and-forget checkpoint writes into durable saves against the real state store, under the lease the dispatcher
-/// already holds. A function binds no store SDK and holds no store credentials — it loads and saves a run's checkpoint
-/// over HTTP, and this coordinator terminates those calls into <see cref="IWorkflowCheckpointStore"/>.
+/// The server-side terminus of every remote checkpoint surface: it turns opaque, fire-and-forget checkpoint writes into
+/// durable saves against the real state store, under the lease the writer already holds. Both the serverless checkpoint
+/// surface (ADR 0055) and the runner API (ADR 0065) sit on it, so a baked function and a runner alike bind no store SDK
+/// and hold no store credentials — they load and save a run's checkpoint over HTTP, and this coordinator terminates
+/// those calls into <see cref="IWorkflowCheckpointStore"/>.
 /// </summary>
 /// <remarks>
 /// <para>
