@@ -82,6 +82,41 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     }
 
     /// <summary>
+    /// Fetch a source document from a web endpoint
+    /// </summary>
+    /// <remarks>
+    /// Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<FetchSourceDocumentResponse> FetchSourceDocumentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        FetchSourceDocumentRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<FetchSourceDocumentRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest, FetchSourceDocumentResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List registered sources
     /// </summary>
     /// <remarks>
@@ -138,6 +173,41 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     }
 
     /// <summary>
+    /// Register a source
+    /// </summary>
+    /// <remarks>
+    /// Registers a reach-scoped source (design §7.6): its name, type, and OpenAPI/AsyncAPI document, plus the managementTags scoping who may see and manage it. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if a source with that name already exists in the caller's reach.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateSourceResponse> CreateSourceAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate.CreateBuilder(workspace, in body, 30).RootElement;
+        CreateSourceRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateSourceRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate, CreateSourceResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a source
     /// </summary>
     /// <remarks>
@@ -169,6 +239,43 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        UpdateSourceRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<UpdateSourceRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate, UpdateSourceResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update a source
+    /// </summary>
+    /// <remarks>
+    /// Replaces the registered document and mutable metadata (display name, description) of an existing source; the name, type, managementTags reach scope, and created-* audit fields are immutable. The source must be in the caller's reach (404 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UpdateSourceResponse> UpdateSourceAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         UpdateSourceRequest request = new(NameValue);
 

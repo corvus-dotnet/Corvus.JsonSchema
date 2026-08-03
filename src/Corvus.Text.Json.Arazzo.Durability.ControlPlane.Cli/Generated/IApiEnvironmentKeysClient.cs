@@ -163,6 +163,21 @@ public interface IApiEnvironmentKeysClient : IAsyncDisposable
     ValueTask<RegisterEnvironmentKeyResponse> RegisterEnvironmentKeyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Register a key generation for an environment
+    /// </summary>
+    /// <remarks>
+    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RegisterEnvironmentKeyResponse> RegisterEnvironmentKeyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Retire a key generation
     /// </summary>
     /// <remarks>
@@ -173,4 +188,20 @@ public interface IApiEnvironmentKeysClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<RetireEnvironmentKeyResponse> RetireEnvironmentKeyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source keyId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Retire a key generation
+    /// </summary>
+    /// <remarks>
+    /// Marks the generation Retired (ADR 0065). Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable. Idempotent: retiring an already-Retired generation returns the existing record. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such generation exists).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="keyId">The keyId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RetireEnvironmentKeyResponse> RetireEnvironmentKeyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source keyId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 }

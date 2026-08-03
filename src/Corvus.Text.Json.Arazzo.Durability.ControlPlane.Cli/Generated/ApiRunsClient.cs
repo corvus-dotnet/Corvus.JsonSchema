@@ -203,6 +203,52 @@ public sealed class ApiRunsClient : IApiRunsClient
     }
 
     /// <summary>
+    /// Resume a faulted run
+    /// </summary>
+    /// <remarks>
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, in body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        ResumeRunRequest request = new(RunIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<ResumeRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest, ResumeRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<ResumeRunRequest, ResumeRunResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Cancel a run
     /// </summary>
     /// <remarks>
@@ -215,6 +261,43 @@ public sealed class ApiRunsClient : IApiRunsClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        CancelRunRequest request = new(RunIdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CancelRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest, CancelRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Cancel a run
+    /// </summary>
+    /// <remarks>
+    /// Cancels a non-terminal run, marking it `Cancelled` (any fault record is kept for post-mortem visibility). Returns the run's new detail on success.
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
         CancelRunRequest request = new(RunIdValue);
 

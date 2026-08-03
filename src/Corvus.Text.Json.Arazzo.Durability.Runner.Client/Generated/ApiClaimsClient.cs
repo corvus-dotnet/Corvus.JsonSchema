@@ -62,6 +62,41 @@ public sealed class ApiClaimsClient : IApiClaimsClient
         return SendWithBodyAsyncCore<ClaimRunRequest, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest, ClaimRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Claim a run and take its lease
+    /// </summary>
+    /// <remarks>
+    /// <para>Takes the first claimable run the runner can execute and returns it with a fresh lease grant. One operation rather than a query followed by an acquire: the store's dispatch index is not a runner-visible surface, and a two-step form would race between the query and the acquire, wasting lease attempts on runs another runner had already taken.</para><para>Claimable means a Pending run, a Running run whose lease has expired (an orphan left by a crashed runner, which must be reclaimable or an interrupted run would never resume), or one marked resume-claimable. The candidate set is intersected server-side with the environments the principal is bound to, so a runner cannot claim a run pinned to an environment it does not serve. The environment is never a request parameter for that reason.</para><para>Answers `204` when nothing is claimable, which is the common case for an idle runner and is not an error.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ClaimRunResponse> ClaimRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        ClaimRunRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<ClaimRunRequest, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest, ClaimRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

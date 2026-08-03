@@ -136,6 +136,22 @@ public interface IApiLeasesClient : IAsyncDisposable
     ValueTask<RenewLeaseResponse> RenewLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Renew a held lease
+    /// </summary>
+    /// <remarks>
+    /// <para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para>
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RenewLeaseResponse> RenewLeaseAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Release a held lease
     /// </summary>
     /// <remarks>

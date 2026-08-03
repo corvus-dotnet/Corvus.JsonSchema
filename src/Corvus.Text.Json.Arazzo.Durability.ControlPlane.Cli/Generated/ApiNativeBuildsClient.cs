@@ -97,6 +97,45 @@ public sealed class ApiNativeBuildsClient : IApiNativeBuildsClient
     }
 
     /// <summary>
+    /// Enqueue a native build of a workflow version for a runtime target
+    /// </summary>
+    /// <remarks>
+    /// Queues an asynchronous Native-AOT build of this workflow version's serverless binary for one runtime target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment, runtimeIdentifier) resets that build job to queued (a rebuild). A background worker then drives the job queued -&gt; building -&gt; ready | failed; poll it with GET .../nativeBuilds/{environment}/{runtimeIdentifier}. Requires catalog write; 404 if the version does not exist.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<EnqueueNativeBuildResponse> EnqueueNativeBuildAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        EnqueueNativeBuildRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<EnqueueNativeBuildRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue, EnqueueNativeBuildResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Count a workflow version's native build jobs
     /// </summary>
     /// <remarks>

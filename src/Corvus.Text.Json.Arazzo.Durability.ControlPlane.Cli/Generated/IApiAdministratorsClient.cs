@@ -170,6 +170,21 @@ public interface IApiAdministratorsClient : IAsyncDisposable
     ValueTask<TransferAdministrationResponse> TransferAdministrationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Transfer administration (replace the administrator set)
+    /// </summary>
+    /// <remarks>
+    /// Replaces the entire administrator set for the base workflow id with the given identities (at least one) — an administrator may transfer administration away from itself (design §15). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<TransferAdministrationResponse> TransferAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Add an administrator
     /// </summary>
     /// <remarks>
@@ -179,6 +194,21 @@ public interface IApiAdministratorsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<AddAdministratorResponse> AddAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Add an administrator
+    /// </summary>
+    /// <remarks>
+    /// Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<AddAdministratorResponse> AddAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Remove an administrator

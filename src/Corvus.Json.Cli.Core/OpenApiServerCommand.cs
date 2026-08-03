@@ -97,11 +97,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
             Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                // OpenAPI 2.0 servers do not consume the 3.x context-source-body pointers, so that
-                // element of the result is discarded here.
-                (schemaTypeMap, _, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
                     .ConfigureAwait(false);
             }
 
@@ -114,7 +113,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
-                settings.IgnoreEmptyFormUrlEncodedBody);
+                settings.IgnoreEmptyFormUrlEncodedBody,
+                contextBodies);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else if (specVersion is "3.2")

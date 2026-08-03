@@ -74,28 +74,40 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <returns>The claimed run, or <see langword="null"/> when nothing is claimable — the common case for an idle
     /// runner, and not an error.</returns>
     /// <exception cref="RunnerApiException">The API refused the claim.</exception>
-    public async ValueTask<RunnerClaim?> TryClaimAsync(IReadOnlyCollection<string> hostedVersions, TimeSpan? lease = null, CancellationToken cancellationToken = default)
+    // Not async, and it must stay that way: Source<TContext> holds its context by reference, so it cannot live across
+    // an await. Building the request and starting the send happen here, synchronously; the response is read in the
+    // async continuation below. The generated client's own methods are shaped the same way and for the same reason.
+    public ValueTask<RunnerClaim?> TryClaimAsync(IReadOnlyCollection<string> hostedVersions, TimeSpan? lease = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(hostedVersions);
 
-        // A generated client takes only the non-generic source for a request body: there is no Source<TContext>
-        // overload to thread the versions through, though the server side emits exactly that for response bodies. So
-        // the array is built through a callback that closes over them, and the closure is the generator's shape rather
-        // than a choice made here — see #227, which is where that asymmetry gets fixed.
-        ClaimRequest.HostedVersionsEntityArray.Source versions = ClaimRequest.HostedVersionsEntityArray.Build(
-            (ref ClaimRequest.HostedVersionsEntityArray.Builder builder) =>
-            {
-                foreach (string version in hostedVersions)
+        // Typed explicitly rather than inferred: a conditional whose branches are `long` and `default` takes `long` as
+        // its natural type, so an absent lease would become leaseSeconds 0 — which the schema's minimum of 1 refuses.
+        ClaimRequest.LeaseSecondsEntity.Source leaseSeconds = lease is { } requested
+            ? (ClaimRequest.LeaseSecondsEntity.Source)(long)requested.TotalSeconds
+            : default;
+
+        // The versions are threaded through as context rather than captured, so the request materialises in one pass
+        // with no closure and no interim collection.
+        ClaimRequest.Source<IReadOnlyCollection<string>> request = ClaimRequest.Build(
+            in hostedVersions,
+            ClaimRequest.HostedVersionsEntityArray.Build(
+                in hostedVersions,
+                static (in IReadOnlyCollection<string> versions, ref ClaimRequest.HostedVersionsEntityArray.Builder builder) =>
                 {
-                    builder.AddItem(version);
-                }
-            });
+                    foreach (string version in versions)
+                    {
+                        builder.AddItem(version);
+                    }
+                }),
+            leaseSeconds);
 
-        ClaimRequest.Source request = lease is { } requested
-            ? ClaimRequest.Build(versions, (long)requested.TotalSeconds)
-            : ClaimRequest.Build(versions);
+        return this.ReadClaimAsync(this.claims.ClaimRunAsync(request, cancellationToken));
+    }
 
-        await using ClaimRunResponse response = await this.claims.ClaimRunAsync(request, cancellationToken).ConfigureAwait(false);
+    private async ValueTask<RunnerClaim?> ReadClaimAsync(ValueTask<ClaimRunResponse> pending)
+    {
+        await using ClaimRunResponse response = await pending.ConfigureAwait(false);
         if (response.StatusCode == 204)
         {
             return null;

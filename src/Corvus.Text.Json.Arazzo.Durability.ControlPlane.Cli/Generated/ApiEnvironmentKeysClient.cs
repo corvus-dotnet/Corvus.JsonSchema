@@ -93,6 +93,43 @@ public sealed class ApiEnvironmentKeysClient : IApiEnvironmentKeysClient
     }
 
     /// <summary>
+    /// Register a key generation for an environment
+    /// </summary>
+    /// <remarks>
+    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RegisterEnvironmentKeyResponse> RegisterEnvironmentKeyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        RegisterEnvironmentKeyRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<RegisterEnvironmentKeyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration, RegisterEnvironmentKeyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Retire a key generation
     /// </summary>
     /// <remarks>
@@ -107,6 +144,54 @@ public sealed class ApiEnvironmentKeysClient : IApiEnvironmentKeysClient
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema KeyIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.CreateBuilder(workspace, keyId, 30).RootElement;
+        RetireEnvironmentKeyRequest request = new(NameValue, KeyIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<RetireEnvironmentKeyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote, RetireEnvironmentKeyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<RetireEnvironmentKeyRequest, RetireEnvironmentKeyResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Retire a key generation
+    /// </summary>
+    /// <remarks>
+    /// Marks the generation Retired (ADR 0065). Retirement is recorded rather than deleted, so a checkpoint written under the generation stays attributable. Idempotent: retiring an already-Retired generation returns the existing record. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such generation exists).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="keyId">The keyId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RetireEnvironmentKeyResponse> RetireEnvironmentKeyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.Source keyId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRetirementNote.CreateBuilder(workspace, in body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema KeyIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema.CreateBuilder(workspace, keyId, 30).RootElement;
         RetireEnvironmentKeyRequest request = new(NameValue, KeyIdValue);

@@ -70,6 +70,48 @@ public sealed class ApiPhotosClient : IApiPhotosClient
     }
 
     /// <summary>
+    /// Upload a photo for a pet (multipart with metadata)
+    /// </summary>
+    /// <param name="petId">The petId parameter.</param>
+    /// <param name="session_token">The session_token parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="file">Binary data for the 'file' part.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync<TContext>(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.PostPetsByPetIdPhotosBody.Source<TContext> body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.EndToEnd.Client.Models.PostPetsByPetIdPhotosBody bodyValue = Petstore.EndToEnd.Client.Models.PostPetsByPetIdPhotosBody.CreateBuilder(workspace, in body, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString PetIdValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString SessionTokenValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        UploadPetPhotoRequest request = new(PetIdValue, SessionTokenValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        string boundary = MultipartFormDataSerializer.GenerateBoundary();
+        Dictionary<string, BinaryPartData> binaryParts = new(StringComparer.Ordinal)
+        {
+            ["file"] = file,
+        };
+        return SendWithBodyWriterAsyncCore<UploadPetPhotoRequest, UploadPetPhotoResponse>(workspace, request, (stream, ct) => MultipartFormDataSerializer.SerializeAsync(bodyValue, stream, boundary, null, binaryParts, ct), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Download a pet photo (binary stream)
     /// </summary>
     /// <param name="photoId">The photoId parameter.</param>

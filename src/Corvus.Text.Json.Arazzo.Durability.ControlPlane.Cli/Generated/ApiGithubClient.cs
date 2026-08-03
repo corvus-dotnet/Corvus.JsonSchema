@@ -65,6 +65,43 @@ public sealed class ApiGithubClient : IApiGithubClient
     }
 
     /// <summary>
+    /// Pull the working copy from its bound branch
+    /// </summary>
+    /// <remarks>
+    /// Refreshes the Git-bound working copy from its branch (workflow-designer design §4.7): the document from gitBinding.path, each specPaths entry as an inline source attachment, and — when scenariosDir is bound — the scenario set from its &lt;name&gt;.scenario.json files. The pull is an etag-guarded save (409 when stale). Reads run on the CALLER's brokered token (409 github-not-connected without a session); 400 when the working copy has no binding or the deployment brokers no App; 404 when a bound file is missing (nothing is partially applied).
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<PullWorkingCopyResponse> PullWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitPullBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitPullBody bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitPullBody.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        PullWorkingCopyRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<PullWorkingCopyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitPullBody, PullWorkingCopyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Commit the working copy to its bound branch
     /// </summary>
     /// <remarks>
@@ -77,6 +114,43 @@ public sealed class ApiGithubClient : IApiGithubClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        CommitWorkingCopyRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CommitWorkingCopyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody, CommitWorkingCopyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Commit the working copy to its bound branch
+    /// </summary>
+    /// <remarks>
+    /// Writes the Git-bound working copy to its branch (workflow-designer design §4.7): the document to gitBinding.path, each bound spec (specPaths) from its inline attachment, and — when scenariosDir is bound — one &lt;name&gt;.scenario.json per scenario. Commits run on the CALLER's brokered token and are authored as their GitHub-held git identity — the control plane composes no author/committer. Optionally opens a pull request FROM the bound branch (draft → the review flow). 400 unbound/not-brokered; 409 github-not-connected.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CommitWorkingCopyResponse> CommitWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
         CommitWorkingCopyRequest request = new(IdValue);
 
@@ -205,6 +279,45 @@ public sealed class ApiGithubClient : IApiGithubClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString OwnerValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RepoValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, repo, 30).RootElement;
+        CreateRepoBranchRequest request = new(OwnerValue, RepoValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateRepoBranchRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate, CreateRepoBranchResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create a branch
+    /// </summary>
+    /// <remarks>
+    /// Creates a branch from a base branch's head (default: the repository's default branch), through the calling principal's brokered token — the branch-per-working-copy flow (§4.7) starts here. Creating a ref makes no commit and composes no identity. 409 (github-branch-exists) when the name is taken; 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="repo">The repo parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateRepoBranchResponse> CreateRepoBranchAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString OwnerValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RepoValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, repo, 30).RootElement;
         CreateRepoBranchRequest request = new(OwnerValue, RepoValue);

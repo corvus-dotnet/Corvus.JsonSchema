@@ -40,6 +40,17 @@ public interface IApiPetsClient : IAsyncDisposable
     ValueTask<CreatePetResponse> CreatePetAsync(Petstore.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create a pet
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CreatePetResponse> CreatePetAsync<TContext>(Petstore.Client.Models.NewPet.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Info for a specific pet
     /// </summary>
     /// <param name="petId">The petId parameter.</param>

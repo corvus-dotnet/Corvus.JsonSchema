@@ -117,6 +117,20 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     ValueTask<SubmitAvailabilityRequestResponse> SubmitAvailabilityRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Submit an availability request
+    /// </summary>
+    /// <remarks>
+    /// Requests that a workflow version be made available in an environment (design §7.8), for a principal who cannot make it available directly because they do not administer the target environment. The requesting identity is taken from the caller. The request is created pending an environment administrator's decision; approval makes the version available (subject to the §7.7 readiness gate at approval time).
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SubmitAvailabilityRequestResponse> SubmitAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Count availability requests
     /// </summary>
     /// <remarks>
@@ -150,6 +164,21 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     ValueTask<ApproveAvailabilityRequestResponse> ApproveAvailabilityRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Approve an availability request
+    /// </summary>
+    /// <remarks>
+    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise), and must not be the request's own requester — a decision is always independent, even for an administrator (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ApproveAvailabilityRequestResponse> ApproveAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Deny an availability request
     /// </summary>
     /// <remarks>
@@ -161,6 +190,21 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     ValueTask<DenyAvailabilityRequestResponse> DenyAvailabilityRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Deny an availability request
+    /// </summary>
+    /// <remarks>
+    /// Denies a pending request. The caller must be an administrator of the target environment (403 otherwise), and must not be the request's own requester (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<DenyAvailabilityRequestResponse> DenyAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Withdraw an availability request
     /// </summary>
     /// <remarks>
@@ -170,4 +214,19 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<WithdrawAvailabilityRequestResponse> WithdrawAvailabilityRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Withdraw an availability request
+    /// </summary>
+    /// <remarks>
+    /// Withdraws the caller's own pending request. The caller must be its requester (403 otherwise). A request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<WithdrawAvailabilityRequestResponse> WithdrawAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 }

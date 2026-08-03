@@ -64,6 +64,42 @@ public sealed class ApiChatClient : IApiChatClient
     }
 
     /// <summary>
+    /// Start a vet support chat session (SSE streaming response)
+    /// </summary>
+    /// <param name="petId">The petId parameter.</param>
+    /// <param name="session_token">The session_token parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<StartVetChatResponse> StartVetChatAsync<TContext>(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.PostPetsByPetIdChatBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.Extended.Models.PostPetsByPetIdChatBody bodyValue = Petstore.Extended.Models.PostPetsByPetIdChatBody.CreateBuilder(workspace, in body, 30).RootElement;
+        Petstore.Extended.Models.JsonString PetIdValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.Extended.Models.JsonString SessionTokenValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        StartVetChatRequest request = new(PetIdValue, SessionTokenValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<StartVetChatRequest, Petstore.Extended.Models.PostPetsByPetIdChatBody, StartVetChatResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Stream live activity updates for a pet (NDJSON)
     /// </summary>
     /// <param name="petId">The petId parameter.</param>

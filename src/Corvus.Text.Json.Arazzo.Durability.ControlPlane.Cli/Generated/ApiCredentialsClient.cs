@@ -87,6 +87,41 @@ public sealed class ApiCredentialsClient : IApiCredentialsClient
     }
 
     /// <summary>
+    /// Create a source credential binding
+    /// </summary>
+    /// <remarks>
+    /// Creates a binding for (sourceName, environment). The body carries references (a SecretRef of the form scheme://locator[#version]) and non-secret metadata only; a value that is not a well-formed SecretRef is rejected (400). Conflicts if a binding for that (sourceName, environment) already exists.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateCredentialResponse> CreateCredentialAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingCreate.CreateBuilder(workspace, in body, 30).RootElement;
+        CreateCredentialRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateCredentialRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingCreate, CreateCredentialResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a source credential binding
     /// </summary>
     /// <param name="sourceName">The sourceName parameter.</param>
@@ -118,6 +153,45 @@ public sealed class ApiCredentialsClient : IApiCredentialsClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString SourceNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, sourceName, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement;
+        UpdateCredentialRequest request = new(SourceNameValue, EnvironmentValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<UpdateCredentialRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate, UpdateCredentialResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update a source credential binding
+    /// </summary>
+    /// <remarks>
+    /// Replaces the references and non-secret metadata of an existing binding; the (sourceName, environment) identity and the created-* audit fields are immutable. Rotation is by changing the reference. A value that is not a well-formed SecretRef is rejected (400).
+    /// </remarks>
+    /// <param name="sourceName">The sourceName parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UpdateCredentialResponse> UpdateCredentialAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString SourceNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, sourceName, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement;
         UpdateCredentialRequest request = new(SourceNameValue, EnvironmentValue);

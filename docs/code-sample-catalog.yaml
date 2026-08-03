@@ -1759,10 +1759,11 @@ skills:
       - {index: 9, language: powershell, lines: [274, 280]}
   - path: ".github/skills/corvus-builder-context-threading/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [65, 76], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [88, 99], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [111, 117], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [45, 59], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [66, 77], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [89, 100], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [112, 118], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [136, 149], category: compilable, verified: false}
   - path: ".github/skills/corvus-bytes-to-bytes/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [93, 103], category: compilable, verified: false}

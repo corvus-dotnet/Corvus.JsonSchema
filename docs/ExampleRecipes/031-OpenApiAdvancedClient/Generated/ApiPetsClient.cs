@@ -87,6 +87,40 @@ public sealed class ApiPetsClient : IApiPetsClient
     }
 
     /// <summary>
+    /// Create a new pet listing
+    /// </summary>
+    /// <param name="session_token">The session_token parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreatePetResponse> CreatePetAsync<TContext>(Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.NewPet.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.Extended.Models.NewPet bodyValue = Petstore.Extended.Models.NewPet.CreateBuilder(workspace, in body, 30).RootElement;
+        Petstore.Extended.Models.JsonString SessionTokenValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        CreatePetRequest request = new(SessionTokenValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreatePetRequest, Petstore.Extended.Models.NewPet, CreatePetResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get multiple pets by IDs (path array parameter)
     /// </summary>
     /// <param name="ids">The ids parameter.</param>

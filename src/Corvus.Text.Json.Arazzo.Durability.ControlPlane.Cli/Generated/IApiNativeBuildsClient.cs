@@ -175,6 +175,22 @@ public interface IApiNativeBuildsClient : IAsyncDisposable
     ValueTask<EnqueueNativeBuildResponse> EnqueueNativeBuildAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Enqueue a native build of a workflow version for a runtime target
+    /// </summary>
+    /// <remarks>
+    /// Queues an asynchronous Native-AOT build of this workflow version's serverless binary for one runtime target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment, runtimeIdentifier) resets that build job to queued (a rebuild). A background worker then drives the job queued -&gt; building -&gt; ready | failed; poll it with GET .../nativeBuilds/{environment}/{runtimeIdentifier}. Requires catalog write; 404 if the version does not exist.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<EnqueueNativeBuildResponse> EnqueueNativeBuildAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.NativeBuildEnqueue.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Count a workflow version's native build jobs
     /// </summary>
     /// <remarks>

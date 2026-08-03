@@ -87,6 +87,41 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// Create a working copy
+    /// </summary>
+    /// <remarks>
+    /// Creates a working copy from a supplied Arazzo document, from a catalog version (the carry-over: fromBaseWorkflowId + fromVersionNumber), or blank. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateWorkspaceWorkflowResponse> CreateWorkspaceWorkflowAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate.CreateBuilder(workspace, in body, 30).RootElement;
+        CreateWorkspaceWorkflowRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateWorkspaceWorkflowRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate, CreateWorkspaceWorkflowResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a working copy
     /// </summary>
     /// <remarks>
@@ -118,6 +153,43 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        UpdateWorkspaceWorkflowRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<UpdateWorkspaceWorkflowRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate, UpdateWorkspaceWorkflowResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Save a working copy
+    /// </summary>
+    /// <remarks>
+    /// Saves the working copy: replaces the document (and optionally the name/designer state). The save presents the etag it read (expectedEtag) and conflicts (409) when stale — a collaborator saved first; re-fetch and reconcile. Never mints a catalog version.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UpdateWorkspaceWorkflowResponse> UpdateWorkspaceWorkflowAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
         UpdateWorkspaceWorkflowRequest request = new(IdValue);
 
@@ -252,6 +324,45 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// Create or replace a scenario
+    /// </summary>
+    /// <remarks>
+    /// Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<PutScenarioResponse> PutScenarioAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ScenarioNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, scenarioName, 30).RootElement;
+        PutScenarioRequest request = new(IdValue, ScenarioNameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<PutScenarioRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario, PutScenarioResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Delete a scenario
     /// </summary>
     /// <param name="id">The id parameter.</param>
@@ -303,6 +414,43 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        PublishWorkingCopyRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<PublishWorkingCopyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody, PublishWorkingCopyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Publish the working copy as a new catalog version
+    /// </summary>
+    /// <remarks>
+    /// The deliberate publish act (design §4.6): validates the document, re-runs the FULL scenario suite server-side (evidence is server-attested, never client-submitted), builds the package embedding metadata/scenarios.json + metadata/evidence.json, and adds the new version to the catalog. Fails 422 with the diagnostics when the document is invalid, or with the suite report when a scenario fails and requireScenarios is not disabled. The new version starts as a draft until promoted.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<PublishWorkingCopyResponse> PublishWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
         PublishWorkingCopyRequest request = new(IdValue);
 
@@ -378,6 +526,43 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// Simulate a working copy deterministically
+    /// </summary>
+    /// <remarks>
+    /// Compiles the working copy's document (with its attached sources) and executes it against the scripted mock transport and a virtual clock, returning the structured trace up to the stop condition. Stateless interactive stepping: there is no debug-session resource — every command replays from the start (determinism makes the replay exact), so 'step' is this call with `until` one step further and time-travel scrubbing needs no further calls. Simulation never touches real credentials or endpoints; the mock transport is the only I/O surface. 200 with the trace (a faulted workflow is a successful simulation); 400 when this deployment offers no simulation or the scenario is unusable; 404 when the working copy is absent or out of reach; 422 when the document does not compile to an executable workflow.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SimulateWorkingCopyResponse> SimulateWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        SimulateWorkingCopyRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<SimulateWorkingCopyRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest, SimulateWorkingCopyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List a working copy's attached sources
     /// </summary>
     /// <remarks>
@@ -428,6 +613,45 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        AttachWorkingCopySourceRequest request = new(IdValue, NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<AttachWorkingCopySourceRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest, AttachWorkingCopySourceResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Attach a source to a working copy
+    /// </summary>
+    /// <remarks>
+    /// Attaches (or replaces) the source for a sourceDescriptions name: a registry reference or an inline document — exactly one. The attachment is saved onto the working copy under optimistic concurrency; a concurrent save conflicts (409) and the client retries against the fresh state. A registry reference must name a source in the caller's reach (404 otherwise).
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<AttachWorkingCopySourceResponse> AttachWorkingCopySourceAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         AttachWorkingCopySourceRequest request = new(IdValue, NameValue);

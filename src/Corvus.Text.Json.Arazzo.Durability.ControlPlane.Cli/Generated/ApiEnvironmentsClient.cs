@@ -87,6 +87,41 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     }
 
     /// <summary>
+    /// Create a deployment environment
+    /// </summary>
+    /// <remarks>
+    /// Creates a governed, reach-scoped environment and grants the calling principal administration of it (design §7.7). The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if an environment with that name already exists in the caller's reach.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateEnvironmentResponse> CreateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate.CreateBuilder(workspace, in body, 30).RootElement;
+        CreateEnvironmentRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateEnvironmentRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentCreate, CreateEnvironmentResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a deployment environment
     /// </summary>
     /// <param name="name">The name parameter.</param>
@@ -115,6 +150,43 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        UpdateEnvironmentRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<UpdateEnvironmentRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate, UpdateEnvironmentResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update a deployment environment
+    /// </summary>
+    /// <remarks>
+    /// Replaces the mutable metadata (display name, description) of an existing environment; the name, managementTags reach scope, and created-* audit fields are immutable. The caller must be a current administrator of the environment (403 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         UpdateEnvironmentRequest request = new(NameValue);
 
@@ -209,6 +281,43 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     }
 
     /// <summary>
+    /// Transfer environment administration (replace the administrator set)
+    /// </summary>
+    /// <remarks>
+    /// Replaces the entire administrator set for the environment with the given identities (at least one) — an administrator may transfer administration away from itself (design §7.7). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        TransferEnvironmentAdministrationRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<TransferEnvironmentAdministrationRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite, TransferEnvironmentAdministrationResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Add an environment administrator
     /// </summary>
     /// <remarks>
@@ -221,6 +330,43 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        AddEnvironmentAdministratorRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<AddEnvironmentAdministratorRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite, AddEnvironmentAdministratorResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Add an environment administrator
+    /// </summary>
+    /// <remarks>
+    /// Adds an identity to the environment's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         AddEnvironmentAdministratorRequest request = new(NameValue);
 

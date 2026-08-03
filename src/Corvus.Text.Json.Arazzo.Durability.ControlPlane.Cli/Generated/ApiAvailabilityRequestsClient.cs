@@ -93,6 +93,41 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     }
 
     /// <summary>
+    /// Submit an availability request
+    /// </summary>
+    /// <remarks>
+    /// Requests that a workflow version be made available in an environment (design §7.8), for a principal who cannot make it available directly because they do not administer the target environment. The requesting identity is taken from the caller. The request is created pending an environment administrator's decision; approval makes the version available (subject to the §7.7 readiness gate at approval time).
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SubmitAvailabilityRequestResponse> SubmitAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit.CreateBuilder(workspace, in body, 30).RootElement;
+        SubmitAvailabilityRequestRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<SubmitAvailabilityRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestSubmit, SubmitAvailabilityRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Count availability requests
     /// </summary>
     /// <remarks>
@@ -181,6 +216,52 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     }
 
     /// <summary>
+    /// Approve an availability request
+    /// </summary>
+    /// <remarks>
+    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise), and must not be the request's own requester — a decision is always independent, even for an administrator (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ApproveAvailabilityRequestResponse> ApproveAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.CreateBuilder(workspace, in body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
+        ApproveAvailabilityRequestRequest request = new(RequestIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<ApproveAvailabilityRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote, ApproveAvailabilityRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<ApproveAvailabilityRequestRequest, ApproveAvailabilityRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Deny an availability request
     /// </summary>
     /// <remarks>
@@ -224,6 +305,52 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     }
 
     /// <summary>
+    /// Deny an availability request
+    /// </summary>
+    /// <remarks>
+    /// Denies a pending request. The caller must be an administrator of the target environment (403 otherwise), and must not be the request's own requester (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<DenyAvailabilityRequestResponse> DenyAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.CreateBuilder(workspace, in body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
+        DenyAvailabilityRequestRequest request = new(RequestIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<DenyAvailabilityRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote, DenyAvailabilityRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<DenyAvailabilityRequestRequest, DenyAvailabilityRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Withdraw an availability request
     /// </summary>
     /// <remarks>
@@ -237,6 +364,52 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
+        WithdrawAvailabilityRequestRequest request = new(RequestIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<WithdrawAvailabilityRequestRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote, WithdrawAvailabilityRequestResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<WithdrawAvailabilityRequestRequest, WithdrawAvailabilityRequestResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Withdraw an availability request
+    /// </summary>
+    /// <remarks>
+    /// Withdraws the caller's own pending request. The caller must be its requester (403 otherwise). A request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<WithdrawAvailabilityRequestResponse> WithdrawAvailabilityRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestDecisionNote.CreateBuilder(workspace, in body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, requestId, 30).RootElement;
         WithdrawAvailabilityRequestRequest request = new(RequestIdValue);
 

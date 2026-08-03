@@ -3031,6 +3031,39 @@ public sealed class OpenApi32CodeGenerator
         return "JsonElement";
     }
 
+    // The request body's schema pointer (the key into contextSourceBodyPointers), picked by the same rule that picks its
+    // type name so the two always describe the same content entry.
+    private static string? ResolveRequestBodySchemaPointer(RequestBodyInfo requestBody)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType)
+                || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType)
+                || CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
+            {
+                return content.SchemaPointer;
+            }
+        }
+
+        return null;
+    }
+
+    // Whether the operation can also be offered as a closure-free, single-materialisation generic overload: it must
+    // have a body that is materialised from a Source (not a raw stream, not multipart/mixed, whose parts are
+    // materialised individually), and that body's type must be one the model generator gives a Source<TContext>.
+    private bool HasContextThreadedBody(OperationInfo op)
+    {
+        if (op.RequestBody is not { } requestBody
+            || IsRawStreamRequestBody(requestBody)
+            || IsMultipartMixedRequestBody(requestBody))
+        {
+            return false;
+        }
+
+        return ResolveRequestBodySchemaPointer(requestBody) is { } pointer
+            && this.contextSourceBodyPointers.Contains(pointer);
+    }
+
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
     {
         foreach (ContentInfo content in requestBody.Content)
@@ -5477,6 +5510,12 @@ public sealed class OpenApi32CodeGenerator
             }
 
             this.EmitInterfaceMethodSignature(w, operations[i]);
+
+            if (this.HasContextThreadedBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitInterfaceMethodSignature(w, operations[i], contextThreaded: true);
+            }
         }
 
         w.CloseBrace();
@@ -5761,7 +5800,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
     }
 
-    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)
+    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false)
     {
         string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
 
@@ -5772,9 +5811,25 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
-            $"ValueTask<{responseName}> {op.MethodName}Async({string.Join(", ", paramParts)});");
+            $"ValueTask<{responseName}> {op.MethodName}Async{generic}({string.Join(", ", paramParts)})" +
+            (contextThreaded ? string.Empty : ";"));
+
+        if (contextThreaded)
+        {
+            EmitContextConstraint(w);
+            w.WriteLine(";");
+        }
+    }
+
+    // The constraint that lets a caller thread a ref struct through as context, guarded because it is a C# 13 feature.
+    private static void EmitContextConstraint(IndentedWriter w)
+    {
+        w.WriteLine("#if NET9_0_OR_GREATER");
+        w.WriteLine("    where TContext : allows ref struct");
+        w.WriteLine("#endif");
     }
 
     // ── Implementation emission ─────────────────────────────────────────
@@ -5817,6 +5872,14 @@ public sealed class OpenApi32CodeGenerator
         {
             w.WriteLine();
             this.EmitClientMethod(w, operations[i], encodingFieldNames);
+
+            // A body whose type carries a Source<TContext> also gets the closure-free, single-materialisation form,
+            // matching what a server result factory already offers for a response body.
+            if (this.HasContextThreadedBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitClientMethod(w, operations[i], encodingFieldNames, contextThreaded: true);
+            }
         }
 
         w.WriteLine();
@@ -5869,7 +5932,7 @@ public sealed class OpenApi32CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false)
     {
         string requestName = $"{op.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
         string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
@@ -5881,15 +5944,21 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
 
         bool hasRequestExprLinks = HasRequestBasedExpressions(op);
 
         bool isMultipartMixedBody = op.RequestBody is not null && IsMultipartMixedRequestBody(op.RequestBody!.Value);
 
+        string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
-            $"public ValueTask<{responseName}> {op.MethodName}Async(" +
+            $"public ValueTask<{responseName}> {op.MethodName}Async{generic}(" +
             $"{string.Join(", ", paramParts)})");
+
+        if (contextThreaded)
+        {
+            EmitContextConstraint(w);
+        }
 
         w.OpenBrace();
 
@@ -5939,16 +6008,17 @@ public sealed class OpenApi32CodeGenerator
         if (hasBody && !isRawStreamBody && !isMultipartMixedBody)
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
+            string bodyArg = contextThreaded ? "in body" : "body";
             if (optionalJsonBody)
             {
                 w.WriteLine("bool hasBodyValue = !body.IsUndefined;");
                 w.WriteLine(
-                    $"{bodyTypeName} bodyValue = hasBodyValue ? {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement : default;");
+                    $"{bodyTypeName} bodyValue = hasBodyValue ? {bodyTypeName}.CreateBuilder(workspace, {bodyArg}, 30).RootElement : default;");
             }
             else
             {
                 w.WriteLine(
-                    $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
+                    $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, {bodyArg}, 30).RootElement;");
             }
         }
 
@@ -6421,7 +6491,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
     }
 
-    private List<string> BuildParameterList(OperationInfo op)
+    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false)
     {
         List<string> paramParts = [];
 
@@ -6484,7 +6554,8 @@ public sealed class OpenApi32CodeGenerator
             {
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
                 string suffix = bodyRequired ? string.Empty : " = default";
-                paramParts.Add($"{bodyTypeName}.Source body{suffix}");
+                string sourceType = contextThreaded ? "Source<TContext>" : "Source";
+                paramParts.Add($"{bodyTypeName}.{sourceType} body{suffix}");
             }
         }
 

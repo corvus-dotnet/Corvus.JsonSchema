@@ -330,6 +330,20 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     ValueTask<CreateWorkspaceWorkflowResponse> CreateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create a working copy
+    /// </summary>
+    /// <remarks>
+    /// Creates a working copy from a supplied Arazzo document, from a catalog version (the carry-over: fromBaseWorkflowId + fromVersionNumber), or blank. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CreateWorkspaceWorkflowResponse> CreateWorkspaceWorkflowAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Get a working copy
     /// </summary>
     /// <remarks>
@@ -349,6 +363,21 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<UpdateWorkspaceWorkflowResponse> UpdateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Save a working copy
+    /// </summary>
+    /// <remarks>
+    /// Saves the working copy: replaces the document (and optionally the name/designer state). The save presents the etag it read (expectedEtag) and conflicts (409) when stale — a collaborator saved first; re-fetch and reconcile. Never mints a catalog version.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<UpdateWorkspaceWorkflowResponse> UpdateWorkspaceWorkflowAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkingCopyUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Delete a working copy
@@ -403,6 +432,22 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     ValueTask<PutScenarioResponse> PutScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create or replace a scenario
+    /// </summary>
+    /// <remarks>
+    /// Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<PutScenarioResponse> PutScenarioAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Delete a scenario
     /// </summary>
     /// <param name="id">The id parameter.</param>
@@ -433,6 +478,21 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     ValueTask<PublishWorkingCopyResponse> PublishWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Publish the working copy as a new catalog version
+    /// </summary>
+    /// <remarks>
+    /// The deliberate publish act (design §4.6): validates the document, re-runs the FULL scenario suite server-side (evidence is server-attested, never client-submitted), builds the package embedding metadata/scenarios.json + metadata/evidence.json, and adds the new version to the catalog. Fails 422 with the diagnostics when the document is invalid, or with the suite report when a scenario fails and requireScenarios is not disabled. The new version starts as a draft until promoted.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<PublishWorkingCopyResponse> PublishWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// The working copy's schema metadata
     /// </summary>
     /// <remarks>
@@ -452,6 +512,21 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<SimulateWorkingCopyResponse> SimulateWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Simulate a working copy deterministically
+    /// </summary>
+    /// <remarks>
+    /// Compiles the working copy's document (with its attached sources) and executes it against the scripted mock transport and a virtual clock, returning the structured trace up to the stop condition. Stateless interactive stepping: there is no debug-session resource — every command replays from the start (determinism makes the replay exact), so 'step' is this call with `until` one step further and time-travel scrubbing needs no further calls. Simulation never touches real credentials or endpoints; the mock transport is the only I/O surface. 200 with the trace (a faulted workflow is a successful simulation); 400 when this deployment offers no simulation or the scenario is unusable; 404 when the working copy is absent or out of reach; 422 when the document does not compile to an executable workflow.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SimulateWorkingCopyResponse> SimulateWorkingCopyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// List a working copy's attached sources
@@ -482,6 +557,22 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<AttachWorkingCopySourceResponse> AttachWorkingCopySourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Attach a source to a working copy
+    /// </summary>
+    /// <remarks>
+    /// Attaches (or replaces) the source for a sourceDescriptions name: a registry reference or an inline document — exactly one. The attachment is saved onto the working copy under optimistic concurrency; a concurrent save conflicts (409) and the client retries against the fresh state. A registry reference must name a source in the caller's reach (404 otherwise).
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<AttachWorkingCopySourceResponse> AttachWorkingCopySourceAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Detach a source from a working copy

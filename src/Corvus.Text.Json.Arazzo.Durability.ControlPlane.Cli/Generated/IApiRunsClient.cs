@@ -260,6 +260,21 @@ public interface IApiRunsClient : IAsyncDisposable
     ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Resume a faulted run
+    /// </summary>
+    /// <remarks>
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Cancel a run
     /// </summary>
     /// <remarks>
@@ -269,6 +284,21 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Cancel a run
+    /// </summary>
+    /// <remarks>
+    /// Cancels a non-terminal run, marking it `Cancelled` (any fault record is kept for post-mortem visibility). Returns the run's new detail on success.
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Count runs

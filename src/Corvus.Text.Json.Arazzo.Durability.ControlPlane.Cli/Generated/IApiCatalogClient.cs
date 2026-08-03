@@ -318,6 +318,21 @@ public interface IApiCatalogClient : IAsyncDisposable
     ValueTask<AddCatalogVersionResponse> AddCatalogVersionAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.Source body, BinaryPartData package, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Add a workflow version
+    /// </summary>
+    /// <remarks>
+    /// Uploads a new immutable workflow document package (the Arazzo workflow plus its referenced OpenAPI/AsyncAPI sources) as `multipart/form-data` — a `package` file part (shaped as the `CatalogPackage` schema) plus `owner` and `tags` parts. The store assigns the next version number, rewrites the workflow id to the versioned form (`{baseWorkflowId}-v{n}`), and records the content hash. The submitted workflow id must not already carry a `-vN` suffix.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="package">Binary data for the 'package' part.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<AddCatalogVersionResponse> AddCatalogVersionAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.Source<TContext> body, BinaryPartData package, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Purge obsolete versions
     /// </summary>
     /// <remarks>
@@ -370,6 +385,22 @@ public interface IApiCatalogClient : IAsyncDisposable
     ValueTask<UpdateCatalogVersionResponse> UpdateCatalogVersionAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Update a version's governance metadata
+    /// </summary>
+    /// <remarks>
+    /// Updates the mutable governance metadata (owner, tags, status). The immutable package, hash, title and description are unchanged. Records `lastUpdatedBy`; setting `status` to `Obsolete` also records `obsoletedBy`.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<UpdateCatalogVersionResponse> UpdateCatalogVersionAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Download a version's document package
     /// </summary>
     /// <remarks>
@@ -391,6 +422,22 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<SimulateCatalogVersionResponse> SimulateCatalogVersionAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Simulate a published version
+    /// </summary>
+    /// <remarks>
+    /// Runs the deterministic simulator over the version's IMMUTABLE stored package — the workflow document and its embedded sources, exactly as published — with the same request shape as simulateWorkingCopy (scenario, stop condition, budget) and the same complete trace back (workflow-designer design §4.3/§8). Re-verify evidence, or explore a regression, without a working copy. Mutates nothing.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SimulateCatalogVersionResponse> SimulateCatalogVersionAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// A version's publish evidence
@@ -460,6 +507,22 @@ public interface IApiCatalogClient : IAsyncDisposable
     ValueTask<ValidateCatalogValueResponse> ValidateCatalogValueAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Validate a value against a schema in a version
+    /// </summary>
+    /// <remarks>
+    /// Validates a JSON value against the true JSON Schema of a target within this version's package — a workflow's `inputs`, a step's request or response body, or a step's `outputs` object — using a full JSON Schema validator (not the lossy precomputed metadata). Returns a structured result (valid plus any errors with their instance locations); a malformed value still yields `200` with `valid: false`. Returns `404` when the version or the requested target schema cannot be resolved.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ValidateCatalogValueResponse> ValidateCatalogValueAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Start a run of a workflow version
     /// </summary>
     /// <remarks>
@@ -472,6 +535,24 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source body, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source idempotencyKey = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Start a run of a workflow version
+    /// </summary>
+    /// <remarks>
+    /// Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Supply an `Idempotency-Key` header to make the start idempotent: a repeated request carrying the same key returns the run the first created rather than starting a duplicate. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="idempotencyKey">The Idempotency-Key parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source<TContext> body, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source idempotencyKey = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Get a single source document from a version

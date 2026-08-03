@@ -6,9 +6,10 @@ description: >
   CreateBuilder<TContext> context-threading form (static lambdas + a ref-struct context that
   `allows ref struct`, so it can carry ReadOnlySpan<byte>). The context is a RefTuple<…> (the
   span-capable ValueTuple companion, .NET 9+) instead of a bespoke context struct. Hand the
-  context-threaded body to the result factory's generic Ok<TContext>(Source<TContext>, ws) overload
-  for a single closure-free materialization (NOT CreateBuilder<TContext>().RootElement + non-generic
-  Ok, which re-materializes). Covers the array Build<TContext> / AddItem<TContext> nesting, the implicit
+  context-threaded body to the generic boundary overload — a server result factory's
+  Ok<TContext>(Source<TContext>, ws), or a client operation's ...Async<TContext>(Source<TContext>) for a
+  REQUEST body — for a single closure-free materialization (NOT CreateBuilder<TContext>().RootElement +
+  non-generic Ok, which re-materializes). Covers the array Build<TContext> / AddItem<TContext> nesting, the implicit
   ReadOnlySpan<byte> -> JsonString.Source / enum Source operators, RefTuple, and the ref-safety gotchas.
   USE FOR: projecting a list/page of bytes-backed values into a generated response without a per-item
   closure; threading spans into a builder; reaching the Ok<TContext> boundary; fixing
@@ -126,6 +127,34 @@ exposes a `Ok<TContext>` overload at all — it is the generic counterpart of `O
 resolve to the universal `JsonElement`, which has the same `CreateBuilder<TContext>(in Source<TContext>)` overload, so
 `Ok<TContext>` works for them too.
 
+## Reaching the request boundary — the client's generic operation overload
+
+A generated **client** has the mirror of `Ok<TContext>`: for every operation whose request body is an object or array,
+it emits `…Async<TContext>(Body.Source<TContext> body, …)` alongside the non-generic `…Async(Body.Source body, …)`.
+Build the body lazily and hand it straight over, exactly as on the server:
+
+```csharp
+ClaimRequest.Source<IReadOnlyCollection<string>> request = ClaimRequest.Build(
+    in hostedVersions,
+    ClaimRequest.HostedVersionsEntityArray.Build(in hostedVersions, static (in IReadOnlyCollection<string> vs, ref ClaimRequest.HostedVersionsEntityArray.Builder b) =>
+    {
+        foreach (string v in vs)
+        {
+            b.AddItem(v);
+        }
+    }),
+    leaseSeconds);
+
+return this.ReadClaimAsync(this.claims.ClaimRunAsync(request, cancellationToken));   // ClaimRunAsync<TContext>
+```
+
+**The calling method must not be `async`.** `Source<TContext>` is a ref struct holding its context, so it cannot live
+in an async state machine. Build the source and *start* the send in a plain method that returns the `ValueTask`, and do
+the awaiting in a separate async continuation — which is the shape the generated client itself uses, and for the same
+reason.
+
+A scalar request body has no `Source<TContext>` and only gets the non-generic overload, exactly as on the response side.
+
 ## Gotchas
 
 | Symptom | Cause | Fix |
@@ -133,6 +162,7 @@ resolve to the universal `JsonElement`, which has the same `CreateBuilder<TConte
 | **CS1729** `'T.Source' does not contain a constructor that takes 1 argument` (from another assembly, e.g. a benchmark) | the `new T.Source((ref Builder b) => …)` WriteAction ctor is **`internal`** | use the public factory `T.Build((ref T.Builder b) => …)` (same-assembly handler code can use `new(...)`) |
 | **CS8347 / CS8350 / CS8156** on `array.AddItem(T.Build(strA, strB))` | the lazy `Build(in field, …)` holds a **ref** to its `in` args; a `string -> Source` arg is a stack temporary, so the lazy item can't be appended | for a genuine string-leaf sub-array (e.g. the `{dimension,value}` grants), use the WriteAction form `new T.Source((ref Builder b) => b.Create(strA, strB))` — a closure there is fine (the strings are the leaf), or thread the value via the context and use a span |
 | ternary `label: hasLabel ? span : default` won't infer a common type | `ReadOnlySpan<byte>` vs `JsonString.Source default` | cast the span branch: `hasLabel ? (Models.JsonString.Source)span : default` |
+| ternary `seconds: has ? (long)x : default` compiles but sends the WRONG VALUE | the branches' natural common type is `long`, so `default` becomes `0L` — NOT an undefined `Source`. The property is emitted as `0` rather than omitted, and a schema `minimum` refuses it at runtime | cast the value branch to the Source type — `has ? (Models.T.Source)(long)x : default` — or assign through an explicitly typed local so the conditional is target-typed. **This is the dangerous sibling of the row above**: a span branch fails to compile, a primitive branch compiles and lies |
 | `Build(field: v)` result "may expose variables outside their scope" when **returned** from a helper | `Build` takes fields by `in`; its `Source` cannot escape the method | consume it in place (pass straight to the consumer / `AddItem`), never `return` it — see corvus-typed-model-construction |
 | a nested object's array field built with one context but the parent `Create<TContext>` wants another | `Create<TContext>(in ctx, …, nested: Nested.Source<TContext>, …)` takes the nested value at the **parent's** `TContext` — same type | thread the **same** context into the nested `Build` (`Build(in item, …)`); when two call sites carry contexts that differ only in one element (e.g. `RefTuple<ResolvedPrincipal,…>` vs `RefTuple<ObservedIdentity,…>`) a **single generic** static method over that element works — `BuildIdentity<TIdentity>(in RefTuple<TIdentity, …> item, ref Builder) where TIdentity : allows ref struct` — method-group inference fixes `TIdentity` from the `in item` argument at each call site (verified; no per-context duplication needed) |
 | `Ok<TContext>` not emitted for a response whose body is scalar (`type: string`) | only object/array bodies carry a `Source<TContext>`; the generator gates the generic overload on that | expected — a scalar body uses the non-generic `Ok(Source, ws)`; there is nothing to thread |

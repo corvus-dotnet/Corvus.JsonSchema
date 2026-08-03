@@ -93,6 +93,43 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
     }
 
     /// <summary>
+    /// Register a runner to serve an environment (authenticated machine principal)
+    /// </summary>
+    /// <remarks>
+    /// Registers the calling runner to serve this environment (design §5.5/§16.4). The runner authenticates as a machine principal (client-credentials, private-key-JWT, or mTLS) and presents its self-description; the control plane derives the trusted principal from the token and binds the runner's authorization to it, rather than to the self-asserted runnerId. The registration is recorded in the runner registry (with the runner's reach tags stamped from the environment's managementTags, never trusted from the runner) and the authorization enters Pending — the runner is dispatchable only once an administrator of the environment authorizes it (see authorizeRunner). Idempotent: a runner re-registering with its own principal keeps its existing authorization status. A registration presenting a principal that differs from the one already bound to this runnerId is refused (409). 404 if the environment does not exist.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RegisterRunnerResponse> RegisterRunnerAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        RegisterRunnerRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<RegisterRunnerRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerRegistrationRequest, RegisterRunnerResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Count the runners that serve an environment
     /// </summary>
     /// <remarks>
@@ -131,6 +168,54 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
+        AuthorizeRunnerRequest request = new(NameValue, RunnerIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<AuthorizeRunnerRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant, AuthorizeRunnerResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<AuthorizeRunnerRequest, AuthorizeRunnerResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Authorize (or reinstate) a runner to serve an environment
+    /// </summary>
+    /// <remarks>
+    /// <para>Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. This is also the return path for a quarantined runner (reinstate) and a revoked one (re-authorize): it transitions Pending, Quarantined, or Revoked to Authorized. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.</para><para>**Pre-authorizing a runner that has not registered yet requires `expectedPrincipal`.** The decision then allow-lists that principal under the runner id rather than the id alone, so a foreign principal cannot register into the authorization before the intended runner arrives. A pre-authorization without it is refused with 400.</para>
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<AuthorizeRunnerResponse> AuthorizeRunnerAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationGrant.CreateBuilder(workspace, in body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
         AuthorizeRunnerRequest request = new(NameValue, RunnerIdValue);
@@ -207,6 +292,54 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
     }
 
     /// <summary>
+    /// Revoke a runner's authorization to serve an environment
+    /// </summary>
+    /// <remarks>
+    /// Permanently removes a compromised runner (design §5.5): the runner stops being dispatched to immediately, and any lease it currently holds is expired so an authorized peer reclaims its in-flight runs at once (its own further checkpoint writes then conflict) — the fence. The record persists with status Revoked, and a revoked runner cannot return to service without a deliberate re-authorization. For a merely faulted runner that should return without ceremony, quarantine it instead. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RevokeRunnerResponse> RevokeRunnerAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.CreateBuilder(workspace, in body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
+        RevokeRunnerRequest request = new(NameValue, RunnerIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<RevokeRunnerRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote, RevokeRunnerResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<RevokeRunnerRequest, RevokeRunnerResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Withdraw a pre-authorization
     /// </summary>
     /// <remarks>
@@ -242,6 +375,54 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
+        QuarantineRunnerRequest request = new(NameValue, RunnerIdValue);
+
+        request.Validate(validationMode);
+
+        if (hasBodyValue)
+        {
+            if (validationMode == ValidationMode.Detailed)
+            {
+                using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!bodyValue.EvaluateSchema(bodyCollector))
+                {
+                    ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+                }
+            }
+            else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed();
+            }
+        }
+
+        if (hasBodyValue)
+        {
+            return SendWithBodyAsyncCore<QuarantineRunnerRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote, QuarantineRunnerResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        }
+
+        return SendAsyncCore<QuarantineRunnerRequest, QuarantineRunnerResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Quarantine a runner (temporary exclusion)
+    /// </summary>
+    /// <remarks>
+    /// Temporarily excludes a faulted runner from new dispatch (design §5.5): it stops receiving new and orphaned work while its in-flight runs drain to completion (unlike revoke, quarantine does not fence them). The record persists with status Quarantined; reinstate it by authorizing it again, with no re-registration required. Only an Authorized runner can be quarantined — quarantining a Pending or Revoked runner conflicts (409). The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent — quarantining an already-Quarantined runner returns the existing record.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<QuarantineRunnerResponse> QuarantineRunnerAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        bool hasBodyValue = !body.IsUndefined;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.CreateBuilder(workspace, in body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
         QuarantineRunnerRequest request = new(NameValue, RunnerIdValue);

@@ -89,6 +89,41 @@ public sealed class ApiSchedulesClient : IApiSchedulesClient
     }
 
     /// <summary>
+    /// Create a schedule
+    /// </summary>
+    /// <remarks>
+    /// Creates a durable schedule (#896): a run of the built-in scheduler workflow, pinned to an environment, that fires the target version on the given cron cadence through the governed run endpoint. The `scheduleId` is the schedule's stable, globally-unique identity; re-creating the same `scheduleId` is idempotent and returns the existing schedule. Validates that the target version exists and is available in the environment (§7.8), that the caller has reach to it, and that at least one runner serving the environment advertises scheduling (`servesSchedules`); if none does, returns `409` with guidance to enable scheduling on a runner there. A scheduled start is reach- and audit-gated exactly as an operator start is. 404 if the target version does not exist or is outside the caller's reach; 409 if it is not available in the environment, not runnable, or no scheduling runner serves the environment; 422 if the target inputs fail the version's baked inputs schema.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateScheduleResponse> CreateScheduleAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ScheduleCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ScheduleCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ScheduleCreate.CreateBuilder(workspace, in body, 30).RootElement;
+        CreateScheduleRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateScheduleRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ScheduleCreate, CreateScheduleResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a schedule
     /// </summary>
     /// <remarks>

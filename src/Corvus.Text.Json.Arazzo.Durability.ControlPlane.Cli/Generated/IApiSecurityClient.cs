@@ -366,6 +366,20 @@ public interface IApiSecurityClient : IAsyncDisposable
     ValueTask<CreateSecurityRuleResponse> CreateSecurityRuleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityRuleCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create a security rule
+    /// </summary>
+    /// <remarks>
+    /// Creates a named rule; the expression is validated against the security-rule grammar.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CreateSecurityRuleResponse> CreateSecurityRuleAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityRuleCreate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Get a security rule
     /// </summary>
     /// <param name="ruleName">The ruleName parameter.</param>
@@ -382,6 +396,21 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<UpdateSecurityRuleResponse> UpdateSecurityRuleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source ruleName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityRuleUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Update a security rule
+    /// </summary>
+    /// <remarks>
+    /// Replaces the rule's content; the expression is validated against the security-rule grammar.
+    /// </remarks>
+    /// <param name="ruleName">The ruleName parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<UpdateSecurityRuleResponse> UpdateSecurityRuleAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source ruleName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityRuleUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Delete a security rule
@@ -423,6 +452,20 @@ public interface IApiSecurityClient : IAsyncDisposable
     ValueTask<CreateSecurityBindingResponse> CreateSecurityBindingAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create a security binding
+    /// </summary>
+    /// <remarks>
+    /// Creates a claim→rule binding; the store assigns its id.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CreateSecurityBindingResponse> CreateSecurityBindingAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Get a security binding
     /// </summary>
     /// <param name="bindingId">The bindingId parameter.</param>
@@ -436,6 +479,18 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<UpdateSecurityBindingResponse> UpdateSecurityBindingAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source bindingId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Update a security binding
+    /// </summary>
+    /// <param name="bindingId">The bindingId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<UpdateSecurityBindingResponse> UpdateSecurityBindingAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source bindingId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Delete a security binding

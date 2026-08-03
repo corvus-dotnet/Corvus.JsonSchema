@@ -142,6 +142,18 @@ public interface IApiDebugRunsClient : IAsyncDisposable
     ValueTask<StartDebugRunResponse> StartDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunStart.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design §18): a durable run under the environment's credential bindings — the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<StartDebugRunResponse> StartDebugRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunStart.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// The debug run's current state: status, cursor, the trace so far (the same shape simulation emits — exchanges as sent), and any wait it is suspended on.
     /// </summary>
     /// <param name="id">The id parameter.</param>
@@ -167,6 +179,19 @@ public interface IApiDebugRunsClient : IAsyncDisposable
     ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses — Skip with outputs is 'step over', Rewind deliberately re-executes.
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="debugRunId">The debugRunId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Cancel the debug run; a terminal state, idempotent.
     /// </summary>
     /// <param name="id">The id parameter.</param>
@@ -182,4 +207,17 @@ public interface IApiDebugRunsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Debug-only: deliver a message to a debug run that is suspended on an AsyncAPI receive, standing in for the real publisher so the run advances. The payload is delivered STRAIGHT to the awaiting run (matched by channel and, when set, correlationId) — nothing is published to a real broker, and there is no production analogue (a live workflow's message arrives from its real source). Answers the 'what if the webhook arrives now / late / malformed?' question.
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="debugRunId">The debugRunId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 }

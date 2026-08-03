@@ -163,6 +163,20 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<SubmitAccessRequestResponse> SubmitAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSubmit.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Submit an access request
+    /// </summary>
+    /// <remarks>
+    /// Submits a request for elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit; the requesting subject is taken from the caller, so a grant can never target a third party. If the requester is eligible to self-elevate exactly this, the request is auto-approved (self-elevation); otherwise it is created pending an administrator's decision.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SubmitAccessRequestResponse> SubmitAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSubmit.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Count access requests
     /// </summary>
     /// <remarks>
@@ -196,6 +210,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<ApproveAccessRequestResponse> ApproveAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Approve an access request
+    /// </summary>
+    /// <remarks>
+    /// Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject — a decision is always independent, so a request that would grant the caller access is refused (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ApproveAccessRequestResponse> ApproveAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Approve an access request as durable eligibility
     /// </summary>
     /// <remarks>
@@ -205,6 +234,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ApproveAccessRequestAsEligibleResponse> ApproveAccessRequestAsEligibleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Approve an access request as durable eligibility
+    /// </summary>
+    /// <remarks>
+    /// Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed; self-elevation is the designed exception to the independent-decision rule, because the eligibility itself was independently decided). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ApproveAccessRequestAsEligibleResponse> ApproveAccessRequestAsEligibleAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestEligibilityNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Deny an access request
@@ -218,6 +262,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<DenyAccessRequestResponse> DenyAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Deny an access request
+    /// </summary>
+    /// <remarks>
+    /// Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<DenyAccessRequestResponse> DenyAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Withdraw an access request
     /// </summary>
     /// <remarks>
@@ -227,6 +286,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<WithdrawAccessRequestResponse> WithdrawAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Withdraw an access request
+    /// </summary>
+    /// <remarks>
+    /// Withdraws a pending request. Only the requester (the request's own subject) may withdraw it (403 otherwise); a request that is not pending conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<WithdrawAccessRequestResponse> WithdrawAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Revoke an approved grant
@@ -240,6 +314,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<RevokeAccessRequestResponse> RevokeAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Revoke an approved grant
+    /// </summary>
+    /// <remarks>
+    /// Revokes an approved grant early: the entitlement is deleted (access stops at the next resolution, fail-safe) and the request is marked revoked. The caller must be an administrator of the target workflow (403 otherwise). A request that is not an approved grant conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RevokeAccessRequestResponse> RevokeAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Grant a pending access request (system-credentialed, no administrator check)
     /// </summary>
     /// <remarks>
@@ -249,6 +338,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GrantAccessRequestResponse> GrantAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Grant a pending access request (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Writes the capped, time-boxed entitlement a pending request's decision authorized, WITHOUT the §15-administrator check that approve applies — the system-credentialed grant path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this to write the grant the decision authorized. The platform ceiling is identical to approve and holds regardless of caller — at most the requested scopes intersected with run access, bound to the requester (never a third party), reach fixed to the target workflow, expiry capped at the deployment maximum — so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GrantAccessRequestResponse> GrantAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 
     /// <summary>
     /// Grant a pending access request as standing eligibility (system-credentialed, no administrator check)
@@ -262,6 +366,21 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<GrantAccessRequestAsEligibleResponse> GrantAccessRequestAsEligibleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Grant a pending access request as standing eligibility (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Writes the capped eligibility assignment a pending request's decision authorized (design §16.5.3), WITHOUT the §15-administrator check that approveAsEligible applies — the system-credentialed grant path (design §16.5.1). The sibling of grantAccessRequest: where that writes a one-time active grant, this writes standing eligibility, so the requester may thereafter self-elevate this access JIT without re-approval. It exists for the bootstrapped approval workflow: when a human approver's decision is 'eligible', the workflow's §13 system credential calls this. The platform ceiling is identical to approveAsEligible and holds regardless of caller — at most the requested scopes intersected with run access, bound to the requester, reach fixed to the target workflow — so this can never widen to an arbitrary binding. Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GrantAccessRequestAsEligibleResponse> GrantAccessRequestAsEligibleAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestDecisionNote.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Settle a pending access request per its decision outcome (system-credentialed, no administrator check)
     /// </summary>
     /// <remarks>
@@ -271,4 +390,19 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<SettleAccessRequestResponse> SettleAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Settle a pending access request per its decision outcome (system-credentialed, no administrator check)
+    /// </summary>
+    /// <remarks>
+    /// Enacts the terminal state a pending request's decision authorized, WITHOUT the §15-administrator check the caller-facing approve/deny apply — the single system-credentialed enactment path (design §16.5.1). It exists for the bootstrapped approval workflow: a human approver drives the decision inside the workflow (delivered as the injected decision message), then the workflow's §13 system credential calls this once to enact whatever was decided, so every outcome flows through the same run. 'approved' writes the capped, time-boxed grant; 'eligible' writes standing eligibility (§16.5.3); 'rejected' marks the request Denied; 'withdrawn' marks it Withdrawn. The platform ceiling on a grant is identical to approve and holds regardless of caller, so this can never widen to an arbitrary binding (that needs security:write). Reachable only with the narrow accessRequests:grant capability, which a deployment grants solely to the approval workflow's system credential. A request that is not pending, or whose scopes are not grantable, conflicts (409).
+    /// </remarks>
+    /// <param name="requestId">The requestId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SettleAccessRequestResponse> SettleAccessRequestAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source requestId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSettlement.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
 }

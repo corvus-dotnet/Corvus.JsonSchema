@@ -44,13 +44,6 @@ on a run, so a runner that never handles the token cannot log it, persist it, or
 Releasing a run the client does not hold does nothing and is not an error, so a runner can release in a `finally`
 without first working out whether it still holds the lease.
 
-## Known limitation: the request body takes a closure
-
-A generated client takes only the non-generic `Model.Source` for a request body, so building the claim's hosted-version
-list closes over the collection. The server side already emits context-threaded `Source<TContext>` overloads for
-response bodies; the client side does not yet do the same for request bodies, so there is no closure-free path here.
-That asymmetry is tracked as a generator gap rather than worked around further.
-
 ## Refusals a runner must act on
 
 | Situation | What you get |
