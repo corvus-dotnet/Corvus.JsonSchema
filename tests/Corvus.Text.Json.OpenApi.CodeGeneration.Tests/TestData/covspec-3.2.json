@@ -134,7 +134,7 @@
             "apiKeyAuth": []
           }
         ],
-        "description": "Returns all items matching optional filters."
+        "description": "Returns all items matching optional filters.\n\nA second paragraph, because an OpenAPI description is CommonMark and multi-line prose is ordinary.\nA wrapped line within that paragraph, which is a wrap rather than a new paragraph.\n\nA third paragraph, so more than one paragraph boundary is exercised."
       },
       "post": {
         "operationId": "createItem",

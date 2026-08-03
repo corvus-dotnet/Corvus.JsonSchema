@@ -116,14 +116,44 @@ public static class CodeEmitHelpers
         };
 
     /// <summary>
-    /// Escapes text for inclusion in an XML doc comment.
+    /// Escapes text for inclusion in an XML doc comment, and flattens it onto one line.
     /// </summary>
     /// <param name="text">The text to escape.</param>
-    /// <returns>The XML-safe text.</returns>
-    public static string EscapeXml(string text) =>
-        text.Replace("&", "&amp;", StringComparison.Ordinal)
+    /// <returns>The XML-safe text, free of line breaks.</returns>
+    /// <remarks>
+    /// An OpenAPI <c>description</c> is CommonMark, so multi-line prose is ordinary in a specification. Emitting it
+    /// verbatim produced C# that did not compile: every line after the first landed outside the <c>///</c> prefix, so
+    /// the comment terminated mid-sentence and the rest of the paragraph was parsed as code. The text is therefore
+    /// flattened onto a single line here rather than at each call site, because it is written at more than twenty of
+    /// them across four generators and the indentation each one is emitted at differs.
+    /// </remarks>
+    public static string EscapeXml(string text)
+    {
+        string escaped = text.Replace("&", "&amp;", StringComparison.Ordinal)
             .Replace("<", "&lt;", StringComparison.Ordinal)
             .Replace(">", "&gt;", StringComparison.Ordinal);
+
+        if (escaped.AsSpan().IndexOfAny('\r', '\n') < 0)
+        {
+            return escaped;
+        }
+
+        // Blank lines separate paragraphs in CommonMark, so they become <para> elements rather than being collapsed
+        // away; a line break within a paragraph is a wrap, and becomes a space.
+        string[] paragraphs = escaped
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split("\n\n", StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < paragraphs.Length; i++)
+        {
+            paragraphs[i] = paragraphs[i].Replace('\n', ' ').Trim();
+        }
+
+        return paragraphs.Length == 1
+            ? paragraphs[0]
+            : $"<para>{string.Join("</para><para>", paragraphs)}</para>";
+    }
 
     /// <summary>
     /// Formats a C# string literal (including surrounding quotes), using the Roslyn

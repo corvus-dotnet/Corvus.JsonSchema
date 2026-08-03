@@ -1787,6 +1787,21 @@ public sealed class OpenApi30CodeGenerator
         return [.. result];
     }
 
+    // The JSON-ish media type the response declares for its body, picked by the same rule that picked the body's
+    // schema so the two always describe the same content entry.
+    private static string DeclaredJsonMediaType(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                return content.MediaType;
+            }
+        }
+
+        return "application/json";
+    }
+
     private static ContentInfo[] PrepareResponseContentEntries(
         OpenApiDocument.Response.ContentEntity contentMap,
         ReadOnlySpan<byte> pathNameUtf8,
@@ -5777,7 +5792,11 @@ public sealed class OpenApi30CodeGenerator
         string bodyExpr = hasBody
             ? $"{bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement"
             : "default";
-        string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
+
+        // The media type the response actually declares, not a literal "application/json". A specification declaring
+        // RFC 9457 problem documents means it: answering them as application/json tells a client the body is an
+        // ordinary result, and a client branching on the media type to find the problem shape never sees one.
+        string contentTypeExpr = hasBody ? $"\"{DeclaredJsonMediaType(response)}\"" : "null";
 
         // When the struct exposes an octet-stream binary body, the private constructor has two
         // extra required parameters (hasBinaryBody, binaryWriter) immediately after contentType.

@@ -2067,6 +2067,21 @@ public sealed class OpenApi20CodeGenerator
     /// <summary>
     /// Returns the distinct content categories present in a response's content entries.
     /// </summary>
+    // The JSON-ish media type the response declares for its body, picked by the same rule that picked the body's
+    // schema so the two always describe the same content entry.
+    private static string DeclaredJsonMediaType(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                return content.MediaType;
+            }
+        }
+
+        return "application/json";
+    }
+
     private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
     {
         return resp.Content
@@ -4291,7 +4306,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine("/// Creates a default error result.");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders);
             }
             else
             {
@@ -4300,7 +4315,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders);
             }
         }
 
@@ -4398,6 +4413,7 @@ public sealed class OpenApi20CodeGenerator
         string structName,
         string factoryName,
         string? bodyTypeName,
+        ResponseInfo response,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
         bool structHasHeaders)
@@ -4466,7 +4482,11 @@ public sealed class OpenApi20CodeGenerator
         string bodyExpr = hasBody
             ? $"{bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement"
             : "default";
-        string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
+
+        // The media type the response actually declares, not a literal "application/json". A specification declaring
+        // RFC 9457 problem documents means it: answering them as application/json tells a client the body is an
+        // ordinary result, and a client branching on the media type to find the problem shape never sees one.
+        string contentTypeExpr = hasBody ? $"\"{DeclaredJsonMediaType(response)}\"" : "null";
 
         if (structHasHeaders)
         {

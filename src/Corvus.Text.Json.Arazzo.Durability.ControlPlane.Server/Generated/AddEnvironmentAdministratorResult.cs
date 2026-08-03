@@ -61,7 +61,7 @@ public readonly struct AddEnvironmentAdministratorResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddEnvironmentAdministratorResult"/> with status 400.</returns>
-    public static AddEnvironmentAdministratorResult BadRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static AddEnvironmentAdministratorResult BadRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 400 BadRequest result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -73,7 +73,7 @@ public readonly struct AddEnvironmentAdministratorResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(400, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Creates a 403 Forbidden result.
@@ -81,7 +81,7 @@ public readonly struct AddEnvironmentAdministratorResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddEnvironmentAdministratorResult"/> with status 403.</returns>
-    public static AddEnvironmentAdministratorResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static AddEnvironmentAdministratorResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 403 Forbidden result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -93,7 +93,7 @@ public readonly struct AddEnvironmentAdministratorResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -101,7 +101,7 @@ public readonly struct AddEnvironmentAdministratorResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddEnvironmentAdministratorResult"/> with status 404.</returns>
-    public static AddEnvironmentAdministratorResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static AddEnvironmentAdministratorResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 404 NotFound result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -113,7 +113,7 @@ public readonly struct AddEnvironmentAdministratorResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Creates a 409 Conflict result.
@@ -121,7 +121,7 @@ public readonly struct AddEnvironmentAdministratorResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="AddEnvironmentAdministratorResult"/> with status 409.</returns>
-    public static AddEnvironmentAdministratorResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static AddEnvironmentAdministratorResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 409 Conflict result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -133,7 +133,7 @@ public readonly struct AddEnvironmentAdministratorResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

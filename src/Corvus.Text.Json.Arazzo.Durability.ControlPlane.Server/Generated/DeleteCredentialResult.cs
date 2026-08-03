@@ -47,7 +47,7 @@ public readonly struct DeleteCredentialResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="DeleteCredentialResult"/> with status 404.</returns>
-    public static DeleteCredentialResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static DeleteCredentialResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 404 NotFound result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -59,7 +59,7 @@ public readonly struct DeleteCredentialResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

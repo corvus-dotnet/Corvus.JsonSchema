@@ -47,7 +47,7 @@ public readonly struct DeleteCatalogVersionResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="DeleteCatalogVersionResult"/> with status 403.</returns>
-    public static DeleteCatalogVersionResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static DeleteCatalogVersionResult Forbidden(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 403 Forbidden result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -59,7 +59,7 @@ public readonly struct DeleteCatalogVersionResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(403, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -67,7 +67,7 @@ public readonly struct DeleteCatalogVersionResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="DeleteCatalogVersionResult"/> with status 404.</returns>
-    public static DeleteCatalogVersionResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static DeleteCatalogVersionResult NotFound(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 404 NotFound result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -79,7 +79,7 @@ public readonly struct DeleteCatalogVersionResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(404, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Creates a 409 Conflict result.
@@ -87,7 +87,7 @@ public readonly struct DeleteCatalogVersionResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="DeleteCatalogVersionResult"/> with status 409.</returns>
-    public static DeleteCatalogVersionResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static DeleteCatalogVersionResult Conflict(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.Source body, JsonWorkspace workspace) => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json");
     /// <summary>
     /// Creates a 409 Conflict result from a context-threaded body, materialised in a single pass.
     /// </summary>
@@ -99,7 +99,7 @@ public readonly struct DeleteCatalogVersionResult
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
-        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
+        => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
