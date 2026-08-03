@@ -31,6 +31,7 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
     private const string EnvironmentColumn = "Environment";
     private const string RunnerIdColumn = "RunnerId";
     private const string StatusColumn = "Status";
+    private const string PrincipalColumn = "Principal";
 
     // The shared client-side ordering for ListAsync: (environment, runnerId) ordinal (Table queries are unordered and the
     // keys are URL-safe base64, not ordinal-order-preserving, so the snapshot is sorted after the (filtered) read).
@@ -136,6 +137,10 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
             [EnvironmentColumn] = environment,
             [RunnerIdColumn] = runnerId,
             [StatusColumn] = RunnerAuthorizationStatusNames.Pending,
+
+            // Mirrored so the runner API can resolve a principal's bindings server-side. A row an administrator
+            // pre-authorized binds none, and is matched by no principal filter.
+            [PrincipalColumn] = principal,
             [DocumentColumn] = json,
         };
         await this.authorizations.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -315,13 +320,16 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
         using ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc.AsMemory());
         byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializeDecision(current.RootElement, decision, expectedEtag, actor, this.timeProvider.GetUtcNow(), etag);
 
-        // The plain key columns (environment / runner id) carry through from the loaded document so the replaced entity keeps
-        // them; only Status and Doc change on a decision.
+        // The plain key columns (environment / runner id) and the bound principal carry through from the loaded document
+        // so the replaced entity keeps them; only Status and Doc change on a decision. Carrying the principal matters:
+        // this is a whole-entity replace, so omitting it would silently unbind the row on the first decision and leave
+        // the runner resolving no environments at all.
         var entity = new TableEntity(Enc(environment), Enc(runnerId))
         {
             [EnvironmentColumn] = current.RootElement.EnvironmentValue,
             [RunnerIdColumn] = current.RootElement.RunnerIdValue,
             [StatusColumn] = RunnerAuthorizationStatusNames.ToWire(decision.Status),
+            [PrincipalColumn] = current.RootElement.PrincipalOrNull,
             [DocumentColumn] = json,
         };
 
@@ -353,6 +361,11 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
         if (query.Environment is { } environment)
         {
             conditions.Add(TableClient.CreateQueryFilter($"Environment eq {environment}"));
+        }
+
+        if (query.Principal is { } principal)
+        {
+            conditions.Add(TableClient.CreateQueryFilter($"Principal eq {principal}"));
         }
 
         if (query.AdministeredEnvironments is { Count: > 0 } administered)

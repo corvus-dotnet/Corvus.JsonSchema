@@ -19,12 +19,19 @@ WebApplication app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// store:    the durable run store the control plane owns. It must also implement IWorkflowDispatchIndex.
-// bindings: the environments each machine principal may execute runs for.
+// The environments each machine principal may execute runs for, read from the runner-authorization records an
+// administrator decides (ADR 0027) rather than declared in configuration.
+var bindings = new RunnerAuthorizationBindings(runnerAuthorizations, environments);
+
+// store: the durable run store the control plane owns. It must also implement IWorkflowDispatchIndex.
 app.MapGroup("/arazzo/runner/v1").MapArazzoRunnerApi(store, bindings);
 
 app.Run();
 ```
+
+A deployment that runs its own runners and knows them by name can supply
+`DeclaredRunnerEnvironmentBindings` instead, a fixed map from principal to environments. The two answer the same
+question from different sources of truth, which is why the surface is an interface.
 
 ## What the surface is
 
@@ -44,8 +51,17 @@ and the subject of every binding lookup, and nothing in a request body or header
 owner would let a compromised runner rename itself into another's leases, so there is nowhere to supply one.
 
 `IRunnerEnvironmentBindings` resolves the environments a principal may execute runs for, per request rather than per
-process, which is what gives runner revocation its effect. `DeclaredRunnerEnvironmentBindings` is the fixed-map
-implementation for a deployment that knows its runners by name.
+process, which is what gives runner revocation its effect.
+
+`RunnerAuthorizationBindings` is the governed implementation. Only an `Authorized` record binds — Pending,
+Quarantined, and Revoked are all excluded — so revoking a runner stops it being offered work without the runner
+having to cooperate. Resolution is cached for **thirty seconds at most**, and that bound is the property rather than a
+tuning knob: the window is exactly the fence's latency, so a deployment asking for longer gets thirty seconds.
+
+**A principal may not hold both a platform binding and a tenant one.** Holding both is a laundering route out of a
+sealed environment into the never-sealed platform one, so such a principal resolves to nothing at all rather than to
+one side of the pair. The rule is re-checked on every resolution, because a binding written before it was enforced, or
+written concurrently, would otherwise pass unexamined.
 
 ## How refusals work
 

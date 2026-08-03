@@ -108,11 +108,15 @@ public sealed class MySqlEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), etag);
         await using MySqlCommand insert = connection.CreateCommand();
         insert.CommandText =
-            "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Etag, Document) " +
-            "VALUES (@env, @runner, @status, @etag, @doc);";
+            "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Principal, Etag, Document) " +
+            "VALUES (@env, @runner, @status, @principal, @etag, @doc);";
         insert.Parameters.AddWithValue("@env", environment);
         insert.Parameters.AddWithValue("@runner", runnerId);
         insert.Parameters.AddWithValue("@status", RunnerAuthorizationStatusNames.Pending);
+
+        // Mirrored so the runner API can resolve a principal's bindings without reading every row. Bound at create and
+        // never after: a registration presenting a different principal is refused rather than rebinding the row.
+        insert.Parameters.AddWithValue("@principal", (object?)principal ?? DBNull.Value);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         insert.Parameters.AddWithValue("@doc", json);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -328,6 +332,12 @@ public sealed class MySqlEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
             command.Parameters.AddWithValue("@env", environment);
         }
 
+        if (query.Principal is { } principal)
+        {
+            conditions.Add("Principal = @principal");
+            command.Parameters.AddWithValue("@principal", principal);
+        }
+
         if (query.AdministeredEnvironments is { Count: > 0 } set)
         {
             var names = new string[set.Count];
@@ -362,10 +372,12 @@ public sealed class MySqlEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
             Environment VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
             RunnerId VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
             Status VARCHAR(64) NOT NULL,
+            Principal VARCHAR(255) COLLATE utf8mb4_bin NULL,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL,
             PRIMARY KEY (Environment, RunnerId),
-            INDEX IX_EnvironmentRunnerAuthorizations_Status (Status)
+            INDEX IX_EnvironmentRunnerAuthorizations_Status (Status),
+            INDEX IX_EnvironmentRunnerAuthorizations_Principal (Principal)
         );
         """;
 }

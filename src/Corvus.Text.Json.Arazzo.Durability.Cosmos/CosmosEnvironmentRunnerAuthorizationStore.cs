@@ -135,7 +135,7 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), NewEtag());
 
         bool conflict;
-        var fields = new EnvelopeFields(itemId, environment, runnerId, RunnerAuthorizationStatusNames.Pending, json);
+        var fields = new EnvelopeFields(itemId, environment, runnerId, RunnerAuthorizationStatusNames.Pending, principal, json);
         using (Stream stream = EnvelopeStream(in fields, out ParsedJsonDocument<EnvironmentRunnerAuthorization> document))
         {
             try
@@ -356,11 +356,15 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             // EnvelopeStream) all complete before the response buffer is returned at the end of this using.
             using ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc);
             byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializeDecision(current.RootElement, decision, expectedEtag, actor, this.timeProvider.GetUtcNow(), NewEtag());
+
+            // The bound principal carries through from the loaded document: a decision replaces the whole envelope, so
+            // omitting it would silently unbind the row and leave the runner resolving no environments at all.
             var fields = new EnvelopeFields(
                 itemId,
                 current.RootElement.EnvironmentValue,
                 current.RootElement.RunnerIdValue,
                 RunnerAuthorizationStatusNames.ToWire(decision.Status),
+                current.RootElement.PrincipalOrNull,
                 json);
             stream = EnvelopeStream(in fields, out document);
         }
@@ -421,6 +425,11 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             conditions.Add("c.env = @env");
         }
 
+        if (query.Principal is not null)
+        {
+            conditions.Add("c.principal = @principal");
+        }
+
         if (query.AdministeredEnvironments is not { Count: > 0 } set)
         {
             return null;
@@ -448,6 +457,11 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         if (query.Environment is { } environment)
         {
             definition = definition.WithParameter("@env", environment);
+        }
+
+        if (query.Principal is { } principal)
+        {
+            definition = definition.WithParameter("@principal", principal);
         }
 
         if (adminNames is not null && query.AdministeredEnvironments is { } administered)
@@ -480,6 +494,13 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
                     writer.WriteString("env"u8, c.Environment);
                     writer.WriteString("runnerId"u8, c.RunnerId);
                     writer.WriteString("status"u8, c.Status);
+
+                    // Mirrored so the runner API can resolve a principal's bindings server-side. A row an administrator
+                    // pre-authorized binds none, and is matched by no principal filter.
+                    if (c.Principal is { } principal)
+                    {
+                        writer.WriteString("principal"u8, principal);
+                    }
 
                     // The authorization document is itself JSON, so embed it verbatim as a nested value — no base64 wrap
                     // (which would be a spurious encode here + decode on read). It is valid JSON we produced, so skip
@@ -573,5 +594,6 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         string Environment,
         string RunnerId,
         string Status,
+        string? Principal,
         byte[] Doc);
 }

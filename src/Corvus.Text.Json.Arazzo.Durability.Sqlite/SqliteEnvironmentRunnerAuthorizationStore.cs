@@ -97,11 +97,15 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText =
-                "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Etag, Document) " +
-                "VALUES (@env, @runner, @status, @etag, @doc);";
+                "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Principal, Etag, Document) " +
+                "VALUES (@env, @runner, @status, @principal, @etag, @doc);";
             insert.Parameters.AddWithValue("@env", environment);
             insert.Parameters.AddWithValue("@runner", runnerId);
             insert.Parameters.AddWithValue("@status", RunnerAuthorizationStatusNames.Pending);
+
+            // Mirrored so the runner API can resolve a principal's bindings without reading every row. Bound at create
+            // and never after: a registration presenting a different principal is refused rather than rebinding the row.
+            insert.Parameters.AddWithValue("@principal", (object?)principal ?? DBNull.Value);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", json);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -348,6 +352,12 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             command.Parameters.AddWithValue("@env", environment);
         }
 
+        if (query.Principal is { } principal)
+        {
+            conditions.Add("Principal = @principal");
+            command.Parameters.AddWithValue("@principal", principal);
+        }
+
         if (query.AdministeredEnvironments is { Count: > 0 } set)
         {
             var names = new string[set.Count];
@@ -379,10 +389,12 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             Environment TEXT NOT NULL,
             RunnerId TEXT NOT NULL,
             Status TEXT NOT NULL,
+            Principal TEXT NULL,
             Etag TEXT NOT NULL,
             Document BLOB NOT NULL,
             PRIMARY KEY (Environment, RunnerId)
         );
         CREATE INDEX IF NOT EXISTS IX_EnvironmentRunnerAuthorizations_Status ON EnvironmentRunnerAuthorizations (Status);
+        CREATE INDEX IF NOT EXISTS IX_EnvironmentRunnerAuthorizations_Principal ON EnvironmentRunnerAuthorizations (Principal);
         """;
 }

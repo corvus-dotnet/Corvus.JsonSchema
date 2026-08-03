@@ -401,6 +401,13 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
             return false;
         }
 
+        // The machine principal a runner proved ownership with (§16.4): the runner API resolves what a principal may
+        // execute through exactly this filter.
+        if (!query.MatchesPrincipal(authorization))
+        {
+            return false;
+        }
+
         // The approver inbox (§5.5/§7.8): the row's environment must be one the caller administers (server-derived set).
         return query.MatchesAdministeredSet(authorization);
     }

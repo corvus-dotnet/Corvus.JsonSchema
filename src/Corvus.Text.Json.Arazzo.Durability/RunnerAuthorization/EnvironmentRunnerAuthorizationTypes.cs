@@ -50,11 +50,27 @@ public readonly record struct RunnerAuthorizationDecision(
 /// environments — the set the caller administers, resolved server-side from the reverse administration index (a genuine
 /// server-derived leaf). <see langword="null"/> matches anything; a caller administering nothing is short-circuited to an
 /// empty page before the store, so the set is never empty here.</param>
+/// <param name="Principal">Only authorizations bound to this trusted machine principal (design §16.4). This is how the
+/// runner API resolves what a principal may execute (ADR 0065 decision 2): the environments it is bound to are the
+/// intersection the claim's candidate set is taken against, so a runner never has to name one. A row an administrator
+/// pre-authorized carries no principal and is matched by nothing here, which is the correct reading of a runner that has
+/// not yet proved ownership of its id. <see langword="null"/> matches anything.</param>
 public readonly record struct RunnerAuthorizationQuery(
     RunnerAuthorizationStatus? Status = null,
     string? Environment = null,
-    IReadOnlyList<string>? AdministeredEnvironments = null)
+    IReadOnlyList<string>? AdministeredEnvironments = null,
+    string? Principal = null)
 {
+    /// <summary>Whether a row passes the machine-principal filter: <see langword="true"/> when no principal is
+    /// constrained, or when the row is bound to exactly it. String-free — the candidate principal's bytes are compared
+    /// against the row's JSON value, so no principal string is realised from the document. The shared client-side test
+    /// for stores that filter in memory (the in-memory store and the KV/table backends, which scan their keyset index
+    /// and apply this per row).</summary>
+    /// <param name="authorization">The candidate row.</param>
+    /// <returns><see langword="true"/> if the row is admitted by the principal filter.</returns>
+    public bool MatchesPrincipal(in EnvironmentRunnerAuthorization authorization)
+        => this.Principal is not { } principal || authorization.PrincipalEquals(principal);
+
     /// <summary>Whether a row passes the approver-inbox filter: <see langword="true"/> when no administered set is
     /// constrained, or when the set contains the row's environment. String-free — the candidate environment strings'
     /// bytes are compared against the row's JSON value (no environment string is realised from the document). The shared

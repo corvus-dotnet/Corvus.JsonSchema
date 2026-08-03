@@ -107,6 +107,11 @@ public sealed class MongoEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
             ["environment"] = environment,
             ["runnerId"] = runnerId,
             ["status"] = RunnerAuthorizationStatusNames.Pending,
+
+            // Mirrored so the runner API can resolve a principal's bindings server-side. Bound at create and never
+            // after: a registration presenting a different principal is refused rather than rebinding the row. A row an
+            // administrator pre-authorized carries none, and is matched by no principal filter.
+            ["principal"] = (BsonValue?)principal ?? BsonNull.Value,
             ["doc"] = new BsonBinaryData(json),
         };
         try
@@ -305,6 +310,11 @@ public sealed class MongoEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         if (query.Environment is { } environment)
         {
             filter &= b.Eq("environment", environment);
+        }
+
+        if (query.Principal is { } principal)
+        {
+            filter &= b.Eq("principal", principal);
         }
 
         if (query.AdministeredEnvironments is { Count: > 0 } administered)

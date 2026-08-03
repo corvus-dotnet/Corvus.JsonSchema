@@ -240,6 +240,76 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     }
 
     [TestMethod]
+    public async Task Listing_filters_by_the_bound_machine_principal()
+    {
+        // How the runner API resolves what a principal may execute (ADR 0065 decision 2): the environments it is bound
+        // to are the intersection a claim's candidate set is taken against, so the store must answer by principal
+        // rather than have the caller read every row and sift.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", "machine-a", default);
+        await store.EnsurePendingAsync("staging", "runner-2", "runner-2", "machine-a", default);
+        await store.EnsurePendingAsync("production", "runner-3", "runner-3", "machine-b", default);
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(Principal: "machine-a")))
+            .ShouldBe([("production", "runner-1"), ("staging", "runner-2")]);
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(Principal: "machine-b")))
+            .ShouldBe([("production", "runner-3")]);
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(Principal: "machine-nobody")))
+            .ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_principal_filter_composes_with_the_status_filter()
+    {
+        // The pair the runner API actually asks for: only an Authorized record binds, so a revoked or still-pending
+        // runner resolves to nothing and is offered no work.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", "machine-a", default);
+        await store.EnsurePendingAsync("staging", "runner-2", "runner-2", "machine-a", default);
+        await store.DecideAsync("staging", "runner-2", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "admin", default);
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(RunnerAuthorizationStatus.Authorized, Principal: "machine-a")))
+            .ShouldBe([("staging", "runner-2")]);
+
+        // Revoking it takes the binding away, which is the fence: the same query now answers nothing.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? authorized = await store.GetAsync("staging", "runner-2", default);
+        await store.DecideAsync("staging", "runner-2", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Revoked), authorized!.RootElement.EtagValue, "admin", default);
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(RunnerAuthorizationStatus.Authorized, Principal: "machine-a")))
+            .ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_decision_keeps_the_bound_principal()
+    {
+        // Several backends replace the whole row on a decision, so the mirrored principal has to carry through. Losing
+        // it would silently unbind the runner the moment an administrator authorized it — the exact operation that is
+        // supposed to let it work.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", "machine-a", default);
+        await store.DecideAsync("production", "runner-1", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "admin", default);
+
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? decided = await store.GetAsync("production", "runner-1", default);
+        decided!.RootElement.PrincipalEquals("machine-a").ShouldBeTrue();
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(RunnerAuthorizationStatus.Authorized, Principal: "machine-a")))
+            .ShouldBe([("production", "runner-1")]);
+    }
+
+    [TestMethod]
+    public async Task A_pre_authorized_row_binds_no_principal_and_is_matched_by_none()
+    {
+        // An administrator pre-authorizing by runner id binds nothing, so no principal resolves it. That is the correct
+        // reading of a runner that has not proved ownership of its id, and it is why ADR 0065 decision 2 requires
+        // pre-authorization to name an expected principal rather than a bare id.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "admin", null, default);
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(Principal: "machine-a"))).ShouldBeEmpty();
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery())).ShouldBe([("production", "runner-1")]);
+    }
+
+    [TestMethod]
     public async Task Listing_keyset_pages_by_environment_and_runner_without_gaps_or_duplicates()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();

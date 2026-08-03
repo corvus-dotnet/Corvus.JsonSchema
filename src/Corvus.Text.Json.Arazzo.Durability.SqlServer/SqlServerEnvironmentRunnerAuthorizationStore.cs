@@ -85,11 +85,15 @@ public sealed class SqlServerEnvironmentRunnerAuthorizationStore : IEnvironmentR
         byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), etag);
         await using SqlCommand insert = connection.CreateCommand();
         insert.CommandText =
-            "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Etag, Document) " +
-            "VALUES (@env, @runner, @status, @etag, @doc);";
+            "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Principal, Etag, Document) " +
+            "VALUES (@env, @runner, @status, @principal, @etag, @doc);";
         insert.Parameters.AddWithValue("@env", environment);
         insert.Parameters.AddWithValue("@runner", runnerId);
         insert.Parameters.AddWithValue("@status", RunnerAuthorizationStatusNames.Pending);
+
+        // Mirrored so the runner API can resolve a principal's bindings without reading every row. Bound at create and
+        // never after: a registration presenting a different principal is refused rather than rebinding the row.
+        insert.Parameters.AddWithValue("@principal", (object?)principal ?? DBNull.Value);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(json.AsMemory());
         insert.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
@@ -306,6 +310,12 @@ public sealed class SqlServerEnvironmentRunnerAuthorizationStore : IEnvironmentR
             command.Parameters.AddWithValue("@env", environment);
         }
 
+        if (query.Principal is { } principal)
+        {
+            conditions.Add("Principal = @principal");
+            command.Parameters.AddWithValue("@principal", principal);
+        }
+
         if (query.AdministeredEnvironments is { Count: > 0 } set)
         {
             var names = new string[set.Count];
@@ -354,11 +364,13 @@ public sealed class SqlServerEnvironmentRunnerAuthorizationStore : IEnvironmentR
                 Environment NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
                 RunnerId NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
                 Status NVARCHAR(64) NOT NULL,
+                Principal NVARCHAR(450) COLLATE Latin1_General_BIN2 NULL,
                 Etag NVARCHAR(255) NOT NULL,
                 Document VARBINARY(MAX) NOT NULL,
                 CONSTRAINT PK_EnvironmentRunnerAuthorizations PRIMARY KEY (Environment, RunnerId)
             );
             CREATE INDEX IX_EnvironmentRunnerAuthorizations_Status ON EnvironmentRunnerAuthorizations (Status);
+            CREATE INDEX IX_EnvironmentRunnerAuthorizations_Principal ON EnvironmentRunnerAuthorizations (Principal);
         END;
         """;
 }
