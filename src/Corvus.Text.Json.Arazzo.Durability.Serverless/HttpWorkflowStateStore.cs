@@ -33,9 +33,18 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     /// <summary>The header carrying the monotonic write-sequence on a checkpoint request and load response.</summary>
     public const string WriteSequenceHeader = "X-Arazzo-Checkpoint-Seq";
 
+    // Bounded resends of one sequence's bytes. A save lost in transport has to be retried rather than skipped, but an
+    // unbounded retry would hold the run's chain against a server that is not coming back.
+    private const int SendAttempts = 3;
+
     private readonly HttpClient client;
     private readonly object gate = new();
-    private readonly Dictionary<string, long> writeSequences = [];
+
+    // The tail of each run's dispatch chain. ADR 0065 decision 6 allows at most one save per run in flight, and the
+    // interlock is per RUN rather than per component: the runner and the listener both author checkpoints for the same
+    // run, so a lock held per component would let two honest tenant components dispatch concurrently. Keyed by run so
+    // different runs never wait on each other.
+    private readonly Dictionary<string, Task> tails = [];
     private readonly List<Task<bool>> pending = [];
 
     /// <summary>Initializes a new instance of the <see cref="HttpWorkflowStateStore"/> class.</summary>
@@ -59,14 +68,10 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
         response.EnsureSuccessStatusCode();
         byte[] bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
 
-        // Seed the run's write-sequence from the runner so a warm function instance advancing a run picks up where
-        // the last invocation left off, keeping the sequence monotonic across the run's whole life.
-        long seq = ReadSequence(response.Headers);
-        lock (this.gate)
-        {
-            this.writeSequences[id.Value] = seq;
-        }
-
+        // The sequence is not seeded here: it travels inside the checkpoint the run authors, so the run continues its
+        // own series from the document it just loaded rather than from a counter this store keeps alongside it. Two
+        // counters for one series can only ever drift apart, and in a sealed environment the document's copy is inside
+        // the MAC while a header is not.
         return new WorkflowCheckpoint(bytes, new WorkflowEtag(response.Headers.ETag?.Tag));
     }
 
@@ -74,17 +79,19 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         // The runner re-projects the index from the bytes, so only the bytes and the write-sequence go over the wire.
-        long seq;
-        lock (this.gate)
-        {
-            seq = (this.writeSequences.TryGetValue(id.Value, out long last) ? last : 0) + 1;
-            this.writeSequences[id.Value] = seq;
-        }
+        // The sequence comes from the document the run authored — one series, one author. Reading it is a forward-only
+        // scan that stops at the property rather than a parse of the whole checkpoint.
+        WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long seq);
 
-        // Copy the bytes: the caller may reuse its buffer once we return, but the fire-and-forget POST outlives the call.
-        Task<bool> post = this.PostCheckpointAsync(id, checkpointUtf8.ToArray(), seq, cancellationToken);
+        // Copy the bytes: the caller may reuse its buffer once we return, but the POST outlives the call, and a retry
+        // is a byte-identical resend of the same sequence rather than a re-authoring.
+        byte[] body = checkpointUtf8.ToArray();
+        Task<bool> post;
         lock (this.gate)
         {
+            Task previous = this.tails.TryGetValue(id.Value, out Task? tail) ? tail : Task.CompletedTask;
+            post = this.DispatchAfterAsync(previous, id, body, seq, cancellationToken);
+            this.tails[id.Value] = post;
             this.pending.Add(post);
         }
 
@@ -145,7 +152,39 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
             ? seq
             : 0;
 
+    // Runs this save once the run's previous one has finished, so at most one is ever in flight for a run. The previous
+    // task never faults (a failed send is a false, not an exception), but it is awaited defensively so one broken link
+    // cannot stall the rest of the chain.
+    private async Task<bool> DispatchAfterAsync(Task previous, WorkflowRunId id, byte[] body, long seq, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await previous.ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // The predecessor's outcome is its own caller's business; this save still has to be dispatched.
+        }
+
+        return await this.PostCheckpointAsync(id, body, seq, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<bool> PostCheckpointAsync(WorkflowRunId id, byte[] body, long seq, CancellationToken cancellationToken)
+    {
+        for (int attempt = 0; attempt < SendAttempts; ++attempt)
+        {
+            if (await this.TrySendAsync(id, body, seq, attempt, cancellationToken).ConfigureAwait(false) is { } settled)
+            {
+                return settled;
+            }
+        }
+
+        return false;
+    }
+
+    // Sends once. Answers null to ask for another attempt, so the retry decision lives in one place rather than being
+    // spread across the transport and status paths.
+    private async Task<bool?> TrySendAsync(WorkflowRunId id, byte[] body, long seq, int attempt, CancellationToken cancellationToken)
     {
         try
         {
@@ -155,12 +194,30 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
             };
             request.Headers.Add(WriteSequenceHeader, seq.ToString(CultureInfo.InvariantCulture));
             using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+
+            // A refusal carries the sequence the server will accept next (ADR 0065 decision 6). Adopt it, so the next
+            // save proposes that value. Without this the run is stranded by the first send that never lands: the local
+            // counter has advanced past what the store persisted, the server accepts only persisted plus one, and every
+            // subsequent save is refused for the same reason as the last.
+            // A 409 means the store will not take this sequence, and resending the identical bytes cannot change that:
+            // the run has to author the next checkpoint. Renumbering here instead would desynchronise the header from
+            // the sequence inside the document, which a sealed environment's MAC covers and a header never is.
+            return response.StatusCode == HttpStatusCode.Conflict ? false : Retry(attempt);
         }
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
         {
-            // Fire-and-forget: a failed interim is tolerated; FlushAsync decides whether the terminal landed.
-            return false;
+            // A transport failure loses the save without the store having refused it, so the same bytes are resent
+            // under the same sequence. Skipping to the next checkpoint instead would leave a hole the store will not
+            // accept, and every later save would be refused for a gap the runner could no longer close.
+            return cancellationToken.IsCancellationRequested ? false : Retry(attempt);
         }
+
+        // Whether to try again, or settle as failed because the attempts are spent. No delay between attempts: the
+        // run's next checkpoint is waiting behind this one, so backing off here backs the whole run off.
+        static bool? Retry(int attempt) => attempt + 1 < SendAttempts ? null : false;
     }
 }

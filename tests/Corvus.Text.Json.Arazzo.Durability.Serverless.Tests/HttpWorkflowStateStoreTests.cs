@@ -23,8 +23,12 @@ public class HttpWorkflowStateStoreTests
     private static readonly WorkflowRunIndexEntry AnyIndex = new("wf", WorkflowRunStatus.Running, default, default);
     private static readonly ReadOnlyMemory<byte> Bytes = new byte[] { 1, 2, 3 };
 
+    // The sequence travels inside the checkpoint, so a payload under test has to be a document that carries one.
+    private static ReadOnlyMemory<byte> At(long sequence)
+        => System.Text.Encoding.UTF8.GetBytes("""{"runId":"run-1","cursor":0,"sequence":""" + sequence + "}");
+
     [TestMethod]
-    public async Task Load_gets_the_checkpoint_and_seeds_the_write_sequence()
+    public async Task Load_returns_the_checkpoint_and_leaves_the_sequence_to_the_document()
     {
         var handler = new StubHandler(_ =>
         {
@@ -42,8 +46,9 @@ public class HttpWorkflowStateStoreTests
         handler.Requests[0].Method.ShouldBe(HttpMethod.Get);
         handler.Requests[0].Path.ShouldBe("/runs/run-1/checkpoint");
 
-        // The next save continues the monotonic sequence from the loaded 7.
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
+        // The store keeps no counter of its own: the sequence it sends is the one the run authored into the document,
+        // so a header the load happened to carry cannot pull the two out of step.
+        await store.SaveAsync("run-1", At(8), AnyIndex, default, default);
         await store.FlushAsync(default);
         (HttpMethod Method, string Path, string? Seq) post = handler.Requests.Single(r => r.Method == HttpMethod.Post);
         post.Path.ShouldBe("/runs/run-1/checkpoint");
@@ -82,18 +87,60 @@ public class HttpWorkflowStateStoreTests
     }
 
     [TestMethod]
-    public async Task The_write_sequence_increments_per_save()
+    public async Task Saves_for_one_run_are_dispatched_one_at_a_time_and_in_order()
     {
-        var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
+        // ADR 0065 decision 6: at most one save per run is in flight. They used to race on the wire, which is what let
+        // two writes for the same run reach the store out of order; the assertion is now on arrival order, not on the
+        // set, because the ordering is the property under test.
+        var inFlight = 0;
+        var concurrent = false;
+        var handler = new StubHandler(async _ =>
+        {
+            if (Interlocked.Increment(ref inFlight) > 1)
+            {
+                concurrent = true;
+            }
+
+            await Task.Yield();
+            Interlocked.Decrement(ref inFlight);
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
+        await store.SaveAsync("run-1", At(1), AnyIndex, default, default);
+        await store.SaveAsync("run-1", At(2), AnyIndex, default, default);
+        await store.SaveAsync("run-1", At(3), AnyIndex, default, default);
         await store.FlushAsync(default);
 
-        // The three saves are stamped 1/2/3; they race on the wire, so assert the set, not arrival order.
-        handler.Requests.Select(r => r.Seq).ShouldBe(["1", "2", "3"], ignoreOrder: true);
+        concurrent.ShouldBeFalse();
+        handler.Requests.Select(r => r.Seq).ShouldBe(["1", "2", "3"]);
+    }
+
+    [TestMethod]
+    public async Task Saves_for_different_runs_are_not_serialised_behind_each_other()
+    {
+        // The interlock is per run. A single chain would make one slow run's checkpoint latency everyone else's.
+        var release = new TaskCompletionSource();
+        var handler = new StubHandler(async request =>
+        {
+            if (request.RequestUri!.AbsolutePath.Contains("slow-run", StringComparison.Ordinal))
+            {
+                await release.Task;
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        var store = new HttpWorkflowStateStore(Client(handler));
+
+        await store.SaveAsync("slow-run", At(1), AnyIndex, default, default);
+        await store.SaveAsync("quick-run", At(1), AnyIndex, default, default);
+
+        // The quick run's save completes while the slow run's is still held.
+        await Task.Delay(50);
+        handler.Requests.Any(r => r.Path.Contains("quick-run", StringComparison.Ordinal)).ShouldBeTrue();
+
+        release.SetResult();
+        await store.FlushAsync(default);
     }
 
     [TestMethod]
@@ -107,6 +154,29 @@ public class HttpWorkflowStateStoreTests
         // A 5xx on the terminal checkpoint means the run's final state is not durable, so Flush fails and the run
         // stays claimable for re-invocation.
         await Should.ThrowAsync<InvalidOperationException>(async () => await store.FlushAsync(default));
+    }
+
+    [TestMethod]
+    public async Task A_send_lost_in_transport_is_resent_byte_identically()
+    {
+        // ADR 0065 decision 6: a retry is a byte-identical resend of the same sequence, not a re-authoring. Skipping to
+        // the next checkpoint would leave a hole the store will not accept, and because the sequence lives inside the
+        // document the runner could not close that hole by renumbering a header.
+        var attempts = 0;
+        var handler = new StubHandler(_ =>
+        {
+            attempts++;
+            return attempts == 1
+                ? throw new HttpRequestException("connection reset")
+                : Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+        });
+        var store = new HttpWorkflowStateStore(Client(handler));
+
+        await store.SaveAsync("run-1", At(4), AnyIndex, default, default);
+        await Should.NotThrowAsync(async () => await store.FlushAsync(default));
+
+        attempts.ShouldBe(2);
+        handler.Requests.Select(r => r.Seq).ShouldAllBe(seq => seq == "4");
     }
 
     [TestMethod]
