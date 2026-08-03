@@ -331,6 +331,32 @@ public sealed class SqlServerEnvironmentRunnerAuthorizationStore : IEnvironmentR
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        byte[]? doc = await DocumentAsync(connection, environment, runnerId, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return false;
+        }
+
+        // Parse NON-COPYING over the driver's array purely to read the stored etag; the precondition throws on a stale
+        // one, so a withdrawal cannot discard a decision another administrator made between the read and this call.
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc.AsMemory()))
+        {
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        await using SqlCommand delete = connection.CreateCommand();
+        delete.CommandText = "DELETE FROM EnvironmentRunnerAuthorizations WHERE Environment = @env AND RunnerId = @runner;";
+        delete.Parameters.AddWithValue("@env", environment);
+        delete.Parameters.AddWithValue("@runner", runnerId);
+        return await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
+    }
+
     private static async ValueTask<byte[]?> DocumentAsync(SqlConnection connection, string environment, string runnerId, CancellationToken cancellationToken)
     {
         await using SqlCommand select = connection.CreateCommand();

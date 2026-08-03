@@ -328,6 +328,40 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            byte[]? doc = await this.DocumentAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
+            if (doc is null)
+            {
+                return false;
+            }
+
+            // Parse NON-COPYING over the driver's array purely to read the stored etag; the precondition throws on a
+            // stale one, so a withdrawal cannot discard a decision another administrator made between the read and this
+            // call.
+            using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc.AsMemory()))
+            {
+                EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+            }
+
+            using SqliteCommand delete = this.connection.CreateCommand();
+            delete.CommandText = "DELETE FROM EnvironmentRunnerAuthorizations WHERE Environment = @env AND RunnerId = @runner;";
+            delete.Parameters.AddWithValue("@env", environment);
+            delete.Parameters.AddWithValue("@runner", runnerId);
+            return await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         this.gate.Dispose();

@@ -272,6 +272,28 @@ public sealed class MongoEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+        byte[]? doc = await this.DocumentAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return false;
+        }
+
+        // The precondition throws on a stale etag, so a withdrawal cannot discard a decision another administrator made
+        // between the read and this call.
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(doc))
+        {
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        DeleteResult deleted = await this.authorizations.DeleteOneAsync(Builders<BsonDocument>.Filter.Eq("_id", Key(environment, runnerId)), cancellationToken).ConfigureAwait(false);
+        return deleted.DeletedCount > 0;
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)

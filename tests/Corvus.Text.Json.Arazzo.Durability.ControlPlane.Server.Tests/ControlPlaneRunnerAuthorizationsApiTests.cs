@@ -425,6 +425,80 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":{{maxConcurrency}},"transports":[],"hostedVersions":[]}""";
 
     [TestMethod]
+    public async Task Withdrawing_a_mistyped_pre_authorization_frees_the_runner_id()
+    {
+        // The recovery path for the one decision no later decision can correct: expectedPrincipal binds when the record
+        // is created and never moves, so a typo would otherwise make the id permanently unusable.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/environments/production/runners/runner-1/authorization",
+            """{"expectedPrincipal":"svc-runner-typo"}""",
+            "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/preAuthorization", "acme"))
+            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // Re-pre-authorized against the right principal, which now registers into it.
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/environments/production/runners/runner-1/authorization",
+            """{"expectedPrincipal":"svc-runner-a"}""",
+            "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a"));
+        registered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        registered.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_is_refused_once_the_runner_has_registered()
+    {
+        // Withdrawal removes the record; revocation keeps it (ADR 0027). Letting withdrawal stand in for revocation
+        // would erase the evidence the runner was ever authorized and leave its leases live.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/preAuthorization", "acme"))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // The record is untouched, so revoke is still available and still auditable.
+        (await runnerAuth.GetAsync("production", "runner-1", default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_nothing_is_no_content()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/never/preAuthorization", "acme"))
+            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_as_a_non_administrator_is_forbidden()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/environments/production/runners/runner-1/authorization",
+            """{"expectedPrincipal":"svc-runner-a"}""",
+            "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/preAuthorization", "globex"))
+            .StatusCode.ShouldBeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+
+        (await runnerAuth.GetAsync("production", "runner-1", default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
     public async Task Revoking_an_authorized_runner_as_an_administrator_makes_it_revoked()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();

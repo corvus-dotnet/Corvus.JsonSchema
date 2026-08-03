@@ -349,6 +349,33 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using (Lease<byte>? lease = await this.database.StringGetLeaseAsync(RecordKey(environment, runnerId)).ConfigureAwait(false))
+        {
+            if (lease is not { Length: > 0 })
+            {
+                return false;
+            }
+
+            // Parse NON-COPYING over the lease purely to read the stored etag; the precondition throws on a stale one.
+            using ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(lease.Memory);
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        // The index member goes with the record. A member left behind would make the keyset pager step over a key whose
+        // record is gone on every page, which is the "indexed but record gone" case the readers skip — correct, but it
+        // never converges on its own.
+        await this.database.KeyDeleteAsync(RecordKey(environment, runnerId)).ConfigureAwait(false);
+        await this.database.SortedSetRemoveAsync(IndexKey, IndexMember(environment, runnerId)).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownsConnection)

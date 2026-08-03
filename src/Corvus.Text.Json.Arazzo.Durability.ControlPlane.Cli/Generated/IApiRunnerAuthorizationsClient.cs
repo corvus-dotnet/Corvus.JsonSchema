@@ -148,6 +148,16 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         public static readonly string[] RevokeRunnerOpenIdConnectScopes = ["environments:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>WithdrawRunnerPreAuthorization</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] WithdrawRunnerPreAuthorizationOauth2Scopes = ["environments:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>WithdrawRunnerPreAuthorization</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] WithdrawRunnerPreAuthorizationOpenIdConnectScopes = ["environments:write"];
+
+        /// <summary>
         /// Gets the scopes required by <c>QuarantineRunner</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] QuarantineRunnerOauth2Scopes = ["environments:write"];
@@ -226,6 +236,17 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<RevokeRunnerResponse> RevokeRunnerAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Withdraw a pre-authorization
+    /// </summary>
+    /// <remarks>
+    /// <para>Removes an authorization no runner has registered against, freeing the runner id.</para><para>This exists for one situation: a pre-authorization that named the wrong `expectedPrincipal`. The principal binds when the record is created and never moves — a registration presenting a different one is refused — so without this an administrator's typo would make that runner id permanently unusable by the runner it was meant for.</para><para>It is not the way to stop a runner that is already serving. Once a runner has registered for the environment, this answers `409` and the caller revokes instead: revoking keeps the record, so the decision stays auditable, and expires the leases the runner holds. Withdrawing would erase both.</para><para>Idempotent: withdrawing when there is nothing to withdraw answers `204`, since the desired state is reached either way.</para>
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<WithdrawRunnerPreAuthorizationResponse> WithdrawRunnerPreAuthorizationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Quarantine a runner (temporary exclusion)

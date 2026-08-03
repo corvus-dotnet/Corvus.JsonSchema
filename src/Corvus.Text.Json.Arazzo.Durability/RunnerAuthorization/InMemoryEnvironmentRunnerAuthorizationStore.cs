@@ -137,6 +137,30 @@ public sealed class InMemoryEnvironmentRunnerAuthorizationStore : IEnvironmentRu
         }
     }
 
+    /// <inheritdoc/>
+    public ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+
+        lock (this.gate)
+        {
+            (string, string) key = (environment, runnerId);
+            if (!this.authorizations.TryGetValue(key, out byte[]? existing))
+            {
+                return new ValueTask<bool>(false);
+            }
+
+            using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(existing.AsMemory()))
+            {
+                EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+            }
+
+            this.authorizations.Remove(key);
+            return new ValueTask<bool>(true);
+        }
+    }
+
     private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
     {
         // Status + environment are compared string-free (no field is realised to a managed string per row).

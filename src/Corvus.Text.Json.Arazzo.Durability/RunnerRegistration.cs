@@ -23,6 +23,12 @@ public readonly partial struct RunnerRegistration
     /// <summary>Gets the runner id as a string.</summary>
     public string RunnerIdValue => (string)this.RunnerId;
 
+    /// <summary>Tests whether the runner serves <paramref name="environment"/>, compared string-free (no environment
+    /// string is realised from the document — the candidate's bytes are compared against the JSON value).</summary>
+    /// <param name="environment">The candidate environment.</param>
+    /// <returns><see langword="true"/> if the runner serves exactly that environment.</returns>
+    public bool EnvironmentEquals(string environment) => this.Environment.ValueEquals(environment);
+
     /// <summary>Gets the instant of the runner's most recent heartbeat.</summary>
     public DateTimeOffset LastSeenAtValue => ((NodaTime.OffsetDateTime)this.LastSeenAt).ToDateTimeOffset();
 

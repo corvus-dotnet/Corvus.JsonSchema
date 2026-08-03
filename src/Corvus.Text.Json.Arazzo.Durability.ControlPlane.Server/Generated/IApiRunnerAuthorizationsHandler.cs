@@ -66,6 +66,15 @@ public interface IApiRunnerAuthorizationsHandler
     ValueTask<RevokeRunnerResult> HandleRevokeRunnerAsync(RevokeRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles DELETE /environments/{name}/runners/{runnerId}/preAuthorization — Withdraw a pre-authorization
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<WithdrawRunnerPreAuthorizationResult> HandleWithdrawRunnerPreAuthorizationAsync(WithdrawRunnerPreAuthorizationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /environments/{name}/runners/{runnerId}/quarantine — Quarantine a runner (temporary exclusion)
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

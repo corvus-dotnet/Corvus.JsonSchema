@@ -101,4 +101,28 @@ public interface IEnvironmentRunnerAuthorizationStore
     /// <returns>The decided authorization as a pooled document the caller must dispose, or <see langword="null"/> if no authorization exists for <c>(environment, runnerId)</c>.</returns>
     /// <exception cref="RunnerAuthorizationConflictException">The expected etag no longer matches.</exception>
     ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes the authorization for <c>(environment, runnerId)</c> entirely, so the runner id is free again.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="runnerId">The runner id.</param>
+    /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to remove
+    /// unconditionally); a stale etag throws <see cref="RunnerAuthorizationConflictException"/>, so a withdrawal cannot
+    /// silently discard a decision another administrator made in the meantime.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if a record was removed; <see langword="false"/> if none existed.</returns>
+    /// <exception cref="RunnerAuthorizationConflictException">The expected etag no longer matches.</exception>
+    /// <remarks>
+    /// This exists for one situation: a pre-authorization that named the wrong machine principal. The principal binds at
+    /// create and never moves — a registration presenting a different one is refused — so without removal an
+    /// administrator's typo would make that runner id permanently unusable by the runner it was meant for.
+    /// <para>
+    /// It is <strong>not</strong> the way to stop a runner that is already serving. Removing that record would take the
+    /// runner's history with it and leave nothing to say it was ever stopped, which is what
+    /// <see cref="RunnerAuthorizationStatus.Revoked"/> is for: the record survives, it is auditable, and the store
+    /// expires the leases it holds. Callers enforce that distinction; the store performs the removal it is asked for.
+    /// </para>
+    /// </remarks>
+    ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken);
 }

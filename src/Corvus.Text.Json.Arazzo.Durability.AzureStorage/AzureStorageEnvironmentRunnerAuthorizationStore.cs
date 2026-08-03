@@ -337,6 +337,36 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
         return PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(json);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+        byte[]? doc = await this.DocumentAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
+        if (doc is null)
+        {
+            return false;
+        }
+
+        // The precondition throws on a stale etag, so a withdrawal cannot discard a decision another administrator made
+        // between the read and this call.
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc.AsMemory()))
+        {
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        try
+        {
+            await this.authorizations.DeleteEntityAsync(Enc(environment), Enc(runnerId), cancellationToken: cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Removed between the read and the delete; the desired state is reached either way.
+            return false;
+        }
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // A key part is encoded URL-safe-base64 so PartitionKey/RowKey hold only characters Table storage permits (the raw

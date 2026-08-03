@@ -165,6 +165,13 @@ The residual mechanics this guide owns, beyond the decision:
 - **A refused registration leaves nothing behind.** The authorization row is written before the liveness row,
   because the principal fence lives on the authorization. The other order let a foreign principal overwrite the
   victim's registration before collecting its `409`.
+- **Revoke stops a runner; withdraw un-says a pre-authorization.** They are not interchangeable, and only one
+  removes the record ([ADR 0027](../adr/0027-runner-environment-binding.md)). Revoking keeps the record at
+  status `Revoked`, so the decision stays auditable, and expires the leases the runner holds so its in-flight
+  work is fenced at once. Withdrawing (`DELETE …/runners/{runnerId}/preAuthorization`) removes the record, and
+  exists only so a pre-authorization that named the wrong `expectedPrincipal` can be corrected — the principal
+  never moves once bound, so otherwise the typo would make that runner id permanently unusable. Withdrawal is
+  refused (`409`) once a runner has registered for the environment under that id: use revoke.
 - **Run-to-environment pinning.** `startCatalogWorkflowRun` takes a required `environment`, validated against
   the version's availability and the caller's reach; the run record and the dispatch index carry it, and the
   runner resolves that environment's credentials. Dispatch then admits a run pinned to environment E only to a

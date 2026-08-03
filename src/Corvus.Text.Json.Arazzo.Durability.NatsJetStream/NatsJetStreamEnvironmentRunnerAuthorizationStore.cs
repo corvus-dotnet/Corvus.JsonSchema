@@ -340,6 +340,29 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     }
 
     /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+
+        string key = Key(environment, runnerId);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } bytes })
+        {
+            return false;
+        }
+
+        // Parse NON-COPYING over the entry's array purely to read the stored etag; the precondition throws on a stale one.
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory()))
+        {
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        await this.store.DeleteAsync(key, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownedConnection is not null)

@@ -310,6 +310,71 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     }
 
     [TestMethod]
+    public async Task Withdrawing_removes_the_record_and_frees_the_runner_id()
+    {
+        // The one situation withdrawal exists for (ADR 0027): a pre-authorization that named the wrong principal. The
+        // principal never moves once bound, so without removal the id would be permanently unusable by the runner it
+        // was meant for.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "admin", "typo-principal", default);
+
+        (await store.TryWithdrawAsync("production", "runner-1", WorkflowEtag.None, default)).ShouldBeTrue();
+
+        (await store.GetAsync("production", "runner-1", default)).ShouldBeNull();
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery())).ShouldBeEmpty();
+
+        // The id is free: a fresh pre-authorization naming the right principal takes it.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> corrected = await store.EnsurePendingAsync("production", "runner-1", "admin", "svc-runner-a", default);
+        corrected.RootElement.PrincipalEquals("svc-runner-a").ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_what_is_not_there_reports_it_rather_than_throwing()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+
+        (await store.TryWithdrawAsync("production", "never", WorkflowEtag.None, default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_under_a_stale_etag_conflicts_so_a_decision_is_not_discarded()
+    {
+        // An administrator reads the record, another authorizes it, and the first withdraws. Without the precondition
+        // the withdrawal would silently discard a decision its caller never saw.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        WorkflowEtag stale;
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> created = await store.EnsurePendingAsync("production", "runner-1", "admin", "svc-runner-a", default))
+        {
+            stale = created.RootElement.EtagValue;
+        }
+
+        using (await store.DecideAsync("production", "runner-1", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "admin", default))
+        {
+        }
+
+        await Should.ThrowAsync<RunnerAuthorizationConflictException>(
+            async () => await store.TryWithdrawAsync("production", "runner-1", stale, default));
+
+        // Nothing was removed.
+        (await store.GetAsync("production", "runner-1", default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Withdrawing_leaves_other_environments_records_alone()
+    {
+        // The record is keyed by (environment, runnerId), so withdrawing one environment's must not disturb another's —
+        // including the keyset index a backend maintains beside it.
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "admin", "svc-runner-a", default);
+        await store.EnsurePendingAsync("staging", "runner-1", "admin", "svc-runner-a", default);
+
+        (await store.TryWithdrawAsync("production", "runner-1", WorkflowEtag.None, default)).ShouldBeTrue();
+
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery())).ShouldBe([("staging", "runner-1")]);
+        (await this.KeysAsync(store, new RunnerAuthorizationQuery(Principal: "svc-runner-a"))).ShouldBe([("staging", "runner-1")]);
+    }
+
+    [TestMethod]
     public async Task Listing_keyset_pages_by_environment_and_runner_without_gaps_or_duplicates()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();

@@ -359,6 +359,63 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WithdrawRunnerPreAuthorizationResult> HandleWithdrawRunnerPreAuthorizationAsync(WithdrawRunnerPreAuthorizationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string environment = (string)parameters.Name;
+        string runnerId = (string)parameters.RunnerId;
+
+        GovernanceGate gate = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
+        if (gate == GovernanceGate.NotFound)
+        {
+            return WithdrawRunnerPreAuthorizationResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+        }
+
+        if (gate != GovernanceGate.Authorized)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
+            return WithdrawRunnerPreAuthorizationResult.Forbidden(NotAdministratorProblem(environment), workspace);
+        }
+
+        // Withdrawal removes the record; revocation keeps it (ADR 0027). Once a runner has registered for this
+        // environment under this id, removing the record would erase the evidence that it was ever authorized AND leave
+        // its leases live, because withdrawal fences nothing — there is nothing to fence when nothing has claimed. The
+        // check is scoped to this environment: the same id registered for a different one says nothing about whether a
+        // pre-authorization here was ever taken up.
+        if (await this.runners.GetAsync(runnerId, cancellationToken).ConfigureAwait(false) is { } registration
+            && registration.EnvironmentEquals(environment))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-runner-registered");
+            return WithdrawRunnerPreAuthorizationResult.Conflict(RunnerRegisteredProblem(environment, runnerId), workspace);
+        }
+
+        WorkflowEtag expectedEtag;
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization>? fetched = await this.authorizations.GetAsync(environment, runnerId, cancellationToken).ConfigureAwait(false))
+        {
+            if (fetched is null)
+            {
+                // Idempotent: there is nothing to withdraw, and the state the caller asked for already holds.
+                return WithdrawRunnerPreAuthorizationResult.NoContent();
+            }
+
+            expectedEtag = fetched.RootElement.EtagValue;
+        }
+
+        try
+        {
+            // Etag-conditional, so a withdrawal cannot discard a decision another administrator made between the read
+            // and this call — including one that authorized the runner the caller believes is still unregistered.
+            await this.authorizations.TryWithdrawAsync(environment, runnerId, expectedEtag, cancellationToken).ConfigureAwait(false);
+        }
+        catch (RunnerAuthorizationConflictException)
+        {
+            return WithdrawRunnerPreAuthorizationResult.Conflict(ConcurrentDecisionProblem(environment, runnerId), workspace);
+        }
+
+        GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "withdrawn");
+        return WithdrawRunnerPreAuthorizationResult.NoContent();
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<RevokeRunnerResult> HandleRevokeRunnerAsync(RevokeRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string environment = (string)parameters.Name;
@@ -747,6 +804,13 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             "Pre-authorization must name a principal",
             400,
             $"No runner '{runnerId}' has registered for environment '{environment}', so this authorization pre-authorizes one. Name the machine principal it will register with in 'expectedPrincipal': allow-listing the id alone would hand the authorization to whichever principal registered first.");
+
+    private static Models.ProblemDetails.Source RunnerRegisteredProblem(string environment, string runnerId)
+        => Problem(
+            "runner-registered",
+            "Runner has registered",
+            409,
+            $"Runner '{runnerId}' has registered for environment '{environment}', so its authorization is no longer a pre-authorization. Revoke it instead: revoking keeps the record auditable and expires the leases the runner holds, neither of which a withdrawal does.");
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string environment)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of environment '{environment}'.");

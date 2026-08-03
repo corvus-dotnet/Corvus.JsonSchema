@@ -396,6 +396,44 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         return default;
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runnerId);
+
+        string itemId = ItemId(environment, runnerId);
+        using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(itemId, cancellationToken).ConfigureAwait(false))
+        {
+            if (payload is not { } page)
+            {
+                return false;
+            }
+
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(page.Memory, DocProperty);
+            if (doc.IsEmpty)
+            {
+                return false;
+            }
+
+            // Parse NON-COPYING over the live response purely to read the stored etag; the precondition throws on a
+            // stale one, so a withdrawal cannot discard a decision another administrator made between the read and this
+            // call. The parse completes before the response buffer is returned at the end of this using.
+            using ParsedJsonDocument<EnvironmentRunnerAuthorization> current = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(doc);
+            EnvironmentRunnerAuthorizationSerialization.EnsureEtag(environment, runnerId, expectedEtag, current.RootElement.EtagValue);
+        }
+
+        using ResponseMessage response = await this.container.DeleteItemStreamAsync(itemId, new PartitionKey(itemId), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Removed between the read and the delete; the desired state is reached either way.
+            return false;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // A deterministic, opaque, Cosmos-id-safe document id from the composite key. The id is also the partition key, so

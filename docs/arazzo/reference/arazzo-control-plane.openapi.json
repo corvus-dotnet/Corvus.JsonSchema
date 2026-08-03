@@ -3550,6 +3550,29 @@
         }
       }
     },
+    "/environments/{name}/runners/{runnerId}/preAuthorization": {
+      "delete": {
+        "operationId": "withdrawRunnerPreAuthorization",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runnerAuthorizations"],
+        "summary": "Withdraw a pre-authorization",
+        "description": "Removes an authorization no runner has registered against, freeing the runner id.\n\nThis exists for one situation: a pre-authorization that named the wrong `expectedPrincipal`. The principal binds when the record is created and never moves — a registration presenting a different one is refused — so without this an administrator's typo would make that runner id permanently unusable by the runner it was meant for.\n\nIt is not the way to stop a runner that is already serving. Once a runner has registered for the environment, this answers `409` and the caller revokes instead: revoking keeps the record, so the decision stays auditable, and expires the leases the runner holds. Withdrawing would erase both.\n\nIdempotent: withdrawing when there is nothing to withdraw answers `204`, since the desired state is reached either way.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/RunnerIdPath" }
+        ],
+        "responses": {
+          "204": { "description": "No authorization for this runner id remains in the environment." },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/environments/{name}/runners/{runnerId}/quarantine": {
       "post": {
         "operationId": "quarantineRunner",

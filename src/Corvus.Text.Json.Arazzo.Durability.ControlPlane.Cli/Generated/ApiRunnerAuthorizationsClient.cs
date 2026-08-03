@@ -207,6 +207,27 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
     }
 
     /// <summary>
+    /// Withdraw a pre-authorization
+    /// </summary>
+    /// <remarks>
+    /// <para>Removes an authorization no runner has registered against, freeing the runner id.</para><para>This exists for one situation: a pre-authorization that named the wrong `expectedPrincipal`. The principal binds when the record is created and never moves — a registration presenting a different one is refused — so without this an administrator's typo would make that runner id permanently unusable by the runner it was meant for.</para><para>It is not the way to stop a runner that is already serving. Once a runner has registered for the environment, this answers `409` and the caller revokes instead: revoking keeps the record, so the decision stays auditable, and expires the leases the runner holds. Withdrawing would erase both.</para><para>Idempotent: withdrawing when there is nothing to withdraw answers `204`, since the desired state is reached either way.</para>
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<WithdrawRunnerPreAuthorizationResponse> WithdrawRunnerPreAuthorizationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runnerId, 30).RootElement;
+        WithdrawRunnerPreAuthorizationRequest request = new(NameValue, RunnerIdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<WithdrawRunnerPreAuthorizationRequest, WithdrawRunnerPreAuthorizationResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Quarantine a runner (temporary exclusion)
     /// </summary>
     /// <remarks>
