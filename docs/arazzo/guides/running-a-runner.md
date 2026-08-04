@@ -71,6 +71,15 @@ through a lifecycle: Pending, Authorized, then Quarantined or Revoked. Revocatio
 revoked runner's claim is refused at the lease path, so it stops serving runs immediately whether or not it
 cooperates.
 
+Registering is itself gated ([ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md)
+decision 2): a runner needs either an authorization an administrator has already bound to its `runnerId` and its
+principal, or a short-lived **enrolment token** for the environment, supplied as `Runner:EnrolmentToken`. Give a
+fixed fleet pre-authorized ids and no token. Give a fleet that scales itself a token, delivered the way the
+deployment delivers its other start-up secrets; a runner holds a token rather than the secret that mints them,
+since the secret would let it enrol any id for as long as it held it. Either way the runner is only `Pending`
+until an administrator authorizes it, so an enrolment token grants a place in the queue rather than the right to
+execute.
+
 The approver-facing side of this is the runner-authorization inbox, where an administrator of an environment
 authorizes or revokes the runners that may serve it.
 

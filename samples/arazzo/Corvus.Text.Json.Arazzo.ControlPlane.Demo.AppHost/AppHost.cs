@@ -510,6 +510,10 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the real source services (below).
     .WithEnvironment("Runner__Environment", "development")
+    // The id an administrator pre-authorized for this runner's machine principal (ADR 0065 decision 2). Registration
+    // requires that decision to exist already, so the id is declared here and seeded by the control plane rather than
+    // invented by the process; the demo's seed pre-authorizes exactly these three (environment, id, principal) triples.
+    .WithEnvironment("Runner__RunnerId", "demo-runner-development")
     // All source backends are real external services (their own processes + databases); the runner routes each at its
     // endpoint and waits for them (its executed runs call them). There is no /svc mock backend to point at any more.
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
@@ -572,6 +576,7 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("
     .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
     // The internal environment the bootstrapped approval workflow is made available in (design §16.5.1).
     .WithEnvironment("Runner__Environment", "system")
+    .WithEnvironment("Runner__RunnerId", "demo-system-runner")
     // The message bus: the approval run's notify SEND publishes to access.notify; the decision consumer subscribes to
     // access.decision (the approver's decision, published by the control plane).
     .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
@@ -615,6 +620,7 @@ if (aotRuntimeVersion is not null)
         .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
         // The single Isolated environment this runner serves (phase 4 seeds it + a version available there).
         .WithEnvironment("Runner__Environment", "isolated")
+        .WithEnvironment("Runner__RunnerId", "demo-serverless-runner")
         // #879 executor-package trust: the signing key's PUBLIC half, so the deploy verifies each native binary's
         // attestation before it hands it to Lambda. Never the private half — this runner cannot sign.
         .WithEnvironment("Runner__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)

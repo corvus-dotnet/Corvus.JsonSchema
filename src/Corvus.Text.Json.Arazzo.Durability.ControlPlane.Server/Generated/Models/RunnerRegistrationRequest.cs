@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runner&#39;s self-description when it registers to serve a deployment environment (design &#167;5.5/&#167;16.4). The runner presents only what it knows about itself; the control plane stamps the rest: the environment (from the path), the runner&#39;s reach tags (from the environment&#39;s managementTags — never trusted from the runner), the last-seen instant (now), and the trusted machine principal (from the authenticated token). The registration enters Pending and is dispatchable only once an administrator of the environment authorizes it.
+/// A runner&#39;s self-description when it registers to serve a deployment environment (design &#167;5.5/&#167;16.4). The runner presents only what it knows about itself; the control plane stamps the rest: the environment (from the path), the runner&#39;s reach tags (from the environment&#39;s managementTags — never trusted from the runner), the last-seen instant (now), and the trusted machine principal (from the authenticated token). A runner cannot admit itself: registration requires either an authorization for this runner id that already names the presenting principal, or an unexpired enrolment token for the environment (ADR 0065 decision 2). A runner enrolling with a token enters Pending and is dispatchable only once an administrator of the environment authorizes it.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -180,6 +180,27 @@ public readonly partial struct RunnerRegistrationRequest
     }
 
     /// <summary>
+    /// Gets the (optional) <c>enrolmentToken</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An unexpired enrolment token for this environment, minted by an administrator and delivered to the runner by the deployment (ADR 0065 decision 2). It admits a runner no administrator has named in advance, which is what lets an environment scale its runners without a decision per instance. Presenting one binds the authorization to the authenticated machine principal and enters Pending, so it grants a place in the approval queue rather than the right to execute. Omit it where the runner id has been pre-authorized for the principal.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnrolmentToken
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnrolmentTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>hostedVersions</c> property.
     /// </summary>
     /// <remarks>
@@ -277,7 +298,7 @@ public readonly partial struct RunnerRegistrationRequest
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The stable identifier of the runner process. Self-chosen; the trust anchor is the authenticated machine principal, not this id — a registration presenting a principal that differs from the one already bound to this runnerId is refused (409).
+    /// The stable identifier of the runner process. The trust anchor is the authenticated machine principal rather than this id: registration is refused unless an administrator has already bound this id to the presenting principal, or the request carries an enrolment token for the environment. The id is settled before the process starts, because the decision naming it has to exist first.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerId
@@ -811,6 +832,11 @@ public readonly partial struct RunnerRegistrationRequest
         public const string Address = "address";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="EnrolmentToken"/>.
+        /// </summary>
+        public const string EnrolmentToken = "enrolmentToken";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public const string HostedVersions = "hostedVersions";
@@ -854,6 +880,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the JSON property name for <see cref="Address"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AddressUtf8 => "address"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="EnrolmentToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnrolmentTokenUtf8 => "enrolmentToken"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
@@ -907,6 +938,11 @@ public readonly partial struct RunnerRegistrationRequest
         public static ReadOnlySpan<byte> Address => "address"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="EnrolmentToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnrolmentToken => "enrolmentToken"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersions => "hostedVersions"u8;
@@ -957,6 +993,11 @@ public readonly partial struct RunnerRegistrationRequest
         /// Gets the pre-baked property name blob for <see cref="Address"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Address => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EnrolmentToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnrolmentToken => [0x05, 0x01, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x72, 0x6F, 0x6C, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x6F, 0x6B, 0x65, 0x6E, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="HostedVersions"/>.

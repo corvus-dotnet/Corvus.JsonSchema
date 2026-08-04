@@ -143,6 +143,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         using Stj.JsonDocument authorized = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme"));
@@ -151,20 +152,22 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
-    public async Task Registering_a_runner_records_it_pending_and_binds_the_machine_principal()
+    public async Task Registering_into_a_pre_authorization_records_liveness_against_the_bound_principal()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
 
-        // The runner authenticates as a machine principal (the harness maps the caller's identity 'svc-runner-a' to the token
-        // subject → principal) and registers itself. The authorization enters Pending and binds to the trusted principal
-        // (design §16.4), not the self-asserted runnerId; createdBy is the principal too.
+        // The runner authenticates as a machine principal (the harness maps the caller's identity 'svc-runner-a' to the
+        // token subject → principal) and registers into the decision already made about it. The authorization is returned
+        // unchanged, still attributed to the administrator who made it, and still bound to the principal it named — the
+        // runner contributes its liveness, never its own standing.
         using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a"));
-        registered.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        registered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
         registered.RootElement.GetProperty("runnerId").GetString().ShouldBe("runner-1");
         registered.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
-        registered.RootElement.GetProperty("createdBy").GetString().ShouldBe("svc-runner-a");
+        registered.RootElement.GetProperty("createdBy").GetString().ShouldBe("acme");
 
         // The liveness registration is recorded in the registry, keyed on the runnerId, serving the environment.
         IReadOnlyList<RunnerRegistration> runners = await host.Registry.ListAsync(default);
@@ -183,6 +186,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // The runner advertises an Isolated execution backend (ADR 0058) in its self-description; the server stamp must
         // copy isolationModel through bytes-to-bytes, so the start gate can later match it against an environment.
         const string body = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", body, "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         RunnerRegistration record = (await host.Registry.ListAsync(default)).Single();
@@ -202,14 +206,19 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // registration is refused at the door: it never enters the registry, so it can never be authorized nor claim a run —
         // closing the gap where an admitted InProcess runner would silently run isolated-required work in-process. The
         // authoritative isolation match still runs at the start gate; this stops the misconfiguration before it reaches dispatch.
+        await PreAuthorizeAsync(host, "secure", "runner-1", "svc-runner-a");
         var refused = await host.SendJsonAsync(HttpMethod.Post, "/environments/secure/runners", RegisterBody("runner-1"), "svc-runner-a");
         refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         using Stj.JsonDocument problem = await ReadJsonAsync(refused);
         problem.RootElement.GetProperty("type").GetString().ShouldEndWith("insufficient-isolation");
 
-        // Refused before RegisterAsync: the registry holds no record for it, and no authorization row was created.
+        // Refused before RegisterAsync: the registry holds no record for it. The administrator's pre-authorization is
+        // untouched — the runner failed to meet the floor, which is a fact about the runner rather than a reason to
+        // discard a decision an administrator made.
         (await host.Registry.ListAsync(default)).ShouldBeEmpty();
-        (await runnerAuth.GetAsync("secure", "runner-1", default)).ShouldBeNull();
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? stillPreAuthorized = await runnerAuth.GetAsync("secure", "runner-1", default);
+        stillPreAuthorized.ShouldNotBeNull();
+        stillPreAuthorized!.RootElement.PrincipalEquals("svc-runner-a").ShouldBeTrue();
     }
 
     [TestMethod]
@@ -219,10 +228,11 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"secure","requiredIsolation":"Isolated"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        // A runner advertising an Isolated execution backend meets the floor and registers normally (Pending, awaiting authorization).
+        // A runner advertising an Isolated execution backend meets the floor and registers into its pre-authorization.
         const string isolatedBody = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        await PreAuthorizeAsync(host, "secure", "runner-1", "svc-runner-a");
         using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/secure/runners", isolatedBody, "svc-runner-a"));
-        registered.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        registered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
         (await host.Registry.ListAsync(default)).Single().IsolationModelValue.ShouldBe(RunIsolationModel.Isolated);
     }
 
@@ -232,8 +242,13 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
 
-        // The environment starts InProcess, so an in-process runner registers cleanly (Pending).
+        // The environment starts InProcess, so an in-process runner registers cleanly against a Pending authorization.
+        // The Pending row is written through the store rather than by registering: since ADR 0065 decision 2 an
+        // administrator's decision must precede registration, and the decision endpoint records an authorized one, so
+        // registration no longer produces Pending. The state itself still exists, and this is the case that needs it —
+        // a runner an administrator has named but not yet approved.
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await runnerAuth.EnsurePendingAsync("production", "runner-1", "acme", "svc-runner-a", default)).Dispose();
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // An administrator later raises the environment's isolation floor to Isolated (ADR 0058).
@@ -259,6 +274,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"secure","requiredIsolation":"Isolated"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
         const string isolatedBody = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        await PreAuthorizeAsync(host, "secure", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/secure/runners", isolatedBody, "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // The runner meets the Isolated floor, so authorization proceeds normally.
@@ -274,6 +290,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         // An in-process runner registers into an InProcess environment and an administrator authorizes it.
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -302,6 +319,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         // An Isolated-backed runner registers (allowed into an InProcess environment) and is authorized.
         const string isolatedBody = """{"runnerId":"runner-1","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"isolationModel":"Isolated"}""";
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", isolatedBody, "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -329,7 +347,9 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         // An in-process runner registers but is never authorized (stays Pending). Only Authorized runners fence the raise:
         // a Pending runner is not dispatching, and the authorize-time floor will refuse to authorize it into the raised
-        // environment, so it cannot strand the environment. The raise therefore succeeds.
+        // environment, so it cannot strand the environment. The raise therefore succeeds. The Pending row is written
+        // through the store because registration no longer produces one (see the note in the isolation-floor test above).
+        (await runnerAuth.EnsurePendingAsync("production", "runner-1", "acme", "svc-runner-a", default)).Dispose();
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"requiredIsolation":"Isolated"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -340,6 +360,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // An administrator authorizes the runner; a subsequent re-registration by the same principal must not reset it.
@@ -351,15 +372,18 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
-    public async Task Registering_a_runnerId_owned_by_a_different_principal_is_conflict()
+    public async Task Registering_a_runnerId_owned_by_a_different_principal_is_refused()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // A different authenticated machine cannot take over a runnerId that a principal already owns (§16.4) → 409.
-        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        // A different authenticated machine cannot take over a runnerId that a principal already owns (§16.4). It is
+        // refused as not pre-authorized rather than as a conflict: telling a stranger that an id is taken is how it
+        // learns which ids exist, and the id is an administrator's choice rather than a secret.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // The original binding is untouched.
         using ParsedJsonDocument<EnvironmentRunnerAuthorization>? bound = await runnerAuth.GetAsync("production", "runner-1", default);
@@ -372,13 +396,14 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // ADR 0065 decision 2: an authorization row must exist before any registry row is written. The principal fence
         // lives on the authorization, so writing the liveness row first means a foreign principal overwrites the
         // victim's registration — its hosted versions, concurrency, isolation, and last-seen — and only then gets its
-        // 409. The refusal has to leave nothing behind.
+        // refusal. The refusal has to leave nothing behind.
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1", maxConcurrency: 4), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1", maxConcurrency: 99), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1", maxConcurrency: 99), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         RunnerRegistration? registered = await host.Registry.GetAsync("runner-1", default);
         registered.ShouldNotBeNull();
@@ -411,7 +436,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         // Anyone else presenting that id is refused, and leaves no registry row behind.
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-expected"), "svc-runner-b"))
-            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await host.Registry.GetAsync("runner-expected", default)).ShouldBeNull();
 
         // The named principal registers into its own pre-authorization and is dispatchable at once.
@@ -423,6 +448,169 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     // A minimal RunnerRegistrationRequest body: the runner's self-description (the server stamps environment/reachTags/lastSeenAt).
     private static string RegisterBody(string runnerId, int maxConcurrency = 4)
         => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":{{maxConcurrency}},"transports":[],"hostedVersions":[]}""";
+
+    // An administrator pre-authorizes the id for the principal that will present it. Registration requires this to exist
+    // (ADR 0065 decision 2), so it is the first step of every registration path rather than an alternative to one.
+    private static async Task PreAuthorizeAsync(Scoped host, string environment, string runnerId, string principal)
+        => (await host.SendJsonAsync(
+            HttpMethod.Post,
+            $"/environments/{environment}/runners/{runnerId}/authorization",
+            $$"""{"expectedPrincipal":"{{principal}}"}""",
+            "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+    // A registration body carrying an enrolment token, for a runner no administrator has named.
+    private static string EnrolBody(string runnerId, string token)
+        => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[],"enrolmentToken":"{{token}}"}""";
+
+    [TestMethod]
+    public async Task A_runner_presenting_an_enrolment_token_enrols_itself_pending()
+    {
+        // The path that lets an environment scale its runners: no administrator named this instance in advance, and it
+        // still cannot execute anything — it enters the approval queue bound to the principal that presented the token.
+        byte[] secret = Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length");
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth, secret);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string token = EnrolmentToken.Issue(secret, "production", DateTimeOffset.UtcNow.AddMinutes(15));
+        using Stj.JsonDocument enrolled = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-scaled-out", token), "svc-runner-a"));
+
+        enrolled.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        enrolled.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
+        ((string)(await host.Registry.GetAsync("runner-scaled-out", default))!.Value.RunnerId).ShouldBe("runner-scaled-out");
+    }
+
+    [TestMethod]
+    public async Task An_enrolment_token_for_another_environment_enrols_nothing()
+    {
+        // Registration stays environment-scoped. A token delivered to one environment's runners must not admit them to
+        // another, or the token would restore the blanket capability it exists to bound.
+        byte[] secret = Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length");
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth, secret);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"staging"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string stagingToken = EnrolmentToken.Issue(secret, "staging", DateTimeOffset.UtcNow.AddMinutes(15));
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-1", stagingToken), "svc-runner-a"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await runnerAuth.GetAsync("production", "runner-1", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task An_expired_enrolment_token_enrols_nothing()
+    {
+        byte[] secret = Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length");
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth, secret);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string expired = EnrolmentToken.Issue(secret, "production", DateTimeOffset.UtcNow.AddMinutes(-1));
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-1", expired), "svc-runner-a"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task An_enrolment_token_cannot_take_over_another_principals_runner()
+    {
+        // The squatting fence has to survive the new door. A token admits a runner to an environment; it does not
+        // transfer an id already bound to someone else, or enrolment would become the takeover the fence prevents.
+        byte[] secret = Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length");
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth, secret);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
+
+        string token = EnrolmentToken.Issue(secret, "production", DateTimeOffset.UtcNow.AddMinutes(15));
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-1", token), "svc-runner-b"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? bound = await runnerAuth.GetAsync("production", "runner-1", default);
+        bound!.RootElement.PrincipalEquals("svc-runner-a").ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task A_deployment_with_no_enrolment_secret_enrols_nobody()
+    {
+        // An absent secret means enrolment is off, not that anything presented is accepted.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string token = EnrolmentToken.Issue(Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length"), "production", DateTimeOffset.UtcNow.AddMinutes(15));
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-1", token), "svc-runner-a"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task An_enrolled_runner_becomes_dispatchable_only_when_an_administrator_authorizes_it()
+    {
+        // Register-then-approve, which is the flow the token exists to keep. Enrolment puts the runner in the queue; an
+        // administrator still makes the decision that lets it execute.
+        byte[] secret = Encoding.UTF8.GetBytes("an-enrolment-secret-of-entirely-sufficient-length");
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth, secret);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string token = EnrolmentToken.Issue(secret, "production", DateTimeOffset.UtcNow.AddMinutes(15));
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", EnrolBody("runner-1", token), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The administrator needs no expectedPrincipal: enrolment already proved which principal holds the id.
+        using Stj.JsonDocument authorized = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme"));
+        authorized.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        authorized.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
+    }
+
+    [TestMethod]
+    public async Task Registering_without_a_pre_authorization_is_refused()
+    {
+        // ADR 0065 decision 2: `runners:register` is reach-scoped per environment and never the system context. The
+        // authorization row IS that scoping — holding the scope lets a principal ask, and an administrator's decision
+        // decides which environment and which id it may ask about. Without one there is nothing to register into.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // Nothing was created by the attempt: neither an authorization it could later grow into, nor a liveness row.
+        (await runnerAuth.GetAsync("production", "runner-1", default)).ShouldBeNull();
+        (await host.Registry.GetAsync("runner-1", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Every_registration_refusal_is_indistinguishable_from_the_others()
+    {
+        // The property, not the status code. A principal that may not register here learns nothing about why: whether
+        // the environment exists, whether the id is taken, and whether someone else holds it are all the same answer.
+        // Distinguishing them would turn registration into an enumeration oracle over environments and runner ids,
+        // which is the squatting reconnaissance ADR 0065 decision 2 closes.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-taken", "svc-runner-a");
+
+        HttpResponseMessage unknownEnvironment = await host.SendJsonAsync(HttpMethod.Post, "/environments/nowhere/runners", RegisterBody("runner-1"), "svc-runner-b");
+        HttpResponseMessage noPreAuthorization = await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-b");
+        HttpResponseMessage anothersPreAuthorization = await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-taken"), "svc-runner-b");
+
+        unknownEnvironment.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        noPreAuthorization.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        anothersPreAuthorization.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        string unknownBody = await unknownEnvironment.Content.ReadAsStringAsync();
+        (await noPreAuthorization.Content.ReadAsStringAsync()).ShouldBe(unknownBody);
+        (await anothersPreAuthorization.Content.ReadAsStringAsync()).ShouldBe(unknownBody);
+
+        // And the victim's binding is untouched by the attempt on it.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? bound = await runnerAuth.GetAsync("production", "runner-taken", default);
+        bound!.RootElement.PrincipalEquals("svc-runner-a").ShouldBeTrue();
+    }
 
     [TestMethod]
     public async Task Withdrawing_a_mistyped_pre_authorization_frees_the_runner_id()
@@ -460,6 +648,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await PreAuthorizeAsync(host, "production", "runner-1", "svc-runner-a");
         (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/preAuthorization", "acme"))
@@ -787,7 +976,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<Scoped> StartAsync(IEnvironmentRunnerAuthorizationStore runnerAuthorizations)
+    private static async Task<Scoped> StartAsync(IEnvironmentRunnerAuthorizationStore runnerAuthorizations, byte[]? enrolmentSecret = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -811,7 +1000,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // (the §5.5 revocation fence): revoking a runner expires the leases it holds. The store is exposed to the test so a
         // fence assertion can check that a revoked runner's lease is reclaimable. The runner registry is likewise exposed so
         // the registration tests can confirm a registered runner's liveness record (design §16.4).
-        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store);
+        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store, runnerEnrolmentSecret: enrolmentSecret ?? default(ReadOnlyMemory<byte>));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, registry);

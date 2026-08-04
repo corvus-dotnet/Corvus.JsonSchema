@@ -43,6 +43,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly ControlPlaneAccess access;
     private readonly IWorkflowLeaseAdministration? leaseAdministration;
     private readonly string subjectClaimType;
+    private readonly ReadOnlyMemory<byte> enrolmentSecret;
     private readonly ILogger? auditLogger;
 
     // The audited resource kind for every decision on this surface (design §850).
@@ -59,6 +60,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// deployment whose store lacks the capability (<see langword="null"/>) still stops all future dispatch on revoke; only the
     /// immediate in-flight fence is unavailable.</param>
     /// <param name="subjectClaimType">The claim type identifying the deciding subject (the audit actor); default <c>sub</c>.</param>
+    /// <param name="enrolmentSecret">The secret enrolment tokens are minted and validated with (ADR 0065 decision 2), or
+    /// empty to accept none. A deployment that leaves it empty admits only runners an administrator has pre-authorized by
+    /// id, which is workable for a fixed fleet and not for one that scales itself.</param>
     /// <param name="auditLogger">The logger for the §850 runner-authorization audit (who authorized/quarantined/revoked which runner); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
@@ -68,6 +72,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         ControlPlaneAccess access,
         IWorkflowLeaseAdministration? leaseAdministration = null,
         string subjectClaimType = "sub",
+        ReadOnlyMemory<byte> enrolmentSecret = default,
         ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(authorizations);
@@ -83,11 +88,25 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         this.access = access;
         this.leaseAdministration = leaseAdministration;
         this.subjectClaimType = subjectClaimType;
+        this.enrolmentSecret = enrolmentSecret;
         this.auditLogger = auditLogger;
     }
 
     // The (environment, runnerId) audit target key (design §850).
     private static string RunnerKey(string environment, string runnerId) => $"{runnerId}@{environment}";
+
+    // Whether the registration carries an enrolment token this deployment minted for this environment (ADR 0065
+    // decision 2). A deployment that configured no secret enrols nobody, rather than treating an absent secret as a
+    // reason to accept whatever was presented.
+    private bool TryEnrol(Models.RunnerRegistrationRequest body, string environment)
+    {
+        if (this.enrolmentSecret.IsEmpty || body.EnrolmentToken.IsUndefined())
+        {
+            return false;
+        }
+
+        return EnrolmentToken.TryValidate(this.enrolmentSecret.Span, (string)body.EnrolmentToken, environment, DateTimeOffset.UtcNow);
+    }
 
     /// <inheritdoc/>
     public async ValueTask<ListEnvironmentRunnerAuthorizationsResult> HandleListEnvironmentRunnerAuthorizationsAsync(ListEnvironmentRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -230,27 +249,61 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RegisterRunnerResult.Conflict(UnidentifiedPrincipalProblem(), workspace);
         }
 
-        // The environment must exist. It is read as the trusted System identity, not as the runner: the runner's reach is the
-        // environment's (stamped below from its managementTags — never trusted from the runner), so registration is gated by
-        // the runners:register scope plus the later administrator authorization, not by the runner's own reach. Unknown
-        // environment is 404.
+        // ADR 0065 decision 2: `runners:register` is scoped per environment, never by the system context. Holding the
+        // scope lets a principal ask to register; what decides which environment and which id it may ask about is one of
+        // two things, and a runner can produce neither for itself.
+        //
+        // Either an administrator has already bound this id to this principal, or the request carries an unexpired
+        // enrolment token for this environment. The first suits a fixed fleet; the second is what lets an environment
+        // scale its runners without a decision per instance, which the first cannot do without something holding the
+        // standing power to pre-authorize any id — the blanket capability this scoping exists to remove.
+        //
+        // A token never takes an id that is already bound. Enrolment creates, it does not transfer, so a stranger with a
+        // valid token cannot displace a runner already registered under an id, and what it does create is Pending, which
+        // dispatches nothing until an administrator decides.
+        bool enrolled = false;
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization>? existing =
+            await this.authorizations.GetAsync(environment, runnerId, cancellationToken).ConfigureAwait(false))
+        {
+            // Compared string-free against the document's bytes: the bound principal is never realised as a string.
+            if (existing?.RootElement.PrincipalEquals(principal) != true)
+            {
+                enrolled = existing is null && this.TryEnrol(body, environment);
+                if (!enrolled)
+                {
+                    GovernanceAudit.Mutation(
+                        this.auditLogger,
+                        "runner.register",
+                        principal,
+                        TargetKind,
+                        RunnerKey(environment, runnerId),
+                        existing is null ? "refused-not-pre-authorized" : "refused-principal-conflict");
+                    return RegisterRunnerResult.NotFound(NotPreAuthorizedProblem(), workspace);
+                }
+            }
+        }
+
+        // The environment is read as the trusted System identity, because what is being read from it is what the server
+        // stamps rather than what the caller may see: the reach tags come from its managementTags and never from the
+        // runner. The caller's right to be here was settled by the authorization above.
         SecurityTagSet reachTags;
         RunIsolationModel requiredIsolation;
         using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false))
         {
             if (environmentDoc is null)
             {
-                return RegisterRunnerResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+                // An authorization outliving its environment. It answers exactly as an unknown environment and an
+                // unauthorized id do, so a caller cannot tell the three apart and probe for either.
+                GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-environment-absent");
+                return RegisterRunnerResult.NotFound(NotPreAuthorizedProblem(), workspace);
             }
 
             reachTags = environmentDoc.RootElement.ManagementTagsValue;
             requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
         }
 
-        // Record the runner's liveness registration (the runner's self-description, with the server stamping environment,
-        // reach tags, and the last-seen instant), then bind its authorization to the trusted principal. EnsurePendingAsync
-        // creates the Pending row and stamps the principal on first registration, returns the existing row unchanged when the
-        // same principal re-registers, and throws when a different principal already owns this runnerId (→ 409).
+        // Record the runner's liveness registration: the runner's self-description, with the server stamping the
+        // environment, the reach tags, and the last-seen instant.
         RunnerRegistration registration = BuildRegistration(body, environment, reachTags, DateTimeOffset.UtcNow);
 
         // ADR 0058 isolation floor, enforced at the door: a runner whose advertised isolation does not meet the
@@ -265,10 +318,10 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RegisterRunnerResult.Conflict(InsufficientIsolationProblem(environment, requiredIsolation, registration.IsolationModelValue), workspace);
         }
 
-        // ADR 0065 decision 2: the authorization row is written FIRST, because the principal fence lives on it. Writing
-        // the liveness row first meant a foreign principal overwrote the victim's registration — its hosted versions,
-        // concurrency, isolation, and last-seen — and only then collected its 409, so the refusal left the damage behind.
-        // Ordering it this way makes a refused registration leave nothing at all.
+        // The authorization is re-read through the store's own principal fence rather than trusted from the check above,
+        // which closes the window between them: an administrator withdrawing a pre-authorization, or re-pointing it at
+        // another principal, concurrently with this registration is refused here rather than half-applied. The row
+        // already exists, so this returns it unchanged and the pre-ADR-0065 create-on-first-registration path is dead.
         ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization;
         try
         {
@@ -277,7 +330,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         catch (RunnerPrincipalConflictException)
         {
             GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-principal-conflict");
-            return RegisterRunnerResult.Conflict(PrincipalConflictProblem(environment, runnerId), workspace);
+            return RegisterRunnerResult.NotFound(NotPreAuthorizedProblem(), workspace);
         }
 
         try
@@ -291,7 +344,13 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             throw;
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), authorization.RootElement.IsAuthorized ? "registered-authorized" : "registered-pending");
+        GovernanceAudit.Mutation(
+            this.auditLogger,
+            "runner.register",
+            principal,
+            TargetKind,
+            RunnerKey(environment, runnerId),
+            enrolled ? "enrolled-pending" : authorization.RootElement.IsAuthorized ? "registered-authorized" : "registered-pending");
         workspace.TakeOwnership(authorization);
         return RegisterRunnerResult.Ok(ToView(authorization.RootElement), workspace);
     }
@@ -784,6 +843,17 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
         => Problem("environment-not-found", "Environment not found", 404, $"No environment named '{environment}' exists, or it is outside your reach.");
 
+    // The single refusal every unsuccessful registration receives (ADR 0065 decision 2). It names nothing the caller
+    // supplied, because echoing the environment or the runner id back would make the three causes distinguishable by
+    // their bodies even where the status matched, and distinguishing them is exactly the enumeration this closes. Which
+    // cause it was is recorded in the audit log instead, where the operator who needs it can see it and the caller cannot.
+    private static Models.ProblemDetails.Source NotPreAuthorizedProblem()
+        => Problem(
+            "runner-not-pre-authorized",
+            "Runner not pre-authorized",
+            404,
+            "This runner is not pre-authorized to register. An administrator of the environment pre-authorizes the runner id for the machine principal that will present it, and registration requires that decision to already exist.");
+
     private static Models.ProblemDetails.Source RunnerNotFoundProblem(string environment, string runnerId)
         => Problem("runner-authorization-not-found", "Runner authorization not found", 404, $"No runner '{runnerId}' has registered for environment '{environment}'.");
 
@@ -809,9 +879,6 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private static Models.ProblemDetails.Source NotAuthorizedToQuarantineProblem(string environment, string runnerId)
         => Problem("not-authorized-to-quarantine", "Runner not authorized", 409, $"Runner '{runnerId}' is not currently authorized to serve environment '{environment}', so it cannot be quarantined. Only an authorized runner can be quarantined; authorize it first, or revoke it to remove it permanently.");
-
-    private static Models.ProblemDetails.Source PrincipalConflictProblem(string environment, string runnerId)
-        => Problem("runner-principal-conflict", "Runner already claimed", 409, $"Runner '{runnerId}' in environment '{environment}' is already bound to a different machine principal (design §16.4); a registration presenting a different principal cannot take it over. Choose a distinct runnerId, or have an administrator revoke the existing authorization.");
 
     private static Models.ProblemDetails.Source UnidentifiedPrincipalProblem()
         => Problem("unidentified-machine-principal", "Unidentified machine principal", 409, "The registration token carries no machine principal (design §16.4); a runner must authenticate as a machine principal (client-credentials, private-key-JWT, or mTLS) to register.");

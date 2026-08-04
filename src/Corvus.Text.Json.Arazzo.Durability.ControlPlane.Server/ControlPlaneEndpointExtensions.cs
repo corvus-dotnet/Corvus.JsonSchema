@@ -71,6 +71,8 @@ public static class ControlPlaneEndpointExtensions
     /// only, eight hours.
     /// </param>
     /// <param name="accessRequestSubjectClaimType">The claim type identifying the requesting subject (and that a grant keys on); default <c>sub</c>.</param>
+    /// <param name="runnerEnrolmentSecret">The secret runner enrolment tokens are minted and validated with (ADR 0065
+    /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
     /// <param name="selfElevationEligibility">
     /// An optional predicate deciding whether a requester is eligible to self-elevate a request (§16.5.3); when it
     /// returns <see langword="true"/> the request is auto-approved without a human approver. Default: never eligible.
@@ -97,7 +99,7 @@ public static class ControlPlaneEndpointExtensions
         WorkflowApprovalOptions? workflowApproval = null,
         Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null,
         INativeBuildJobStore? nativeBuildJobStore = null,
-        IWorkflowDeploymentStore? workflowDeploymentStore = null,
+        IWorkflowDeploymentStore? workflowDeploymentStore = null, ReadOnlyMemory<byte> runnerEnrolmentSecret = default,
         string? ownerGroupClaimType = "tenant")
     {
         ArgumentNullException.ThrowIfNull(endpoints);
@@ -290,7 +292,7 @@ public static class ControlPlaneEndpointExtensions
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, auditLogger);
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, auditLogger);
         var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditLogger: auditLogger);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session

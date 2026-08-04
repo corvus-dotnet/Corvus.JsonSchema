@@ -21,4 +21,9 @@ namespace Corvus.Text.Json.Arazzo.Runner;
 /// a serverless runner that advances runs through a deployed function. <see langword="null"/> (the default) advertises
 /// nothing, which the control plane reads as the in-process default — so an existing in-process runner is unchanged.
 /// Dispatch matches an environment's required isolation against this advertised model.</param>
-public sealed record RunnerOptions(string RunnerId, string Environment, int MaxConcurrency = 4, bool ServesSchedules = false, string? IsolationModel = null);
+/// <param name="EnrolmentToken">A short-lived enrolment token for this runner's environment, where the deployment
+/// delivered one (ADR 0065 decision 2). It is what admits a runner no administrator has named in advance, so an
+/// environment can scale its runners without a decision per instance; presenting one enters <c>Pending</c>, and an
+/// administrator still authorizes the runner before it is dispatchable. <see langword="null"/> (the default) is right
+/// for a runner whose id has been pre-authorized for its machine principal, which is the fixed-fleet case.</param>
+public sealed record RunnerOptions(string RunnerId, string Environment, int MaxConcurrency = 4, bool ServesSchedules = false, string? IsolationModel = null, string? EnrolmentToken = null);

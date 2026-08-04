@@ -66,10 +66,14 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)state
 // so control-plane dispatch routes only this environment's Isolated runs to it. Configurable so one host image can serve
 // any Isolated environment; the demo defaults to "isolated".
 string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "isolated";
+// Stable identity, for the same reason as the app runner: the id is pre-authorized before this process exists.
+string runnerId = builder.Configuration["Runner:RunnerId"]
+    ?? $"serverless-runner-{System.Environment.MachineName}-{System.Environment.ProcessId}";
 var options = new RunnerOptions(
-    $"serverless-runner-{System.Environment.MachineName}-{System.Environment.ProcessId}",
+    runnerId,
     runnerEnvironment,
-    IsolationModel: "Isolated");
+    IsolationModel: "Isolated",
+    EnrolmentToken: builder.Configuration["Runner:EnrolmentToken"]);
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);

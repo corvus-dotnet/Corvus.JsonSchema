@@ -623,16 +623,17 @@ if (seedExampleData && serverlessBuildWorkerWired)
     }
 }
 
-// DEMO: the open demo has no interactive administrator, so stand in for the development environment's administrator
-// (the "demo" identity that created it, §7.7) and authorize each runner that registers a Pending §5.5 authorization to
-// serve it — otherwise the out-of-process runner stays dispatch-paused and never claims catalogued runs. This keeps the
-// §5.5 semantic intact (an administrator, never the runner, grants authorization); production does it via the UI/API — so
-// it is part of the example fiction and only wired when the deployment opts in.
+// DEMO: the open demo has no interactive administrator, so stand in for the administrators of the environments this
+// composition starts runners for and make their §5.5 authorization decisions up front. Since ADR 0065 decision 2 a
+// runner cannot announce itself — registration requires a decision that already names it and its machine principal — so
+// without this the out-of-process runners are refused registration and never claim catalogued runs. It keeps the §5.5
+// semantic intact (an administrator, never the runner, decides); production does it via the UI/API, so this is part of
+// the example fiction and only wired when the deployment opts in.
 if (seedExampleData)
 {
-    builder.Services.AddHostedService(sp => new RunnerAutoAuthorizationService(
+    builder.Services.AddHostedService(sp => new RunnerPreAuthorizationService(
         runnerAuthorizations,
-        sp.GetRequiredService<ILogger<RunnerAutoAuthorizationService>>()));
+        sp.GetRequiredService<ILogger<RunnerPreAuthorizationService>>()));
 }
 
 WebApplication app = builder.Build();

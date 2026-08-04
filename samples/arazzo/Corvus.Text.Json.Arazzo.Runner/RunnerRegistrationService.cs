@@ -180,6 +180,15 @@ public sealed class RunnerRegistrationService(
                 writer.WriteString("isolationModel", isolationModel);
             }
 
+            // The enrolment token, where the deployment gave this runner one (ADR 0065 decision 2). A runner holds a
+            // token rather than the secret that mints them: the secret would let it enrol any id for as long as it held
+            // it, which is the standing capability the token exists to bound. A runner whose id an administrator has
+            // already pre-authorized needs none, and sends none.
+            if (options.EnrolmentToken is { Length: > 0 } enrolmentToken)
+            {
+                writer.WriteString("enrolmentToken", enrolmentToken);
+            }
+
             writer.WriteEndObject();
         }
 

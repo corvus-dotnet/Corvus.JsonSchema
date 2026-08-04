@@ -162,9 +162,18 @@ The residual mechanics this guide owns, beyond the decision:
   optimistic concurrency.
 - **The runner is a machine principal.** It registers through an authenticated endpoint (client-credentials,
   private-key JWT, or mTLS), and the control plane binds the authorization to the trusted principal it derives
-  from the token, not to a self-asserted `runnerId`; a registration presenting a principal that differs from the
-  one already bound to a `runnerId` is refused (`409`). Both admission orders share the record: pre-authorization
-  and register-then-approve.
+  from the token, not to a self-asserted `runnerId`.
+- **A runner cannot admit itself** ([ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md)
+  decision 2). Registration is scoped per environment rather than performed in the system context, and what scopes
+  it is one of two things the runner cannot produce: an authorization an administrator has already bound to this
+  `runnerId` and this principal, or an unexpired **enrolment token** for the environment. Both admission orders
+  survive, one under each. Pre-authorization suits a fixed fleet; an enrolment token is what lets an environment
+  scale its runners, because otherwise something has to hold the standing power to pre-authorize any id on demand,
+  which is the blanket capability the scoping exists to remove.
+- **Every registration refusal is the same refusal.** Whether the environment exists, whether the id is
+  pre-authorized, and whether another principal holds it are indistinguishable to the caller (`404`), or
+  registration becomes an enumeration oracle over environments and runner ids. The audit log keeps the distinction,
+  on the side that needs it.
 - **A pre-authorization names the principal it allow-lists.** An administrator authorizing a `runnerId` that has
   not registered yet supplies `expectedPrincipal`, and the record is bound from the moment it exists. Allow-listing
   the id alone would hand the authorization to whichever principal registered first, and the id is chosen by an

@@ -72,10 +72,16 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)state
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
 // environment; the demo defaults to production. The runner is only dispatchable for runs targeting it.
 string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "production";
+// The runner's stable identity. An administrator pre-authorizes a runner id for the principal that will present it
+// (ADR 0065 decision 2), so the id has to be known before the process starts rather than derived from the process
+// itself. The machine/pid fallback keeps a bare run identifiable, but only a configured id can be pre-authorized.
+string runnerId = builder.Configuration["Runner:RunnerId"]
+    ?? $"runner-{System.Environment.MachineName}-{System.Environment.ProcessId}";
 var options = new RunnerOptions(
-    $"runner-{System.Environment.MachineName}-{System.Environment.ProcessId}",
+    runnerId,
     runnerEnvironment,
-    ServesSchedules: builder.Configuration.GetValue("Runner:ServesSchedules", true));
+    ServesSchedules: builder.Configuration.GetValue("Runner:ServesSchedules", true),
+    EnrolmentToken: builder.Configuration["Runner:EnrolmentToken"]);
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);

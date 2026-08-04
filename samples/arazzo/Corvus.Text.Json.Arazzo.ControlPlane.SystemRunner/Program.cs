@@ -68,7 +68,10 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)state
 // The single environment this runner serves (design §5.5): the control plane's internal "system" environment, where
 // the bootstrapped approval workflow is made available. It is only dispatchable for runs pinned to it.
 string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "system";
-var options = new RunnerOptions($"system-runner-{System.Environment.MachineName}-{System.Environment.ProcessId}", runnerEnvironment);
+// Stable identity, for the same reason as the app runner: the id is pre-authorized before this process exists.
+string runnerId = builder.Configuration["Runner:RunnerId"]
+    ?? $"system-runner-{System.Environment.MachineName}-{System.Environment.ProcessId}";
+var options = new RunnerOptions(runnerId, runnerEnvironment, EnrolmentToken: builder.Configuration["Runner:EnrolmentToken"]);
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);
