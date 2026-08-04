@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -244,7 +245,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static string Enc(string value)
-        => Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     private static async ValueTask<byte[]?> DocumentAsync(TableClient table, string partition, string rowKey, CancellationToken cancellationToken)
     {

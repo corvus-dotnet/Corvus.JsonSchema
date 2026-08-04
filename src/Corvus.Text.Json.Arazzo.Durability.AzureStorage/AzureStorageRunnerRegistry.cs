@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Buffers.Text;
+using System.Globalization;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
@@ -33,6 +36,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// </remarks>
 public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
 {
+    // The hosting key's encode/compose scratch fits the stack for any ordinary base workflow id, with an
+    // ArrayPool fallback for a long one.
+    private const int HostingKeyStackThreshold = 256;
+
+    // "|" plus the widest int, bounding the suffix appended after the encoded id.
+    private const int VersionKeySuffixMax = 12;
+
     private const string RunnersTable = "arazzoRunners";
     private const string HostingTable = "arazzoRunnerHosting";
     private const string PartitionKey = "runner";
@@ -363,8 +373,36 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
     /// </summary>
     private static string HostingPartition(string baseWorkflowId, int versionNumber)
     {
-        string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(baseWorkflowId)).Replace('/', '_').Replace('+', '-');
-        return $"{encoded}|{versionNumber}";
+        // Encoded and composed through scratch buffers: the byte array, the encoded string and the interpolation's own
+        // buffer were three allocations for a key that is only ever handed to the table client as a string. The buffers
+        // are sized from the id, so a long one rents rather than growing the stack.
+        int maxBytes = Encoding.UTF8.GetMaxByteCount(baseWorkflowId.Length);
+        int maxChars = Base64Url.GetEncodedLength(maxBytes) + VersionKeySuffixMax;
+        byte[]? rentedBytes = maxBytes > HostingKeyStackThreshold ? ArrayPool<byte>.Shared.Rent(maxBytes) : null;
+        char[]? rentedChars = maxChars > HostingKeyStackThreshold ? ArrayPool<char>.Shared.Rent(maxChars) : null;
+        try
+        {
+            Span<byte> raw = rentedBytes ?? stackalloc byte[HostingKeyStackThreshold];
+            int rawLength = Encoding.UTF8.GetBytes(baseWorkflowId, raw);
+
+            Span<char> key = rentedChars ?? stackalloc char[HostingKeyStackThreshold];
+            Base64Url.EncodeToChars(raw[..rawLength], key, out _, out int encoded);
+            key[encoded++] = '|';
+            versionNumber.TryFormat(key[encoded..], out int versionChars, provider: CultureInfo.InvariantCulture);
+            return new string(key[..(encoded + versionChars)]);
+        }
+        finally
+        {
+            if (rentedBytes is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedBytes);
+            }
+
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     private async ValueTask DeleteHostingEntityAsync(string baseWorkflowId, int versionNumber, string runnerId, CancellationToken cancellationToken)

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -291,7 +292,7 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
     // two replacements are all permitted in a Table key. A leading '~' guarantees a non-empty key even for the empty
     // string, which Table storage forbids as a key.
     private static string Enc(string value)
-        => "~" + Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // The record is a point read by (PartitionKey, RowKey); a missing entity is reported by the 404 status code rather
     // than by a thrown exception leaking out (NoThrow), and surfaces as a null document to the caller.

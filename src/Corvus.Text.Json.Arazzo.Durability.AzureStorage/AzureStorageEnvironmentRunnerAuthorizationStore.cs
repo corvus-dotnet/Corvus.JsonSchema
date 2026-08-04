@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -373,7 +374,7 @@ public sealed class AzureStorageEnvironmentRunnerAuthorizationStore : IEnvironme
     // environment / runner id may contain characters — '/', '\', '#', '?', control bytes — that keys forbid). The plain
     // key parts are kept as their own entity columns for the list filter/sort, so the keys themselves never need decoding.
     private static string Enc(string value)
-        => Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // Builds the OData filter for the optional query criteria (an absent criterion matches anything); null when the
     // query is empty so the read is an unfiltered scan.

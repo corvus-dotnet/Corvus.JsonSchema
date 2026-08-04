@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -302,7 +303,7 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
     // alphabet plus those two replacements is valid in both a Table key and a blob name. A leading '~' guarantees a
     // non-empty key.
     private static string Enc(string value)
-        => "~" + Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     private BlobClient BlobFor(string id) => this.documents.GetBlobClient(Enc(id));
 

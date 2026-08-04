@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -29,6 +31,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// </remarks>
 public sealed class AzureStorageAvailabilityStore : IAvailabilityStore
 {
+    // Key parts are short, so the RowKey's encode/transcode scratch fits the stack in the common case, with an
+    // ArrayPool fallback. Matches AvailabilityContinuationToken's own threshold.
+    private const int StackThreshold = 256;
+
     private const string AvailabilityTable = "arazzoAvailability";
     private const string Partition = "avail";
     private const string DocumentColumn = "Document";
@@ -295,12 +301,39 @@ public sealed class AzureStorageAvailabilityStore : IAvailabilityStore
     // U+0000 control byte (which cannot appear in a key part) and the result is URL-safe-base64 encoded so the RowKey
     // holds only characters Table storage permits. A leading '~' guarantees a non-empty key. The plain key parts are kept
     // as their own entity columns for the list queries/sort, so the RowKey itself never needs decoding.
+    //
+    // That is the same composition AvailabilityContinuationToken encodes — same three parts, same separator, same
+    // alphabet — so it is encoded by the same code rather than assembled again here. Building it through a formatted
+    // string and a byte array cost six allocations for a key that fits a stack buffer; the only one left is the RowKey
+    // itself, which the caller needs as a string.
     private static string RowKey(string baseWorkflowId, int versionNumber, string environment)
     {
-        string raw = string.Create(
-            CultureInfo.InvariantCulture,
-            $"{baseWorkflowId}\0{versionNumber}\0{environment}");
-        return "~" + Convert.ToBase64String(Encoding.UTF8.GetBytes(raw)).Replace('/', '_').Replace('+', '-');
+        int maxEncoded = AvailabilityContinuationToken.GetMaxEncodedLength(baseWorkflowId, environment);
+        byte[]? rentedBytes = maxEncoded > StackThreshold ? ArrayPool<byte>.Shared.Rent(maxEncoded) : null;
+        char[]? rentedChars = maxEncoded > StackThreshold ? ArrayPool<char>.Shared.Rent(maxEncoded + 1) : null;
+        try
+        {
+            Span<byte> encoded = rentedBytes ?? stackalloc byte[StackThreshold];
+            int written = AvailabilityContinuationToken.EncodeToUtf8(baseWorkflowId, versionNumber, environment, encoded);
+
+            // Base64URL is ASCII, so the transcode is a widening copy into the one buffer the string is built from.
+            Span<char> key = rentedChars ?? stackalloc char[StackThreshold + 1];
+            key[0] = '~';
+            int chars = Encoding.ASCII.GetChars(encoded[..written], key[1..]);
+            return new string(key[..(chars + 1)]);
+        }
+        finally
+        {
+            if (rentedBytes is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedBytes);
+            }
+
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     // Pulls the candidate entities for a list axis — only the plain key columns plus the Document bytes — into rows the

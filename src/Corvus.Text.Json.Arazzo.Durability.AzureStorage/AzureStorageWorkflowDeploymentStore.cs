@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -477,12 +478,12 @@ public sealed class AzureStorageWorkflowDeploymentStore : IWorkflowDeploymentSto
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static string Enc(string value)
-        => Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // The inverse of Enc: recovers a deployment id from its Base64 RowKey so the keyset order can be computed from the
     // projection without reading documents. Only ever applied to RowKeys this store wrote (round-trips exactly).
     private static string Dec(string rowKey)
-        => Encoding.UTF8.GetString(Convert.FromBase64String(rowKey.Replace('_', '/').Replace('-', '+')));
+        => Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowKey));
 
     // Builds the OData filter for the optional query criteria (status / target tuple); null when the query is empty so the
     // read is an unfiltered scan of the single partition.

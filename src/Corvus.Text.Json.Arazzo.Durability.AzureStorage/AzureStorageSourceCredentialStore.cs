@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -356,7 +357,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     // those two replacements are all permitted in a Table key. A leading '~' guarantees a non-empty key even for the
     // empty string (an empty tag discriminator), which Table storage forbids as a key.
     private static string Enc(string value)
-        => "~" + Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // Finds the single binding for (sourceName, environment) the caller's reach for the verb admits, returning its
     // bytes and its tag discriminator (the row-key segment). A binding outside reach is invisible (non-disclosing).

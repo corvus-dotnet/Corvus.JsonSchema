@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
@@ -348,7 +349,7 @@ public sealed class AzureStorageEnvironmentStore : IEnvironmentStore
     // those two replacements are all permitted in a Table key. A leading '~' guarantees a non-empty key even for the
     // empty string (an empty tag discriminator), which Table storage forbids as a key.
     private static string Enc(string value)
-        => "~" + Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // Finds the single environment named `name` the caller's reach for the verb admits, returning its bytes and its tag
     // discriminator (the row-key seed). An environment outside reach is invisible (non-disclosing).

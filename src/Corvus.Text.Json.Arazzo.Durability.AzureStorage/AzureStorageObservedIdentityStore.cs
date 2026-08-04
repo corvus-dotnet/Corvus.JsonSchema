@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
@@ -458,7 +459,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     // two replacements are all permitted in a Table key. A leading '~' guarantees a non-empty key even for the empty
     // string, which Table storage forbids as a key.
     private static string Enc(string value)
-        => PrimaryPartitionFloor + Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+        => PrimaryPartitionFloor + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 
     // Reads the primary entity's persisted document and its stored identity digest (the latter so a re-sighting can
     // retract a now-stale digest-index entity). A missing entity yields (null, null).
