@@ -1967,6 +1967,8 @@ public sealed class AsyncApi30CodeGenerator
             ? "string channel, CancellationToken cancellationToken = default"
             : "CancellationToken cancellationToken = default";
 
+        bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
+
         if (op.SecuritySchemes.Count > 0)
         {
             w.WriteLine($"public async ValueTask StartAsync({startParams})");
@@ -1989,14 +1991,33 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine();
 
             string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (hasBindingContext)
+            {
+                w.WriteLine("MessageContext context = new()");
+                w.OpenBrace();
+                if (op.ChannelBindingsJson is not null)
+                {
+                    w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
+                }
+
+                if (op.OperationBindingsJson is not null)
+                {
+                    w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
+                }
+
+                w.CloseBraceWithSemicolon();
+            }
+
             if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"await this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+                string contextArg = hasBindingContext ? ", context" : string.Empty;
+                w.WriteLine($"await this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken).ConfigureAwait(false);");
             }
             else
             {
-                w.WriteLine($"await this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+                string contextArg = hasBindingContext ? ", context" : string.Empty;
+                w.WriteLine($"await this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken).ConfigureAwait(false);");
             }
 
             w.CloseBrace();
@@ -2013,14 +2034,33 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (hasBindingContext)
+            {
+                w.WriteLine("MessageContext context = new()");
+                w.OpenBrace();
+                if (op.ChannelBindingsJson is not null)
+                {
+                    w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
+                }
+
+                if (op.OperationBindingsJson is not null)
+                {
+                    w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
+                }
+
+                w.CloseBraceWithSemicolon();
+            }
+
             if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+                string contextArg = hasBindingContext ? ", context" : string.Empty;
+                w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken);");
             }
             else
             {
-                w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+                string contextArg = hasBindingContext ? ", context" : string.Empty;
+                w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken);");
             }
 
             w.CloseBrace();
