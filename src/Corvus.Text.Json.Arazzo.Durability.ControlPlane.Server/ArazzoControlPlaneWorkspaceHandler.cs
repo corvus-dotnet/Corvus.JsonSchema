@@ -986,7 +986,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                         writer.WriteString("name"u8, name);
                         writer.WriteBoolean("passed"u8, ok);
                         writer.WriteString("outcome"u8, ScenarioSuite.OutcomeName(result.Outcome));
-                        var visited = new List<string>();
+                        var visited = new List<string>(result.Steps.Count);
                         foreach (SimulatedStepRecord record in result.Steps)
                         {
                             visited.Add(record.StepId);
@@ -3120,9 +3120,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         => Problem("working-copy-not-found", "Working copy not found", 404, $"No working copy '{id}' exists, or it is outside your reach.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 }

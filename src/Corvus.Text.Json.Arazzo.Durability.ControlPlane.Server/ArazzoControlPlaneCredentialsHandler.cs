@@ -775,9 +775,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         => Problem("credential-not-found", "Credential not found", 404, $"No source credential binding for '{sourceName}@{environment}' exists.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 }

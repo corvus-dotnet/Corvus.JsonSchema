@@ -719,21 +719,32 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         return true;
     }
 
-    private static Models.ValidationResult.Source BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
-        => new((ref Models.ValidationResult.Builder b) => b.Create(
-            valid: valid,
-            errors: new Models.ValidationResult.ValidationErrorArray.Source((ref Models.ValidationResult.ValidationErrorArray.Builder ab) =>
-            {
-                foreach ((string instancePath, string message, string schemaLocation) in errors)
-                {
-                    ab.AddItem(new Models.ValidationError.Source((ref Models.ValidationError.Builder eb) =>
-                    {
-                        Models.JsonString.Source instancePathSource = string.IsNullOrEmpty(instancePath) ? default : (Models.JsonString.Source)instancePath;
-                        Models.JsonString.Source schemaLocationSource = string.IsNullOrEmpty(schemaLocation) ? default : (Models.JsonString.Source)schemaLocation;
-                        eb.Create(message: message, instancePath: instancePathSource, schemaLocation: schemaLocationSource);
-                    }));
-                }
-            })));
+    // The outcome threads itself through as the build context so none of the three levels captures. A validation
+    // response carries up to 200 errors, and the closure form allocated a display class for the result, one for the
+    // array, and one more per error.
+    private static Models.ValidationResult.Source<ValidationOutcome> BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
+        => Models.ValidationResult.Build(new ValidationOutcome(valid, errors), BuildValidationResultValue);
+
+    private static void BuildValidationResultValue(in ValidationOutcome outcome, ref Models.ValidationResult.Builder b)
+        => b.Create(
+            in outcome,
+            Models.ValidationResult.ValidationErrorArray.Build(in outcome, BuildValidationErrors),
+            outcome.Valid);
+
+    private static void BuildValidationErrors(in ValidationOutcome outcome, ref Models.ValidationResult.ValidationErrorArray.Builder b)
+    {
+        foreach ((string InstancePath, string Message, string SchemaLocation) error in outcome.Errors)
+        {
+            b.AddItem(Models.ValidationError.Build(in error, BuildValidationError));
+        }
+    }
+
+    private static void BuildValidationError(in (string InstancePath, string Message, string SchemaLocation) error, ref Models.ValidationError.Builder b)
+    {
+        Models.JsonString.Source instancePath = string.IsNullOrEmpty(error.InstancePath) ? default : (Models.JsonString.Source)error.InstancePath;
+        Models.JsonString.Source schemaLocation = string.IsNullOrEmpty(error.SchemaLocation) ? default : (Models.JsonString.Source)error.SchemaLocation;
+        b.Create(message: error.Message, instancePath: instancePath, schemaLocation: schemaLocation);
+    }
 
     private static CatalogOwner ToOwner(Models.CatalogOwner owner)
         => new(
@@ -812,7 +823,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // Strip internal tags from each version NOW (before the deferred body serialization runs): a rewritten public
         // view must have its ownership established up-front so its element stays valid through serialization. Versions
         // with no internal tags keep their zero-copy element (owned via the page transfer above).
-        var views = new List<CatalogVersion>();
+        var views = new List<CatalogVersion>(page.Versions.Count);
         foreach (CatalogVersion version in page.Versions)
         {
             views.Add(this.access.PublicView(version, workspace));
@@ -945,9 +956,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         => Problem("forbidden", "Action not permitted", 403, $"You do not have permission to modify version {versionNumber} of '{baseWorkflowId}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
+
+    /// <summary>A validation verdict and its errors, as the context a validation response builds from.</summary>
+    private readonly record struct ValidationOutcome(
+        bool Valid,
+        IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> Errors);
 }

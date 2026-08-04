@@ -229,11 +229,11 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     }
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     // A described usage grant written bytes-native from its (dimension, value) spans — shared by the whoami and grantee
     // identity sub-arrays (both hold AdministratorIdentity items). The spans are valid for the synchronous build.

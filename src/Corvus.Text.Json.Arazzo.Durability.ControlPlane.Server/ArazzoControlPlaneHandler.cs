@@ -79,7 +79,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string? correlationId = parameters.CorrelationId.IsNotUndefined() ? (string)parameters.CorrelationId : null;
         TagSet tags = ParseTags(parameters.Tag);
 
-        // `using`: the page owns the pooled continuation-token buffer; BuildPage's Source closure copies it into the
+        // `using`: the page owns the pooled continuation-token buffer; BuildPage's Source copies it into the
         // response workspace synchronously inside Ok (CreateBuilder materialises eagerly), so disposing after Ok is safe.
         using WorkflowRunPage page = await this.management.ListAsync(
             new WorkflowQuery(status, workflowId, limit, pageToken, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
@@ -448,85 +448,88 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 wait: wait);
         });
 
-    private static Models.WorkflowRunPage.Source BuildPage(WorkflowRunPage page)
-        => new((ref Models.WorkflowRunPage.Builder b) =>
+    private static Models.WorkflowRunPage.Source<WorkflowRunPage> BuildPage(in WorkflowRunPage page)
+        => Models.WorkflowRunPage.Build(in page, BuildPageValue);
+
+    // The page threads itself through as the build context, so nothing below captures: one list response no longer
+    // allocates a display class for the page, another for the array, and one more per run.
+    // The token is the page's pooled UTF-8 (alive through this synchronous build); write it straight into the
+    // response — no managed token string. Empty means "last page". (.Span is taken here, inside the build
+    // CreateBuilder runs synchronously during Ok, while the page is still owned by the handler.)
+    private static void BuildPageValue(in WorkflowRunPage page, ref Models.WorkflowRunPage.Builder b)
+        => b.Create(
+            in page,
+            Models.WorkflowRunPage.WorkflowRunSummaryArray.Build(in page, BuildSummaries),
+            page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span);
+
+    private static void BuildSummaries(in WorkflowRunPage page, ref Models.WorkflowRunPage.WorkflowRunSummaryArray.Builder b)
+    {
+        foreach (WorkflowRunListing listing in page.Runs)
         {
-            // The token is the page's pooled UTF-8 (alive through this synchronous build); write it straight into the
-            // response — no managed token string. Empty means "last page". (.Span is taken here, inside the closure
-            // CreateBuilder runs synchronously during Ok, while the page is still owned by the handler.)
-            b.Create(
-                runs: new Models.WorkflowRunPage.WorkflowRunSummaryArray.Source(
-                    (ref Models.WorkflowRunPage.WorkflowRunSummaryArray.Builder ab) =>
-                    {
-                        foreach (WorkflowRunListing listing in page.Runs)
-                        {
-                            ab.AddItem(BuildSummary(listing));
-                        }
-                    }),
-                nextPageToken: page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span);
-        });
+            b.AddItem(Models.WorkflowRunSummary.Build(in listing, BuildSummary));
+        }
+    }
 
-    private static Models.WorkflowRunSummary.Source BuildSummary(WorkflowRunListing listing)
-        => new((ref Models.WorkflowRunSummary.Builder b) =>
+    private static void BuildSummary(in WorkflowRunListing listing, ref Models.WorkflowRunSummary.Builder b)
+    {
+        WorkflowRunIndexEntry e = listing.Index;
+
+        Models.JsonString.Source awaitingChannel = default;
+        if (e.AwaitingChannel is { } ac)
         {
-            WorkflowRunIndexEntry e = listing.Index;
+            awaitingChannel = ac;
+        }
 
-            Models.JsonString.Source awaitingChannel = default;
-            if (e.AwaitingChannel is { } ac)
-            {
-                awaitingChannel = ac;
-            }
+        Models.JsonString.Source awaitingCorrelationId = default;
+        if (e.AwaitingCorrelationId is { } acid)
+        {
+            awaitingCorrelationId = acid;
+        }
 
-            Models.JsonString.Source awaitingCorrelationId = default;
-            if (e.AwaitingCorrelationId is { } acid)
-            {
-                awaitingCorrelationId = acid;
-            }
+        Models.JsonDateTime.Source dueAt = default;
+        if (e.DueAt is { } due)
+        {
+            dueAt = due;
+        }
 
-            Models.JsonDateTime.Source dueAt = default;
-            if (e.DueAt is { } due)
-            {
-                dueAt = due;
-            }
+        Models.JsonString.Source errorType = default;
+        if (e.ErrorType is { } et)
+        {
+            errorType = et;
+        }
 
-            Models.JsonString.Source errorType = default;
-            if (e.ErrorType is { } et)
-            {
-                errorType = et;
-            }
+        Models.JsonString.Source correlationId = default;
+        if (e.CorrelationId is { } cid)
+        {
+            correlationId = cid;
+        }
 
-            Models.JsonString.Source correlationId = default;
-            if (e.CorrelationId is { } cid)
-            {
-                correlationId = cid;
-            }
+        Models.WorkflowRunSummary.JsonStringArray.Source tags = default;
+        if (!e.Tags.IsEmpty)
+        {
+            tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
+        }
 
-            Models.WorkflowRunSummary.JsonStringArray.Source tags = default;
-            if (!e.Tags.IsEmpty)
-            {
-                tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
-            }
+        Models.JsonString.Source environment = default;
+        if (e.Environment is { } env)
+        {
+            environment = env;
+        }
 
-            Models.JsonString.Source environment = default;
-            if (e.Environment is { } env)
-            {
-                environment = env;
-            }
-
-            b.Create(
-                createdAt: e.CreatedAt,
-                id: listing.Id.Value,
-                status: e.Status.ToString(),
-                updatedAt: e.UpdatedAt,
-                workflowId: e.WorkflowId,
-                awaitingChannel: awaitingChannel,
-                awaitingCorrelationId: awaitingCorrelationId,
-                correlationId: correlationId,
-                dueAt: dueAt,
-                environment: environment,
-                errorType: errorType,
-                tags: tags);
-        });
+        b.Create(
+            createdAt: e.CreatedAt,
+            id: listing.Id.Value,
+            status: e.Status.ToString(),
+            updatedAt: e.UpdatedAt,
+            workflowId: e.WorkflowId,
+            awaitingChannel: awaitingChannel,
+            awaitingCorrelationId: awaitingCorrelationId,
+            correlationId: correlationId,
+            dueAt: dueAt,
+            environment: environment,
+            errorType: errorType,
+            tags: tags);
+    }
 
     private static Models.WorkflowFault.Source BuildFault(WorkflowFault f)
         => new((ref Models.WorkflowFault.Builder b) => b.Create(at: f.At, attempt: f.Attempt, error: f.Error, stepId: f.StepId));
@@ -562,9 +565,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         => Problem("forbidden", "Action not permitted", 403, $"You do not have permission to modify run '{runId}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 }

@@ -584,7 +584,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
         // Contents PUTs, each read-sha-then-write, authored as the signed-in user (§4.7): the broker
         // composes no author/committer — GitHub stamps the token's user.
-        var written = new List<(string Path, string? Sha)>();
+        var written = new List<(string Path, string? Sha)>(files.Count);
         foreach ((string filePath, byte[] bytes) in files)
         {
             (GitHubBroker.ReadOutcome shaOutcome, ParsedJsonDocument<JsonElement>? current) = await github.BrowseAsync(principal, owner, repo, filePath, branch, cancellationToken).ConfigureAwait(false);
@@ -1061,11 +1061,11 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         => Problem("github-not-brokered", "GitHub not brokered", 400, "This deployment brokers no GitHub App.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     // The token-custody key (§4.7): shared with the connected-provider surface, so one signed-in
     // principal keys one custody row per provider whichever surface began the sign-in.

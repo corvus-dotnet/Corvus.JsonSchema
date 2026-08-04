@@ -1151,11 +1151,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         => Problem($"{kind}-not-found", $"{char.ToUpperInvariant(kind[0])}{kind[1..]} not found", 404, $"No security {kind} '{id}' exists.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     private ValueTask RefreshAsync(CancellationToken cancellationToken)
         => this.policy is { } p ? p.RefreshAsync(cancellationToken) : default;

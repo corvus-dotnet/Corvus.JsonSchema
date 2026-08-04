@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -171,7 +172,7 @@ public sealed class GitHubBroker
     /// <returns>The outcome and, on success, the GitHub payload (caller disposes) — an array for a directory, an object for a file.</returns>
     public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> BrowseAsync(string principalKey, string owner, string repo, string? path, string? reference, CancellationToken cancellationToken)
     {
-        string escapedPath = string.Join('/', (path ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
+        string escapedPath = EscapePath(path);
         string query = string.IsNullOrEmpty(reference) ? string.Empty : $"?ref={Uri.EscapeDataString(reference)}";
         return this.GetAsync(principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/contents/{escapedPath}{query}", cancellationToken);
     }
@@ -201,7 +202,7 @@ public sealed class GitHubBroker
             return (WriteOutcome.NotConnected, null);
         }
 
-        string escapedPath = string.Join('/', path.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
+        string escapedPath = EscapePath(path);
         byte[] body = PersistedJson.ToArray(
             (Message: message, Branch: branch, Content: content, Sha: existingSha),
             static (Utf8JsonWriter writer, in (string Message, string Branch, ReadOnlyMemory<byte> Content, string? Sha) s) =>
@@ -498,6 +499,46 @@ public sealed class GitHubBroker
         request.Headers.TryAddWithoutValidation("Accept", "application/vnd.github+json");
         request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.TryAddWithoutValidation("User-Agent", "arazzo-control-plane");
+    }
+
+    /// <summary>Percent-encodes each segment of a repository path, dropping empty ones, so the whole path rides a
+    /// contents URL without its separators being escaped.</summary>
+    /// <remarks>
+    /// Walked segment by segment rather than Split/Select/Join, which allocated an array, a substring per segment, a
+    /// projection iterator and the join buffer on every request. Both the read and the write path used the same
+    /// expression, so this is also the one copy of it.
+    /// </remarks>
+    private static string EscapePath(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return string.Empty;
+        }
+
+        var escaped = new StringBuilder(path.Length + 16);
+        int start = 0;
+        while (start < path.Length)
+        {
+            int end = path.IndexOf('/', start);
+            if (end < 0)
+            {
+                end = path.Length;
+            }
+
+            if (end > start)
+            {
+                if (escaped.Length > 0)
+                {
+                    escaped.Append('/');
+                }
+
+                escaped.Append(Uri.EscapeDataString(path.AsSpan(start, end - start)));
+            }
+
+            start = end + 1;
+        }
+
+        return escaped.ToString();
     }
 }
 

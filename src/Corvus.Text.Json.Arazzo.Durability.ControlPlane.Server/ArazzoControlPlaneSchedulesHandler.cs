@@ -462,11 +462,11 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         => Problem("schedule-not-found", "Schedule not found", 404, $"No schedule '{scheduleId}' exists, or it is outside your reach.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     // A loaded scheduler run plus the two derived values that need async/realised context, threaded by `in` into the
     // static response build. The State is disposed by the caller after the (synchronous) build resolves. This is a build

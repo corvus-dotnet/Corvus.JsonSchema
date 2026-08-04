@@ -278,7 +278,12 @@ public static partial class CatalogPackage
                 issues.Add("The Arazzo workflow has no workflowId.");
             }
 
-            var present = new HashSet<string>(contents.Sources.Select(s => s.Key), StringComparer.Ordinal);
+            var present = new HashSet<string>(contents.Sources.Count, StringComparer.Ordinal);
+            foreach (KeyValuePair<string, byte[]> source in contents.Sources)
+            {
+                present.Add(source.Key);
+            }
+
             foreach (CatalogSourceRef source in sources)
             {
                 if (!string.Equals(source.Type, "arazzo", StringComparison.OrdinalIgnoreCase) && !present.Contains(source.Name))

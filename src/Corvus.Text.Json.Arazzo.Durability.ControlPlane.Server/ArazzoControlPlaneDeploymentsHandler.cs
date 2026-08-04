@@ -184,9 +184,9 @@ public sealed class ArazzoControlPlaneDeploymentsHandler : IApiDeploymentsHandle
         => Problem("deployment-not-found", "Deployment not found", 404, $"No deployment of version {versionNumber} of workflow '{baseWorkflowId}' exists for '{runtimeIdentifier}' in environment '{environment}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 }

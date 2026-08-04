@@ -148,7 +148,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         DateTimeOffset now = current.AnyExpiringBindings ? this.timeProvider.GetUtcNow() : default;
 
         // Bindings matching this principal and still in effect, in resolution order (an expired grant is excluded).
-        var matched = new List<BindingClauses>();
+        // Allocated only when one actually matches: an unauthenticated request never reaches the loop, and an
+        // authenticated one that matches nothing is the common warm path. ResolveGrantedScopes below is already lazy
+        // the same way.
+        List<BindingClauses>? matched = null;
         if (principal?.Identity?.IsAuthenticated == true)
         {
             IReadOnlyList<SecurityTag> identity = this.GetInternalTags(principal);
@@ -156,15 +159,19 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             {
                 if (this.Matches(binding, identity) && !IsExpired(binding, now))
                 {
-                    matched.Add(binding);
+                    (matched ??= []).Add(binding);
                 }
             }
         }
 
+        // An empty set still goes through ResolveReach. It resolves to the deny-by-default filter, where the null this
+        // method returns for an unrestricted grant means full reach, so short-circuiting on "nothing matched" would
+        // invert the answer.
+        IReadOnlyList<BindingClauses> resolved = matched is null ? [] : matched;
         return new AccessContext(
-            this.ResolveReach(matched, claims, current, static b => b.Read),
-            this.ResolveReach(matched, claims, current, static b => b.Write),
-            this.ResolveReach(matched, claims, current, static b => b.Purge));
+            this.ResolveReach(resolved, claims, current, static b => b.Read),
+            this.ResolveReach(resolved, claims, current, static b => b.Write),
+            this.ResolveReach(resolved, claims, current, static b => b.Purge));
     }
 
     /// <inheritdoc/>
@@ -379,7 +386,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     }
 
     private SecurityFilter? ResolveReach(
-        List<BindingClauses> matched,
+        IReadOnlyList<BindingClauses> matched,
         IReadOnlyDictionary<string, IReadOnlyList<string>> claims,
         Compiled current,
         Func<BindingClauses, VerbClause> selectVerb)

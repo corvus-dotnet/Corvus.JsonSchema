@@ -27,6 +27,10 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
+    // Takes the filter by reference so a query's criteria travel as a context instead of being captured, which keeps
+    // every Snapshot predicate static.
+    private delegate bool EntryPredicate<TContext>(in TContext context, in Entry entry);
+
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunId id,
@@ -193,9 +197,11 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        foreach (WorkflowRunId id in this.Snapshot(e =>
-            e.Index.Status == WorkflowRunStatus.Suspended && e.Index.DueAt is { } due && due <= before
-            && MatchesEnvironment(e.Index.Environment, runnerEnvironment)))
+        foreach (WorkflowRunId id in this.Snapshot(
+            new DueFilter(before, runnerEnvironment),
+            static (in DueFilter f, in Entry e) =>
+                e.Index.Status == WorkflowRunStatus.Suspended && e.Index.DueAt is { } due && due <= f.Before
+                && MatchesEnvironment(e.Index.Environment, f.RunnerEnvironment)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return id;
@@ -211,11 +217,13 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     {
         ArgumentNullException.ThrowIfNull(channel);
         await Task.CompletedTask.ConfigureAwait(false);
-        foreach (WorkflowRunId id in this.Snapshot(e =>
-            e.Index.Status == WorkflowRunStatus.Suspended
-            && e.Index.AwaitingChannel == channel
-            && (correlationId is null || e.Index.AwaitingCorrelationId is null || e.Index.AwaitingCorrelationId == correlationId)
-            && MatchesEnvironment(e.Index.Environment, runnerEnvironment)))
+        foreach (WorkflowRunId id in this.Snapshot(
+            new AwaitingFilter(channel, correlationId, runnerEnvironment),
+            static (in AwaitingFilter f, in Entry e) =>
+                e.Index.Status == WorkflowRunStatus.Suspended
+                && e.Index.AwaitingChannel == f.Channel
+                && (f.CorrelationId is null || e.Index.AwaitingCorrelationId is null || e.Index.AwaitingCorrelationId == f.CorrelationId)
+                && MatchesEnvironment(e.Index.Environment, f.RunnerEnvironment)))
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return id;
@@ -333,24 +341,32 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         await Task.CompletedTask.ConfigureAwait(false);
 
-        List<WorkflowRunId> claimable;
+        // A plain scan rather than Where/Select/ToList: this is the dispatch claim path and it runs under the gate, so
+        // the display class, two delegates and two iterators that shape cost are paid on every claim query.
+        var claimable = new List<WorkflowRunId>();
         lock (this.gate)
         {
-            claimable = this.entries
-                .Where(kvp => hostedWorkflowIds.Contains(kvp.Value.Index.WorkflowId)
-                    && MatchesEnvironment(kvp.Value.Index.Environment, runnerEnvironment)
-                    && (kvp.Value.Index.Status == WorkflowRunStatus.Pending
-                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))
+            foreach (KeyValuePair<string, Entry> kvp in this.entries)
+            {
+                WorkflowRunIndexEntry index = kvp.Value.Index;
+                if (!hostedWorkflowIds.Contains(index.WorkflowId)
+                    || !MatchesEnvironment(index.Environment, runnerEnvironment))
+                {
+                    continue;
+                }
 
-                        // §18: a paused (or faulted) run the control plane marked resume-claimable via
-                        // RequestResumeAsync. It stays Suspended/Faulted (never re-labelled Pending), and its marker
-                        // is cleared on the claiming runner's first checkpoint. Gated on the stopped status so a
-                        // terminal run that somehow retained the marker is never surfaced (nor perpetually re-loaded
-                        // and rejected by the dispatcher).
-                        || (kvp.Value.Index.ResumeRequestedAt is not null
-                            && kvp.Value.Index.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted)))
-                .Select(kvp => new WorkflowRunId(kvp.Key))
-                .ToList();
+                // §18: a paused (or faulted) run the control plane marked resume-claimable via RequestResumeAsync. It
+                // stays Suspended/Faulted (never re-labelled Pending), and its marker is cleared on the claiming
+                // runner's first checkpoint. Gated on the stopped status so a terminal run that somehow retained the
+                // marker is never surfaced (nor perpetually re-loaded and rejected by the dispatcher).
+                if (index.Status == WorkflowRunStatus.Pending
+                    || (index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))
+                    || (index.ResumeRequestedAt is not null
+                        && index.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted))
+                {
+                    claimable.Add(new WorkflowRunId(kvp.Key));
+                }
+            }
         }
 
         foreach (WorkflowRunId id in claimable)
@@ -372,18 +388,31 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     private bool HasLiveLease(string id, DateTimeOffset now)
         => this.leases.TryGetValue(id, out LeaseRecord lease) && lease.ExpiresAt > now;
 
-    private List<WorkflowRunId> Snapshot(Func<Entry, bool> predicate)
+    // The filter travels as a context rather than being captured, so the predicate stays static and one query
+    // allocates the result list and nothing else.
+    private List<WorkflowRunId> Snapshot<TContext>(in TContext context, EntryPredicate<TContext> matches)
     {
+        var ids = new List<WorkflowRunId>();
         lock (this.gate)
         {
-            return this.entries
-                .Where(kvp => predicate(kvp.Value))
-                .Select(kvp => new WorkflowRunId(kvp.Key))
-                .ToList();
+            foreach (KeyValuePair<string, Entry> kvp in this.entries)
+            {
+                Entry entry = kvp.Value;
+                if (matches(in context, in entry))
+                {
+                    ids.Add(new WorkflowRunId(kvp.Key));
+                }
+            }
         }
+
+        return ids;
     }
 
     private readonly record struct Entry(byte[] Checkpoint, WorkflowEtag Etag, WorkflowRunIndexEntry Index);
+
+    private readonly record struct DueFilter(DateTimeOffset Before, string? RunnerEnvironment);
+
+    private readonly record struct AwaitingFilter(string Channel, string? CorrelationId, string? RunnerEnvironment);
 
     private readonly record struct LeaseRecord(string Owner, string Token, DateTimeOffset ExpiresAt);
 }

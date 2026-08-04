@@ -49,7 +49,7 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
         // No registry is not an error for a read: an empty listing means the pane simply offers no
         // provider affordance. Connection state is per caller; an unresolvable principal reads as
         // disconnected everywhere (it could hold no custody row).
-        var rows = new List<ProviderRow>();
+        List<ProviderRow> rows = this.broker is null ? [] : new List<ProviderRow>(this.broker.Providers.Count);
         if (this.broker is { } providers)
         {
             string? principal = this.PrincipalKey();
@@ -164,11 +164,11 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
         => Problem("providers-not-configured", "No connected providers", 400, "This deployment registers no connected providers.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     // The token-custody key (§4.7): shared with the GitHub surface, so one signed-in principal
     // keys one custody row per provider whichever surface began the sign-in.

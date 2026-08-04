@@ -223,9 +223,9 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
         => Problem("native-build-not-found", "Native build not found", 404, $"No native build of version {versionNumber} of workflow '{baseWorkflowId}' exists for '{runtimeIdentifier}' in environment '{environment}'.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 }

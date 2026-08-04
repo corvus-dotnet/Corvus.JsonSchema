@@ -77,8 +77,18 @@ public static class AmbientIdentityStamp
             return identity;
         }
 
-        List<SecurityTag> tags = identity.ToList();
-        tags.RemoveAll(t => Governs(governed, t.Key));
+        // Filter on the way in rather than ToList-then-RemoveAll: the predicate would capture `governed`, so this path
+        // allocated a display class and a delegate on every authenticated request, plus the entries it then removed.
+        // The multi-provider overload below already builds it this way.
+        var tags = new List<SecurityTag>();
+        foreach (SecurityTag tag in identity)
+        {
+            if (!Governs(governed, tag.Key))
+            {
+                tags.Add(tag);
+            }
+        }
+
         tags.AddRange(ambient.Tags);
         return SecurityTagSet.FromTags(tags);
     }

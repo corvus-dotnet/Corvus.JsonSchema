@@ -831,11 +831,11 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         => Problem("insufficient-isolation", "Insufficient runner isolation", 409, $"This runner advertises {advertised} isolation, but environment '{environment}' requires {required} isolation (ADR 0058); register a runner with a {required} execution backend to serve this environment.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
-        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+        => Models.ProblemDetails.Build(
             detail: detail,
             status: status,
             title: title,
-            type: ProblemBase + type));
+            type: ProblemBase + type);
 
     private enum GovernanceGate
     {
