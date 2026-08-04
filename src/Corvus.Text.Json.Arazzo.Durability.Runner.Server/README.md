@@ -42,6 +42,9 @@ question from different sources of truth, which is why the surface is an interfa
 | `POST /messageClaims` | Takes the runs awaiting a message on a channel, each with its lease. The payload is not sent and never reaches the store. |
 | `POST /runs/{runId}/lease/renewal` | Extends a held lease, so a long advance does not have its run reclaimed underneath it. |
 | `DELETE /runs/{runId}/lease` | Hands a run back so another runner may claim it without waiting for the lease to expire. |
+| `GET /hostedVersions` | Lists the versions this runner may execute, resolved from its bindings and each environment's availability. |
+| `GET /versions/{baseWorkflowId}/{versionNumber}` | Reads one such version and its content hash. |
+| `GET /versions/{baseWorkflowId}/{versionNumber}/documents/{documentName}` | Pulls one package document (executor, manifest, signature) as opaque octets. |
 | `GET /runs/{runId}/checkpoint` | Reads the run's checkpoint as opaque octets, with the sequence the store has persisted. |
 | `PUT /runs/{runId}/checkpoint` | Replaces the run's row under compare-and-swap, accepting only the persisted sequence plus one. |
 

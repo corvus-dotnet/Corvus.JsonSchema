@@ -48,6 +48,12 @@ public sealed class RunnerApiOptions
     /// </summary>
     public string PrincipalClaimType { get; set; } = "sub";
 
+    /// <summary>
+    /// Gets or sets the page size for the hosted-versions listing when a runner asks for none, and the most it will
+    /// return whatever it asks for. Defaults to 200.
+    /// </summary>
+    public int MaximumHostedPage { get; set; } = 200;
+
     /// <summary>Bounds a requested lease duration to the deployment's range.</summary>
     /// <param name="requested">The requested duration, or <see langword="null"/> when the runner asked for none.</param>
     /// <returns>The duration to grant.</returns>
@@ -55,6 +61,14 @@ public sealed class RunnerApiOptions
         => requested is not { } duration || duration <= TimeSpan.Zero
             ? this.DefaultLease
             : duration > this.MaximumLease ? this.MaximumLease : duration;
+
+    /// <summary>Bounds a requested hosted-versions page size.</summary>
+    /// <param name="requested">The page size the runner asked for, or <see langword="null"/> when it asked for none.</param>
+    /// <returns>The page size to serve.</returns>
+    public int BoundHostedPage(int? requested)
+        => requested is not { } count || count <= 0
+            ? this.MaximumHostedPage
+            : count > this.MaximumHostedPage ? this.MaximumHostedPage : count;
 
     /// <summary>Bounds how many runs one wait-index sweep may claim.</summary>
     /// <param name="requested">The limit the runner asked for, or <see langword="null"/> when it asked for none.</param>

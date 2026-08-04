@@ -141,7 +141,10 @@ public sealed class RunnerRunCoordinator
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         TimeSpan lease = this.options.BoundLease(requestedLease);
         int wanted = this.options.BoundSweep(limit);
-        List<ClaimedRunRecord> claims = [];
+
+        // Sized from the bound, not grown into it: the loop returns the moment it reaches `wanted`, so that is the
+        // exact ceiling and every grow-and-copy on the way there would be avoidable work.
+        var claims = new List<ClaimedRunRecord>(wanted);
 
         foreach (string environment in sweep.Environments)
         {
@@ -187,7 +190,10 @@ public sealed class RunnerRunCoordinator
 
         TimeSpan lease = this.options.BoundLease(requestedLease);
         int wanted = this.options.BoundSweep(limit);
-        List<ClaimedRunRecord> claims = [];
+
+        // Sized from the bound, not grown into it: the loop returns the moment it reaches `wanted`, so that is the
+        // exact ceiling and every grow-and-copy on the way there would be avoidable work.
+        var claims = new List<ClaimedRunRecord>(wanted);
 
         foreach (string environment in sweep.Environments)
         {

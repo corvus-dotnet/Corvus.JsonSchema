@@ -263,6 +263,16 @@ Release runs on an uncancelled token, because cancellation is how a runner shuts
 releasing matters most. Passing the caller's token through would skip the release on every run in flight and strand
 each one until its lease lapsed.
 
+**And a runner is told what to host.** `GET /hostedVersions` resolves the versions a runner may execute from its
+environment bindings and each environment's availability, and `RunnerApiArtifactSource` pulls the executor, its
+manifest and the manifest signature over the API. A runner previously read the catalog itself and treated everything
+in it as hostable, which needed a credential for the whole catalog and gave a runner sight of versions it had no
+business executing. Being told what to host needs neither.
+
+The runner still verifies what it pulls. The content hash is served by its own operation rather than read from inside
+the package, because a manifest vouching for itself would prove nothing, and the loader checks the assembly against
+both the hash and the manifest signature.
+
 **Resume shares the path.** `WorkflowWorker` polls the wait index for due timers and delivered messages and
 calls the same contract through `HostedWorkflowResumer.ResumeAsync`; one `workflowId -> IHostedWorkflow`
 resolver serves new-run dispatch, orphan reclaim, and wait-resume.

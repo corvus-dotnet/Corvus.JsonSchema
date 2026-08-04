@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Microsoft.AspNetCore.Builder;
@@ -24,6 +25,7 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 {
     public const string Runner = "runner-a";
     public const string Peer = "runner-b";
+    public const string Stranger = "runner-unbound";
     public const string Production = "production";
     public const string Version = "adopt-v3";
 
@@ -34,20 +36,29 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     private readonly HttpClient peerHttp;
     private readonly HttpClientTransport runnerTransport;
     private readonly HttpClientTransport peerTransport;
+    private readonly HttpClient strangerHttp;
+    private readonly HttpClientTransport strangerTransport;
 
     private RunnerApiFixture(
         WebApplication app,
         InMemoryWorkflowStateStore store,
+        InMemoryWorkflowCatalogStore catalog,
+        InMemoryAvailabilityStore availability,
         TestClock clock,
         HttpClient runnerHttp,
         HttpClientTransport runnerTransport,
         ArazzoRunnerClient client,
         HttpClient peerHttp,
         HttpClientTransport peerTransport,
-        ArazzoRunnerClient peer)
+        ArazzoRunnerClient peer,
+        HttpClient strangerHttp,
+        HttpClientTransport strangerTransport,
+        ArazzoRunnerClient stranger)
     {
         this.app = app;
         this.Store = store;
+        this.Catalog = catalog;
+        this.Availability = availability;
         this.Clock = clock;
         this.runnerHttp = runnerHttp;
         this.runnerTransport = runnerTransport;
@@ -55,9 +66,17 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         this.peerHttp = peerHttp;
         this.peerTransport = peerTransport;
         this.PeerClient = peer;
+        this.strangerHttp = strangerHttp;
+        this.strangerTransport = strangerTransport;
+        this.StrangerClient = stranger;
+        this.Transport = runnerTransport;
     }
 
     public InMemoryWorkflowStateStore Store { get; }
+
+    public InMemoryWorkflowCatalogStore Catalog { get; }
+
+    public InMemoryAvailabilityStore Availability { get; }
 
     public TestClock Clock { get; }
 
@@ -65,10 +84,18 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 
     public ArazzoRunnerClient PeerClient { get; }
 
+    /// <summary>Gets a client whose principal is bound to no environment at all.</summary>
+    public ArazzoRunnerClient StrangerClient { get; }
+
+    /// <summary>Gets the runner's transport, for components that take one directly.</summary>
+    public HttpClientTransport Transport { get; }
+
     public static async Task<RunnerApiFixture> StartAsync()
     {
         var clock = new TestClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
+        var catalog = new InMemoryWorkflowCatalogStore();
+        var availability = new InMemoryAvailabilityStore();
         var bindings = new DeclaredRunnerEnvironmentBindings(new Dictionary<string, IReadOnlyList<string>>
         {
             [Runner] = [Production],
@@ -91,12 +118,13 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
             await next(context);
         });
 
-        app.MapArazzoRunnerApi(store, bindings, requireAuthorization: false, timeProvider: clock);
+        app.MapArazzoRunnerApi(store, catalog, availability, bindings, requireAuthorization: false, timeProvider: clock);
         await app.StartAsync();
 
         (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner);
         (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer);
-        return new RunnerApiFixture(app, store, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer);
+        (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger);
+        return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
     }
 
     public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null)
@@ -135,9 +163,27 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
             default);
     }
 
+    /// <summary>Catalogues a workflow and makes that version available in an environment.</summary>
+    public async ValueTask SeedCatalogAsync(string baseWorkflowId, string environment)
+    {
+        byte[] workflow = System.Text.Encoding.UTF8.GetBytes($$"""
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Flow", "description": "A flow." },
+          "workflows": [ { "workflowId": "{{baseWorkflowId}}", "steps": [] } ]
+        }
+        """);
+
+        using ParsedJsonDocument<CatalogVersion> version = await this.Catalog.AddAsync(baseWorkflowId, CatalogPackage.Build(workflow, []), default, default);
+        await this.Availability.MakeAvailableAsync(baseWorkflowId, (int)version.RootElement.VersionNumber, environment, "operator", default);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await this.Client.DisposeAsync();
+        await this.StrangerClient.DisposeAsync();
+        await this.strangerTransport.DisposeAsync();
+        this.strangerHttp.Dispose();
         await this.PeerClient.DisposeAsync();
         await this.runnerTransport.DisposeAsync();
         await this.peerTransport.DisposeAsync();

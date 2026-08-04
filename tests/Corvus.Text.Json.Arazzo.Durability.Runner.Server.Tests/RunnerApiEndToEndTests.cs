@@ -19,6 +19,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
+using Corvus.Text.Json.Arazzo.Durability.Availability;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests;
 
 /// <summary>
@@ -288,7 +290,7 @@ public sealed class RunnerApiEndToEndTests
                 await next(context);
             });
 
-            app.MapArazzoRunnerApi(store, bindings, options, requireAuthorization: false, timeProvider: clock);
+            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, options, requireAuthorization: false, timeProvider: clock);
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store, clock);

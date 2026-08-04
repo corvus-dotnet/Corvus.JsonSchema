@@ -61,6 +61,23 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
         this.scheduleWorkflow = scheduleWorkflow;
     }
 
+    /// <summary>Initializes a new instance of the <see cref="HostedWorkflowResumer"/> class over any artifact source.</summary>
+    /// <param name="artifacts">Where the executor assembly, its manifest, and the version's content hash come from. A
+    /// runner holding no catalog credential passes the runner API's source (ADR 0065); a host that owns the catalog
+    /// passes <see cref="CatalogWorkflowArtifactSource"/>, which is what the catalog-taking overload does for it.</param>
+    /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
+    /// <param name="transportBinder">Binds a workflow's descriptor to the transports a run executes through.</param>
+    /// <param name="scheduleWorkflow">The built-in scheduler workflow, or <see langword="null"/> on a host that does not serve schedules.</param>
+    public HostedWorkflowResumer(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader, WorkflowTransportBinder transportBinder, ScheduleHostedWorkflow? scheduleWorkflow = null)
+    {
+        ArgumentNullException.ThrowIfNull(artifacts);
+        ArgumentNullException.ThrowIfNull(loader);
+        ArgumentNullException.ThrowIfNull(transportBinder);
+        this.resolver = new LoaderHostedWorkflowResolver(artifacts, loader);
+        this.transportBinder = transportBinder;
+        this.scheduleWorkflow = scheduleWorkflow;
+    }
+
     /// <inheritdoc/>
     public RunIsolationModel IsolationModel => RunIsolationModel.InProcess;
 

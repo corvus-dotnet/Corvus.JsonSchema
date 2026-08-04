@@ -31,13 +31,14 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly IApiClaimsClient claims;
     private readonly IApiLeasesClient leases;
     private readonly IApiCheckpointsClient checkpoints;
+    private readonly IApiCatalogClient catalog;
     private readonly ConcurrentDictionary<string, string> heldLeases = new(StringComparer.Ordinal);
     private readonly bool ownsClients;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
     public ArazzoRunnerClient(IApiTransport transport)
-        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), ownsClients: true)
+        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true)
     {
     }
 
@@ -45,16 +46,19 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="claims">The claims client.</param>
     /// <param name="leases">The leases client.</param>
     /// <param name="checkpoints">The checkpoints client.</param>
+    /// <param name="catalog">The catalog client, which serves what this runner may execute and the artifacts for it.</param>
     /// <param name="ownsClients">Whether disposing this disposes the clients.</param>
-    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, bool ownsClients = false)
+    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(leases);
         ArgumentNullException.ThrowIfNull(checkpoints);
+        ArgumentNullException.ThrowIfNull(catalog);
 
         this.claims = claims;
         this.leases = leases;
         this.checkpoints = checkpoints;
+        this.catalog = catalog;
         this.ownsClients = ownsClients;
         this.Checkpoints = new RunnerApiCheckpointStore(this);
     }
@@ -104,6 +108,51 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
         return this.ReadClaimAsync(this.claims.ClaimRunAsync(request, cancellationToken));
     }
+
+    /// <summary>
+    /// Lists every version this runner may execute, following the listing to its end.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The versions, resolved from this runner's environment bindings rather than from the catalog at large.</returns>
+    /// <exception cref="RunnerApiException">The API refused the listing.</exception>
+    public async ValueTask<IReadOnlyList<RunnerHostedVersion>> ListHostedVersionsAsync(CancellationToken cancellationToken = default)
+    {
+        var hosted = new List<RunnerHostedVersion>();
+        byte[]? pageToken = null;
+
+        while (true)
+        {
+            await using ListHostedVersionsResponse response = await this.FetchHostedPageAsync(pageToken, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode != 200)
+            {
+                throw Refused("list the versions it may execute", response.StatusCode);
+            }
+
+            HostedVersions body = response.OkBody;
+            foreach (HostedVersion version in body.Versions.EnumerateArray())
+            {
+                hosted.Add(new RunnerHostedVersion((string)version.BaseWorkflowId, (int)version.VersionNumber, (string)version.Hash));
+            }
+
+            if (body.NextPageToken.IsUndefined())
+            {
+                return hosted;
+            }
+
+            // Copied because the response owns the bytes and is about to be disposed. The token stays UTF-8 either
+            // way: it is opaque to the runner and never becomes a string on the way through.
+            using UnescapedUtf8JsonString tokenUtf8 = body.NextPageToken.GetUtf8String();
+            pageToken = tokenUtf8.Span.ToArray();
+        }
+    }
+
+    // Not async, for the same reason as TryClaimAsync: the request Source is a ref struct and cannot live across the
+    // await, so it is built and handed to the send here, and the response is read by the caller's continuation.
+    private ValueTask<ListHostedVersionsResponse> FetchHostedPageAsync(byte[]? pageToken, CancellationToken cancellationToken)
+        => this.catalog.ListHostedVersionsAsync(
+            pageToken is null ? default : (Models.GetHostedVersionsPageToken.Source)pageToken.AsSpan(),
+            default,
+            cancellationToken);
 
     /// <summary>
     /// Takes the runs whose durable timer is now due, and their leases.

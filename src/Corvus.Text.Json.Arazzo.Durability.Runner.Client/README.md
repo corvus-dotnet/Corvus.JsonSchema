@@ -78,6 +78,25 @@ the channel, and a run awaiting no particular correlation is reached by any mess
 are both present and different fail to match. That is the store's rule, pinned by the conformance suite across every
 backend; the client passes the correlation through unchanged rather than reinterpreting it.
 
+## Loading an executor without a catalog credential
+
+`RunnerApiArtifactSource` serves the version's content hash and its package documents over the API, so it drops
+straight into `HostedWorkflowResumer` or `LoaderHostedWorkflowResolver` in place of a catalog store.
+
+```csharp
+var artifacts = new RunnerApiArtifactSource(transport);
+var resumer = new HostedWorkflowResumer(artifacts, new WorkflowExecutorLoader(verifier), binder);
+
+IReadOnlyList<RunnerHostedVersion> hosted = await runner.ListHostedVersionsAsync();
+```
+
+Being served from the control plane is not why the runner trusts what it gets. The assembly is verified against the
+content hash and the manifest's signature after the pull, and the hash comes from its own operation rather than from
+inside the package, because a manifest vouching for itself would prove nothing.
+
+A version the runner may not execute is answered as absent, indistinguishable from one that was never catalogued.
+Saying "forbidden" would confirm that the version exists.
+
 ## The lease token never leaves the client
 
 `TryClaimAsync` returns what a runner needs to act on — the run, its workflow, its environment, and when the lease

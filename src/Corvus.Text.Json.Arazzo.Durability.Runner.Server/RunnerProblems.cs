@@ -39,6 +39,19 @@ internal static class RunnerProblems
             title: "Forbidden",
             type: "about:blank");
 
+    /// <summary>The refusal for a version document the principal may not have, or that does not exist.</summary>
+    /// <returns>The problem body.</returns>
+    /// <remarks>
+    /// One answer covers both, deliberately. Distinguishing them would confirm which versions exist outside the
+    /// environments the runner serves.
+    /// </remarks>
+    internal static ProblemDetails.Source NoSuchDocument()
+        => ProblemDetails.Build(
+            detail: "No such document for a version this runner may execute.",
+            status: 404,
+            title: "Not Found",
+            type: "about:blank");
+
     /// <summary>The refusal for a run the principal holds whose row is nonetheless absent.</summary>
     /// <returns>The problem body.</returns>
     internal static ProblemDetails.Source NoCheckpoint()

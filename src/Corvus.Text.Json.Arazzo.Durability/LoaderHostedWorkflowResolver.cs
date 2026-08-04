@@ -15,17 +15,25 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
 {
-    private readonly IWorkflowCatalogStore catalog;
+    private readonly IWorkflowArtifactSource artifacts;
     private readonly WorkflowExecutorLoader loader;
 
-    /// <summary>Initializes a new instance of the <see cref="LoaderHostedWorkflowResolver"/> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="LoaderHostedWorkflowResolver"/> class over a catalog.</summary>
     /// <param name="catalog">The catalog the executor assembly + manifest + content hash are fetched from.</param>
     /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
     public LoaderHostedWorkflowResolver(IWorkflowCatalogStore catalog, WorkflowExecutorLoader loader)
+        : this(new CatalogWorkflowArtifactSource(catalog), loader)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="LoaderHostedWorkflowResolver"/> class over any artifact source.</summary>
+    /// <param name="artifacts">Where the content hash and the package's documents come from. A runner without a catalog credential passes the runner API's source (ADR 0065); a host that owns the catalog passes <see cref="CatalogWorkflowArtifactSource"/>.</param>
+    /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
+    public LoaderHostedWorkflowResolver(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader)
+    {
+        ArgumentNullException.ThrowIfNull(artifacts);
         ArgumentNullException.ThrowIfNull(loader);
-        this.catalog = catalog;
+        this.artifacts = artifacts;
         this.loader = loader;
     }
 
@@ -68,21 +76,17 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         }
 
         // The version document is owned here only to read its hash (an owned copy, safe after dispose).
-        string hash;
-        using (ParsedJsonDocument<CatalogVersion> versionDoc = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
-            ?? throw ThrowHelper.GetVersionNotInCatalogException(versionNumber, baseWorkflowId))
-        {
-            hash = (string)versionDoc.RootElement.Hash;
-        }
+        string hash = await this.artifacts.GetContentHashAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
+            ?? throw ThrowHelper.GetVersionNotInCatalogException(versionNumber, baseWorkflowId);
 
-        ReadOnlyMemory<byte> assembly = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
+        ReadOnlyMemory<byte> assembly = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw ThrowHelper.GetVersionNotRunnableException(versionNumber, baseWorkflowId);
-        ReadOnlyMemory<byte> manifest = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
+        ReadOnlyMemory<byte> manifest = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw ThrowHelper.GetVersionHasNoManifestException(versionNumber, baseWorkflowId);
 
         // The detached signature is optional here (empty when the package is unsigned); the loader enforces it only when
         // it was configured with a verifier — a signing-required runner rejects an unsigned or badly-signed package.
-        ReadOnlyMemory<byte> signature = await this.catalog.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
+        ReadOnlyMemory<byte> signature = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
 
         return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature).Workflow;
     }
