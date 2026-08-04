@@ -710,22 +710,11 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private string? SubjectOf(ClaimsPrincipal? principal) => principal?.FindFirst(this.subjectClaimType)?.Value;
 
-    // The trusted machine principal bound to a runner's authorization at registration (design §16.4). A machine principal is
-    // a Keycloak client, so the stable identity is the client id: prefer the authorized-party (azp) / client_id claim, then
-    // the token subject, then the authentication name. Derived from the verified token — never from the request body.
-    private string? MachinePrincipal()
-    {
-        ClaimsPrincipal? principal = this.access.CurrentPrincipal;
-        if (principal is null)
-        {
-            return null;
-        }
-
-        return principal.FindFirst("azp")?.Value
-            ?? principal.FindFirst("client_id")?.Value
-            ?? this.SubjectOf(principal)
-            ?? principal.Identity?.Name;
-    }
+    // The trusted machine principal bound to a runner's authorization at registration (design §16.4), derived from the
+    // verified token and never from the request body. It goes through the shared resolver because the runner API resolves
+    // the same runner's bindings and lease ownership from its claims, and a runner bound here under one identity but read
+    // there under another is offered no work at all, with nothing anywhere reporting why.
+    private string? MachinePrincipal() => Security.MachinePrincipal.Resolve(this.access.CurrentPrincipal, this.subjectClaimType);
 
     // Builds the runner's liveness RunnerRegistration server-side (design §5.5/§16.4): the runner's self-description is copied
     // bytes-to-bytes from the request through a pooled scratch writer, and the server stamps the environment (from the path),

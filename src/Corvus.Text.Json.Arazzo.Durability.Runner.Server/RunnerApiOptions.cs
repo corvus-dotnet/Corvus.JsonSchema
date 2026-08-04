@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Durability.Security;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
 /// <summary>
@@ -42,11 +44,16 @@ public sealed class RunnerApiOptions
     public int MaximumCheckpointBytes { get; set; } = 64 * 1024 * 1024;
 
     /// <summary>
-    /// Gets or sets the claim type carrying the machine principal's identity. The principal is the lease owner and the
-    /// subject of every binding lookup, so a deployment names the claim its identity provider issues it in. Defaults to
-    /// <c>sub</c>.
+    /// Gets or sets the claim type carrying the machine principal's identity, or <see langword="null"/> to resolve it as
+    /// <see cref="MachinePrincipal"/> does. Defaults to <see langword="null"/>.
     /// </summary>
-    public string PrincipalClaimType { get; set; } = "sub";
+    /// <remarks>
+    /// The default is what makes a runner's registration and its claims agree on who it is: the control plane binds an
+    /// authorization to the principal <see cref="MachinePrincipal"/> resolves, and this API must resolve the same one or
+    /// the runner is bound to nothing. Naming a claim here overrides that entirely and is for an issuer whose claims
+    /// mean something other than the standard ones.
+    /// </remarks>
+    public string? PrincipalClaimType { get; set; }
 
     /// <summary>
     /// Gets or sets the page size for the hosted-versions listing when a runner asks for none, and the most it will

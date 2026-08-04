@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
@@ -20,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 public sealed class RunnerPrincipalAccessor
 {
     private readonly IHttpContextAccessor httpContextAccessor;
-    private readonly string claimType;
+    private readonly string? claimType;
 
     /// <summary>Initializes a new instance of the <see cref="RunnerPrincipalAccessor"/> class.</summary>
     /// <param name="httpContextAccessor">The accessor for the current request.</param>
@@ -35,14 +36,25 @@ public sealed class RunnerPrincipalAccessor
 
     /// <summary>Resolves the current request's machine principal.</summary>
     /// <returns>The principal, or <see langword="null"/> when the request carries no authenticated identity or none that
-    /// names one. There is no fallback to another claim: a request whose principal cannot be established is refused,
-    /// because guessing it would decide lease ownership from whatever the token happened to carry.</returns>
+    /// names one. There is no fallback beyond the ones <see cref="MachinePrincipal"/> defines: a request whose principal
+    /// cannot be established is refused, because guessing it would decide lease ownership from whatever the token
+    /// happened to carry.</returns>
+    /// <remarks>
+    /// Resolution goes through <see cref="MachinePrincipal"/> so that it agrees with the identity the control plane bound
+    /// the runner's authorization to when it registered. The two disagreeing does not surface as an error anywhere: the
+    /// runner resolves to no bindings and is offered no work, exactly as an unauthorized one is.
+    /// </remarks>
     public string? Resolve()
     {
         ClaimsPrincipal? user = this.httpContextAccessor.HttpContext?.User;
         if (user?.Identity?.IsAuthenticated != true)
         {
             return null;
+        }
+
+        if (this.claimType is null)
+        {
+            return MachinePrincipal.Resolve(user);
         }
 
         string? principal = user.FindFirstValue(this.claimType);
