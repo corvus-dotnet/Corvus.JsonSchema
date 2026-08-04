@@ -16,6 +16,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
@@ -507,6 +508,12 @@ if (requireAuthorization)
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
     builder.Services.AddArazzoControlPlaneAuthorization();
 
+    // The runner API's own scope (ADR 0065). It is what a runner presents INSTEAD of a store credential, so it is
+    // deliberately not one of the control-plane capability scopes: holding it lets a runner ask for work, and grants
+    // reach over nothing. Which runs it is offered comes from the environments an administrator bound its machine
+    // principal to.
+    builder.Services.AddArazzoRunnerAuthorization();
+
     // Scoped-mode row security reads the caller's principal through IHttpContextAccessor; the library requires the host
     // to register it to switch enforcement on (ControlPlaneRowSecurity: "the host must register it ... to switch
     // enforcement on"). Without this, MapArazzoControlPlane throws at startup in Scoped mode — the gap that stayed
@@ -936,6 +943,25 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // deployment reaches Deployed); passing the build-job store lets the build worker (Phase 3b) drain it here.
     nativeBuildJobStore: nativeBuildJobStore,
     workflowDeploymentStore: workflowDeploymentStore);
+
+// The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
+// credential to execute. It shares this host's stores because the demo is one process; the point of the split is that
+// the runner is a DIFFERENT process, reaching them only through these operations and only for the environments its
+// machine principal is bound to. RunnerAuthorizationBindings is what resolves that, per request and from the
+// authorization records, so revoking a runner stops it being offered work within the cache window rather than depending
+// on the runner standing itself down.
+//
+// Mapped only when authentication is enforced. Every operation derives its lease ownership and its reach from the
+// authenticated principal, so with authentication off there is no principal, nothing to own a lease, and nothing the
+// API could safely answer. The runner processes only run in the secured (AppHost) topology in any case.
+if (requireAuthorization)
+{
+    app.MapGroup("/arazzo/runner/v1").MapArazzoRunnerApi(
+        stateStore,
+        catalogStore,
+        availabilityStore,
+        new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore));
+}
 
 // oscar's PENDING access request (the approver-inbox content): seeded THROUGH the approval service, exactly as a real
 // caller submits — so with the system approval workflow enabled it starts the bootstrapped approval run and can be

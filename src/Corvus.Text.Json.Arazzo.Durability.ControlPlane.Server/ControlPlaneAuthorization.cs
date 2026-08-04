@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Security.Claims;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -134,7 +134,7 @@ public static class ControlPlaneAuthorization
                 string required = scope;
                 options.AddPolicy(scope, policy => policy
                     .RequireAuthenticatedUser()
-                    .RequireAssertion(context => HasScope(context.User, scopeClaimType, required)));
+                    .RequireAssertion(context => ScopeClaims.Has(context.User, scopeClaimType, required)));
             }
         });
 
@@ -182,26 +182,5 @@ public static class ControlPlaneAuthorization
         {
             builder.RequireAuthorization(scope);
         }
-    }
-
-    private static bool HasScope(ClaimsPrincipal user, string scopeClaimType, string scope)
-    {
-        foreach (Claim claim in user.Claims)
-        {
-            if (!string.Equals(claim.Type, scopeClaimType, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            foreach (string part in claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                if (string.Equals(part, scope, StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }

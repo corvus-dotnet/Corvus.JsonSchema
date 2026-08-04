@@ -44,6 +44,7 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Directories.Keycloak\Corvus.Text.Json.Arazzo.Directories.Keycloak.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Runner.Server\Corvus.Text.Json.Arazzo.Durability.Runner.Server.csproj" />
   </ItemGroup>
 
 </Project>

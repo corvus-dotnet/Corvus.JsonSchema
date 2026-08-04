@@ -109,7 +109,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["runners:register", "runs:write"],
+      "defaultClientScopes": ["runners:register", "runs:write", "runner:execute"],
       "protocolMappers": [
         {
           "name": "scheduler-group",
@@ -136,7 +136,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["runners:register", "accessRequests:grant"]
+      "defaultClientScopes": ["runners:register", "accessRequests:grant", "runner:execute"]
     }
   ],
   "clientScopes": [
@@ -186,6 +186,12 @@
     {
       "name": "runs:write",
       "description": "Start runs of catalogued workflow versions (design §5.5). Held by the runner's machine principal so its durable scheduler (#896) may fire scheduled targets through the governed run endpoint.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
+    },
+    {
+      "name": "runner:execute",
+      "description": "Claim, lease, and advance runs through the runner API (ADR 0065). Held by every runner's machine principal. It is what a runner holds instead of a store credential, and grants nothing beyond the environments an administrator bound that principal to.",
       "protocol": "openid-connect",
       "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" }
     }
