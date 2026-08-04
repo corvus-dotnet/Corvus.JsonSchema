@@ -105,6 +105,141 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         return this.ReadClaimAsync(this.claims.ClaimRunAsync(request, cancellationToken));
     }
 
+    /// <summary>
+    /// Takes the runs whose durable timer is now due, and their leases.
+    /// </summary>
+    /// <param name="hostedVersions">The versioned workflow ids this runner has baked and can execute.</param>
+    /// <param name="limit">The most runs to claim; the server bounds it. Omit for the deployment's default.</param>
+    /// <param name="lease">The lease duration to request; the server bounds it. Omit for the deployment's default.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when no timer is due.</returns>
+    /// <exception cref="RunnerApiException">The API refused the sweep.</exception>
+    /// <remarks>
+    /// There is no cutoff to pass. The server resumes against its own clock, so a runner cannot ask for timers that
+    /// have not fired, whether deliberately or through a skewed clock of its own.
+    /// </remarks>
+    // Not async, for the same reason as TryClaimAsync: Source<TContext> holds its context by reference.
+    public ValueTask<IReadOnlyList<RunnerClaim>> ClaimDueTimersAsync(IReadOnlyCollection<string> hostedVersions, int? limit = null, TimeSpan? lease = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(hostedVersions);
+
+        TimerClaimRequest.LeaseSecondsEntity.Source leaseSeconds = lease is { } requested
+            ? (TimerClaimRequest.LeaseSecondsEntity.Source)(long)requested.TotalSeconds
+            : default;
+        TimerClaimRequest.LimitEntity.Source wanted = limit is { } count
+            ? (TimerClaimRequest.LimitEntity.Source)(long)count
+            : default;
+
+        TimerClaimRequest.Source<IReadOnlyCollection<string>> request = TimerClaimRequest.Build(
+            in hostedVersions,
+            TimerClaimRequest.HostedVersionsEntityArray.Build(
+                in hostedVersions,
+                static (in IReadOnlyCollection<string> versions, ref TimerClaimRequest.HostedVersionsEntityArray.Builder builder) =>
+                {
+                    foreach (string version in versions)
+                    {
+                        builder.AddItem(version);
+                    }
+                }),
+            leaseSeconds,
+            wanted);
+
+        return this.ReadClaimsAsync(this.claims.ClaimDueTimersAsync(request, cancellationToken));
+    }
+
+    /// <summary>
+    /// Takes the runs awaiting a message on a channel, and their leases, so this runner can hand each of them the
+    /// message it is holding.
+    /// </summary>
+    /// <param name="channel">The channel the message arrived on.</param>
+    /// <param name="correlationId">The delivered message's correlation token, or <see langword="null"/> to match every run awaiting the channel, whatever correlation each awaits.</param>
+    /// <param name="hostedVersions">The versioned workflow ids this runner has baked and can execute.</param>
+    /// <param name="limit">The most runs to claim; the server bounds it. Omit for the deployment's default.</param>
+    /// <param name="lease">The lease duration to request; the server bounds it. Omit for the deployment's default.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when nothing awaits that message.</returns>
+    /// <exception cref="RunnerApiException">The API refused the sweep.</exception>
+    /// <remarks>
+    /// The payload is not sent. This asks which runs a message can resume, not what it said, so the runner keeps the
+    /// only copy of the message and delivers it to each run itself.
+    /// </remarks>
+    // Not async, for the same reason as TryClaimAsync: Source<TContext> holds its context by reference.
+    public ValueTask<IReadOnlyList<RunnerClaim>> ClaimAwaitingMessageAsync(string channel, string? correlationId, IReadOnlyCollection<string> hostedVersions, int? limit = null, TimeSpan? lease = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(channel);
+        ArgumentNullException.ThrowIfNull(hostedVersions);
+
+        MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = lease is { } requested
+            ? (MessageClaimRequest.LeaseSecondsEntity.Source)(long)requested.TotalSeconds
+            : default;
+        MessageClaimRequest.LimitEntity.Source wanted = limit is { } count
+            ? (MessageClaimRequest.LimitEntity.Source)(long)count
+            : default;
+        MessageClaimRequest.CorrelationIdEntity.Source correlation = correlationId is { } token
+            ? (MessageClaimRequest.CorrelationIdEntity.Source)token
+            : default;
+
+        MessageClaimRequest.Source<IReadOnlyCollection<string>> request = MessageClaimRequest.Build(
+            in hostedVersions,
+            channel,
+            MessageClaimRequest.HostedVersionsEntityArray.Build(
+                in hostedVersions,
+                static (in IReadOnlyCollection<string> versions, ref MessageClaimRequest.HostedVersionsEntityArray.Builder builder) =>
+                {
+                    foreach (string version in versions)
+                    {
+                        builder.AddItem(version);
+                    }
+                }),
+            correlation,
+            leaseSeconds,
+            wanted);
+
+        return this.ReadClaimsAsync(this.claims.ClaimAwaitingMessageAsync(request, cancellationToken));
+    }
+
+    private async ValueTask<IReadOnlyList<RunnerClaim>> ReadClaimsAsync(ValueTask<ClaimDueTimersResponse> pending)
+    {
+        await using ClaimDueTimersResponse response = await pending.ConfigureAwait(false);
+        if (response.StatusCode != 200)
+        {
+            throw Refused("claim due timers", response.StatusCode);
+        }
+
+        return this.Retain(response.OkBody.Claims);
+    }
+
+    private async ValueTask<IReadOnlyList<RunnerClaim>> ReadClaimsAsync(ValueTask<ClaimAwaitingMessageResponse> pending)
+    {
+        await using ClaimAwaitingMessageResponse response = await pending.ConfigureAwait(false);
+        if (response.StatusCode != 200)
+        {
+            throw Refused("claim runs awaiting a message", response.StatusCode);
+        }
+
+        return this.Retain(response.OkBody.Claims);
+    }
+
+    // Every claim's token is retained here, exactly as a single claim's is, so a runner working through a sweep never
+    // handles a lease token itself.
+    private List<RunnerClaim> Retain(ClaimedRuns.ClaimedRunArray claims)
+    {
+        var result = new List<RunnerClaim>(claims.GetArrayLength());
+        foreach (ClaimedRun claimed in claims.EnumerateArray())
+        {
+            var runId = new WorkflowRunId((string)claimed.RunId);
+            this.heldLeases[runId.Value] = (string)claimed.Lease.Token;
+            result.Add(new RunnerClaim(
+                runId,
+                (string)claimed.WorkflowId,
+                (string)claimed.Environment,
+                ((NodaTime.OffsetDateTime)claimed.Lease.ExpiresAt).ToDateTimeOffset(),
+                (long)claimed.Lease.Epoch));
+        }
+
+        return result;
+    }
+
     private async ValueTask<RunnerClaim?> ReadClaimAsync(ValueTask<ClaimRunResponse> pending)
     {
         await using ClaimRunResponse response = await pending.ConfigureAwait(false);

@@ -100,7 +100,7 @@ public sealed class RunnerApiDispatcher
             }
 
             attempted++;
-            if (await this.RunAsync(claim, resume, cancellationToken).ConfigureAwait(false))
+            if (await RunnerRunAdvance.AdvanceAsync(this.client, claim, resume, default, default, hasMessage: false, cancellationToken).ConfigureAwait(false))
             {
                 dispatched++;
             }
@@ -122,37 +122,5 @@ public sealed class RunnerApiDispatcher
 
         seen ??= [first];
         return seen.Add(id);
-    }
-
-    private async ValueTask<bool> RunAsync(RunnerClaim claim, WorkflowResumer resume, CancellationToken cancellationToken)
-    {
-        try
-        {
-            // The run loads and advances through the client's checkpoint store, so the executor is unaware it is not
-            // talking to a database. A claim is only offered for a run the server has already re-read as claimable,
-            // so a null here means the row went away underneath us rather than that the run was unsuitable.
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.client.Checkpoints, claim.RunId, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (run is null)
-            {
-                return false;
-            }
-
-            await resume(run, cancellationToken).ConfigureAwait(false);
-            return true;
-        }
-        catch (RunnerLeaseLostException)
-        {
-            // The run is someone else's now. Its checkpoint writes were refused rather than applied, so there is
-            // nothing to undo, and the runner that holds the lease will carry it from the last durable checkpoint.
-            return false;
-        }
-        finally
-        {
-            // Deliberately not the caller's token. Cancellation is how a runner shuts down, and that is precisely
-            // when releasing matters most: a token passed through here would skip the release on every run in
-            // flight, stranding each until its lease lapsed. Releasing a run this client no longer holds does
-            // nothing, so this is safe on every path.
-            await this.client.ReleaseAsync(claim.RunId, CancellationToken.None).ConfigureAwait(false);
-        }
     }
 }

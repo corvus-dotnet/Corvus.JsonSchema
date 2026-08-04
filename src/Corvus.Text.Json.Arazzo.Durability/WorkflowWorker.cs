@@ -91,7 +91,7 @@ public sealed class WorkflowWorker
     /// matching <paramref name="correlationId"/>) and resumes them.
     /// </summary>
     /// <param name="channel">The channel the message arrived on.</param>
-    /// <param name="correlationId">The correlation id of the message, or <see langword="null"/> to match runs awaiting the channel with no specific correlation.</param>
+    /// <param name="correlationId">The correlation id of the message, or <see langword="null"/> to match every run awaiting the channel, whatever correlation each awaits.</param>
     /// <param name="payload">The message payload; it must stay alive until this call returns.</param>
     /// <param name="resume">The adapter that re-enters the run's generated executor.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

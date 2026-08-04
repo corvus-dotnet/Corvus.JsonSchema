@@ -28,6 +28,14 @@ public sealed class RunnerApiOptions
     public int ClaimCandidates { get; set; } = 16;
 
     /// <summary>
+    /// Gets or sets how many runs one wait-index sweep will claim when the runner asks for no limit, and the most it
+    /// will claim whatever it asks for. Every run a sweep returns is leased from that moment, so a sweep that took a
+    /// large fan-out at once would hold each lease for as long as the runner needed to work through the rest of the
+    /// batch one at a time. Defaults to 16.
+    /// </summary>
+    public int MaximumSweep { get; set; } = 16;
+
+    /// <summary>
     /// Gets or sets the largest checkpoint the deployment accepts. A generous cap, so a lying or hostile
     /// <c>Content-Length</c> cannot force an unbounded rent; a real checkpoint is far smaller. Defaults to 64 MiB.
     /// </summary>
@@ -47,4 +55,12 @@ public sealed class RunnerApiOptions
         => requested is not { } duration || duration <= TimeSpan.Zero
             ? this.DefaultLease
             : duration > this.MaximumLease ? this.MaximumLease : duration;
+
+    /// <summary>Bounds how many runs one wait-index sweep may claim.</summary>
+    /// <param name="requested">The limit the runner asked for, or <see langword="null"/> when it asked for none.</param>
+    /// <returns>The number to claim at most.</returns>
+    public int BoundSweep(int? requested)
+        => requested is not { } count || count <= 0
+            ? this.MaximumSweep
+            : count > this.MaximumSweep ? this.MaximumSweep : count;
 }

@@ -38,6 +38,8 @@ question from different sources of truth, which is why the surface is an interfa
 | Operation | What it does |
 |---|---|
 | `POST /claims` | Takes a claimable run and its lease in one operation, or `204` when nothing is claimable. |
+| `POST /timerClaims` | Takes the runs whose durable timer has fired, each with its lease. The cutoff is this server's clock, never a request parameter. |
+| `POST /messageClaims` | Takes the runs awaiting a message on a channel, each with its lease. The payload is not sent and never reaches the store. |
 | `POST /runs/{runId}/lease/renewal` | Extends a held lease, so a long advance does not have its run reclaimed underneath it. |
 | `DELETE /runs/{runId}/lease` | Hands a run back so another runner may claim it without waiting for the lease to expire. |
 | `GET /runs/{runId}/checkpoint` | Reads the run's checkpoint as opaque octets, with the sequence the store has persisted. |

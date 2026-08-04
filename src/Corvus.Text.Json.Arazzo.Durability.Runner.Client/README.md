@@ -54,6 +54,30 @@ run comes back claimable without having advanced, rather than spinning on a run 
 runs on every exit path including cancellation, because cancellation is how a runner shuts down and that is exactly
 when giving the lease back matters.
 
+## Resuming a waiting run
+
+`RunnerApiWorker` is the counterpart to `WorkflowWorker`: a suspended run resumes when its durable timer fires or when
+a message it awaits arrives, and neither now requires the runner to query the store's wait index.
+
+```csharp
+var worker = new RunnerApiWorker(runner);
+int resumed = await worker.ResumeDueTimersAsync(hostedVersions, resumer, stoppingToken);
+int delivered = await worker.DeliverMessageAsync(channel, correlationId, payload, hostedVersions, resumer, stoppingToken);
+```
+
+There is no due-time cutoff to pass, because the server resumes against its own clock. A runner naming one would be
+asking for timers that have not fired, and a runner with a fast clock would do so without meaning to. A sweep is also
+intersected with the runner's hosted versions, which the store-backed worker never did: it would hand a runner a due
+run for a version it had not baked, which the runner could only fault.
+
+**The payload never reaches the control plane.** These operations ask which runs a message can resume, not what the
+message said, so the runner keeps the only copy and hands it to each resumed run itself.
+
+**Correlation absence is a wildcard on either side.** A message carrying no correlation id reaches every run awaiting
+the channel, and a run awaiting no particular correlation is reached by any message on it. Only two correlations that
+are both present and different fail to match. That is the store's rule, pinned by the conformance suite across every
+backend; the client passes the correlation through unchanged rather than reinterpreting it.
+
 ## The lease token never leaves the client
 
 `TryClaimAsync` returns what a runner needs to act on — the run, its workflow, its environment, and when the lease

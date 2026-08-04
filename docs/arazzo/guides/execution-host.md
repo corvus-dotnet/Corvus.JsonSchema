@@ -267,6 +267,26 @@ each one until its lease lapsed.
 calls the same contract through `HostedWorkflowResumer.ResumeAsync`; one `workflowId -> IHostedWorkflow`
 resolver serves new-run dispatch, orphan reclaim, and wait-resume.
 
+**And resume goes over the API too.** `RunnerApiWorker` is the credential-free counterpart, claiming due timers and
+message-awaiting runs through the runner API instead of the wait index. Three things differ from the store-backed
+worker, and each is a rule the server now applies.
+
+- **No due-time cutoff.** The server resumes against its own clock. A runner naming a cutoff would be asking for
+  timers that have not fired, and a runner with a fast clock would do so without meaning to.
+- **No environment.** Resolved from the principal's bindings, as everywhere else.
+- **Hosted versions are intersected.** The store-backed worker never did this, so it would hand a runner a due run
+  for a version the runner had not baked, which it could only fault. That is a real gap the API path closes.
+
+**A delivered message's payload never reaches the control plane.** The API answers which runs a message can resume,
+and the runner hands its own copy to each of them. What the control plane learns is that a message arrived on a
+channel, not what it said.
+
+**Correlation matching treats absence as a wildcard on either side.** A message carrying no correlation id reaches
+every run awaiting the channel, and a run awaiting the channel with no particular correlation is reached by any
+message on it. Only two correlations that are both present and different fail to match. This is the store's rule,
+pinned by the conformance suite across every backend, and the runner API passes the correlation through unchanged
+rather than reinterpreting it.
+
 **Leases and shutdown.** A claimer holds a per-run lease (`owner`, TTL) and renews it while executing, so a long
 step does not let the lease lapse; every checkpoint is a CAS write, so a slow or zombie runner whose lease was
 taken over fails its next CAS and aborts (no split-brain). On a crash, orphan reclaim surfaces the `Running` run

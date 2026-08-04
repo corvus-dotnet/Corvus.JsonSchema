@@ -103,6 +103,26 @@ public interface IApiClaimsClient : IAsyncDisposable
         public static readonly string[] ClaimRunOpenIdConnectScopes = ["runner:execute"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ClaimDueTimers</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimDueTimersOauth2Scopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ClaimDueTimers</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimDueTimersOpenIdConnectScopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ClaimAwaitingMessage</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimAwaitingMessageOauth2Scopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ClaimAwaitingMessage</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimAwaitingMessageOpenIdConnectScopes = ["runner:execute"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["runner:execute"];
@@ -132,6 +152,54 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ClaimRunResponse> ClaimRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
+    /// Claim the runs whose durable timer is now due
+    /// </summary>
+    /// <remarks>
+    /// <para>Takes the suspended runs whose durable timer has fired and returns each with a fresh lease grant, so a runner resumes a waiting run without querying the store's wait index.</para><para>As with claiming a new run this is one operation rather than a query followed by an acquire, and for a sharper reason here: the due set is not ordered, so a runner claiming one at a time would keep drawing whichever run the query happened to return first and make no progress through the rest.</para><para>The candidate set is intersected server-side with the environments the principal is bound to, and with the runner's hostedVersions, so a runner is never handed a due run it is not authorised for or cannot execute.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ClaimDueTimersResponse> ClaimDueTimersAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.TimerClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Claim the runs whose durable timer is now due
+    /// </summary>
+    /// <remarks>
+    /// <para>Takes the suspended runs whose durable timer has fired and returns each with a fresh lease grant, so a runner resumes a waiting run without querying the store's wait index.</para><para>As with claiming a new run this is one operation rather than a query followed by an acquire, and for a sharper reason here: the due set is not ordered, so a runner claiming one at a time would keep drawing whichever run the query happened to return first and make no progress through the rest.</para><para>The candidate set is intersected server-side with the environments the principal is bound to, and with the runner's hostedVersions, so a runner is never handed a due run it is not authorised for or cannot execute.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ClaimDueTimersResponse> ClaimDueTimersAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.TimerClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
+    /// Claim the runs awaiting a message on a channel
+    /// </summary>
+    /// <remarks>
+    /// <para>Takes the suspended runs awaiting a message on the given channel and correlation id, and returns each with a fresh lease grant. The runner then hands its copy of the message to each run and advances it.</para><para>The payload never reaches the control plane. This operation asks which runs a message can resume, not what the message contains, which is why a delivered message is the runner's to hold rather than something it forwards.</para><para>A message can resume many runs at once, so the result is a set. The candidate set is intersected server-side with the environments the principal is bound to and with the runner's hostedVersions, so two environments awaiting the same channel name never resume each other's runs.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ClaimAwaitingMessageResponse> ClaimAwaitingMessageAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.MessageClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Claim the runs awaiting a message on a channel
+    /// </summary>
+    /// <remarks>
+    /// <para>Takes the suspended runs awaiting a message on the given channel and correlation id, and returns each with a fresh lease grant. The runner then hands its copy of the message to each run and advances it.</para><para>The payload never reaches the control plane. This operation asks which runs a message can resume, not what the message contains, which is why a delivered message is the runner's to hold rather than something it forwards.</para><para>A message can resume many runs at once, so the result is a set. The candidate set is intersected server-side with the environments the principal is bound to and with the runner's hostedVersions, so two environments awaiting the same channel name never resume each other's runs.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ClaimAwaitingMessageResponse> ClaimAwaitingMessageAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.MessageClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif

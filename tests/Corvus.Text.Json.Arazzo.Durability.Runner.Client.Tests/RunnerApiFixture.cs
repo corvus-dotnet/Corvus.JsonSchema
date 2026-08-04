@@ -99,13 +99,13 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         return new RunnerApiFixture(app, store, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer);
     }
 
-    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence)
+    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
             new WorkflowRunId(runId),
-            Version,
+            workflowId ?? Version,
             status,
             cursor: 0,
             sequence,
@@ -115,9 +115,14 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
             inputs: default,
             stepOutputs,
             outputs: default,
+            wait: wait,
             environment: Production,
             updatedAt: T0);
     }
+
+    /// <summary>Seeds a run suspended on a wait, which is the only state a timer or a message can resume.</summary>
+    public ValueTask SeedWaitingAsync(string runId, WorkflowWait wait, string? workflowId = null)
+        => this.SaveAsync(runId, Checkpoint(runId, WorkflowRunStatus.Suspended, sequence: 1, wait, workflowId));
 
     public async ValueTask SeedAsync(string runId, WorkflowRunStatus status)
     {
@@ -150,6 +155,9 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         var transport = new HttpClientTransport(http);
         return (http, transport, new ArazzoRunnerClient(transport));
     }
+
+    private async ValueTask SaveAsync(string runId, byte[] checkpoint)
+        => await this.Store.SaveAsync(new WorkflowRunId(runId), checkpoint, WorkflowCheckpointSerializer.ProjectIndex(checkpoint), WorkflowEtag.None, default);
 
     internal sealed class TestClock(DateTimeOffset now) : TimeProvider
     {

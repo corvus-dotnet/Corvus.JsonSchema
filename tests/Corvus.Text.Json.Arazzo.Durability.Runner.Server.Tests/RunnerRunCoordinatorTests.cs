@@ -41,6 +41,69 @@ public sealed class RunnerRunCoordinatorTests
     }
 
     [TestMethod]
+    public async Task A_due_run_in_an_environment_the_principal_is_not_bound_to_is_never_resumed()
+    {
+        // The same non-disclosure rule as dispatch, and it has to be: a timer firing in another tenant's environment
+        // must not become a way to reach that tenant's run.
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedWaitingAsync("run-1", Staging, WorkflowWait.Timer(T0));
+
+        fixture.Clock.Advance(TimeSpan.FromMinutes(1));
+
+        (await fixture.Coordinator.ClaimDueAsync(Runner, [Version], null, null, default)).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_message_for_a_run_in_an_environment_the_principal_is_not_bound_to_is_never_delivered()
+    {
+        // Two environments can have runs awaiting the same channel name. The channel is not a namespace, so the
+        // binding is what keeps one tenant's message from resuming another's run.
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedWaitingAsync("run-1", Staging, WorkflowWait.Message("orders", null));
+
+        (await fixture.Coordinator.ClaimAwaitingAsync(Runner, "orders", null, [Version], null, null, default)).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_principal_bound_to_nothing_is_offered_no_waiting_run()
+    {
+        // A runner whose authorization is pending or revoked resolves to no environments, and is answered as though
+        // there were nothing to resume rather than told that there is.
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedWaitingAsync("run-1", Production, WorkflowWait.Message("orders", null));
+
+        (await fixture.Coordinator.ClaimAwaitingAsync("stranger", "orders", null, [Version], null, null, default)).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_sweep_claims_no_more_than_the_deployment_allows()
+    {
+        var fixture = await Fixture.EmptyAsync(new RunnerApiOptions { MaximumSweep = 2 });
+        await fixture.SeedWaitingAsync("run-1", Production, WorkflowWait.Message("orders", null));
+        await fixture.SeedWaitingAsync("run-2", Production, WorkflowWait.Message("orders", null));
+        await fixture.SeedWaitingAsync("run-3", Production, WorkflowWait.Message("orders", null));
+
+        // Asking for more than the deployment permits is bounded rather than refused, exactly as a lease request is.
+        (await fixture.Coordinator.ClaimAwaitingAsync(Runner, "orders", null, [Version], 99, null, default)).Count.ShouldBe(2);
+    }
+
+    [TestMethod]
+    public async Task A_waiting_run_is_leased_to_the_claiming_principal()
+    {
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedWaitingAsync("run-1", Production, WorkflowWait.Message("orders", null));
+
+        IReadOnlyList<ClaimedRunRecord> claims = await fixture.Coordinator.ClaimAwaitingAsync(Runner, "orders", null, [Version], null, null, default);
+
+        claims.Count.ShouldBe(1);
+        claims[0].Environment.ShouldBe(Production);
+        claims[0].Lease.Epoch.ShouldBeGreaterThan(0);
+
+        // Held by this runner, so a peer sweeping the same channel is offered nothing.
+        (await fixture.Coordinator.ClaimAwaitingAsync(Peer, "orders", null, [Version], null, null, default)).ShouldBeEmpty();
+    }
+
+    [TestMethod]
     public async Task An_idle_runner_is_told_nothing_is_claimable_rather_than_refused()
     {
         var fixture = await Fixture.EmptyAsync();
@@ -252,7 +315,8 @@ public sealed class RunnerRunCoordinatorTests
     }
 
     // An in-memory store that counts lease attempts, so a test can assert the claim stopped rather than inferring it.
-    private sealed class CountingStore(TimeProvider timeProvider) : IWorkflowStateStore, IWorkflowDispatchIndex
+    // A real store is both indexes, so the double is too. Counting only the lease attempts is the only thing it adds.
+    private sealed class CountingStore(TimeProvider timeProvider) : IWorkflowStateStore, IWorkflowDispatchIndex, IWorkflowWaitIndex
     {
         private readonly InMemoryWorkflowStateStore inner = new(timeProvider);
 
@@ -272,6 +336,21 @@ public sealed class RunnerRunCoordinatorTests
 
         public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
             => this.inner.TryExtendLeaseAsync(lease, extension, cancellationToken);
+
+        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+            => this.inner.QueryDueAsync(before, cancellationToken);
+
+        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
+            => this.inner.QueryDueAsync(before, runnerEnvironment, cancellationToken);
+
+        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+            => this.inner.QueryAwaitingAsync(channel, correlationId, cancellationToken);
+
+        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
+            => this.inner.QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken);
+
+        public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
+            => this.inner.QueryAsync(query, cancellationToken);
 
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
             => this.inner.ReleaseLeaseAsync(lease, cancellationToken);
@@ -335,6 +414,17 @@ public sealed class RunnerRunCoordinatorTests
             return fixture;
         }
 
+        public async ValueTask SeedWaitingAsync(string runId, string environment, WorkflowWait wait)
+        {
+            byte[] checkpoint = Checkpoint(runId, WorkflowRunStatus.Suspended, environment, null, wait);
+            await this.Store.SaveAsync(
+                new WorkflowRunId(runId),
+                checkpoint,
+                WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
+                WorkflowEtag.None,
+                default);
+        }
+
         public async ValueTask SeedAsync(string runId, WorkflowRunStatus status, string environment, bool resumeRequested = false)
         {
             DateTimeOffset resumeRequestedAt = this.Clock.GetUtcNow();
@@ -347,7 +437,7 @@ public sealed class RunnerRunCoordinatorTests
                 default);
         }
 
-        private static byte[] Checkpoint(string runId, WorkflowRunStatus status, string environment, DateTimeOffset? resumeRequestedAt)
+        private static byte[] Checkpoint(string runId, WorkflowRunStatus status, string environment, DateTimeOffset? resumeRequestedAt, WorkflowWait? wait = null)
         {
             using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
             using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -363,6 +453,7 @@ public sealed class RunnerRunCoordinatorTests
                 inputs: default,
                 stepOutputs,
                 outputs: default,
+                wait: wait,
                 environment: environment,
                 resumeRequestedAt: resumeRequestedAt,
                 updatedAt: T0);

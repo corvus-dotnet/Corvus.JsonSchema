@@ -44,7 +44,7 @@ public interface IWorkflowWaitIndex
 
     /// <summary>Finds suspended runs awaiting a message on a channel (optionally for a specific correlation id).</summary>
     /// <param name="channel">The channel a message was delivered on.</param>
-    /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match runs awaiting the channel with no specific correlation.</param>
+    /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match every run awaiting the channel, whatever correlation each awaits.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The ids of the runs the message can resume.</returns>
     IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken);
@@ -58,7 +58,7 @@ public interface IWorkflowWaitIndex
     /// <paramref name="runnerEnvironment"/> is the env-agnostic base overload (an in-process host delivering to every awaiting run).
     /// </summary>
     /// <param name="channel">The channel a message was delivered on.</param>
-    /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match runs awaiting the channel with no specific correlation.</param>
+    /// <param name="correlationId">The correlation id of the delivered message, or <see langword="null"/> to match every run awaiting the channel, whatever correlation each awaits.</param>
     /// <param name="runnerEnvironment">The single environment a consumer serves — an awaiting run matches only when pinned to exactly it; <see langword="null"/> is env-agnostic (the base overload).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The ids of the runs the message can resume, constrained to the consumer's environment (all matching runs when <paramref name="runnerEnvironment"/> is <see langword="null"/>).</returns>

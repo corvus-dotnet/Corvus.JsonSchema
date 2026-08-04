@@ -19,6 +19,7 @@ public sealed class RunnerRunCoordinator
 {
     private readonly IWorkflowStateStore store;
     private readonly IWorkflowDispatchIndex index;
+    private readonly IWorkflowWaitIndex waits;
     private readonly IRunnerEnvironmentBindings bindings;
     private readonly IRunnerLeaseEpochSource epochs;
     private readonly RunnerApiOptions options;
@@ -44,6 +45,8 @@ public sealed class RunnerRunCoordinator
         this.store = store;
         this.index = store as IWorkflowDispatchIndex
             ?? throw new ArgumentException("The runner API's store must implement IWorkflowDispatchIndex; without it there is no claimable set to offer.", nameof(store));
+        this.waits = store as IWorkflowWaitIndex
+            ?? throw new ArgumentException("The runner API's store must implement IWorkflowWaitIndex; without it a suspended run's timer would never fire and a delivered message would reach nothing.", nameof(store));
         this.bindings = bindings;
         this.options = options ?? new RunnerApiOptions();
         this.epochs = epochs ?? new MonotonicRunnerLeaseEpochSource(timeProvider);
@@ -110,6 +113,96 @@ public sealed class RunnerRunCoordinator
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Takes the runs whose durable timer is now due, and their leases, in one operation.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal, which becomes the lease owner.</param>
+    /// <param name="hostedVersions">The versioned workflow ids the runner has baked and can execute.</param>
+    /// <param name="limit">The most runs to claim, bounded by the deployment.</param>
+    /// <param name="requestedLease">The lease duration the runner asked for, bounded by the deployment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when no timer is due.</returns>
+    /// <remarks>
+    /// The cutoff is this server's clock rather than a request parameter. A runner naming its own cutoff would be
+    /// asking to resume runs whose timers have not fired, and a runner with a fast clock would do so by accident.
+    /// </remarks>
+    public async ValueTask<IReadOnlyList<ClaimedRunRecord>> ClaimDueAsync(string principal, IReadOnlyCollection<string> hostedVersions, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+        ArgumentNullException.ThrowIfNull(hostedVersions);
+
+        if (await this.BeginSweepAsync(principal, hostedVersions, cancellationToken).ConfigureAwait(false) is not { } sweep)
+        {
+            return [];
+        }
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        TimeSpan lease = this.options.BoundLease(requestedLease);
+        int wanted = this.options.BoundSweep(limit);
+        List<ClaimedRunRecord> claims = [];
+
+        foreach (string environment in sweep.Environments)
+        {
+            await foreach (WorkflowRunId id in this.waits.QueryDueAsync(now, environment, cancellationToken).ConfigureAwait(false))
+            {
+                if (claims.Count >= wanted)
+                {
+                    return claims;
+                }
+
+                await this.TryTakeWaitingAsync(id, environment, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return claims;
+    }
+
+    /// <summary>
+    /// Takes the runs awaiting a message on a channel, and their leases, in one operation.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal, which becomes the lease owner.</param>
+    /// <param name="channel">The channel the message arrived on.</param>
+    /// <param name="correlationId">The delivered message's correlation token, or <see langword="null"/> to match every run awaiting the channel, whatever correlation each awaits. Absence is a wildcard on either side: a run awaiting no particular correlation is likewise matched by any message.</param>
+    /// <param name="hostedVersions">The versioned workflow ids the runner has baked and can execute.</param>
+    /// <param name="limit">The most runs to claim, bounded by the deployment.</param>
+    /// <param name="requestedLease">The lease duration the runner asked for, bounded by the deployment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when nothing awaits that message.</returns>
+    /// <remarks>
+    /// The payload is not a parameter and never reaches the store. This answers which runs a message can resume, not
+    /// what it said, so the runner keeps the only copy and hands it to each run itself.
+    /// </remarks>
+    public async ValueTask<IReadOnlyList<ClaimedRunRecord>> ClaimAwaitingAsync(string principal, string channel, string? correlationId, IReadOnlyCollection<string> hostedVersions, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+        ArgumentException.ThrowIfNullOrEmpty(channel);
+        ArgumentNullException.ThrowIfNull(hostedVersions);
+
+        if (await this.BeginSweepAsync(principal, hostedVersions, cancellationToken).ConfigureAwait(false) is not { } sweep)
+        {
+            return [];
+        }
+
+        TimeSpan lease = this.options.BoundLease(requestedLease);
+        int wanted = this.options.BoundSweep(limit);
+        List<ClaimedRunRecord> claims = [];
+
+        foreach (string environment in sweep.Environments)
+        {
+            await foreach (WorkflowRunId id in this.waits.QueryAwaitingAsync(channel, correlationId, environment, cancellationToken).ConfigureAwait(false))
+            {
+                if (claims.Count >= wanted)
+                {
+                    return claims;
+                }
+
+                await this.TryTakeWaitingAsync(id, environment, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return claims;
     }
 
     /// <summary>
@@ -206,6 +299,65 @@ public sealed class RunnerRunCoordinator
     // reports. The index query already constrains the candidate set, but it ran before the lease: the run may have been
     // completed, suspended, or deleted in between, and re-reading here is what makes the claim's answer true rather than
     // assumed.
+    // Resolves what a sweep is allowed to look at, or null when it is allowed to look at nothing. A principal bound to
+    // no environment is offered nothing, which is the correct answer for one whose authorization is pending or revoked,
+    // and is the same rule the single-run claim applies.
+    private async ValueTask<(IReadOnlyList<string> Environments, HashSet<string> Hosted)?> BeginSweepAsync(string principal, IReadOnlyCollection<string> hostedVersions, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string> environments = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        if (environments.Count == 0 || hostedVersions.Count == 0)
+        {
+            return null;
+        }
+
+        // Built once per sweep rather than per candidate: a runner may host a thousand versions, and every candidate
+        // is re-checked against them under its lease.
+        return (environments, new HashSet<string>(hostedVersions, StringComparer.Ordinal));
+    }
+
+    // Leases one waiting candidate and keeps it only if it is still resumable under that lease. A run that changed
+    // between the index query and the lease is handed straight back rather than held by a runner that will not advance
+    // it, exactly as a dispatch claim does.
+    private async ValueTask TryTakeWaitingAsync(WorkflowRunId id, string environment, string principal, HashSet<string> hosted, TimeSpan lease, List<ClaimedRunRecord> claims, CancellationToken cancellationToken)
+    {
+        WorkflowLease? acquired = await this.store.AcquireLeaseAsync(id, principal, lease, cancellationToken).ConfigureAwait(false);
+        if (acquired is not { } held)
+        {
+            // Another runner is already advancing it.
+            return;
+        }
+
+        if (await this.ProjectWaitingClaimAsync(held, environment, hosted, cancellationToken).ConfigureAwait(false) is { } claimed)
+        {
+            claims.Add(claimed);
+            return;
+        }
+
+        await this.store.ReleaseLeaseAsync(held, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A waiting run must still be Suspended to be resumable. That is a stricter predicate than a dispatch claim's, and
+    // deliberately so: the wait index says a timer fired or a message matched, but the run may have been advanced,
+    // completed, or faulted since, and resuming a run that is no longer waiting would re-enter it at a step it has
+    // already left.
+    private async ValueTask<ClaimedRunRecord?> ProjectWaitingClaimAsync(WorkflowLease held, string environment, HashSet<string> hostedVersions, CancellationToken cancellationToken)
+    {
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.RunId, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProjectIndex(row.Utf8, out WorkflowRunIndexEntry entry))
+        {
+            return null;
+        }
+
+        if (entry.Status != WorkflowRunStatus.Suspended || entry.Environment != environment || !hostedVersions.Contains(entry.WorkflowId))
+        {
+            return null;
+        }
+
+        long epoch = this.epochs.NextEpoch(held.RunId);
+        var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(epoch, held.Token), held.ExpiresAt, epoch);
+        return new ClaimedRunRecord(held.RunId, entry.WorkflowId, environment, grant);
+    }
+
     private async ValueTask<ClaimedRunRecord?> ProjectClaimAsync(WorkflowLease held, string environment, HashSet<string> hostedVersions, CancellationToken cancellationToken)
     {
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.RunId, cancellationToken).ConfigureAwait(false);
