@@ -311,9 +311,7 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
     // create collides on the id (a 409) and a replace/read is a single-partition point operation.
     private static string ItemId(string environmentName)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(environmentName), hash);
-        return "eadmin-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("eadmin-", environmentName);
     }
 
     // Serializes the {id, pk, environmentName, adminDigests, doc} envelope into a pooled stream and builds the caller's

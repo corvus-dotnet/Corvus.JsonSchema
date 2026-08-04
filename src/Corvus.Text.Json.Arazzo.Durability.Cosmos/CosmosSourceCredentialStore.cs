@@ -358,9 +358,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     // partition; an exact-duplicate create collides on the id and surfaces as a 409.
     private static string ItemId(string discriminator)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(discriminator), hash);
-        return "scred-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("scred-", discriminator);
     }
 
     // Serializes the {id, pk, sourceName, environment, doc:base64} envelope into a pooled stream and builds the

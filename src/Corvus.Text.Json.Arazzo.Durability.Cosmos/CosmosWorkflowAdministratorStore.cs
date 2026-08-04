@@ -227,9 +227,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
     // collides on the id (a 409) and a replace/read is a single-partition point operation.
     private static string ItemId(string baseWorkflowId)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(baseWorkflowId), hash);
-        return "wadmin-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("wadmin-", baseWorkflowId);
     }
 
     // Serializes the {id, pk, baseWorkflowId, adminDigests, doc} envelope into a pooled stream and builds the caller's

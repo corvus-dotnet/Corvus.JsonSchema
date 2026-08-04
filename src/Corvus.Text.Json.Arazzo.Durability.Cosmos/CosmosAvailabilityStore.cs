@@ -336,10 +336,9 @@ public sealed class CosmosAvailabilityStore : IAvailabilityStore, IAsyncDisposab
     // collides on the id and surfaces as a 409 — mirroring the relational backends' composite-primary-key uniqueness.
     private static string ItemId(string baseWorkflowId, int versionNumber, string environment)
     {
-        string discriminator = string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId} {versionNumber} {environment}");
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(discriminator), hash);
-        return "avail-" + Convert.ToHexStringLower(hash);
+        Span<char> version = stackalloc char[12];
+        versionNumber.TryFormat(version, out int versionLength, provider: CultureInfo.InvariantCulture);
+        return CosmosItemId.Compose("avail-", (byte)' ', baseWorkflowId, version[..versionLength], environment);
     }
 
     // Collapses (baseWorkflowId, numeric versionNumber) into one orderable string so the by-environment list axis is a

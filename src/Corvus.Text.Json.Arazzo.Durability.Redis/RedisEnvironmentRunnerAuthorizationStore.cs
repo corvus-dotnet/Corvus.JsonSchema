@@ -210,8 +210,10 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : EnvironmentRunnerAuthorizationPage.DefaultPageSize;
 
-        // Decode the keyset cursor to the index member the previous page ended at ("{environment}\0{runnerId}"); the parts
-        // reify to a string only here (the leaf). Undefined token = first page; a malformed token throws FormatException.
+        // Decode the keyset cursor to the index member the previous page ended at ("{environment}\0{runnerId}").
+        // The token is base64url of exactly that, and MemberSeparator is the same \0, so the decoded bytes ARE the
+        // member: one transcode of the contiguous decode, rather than a string per part and a concatenation to put
+        // them back together. Undefined token = first page; a malformed token throws FormatException.
         string? cursorMember = null;
         if (pageToken.IsNotUndefined())
         {
@@ -221,7 +223,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
             {
                 if (EnvironmentRunnerAuthorizationContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> cursorEnvUtf8, out ReadOnlySpan<byte> cursorRunnerUtf8))
                 {
-                    cursorMember = IndexMemberOf(Encoding.UTF8.GetString(cursorEnvUtf8), Encoding.UTF8.GetString(cursorRunnerUtf8));
+                    cursorMember = Encoding.UTF8.GetString(buffer.AsSpan(0, cursorEnvUtf8.Length + 1 + cursorRunnerUtf8.Length));
                 }
             }
             finally

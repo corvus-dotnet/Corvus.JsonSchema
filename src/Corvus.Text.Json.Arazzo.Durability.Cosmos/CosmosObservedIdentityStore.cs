@@ -329,9 +329,7 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     // grantee upserts the same item.
     private static string ItemId(string subjectKind, string subjectValue)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(subjectKind + Separator + subjectValue), hash);
-        return "obid-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("obid-", (byte)Separator, subjectKind, subjectValue);
     }
 
     // Serializes the { id, pk, subjectKind, subjectValue, identityDigest, sortKey, securityTags:[{k,v}], doc } envelope

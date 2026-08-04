@@ -377,9 +377,7 @@ public sealed class CosmosEnvironmentStore : IEnvironmentStore, IAsyncDisposable
     // the partition; an exact-duplicate create collides on the id and surfaces as a 409.
     private static string ItemId(string discriminator)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(discriminator), hash);
-        return "env-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("env-", discriminator);
     }
 
     // Serializes the {id, pk, name, doc} envelope into a pooled stream and builds the caller's pooled return document

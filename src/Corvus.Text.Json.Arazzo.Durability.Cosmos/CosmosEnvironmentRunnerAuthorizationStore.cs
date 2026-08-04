@@ -442,10 +442,7 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
     // uniqueness.
     private static string ItemId(string environment, string runnerId)
     {
-        string discriminator = string.Create(CultureInfo.InvariantCulture, $"{environment} {runnerId}");
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes(discriminator), hash);
-        return "rauth-" + Convert.ToHexStringLower(hash);
+        return CosmosItemId.Compose("rauth-", (byte)' ', environment, runnerId);
     }
 
     // Appends the shared list filters (status / environment) and the approver-inbox filter (env IN the administered set) to
