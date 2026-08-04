@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,6 +35,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </remarks>
 public sealed class ProviderBroker
 {
+    // The entropy behind both the OAuth state and the PKCE verifier. RFC 7636 §4.1 puts a verifier at 43 to 128
+    // characters, which base64url of 32 bytes meets exactly at 43.
+    private const int EntropyBytes = 32;
+
     private static readonly TimeSpan StateLifetime = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan TokenRefreshSkew = TimeSpan.FromSeconds(60);
 
@@ -173,18 +178,33 @@ public sealed class ProviderBroker
         }
 
         this.PrunePending();
-        string state = Base64Url(RandomNumberGenerator.GetBytes(32));
+        Span<byte> entropy = stackalloc byte[EntropyBytes];
+        RandomNumberGenerator.Fill(entropy);
+        string state = Base64Url.EncodeToString(entropy);
 
         // PKCE (RFC 7636): a per-authorization verifier binds the code to this sign-in, so an
         // intercepted code cannot be redeemed without it. The challenge rides the authorize URL; the
         // verifier stays server-side with the state and is presented at the exchange. A provider that
         // does not support PKCE ignores the extra parameters (OAuth 2.0 §3.1), so this is safe to send.
-        string? codeVerifier = provider.UsePkce ? Base64Url(RandomNumberGenerator.GetBytes(32)) : null;
+        string? codeVerifier = null;
+        string pkce = string.Empty;
+        if (provider.UsePkce)
+        {
+            // The verifier is the base64url text of fresh entropy, and S256 hashes that text's ASCII. Encoding it to
+            // UTF-8 once yields both: the string held with the pending state, and the exact bytes to hash.
+            RandomNumberGenerator.Fill(entropy);
+            Span<byte> verifierUtf8 = stackalloc byte[Base64Url.GetEncodedLength(EntropyBytes)];
+            Base64Url.EncodeToUtf8(entropy, verifierUtf8, out _, out int verifierLength);
+            verifierUtf8 = verifierUtf8[..verifierLength];
+            codeVerifier = Encoding.ASCII.GetString(verifierUtf8);
+
+            Span<byte> challenge = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(verifierUtf8, challenge);
+            pkce = $"&code_challenge={Base64Url.EncodeToString(challenge)}&code_challenge_method=S256";
+        }
+
         this.pending[state] = new PendingAuth(principalKey, provider.Name!, codeVerifier, this.timeProvider.GetUtcNow() + StateLifetime);
         string scope = string.IsNullOrEmpty(provider.Scopes) ? string.Empty : $"&scope={Uri.EscapeDataString(provider.Scopes)}";
-        string pkce = codeVerifier is null
-            ? string.Empty
-            : $"&code_challenge={Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(codeVerifier)))}&code_challenge_method=S256";
         string authorizeUrl = resolved.AuthorizeEndpoint +
             (resolved.AuthorizeEndpoint.Contains('?') ? '&' : '?') +
             $"client_id={Uri.EscapeDataString(provider.ClientId!)}" +
@@ -195,8 +215,6 @@ public sealed class ProviderBroker
             $"&state={Uri.EscapeDataString(state)}";
         return (BeginOutcome.Success, authorizeUrl, state);
     }
-
-    private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     /// <summary>
     /// Completes the flow: validates and consumes the state (single-use, provider-bound),

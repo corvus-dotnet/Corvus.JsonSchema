@@ -209,7 +209,7 @@ public sealed class GitHubBroker
                 writer.WriteStartObject();
                 writer.WriteString("message"u8, s.Message);
                 writer.WriteString("branch"u8, s.Branch);
-                writer.WriteString("content"u8, Convert.ToBase64String(s.Content.Span));
+                writer.WriteBase64String("content"u8, s.Content.Span);
                 if (s.Sha is not null)
                 {
                     writer.WriteString("sha"u8, s.Sha);

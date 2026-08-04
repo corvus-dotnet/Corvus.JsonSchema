@@ -119,7 +119,7 @@ public readonly partial struct CatalogDocument
         writer.WriteBoolean(JsonPropertyNames.RunnableUtf8, (bool)version.Runnable);
 
         // Base64-encode the package straight into the writer — no intermediate base64 string (which would scale with
-        // package size on every write). Read back by CatalogDocument.PackageBytes via Convert.FromBase64String.
+        // package size on every write). Read back by CatalogDocument.PackageBytes, which is bytes-native to match.
         writer.WriteBase64String(JsonPropertyNames.PackageUtf8, package.Span);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, (string)version.CreatedBy);
         writer.WriteNumber(JsonPropertyNames.CreatedAtUtf8, version.CreatedAtValue.ToUnixTimeMilliseconds());

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using Corvus.Text.Json.Arazzo.Execution;
 using VaultSharp;
 using VaultSharp.V1.Commons;
@@ -105,14 +106,10 @@ public sealed class VaultTransitExecutorPackageSigner : IExecutorPackageSigner
         }
 
         int lastColon = vaultSignature.LastIndexOf(':');
-        string encoded = lastColon >= 0 ? vaultSignature[(lastColon + 1)..] : vaultSignature;
-        return base64Url ? DecodeBase64Url(encoded) : Convert.FromBase64String(encoded);
-    }
+        ReadOnlySpan<char> encoded = lastColon >= 0 ? vaultSignature.AsSpan(lastColon + 1) : vaultSignature;
 
-    private static byte[] DecodeBase64Url(string value)
-    {
-        string padded = value.Replace('-', '+').Replace('_', '/');
-        padded += (padded.Length % 4) switch { 2 => "==", 3 => "=", _ => string.Empty };
-        return Convert.FromBase64String(padded);
+        // Base64Url.DecodeFromChars reads the base64url alphabet and tolerates the absent padding directly, so neither
+        // branch needs the substring, the character swaps, or the re-padding those used to cost.
+        return base64Url ? Base64Url.DecodeFromChars(encoded) : Convert.FromBase64String(new string(encoded));
     }
 }

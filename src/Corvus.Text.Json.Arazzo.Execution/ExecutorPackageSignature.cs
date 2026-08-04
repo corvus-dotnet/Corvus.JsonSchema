@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Buffers.Text;
 
 namespace Corvus.Text.Json.Arazzo.Execution;
 
@@ -35,15 +34,22 @@ public readonly record struct ExecutorPackageSignature(string Algorithm, string 
 
         string algorithm = ReadString(root, "algorithm"u8);
         string keyId = ReadString(root, "keyId"u8);
-        string valueBase64 = ReadString(root, "value"u8);
 
-        byte[] value = new byte[Base64.GetMaxDecodedFromUtf8Length(valueBase64.Length)];
-        if (!Convert.TryFromBase64String(valueBase64, value, out int written))
+        // The signature decodes from the element's own UTF-8 rather than through a managed base64 string, and lands in
+        // a buffer sized to the signature rather than to its encoded form.
+        if (!root.TryGetProperty("value"u8, out JsonElement encoded)
+            || encoded.ValueKind != JsonValueKind.String
+            || encoded.ValueEquals(""u8))
+        {
+            throw ThrowHelper.GetExecutorSignatureMissingStringPropertyException("value");
+        }
+
+        if (!encoded.TryGetBytesFromBase64(out byte[]? value))
         {
             ThrowHelper.ThrowExecutorSignatureValueNotBase64();
         }
 
-        return new ExecutorPackageSignature(algorithm, keyId, value.AsMemory(0, written));
+        return new ExecutorPackageSignature(algorithm, keyId, value);
     }
 
     /// <summary>Serializes this signature to its UTF-8 JSON form for the <c>metadata/executor-manifest.sig</c> package entry.</summary>
@@ -57,7 +63,7 @@ public readonly record struct ExecutorPackageSignature(string Algorithm, string 
             writer.WriteStartObject();
             writer.WriteString("algorithm"u8, this.Algorithm);
             writer.WriteString("keyId"u8, this.KeyId);
-            writer.WriteString("value"u8, Convert.ToBase64String(this.Value.Span));
+            writer.WriteBase64String("value"u8, this.Value.Span);
             writer.WriteEndObject();
         }
 

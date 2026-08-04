@@ -664,7 +664,7 @@ public sealed class ControlPlaneGitHubApiTests
                         sha = ShaOf(historicFile),
                         size = historicFile.Length,
                         encoding = "base64",
-                        content = Convert.ToBase64String(historicFile),
+                        content = ContentsBase64(historicFile),
                     });
                 }
 
@@ -677,7 +677,7 @@ public sealed class ControlPlaneGitHubApiTests
                         sha = ShaOf(file),
                         size = file.Length,
                         encoding = "base64",
-                        content = Convert.ToBase64String(file),
+                        content = ContentsBase64(file),
                     });
                 }
 
@@ -769,5 +769,20 @@ public sealed class ControlPlaneGitHubApiTests
 
         private static string ShaOf(byte[] content)
             => Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(content)).ToLowerInvariant();
+
+        /// <summary>Encodes a file the way the real contents API does: base64 wrapped at 60 characters with a trailing
+        /// newline, not one unbroken line. A decoder that rejects that whitespace passes against a flat stub and fails
+        /// against GitHub, so the stub emits the wrapped form.</summary>
+        private static string ContentsBase64(byte[] content)
+        {
+            string flat = Convert.ToBase64String(content);
+            var wrapped = new StringBuilder(flat.Length + (flat.Length / 60) + 1);
+            for (int i = 0; i < flat.Length; i += 60)
+            {
+                wrapped.Append(flat.AsSpan(i, Math.Min(60, flat.Length - i))).Append('\n');
+            }
+
+            return wrapped.ToString();
+        }
     }
 }

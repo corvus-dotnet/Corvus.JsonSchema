@@ -925,13 +925,20 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
         using (payload)
         {
+            // Decode from the element's own UTF-8 rather than through a managed base64 string, which would scale with
+            // the file's size. GitHub's contents API wraps the encoding every 60 characters and the decoder skips that
+            // whitespace, so the wrapped form reads back byte-for-byte. Content that will not decode is answered as
+            // absent alongside the other malformed-payload cases, rather than thrown out of a pull.
             JsonElement p = payload.RootElement;
-            if (p.ValueKind != JsonValueKind.Object || !p.TryGetProperty("content"u8, out JsonElement content) || content.GetString() is not { } base64)
+            if (p.ValueKind != JsonValueKind.Object
+                || !p.TryGetProperty("content"u8, out JsonElement content)
+                || content.ValueKind != JsonValueKind.String
+                || !content.TryGetBytesFromBase64(out byte[]? bytes))
             {
                 return (GitHubBroker.ReadOutcome.NotFound, null);
             }
 
-            return (GitHubBroker.ReadOutcome.Success, Convert.FromBase64String(base64));
+            return (GitHubBroker.ReadOutcome.Success, bytes);
         }
     }
 

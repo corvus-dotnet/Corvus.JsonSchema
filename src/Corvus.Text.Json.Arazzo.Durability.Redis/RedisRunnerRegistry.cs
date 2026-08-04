@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Text;
 using Corvus.Text.Json;
 using StackExchange.Redis;
@@ -398,5 +399,5 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     /// would collide with a hosting key's structural separators.
     /// </summary>
     private static string EncodeBaseWorkflowId(string baseWorkflowId)
-        => Convert.ToBase64String(Encoding.UTF8.GetBytes(baseWorkflowId)).Replace('/', '_').Replace('+', '-').TrimEnd('=');
+        => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(baseWorkflowId));
 }

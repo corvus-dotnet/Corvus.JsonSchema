@@ -27,7 +27,13 @@ public readonly partial struct RunDocument
 
     /// <summary>Decodes the opaque checkpoint bytes.</summary>
     /// <returns>The checkpoint bytes.</returns>
-    public byte[] CheckpointBytes() => Convert.FromBase64String((string)this.Checkpoint);
+    public byte[] CheckpointBytes()
+    {
+        // Get the base64 as raw UTF-8 (no intermediate managed string, which would scale with checkpoint size on
+        // every read) and decode via the UTF-8 buffer decoder.
+        using UnescapedUtf8JsonString utf8 = this.Checkpoint.GetUtf8String();
+        return CosmosJson.DecodeBase64Utf8(utf8.Span);
+    }
 
     /// <summary>
     /// Writes the run document's persisted JSON straight to <paramref name="writer"/> from a checkpoint and its index
@@ -44,7 +50,7 @@ public readonly partial struct RunDocument
         writer.WriteString(JsonPropertyNames.IdUtf8, id.Value);
 
         // Base64-encode the checkpoint straight into the writer — no intermediate base64 string (which would scale with
-        // checkpoint size on every write). Read back by RunDocument.CheckpointBytes via Convert.FromBase64String.
+        // checkpoint size on every write). Read back by RunDocument.CheckpointBytes, which is bytes-native to match.
         writer.WriteBase64String(JsonPropertyNames.CheckpointUtf8, checkpoint.Span);
         writer.WriteString(JsonPropertyNames.StatusUtf8, index.Status.ToString());
         writer.WriteString(JsonPropertyNames.WorkflowIdUtf8, index.WorkflowId);
