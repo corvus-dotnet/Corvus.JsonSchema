@@ -105,6 +105,51 @@ public sealed class CheckpointTokenTests
     }
 
     [TestMethod]
+    public void A_run_spelled_with_the_separator_cannot_borrow_anothers_token()
+    {
+        // The signed message is unframed, so this is the collision to rule out: a run id containing the separator must
+        // not be able to produce the same signed message as a different pair of run id and expiry. It cannot, because
+        // the expiry is a digits-only suffix after the final colon — asserted here rather than left as an assumption.
+        long expiry = Now.AddMinutes(10).ToUnixTimeSeconds();
+        string token = CheckpointToken.Issue(Secret, $"run-1:{expiry}", Now.AddMinutes(10));
+
+        CheckpointToken.TryValidate(Secret, token, "run-1", Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, token, $"run-1:{expiry}", Now).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public void Validating_a_token_allocates_nothing()
+    {
+        // This runs on every checkpoint callback from a deployed function, before the caller has proved anything, so
+        // its cost is what someone presenting a wrong token can spend on the runner's behalf. The first shape allocated
+        // 576 bytes a call, transcoding both sides of the comparison and materialising the expiry twice.
+        string token = CheckpointToken.Issue(Secret, "run-1", Now.AddMinutes(10));
+
+        // Warm up, so the measurement covers the work rather than the JIT.
+        for (int i = 0; i < 1_000; ++i)
+        {
+            CheckpointToken.TryValidate(Secret, token, "run-1", Now);
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        const int Iterations = 10_000;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        bool accepted = true;
+        for (int i = 0; i < Iterations; ++i)
+        {
+            accepted &= CheckpointToken.TryValidate(Secret, token, "run-1", Now);
+        }
+
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        accepted.ShouldBeTrue("the measured calls must be doing the real work, not failing early");
+        allocated.ShouldBe(0, $"validation must allocate nothing; it allocated {allocated} bytes over {Iterations} calls");
+    }
+
+    [TestMethod]
     public async Task The_endpoint_rejects_a_checkpoint_request_with_no_token()
     {
         await using TokenHost host = await TokenHost.StartAsync();

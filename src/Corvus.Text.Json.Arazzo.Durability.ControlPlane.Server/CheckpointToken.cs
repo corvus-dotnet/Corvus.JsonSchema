@@ -2,8 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Buffers.Text;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -18,10 +20,32 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// and only until it expires. The token is <c>{expiryUnixSeconds}.{base64url(HMAC-SHA256(secret, "runId:expiry"))}</c> —
 /// the run id is bound by the signature but never transmitted, since the checkpoint endpoint already knows it from the URL.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The signed message is unframed, and that is sound rather than merely untroublesome so far: the expiry is a
+/// digits-only suffix after the final colon, so no other pair of run id and expiry can produce an identical message
+/// however the run id is spelled. A run id containing the separator therefore borrows nothing, which is asserted rather
+/// than assumed.
+/// </para>
+/// <para>
+/// Validation allocates nothing. It runs on every checkpoint callback, before the caller has proved anything, so its
+/// cost is what someone presenting a wrong token can spend on the runner's behalf.
+/// </para>
+/// </remarks>
 public static class CheckpointToken
 {
     /// <summary>The minimum checkpoint-secret length: 256 bits, matching the HMAC-SHA256 output, so a full-strength key is required.</summary>
     public const int MinimumSecretBytes = 32;
+
+    // Base64url of a 32-byte HMAC is 43 characters; the buffer is rounded up rather than tightened, since it is stack space.
+    private const int SignatureChars = 64;
+
+    // long.MinValue is 20 characters, which bounds every expiry this formats or re-formats.
+    private const int CanonicalExpiryChars = 20;
+
+    // Run ids are short, so the signed message is normally stack-sized; the pool is there so an unusually long one
+    // degrades rather than overflowing the stack.
+    private const int MessageStackThreshold = 256;
 
     /// <summary>
     /// Mints a checkpoint token for a run, valid until <paramref name="expiry"/>.
@@ -40,7 +64,13 @@ public static class CheckpointToken
         }
 
         long expiryUnixSeconds = expiry.ToUnixTimeSeconds();
-        return $"{expiryUnixSeconds.ToString(CultureInfo.InvariantCulture)}.{Sign(secret, runId, expiryUnixSeconds)}";
+        Span<char> signature = stackalloc char[SignatureChars];
+        if (!TrySign(secret, runId, expiryUnixSeconds, signature, out int written))
+        {
+            throw new ArgumentException("The checkpoint token's signature could not be computed.", nameof(runId));
+        }
+
+        return string.Concat(expiryUnixSeconds.ToString(CultureInfo.InvariantCulture), ".", signature[..written]);
     }
 
     /// <summary>
@@ -65,29 +95,62 @@ public static class CheckpointToken
             return false;
         }
 
-        // Parse the expiry as a bare non-negative decimal and require it to be canonical (no sign, whitespace, or leading
-        // zeros), so exactly one token string authenticates a run — a signed/padded variant is not an equivalent token.
+        // Parse the expiry as a bare non-negative decimal, and reject an expired one before doing any work on it.
         ReadOnlySpan<char> expirySegment = token.AsSpan(0, separator);
         if (!long.TryParse(expirySegment, NumberStyles.None, CultureInfo.InvariantCulture, out long expiryUnixSeconds)
-            || !expirySegment.SequenceEqual(expiryUnixSeconds.ToString(CultureInfo.InvariantCulture))
             || expiryUnixSeconds <= now.ToUnixTimeSeconds())
+        {
+            return false;
+        }
+
+        // Require the expiry to be canonical (no sign, whitespace, or leading zeros) by re-formatting it and comparing,
+        // so exactly one token string authenticates a run and a padded variant is not an equivalent token.
+        Span<char> canonical = stackalloc char[CanonicalExpiryChars];
+        if (!expiryUnixSeconds.TryFormat(canonical, out int canonicalLength, provider: CultureInfo.InvariantCulture)
+            || !expirySegment.SequenceEqual(canonical[..canonicalLength]))
         {
             return false;
         }
 
         // Recompute the signature over the run in the URL and the token's expiry, and compare in constant time. A token
         // minted for another run yields a different signature, so it does not validate here.
-        string expected = Sign(secret, runId, expiryUnixSeconds);
+        Span<char> expected = stackalloc char[SignatureChars];
+        if (!TrySign(secret, runId, expiryUnixSeconds, expected, out int written))
+        {
+            return false;
+        }
+
+        // The platform's constant-time comparison over the raw UTF-16 code units: nothing is hand-rolled, and neither
+        // side is transcoded to reach it. Equal char counts imply equal byte counts, which is what it compares on.
         return CryptographicOperations.FixedTimeEquals(
-            Encoding.ASCII.GetBytes(token[(separator + 1)..]),
-            Encoding.ASCII.GetBytes(expected));
+            MemoryMarshal.AsBytes(token.AsSpan(separator + 1)),
+            MemoryMarshal.AsBytes((ReadOnlySpan<char>)expected[..written]));
     }
 
-    private static string Sign(ReadOnlySpan<byte> secret, string runId, long expiryUnixSeconds)
+    // Signs into the caller's buffer, allocating nothing. Validation runs on every checkpoint callback, before the
+    // caller has proved anything, so its cost is what someone presenting a wrong token can spend on the runner's behalf.
+    private static bool TrySign(ReadOnlySpan<byte> secret, string runId, long expiryUnixSeconds, Span<char> destination, out int written)
     {
-        byte[] message = Encoding.UTF8.GetBytes($"{runId}:{expiryUnixSeconds.ToString(CultureInfo.InvariantCulture)}");
-        Span<byte> signature = stackalloc byte[HMACSHA256.HashSizeInBytes];
-        HMACSHA256.HashData(secret, message, signature);
-        return Base64Url.EncodeToString(signature);
+        int maximumMessage = Encoding.UTF8.GetMaxByteCount(runId.Length) + 1 + CanonicalExpiryChars;
+        byte[]? rented = maximumMessage > MessageStackThreshold ? ArrayPool<byte>.Shared.Rent(maximumMessage) : null;
+        try
+        {
+            Span<byte> message = rented ?? stackalloc byte[MessageStackThreshold];
+            int position = Encoding.UTF8.GetBytes(runId, message);
+            message[position++] = (byte)':';
+            expiryUnixSeconds.TryFormat(message[position..], out int digits, provider: CultureInfo.InvariantCulture);
+            position += digits;
+
+            Span<byte> signature = stackalloc byte[HMACSHA256.HashSizeInBytes];
+            HMACSHA256.HashData(secret, message[..position], signature);
+            return Base64Url.TryEncodeToChars(signature, destination, out written);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
     }
 }
