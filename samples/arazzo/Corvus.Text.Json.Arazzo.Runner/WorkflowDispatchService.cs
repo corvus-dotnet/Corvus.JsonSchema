@@ -2,46 +2,47 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 
 namespace Corvus.Text.Json.Arazzo.Runner;
 
 /// <summary>
-/// The runner's dispatch + resume loop (design §7). It polls the store-as-queue for the versions it hosts:
-/// <see cref="WorkflowDispatcher"/> claims <c>Pending</c> runs and lease-expired <c>Running</c> orphans (a
-/// crashed runner's in-flight work), while <see cref="WorkflowWorker"/> resumes suspended runs whose durable
-/// timer is now due. Both take a per-run lease (CAS) so exactly one runner advances a run.
+/// The runner's dispatch + resume loop (design §7), driven entirely through the runner API (ADR 0065). It polls for the
+/// versions it hosts: <see cref="RunnerApiDispatcher"/> claims <c>Pending</c> runs and lease-expired <c>Running</c>
+/// orphans (a crashed runner's in-flight work), while <see cref="RunnerApiWorker"/> resumes suspended runs whose durable
+/// timer is now due. Both take a per-run lease so exactly one runner advances a run.
 /// </summary>
 /// <remarks>
-/// Both dispatch and timer-resume drive each claimed run through the injected <see cref="WorkflowResumer"/> — the
-/// real <see cref="HostedWorkflowResumer"/> that loads the version's compiled <c>executor.dll</c> into a collectible
-/// ALC (on first use, cached thereafter) and re-enters it against the runner's transports, the same live-execution
-/// path the control-plane host runs in-process. So the runner genuinely executes catalogued runs: the seeded orphaned
-/// <c>Running</c> run is reclaimed and re-executed on start-up (orphan reclaim in action).
+/// <para>
+/// The runner holds no store credential, and this loop names no environment. It presents its machine principal, and the
+/// control plane intersects every candidate set with the environments an administrator bound that principal to. What
+/// used to be a runner-side environment filter and a runner-side authorization gate are the server's to apply, which is
+/// what turns them from cooperation into enforcement: a production run cannot land on a staging runner that asks for
+/// one, and a revoked runner is not told to stand down, it is simply offered nothing.
+/// </para>
+/// <para>
+/// Both dispatch and timer-resume drive each claimed run through the injected <see cref="WorkflowResumer"/> — the real
+/// <see cref="HostedWorkflowResumer"/> that loads the version's compiled <c>executor.dll</c> into a collectible ALC (on
+/// first use, cached thereafter) and re-enters it against the runner's transports, the same live-execution path the
+/// control-plane host runs in-process. The executor itself is pulled through the API too, so the runner reaches the
+/// catalog with no more credential than it reaches the queue with. So the runner genuinely executes catalogued runs: the
+/// seeded orphaned <c>Running</c> run is reclaimed and re-executed on start-up (orphan reclaim in action).
+/// </para>
 /// </remarks>
 public sealed class WorkflowDispatchService(
-    IWorkflowStateStore store,
-    IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
-    SecuredWorkflowCatalog catalog,
+    ArazzoRunnerClient client,
     WorkflowResumer resumer,
     RunnerOptions options,
     ILogger<WorkflowDispatchService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
-    // The last-observed authorization state, so IsAuthorizedAsync logs only on a transition (not every poll cycle).
-    private bool? lastAuthorized;
-
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // §5.5 dispatch: the runner claims new + orphaned runs only while an administrator of its environment has authorized
-        // it (the gate; revoke takes effect within a poll cycle, in-flight runs drain), AND only runs pinned to the single
-        // environment it serves (runnerEnvironment) — a production run never lands on a staging runner.
-        var dispatcher = new WorkflowDispatcher(store, options.RunnerId, dispatchGate: this.IsAuthorizedAsync, runnerEnvironment: options.Environment);
-        var worker = new WorkflowWorker(store, options.RunnerId);
+        var dispatcher = new RunnerApiDispatcher(client);
+        var worker = new RunnerApiWorker(client);
 
         using var timer = new PeriodicTimer(PollInterval);
         while (!stoppingToken.IsCancellationRequested)
@@ -53,10 +54,9 @@ public sealed class WorkflowDispatchService(
                 {
                     int dispatched = await dispatcher.DispatchClaimableAsync(hostedIds, resumer, stoppingToken).ConfigureAwait(false);
 
-                    // Timer-resume is environment-scoped exactly as dispatch is (§5.5): pass the runner's environment so it
-                    // only resumes due runs pinned to it, never another environment's due run (which it could not resume with
-                    // the right credentials, and — for a $schedule run — would fault for lack of that environment's scheduler).
-                    int resumed = await worker.ResumeDueTimersAsync(resumer, options.Environment, stoppingToken).ConfigureAwait(false);
+                    // Timer-resume is scoped by the same hosted set as dispatch, so a due run of a version this runner
+                    // has not baked is left for one that has, rather than claimed and faulted for want of an executor.
+                    int resumed = await worker.ResumeDueTimersAsync(hostedIds, resumer, stoppingToken).ConfigureAwait(false);
                     if (dispatched + resumed > 0)
                     {
                         logger.LogInformation("Dispatched {Dispatched} new/orphaned run(s); resumed {Resumed} due run(s).", dispatched, resumed);
@@ -69,7 +69,7 @@ public sealed class WorkflowDispatchService(
             }
             catch (Exception ex)
             {
-                // A transient store error must not kill the loop — log and retry on the next tick.
+                // A transient API error must not kill the loop — log and retry on the next tick.
                 logger.LogError(ex, "Dispatch cycle failed; retrying on the next poll.");
             }
 
@@ -84,45 +84,29 @@ public sealed class WorkflowDispatchService(
         }
     }
 
-    // The §5.5 dispatch gate: this runner may take new/orphaned work only while an administrator of its environment has
-    // Authorized it (Pending on first registration, revocable). Read its own authorization each cycle; log only on a state
-    // change so a paused runner does not spam the log. A revoked/pending runner stays registered + heartbeating but idle.
-    private async ValueTask<bool> IsAuthorizedAsync(CancellationToken cancellationToken)
-    {
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? authorization =
-            await runnerAuthorizations.GetAsync(options.Environment, options.RunnerId, cancellationToken).ConfigureAwait(false);
-        bool authorized = authorization is { } doc && doc.RootElement.IsAuthorized;
-
-        if (this.lastAuthorized != authorized)
-        {
-            this.lastAuthorized = authorized;
-            if (authorized)
-            {
-                logger.LogInformation("Runner {RunnerId} is authorized to serve environment '{Environment}'; dispatch is active.", options.RunnerId, options.Environment);
-            }
-            else
-            {
-                logger.LogWarning("Runner {RunnerId} is not authorized to serve environment '{Environment}' (pending or revoked); dispatch is paused until an administrator authorizes it.", options.RunnerId, options.Environment);
-            }
-        }
-
-        return authorized;
-    }
-
     private async Task<string[]> HostedWorkflowIdsAsync(CancellationToken cancellationToken)
     {
-        // The versions this runner hosts = every catalogued version (versioned id, e.g. "onboard-customer-v1").
-        // Refreshed each cycle so a newly-published version is picked up without a restart.
-        CatalogPage page = await catalog.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
+        // The versions this runner may execute, as the control plane resolves them from this runner's environment
+        // bindings rather than from the catalog at large. Refreshed each cycle, so a newly-published version is picked
+        // up (and a newly-revoked binding drops away) without a restart.
+        IReadOnlyList<RunnerHostedVersion> hosted = await client.ListHostedVersionsAsync(cancellationToken).ConfigureAwait(false);
 
-        // A durable schedule (#896) is a run of the built-in scheduler workflow, not a catalogued version, so its
-        // reserved id is claimable only on a runner that opts in (and has the scheduler wired into its resumer) — else a
-        // schedule run pinned to this environment would be claimed by a runner that cannot resume it and would fault it.
-        if (options.ServesSchedules)
+        // A durable schedule (#896) is a run of the built-in scheduler workflow rather than a catalogued version, so its
+        // reserved id is never in the listing and is added here instead. It is added only on a runner that opts in (and
+        // so has the scheduler wired into its resumer), because a schedule run claimed by a runner that cannot resume it
+        // would simply fault.
+        bool servesSchedules = options.ServesSchedules;
+        var ids = new string[hosted.Count + (servesSchedules ? 1 : 0)];
+        for (int i = 0; i < hosted.Count; ++i)
         {
-            return [.. page.Versions.Select(static v => (string)v.WorkflowId), ScheduleHostedWorkflow.ScheduleWorkflowId];
+            ids[i] = hosted[i].ToWorkflowId();
         }
 
-        return [.. page.Versions.Select(static v => (string)v.WorkflowId)];
+        if (servesSchedules)
+        {
+            ids[^1] = ScheduleHostedWorkflow.ScheduleWorkflowId;
+        }
+
+        return ids;
     }
 }

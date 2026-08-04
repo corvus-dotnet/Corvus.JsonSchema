@@ -22,13 +22,21 @@ load and isolation model, and the trigger surface.
 
 ## Topology
 
-Two independently-scaled processes share the durability store
+Two independently-scaled processes work over one durability store
 ([ADR 0023](../adr/0023-two-process-store-as-queue.md)): the **control plane** (catalog, the compile-at-add,
 the runs and governance REST API, the run-start endpoint, the runner registry) and the **execution host, the
 "runner"** (loads workflow assemblies, owns the transports and scheduler, runs workflows and resumes them,
-checkpointing to the store). They never call each other on the hot path: the control plane creates a `Pending`
-run in the store, and a runner hosting that version claims and executes it (store-as-queue). The control plane
-learns what each runner hosts, and whether it is live, only through the registry and heartbeats.
+checkpointing to the store). The queue is still the store: the control plane creates a `Pending` run, and a
+runner hosting that version claims and executes it. The control plane learns what each runner hosts, and whether
+it is live, only through the registry and heartbeats.
+
+What the runner does not hold is a credential for that store. Under
+[ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md) the control plane owns it exclusively
+and serves the [runner API](../reference/arazzo-runner.openapi.json), so claiming, leasing, checkpointing, and
+pulling executor artifacts are requests it authorises rather than queries a runner makes for itself. A runner
+authenticates with the machine principal it registered under, and every candidate set is intersected server-side
+with the environments an administrator bound that principal to. The sample runners under `samples/arazzo` are
+wired this way, so the two-process demo is a demonstration of the split rather than a description of it.
 
 ```mermaid
 flowchart LR

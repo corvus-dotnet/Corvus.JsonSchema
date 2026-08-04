@@ -3,8 +3,8 @@
 // </copyright>
 
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo.Durability;
-using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
+using Corvus.Text.Json.OpenApi;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -24,31 +24,28 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo.Tests;
 public sealed class RunnerLoopResilienceTests
 {
     [TestMethod]
-    public async Task Dispatch_loop_survives_store_faults_and_keeps_polling()
+    public async Task Dispatch_loop_survives_runner_api_faults_and_keeps_polling()
     {
-        var catalogStore = new ThrowingCatalogStore();
-        var catalog = new SecuredWorkflowCatalog(catalogStore, new StubWaitIndex(), "test");
+        var transport = new ThrowingApiTransport();
         using var service = new WorkflowDispatchService(
-            new StubStateStore(),
-            new StubAuthorizations(),
-            catalog,
-            resumer: null!, // never reached: the catalog read faults first, and the loop must absorb that
+            new ArazzoRunnerClient(transport),
+            resumer: null!, // never reached: listing the hosted versions faults first, and the loop must absorb that
             new RunnerOptions("runner-under-test", "development"),
             NullLogger<WorkflowDispatchService>.Instance);
 
         await service.StartAsync(CancellationToken.None);
 
-        // The poll interval is 2s and the first cycle runs immediately: two observed catalog reads prove the
+        // The poll interval is 2s and the first cycle runs immediately: two observed requests prove the
         // loop survived the first fault and came back for another cycle.
         DateTime deadline = DateTime.UtcNow.AddSeconds(15);
-        while (catalogStore.Queries < 2 && DateTime.UtcNow < deadline)
+        while (transport.Requests < 2 && DateTime.UtcNow < deadline)
         {
             await Task.Delay(50);
         }
 
         Task executeTask = service.ExecuteTask.ShouldNotBeNull();
-        executeTask.IsFaulted.ShouldBeFalse($"a transient store fault must not fault (and so stop) the runner host: {executeTask.Exception}");
-        catalogStore.Queries.ShouldBeGreaterThanOrEqualTo(2, "the dispatch loop must keep polling through transient store faults");
+        executeTask.IsFaulted.ShouldBeFalse($"a transient runner-API fault must not fault (and so stop) the runner host: {executeTask.Exception}");
+        transport.Requests.ShouldBeGreaterThanOrEqualTo(2, "the dispatch loop must keep polling through transient runner-API faults");
 
         await service.StopAsync(CancellationToken.None);
     }
@@ -89,78 +86,46 @@ public sealed class RunnerLoopResilienceTests
         await service.StopAsync(CancellationToken.None);
     }
 
-    private sealed class ThrowingCatalogStore : IWorkflowCatalogStore
+    /// <summary>
+    /// A runner-API transport whose every request fails the way a control plane briefly out of reach does. The runner
+    /// now reaches the store only through that API, so this is where a transient infrastructure fault arrives, and the
+    /// loop has to absorb it exactly as it absorbed a store read timing out.
+    /// </summary>
+    private sealed class ThrowingApiTransport : IApiTransport
     {
-        private int queries;
+        private int requests;
 
-        public int Queries => this.queries;
+        public int Requests => this.requests;
 
-        public ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken)
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => this.Fail<TResponse>();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => this.Fail<TResponse>();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => this.Fail<TResponse>();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => this.Fail<TResponse>();
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        private ValueTask<TResponse> Fail<TResponse>()
+            where TResponse : struct, IApiResponse<TResponse>
         {
-            this.queries++;
+            Interlocked.Increment(ref this.requests);
             throw new TimeoutException("Timeout during reading attempt");
         }
-
-        public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ReadOnlyMemory<byte>?> GetPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ReadOnlyMemory<byte>?> GetDocumentAsync(string baseWorkflowId, int versionNumber, string documentName, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<bool> UpdatePackageAsync(string baseWorkflowId, int versionNumber, ReadOnlyMemory<byte> updatedPackage, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask DeleteManyAsync(IReadOnlyList<CatalogVersionRef> versions, CancellationToken cancellationToken) => throw new NotSupportedException();
-    }
-
-    private sealed class StubWaitIndex : IWorkflowWaitIndex
-    {
-        public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => throw new NotSupportedException();
-    }
-
-    private sealed class StubStateStore : IWorkflowStateStore, IWorkflowDispatchIndex, IWorkflowWaitIndex
-    {
-        public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => throw new NotSupportedException();
-    }
-
-    private sealed class StubAuthorizations : IEnvironmentRunnerAuthorizationStore
-    {
-        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> GetAsync(string environment, string runnerId, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private sealed class ThrowingVault : IVaultClient

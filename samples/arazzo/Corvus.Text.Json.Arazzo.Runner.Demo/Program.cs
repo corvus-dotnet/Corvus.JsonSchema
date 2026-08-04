@@ -9,6 +9,7 @@
 // BackgroundServices; the minimal web surface exists only for the §5.4 health probe + Aspire/OTel.
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
@@ -21,6 +22,7 @@ using Corvus.Text.Json.Arazzo.Runner.Demo;
 using Corvus.Text.Json.Arazzo.Samples.Notifications;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 using Corvus.Text.Json.AsyncApi.Nats;
+using Corvus.Text.Json.OpenApi.HttpTransport;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.AppRole;
 
@@ -192,34 +194,52 @@ if (builder.Configuration["Runner:ExecutorTrust:PublicKeyFile"] is { Length: > 0
         new Dictionary<string, string>(StringComparer.Ordinal) { [trustKeyId] = await File.ReadAllTextAsync(trustKeyFile) });
 }
 
-// Machine-principal credentials for this runner's authenticated calls to the control plane — shared by authenticated
-// registration (below) and governed schedule firing (here). Read once; absent any of them (a bare two-process run),
-// both fall back: registration to the store-direct path, and schedule firing stays unwired.
-string? controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"];
-string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
-string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
-string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
+// Machine-principal credentials for this runner's authenticated calls to the control plane (design §16.4) — the runner
+// API, authenticated registration, and governed schedule firing all go out as this one identity. Required: under ADR
+// 0065 the runner reaches the durable store ONLY through the control plane, so a runner that cannot authenticate to it
+// has no way to be given work and should say so at startup rather than poll a queue it will never be offered.
+string controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"]
+    ?? throw new InvalidOperationException("Runner:ControlPlane:BaseUrl (the control plane serving the runner API) is required — run the runner under the AppHost.");
+string runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:BaseUrl (the identity provider issuing this runner's machine-principal token) is required — run the runner under the AppHost.");
+string runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientId (this runner's machine principal) is required — run the runner under the AppHost.");
+string runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientSecret (this runner's machine-principal secret) is required — run the runner under the AppHost.");
 string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
 
+// One authentication provider for every outbound call to the control plane: the runner API below, registration, and
+// schedule firing are all the same machine principal, and the control plane binds this runner's authorization to it.
+var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvider(
+    new HttpClient(),
+    new OAuth2ClientCredentialsOptions
+    {
+        TokenEndpoint = new Uri(ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm)),
+        ClientId = runnerClientId,
+        ClientSecret = runnerClientSecret,
+    });
+
+// The runner API client (ADR 0065) — THE change that retires this runner's store credential for execution. Claiming,
+// leasing, checkpointing, and pulling executor artifacts are now requests the control plane authorises, not queries the
+// runner makes for itself, and it names no environment on any of them: the control plane intersects every candidate set
+// with the environments an administrator bound this machine principal to. The store handles this host still opens are
+// for the surfaces that have no API counterpart yet (registration/heartbeat, source credentials, environments, draft
+// runs, and the verdict consumer below), not for executing catalogued runs.
+var runnerApiTransport = new HttpClientTransport(
+    new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
+    controlPlaneAuthentication);
+var runnerClient = new ArazzoRunnerClient(runnerApiTransport);
+builder.Services.AddSingleton(runnerClient);
+
 // Durable schedules (#896): a schedule is a durable run of the built-in scheduler workflow. When this runner serves
-// schedules and its machine-principal credentials are present, wire the scheduler into the resumer; on each due
-// occurrence it fires the target through the control plane's governed run endpoint (ControlPlaneRunStarter),
-// authenticated as the same machine principal the runner registers under and carrying an idempotency key — so a
-// scheduled start is governed exactly like an operator start and a re-fire after a recycle starts the target once.
+// schedules, wire the scheduler into the resumer; on each due occurrence it fires the target through the control plane's
+// governed run endpoint (ControlPlaneRunStarter), authenticated as the same machine principal the runner registers under
+// and carrying an idempotency key — so a scheduled start is governed exactly like an operator start and a re-fire after
+// a recycle starts the target once.
 ScheduleHostedWorkflow? scheduleWorkflow = null;
-if (options.ServesSchedules
-    && !string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
-    && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
+if (options.ServesSchedules)
 {
-    var runStartAuthentication = new OAuth2ClientCredentialsAuthenticationProvider(
-        new HttpClient(),
-        new OAuth2ClientCredentialsOptions
-        {
-            TokenEndpoint = new Uri(ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm)),
-            ClientId = runnerClientId,
-            ClientSecret = runnerClientSecret,
-        });
-    var runStarter = new ControlPlaneRunStarter(new HttpClient(), runStartAuthentication, controlPlaneBaseUrl, runnerEnvironment);
+    var runStarter = new ControlPlaneRunStarter(new HttpClient(), controlPlaneAuthentication, controlPlaneBaseUrl, runnerEnvironment);
     scheduleWorkflow = new ScheduleHostedWorkflow(runStarter.AsStartHandler(), TimeProvider.System);
 }
 
@@ -229,7 +249,9 @@ if (options.ServesSchedules
 // wiring it here is what makes the separate runner genuinely EXECUTE catalogued runs (it previously only leased them
 // and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer, and the
 // scheduler (when wired) rides the same loops — a schedule run is dispatched, resumed on its due timer, and re-fired.
-var catalogResumerBackend = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow);
+// The executor comes from the runner API too (ADR 0065), so the runner holds no catalog credential either; what it is
+// served is still verified against the manifest signature and the content hash before it is activated.
+var catalogResumerBackend = new HostedWorkflowResumer(new RunnerApiArtifactSource(runnerApiTransport), new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow);
 WorkflowResumer catalogResumer = catalogResumerBackend.AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
@@ -269,23 +291,18 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
     builder.Services.AddHostedService<DraftRunPumpService>();
 }
 
-// Authenticated registration (design §5.5/§16.4): when the control-plane API + this runner's machine-principal credentials
-// are configured (the real topology under the AppHost), the runner registers through the control plane's authenticated HTTP
+// Authenticated registration (design §5.5/§16.4): the runner registers through the control plane's authenticated HTTP
 // endpoint as a Keycloak client-credentials client, so the control plane derives the trusted principal from the token and
-// binds the runner's authorization to it — instead of the runner self-asserting a Pending row into the shared store. Absent
-// any of these (a bare two-process run), the registrar stays null and registration falls back to the store-direct path.
-ControlPlaneRunnerRegistrar? runnerRegistrar = null;
-if (!string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
-    && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
-{
-    runnerRegistrar = new ControlPlaneRunnerRegistrar(
-        new HttpClient(),
-        controlPlaneBaseUrl,
-        runnerEnvironment,
-        ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
-        runnerClientId,
-        runnerClientSecret);
-}
+// binds the runner's authorization to it — instead of the runner self-asserting a Pending row into the shared store. It
+// is the same machine principal the runner API resolves this runner's bindings from, which is what makes an
+// administrator's decision on this registration govern what the runner is subsequently offered.
+var runnerRegistrar = new ControlPlaneRunnerRegistrar(
+    new HttpClient(),
+    controlPlaneBaseUrl,
+    runnerEnvironment,
+    ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
+    runnerClientId,
+    runnerClientSecret);
 
 // The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume). The registration service is
 // constructed explicitly so the optional control-plane registrar (or null) flows in deterministically.

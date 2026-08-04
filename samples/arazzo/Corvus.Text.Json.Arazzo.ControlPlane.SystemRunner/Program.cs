@@ -13,6 +13,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
@@ -21,6 +22,7 @@ using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Runner;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 using Corvus.Text.Json.AsyncApi.Nats;
+using Corvus.Text.Json.OpenApi.HttpTransport;
 using Npgsql;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.AppRole;
@@ -161,9 +163,42 @@ if (builder.Configuration["Runner:ExecutorTrust:PublicKeyFile"] is { Length: > 0
         new Dictionary<string, string>(StringComparer.Ordinal) { [trustKeyId] = await File.ReadAllTextAsync(trustKeyFile) });
 }
 
+// This runner's machine-principal credentials (§16.4). Required, because under ADR 0065 the system runner is given work
+// through the runner API like any other: it runs the control plane's own workflows, but it is a separate process and is
+// trusted as one.
+string runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:BaseUrl (the identity provider issuing this runner's machine-principal token) is required — the AppHost injects it.");
+string runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientId (this runner's machine principal) is required — the AppHost injects it.");
+string runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientSecret (this runner's machine-principal secret) is required — the AppHost injects it.");
+string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
+
+// One authentication provider for every outbound call to the control plane: the runner API below and registration are
+// the same machine principal, and the control plane binds this runner's authorization to it.
+var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvider(
+    new HttpClient(),
+    new OAuth2ClientCredentialsOptions
+    {
+        TokenEndpoint = new Uri(ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm)),
+        ClientId = runnerClientId,
+        ClientSecret = runnerClientSecret,
+    });
+
+// The runner API client (ADR 0065): claiming, leasing, checkpointing, and pulling executor artifacts go through the
+// control plane rather than the store. The system runner is not exempt — it executes the platform's own workflows, but
+// as a distinct process with its own principal, and the whole point of the split is that a process is trusted by what it
+// authenticates as rather than by what it happens to run.
+var runnerApiTransport = new HttpClientTransport(
+    new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
+    controlPlaneAuthentication);
+var runnerClient = new ArazzoRunnerClient(runnerApiTransport);
+builder.Services.AddSingleton(runnerClient);
+
 // Catalogued-run execution: claim a Pending access-approval run and re-enter its baked executor through the real
 // HostedWorkflowResumer, running it against the binder above. The dispatch/resume loops consume it as their resumer.
-var catalogResumerBackend = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder);
+// The executor is pulled through the runner API too, so no catalog credential is needed to load it.
+var catalogResumerBackend = new HostedWorkflowResumer(new RunnerApiArtifactSource(runnerApiTransport), new WorkflowExecutorLoader(verifier: executorVerifier), binder);
 WorkflowResumer catalogResumer = catalogResumerBackend.AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
@@ -183,23 +218,15 @@ NatsMessageTransport decisionsTransport = await NatsMessageTransport.CreateAsync
 
 // Authenticated registration (§5.5/§16.4): the system runner registers through the control plane's authenticated HTTP
 // endpoint as its arazzo-access-approval machine principal (client-credentials), so the control plane binds its
-// authorization to the trusted principal rather than accepting a self-asserted store row. Absent the config (a bare
-// run), the registrar stays null and registration falls back to the store-direct path.
-ControlPlaneRunnerRegistrar? runnerRegistrar = null;
-string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
-string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
-string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl) && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
-{
-    string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
-    runnerRegistrar = new ControlPlaneRunnerRegistrar(
-        new HttpClient(),
-        controlPlaneBaseUrl,
-        runnerEnvironment,
-        ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
-        runnerClientId,
-        runnerClientSecret);
-}
+// authorization to the trusted principal rather than accepting a self-asserted store row. It is the same principal the
+// runner API resolves this runner's bindings from.
+var runnerRegistrar = new ControlPlaneRunnerRegistrar(
+    new HttpClient(),
+    controlPlaneBaseUrl,
+    runnerEnvironment,
+    ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
+    runnerClientId,
+    runnerClientSecret);
 
 builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<IRunnerRegistry>(),

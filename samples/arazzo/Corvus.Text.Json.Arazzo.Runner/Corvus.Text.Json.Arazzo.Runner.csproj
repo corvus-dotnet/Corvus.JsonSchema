@@ -18,6 +18,7 @@
        the composition root — sources, environment, consumers — differs between runners. -->
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Runner.Client\Corvus.Text.Json.Arazzo.Durability.Runner.Client.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />

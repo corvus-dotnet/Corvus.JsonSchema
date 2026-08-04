@@ -21,11 +21,14 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Runner;
 using Corvus.Text.Json.Arazzo.ServerlessRunner.Demo;
+using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
+using Corvus.Text.Json.OpenApi.HttpTransport;
 using Npgsql;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -138,28 +141,48 @@ var serverlessBackend = new ServerlessRunExecutionBackend(
     new Uri(checkpointBaseUrl, UriKind.Absolute));
 builder.Services.AddSingleton<WorkflowResumer>(serverlessBackend.AsResumer());
 
-// Authenticated registration (design §5.5/§16.4): when the control-plane API + this runner's machine-principal
-// credentials are configured (the real topology under the AppHost), the runner registers through the control plane's
-// authenticated HTTP endpoint as its Keycloak client-credentials client, so the control plane derives the trusted
-// principal from the token and binds the runner's authorization to it. Absent any of these (a bare two-process run), the
-// registrar stays null and registration falls back to the store-direct path (an administrator then authorizes it).
-string? controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"];
-string? runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"];
-string? runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"];
-string? runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"];
+// This runner's machine-principal credentials (design §16.4), required for the same reason as on every other runner:
+// under ADR 0065 it is given work through the runner API, so being unable to authenticate to the control plane means
+// being unable to be given work at all.
+string controlPlaneBaseUrl = builder.Configuration["Runner:ControlPlane:BaseUrl"]
+    ?? throw new InvalidOperationException("Runner:ControlPlane:BaseUrl (the control plane serving the runner API) is required — the AppHost injects it.");
+string runnerKeycloakBaseUrl = builder.Configuration["Runner:Keycloak:BaseUrl"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:BaseUrl (the identity provider issuing this runner's machine-principal token) is required — the AppHost injects it.");
+string runnerClientId = builder.Configuration["Runner:Keycloak:ClientId"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientId (this runner's machine principal) is required — the AppHost injects it.");
+string runnerClientSecret = builder.Configuration["Runner:Keycloak:ClientSecret"]
+    ?? throw new InvalidOperationException("Runner:Keycloak:ClientSecret (this runner's machine-principal secret) is required — the AppHost injects it.");
 string runnerRealm = builder.Configuration["Runner:Keycloak:Realm"] ?? "arazzo";
-ControlPlaneRunnerRegistrar? runnerRegistrar = null;
-if (!string.IsNullOrWhiteSpace(controlPlaneBaseUrl) && !string.IsNullOrWhiteSpace(runnerKeycloakBaseUrl)
-    && !string.IsNullOrWhiteSpace(runnerClientId) && !string.IsNullOrWhiteSpace(runnerClientSecret))
-{
-    runnerRegistrar = new ControlPlaneRunnerRegistrar(
-        new HttpClient(),
-        controlPlaneBaseUrl,
-        runnerEnvironment,
-        ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
-        runnerClientId,
-        runnerClientSecret);
-}
+
+// One authentication provider for every outbound call to the control plane: the runner API and registration are the
+// same machine principal, and the control plane binds this runner's authorization to it.
+var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvider(
+    new HttpClient(),
+    new OAuth2ClientCredentialsOptions
+    {
+        TokenEndpoint = new Uri(ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm)),
+        ClientId = runnerClientId,
+        ClientSecret = runnerClientSecret,
+    });
+
+// The runner API client (ADR 0065): claims, leases, and checkpoints go through the control plane rather than the store.
+// This runner never loads an executor itself — it invokes the version's deployed function — so it pulls no artifacts;
+// what it needs from the API is the queue, and the hosted-version listing that tells it which versions it may claim.
+var runnerClient = new ArazzoRunnerClient(new HttpClientTransport(
+    new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
+    controlPlaneAuthentication));
+builder.Services.AddSingleton(runnerClient);
+
+// Authenticated registration (design §5.5/§16.4): the runner registers through the control plane's authenticated HTTP
+// endpoint as its Keycloak client-credentials client, so the control plane derives the trusted principal from the token
+// and binds the runner's authorization to it. It is the same principal the runner API resolves its bindings from.
+var runnerRegistrar = new ControlPlaneRunnerRegistrar(
+    new HttpClient(),
+    controlPlaneBaseUrl,
+    runnerEnvironment,
+    ControlPlaneRunnerRegistrar.TokenEndpointFor(runnerKeycloakBaseUrl, runnerRealm),
+    runnerClientId,
+    runnerClientSecret);
 
 // The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume). The registration service is
 // constructed explicitly so the optional control-plane registrar (or null) flows in deterministically; the dispatch
