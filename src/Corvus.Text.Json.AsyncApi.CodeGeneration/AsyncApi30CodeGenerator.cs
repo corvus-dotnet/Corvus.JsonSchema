@@ -2299,6 +2299,11 @@ public sealed class AsyncApi30CodeGenerator
         // Core that receives the (retained) UTF-8 channel bytes. Static channels are unchanged.
         bool dynamicNoParams = op.IsDynamicAddress;
 
+        // A channel or operation binding travels to the transport as a MessageContext, so a consumer is
+        // subscribed with the protocol-specific metadata its specification declared. Built once here rather
+        // than at each subscribe site: the body below serves both the async and the synchronous StartAsync.
+        bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
+
         // Local function emitting the subscribe body. For the dynamic case the channel bytes have
         // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
         void EmitStartBody(bool async)
@@ -2306,19 +2311,37 @@ public sealed class AsyncApi30CodeGenerator
             string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
             string keyword = async ? "await " : "return ";
             string suffix = async ? ".ConfigureAwait(false)" : string.Empty;
+            string contextArg = hasBindingContext ? ", context" : string.Empty;
+            if (hasBindingContext)
+            {
+                w.WriteLine("MessageContext context = new()");
+                w.OpenBrace();
+                if (op.ChannelBindingsJson is not null)
+                {
+                    w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
+                }
+
+                if (op.OperationBindingsJson is not null)
+                {
+                    w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
+                }
+
+                w.CloseBraceWithSemicolon();
+                w.WriteLine();
+            }
             if (IsResponderOperation(op))
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
+                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
             else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
+                w.WriteLine($"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
             else
             {
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
+                w.WriteLine($"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
         }
 

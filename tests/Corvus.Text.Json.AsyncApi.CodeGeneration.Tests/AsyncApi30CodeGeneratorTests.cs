@@ -2235,6 +2235,23 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ConsumerWithOperationBindings_PassesBindingContextToTransport()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "nats-operation-bindings.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("NatsBindings", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("SubscribeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        StringAssert.Contains(consumer.Content, "MessageContext context = new()");
+        StringAssert.Contains(consumer.Content, "OperationBindingsJson = OperationBindingsBytes");
+        StringAssert.Contains(consumer.Content, "this.HandleMessageAsync, context, cancellationToken");
+    }
+
+    [TestMethod]
     public void Compile_ConsumerDynamicMultiMessage_GeneratedCodeCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
