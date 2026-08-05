@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class MalformedDataTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+        "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
     [TestMethod]
     public async Task DeliverRaw_MalformedJson_PolicyDeadLetter_SendsToDeadLetter()
@@ -143,7 +143,7 @@ public class MalformedDataTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, dlPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Valid JSON but lumens is a string — type mismatch fails validation
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -166,7 +166,7 @@ public class MalformedDataTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Detailed, dlPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // lumens value exceeds no constraint (minimum:0) but type is wrong
         await transport.DeliverAsync<LightMeasuredPayload>(
