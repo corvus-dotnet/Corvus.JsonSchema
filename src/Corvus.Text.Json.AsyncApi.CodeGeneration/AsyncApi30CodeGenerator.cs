@@ -1032,10 +1032,8 @@ public sealed class AsyncApi30CodeGenerator
         foreach (var paramProp in channel.ParametersValue.EnumerateObject())
         {
             string paramName = paramProp.Name;
-            AsyncApiDocument.Parameter param = paramProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchParameter: static (in AsyncApiDocument.Parameter p) => p,
-                defaultMatch: static (in AsyncApiDocument.Parameters.AdditionalPropertiesEntity _) => default);
+            JsonElement resolvedParameter = ResolveRef(paramProp.Value, doc, resolver);
+            AsyncApiDocument.Parameter param = resolvedParameter;
 
             if (param.IsUndefined())
             {
