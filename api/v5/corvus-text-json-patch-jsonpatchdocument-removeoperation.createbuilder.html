@@ -112,6 +112,10 @@
 <td></td>
 </tr>
 <tr>
+<td><a href="#createbuilder-jsonworkspace-jsonpatchdocument-removeoperation-source-tcontext-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt;, int)</a></td>
+<td></td>
+</tr>
+<tr>
 <td><a href="#createbuilder-jsonworkspace-int-int">CreateBuilder(JsonWorkspace, int, int)</a></td>
 <td></td>
 </tr>
@@ -185,8 +189,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-int-int">CreateBuilder(JsonWorkspace, int, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, int initialCapacity, int initialValueBufferSize)
+<h2 id="createbuilder-jsonworkspace-jsonpatchdocument-removeoperation-source-tcontext-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt;, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt; value, int initialCapacity)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -204,12 +208,12 @@
 <td></td>
 </tr>
 <tr>
-<td><code>initialCapacity</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td><em>(optional)</em></td>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-source.html"><code>JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt;</code></a></td>
+<td></td>
 </tr>
 <tr>
-<td><code>initialValueBufferSize</code></td>
+<td><code>initialCapacity</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
@@ -237,8 +241,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-jsonpatchdocument-removeoperation-builder-build-int-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.RemoveOperation.Builder.Build, int, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPatchDocument.RemoveOperation.Builder.Build value, int initialCapacity, int initialValueBufferSize)
+<h2 id="createbuilder-jsonworkspace-int-int">CreateBuilder(JsonWorkspace, int, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, int initialCapacity, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -253,11 +257,6 @@
 <tr>
 <td><code>workspace</code></td>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
-<td></td>
-</tr>
-<tr>
-<td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-builder-build.html"><code>JsonPatchDocument.RemoveOperation.Builder.Build</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -294,8 +293,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-tcontext-jsonpatchdocument-removeoperation-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt;, int, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in TContext context, in JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt; value, int initialCapacity, int initialValueBufferSize)
+<h2 id="createbuilder-jsonworkspace-jsonpatchdocument-removeoperation-builder-build-int-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.RemoveOperation.Builder.Build, int, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPatchDocument.RemoveOperation.Builder.Build value, int initialCapacity, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -313,13 +312,8 @@
 <td></td>
 </tr>
 <tr>
-<td><code>context</code></td>
-<td><code>TContext</code></td>
-<td></td>
-</tr>
-<tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-builder-build.html"><code>JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-builder-build.html"><code>JsonPatchDocument.RemoveOperation.Builder.Build</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -356,8 +350,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-jsonpointer-source-int">CreateBuilder(JsonWorkspace, JsonPointer.Source, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPointer.Source path, int initialCapacity)
+<h2 id="createbuilder-jsonworkspace-tcontext-jsonpatchdocument-removeoperation-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt;, int, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in TContext context, in JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt; value, int initialCapacity, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -375,12 +369,22 @@
 <td></td>
 </tr>
 <tr>
-<td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>JsonPointer.Source</code></a></td>
+<td><code>context</code></td>
+<td><code>TContext</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-builder-build.html"><code>JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt;</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>initialCapacity</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td><em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>initialValueBufferSize</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
@@ -408,8 +412,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace">CreateBuilder(JsonWorkspace)</h2>
-<pre><code class="language-csharp">public JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace)
+<h2 id="createbuilder-jsonworkspace-jsonpointer-source-int">CreateBuilder(JsonWorkspace, JsonPointer.Source, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPointer.Source path, int initialCapacity)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -426,11 +430,63 @@
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
 <td></td>
 </tr>
+<tr>
+<td><code>path</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>JsonPointer.Source</code></a></td>
+<td></td>
+</tr>
+<tr>
+<td><code>initialCapacity</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td><em>(optional)</em></td>
+</tr>
 </tbody>
 </table>
 <h3 id="returns-5">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt;</code></a></p>
 <h2 id="applies-to-5">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="createbuilder-jsonworkspace">CreateBuilder(JsonWorkspace)</h2>
+<pre><code class="language-csharp">public JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt; CreateBuilder(JsonWorkspace workspace)
+</code></pre>
+<h3 id="parameters-6">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-6">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;JsonPatchDocument.RemoveOperation.Mutable&gt;</code></a></p>
+<h2 id="applies-to-6">Applies To</h2>
 <table>
 <thead>
 <tr>

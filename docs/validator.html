@@ -157,6 +157,12 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -516,6 +522,12 @@ JsonSchema schema2 = JsonSchema.FromFile(&quot;person.json&quot;);
 <li><strong>Cache</strong> the pipeline for subsequent validations against the same schema</li>
 </ol>
 <p>This means the Validator produces the exact same validation logic as build-time source generation — the only difference is that compilation happens at runtime.</p>
+<h3 id="hosting-requirement-preserve-the-compilation-context">Hosting requirement: preserve the compilation context</h3>
+<p>Because compilation happens at runtime, the Roslyn compiler reads the host application's reference assemblies and preprocessor symbols from its <code>.deps.json</code>. Any application or test project that hosts the Validator must set <code>PreserveCompilationContext</code> in its project file. Without it, the first validation throws, reporting that the generated validator does not implement its expected interface, because the runtime compilation ran against an incomplete reference set.</p>
+<pre><code class="language-xml">&lt;PropertyGroup&gt;
+  &lt;PreserveCompilationContext&gt;true&lt;/PreserveCompilationContext&gt;
+&lt;/PropertyGroup&gt;
+</code></pre>
 <h2 id="supported-json-schema-drafts">Supported JSON Schema Drafts</h2>
 <table>
 <thead>

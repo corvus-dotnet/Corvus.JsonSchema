@@ -98,14 +98,14 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1016560942dce21c2839a2f495db55e0e8d6687a/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L21">IJsonDocument.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/d7c5787dea6f4bb613baaf1061e754bf7b7c1671/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L21">IJsonDocument.cs</a></p>
 <p>The interface explicitly implemented by JSON Document providers for internal use only.</p>
 <pre><code class="language-csharp">public interface IJsonDocument : IDisposable
 </code></pre>
 <h2 id="implements">Implements</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
 <h2 id="implemented-by">Implemented By</h2>
-<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.html"><code>DefaultValueJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedstringjsondocument-t.html"><code>FixedStringJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.html"><code>ParsedJsonDocumentBuilder</code></a></p>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.html"><code>DefaultValueJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedstringjsondocument-t.html"><code>FixedStringJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacecreateddocument.html"><code>IWorkspaceCreatedDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.html"><code>ParsedJsonDocumentBuilder</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-valuelessjsondocument-t.html"><code>ValuelessJsonDocument&lt;T&gt;</code></a></p>
 <h2 id="properties">Properties</h2>
 <table>
 <thead>
@@ -157,12 +157,20 @@
 <td>Appends the element at the specified index to the metadata database.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.appendlocalelementrowsrebased.html#appendlocalelementrowsrebased-int-metadatadb-int">AppendLocalElementRowsRebased(int, MetadataDb, int)</a></td>
+<td>Appends the element's complete row run to the given metadata database with every row's location rebased by <code>locationDelta</code> (property-map indexes normalized to plain lengths) — the row-copy half of...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.buildrentedmetadatadb.html#buildrentedmetadatadb-int-jsonworkspace-byte">BuildRentedMetadataDb(int, JsonWorkspace, byte[])</a></td>
 <td>Builds a rented metadata database for the specified parent document index.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.cloneelement.html">CloneElement</a></td>
 <td>Clones the element at the specified index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.cloneelementasbuilder.html#cloneelementasbuilder-int-jsonworkspace">CloneElementAsBuilder(int, JsonWorkspace)</a></td>
+<td>Creates a standalone copy of the element at the specified index as a new document owned by <code>workspace</code>.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.ensurepropertymap.html#ensurepropertymap-int">EnsurePropertyMap(int)</a></td>
@@ -263,6 +271,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.tryformat.html">TryFormat</a></td>
 <td>Formats the value to the provided destination span according to the specified format and format provider.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetcontiguouslocalelement.html#trygetcontiguouslocalelement-int-readonlymemory-byte-int">TryGetContiguousLocalElement(int, ReadOnlyMemory&lt;byte&gt;, int)</a></td>
+<td>Attempts to expose the element at the specified index as a contiguous, fully-local segment: its complete raw UTF-8 (including any enclosing quotes or braces) and the document-text offset that segme...</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetline.html">TryGetLine</a></td>

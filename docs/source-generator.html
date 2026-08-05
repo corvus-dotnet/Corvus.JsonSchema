@@ -157,6 +157,12 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -611,6 +617,21 @@ public readonly partial struct PhoneNumber;
 <td>Stale generated code</td>
 <td>Incremental cache not invalidated</td>
 <td>Clean and rebuild (<code>dotnet clean &amp;&amp; dotnet build</code>)</td>
+</tr>
+<tr>
+<td>Cross-assembly type mismatch on a generated type (<code>CS0535</code>, or a conversion that should exist but does not)</td>
+<td>Each generation root emits its own copy of the primitive types; there is no shared base <code>JsonString</code>, so the &quot;same&quot; concrete type from another assembly is a distinct type</td>
+<td>Fully-qualify the generated type at the cross-assembly seam rather than assuming a common base type</td>
+</tr>
+<tr>
+<td><code>CS0029</code> on a model type named <code>Source</code></td>
+<td>The generator emits a nested builder <code>ref struct</code> named <code>Source</code> on each type, which collides with a model of the same name</td>
+<td>Do not name a <code>[JsonSchemaTypeGenerator]</code> model <code>Source</code></td>
+</tr>
+<tr>
+<td><code>CS0246</code> for the shared primitive types</td>
+<td>A generation-root model was declared in a leaf namespace, so the shared primitives were emitted into that leaf instead of the assembly root</td>
+<td>Declare a generation-root model in the assembly's root namespace, even when its file sits in a subfolder</td>
 </tr>
 </tbody>
 </table>

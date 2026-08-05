@@ -226,6 +226,11 @@
 <td>Represents a mutable JSON element of type <code>T</code>.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacecreateddocument.html">IWorkspaceCreatedDocument</a></td>
+<td>interface</td>
+<td>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a> that records the workspace which created it, so that it is disposed only by its creator — never by...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html">IWorkspaceManagedDocument</a></td>
 <td>interface</td>
 <td>Marker interface for documents whose lifecycle is managed by a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a>. When a workspace is disposed or reset, all registered documents implem...</td>
@@ -349,6 +354,11 @@
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-utf8urikind.html">Utf8UriKind</a></td>
 <td>enum</td>
 <td>Defines the kind of URI, controlling whether absolute or relative URIs are used.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-valuelessjsondocument-t.html">ValuelessJsonDocument<T></a></td>
+<td>class</td>
+<td>Represents one of the three &quot;valueless&quot; JSON literals — <code>true</code>, <code>false</code>, and <code>null</code> — whose value is fully determined by its token type and which therefore need no backing buffer at all.</td>
 </tr>
 </tbody>
 </table>

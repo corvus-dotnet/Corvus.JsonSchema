@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonElement, CancellationToken)</a></td>
+<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonworkspace-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonWorkspace, JsonElement, CancellationToken)</a></td>
 <td>Sends a request message and waits for a correlated reply.</td>
 </tr>
 <tr>
-<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonElement, CancellationToken)</a></td>
+<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonworkspace-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonWorkspace, JsonElement, CancellationToken)</a></td>
 <td>Sends a request message and waits for a correlated reply, with protocol-specific metadata.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonElement, CancellationToken)</h2>
+<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonworkspace-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonWorkspace, JsonElement, CancellationToken)</h2>
 <p>Sends a request message and waits for a correlated reply.</p>
-<pre><code class="language-csharp">public abstract ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public abstract ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, JsonWorkspace workspace, JsonElement headers, CancellationToken cancellationToken)
     where TRequest : struct, IJsonElement&lt;TRequest&gt;
     where TReply : struct, IJsonElement&lt;TReply&gt;
 </code></pre>
@@ -173,6 +173,11 @@
 <td>A correlation identifier linking request to reply, as UTF-8 bytes. The memory must remain valid until this method completes. For GUIDs, use <code>Guid.TryFormat(Span&lt;byte&gt;, out _, &quot;D&quot;)</code> to format directly to a <code>byte\[36\]</code> without allocating an intermediate string.</td>
 </tr>
 <tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>Takes ownership of the parsed reply's payload and headers documents. The returned reply is a view over documents this workspace owns, so it stays valid until the workspace is disposed - dispose the workspace once the reply is no longer needed (a generated caller threads the run's workspace).</td>
+</tr>
+<tr>
 <td><code>headers</code></td>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. <em>(optional)</em></td>
@@ -186,7 +191,7 @@
 </table>
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt;</code></a></p>
-<p>The reply payload and headers.</p>
+<p>The reply payload and headers, owned by <code>workspace</code>.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
@@ -203,9 +208,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonElement, CancellationToken)</h2>
+<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonworkspace-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonWorkspace, JsonElement, CancellationToken)</h2>
 <p>Sends a request message and waits for a correlated reply, with protocol-specific metadata.</p>
-<pre><code class="language-csharp">public virtual ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, in MessageContext context, JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public virtual ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, in MessageContext context, JsonWorkspace workspace, JsonElement headers, CancellationToken cancellationToken)
     where TRequest : struct, IJsonElement&lt;TRequest&gt;
     where TReply : struct, IJsonElement&lt;TReply&gt;
 </code></pre>
@@ -264,6 +269,11 @@
 <td>The message context containing bindings and content type.</td>
 </tr>
 <tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>Takes ownership of the parsed reply's payload and headers documents; dispose it once the reply is no longer needed.</td>
+</tr>
+<tr>
 <td><code>headers</code></td>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. <em>(optional)</em></td>
@@ -277,7 +287,7 @@
 </table>
 <h3 id="returns-1">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt;</code></a></p>
-<p>The reply payload and headers.</p>
+<p>The reply payload and headers, owned by <code>workspace</code>.</p>
 <h2 id="applies-to-1">Applies To</h2>
 <table>
 <thead>

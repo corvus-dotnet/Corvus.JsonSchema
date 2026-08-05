@@ -157,6 +157,12 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -1184,6 +1190,20 @@ await producer.PublishTurnOnOffAsync(
 // Wire: publishes to &quot;smartylighting.streetlights.1.0.action.lamp-42.turn.on&quot;
 </code></pre>
 <p>The generated code constructs the channel address from the template using zero-allocation UTF-8 byte manipulation with pooled buffers — no string concatenation or allocation on the hot path.</p>
+<h3 id="consumers">Consumers</h3>
+<p>A consumer for a parameterised channel takes the same parameters on <code>StartAsync</code>, and subscribes to the address they compose:</p>
+<pre><code class="language-csharp">await using ReceiveLightMeasurementConsumer consumer = new(transport, handler);
+
+// Subscribes to &quot;smartylighting.streetlights.1.0.action.lamp-42.lighting.measured&quot;
+await consumer.StartAsync(streetlightId: &quot;lamp-42&quot;);
+</code></pre>
+<p>A <code>ReadOnlySpan&lt;char&gt;</code> overload sits beneath the <code>string</code> one, so a caller that already holds a span does not create a string just to have it measured and copied:</p>
+<pre><code class="language-csharp">await consumer.StartAsync(streetlightId: idSpan);
+</code></pre>
+<p>The address is composed the same way the producer composes its own: the template is split when the code is generated, so its literal parts are <code>u8</code> literals and only the parameter values are transcoded, filled once into the array the subscription retains. The dead-letter address is built from those same bytes rather than by concatenating a second string.</p>
+<blockquote>
+<p><strong>Before 5.3.0</strong> a consumer for a parameterised channel had no parameters on <code>StartAsync</code> and subscribed to the template <em>literally</em>, placeholder and all — so it listened on a channel no publisher ever wrote to. Supplying the parameters is therefore a breaking change with a fix inside it: the call that compiled before was subscribing to nothing real.</p>
+</blockquote>
 <h2 id="message-headers">Message Headers</h2>
 <p>When an AsyncAPI message defines a <code>headers</code> schema (directly or via message traits), the generated code produces typed header structures. Headers provide metadata about the message — correlation IDs, trace context, content versioning — separate from the payload.</p>
 <h3 id="defining-headers-in-the-spec">Defining Headers in the Spec</h3>
@@ -1385,6 +1405,35 @@ foreach (var item in reply.Results.EnumerateArray())
 }
 </code></pre>
 <p>The extension is intentionally explicit. The generator does not infer request/reply pairs from matching <code>correlationId</code> values because that is ambiguous in real-world 2.6 documents.</p>
+<h3 id="responder-requestreply-receive">Responder (request/reply receive)</h3>
+<p>The methods above are the <em>requester</em> half of request/reply (send a request, await the reply). The <em>responder</em> half — receive a request and send back a correlated reply — is modelled by a <strong>receive</strong> operation that declares a <code>reply</code>. For these operations the generator produces a reply-returning handler and a consumer that publishes the reply for you.</p>
+<p>The handler returns the reply payload instead of <code>void</code>:</p>
+<pre><code class="language-csharp">public sealed class CalculateHandler : ICalculateHandler
+{
+    // A receive operation with a reply: return the reply payload; the consumer publishes it.
+    public ValueTask&lt;CalculateResponse&gt; HandleCalculateRequestAsync(
+        CalculateRequest payload,
+        CancellationToken cancellationToken = default)
+    {
+        int sum = payload.A + payload.B;
+        return ValueTask.FromResult(new CalculateResponse.Source((ref CalculateResponse.Builder b) =&gt;
+        {
+            b.Create(result: sum);
+        }));
+    }
+}
+</code></pre>
+<p>The generated consumer subscribes through the transport's responder primitive:</p>
+<pre><code class="language-csharp">ValueTask SubscribeReplyAsync&lt;TRequest, TReply&gt;(
+    ReadOnlyMemory&lt;byte&gt; channelUtf8,
+    Func&lt;TRequest, JsonElement, CancellationToken, ValueTask&lt;TReply&gt;&gt; handler,
+    CancellationToken cancellationToken = default)
+    where TRequest : struct, IJsonElement&lt;TRequest&gt;
+    where TReply : struct, IJsonElement&lt;TReply&gt;;
+</code></pre>
+<p>The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same <code>CorrelationId</code>/<code>ReplyTo</code> the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.</p>
+<p><strong>Reply ownership.</strong> <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable.</p>
+<p><strong>Implementation status.</strong> <code>SubscribeReplyAsync</code> is a default interface member that throws <code>NotSupportedException</code>, so a transport opts in by overriding it. The in-memory testing transport implements a full in-process round-trip: a <code>RequestAsync</code> call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, <code>RequestAsync</code> parks the request for the test helper <code>CompleteRequest</code>, as before). The broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) inherit the default until responder support is implemented for each.</p>
 <h2 id="bindings">Bindings</h2>
 <p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via <code>MessageContext</code>:</p>
 <table>

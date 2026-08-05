@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1016560942dce21c2839a2f495db55e0e8d6687a/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.cs#L26">JsonDocumentBuilder.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/d7c5787dea6f4bb613baaf1061e754bf7b7c1671/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.cs#L26">JsonDocumentBuilder.cs</a></p>
 <p>A mutable JSON document builder that provides functionality to construct and modify JSON documents.</p>
-<pre><code class="language-csharp">public sealed class JsonDocumentBuilder&lt;T&gt; : JsonDocument, IMutableJsonDocument, IWorkspaceManagedDocument, IJsonDocument, IDisposable
+<pre><code class="language-csharp">public sealed class JsonDocumentBuilder&lt;T&gt; : JsonDocument, IMutableJsonDocument, IWorkspaceManagedDocument, IJsonDocument, IDisposable, IWorkspaceCreatedDocument
     where T : struct, IMutableJsonElement&lt;T&gt;
 </code></pre>
 <h2 id="type-parameters">Type Parameters</h2>
@@ -121,7 +121,7 @@
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.html"><code>JsonDocument</code></a> → <strong>JsonDocumentBuilder<T></strong></p>
 <h2 id="implements">Implements</h2>
-<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-iworkspacecreateddocument.html"><code>IWorkspaceCreatedDocument</code></a></p>
 <h2 id="properties">Properties</h2>
 <table>
 <thead>
