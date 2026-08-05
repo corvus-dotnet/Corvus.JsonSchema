@@ -125,6 +125,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -139,7 +140,7 @@ public sealed class MqttMessageTransport : IMessageTransport
             : null;
 
         (byte[] rented, int length) = SerializeToRented(in request);
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -152,6 +153,19 @@ public sealed class MqttMessageTransport : IMessageTransport
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeReplyCoreAsync(channel, channelUtf8, handler, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -249,6 +263,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         int length,
         ReadOnlyMemory<byte> correlationIdUtf8,
         string? headersBase64,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
@@ -267,8 +282,9 @@ public sealed class MqttMessageTransport : IMessageTransport
                 await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
             }
 
-            // Publish the request
-            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersBase64, correlationIdUtf8);
+            // Publish the request, advertising the reply topic via the native MQTT 5.0 ResponseTopic
+            // so a Corvus responder (SubscribeReplyAsync) knows where to send the correlated reply.
+            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersBase64, correlationIdUtf8, replyChannel);
             await this.client.PublishAsync(requestMsg, cancellationToken).ConfigureAwait(false);
 
             // Wait for correlated reply
@@ -280,9 +296,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 TReply replyPayload;
                 if (reply.PayloadSegment is { Count: > 0 })
                 {
-                    // Cold path — document not disposed; returned values reference its memory
+                    // Cold path — the caller's workspace owns the returned reply document (disposed with it),
+                    // since the returned value is used after this method returns.
                     ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(
                         reply.PayloadSegment.Array!.AsMemory(reply.PayloadSegment.Offset, reply.PayloadSegment.Count));
+                    workspace.TakeOwnership(replyDoc);
                     replyPayload = replyDoc.RootElement;
                 }
                 else
@@ -291,6 +309,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 }
 
                 ParsedJsonDocument<JsonElement>? headersDoc = DecodeHeadersDocument(reply);
+                if (headersDoc is not null)
+                {
+                    workspace.TakeOwnership(headersDoc);
+                }
+
                 JsonElement replyHeaders = headersDoc?.RootElement ?? default;
                 return (replyPayload, replyHeaders);
             }
@@ -360,6 +383,26 @@ public sealed class MqttMessageTransport : IMessageTransport
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
         this.handlers[channel] = (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+
+        this.options.Heartbeat?.Start(channel, "mqtt");
+
+        MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
+            .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
+            .Build();
+
+        await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string dlChannel = channel + this.options.DeadLetterSuffix;
+        this.handlers[channel] = (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
 
         this.options.Heartbeat?.Start(channel, "mqtt");
 
@@ -442,7 +485,8 @@ public sealed class MqttMessageTransport : IMessageTransport
         byte[] rented,
         int length,
         string? headersBase64,
-        ReadOnlyMemory<byte> correlationIdUtf8)
+        ReadOnlyMemory<byte> correlationIdUtf8,
+        string? responseTopic = null)
     {
         MqttApplicationMessage message = new()
         {
@@ -451,6 +495,7 @@ public sealed class MqttMessageTransport : IMessageTransport
             QualityOfServiceLevel = this.options.QualityOfServiceLevel,
             Retain = this.options.Retain,
             ContentType = "application/json",
+            ResponseTopic = responseTopic,
         };
 
         if (headersBase64 is not null)
@@ -615,6 +660,191 @@ public sealed class MqttMessageTransport : IMessageTransport
                             if (payloadElement.ValueKind != JsonValueKind.Undefined)
                             {
                                 (rented, length) = SerializeToRented(in payloadElement);
+                            }
+                            else
+                            {
+                                rented = [];
+                                length = 0;
+                            }
+
+                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToBase64String(in headers)
+                                : null;
+
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
+                        }
+                    }
+                    else if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Handler);
+                        await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Handler);
+                    }
+                }
+            }
+        }
+    }
+
+    private async ValueTask DispatchToResponderAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        string deadLetterChannel,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MqttApplicationMessage message,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        this.options.Heartbeat?.Tick(channel, "mqtt");
+
+        ParsedJsonDocument<TRequest> requestDoc;
+        try
+        {
+            ArraySegment<byte> payloadSegment = message.PayloadSegment;
+            ReadOnlyMemory<byte> payloadMemory = payloadSegment.Array is null
+                ? ReadOnlyMemory<byte>.Empty
+                : payloadSegment.Array.AsMemory(payloadSegment.Offset, payloadSegment.Count);
+            requestDoc = ParsedJsonDocument<TRequest>.Parse(payloadMemory);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+            if (action == MessageErrorAction.DeadLetter)
+            {
+                try
+                {
+                    await this.DeadLetterRawAsync(deadLetterChannel, channel, message.PayloadSegment, ex, cancellationToken).ConfigureAwait(false);
+                    AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
+                }
+                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                {
+                    AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
+                }
+            }
+            else if (action == MessageErrorAction.Abort)
+            {
+                AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Deserialization);
+                await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Deserialization);
+            }
+
+            return;
+        }
+
+        using (requestDoc)
+        {
+            TRequest request = requestDoc.RootElement;
+            JsonElement requestElement = JsonElement.From(in request);
+
+            ParsedJsonDocument<JsonElement>? headersDoc;
+            try
+            {
+                headersDoc = this.DecodeHeadersDocument(message);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                if (action == MessageErrorAction.DeadLetter)
+                {
+                    try
+                    {
+                        await this.DeadLetterRawAsync(deadLetterChannel, channel, message.PayloadSegment, ex, cancellationToken).ConfigureAwait(false);
+                        AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
+                    }
+                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                    {
+                        AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
+                    }
+                }
+                else if (action == MessageErrorAction.Abort)
+                {
+                    AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Deserialization);
+                    await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Deserialization);
+                }
+
+                return;
+            }
+
+            using (headersDoc)
+            {
+                JsonElement headers = headersDoc?.RootElement ?? default;
+
+                try
+                {
+                    TReply reply;
+                    if (this.middleware is not null)
+                    {
+                        TReply captured = default;
+                        await this.middleware(async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        reply = captured;
+                    }
+                    else
+                    {
+                        reply = await handler(request, headers, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    // Determine where to send the reply: the requester advertises the reply topic via
+                    // the native MQTT 5.0 ResponseTopic, and correlates the reply by CorrelationData.
+                    string? responseTopic = message.ResponseTopic;
+                    if (string.IsNullOrEmpty(responseTopic))
+                    {
+                        // No reply address — nothing to respond to.
+                        AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Handler);
+                        return;
+                    }
+
+                    ReadOnlyMemory<byte> correlationIdUtf8 = message.CorrelationData is { Length: > 0 } corr
+                        ? corr
+                        : default;
+
+                    (byte[] rented, int length) = SerializeToRented(in reply);
+                    try
+                    {
+                        MqttApplicationMessage replyMsg = BuildMessage(responseTopic, rented, length, null, correlationIdUtf8);
+                        await this.client.PublishAsync(replyMsg, cancellationToken).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        if (rented.Length > 0)
+                        {
+                            ArrayPool<byte>.Shared.Return(rented);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, requestElement, headers);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.DeadLetter)
+                    {
+                        try
+                        {
+                            byte[] rented;
+                            int length;
+                            if (requestElement.ValueKind != JsonValueKind.Undefined)
+                            {
+                                (rented, length) = SerializeToRented(in requestElement);
                             }
                             else
                             {

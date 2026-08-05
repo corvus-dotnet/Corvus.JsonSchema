@@ -14,7 +14,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 
 ## Skills Inventory
 
-20 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+22 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
 
 | Skill | Area |
 |-------|------|
@@ -26,6 +26,8 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
 | `corvus-low-alloc-data-structures` | Ref-struct collections, SIMD, hash sets |
+| `corvus-bytes-to-bytes` | Killing record<->document string seams; the genuine-leaf proof; the pre-commit allocation self-audit |
+| `corvus-builder-context-threading` | Building generated models from UTF-8 spans with no closure (the `Build<TContext>` form) |
 | `corvus-numeric-types` | BigNumber, numeric parsing, format selection |
 | `corvus-ecma-regex` | ECMAScript → .NET regex translation |
 | `corvus-query-languages` | JSONata, JMESPath, JsonLogic, JSONPath |
@@ -104,6 +106,8 @@ Before every commit, verify these mandatory gates in order:
 The catalog tracks line numbers of code blocks in documentation, instructions, and skill files. Editing these files shifts line numbers, making the catalog stale. CI runs `-Check` and fails if it is stale. This applies even when the edits are incidental to non-documentation work (e.g., adding a coverage rule to copilot-instructions.md while doing test work).
 
 See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
+
+4. **Allocation & honest-decision self-audit.** The commit is where multi-turn work converges, so this gate lives here, not as a per-edit hope. Scan your own diff and **report** (under a `Decisions & deferrals` heading in your message, never buried in a code comment or a design-doc tier) every: (a) managed `string` / `List<string>` / `Dictionary` introduced on a path where bytes are available; (b) non-`static` builder lambda (a closure) where a `static` + `TContext` form exists; (c) reflection-based dispatch; (d) work deferred, skipped, or abandoned; (e) fix that *moved* a cost (a transcode/allocation) elsewhere rather than removing it — give the before/after `file:line`. The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"** require the two-ended proof in the `corvus-bytes-to-bytes` skill before they may justify a string — they are red flags for work being avoided, not justifications. Prove every warm-path allocation claim with a BenchmarkDotNet `[MemoryDiagnoser]` baseline-vs-new benchmark. "Admin-rare" is not a licence to allocate.
 
 ### Diagnostic discipline
 
@@ -466,7 +470,25 @@ Where `<Name>` is the benchmark name (e.g., `AnsibleMeta`, `GeoJson`, `CmakePres
 
 ### Regenerating C/ benchmarks
 
-After making code generator changes, regenerate all C/ directories:
+After making code generator changes, regenerate **all** C/ directories with the batch script:
+
+```bash
+pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1
+```
+
+It builds the generator, then for every `*BenchmarkModels` project reads the root namespace
+(`Corvus.<Name>Benchmark.Current`) from the existing `C/` output, applies the `<Name>Schema` root-type
+convention (overridable via the script's `$Overrides` table) against the project's single `*-schema.json`,
+cleans `C/`, regenerates with `--engine V5`, and flags any project whose regeneration is **not** additive-only
+for review. It never touches B/. See `docs/BenchmarkGuide.md` for the full description.
+
+> A non-additive (review-flagged) diff is not automatically wrong: a generator change that alters nested
+> type-name truncation (e.g. the path-truncation collision fix in `GenerationDriverV5.cs`) legitimately
+> renames deeply-nested files for the larger schemas (GeoJson, Ui5, CmakePresets, …), which git pairs as
+> delete+add. Confirm the benchmark solution still builds and treat such a sweep as its own commit, distinct
+> from any feature change riding alongside it.
+
+To regenerate a single project by hand (the script automates exactly this per project):
 
 ```bash
 # Clean the C/ directory first (old files cause compilation errors)
@@ -476,7 +498,7 @@ Remove-Item -Recurse -Force benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C\
 dotnet run --project src\Corvus.Json.CodeGenerator -f net10.0 -c Release -- <schema-path> --rootNamespace Corvus.<Name>Benchmark.Current --outputRootTypeName <Name>Schema --outputPath benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C --engine V5
 ```
 
-All 37+ benchmark models follow the same pattern — no special cases. (GeoJson previously required special handling for long file paths, but this was fixed by the path truncation collision fix in `GenerationDriverV5.cs`.)
+All 37+ benchmark models follow the same pattern — no special cases.
 
 ### Running benchmarks
 

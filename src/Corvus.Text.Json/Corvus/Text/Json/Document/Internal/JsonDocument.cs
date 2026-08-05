@@ -1437,8 +1437,12 @@ public abstract partial class JsonDocument
         {
             requiredEscaping = true;
 
+            // Size the scratch buffer to the MAX ESCAPED length, not the raw length: escaping expands (e.g. ' -> ',
+            // 6x), so a buffer sized to valueLength overflows when an escapable char pushes the output past it (and past a
+            // pool bucket). This mirrors the writer's WriteStringEscapeValue and the _valueBacking sizing above.
+            int maxEscapedLength = JsonWriterHelper.GetMaxEscapedLength(valueLength, valueIdx);
             char[]? buffer = null;
-            Span<char> escapedBuffer = valueLength <= JsonConstants.StackallocCharThreshold ? stackalloc char[JsonConstants.StackallocCharThreshold] : (buffer = ArrayPool<char>.Shared.Rent(valueLength)).AsSpan();
+            Span<char> escapedBuffer = maxEscapedLength <= JsonConstants.StackallocCharThreshold ? stackalloc char[JsonConstants.StackallocCharThreshold] : (buffer = ArrayPool<char>.Shared.Rent(maxEscapedLength)).AsSpan();
 
             JsonWriterHelper.EscapeString(value, escapedBuffer, valueIdx, encoder, out written);
             JsonWriterHelper.ToUtf8(escapedBuffer.Slice(0, written), _valueBacking.AsSpan(index), out written);

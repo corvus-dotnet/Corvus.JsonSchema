@@ -59,6 +59,38 @@ public sealed class ApiAdoptionClient : IApiAdoptionClient
         return SendWithBodyWriterAsyncCore<SubmitAdoptionApplicationRequest, SubmitAdoptionApplicationResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Submit an adoption application (URL-encoded form)
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync<TContext>(Petstore.Extended.Models.PostAdoptionApplyBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.Extended.Models.PostAdoptionApplyBody bodyValue = Petstore.Extended.Models.PostAdoptionApplyBody.CreateBuilder(workspace, in body, 30).RootElement;
+        SubmitAdoptionApplicationRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyWriterAsyncCore<SubmitAdoptionApplicationRequest, SubmitAdoptionApplicationResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

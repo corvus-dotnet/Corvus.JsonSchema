@@ -75,6 +75,15 @@ On `netstandard2.0` these use `unsafe fixed` pointer overloads; on modern .NET t
 
 > Source: `src/Corvus.Text.Json/Corvus/Text/Json/Reader/JsonReaderHelper.Unescaping.cs`
 
+### Reading a value's bytes without a string
+
+Transcoding is for when you genuinely need a `string`. To read or compare a string value while staying on the UTF-8 path, use the consumer primitives that hand back the bytes rather than a managed string.
+
+- `element.GetUtf8String()` returns an `UnescapedUtf8JsonString`, a `ref struct` over the value's unescaped UTF-8 bytes. Read it or `SequenceEqual`-compare it without allocating a `string`.
+- `JsonMarshal.GetRawUtf8Value(element)` returns a `RawUtf8JsonString`, a non-owning view of the raw (as-stored) UTF-8 bytes of any value.
+
+Both reference the source document's bytes, so they are valid only while that document is alive. Copy out what you need before the document is disposed.
+
 ---
 
 ## 3. Three-Tier Pooling Hierarchy

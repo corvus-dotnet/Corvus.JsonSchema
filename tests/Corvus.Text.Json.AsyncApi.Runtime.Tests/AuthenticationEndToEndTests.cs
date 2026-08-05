@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class AuthenticationEndToEndTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+        "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
     [TestMethod]
     public async Task Producer_WithAuthProvider_AuthenticatesBeforePublish()
@@ -50,7 +50,7 @@ public class AuthenticationEndToEndTests
         await using ReceiveLightMeasurementConsumer consumer = new(
             transport, handler, ValidationMode.None, errorPolicy: null, authProvider: authProvider);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Auth was called during StartAsync (before subscribe)
         Assert.AreEqual(1, authProvider.AuthenticateCallCount);

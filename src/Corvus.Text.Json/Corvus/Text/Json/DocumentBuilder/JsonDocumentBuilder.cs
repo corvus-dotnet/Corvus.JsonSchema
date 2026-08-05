@@ -23,7 +23,7 @@ namespace Corvus.Text.Json;
 /// </summary>
 /// <typeparam name="T">The type of mutable JSON element this builder works with.</typeparam>
 [CLSCompliant(false)]
-public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonDocument
+public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonDocument, IWorkspaceCreatedDocument
     where T : struct, IMutableJsonElement<T>
 {
     private readonly JsonWorkspace _workspace;
@@ -66,6 +66,10 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     /// <inheritdoc />
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     JsonWorkspace IMutableJsonDocument.Workspace => _workspace;
+
+    /// <inheritdoc />
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    JsonWorkspace IWorkspaceCreatedDocument.CreatingWorkspace => _workspace;
 
     /// <summary>
     /// Gets the root element of the JSON document.
@@ -2075,6 +2079,28 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     {
         return CloneElement<JsonElement>(index);
     }
+
+    /// <inheritdoc />
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace)
+    {
+        // TODO(perf): write directly to a workspace-rented Utf8JsonWriter/buffer and Parse() taking
+        // ownership of the buffer memory, avoiding the intermediate ArrayBufferWriter + re-copy.
+        return Internal.JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
+    }
+
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+    {
+        // A builder's element may span mutated segments and external references, so its text is not
+        // guaranteed contiguous; callers must take the token-by-token path.
+        utf8 = default;
+        sourceTextOffset = 0;
+        return false;
+    }
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+        => throw new NotSupportedException("Valid only after TryGetContiguousLocalElement returned true.");
 
     /// <inheritdoc />
     TElement IJsonDocument.CloneElement<TElement>(int index)

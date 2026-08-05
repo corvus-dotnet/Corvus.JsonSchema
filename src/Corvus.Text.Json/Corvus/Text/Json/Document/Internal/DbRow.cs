@@ -112,6 +112,28 @@ internal readonly struct DbRow
     }
 
     /// <summary>
+    /// Creates a fully-specified local row: an explicit number of rows and complex-children flag, for
+    /// copying an already-parsed row run into another database (the source rows carry correct structure;
+    /// only the location is rebased by the caller).
+    /// </summary>
+    /// <param name="jsonTokenType">The <see cref="JsonTokenType"/>.</param>
+    /// <param name="location">The (rebased) location of the value in the UTF8 backing.</param>
+    /// <param name="sizeOrLength">The size or length of the entity (a property-map index must be normalized to the plain length by the caller).</param>
+    /// <param name="numberOfRows">The number of rows the entity occupies.</param>
+    /// <param name="hasComplexChildren">Whether the row carries the complex-children/escaped flag.</param>
+    internal DbRow(JsonTokenType jsonTokenType, int location, int sizeOrLength, int numberOfRows, bool hasComplexChildren)
+    {
+        Debug.Assert(jsonTokenType > JsonTokenType.None && jsonTokenType <= JsonTokenType.Null, "The token type is out of the valid range.");
+        Debug.Assert(location >= 0, "The location must be >= 0");
+        Debug.Assert(sizeOrLength >= 0, "The size or length must be >= 0 (normalize property-map indexes before copying)");
+        Debug.Assert(numberOfRows >= 1, "The number of rows must be >= 1");
+
+        _locationAndFromExternalDocumentUnion = (uint)location;
+        _sizeLengthOrPropertyMapIndexUnion = hasComplexChildren ? sizeOrLength | int.MinValue : sizeOrLength;
+        _numberOfRowsExternalDocumentIndexAndTypeUnion = unchecked((uint)jsonTokenType << 28) | (unchecked((uint)numberOfRows) & 0x0FFFFFFFU);
+    }
+
+    /// <summary>
     /// Creates an instance of a DBRow.
     /// </summary>
     /// <param name="jsonTokenType">The <see cref="JsonTokenType"/>.</param>

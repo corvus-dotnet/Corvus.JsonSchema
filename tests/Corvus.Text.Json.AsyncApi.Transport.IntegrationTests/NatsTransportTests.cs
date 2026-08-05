@@ -213,6 +213,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyWithCorrelationId()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — set up a responder on the request channel
         ReadOnlyMemory<byte> requestChannel = "test.request"u8.ToArray();
         ReadOnlyMemory<byte> replyChannel = "test.reply"u8.ToArray();
@@ -243,6 +245,7 @@ public class NatsTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token);
 
             // If we get here, a reply was received (the subscription handler or NATS handled it)
@@ -255,6 +258,113 @@ public class NatsTransportTests
         }
 
         await s_transport.UnsubscribeAsync(requestChannel);
+    }
+
+    [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — model two services: a responder service (its own connection) registers a
+        // SubscribeReplyAsync that doubles the supplied number, and a separate requester service
+        // (s_transport) calls RequestAsync. The two round-trip through the broker's native request/reply.
+        ReadOnlyMemory<byte> requestChannel = "test.responder-roundtrip"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.responder-roundtrip-reply"u8.ToArray();
+
+        await using NatsMessageTransport responder = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        await responder.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                int value = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element after the handler returns) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        // Act — the requester service sends a request and captures the computed reply.
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+        byte[] correlationId = "responder-corr-001"u8.ToArray();
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await s_transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert — the responder doubled the number and the requester received the exact value
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+
+        await responder.UnsubscribeAsync(requestChannel);
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — model two services: a responder service (its own connection) registers a
+        // ReceiveOneAndReplyAsync that doubles the supplied number, and a separate requester
+        // service (s_transport) calls RequestAsync. The two round-trip through the broker's
+        // native request/reply. Unlike SubscribeReplyAsync the one-shot wrapper unsubscribes
+        // itself after handling a single request — exactly the primitive the generated Arazzo
+        // responder step calls.
+        ReadOnlyMemory<byte> requestChannel = "test.responder-roundtrip-once"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.responder-roundtrip-reply-once"u8.ToArray();
+
+        await using NatsMessageTransport responder = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        System.Threading.Tasks.Task responderTask = responder.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers) =>
+            {
+                int value = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element after the handler returns) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            }).AsTask();
+
+        await Task.Delay(500);
+
+        // Act — the requester service sends a request and captures the computed reply.
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+        byte[] correlationId = "responder-once-corr-001"u8.ToArray();
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await s_transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert — the responder doubled the number and the requester received the exact value
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+
+        await responderTask;
     }
 
     [TestMethod]
@@ -790,6 +900,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrowsOperationCanceledException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — no responder, should timeout
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -811,7 +923,8 @@ public class NatsTransportTests
                 requestChannel,
                 replyChannel,
                 requestDoc.RootElement,
-                correlationId);
+                correlationId,
+                workspace);
 
             Assert.Fail("Expected an exception for request with no responder.");
         }
@@ -827,6 +940,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -847,7 +962,7 @@ public class NatsTransportTests
 
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await transport.RequestAsync<JsonElement, JsonElement>(
-                channel, channel, doc.RootElement, "corr"u8.ToArray()));
+                channel, channel, doc.RootElement, "corr"u8.ToArray(), workspace));
     }
 
     [TestMethod]
@@ -903,6 +1018,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — transport for the requester
         NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -938,7 +1055,8 @@ public class NatsTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -951,6 +1069,8 @@ public class NatsTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — verify that headers are forwarded in request/reply
         NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
@@ -988,6 +1108,7 @@ public class NatsTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             headersDoc.RootElement);
 
         // Assert — reply received and request headers were forwarded

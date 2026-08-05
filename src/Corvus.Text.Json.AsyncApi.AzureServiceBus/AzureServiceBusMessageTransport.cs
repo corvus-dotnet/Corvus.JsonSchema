@@ -19,23 +19,24 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     private readonly AzureServiceBusTransportOptions options;
     private readonly ServiceBusClient client;
     private readonly ServiceBusSender sender;
-    private readonly ServiceBusProcessor? processor;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly byte[] deadLetterSuffixUtf8;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource> subscriptions = new(StringComparer.Ordinal);
+
+    // Each subscription keeps its own processor so Unsubscribe/Dispose can actually stop it. A single shared
+    // processor field could not: a transport may hold several subscriptions, and it was never assigned (created
+    // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
+    private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
     private bool disposed;
 
     private AzureServiceBusMessageTransport(
         AzureServiceBusTransportOptions options,
         ServiceBusClient client,
-        ServiceBusSender sender,
-        ServiceBusProcessor? processor)
+        ServiceBusSender sender)
     {
         this.options = options;
         this.client = client;
         this.sender = sender;
-        this.processor = processor;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
         this.deadLetterSuffixUtf8 = Encoding.UTF8.GetBytes(options.DeadLetterSuffix);
@@ -84,11 +85,8 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         string entityPath = options.UseTopic ? options.TopicName! : options.QueueName!;
         ServiceBusSender sender = client.CreateSender(entityPath);
 
-        // Processor created only when subscribing
-        ServiceBusProcessor? processor = null;
-
         return new ValueTask<AzureServiceBusMessageTransport>(
-            new AzureServiceBusMessageTransport(options, client, sender, processor));
+            new AzureServiceBusMessageTransport(options, client, sender));
     }
 
     /// <inheritdoc/>
@@ -154,6 +152,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -245,9 +244,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             // Parse reply with error handling
             try
             {
-                using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                // The parsed reply is returned to the caller and used after this method returns, so its document is
+                // owned by the caller's workspace (disposed when the workspace is) rather than disposed here.
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
-                JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
+                JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties, workspace);
 
                 await replyReceiver.CompleteMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -337,7 +339,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = tcs;
+        this.subscriptions[channel] = (tcs, processor);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -386,9 +388,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             // Handle
             using (payloadDoc)
+            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
             {
                 TPayload payload = payloadDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties);
+                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
 
                 try
                 {
@@ -453,20 +456,185 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Subscribes to request messages on a channel and replies to each — the responder counterpart of
+    /// <see cref="RequestAsync{TRequest, TReply}(ReadOnlyMemory{byte}, ReadOnlyMemory{byte}, TRequest, ReadOnlyMemory{byte}, JsonWorkspace, JsonElement, CancellationToken)"/>.
+    /// </summary>
+    /// <remarks>
+    /// For every request the processor delivers, this reads the native <see cref="ServiceBusReceivedMessage.ReplyTo"/>,
+    /// <see cref="ServiceBusReceivedMessage.CorrelationId"/> and <see cref="ServiceBusReceivedMessage.SessionId"/> fields
+    /// (the same ones <c>RequestAsync</c> sets), invokes the handler to obtain the typed reply, and sends that reply to the
+    /// request's reply-to entity echoing the request's session and correlation identifiers so the requester's session
+    /// receiver correlates it.
+    /// </remarks>
+    /// <typeparam name="TRequest">The request payload type the responder parses into.</typeparam>
+    /// <typeparam name="TReply">The reply payload type the handler returns.</typeparam>
+    /// <param name="channelUtf8">The request channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The handler invoked with each request payload and its headers, returning the reply payload.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    public async ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
+        // Build dead-letter channel UTF-8 bytes
+        Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
+        channelUtf8.Span.CopyTo(dlChannelUtf8);
+        this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
+        string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
+
+        this.options.Heartbeat?.Start(channel, "azureservicebus");
+
+        ServiceBusProcessor processor = this.options.UseTopic
+            ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
+            : this.client.CreateProcessor(this.options.QueueName!);
+
+        TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        this.subscriptions[channel] = (tcs, processor);
+
+        processor.ProcessMessageAsync += async args =>
+        {
+            this.options.Heartbeat?.Tick(channel, "azureservicebus");
+
+            ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
+
+            // Parse the request
+            ParsedJsonDocument<TRequest> requestDoc;
+            try
+            {
+                requestDoc = ParsedJsonDocument<TRequest>.Parse(bodyBytes);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+
+                if (action == MessageErrorAction.Abort)
+                {
+                    AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Deserialization);
+                    tcs.TrySetResult();
+                    await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+                    return;
+                }
+
+                if (action == MessageErrorAction.DeadLetter)
+                {
+                    try
+                    {
+                        await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "azureservicebus");
+                    }
+                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                    {
+                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "azureservicebus", dlEx);
+                    }
+
+                    return;
+                }
+
+                AsyncApiTelemetry.RecordSkip(channel, "azureservicebus", MessageErrorKind.Deserialization);
+                await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);
+                return;
+            }
+
+            // Handle the request and publish the reply
+            using (requestDoc)
+            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
+            {
+                TRequest request = requestDoc.RootElement;
+                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
+
+                try
+                {
+                    TReply reply;
+                    if (this.middleware is not null)
+                    {
+                        TReply captured = default;
+                        await this.middleware(
+                            async (ct) => captured = await handler(request, headersElement, ct).ConfigureAwait(false),
+                            cancellationToken).ConfigureAwait(false);
+                        reply = captured;
+                    }
+                    else
+                    {
+                        reply = await handler(request, headersElement, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    // Echo the request's reply-to address, session ID and correlation ID so the requester's
+                    // session receiver (keyed on the correlation ID it used as the session ID) receives the reply.
+                    string? replyTo = args.Message.ReplyTo;
+                    if (!string.IsNullOrEmpty(replyTo))
+                    {
+                        await this.SendReplyAsync(replyTo, reply, args.Message.SessionId, args.Message.CorrelationId, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    tcs.TrySetResult();
+                    await args.AbandonMessageAsync(args.Message).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+
+                    if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Handler);
+                        tcs.TrySetResult();
+                        await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (action == MessageErrorAction.DeadLetter)
+                    {
+                        try
+                        {
+                            await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "azureservicebus");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "azureservicebus", dlEx);
+                        }
+
+                        return;
+                    }
+
+                    AsyncApiTelemetry.RecordSkip(channel, "azureservicebus", MessageErrorKind.Handler);
+                    await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);
+                }
+            }
+        };
+
+        processor.ProcessErrorAsync += args =>
+        {
+            // Log error but don't fail - processor will continue
+            return Task.CompletedTask;
+        };
+
+        await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc/>
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        if (this.subscriptions.TryRemove(channel, out TaskCompletionSource? tcs))
+        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
         {
-            tcs.TrySetResult();
-
-            if (this.processor is not null)
-            {
-                await this.processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
-            }
-
+            subscription.Completion.TrySetResult();
+            await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
+            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
             this.options.Heartbeat?.Stop(channel, "azureservicebus");
         }
     }
@@ -497,11 +665,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         this.disposed = true;
 
-        if (this.processor is not null)
+        foreach ((TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription in this.subscriptions.Values)
         {
-            await this.processor.StopProcessingAsync().ConfigureAwait(false);
-            await this.processor.DisposeAsync().ConfigureAwait(false);
+            subscription.Completion.TrySetResult();
+            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
+            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
         }
+
+        this.subscriptions.Clear();
 
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);
@@ -556,6 +727,64 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         }
     }
 
+    private async ValueTask SendReplyAsync<TReply>(
+        string replyChannel,
+        TReply reply,
+        string? sessionId,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        where TReply : struct, IJsonElement<TReply>
+    {
+        byte[]? rentedArray = null;
+
+        try
+        {
+            // Serialize the reply, mirroring RequestAsync's request serialization.
+            ArrayBufferWriter<byte> buffer = new();
+            Utf8JsonWriter writer = new(buffer);
+            reply.WriteTo(writer);
+            writer.Flush();
+
+            int length = buffer.WrittenCount;
+            rentedArray = length <= 256  // StackallocByteThreshold
+                ? null
+                : ArrayPool<byte>.Shared.Rent(length);
+
+            ReadOnlyMemory<byte> payload = rentedArray is null
+                ? buffer.WrittenMemory
+                : new ReadOnlyMemory<byte>(rentedArray, 0, length);
+
+            if (rentedArray is not null)
+            {
+                buffer.WrittenSpan.CopyTo(rentedArray);
+            }
+
+            // Echo the request's session and correlation identifiers so the requester's session
+            // receiver (which accepts the session whose ID equals the correlation ID) gets the reply.
+            ServiceBusMessage message = new(payload);
+
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                message.SessionId = sessionId;
+            }
+
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                message.CorrelationId = correlationId;
+            }
+
+            await using ServiceBusSender replySender = this.client.CreateSender(replyChannel);
+            await replySender.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
+
     private static int EstimateSerializedSize<TPayload>(TPayload payload)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -576,7 +805,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         return writer.WrittenCount;
     }
 
-    private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties)
+    private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties, JsonWorkspace workspace)
     {
         if (applicationProperties.Count == 0)
         {
@@ -595,7 +824,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         writer.WriteEndObject();
         writer.Flush();
 
-        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        // The returned element is used after this method returns (by the caller's handler, or by RequestAsync's
+        // caller), so its document is owned by the caller's workspace rather than disposed here.
+        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        workspace.TakeOwnership(doc);
         return doc.RootElement;
     }
 }

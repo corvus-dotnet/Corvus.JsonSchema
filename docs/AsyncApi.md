@@ -890,6 +890,27 @@ await producer.PublishTurnOnOffAsync(
 
 The generated code constructs the channel address from the template using zero-allocation UTF-8 byte manipulation with pooled buffers — no string concatenation or allocation on the hot path.
 
+### Consumers
+
+A consumer for a parameterised channel takes the same parameters on `StartAsync`, and subscribes to the address they compose:
+
+```csharp
+await using ReceiveLightMeasurementConsumer consumer = new(transport, handler);
+
+// Subscribes to "smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"
+await consumer.StartAsync(streetlightId: "lamp-42");
+```
+
+A `ReadOnlySpan<char>` overload sits beneath the `string` one, so a caller that already holds a span does not create a string just to have it measured and copied:
+
+```csharp
+await consumer.StartAsync(streetlightId: idSpan);
+```
+
+The address is composed the same way the producer composes its own: the template is split when the code is generated, so its literal parts are `u8` literals and only the parameter values are transcoded, filled once into the array the subscription retains. The dead-letter address is built from those same bytes rather than by concatenating a second string.
+
+> **Before 5.3.0** a consumer for a parameterised channel had no parameters on `StartAsync` and subscribed to the template *literally*, placeholder and all — so it listened on a channel no publisher ever wrote to. Supplying the parameters is therefore a breaking change with a fix inside it: the call that compiled before was subscribing to nothing real.
+
 ## Message Headers
 
 When an AsyncAPI message defines a `headers` schema (directly or via message traits), the generated code produces typed header structures. Headers provide metadata about the message — correlation IDs, trace context, content versioning — separate from the payload.
@@ -1098,6 +1119,47 @@ AsyncAPI 3.0 uses the standard operation `reply` object. AsyncAPI 2.6 has `corre
 ```
 
 The extension is intentionally explicit. The generator does not infer request/reply pairs from matching `correlationId` values because that is ambiguous in real-world 2.6 documents.
+
+### Responder (request/reply receive)
+
+The methods above are the *requester* half of request/reply (send a request, await the reply). The *responder* half — receive a request and send back a correlated reply — is modelled by a **receive** operation that declares a `reply`. For these operations the generator produces a reply-returning handler and a consumer that publishes the reply for you.
+
+The handler returns the reply payload instead of `void`:
+
+```csharp
+public sealed class CalculateHandler : ICalculateHandler
+{
+    // A receive operation with a reply: return the reply payload; the consumer publishes it.
+    public ValueTask<CalculateResponse> HandleCalculateRequestAsync(
+        CalculateRequest payload,
+        CancellationToken cancellationToken = default)
+    {
+        int sum = payload.A + payload.B;
+        return ValueTask.FromResult(new CalculateResponse.Source((ref CalculateResponse.Builder b) =>
+        {
+            b.Create(result: sum);
+        }));
+    }
+}
+```
+
+The generated consumer subscribes through the transport's responder primitive:
+
+```csharp
+ValueTask SubscribeReplyAsync<TRequest, TReply>(
+    ReadOnlyMemory<byte> channelUtf8,
+    Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+    CancellationToken cancellationToken = default)
+    where TRequest : struct, IJsonElement<TRequest>
+    where TReply : struct, IJsonElement<TReply>;
+```
+
+The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
+
+**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable.
+
+**Implementation status.** `SubscribeReplyAsync` is a default interface member that throws `NotSupportedException`, so a transport opts in by overriding it. The in-memory testing transport implements a full in-process round-trip: a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). The broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) inherit the default until responder support is implemented for each.
+
 
 ## Bindings
 

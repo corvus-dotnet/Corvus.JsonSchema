@@ -1011,6 +1011,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                     break;
@@ -1078,6 +1082,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
                     break;
@@ -1155,6 +1163,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonElement:
                     valueBuilder.AddProperty(name, _jsonElement);
                     break;
@@ -1567,6 +1579,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
@@ -1594,6 +1610,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                     break;
@@ -1631,6 +1651,10 @@ public readonly partial struct JsonElement
         {
             switch (_kind)
             {
+                case Kind.Unknown:
+                    // An undefined source represents an absent optional property: omit it, matching the typed builders.
+                    break;
+
                 case Kind.JsonArrayBuilderInstance:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                     break;
@@ -1765,6 +1789,39 @@ public readonly partial struct JsonElement
     /// <remarks>This method is not CLS compliant.</remarks>
     [CLSCompliant(false)]
     public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Source source, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
+    {
+        // Create the document builder without a MetadataDb
+        if (source.IsUndefined)
+        {
+            ThrowHelper.ThrowArgumentException(SR.EmptyJsonIsInvalid);
+        }
+
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+        var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
+        source.AddAsItem(ref cvb);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates a JSON document builder from a context-threaded source.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the source.</typeparam>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="source">The context-threaded source from which to create the document.</param>
+    /// <param name="estimatedMemberCount">The (optional) estimated member count for the root value.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A new <see cref="JsonDocumentBuilder{TMutable}"/> initialised with the given source.</returns>
+    /// <remarks>The generic mirror of <see cref="CreateBuilder(JsonWorkspace, in Source, int, int)"/>: a body assembled
+    /// closure-free as a <see cref="Source{TContext}"/> is materialised in a single pass. The universal
+    /// <see cref="JsonElement"/> needs this so a generated <c>Ok&lt;TContext&gt;</c> result factory whose response body is
+    /// an any-schema (resolved to <see cref="JsonElement"/>) can route the context-threaded body through it.</remarks>
+    /// <remarks>This method is not CLS compliant.</remarks>
+    [CLSCompliant(false)]
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in Source<TContext> source, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
     {
         // Create the document builder without a MetadataDb
         if (source.IsUndefined)

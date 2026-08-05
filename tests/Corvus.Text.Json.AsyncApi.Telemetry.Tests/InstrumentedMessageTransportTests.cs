@@ -152,6 +152,7 @@ public class InstrumentedMessageTransportTests
     [TestMethod]
     public async Task RequestAsync_CreatesActivityWithConversationId()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         List<Activity> activities = [];
         using ActivityListener listener = CreateActivityListener(activities);
 
@@ -167,7 +168,7 @@ public class InstrumentedMessageTransportTests
         try
         {
             await transport.RequestAsync<JsonElement, JsonElement>(
-                TestChannel, replyChannel, request, correlationId, noHeaders, cts.Token);
+                TestChannel, replyChannel, request, correlationId, workspace, noHeaders, cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -302,6 +303,7 @@ public class InstrumentedMessageTransportTests
             ReadOnlyMemory<byte> replyChannelUtf8,
             TRequest request,
             ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
             JsonElement headers = default,
             CancellationToken cancellationToken = default)
             where TRequest : struct, IJsonElement<TRequest>
@@ -362,6 +364,7 @@ public class InstrumentedMessageTransportTests
             ReadOnlyMemory<byte> replyChannelUtf8,
             TRequest request,
             ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
             JsonElement headers = default,
             CancellationToken cancellationToken = default)
             where TRequest : struct, IJsonElement<TRequest>

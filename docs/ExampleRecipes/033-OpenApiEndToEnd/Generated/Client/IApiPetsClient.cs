@@ -44,6 +44,18 @@ public interface IApiPetsClient : IAsyncDisposable
     ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Create a new pet listing
+    /// </summary>
+    /// <param name="session_token">The session_token parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CreatePetResponse> CreatePetAsync<TContext>(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Get multiple pets by IDs (path array parameter)
     /// </summary>
     /// <param name="ids">The ids parameter.</param>

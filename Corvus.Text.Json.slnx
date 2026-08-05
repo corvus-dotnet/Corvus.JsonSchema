@@ -128,6 +128,7 @@
     <Project Path="src/Corvus.Text.Json.OpenApi31/Corvus.Text.Json.OpenApi31.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.CodeGeneration/Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.HttpTransport/Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <Project Path="src/Corvus.Text.Json.OpenApi.Polly/Corvus.Text.Json.OpenApi.Polly.csproj" />
   </Folder>
   <Folder Name="/v5/">
     <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />

@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class MiddlewareAndResilienceTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+        "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
     [TestMethod]
     public async Task Consumer_WithMiddleware_MiddlewareWrapsHandler()
@@ -31,7 +31,7 @@ public class MiddlewareAndResilienceTests
         CountingHandler handler = new();
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
@@ -60,7 +60,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, skipPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // First message: handler throws, policy says skip
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -89,7 +89,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, dlPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
@@ -114,7 +114,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, abortPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
@@ -139,7 +139,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, dlPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Invalid: lumens is negative (minimum: 0)
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -170,7 +170,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, skipPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Deliver 3 messages that all fail
         for (int i = 0; i < 3; i++)
@@ -199,7 +199,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Detailed, dlPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Invalid: lumens is a string instead of integer
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -226,7 +226,7 @@ public class MiddlewareAndResilienceTests
             MessageErrorAction.Abort);
 
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, strictPolicy);
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Valid message — handler succeeds, no policy invoked
         await transport.DeliverAsync<LightMeasuredPayload>(

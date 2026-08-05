@@ -36,6 +36,20 @@ public interface IApiPhotosClient : IAsyncDisposable
     ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.PostPetsByPetIdPhotosBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Upload a photo for a pet (multipart with metadata)
+    /// </summary>
+    /// <param name="petId">The petId parameter.</param>
+    /// <param name="session_token">The session_token parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="file">Binary data for the 'file' part.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync<TContext>(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.PostPetsByPetIdPhotosBody.Source<TContext> body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
     /// Download a pet photo (binary stream)
     /// </summary>
     /// <param name="photoId">The photoId parameter.</param>

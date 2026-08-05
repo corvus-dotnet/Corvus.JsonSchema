@@ -81,6 +81,38 @@ public sealed class ApiPetsClient : IApiPetsClient
     }
 
     /// <summary>
+    /// Create a pet
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreatePetResponse> CreatePetAsync<TContext>(Petstore.V2.Client.Models.NewPet.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.V2.Client.Models.NewPet bodyValue = Petstore.V2.Client.Models.NewPet.CreateBuilder(workspace, in body, 30).RootElement;
+        CreatePetRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreatePetRequest, Petstore.V2.Client.Models.NewPet, CreatePetResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Info for a specific pet
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
@@ -106,6 +138,40 @@ public sealed class ApiPetsClient : IApiPetsClient
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Petstore.V2.Client.Models.UpdatePetWithFormFormBody bodyValue = Petstore.V2.Client.Models.UpdatePetWithFormFormBody.CreateBuilder(workspace, body, 30).RootElement;
+        Petstore.V2.Client.Models.JsonString PetIdValue = Petstore.V2.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        UpdatePetWithFormRequest request = new(PetIdValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyWriterAsyncCore<UpdatePetWithFormRequest, UpdatePetWithFormResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update a pet using form data
+    /// </summary>
+    /// <param name="petId">The petId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<UpdatePetWithFormResponse> UpdatePetWithFormAsync<TContext>(Petstore.V2.Client.Models.JsonString.Source petId, Petstore.V2.Client.Models.UpdatePetWithFormFormBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Petstore.V2.Client.Models.UpdatePetWithFormFormBody bodyValue = Petstore.V2.Client.Models.UpdatePetWithFormFormBody.CreateBuilder(workspace, in body, 30).RootElement;
         Petstore.V2.Client.Models.JsonString PetIdValue = Petstore.V2.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
         UpdatePetWithFormRequest request = new(PetIdValue);
 

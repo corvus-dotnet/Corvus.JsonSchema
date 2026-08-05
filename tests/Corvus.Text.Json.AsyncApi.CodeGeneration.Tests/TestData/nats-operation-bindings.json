@@ -1,0 +1,35 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "NATS operation bindings",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "orders": {
+      "address": "orders.created",
+      "messages": {
+        "OrderCreated": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "subscribeOrders": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/orders" },
+      "bindings": {
+        "nats": {
+          "x-mode": "jetstream",
+          "x-stream": "ORDERS",
+          "x-consumer": "orders-service"
+        }
+      }
+    }
+  }
+}

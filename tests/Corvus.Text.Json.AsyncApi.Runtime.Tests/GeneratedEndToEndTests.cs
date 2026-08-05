@@ -31,7 +31,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class GeneratedEndToEndTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+        "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
     [TestMethod]
     public async Task Producer_PublishTurnOnOff_SerializesPayloadToChannel()
@@ -122,7 +122,7 @@ public class GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Deliver a message to verify the subscription is active
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -139,7 +139,7 @@ public class GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
@@ -160,7 +160,7 @@ public class GeneratedEndToEndTests
         DefaultMessageErrorPolicy abortPolicy = new(MessageErrorAction.Abort, MessageErrorAction.Abort, MessageErrorAction.Abort);
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, abortPolicy);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // lumens has minimum:0, so -1 is invalid; policy says abort immediately (0 retries)
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -183,7 +183,7 @@ public class GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Invalid payload (lumens < 0) but validation is disabled
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -200,7 +200,7 @@ public class GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
         await consumer.StopAsync();
 
         // After stopping, delivering should throw because there's no subscription
@@ -217,7 +217,7 @@ public class GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
         await consumer.DisposeAsync();
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
@@ -246,7 +246,7 @@ public class GeneratedEndToEndTests
         // Default policy: 3 retries then skip
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         // Invalid payload triggers validation failure; default policy retries 3 times, then skips
         await transport.DeliverAsync<LightMeasuredPayload>(
@@ -272,7 +272,7 @@ public class GeneratedEndToEndTests
         DefaultMessageErrorPolicy deadLetterPolicy = new(MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, deadLetterPolicy);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
@@ -299,7 +299,7 @@ public class GeneratedEndToEndTests
         DefaultMessageErrorPolicy skipPolicy = new(MessageErrorAction.Skip, MessageErrorAction.Skip, MessageErrorAction.Abort);
         await using ReceiveLightMeasurementConsumer consumer = new(transport, throwingHandler, ValidationMode.None, skipPolicy);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
