@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -43,7 +43,8 @@ public readonly partial struct DimCommandPayload
         /// <summary>
         /// Initializes a new instance of the <see cref="Mutable"/> struct.
         /// </summary>
-        /// <param name="value">The value from which to construct the instance.</param>
+        /// <param name="parent">The document that contains the element.</param>
+        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
@@ -113,7 +114,7 @@ public readonly partial struct DimCommandPayload
         /// <summary>
         /// Converts the instance to a JsonElement.
         /// </summary>
-        /// <param name="value">The instance of this type.</param>
+        /// <param name="instance">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator JsonElement(Mutable instance)
@@ -124,7 +125,7 @@ public readonly partial struct DimCommandPayload
         /// <summary>
         /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
         /// </summary>
-        /// <param name="value">The instance of this type.</param>
+        /// <param name="instance">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
         public static explicit operator Mutable(DimCommandPayload instance)
@@ -141,7 +142,7 @@ public readonly partial struct DimCommandPayload
         /// <summary>
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
-        /// <param name="value">The <see cref="Mutable"/> instance.</param>
+        /// <param name="instance">The <see cref="Mutable"/> instance.</param>
         /// <returns>An immutable instance of a <see cref="DimCommandPayload"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator DimCommandPayload(Mutable instance)
@@ -152,7 +153,8 @@ public readonly partial struct DimCommandPayload
         /// <summary>
         /// Gets an instance of the JSON value from another element.
         /// </summary>
-        /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+        /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+        /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Mutable From<T>(in T instance)
@@ -172,11 +174,11 @@ public readonly partial struct DimCommandPayload
         /// Target brightness percentage.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Mutable Percentage
+        public AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Mutable Percentage
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PercentageUtf8, out AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PercentageUtf8, out AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Mutable value))
                 {
                     return value;
                 }
@@ -193,11 +195,11 @@ public readonly partial struct DimCommandPayload
         /// ISO 8601 timestamp of the command.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.JsonDateTime.Mutable SentAt
+        public AsyncApiBenchmark.Generated.Models.JsonDateTime.Mutable SentAt
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.JsonDateTime.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -217,11 +219,11 @@ public readonly partial struct DimCommandPayload
         /// The streetlight to dim.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Mutable StreetlightId
+        public AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Mutable StreetlightId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Mutable value))
                 {
                     return value;
                 }
@@ -263,7 +265,7 @@ public readonly partial struct DimCommandPayload
         /// Set the <c>percentage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPercentage(in AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Source value)
+        public void SetPercentage(scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source value)
         {
             CheckValidInstance();
 
@@ -294,7 +296,7 @@ public readonly partial struct DimCommandPayload
         /// Set the <c>sentAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSentAt(in AsyncApiBenchmark.Generated.JsonDateTime.Source value)
+        public void SetSentAt(scoped in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -339,7 +341,7 @@ public readonly partial struct DimCommandPayload
         /// Set the <c>streetlightId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStreetlightId(in AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Source value)
+        public void SetStreetlightId(scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source value)
         {
             CheckValidInstance();
 
@@ -513,12 +515,16 @@ public readonly partial struct DimCommandPayload
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source _createArg1;
+        private readonly AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source _createArg2;
+        private readonly AsyncApiBenchmark.Generated.Models.JsonDateTime.Source _createArg3;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -531,7 +537,15 @@ public readonly partial struct DimCommandPayload
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(AsyncApiBenchmark.Generated.DimCommandPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(AsyncApiBenchmark.Generated.Models.DimCommandPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source arg1, scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source arg2, scoped in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source arg3)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(DimCommandPayload instance) => new(JsonElement.From(instance));
 
@@ -547,6 +561,13 @@ public readonly partial struct DimCommandPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -565,6 +586,13 @@ public readonly partial struct DimCommandPayload
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -583,6 +611,13 @@ public readonly partial struct DimCommandPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -601,6 +636,13 @@ public readonly partial struct DimCommandPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -619,6 +661,13 @@ public readonly partial struct DimCommandPayload
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -652,7 +701,7 @@ public readonly partial struct DimCommandPayload
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, AsyncApiBenchmark.Generated.DimCommandPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, AsyncApiBenchmark.Generated.Models.DimCommandPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -768,9 +817,9 @@ public readonly partial struct DimCommandPayload
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Source percentage,
-            in AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Source streetlightId,
-            in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt = default)
+            in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source percentage,
+            in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source streetlightId,
+            in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source sentAt = default)
         {
             percentage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Percentage, ref builder);
             streetlightId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StreetlightId, ref builder);
@@ -781,9 +830,9 @@ public readonly partial struct DimCommandPayload
         /// Creates an instance of a <see cref="DimCommandPayload"/>.
         /// </summary>
         public void Create(
-            in AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Source percentage,
-            in AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Source streetlightId,
-            in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt = default)
+            in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source percentage,
+            in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source streetlightId,
+            in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source sentAt = default)
         {
             Create(ref _builder, percentage, streetlightId, sentAt);
         }
@@ -808,6 +857,20 @@ public readonly partial struct DimCommandPayload
             Builder ovb = new(o);
             value(context, ref ovb);
             o = ovb._builder;
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source arg1, scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source arg2, scoped in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source arg3, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3);
             o.EndObject();
         }
     }
@@ -842,6 +905,18 @@ public readonly partial struct DimCommandPayload
     }
 
     /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="percentage">The value of the <c>"percentage"</c> property.</param>
+    /// <param name="streetlightId">The value of the <c>"streetlightId"</c> property.</param>
+    /// <param name="sentAt">The value of the <c>"sentAt"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source percentage, scoped in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source streetlightId, scoped in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source sentAt = default)
+    {
+        return new Source(percentage, streetlightId, sentAt);
+    }
+
+    /// <summary>
     /// Creates and initializes a mutable document from a value.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
@@ -850,6 +925,29 @@ public readonly partial struct DimCommandPayload
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        value.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a context-threaded value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -916,7 +1014,7 @@ public readonly partial struct DimCommandPayload
     /// <param name="sentAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.Generated.DimCommandPayload.TargetBrightnessPercentage.Source percentage, in AsyncApiBenchmark.Generated.DimCommandPayload.TheStreetlightToDim.Source streetlightId, in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source percentage, in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source streetlightId, in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source sentAt = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -937,5 +1035,114 @@ public readonly partial struct DimCommandPayload
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<DimCommandPayload, Mutable>(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimCommandPayload> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimCommandPayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimCommandPayload> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimCommandPayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimCommandPayload> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimCommandPayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="percentage">The value of the property.</param>
+    /// <param name="streetlightId">The value of the property.</param>
+    /// <param name="sentAt">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimCommandPayload> Create(in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TargetBrightnessPercentage.Source percentage, in AsyncApiBenchmark.Generated.Models.DimCommandPayload.TheStreetlightToDim.Source streetlightId, in AsyncApiBenchmark.Generated.Models.JsonDateTime.Source sentAt = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(percentage, streetlightId, sentAt);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimCommandPayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
     }
 }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -45,33 +45,33 @@ public readonly partial struct DimResponsePayload
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StreetlightIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/streetlightId"u8, buffer, out written);
 
-        private static void MatchAppliedPercentage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchAppliedPercentage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.AppliedPercentageUtf8,
                     evaluationPath: AppliedPercentageSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -82,18 +82,18 @@ public readonly partial struct DimResponsePayload
             requiredBitBuffer[RequiredOffsetForStatus] |= RequiredBitForStatus;
         }
 
-        private static void MatchStreetlightId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchStreetlightId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.StreetlightIdUtf8,
                     evaluationPath: StreetlightIdSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -104,22 +104,22 @@ public readonly partial struct DimResponsePayload
             requiredBitBuffer[RequiredOffsetForStreetlightId] |= RequiredBitForStreetlightId;
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.AppliedPercentageUtf8, MatchAppliedPercentage),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.StreetlightIdUtf8, MatchStreetlightId),
             ]);
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -181,9 +181,9 @@ public readonly partial struct DimResponsePayload
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -51,18 +51,18 @@ public readonly partial struct LightMeasuredPayload
         private static readonly JsonSchemaPathProvider LumensSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lumens"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SentAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sentAt"u8, buffer, out written);
 
-        private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.SensorId.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.IdUtf8,
                     evaluationPath: IdSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.SensorId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -73,18 +73,18 @@ public readonly partial struct LightMeasuredPayload
             requiredBitBuffer[RequiredOffsetForId] |= RequiredBitForId;
         }
 
-        private static void MatchLumens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchLumens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.LumensUtf8,
                     evaluationPath: LumensSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -95,18 +95,18 @@ public readonly partial struct LightMeasuredPayload
             requiredBitBuffer[RequiredOffsetForLumens] |= RequiredBitForLumens;
         }
 
-        private static void MatchSentAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSentAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                AsyncApiBenchmark.Generated.JsonDateTime.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.SentAtUtf8,
                     evaluationPath: SentAtSchemaEvaluationPath);
 
-            AsyncApiBenchmark.Generated.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            AsyncApiBenchmark.Generated.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -117,22 +117,22 @@ public readonly partial struct LightMeasuredPayload
             requiredBitBuffer[RequiredOffsetForSentAt] |= RequiredBitForSentAt;
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.IdUtf8, MatchId),
                 (static () => JsonPropertyNames.LumensUtf8, MatchLumens),
                 (static () => JsonPropertyNames.SentAtUtf8, MatchSentAt),
             ]);
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -194,9 +194,9 @@ public readonly partial struct LightMeasuredPayload
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {
