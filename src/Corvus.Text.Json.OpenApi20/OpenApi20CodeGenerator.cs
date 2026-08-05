@@ -35,6 +35,7 @@ public sealed class OpenApi20CodeGenerator
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
+    private readonly IReadOnlySet<string> contextSourceBodyPointers;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
 
     /// <summary>
@@ -58,12 +59,14 @@ public sealed class OpenApi20CodeGenerator
         string rootNamespace,
         IReadOnlyDictionary<string, string> schemaTypeMap,
         string? clientNamePrefix = null,
-        bool ignoreEmptyFormUrlEncodedBody = false)
+        bool ignoreEmptyFormUrlEncodedBody = false,
+        IReadOnlySet<string>? contextSourceBodyPointers = null)
     {
         this.rootNamespace = rootNamespace;
         this.schemaTypeMap = schemaTypeMap;
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
+        this.contextSourceBodyPointers = contextSourceBodyPointers ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -353,6 +356,8 @@ public sealed class OpenApi20CodeGenerator
 
             bool hasBody = OperationHasBodyOrFormData(opRef.Operation, opRef.PathItem);
 
+            string methodName = GetMethodName(operationId, opRef.Method, path);
+
             result.Add(new OperationSummary(
                 path,
                 opRef.Method,
@@ -361,7 +366,10 @@ public sealed class OpenApi20CodeGenerator
                 isDeprecated,
                 paramCount,
                 hasBody,
-                summary));
+                summary,
+                methodName,
+                GeneratedClientTypeNaming.RequestTypeName(methodName),
+                GeneratedClientTypeNaming.ResponseTypeName(methodName)));
         }
 
         return [.. result];
@@ -1961,6 +1969,51 @@ public sealed class OpenApi20CodeGenerator
         return "JsonElement";
     }
 
+    // The JSON-ish media type's schema pointer for a RESPONSE body, the key into contextSourceBodyPointers.
+    private static string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                return content.SchemaPointer;
+            }
+        }
+
+        return null;
+    }
+
+    // The request body's schema pointer (the key into contextSourceBodyPointers), picked by the same rule that picks its
+    // type name so the two always describe the same content entry. A 2.0 body arrives as an `in: "body"` parameter, or
+    // as aggregated `formData` fields, but by this point both are normalised into the same RequestBodyInfo the 3.x
+    // generators use, so the rule is identical.
+    private static string? ResolveRequestBodySchemaPointer(RequestBodyInfo requestBody)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType)
+                || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType)
+                || CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
+            {
+                return content.SchemaPointer;
+            }
+        }
+
+        return null;
+    }
+
+    // Whether the operation can also be offered as a closure-free, single-materialisation generic overload.
+    private bool HasContextThreadedBody(OperationInfo op)
+    {
+        if (op.RequestBody is not { } requestBody || IsRawStreamRequestBody(requestBody))
+        {
+            return false;
+        }
+
+        return ResolveRequestBodySchemaPointer(requestBody) is { } pointer
+            && this.contextSourceBodyPointers.Contains(pointer);
+    }
+
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
     {
         foreach (ContentInfo content in requestBody.Content)
@@ -2062,6 +2115,21 @@ public sealed class OpenApi20CodeGenerator
     /// <summary>
     /// Returns the distinct content categories present in a response's content entries.
     /// </summary>
+    // The JSON-ish media type the response declares for its body, picked by the same rule that picked the body's
+    // schema so the two always describe the same content entry.
+    private static string DeclaredJsonMediaType(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                return content.MediaType;
+            }
+        }
+
+        return "application/json";
+    }
+
     private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
     {
         return resp.Content
@@ -3415,6 +3483,12 @@ public sealed class OpenApi20CodeGenerator
             }
 
             this.EmitInterfaceMethodSignature(w, operations[i]);
+
+            if (this.HasContextThreadedBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitInterfaceMethodSignature(w, operations[i], contextThreaded: true);
+            }
         }
 
         w.CloseBrace();
@@ -3436,7 +3510,7 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
     }
 
-    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)
+    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false)
     {
         string responseName = $"{op.MethodName}Response";
 
@@ -3447,9 +3521,25 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
-            $"ValueTask<{responseName}> {op.MethodName}Async({string.Join(", ", paramParts)});");
+            $"ValueTask<{responseName}> {op.MethodName}Async{generic}({string.Join(", ", paramParts)})" +
+            (contextThreaded ? string.Empty : ";"));
+
+        if (contextThreaded)
+        {
+            EmitContextConstraint(w);
+            w.WriteLine(";");
+        }
+    }
+
+    // The constraint that lets a caller thread a ref struct through as context, guarded because it is a C# 13 feature.
+    private static void EmitContextConstraint(IndentedWriter w)
+    {
+        w.WriteLine("#if NET9_0_OR_GREATER");
+        w.WriteLine("    where TContext : allows ref struct");
+        w.WriteLine("#endif");
     }
 
     // ── Implementation emission ─────────────────────────────────────────
@@ -3492,6 +3582,13 @@ public sealed class OpenApi20CodeGenerator
         {
             w.WriteLine();
             this.EmitClientMethod(w, operations[i], encodingFieldNames);
+
+            // A body whose type carries a Source<TContext> also gets the closure-free, single-materialisation form.
+            if (this.HasContextThreadedBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitClientMethod(w, operations[i], encodingFieldNames, contextThreaded: true);
+            }
         }
 
         w.WriteLine();
@@ -3537,7 +3634,7 @@ public sealed class OpenApi20CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false)
     {
         string requestName = $"{op.MethodName}Request";
         string responseName = $"{op.MethodName}Response";
@@ -3549,11 +3646,16 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
 
         w.WriteLine(
-            $"public ValueTask<{responseName}> {op.MethodName}Async(" +
+            $"public ValueTask<{responseName}> {op.MethodName}Async{(contextThreaded ? "<TContext>" : string.Empty)}(" +
             $"{string.Join(", ", paramParts)})");
+
+        if (contextThreaded)
+        {
+            EmitContextConstraint(w);
+        }
 
         w.OpenBrace();
 
@@ -3572,7 +3674,7 @@ public sealed class OpenApi20CodeGenerator
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
-                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, {(contextThreaded ? "in body" : "body")}, 30).RootElement;");
         }
 
         if (hasParams)
@@ -3885,7 +3987,7 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
     }
 
-    private List<string> BuildParameterList(OperationInfo op)
+    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false)
     {
         List<string> paramParts = [];
 
@@ -3913,7 +4015,8 @@ public sealed class OpenApi20CodeGenerator
             {
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
                 string suffix = bodyRequired ? string.Empty : " = default";
-                paramParts.Add($"{bodyTypeName}.Source body{suffix}");
+                string sourceType = contextThreaded ? "Source<TContext>" : "Source";
+                paramParts.Add($"{bodyTypeName}.{sourceType} body{suffix}");
             }
         }
 
@@ -4286,7 +4389,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine("/// Creates a default error result.");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders);
             }
             else
             {
@@ -4295,7 +4398,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders);
             }
         }
 
@@ -4393,12 +4496,18 @@ public sealed class OpenApi20CodeGenerator
         string structName,
         string factoryName,
         string? bodyTypeName,
+        ResponseInfo response,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
         bool structHasHeaders)
     {
         bool isDefault = statusCode == "default";
         bool hasBody = bodyTypeName is not null;
+
+        // The body carries a Source<TContext> (object/array type) iff its schema pointer is in the context-source set.
+        bool bodyHasContextSource = hasBody
+            && ResolveResponseBodySchemaPointer(response) is { } bodySchemaPointer
+            && this.contextSourceBodyPointers.Contains(bodySchemaPointer);
 
         StringBuilder paramList = new();
         if (isDefault)
@@ -4461,7 +4570,11 @@ public sealed class OpenApi20CodeGenerator
         string bodyExpr = hasBody
             ? $"{bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement"
             : "default";
-        string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
+
+        // The media type the response actually declares, not a literal "application/json". A specification declaring
+        // RFC 9457 problem documents means it: answering them as application/json tells a client the body is an
+        // ordinary result, and a client branching on the media type to find the problem shape never sees one.
+        string contentTypeExpr = hasBody ? $"\"{DeclaredJsonMediaType(response)}\"" : "null";
 
         if (structHasHeaders)
         {
@@ -4478,6 +4591,56 @@ public sealed class OpenApi20CodeGenerator
         {
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr});");
         }
+
+        // Closure-free, single-materialisation sibling: takes the response body already assembled as a context-threaded
+        // Source<TContext> and routes it straight through CreateBuilder<TContext> — no per-item closure on the caller
+        // side and no re-materialisation here. Only for object/array bodies; a scalar body has no Source<TContext>.
+        if (!bodyHasContextSource)
+        {
+            return;
+        }
+
+        string genericParamList = paramList.ToString().Replace($"{bodyTypeName}.Source body", $"{bodyTypeName}.Source<TContext> body");
+        string genericBodyExpr = $"{bodyTypeName}.CreateBuilder(workspace, in body, 30).RootElement";
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Creates a {statusCode} {factoryName} result from a context-threaded body, materialised in a single pass.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <typeparam name=\"TContext\">The type of the context carried by the body.</typeparam>");
+        if (isDefault)
+        {
+            w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+        }
+
+        w.WriteLine("/// <param name=\"body\">The context-threaded response body.</param>");
+        w.WriteLine("/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        foreach (var (header, _, fieldName, _) in respHeaders)
+        {
+            w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+        }
+
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+
+        string genericCtorArgs;
+        if (structHasHeaders)
+        {
+            StringBuilder genericArgs = new();
+            genericArgs.Append($"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}");
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
+            {
+                genericArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+            }
+
+            genericCtorArgs = genericArgs.ToString();
+        }
+        else
+        {
+            genericCtorArgs = $"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}";
+        }
+
+        w.WriteLine($"public static {structName} {factoryName}<TContext>({genericParamList})");
+        EmitContextConstraint(w);
+        w.WriteLine($"    => new({genericCtorArgs});");
     }
 
     private GeneratedFile EmitServerEndpointRegistration(

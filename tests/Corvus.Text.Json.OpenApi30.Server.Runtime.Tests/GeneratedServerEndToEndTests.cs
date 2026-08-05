@@ -124,7 +124,29 @@ public class GeneratedServerEndToEndTests
     public async Task DownloadFile_WhenRequested_ReturnsOk()
     {
         HttpResponseMessage response = await Client.GetAsync("/download");
-        await AssertEmptyResponseAsync(response, HttpStatusCode.OK);
+
+        // The download endpoint returns its file content (the mock returns "file-content"); the previous assertion
+        // expected an empty body, which never matched the handler. Assert the real contract: status + body.
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("file-content", await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task OptionalBodyProbe_WithoutBody_ReturnsNoContent()
+    {
+        // Regression (optional request bodies): a body-less POST to an operation whose requestBody is required:false
+        // must not be rejected by the dispatch — the empty body binds undefined and the handler runs, returning 204.
+        HttpResponseMessage response = await Client.PostAsync("/optional-body-probe", null);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task OptionalBodyProbe_WithBody_ReturnsNoContent()
+    {
+        // The same operation still accepts (and parses) a body when one is supplied.
+        StringContent content = new("""{"note":"hello"}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await Client.PostAsync("/optional-body-probe", content);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [TestMethod]
@@ -758,13 +780,6 @@ public class GeneratedServerEndToEndTests
         string body = await response.Content.ReadAsStringAsync();
         Assert.AreEqual(expectedStatusCode, response.StatusCode);
         Assert.AreEqual(expectedBody, body);
-    }
-
-    private static async Task AssertEmptyResponseAsync(HttpResponseMessage response, HttpStatusCode expectedStatusCode)
-    {
-        string body = await response.Content.ReadAsStringAsync();
-        Assert.AreEqual(expectedStatusCode, response.StatusCode);
-        Assert.AreEqual(string.Empty, body);
     }
 
     private static async Task AssertProblemDetailsAsync(HttpResponseMessage response, HttpStatusCode expectedStatusCode, string expectedDetail)

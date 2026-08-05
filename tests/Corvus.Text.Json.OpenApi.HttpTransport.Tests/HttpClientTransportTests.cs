@@ -351,6 +351,106 @@ public class HttpClientTransportTests
     }
 
     [TestMethod]
+    public async Task SendAsync_BaseUrlOverrideWithPathPrefix_PrefixPreserved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(
+            client,
+            baseUrlOverride: _ => new ValueTask<Uri?>(new Uri("https://dev.example/env/")));
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://dev.example/env/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_BaseUrlOverride_TakesPrecedenceOverPathPrefixedBaseAddress()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory/");
+
+        await using HttpClientTransport transport = new(
+            client,
+            baseUrlOverride: _ => new ValueTask<Uri?>(new Uri("https://dev.example/env/")));
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://dev.example/env/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_BaseUrlOverrideResolvesNull_FallsBackToBaseAddress()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory/");
+
+        await using HttpClientTransport transport = new(
+            client,
+            baseUrlOverride: _ => new ValueTask<Uri?>((Uri?)null));
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://apim.example/inventory/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_BaseUrlOverride_ResolvedOnceAcrossSends()
+    {
+        int resolutions = 0;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: _ => Task.CompletedTask);
+
+        await using HttpClientTransport transport = new(
+            client,
+            baseUrlOverride: _ =>
+            {
+                resolutions++;
+                return new ValueTask<Uri?>(new Uri("https://dev.example/env/"));
+            });
+
+        TestGetRequest request = default;
+        await using (TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request))
+        {
+        }
+
+        await using (TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request))
+        {
+        }
+
+        Assert.AreEqual(1, resolutions);
+    }
+
+    [TestMethod]
     public async Task SendAsync_NoBaseAddress_ThrowsInvalidOperationException()
     {
         using MockHandler handler = new(HttpStatusCode.OK, "[]"u8.ToArray());

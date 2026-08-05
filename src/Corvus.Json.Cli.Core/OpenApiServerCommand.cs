@@ -97,9 +97,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
             Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
                     .ConfigureAwait(false);
             }
 
@@ -112,7 +113,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
-                settings.IgnoreEmptyFormUrlEncodedBody);
+                settings.IgnoreEmptyFormUrlEncodedBody,
+                contextBodies);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else if (specVersion is "3.2")
@@ -123,9 +125,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
             Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -138,7 +141,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
-                settings.IgnoreEmptyFormUrlEncodedBody);
+                settings.IgnoreEmptyFormUrlEncodedBody,
+                contextBodies);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else if (specVersion is "3.1" or not "3.0")
@@ -149,9 +153,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
             Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -164,7 +169,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
-                settings.IgnoreEmptyFormUrlEncodedBody);
+                settings.IgnoreEmptyFormUrlEncodedBody,
+                contextBodies);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else
@@ -175,9 +181,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
             Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -190,7 +197,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
-                settings.IgnoreEmptyFormUrlEncodedBody);
+                settings.IgnoreEmptyFormUrlEncodedBody,
+                contextBodies);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
 
@@ -223,7 +231,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         return 0;
     }
 
-    private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
+    private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlySet<string> ContextSourceBodyPointers, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
         string specVersion,
         string rootNamespace,
@@ -348,6 +356,11 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
 
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
 
+        // The subset of map pointers whose type is an object or array — i.e. types for which the model generator emits a
+        // context-threaded Source<TContext>. The server generator emits a closure-free, single-materialisation
+        // Ok<TContext> response factory only for a body in this set; a scalar body has no Source<TContext>.
+        HashSet<string> contextSourceBodyPointers = new(StringComparer.Ordinal);
+
         foreach ((string pointerStr, TypeDeclaration td) in pointerToType)
         {
             TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
@@ -355,21 +368,25 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             if (reduced.HasDotnetTypeName())
             {
                 schemaTypeMap[pointerStr] = reduced.FullyQualifiedDotnetTypeName();
+                if ((reduced.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0)
+                {
+                    contextSourceBodyPointers.Add(pointerStr);
+                }
             }
 
-            AddChildTypesToMap(reduced, schemaTypeMap);
+            AddChildTypesToMap(reduced, schemaTypeMap, contextSourceBodyPointers);
         }
 
-        return (schemaTypeMap, schemaFileNames);
+        return (schemaTypeMap, contextSourceBodyPointers, schemaFileNames);
     }
 
-    private static void AddChildTypesToMap(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap)
+    private static void AddChildTypesToMap(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap, HashSet<string> contextSourceBodyPointers)
     {
         HashSet<TypeDeclaration> visited = [];
-        AddChildTypesToMapCore(parentType, schemaTypeMap, visited);
+        AddChildTypesToMapCore(parentType, schemaTypeMap, contextSourceBodyPointers, visited);
     }
 
-    private static void AddChildTypesToMapCore(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap, HashSet<TypeDeclaration> visited)
+    private static void AddChildTypesToMapCore(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap, HashSet<string> contextSourceBodyPointers, HashSet<TypeDeclaration> visited)
     {
         foreach (TypeDeclaration child in parentType.Children())
         {
@@ -384,10 +401,14 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 && reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
             {
                 string key = "#" + rootPointer;
-                schemaTypeMap.TryAdd(key, reducedChild.FullyQualifiedDotnetTypeName());
+                if (schemaTypeMap.TryAdd(key, reducedChild.FullyQualifiedDotnetTypeName())
+                    && (reducedChild.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0)
+                {
+                    contextSourceBodyPointers.Add(key);
+                }
             }
 
-            AddChildTypesToMapCore(reducedChild, schemaTypeMap, visited);
+            AddChildTypesToMapCore(reducedChild, schemaTypeMap, contextSourceBodyPointers, visited);
         }
     }
 

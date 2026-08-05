@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Net;
 using System.Text;
 using CanonTests32.Server;
@@ -138,6 +139,24 @@ public class GeneratedServerEndToEndTests
     {
         HttpResponseMessage response = await client!.GetAsync("/download");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task OptionalBodyProbe_WithoutBody_ReturnsNoContent()
+    {
+        // Regression (optional request bodies): a body-less POST to an operation whose requestBody is required:false
+        // must not be rejected by the dispatch — the empty body binds undefined and the handler runs, returning 204.
+        HttpResponseMessage response = await client!.PostAsync("/optional-body-probe", null);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task OptionalBodyProbe_WithBody_ReturnsNoContent()
+    {
+        // The same operation still accepts (and parses) a body when one is supplied.
+        StringContent content = new("""{"note":"hello"}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/optional-body-probe", content);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
     }
 
     [TestMethod]
@@ -643,6 +662,20 @@ public class GeneratedServerEndToEndTests
     {
         HttpResponseMessage response = await client!.GetAsync("/export");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task ExportData_CarriesItsResponseHeaders()
+    {
+        // A binary response body AND response headers together. The factory for that combination emitted a required
+        // parameter after an optional one and did not compile at all, so nothing downstream of it was ever exercised;
+        // compiling again is necessary but not sufficient, and this asserts the header values reach the wire.
+        HttpResponseMessage response = await client!.GetAsync("/export");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("\"export-1\"", response.Headers.ETag?.ToString());
+        Assert.AreEqual("7", response.Headers.GetValues("X-Export-Sequence").Single());
+        Assert.AreEqual("export-data", await response.Content.ReadAsStringAsync());
     }
 
     [TestMethod]

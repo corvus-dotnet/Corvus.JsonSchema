@@ -23,6 +23,32 @@
     }
   ],
   "paths": {
+    "/optional-body-probe": {
+      "post": {
+        "operationId": "optionalBodyProbe",
+        "summary": "Regression probe: an optional request body that is absent must not fail to parse.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted, with or without a body."
+          }
+        }
+      }
+    },
     "/items": {
       "servers": [
         {
@@ -108,7 +134,7 @@
             "apiKeyAuth": []
           }
         ],
-        "description": "Returns all items matching optional filters."
+        "description": "Returns all items matching optional filters.\n\nA second paragraph, because an OpenAPI description is CommonMark and multi-line prose is ordinary.\nA wrapped line within that paragraph, which is a wrap rather than a new paragraph.\n\nA third paragraph, so more than one paragraph boundary is exercised."
       },
       "post": {
         "operationId": "createItem",
@@ -268,7 +294,7 @@
                 }
               },
               "X-Request-Id": {
-                "description": "Request correlation ID (no schema â€” raw string)"
+                "description": "Request correlation ID (no schema \u00e2\u20ac\u201d raw string)"
               },
               "X-Tags": {
                 "schema": {
@@ -558,6 +584,21 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "The exported representation's entity tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Export-Sequence": {
+                "description": "The export's monotonic sequence.",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
                 }
               }
             }
