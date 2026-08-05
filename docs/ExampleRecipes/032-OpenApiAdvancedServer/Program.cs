@@ -321,11 +321,10 @@ internal sealed class PhotosHandler : IApiPhotosHandler
                 workspace));
         }
 
-        // For binary responses, the generated infrastructure streams the data
-        // to the client. Here we return Ok() — the actual streaming is handled
-        // by the endpoint registration middleware.
-        _ = photo; // In production, you'd stream photo.Data
-        return ValueTask.FromResult(DownloadPhotoResult.Ok());
+        // A binary response carries its body through the result factory. Pass the bytes and the
+        // generated infrastructure writes them to the response stream, with the content type the
+        // handler chooses rather than the one the specification happened to list first.
+        return ValueTask.FromResult(DownloadPhotoResult.Ok(photo.Data, photo.ContentType));
     }
 }
 

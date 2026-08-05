@@ -68,6 +68,18 @@ public readonly struct StartVetChatResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartVetChatResult"/> with status 401.</returns>
     public static StartVetChatResult Unauthorized(Petstore.Extended.Server.Models.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.Extended.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 401 Unauthorized result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="StartVetChatResult"/> with status 401.</returns>
+    public static StartVetChatResult Unauthorized<TContext>(Petstore.Extended.Server.Models.Error.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(401, Petstore.Extended.Server.Models.Error.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
