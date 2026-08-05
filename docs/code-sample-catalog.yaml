@@ -510,8 +510,8 @@ example-recipes:
       - {index: 2, language: csharp, lines: [37, 44], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [52, 59], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [70, 74], category: compilable, verified: false}
-      - {index: 5, language: bash, lines: [86, 88]}
-      - {index: 6, language: text, lines: [92, 102]}
+      - {index: 5, language: bash, lines: [88, 90]}
+      - {index: 6, language: text, lines: [94, 104]}
   - path: "docs/ExampleRecipes/038-AsyncApiEndToEnd/README.md"
     companion_project: "docs/ExampleRecipes/038-AsyncApiEndToEnd/"
     blocks:

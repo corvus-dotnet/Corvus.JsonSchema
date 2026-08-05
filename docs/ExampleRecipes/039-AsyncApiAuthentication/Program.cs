@@ -184,7 +184,7 @@ catch (Exception ex)
         tokenFactory: ct => new ValueTask<string>("refreshed-token-value"));
 
     ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-    await consumer.StartAsync();
+    await consumer.StartAsync(streetlightId: "lamp-006");
     Console.WriteLine("Bearer token (dynamic): consumer subscribed");
     await consumer.StopAsync();
 }
@@ -211,7 +211,7 @@ catch (Exception ex)
         location: "header");
 
     ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-    await consumer.StartAsync();
+    await consumer.StartAsync(streetlightId: "lamp-007");
     Console.WriteLine("API key (named): consumer subscribed");
     await consumer.StopAsync();
 }

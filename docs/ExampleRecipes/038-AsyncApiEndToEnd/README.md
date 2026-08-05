@@ -62,10 +62,10 @@ ReceiveLightMeasurementConsumer consumer = new(
     handler,
     validationMode: ValidationMode.Basic);
 
-await consumer.StartAsync();
+await consumer.StartAsync(StreetlightId);
 ```
 
-The consumer subscribes to the `lightingMeasured` channel. When messages arrive, they're validated against the schema, then passed to your handler.
+The channel address template declares a `{streetlightId}` parameter, so `StartAsync` takes the id and the consumer subscribes to the concrete `lightingMeasured` channel the template composes to. When messages arrive, they're validated against the schema, then passed to your handler.
 
 **Your handler implementation:**
 
@@ -196,10 +196,10 @@ await using NatsMessageTransport transport = new(new NatsTransportOptions
 ```csharp
 // ❌ Wrong: publish before consumer starts
 await transport.PublishAsync(...);
-await consumer.StartAsync(); // Too late!
+await consumer.StartAsync(StreetlightId); // Too late!
 
 // ✅ Correct: start consumer first
-await consumer.StopAsync();
+await consumer.StartAsync(StreetlightId);
 await transport.PublishAsync(...); // Now delivered
 ```
 

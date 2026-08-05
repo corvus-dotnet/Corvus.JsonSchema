@@ -68,10 +68,12 @@ If validation fails, the message is routed to your `IMessageErrorPolicy` — it 
 ### Consumer Lifecycle
 
 ```csharp
-await consumer.StartAsync();    // Subscribe to the channel
+await consumer.StartAsync(StreetlightId);    // Subscribe to the channel
 // ... messages are published and auto-delivered ...
-await consumer.StopAsync();     // Unsubscribe and clean up
+await consumer.StopAsync();                  // Unsubscribe and clean up
 ```
+
+The channel address template declares a `{streetlightId}` parameter, so `StartAsync` takes a value for it and subscribes to the concrete channel the template composes to.
 
 ### How InMemoryMessageTransport Works
 
