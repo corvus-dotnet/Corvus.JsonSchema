@@ -242,6 +242,29 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void CovSpec_ResponseLinks_MultiLineLinkDescription_EmitsSingleEscapedDocCommentLine()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/requestBody/content/application~1json/schema"] = "CovTest.Client.NewItem",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "CovTest.Client.CreatedItem",
+        };
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+        GeneratedFile resp = files.First(f => f.FileName == "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "/// Retrieve the created item by its id. Use this link after create &amp; before any update.",
+                StringComparison.Ordinal),
+            "Multi-line link description should be flattened onto a single XML-escaped doc-comment line");
+        Assert.IsFalse(
+            resp.Content.Contains("\nUse this link after create", StringComparison.Ordinal),
+            "The raw line break in the link description must not reach the emitted code");
+    }
+
+    [TestMethod]
     public void Generate_AdditionalOperationsProducesCustomMethodRequest()
     {
         // Build a schema type map for the COPY operation

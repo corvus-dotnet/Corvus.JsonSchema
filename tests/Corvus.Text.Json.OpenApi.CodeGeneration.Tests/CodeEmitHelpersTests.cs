@@ -213,6 +213,30 @@ public class CodeEmitHelpersTests
     }
 
     [TestMethod]
+    public void EscapeXml_CrLfLineBreak_FlattensToSingleLine()
+    {
+        Assert.AreEqual(
+            "first line. second line.",
+            CodeEmitHelpers.EscapeXml("first line.\r\nsecond line."));
+    }
+
+    [TestMethod]
+    public void EscapeXml_LfLineBreak_FlattensToSingleLine()
+    {
+        Assert.AreEqual(
+            "first line. second line.",
+            CodeEmitHelpers.EscapeXml("first line.\nsecond line."));
+    }
+
+    [TestMethod]
+    public void EscapeXml_BlankLineSeparatedParagraphs_BecomeParaElements()
+    {
+        Assert.AreEqual(
+            "<para>first paragraph.</para><para>second paragraph.</para>",
+            CodeEmitHelpers.EscapeXml("first paragraph.\r\n\r\nsecond paragraph."));
+    }
+
+    [TestMethod]
     public void HeaderNameToPropertyName_HyphenatedHeader_ReturnsPascalCase()
     {
         Assert.AreEqual("XRateLimit", CodeEmitHelpers.HeaderNameToPropertyName("X-Rate-Limit"));

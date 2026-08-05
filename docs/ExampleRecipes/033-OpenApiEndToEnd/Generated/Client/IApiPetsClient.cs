@@ -33,6 +33,8 @@ public interface IApiPetsClient : IAsyncDisposable
     /// <param name="filter">The filter parameter.</param>
     /// <param name="xRequestId">The x-request-id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ListPetsResponse> ListPetsAsync(Petstore.EndToEnd.Client.Models.JsonString.Source xRequestId, Petstore.EndToEnd.Client.Models.GetPetsLimit.Source limit = default, Petstore.EndToEnd.Client.Models.GetPetsTags.Source tags = default, Petstore.EndToEnd.Client.Models.GetPetsFilter.Source filter = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -41,6 +43,8 @@ public interface IApiPetsClient : IAsyncDisposable
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -49,6 +53,8 @@ public interface IApiPetsClient : IAsyncDisposable
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<CreatePetResponse> CreatePetAsync<TContext>(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -60,6 +66,8 @@ public interface IApiPetsClient : IAsyncDisposable
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetPetsBatchResponse> GetPetsBatchAsync(Petstore.EndToEnd.Client.Models.GetPetsBatchByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -67,5 +75,7 @@ public interface IApiPetsClient : IAsyncDisposable
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

@@ -1,5 +1,14 @@
 # Version History
 
+## V5.3.1
+
+V5.3.1 closes out the doc-comment emission defects found while reviewing [#916](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/916): the last place specification text reached a generated doc comment unescaped, and the XML doc comments in generated code that had drifted out of step with the signatures they document.
+
+### Bug fixes
+
+- **A multi-line OpenAPI link description no longer breaks the generated build** — The `description` of a response `links` entry was written into the generated link-traversal method's `<summary>` verbatim, in the 3.0, 3.1, and 3.2 client generators. A line break in that description terminated the doc comment and the remainder parsed as source code, the same failure mode #916 reported for operation summaries; a `<` or `&` produced malformed XML docs. The value now goes through the same `EscapeXml` flattening every other doc-comment site has used since #915. See [#917](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/917).
+- **Generated code compiles clean under `GenerateDocumentationFile` with warnings as errors** — Several generated doc comments contradicted the signatures they document, so any consuming project that turns on XML documentation output failed its build with CS1572/CS1573. In the model templates, the `(IJsonDocument parent, int idx)` constructors were documented with a single `value` tag, the conversion operators and `From<T>` documented `value` while the parameter is named `instance`, and `TryParseValue` documented an `element` parameter while emitting `result`. In the OpenAPI client generators, the generated operation methods documented every parameter except the trailing `validationMode` and `responseValidationMode` pair, in all four spec versions. All of those now match, and a regression test compiles generated `jsonschema` and `openapi-client` output with documentation diagnostics enabled to keep them matching. Generated public members that carry no doc comment at all (CS1591) are a separate surface, tracked in [#919](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/919). See [#918](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/918).
+
 ## V5.3.0
 
 V5.3.0 brings the OpenAPI and AsyncAPI generation work from the workflow-engine campaign back to the mainline. Generated clients gain a closure-free request-body overload, generated servers describe themselves from the specification, optional request bodies are finally optional, and the AsyncAPI transport surface gains a request/reply responder. Three changes are breaking, which is why this is a minor rather than a patch release. It also carries two community contributions from Levy Barbosa, covering AsyncAPI channel parameters and channel/operation bindings.

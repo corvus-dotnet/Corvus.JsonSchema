@@ -35,6 +35,8 @@ public sealed class ApiAdoptionClient : IApiAdoptionClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync(Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -64,6 +66,8 @@ public sealed class ApiAdoptionClient : IApiAdoptionClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync<TContext>(Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
