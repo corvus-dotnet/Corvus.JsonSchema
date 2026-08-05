@@ -2235,6 +2235,68 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ConsumerWithOperationBindings_PassesBindingContextToTransport()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "nats-operation-bindings.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("NatsBindings", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("SubscribeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        StringAssert.Contains(consumer.Content, "MessageContext context = new()");
+        StringAssert.Contains(consumer.Content, "OperationBindingsJson = OperationBindingsBytes");
+        StringAssert.Contains(consumer.Content, "this.HandleMessageAsync, context, cancellationToken");
+    }
+
+    [TestMethod]
+    public void Generate_ParameterizedConsumer_ComposesTheAddressWithoutIntermediateStrings()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Parameterized", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("SubscribeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        // The string overload stays, because it is what most callers use, but it delegates to a span overload
+        // so a caller holding a span never makes a string only for it to be measured and copied.
+        StringAssert.Contains(consumer.Content, "public ValueTask StartAsync(string orderId, CancellationToken cancellationToken = default)");
+        StringAssert.Contains(consumer.Content, "public ValueTask StartAsync(ReadOnlySpan<char> orderId, CancellationToken cancellationToken = default)");
+
+        // The literal parts of the template are UTF-8 at compile time and the address is filled once, so the
+        // only allocations are the two arrays the subscription retains.
+        StringAssert.Contains(consumer.Content, "\"orders.\"u8.CopyTo(channelUtf8.AsSpan(written));");
+        StringAssert.Contains(consumer.Content, "written += Encoding.UTF8.GetBytes(orderId, channelUtf8.AsSpan(written));");
+        StringAssert.Contains(consumer.Content, "\".created\"u8.CopyTo(channelUtf8.AsSpan(written));");
+        StringAssert.Contains(consumer.Content, "this.subscribedChannelUtf8 = channelUtf8;");
+
+        // The dead-letter address is built from the bytes just composed, not from a second pass or a concat.
+        StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
+        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;");
+
+        // What the old shape did, and must not come back.
+        Assert.IsFalse(consumer.Content.Contains("ChannelAddressTemplate", StringComparison.Ordinal), "the template should be split at generation time, not carried as a string");
+        Assert.IsFalse(consumer.Content.Contains(".Replace(", StringComparison.Ordinal), "composing by string.Replace allocates a string per parameter");
+    }
+
+    [TestMethod]
+    public void Compile_ParameterizedConsumer_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Parameterized", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        DynamicCompiler.AssertCompiles(files, "Parameterized.Generated");
+    }
+
+    [TestMethod]
     public void Compile_ConsumerDynamicMultiMessage_GeneratedCodeCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));

@@ -94,7 +94,7 @@ public static class MessageTransportReceiveExtensions
 
     /// <summary>
     /// Awaits a single request on a channel and replies to it once: subscribes with the request/reply
-    /// responder (<see cref="IMessageTransport.SubscribeReplyAsync{TRequest, TReply}"/>), invokes
+    /// responder (<see cref="IMessageTransport.SubscribeReplyAsync{TRequest, TReply}(ReadOnlyMemory{byte}, Func{TRequest, JsonElement, CancellationToken, ValueTask{TReply}}, CancellationToken)"/>), invokes
     /// <paramref name="onRequest"/> with the first delivered request to obtain the reply, lets the transport
     /// publish that reply correlated to the request, then unsubscribes — the responder counterpart of
     /// <see cref="ReceiveOneAsync{TPayload}"/>.

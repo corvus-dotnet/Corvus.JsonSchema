@@ -777,6 +777,38 @@ public readonly partial struct CypressSchema
                             }
 
                             /// <summary>
+                            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                            /// </summary>
+                            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                            /// <param name="matchPemFileSpecificProperties">Match a <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties"/>.</param>
+                            /// <param name="matchPfxFileSpecificProperties">Match a <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties"/>.</param>
+                            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                            /// <returns>The accumulator returned by the last match function called.</returns>
+                            public TAccumulator MatchEvery<TAccumulator>(
+                                TAccumulator accumulator,
+                                Matcher<Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties, TAccumulator, TAccumulator> matchPemFileSpecificProperties,
+                                Matcher<Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties, TAccumulator, TAccumulator> matchPfxFileSpecificProperties,
+                                Matcher<Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                            {
+                                bool matched = false;
+
+                                if (Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.JsonSchema.Evaluate(_parent, _idx))
+                                {
+                                    matched = true;
+                                    accumulator = matchPemFileSpecificProperties(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Mutable.From(this), accumulator);
+                                }
+
+                                if (Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.JsonSchema.Evaluate(_parent, _idx))
+                                {
+                                    matched = true;
+                                    accumulator = matchPfxFileSpecificProperties(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Mutable.From(this), accumulator);
+                                }
+
+                                return matched ? accumulator : defaultMatch(this, accumulator);
+                            }
+
+                            /// <summary>
                             /// Gets the value as a <see cref="Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>

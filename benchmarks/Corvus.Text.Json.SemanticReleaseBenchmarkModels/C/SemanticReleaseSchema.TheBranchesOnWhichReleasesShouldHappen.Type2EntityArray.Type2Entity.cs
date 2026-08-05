@@ -817,6 +817,38 @@ public readonly partial struct SemanticReleaseSchema
 
                     return defaultMatch(this);
                 }
+
+                /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
+                /// <param name="matchBranchObject">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject, TAccumulator, TAccumulator> matchBranchObject,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.From(this), accumulator);
+                    }
+
+                    if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchBranchObject(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
             }
         }
     }

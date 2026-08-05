@@ -2920,6 +2920,382 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchAixPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel"/>.</param>
+                /// <param name="matchAlpinePlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel"/>.</param>
+                /// <param name="matchDellOsPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel"/>.</param>
+                /// <param name="matchDevuanPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel"/>.</param>
+                /// <param name="matchDragonFlyBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel"/>.</param>
+                /// <param name="matchElPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel"/>.</param>
+                /// <param name="matchEosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel"/>.</param>
+                /// <param name="matchFedoraPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel"/>.</param>
+                /// <param name="matchFreeBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel"/>.</param>
+                /// <param name="matchGenericBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel"/>.</param>
+                /// <param name="matchGenericLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel"/>.</param>
+                /// <param name="matchGenericUnixPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel"/>.</param>
+                /// <param name="matchAmazonPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel"/>.</param>
+                /// <param name="matchGentooPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel"/>.</param>
+                /// <param name="matchHardenedBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel"/>.</param>
+                /// <param name="matchIosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel"/>.</param>
+                /// <param name="matchJunosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel"/>.</param>
+                /// <param name="matchKaliPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel"/>.</param>
+                /// <param name="matchMacOsPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel"/>.</param>
+                /// <param name="matchMacOsxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel"/>.</param>
+                /// <param name="matchMageiaPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel"/>.</param>
+                /// <param name="matchNxosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel"/>.</param>
+                /// <param name="matchOpenBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel"/>.</param>
+                /// <param name="matchAmazonLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel"/>.</param>
+                /// <param name="matchOpensusePlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel"/>.</param>
+                /// <param name="matchOpenWrtPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel"/>.</param>
+                /// <param name="matchOracleLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel"/>.</param>
+                /// <param name="matchOs10PlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel"/>.</param>
+                /// <param name="matchPanOsPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel"/>.</param>
+                /// <param name="matchSlesPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel"/>.</param>
+                /// <param name="matchSmartOsPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel"/>.</param>
+                /// <param name="matchSolarisPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel"/>.</param>
+                /// <param name="matchSynologyPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel"/>.</param>
+                /// <param name="matchTmosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel"/>.</param>
+                /// <param name="matchAosPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel"/>.</param>
+                /// <param name="matchUbuntuPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel"/>.</param>
+                /// <param name="matchVCenterPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel"/>.</param>
+                /// <param name="matchVoidLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel"/>.</param>
+                /// <param name="matchVSpherePlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel"/>.</param>
+                /// <param name="matchWindowsPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel"/>.</param>
+                /// <param name="matchArchLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel"/>.</param>
+                /// <param name="matchClearLinuxPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel"/>.</param>
+                /// <param name="matchCumulusPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel"/>.</param>
+                /// <param name="matchNetBsdPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel"/>.</param>
+                /// <param name="matchDebianPlatformModel">Match a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel, TAccumulator, TAccumulator> matchAixPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel, TAccumulator, TAccumulator> matchAlpinePlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel, TAccumulator, TAccumulator> matchDellOsPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel, TAccumulator, TAccumulator> matchDevuanPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel, TAccumulator, TAccumulator> matchDragonFlyBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel, TAccumulator, TAccumulator> matchElPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel, TAccumulator, TAccumulator> matchEosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel, TAccumulator, TAccumulator> matchFedoraPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel, TAccumulator, TAccumulator> matchFreeBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel, TAccumulator, TAccumulator> matchGenericBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel, TAccumulator, TAccumulator> matchGenericLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel, TAccumulator, TAccumulator> matchGenericUnixPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel, TAccumulator, TAccumulator> matchAmazonPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel, TAccumulator, TAccumulator> matchGentooPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel, TAccumulator, TAccumulator> matchHardenedBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel, TAccumulator, TAccumulator> matchIosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel, TAccumulator, TAccumulator> matchJunosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel, TAccumulator, TAccumulator> matchKaliPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel, TAccumulator, TAccumulator> matchMacOsPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel, TAccumulator, TAccumulator> matchMacOsxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel, TAccumulator, TAccumulator> matchMageiaPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel, TAccumulator, TAccumulator> matchNxosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel, TAccumulator, TAccumulator> matchOpenBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel, TAccumulator, TAccumulator> matchAmazonLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel, TAccumulator, TAccumulator> matchOpensusePlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel, TAccumulator, TAccumulator> matchOpenWrtPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel, TAccumulator, TAccumulator> matchOracleLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel, TAccumulator, TAccumulator> matchOs10PlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel, TAccumulator, TAccumulator> matchPanOsPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel, TAccumulator, TAccumulator> matchSlesPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel, TAccumulator, TAccumulator> matchSmartOsPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel, TAccumulator, TAccumulator> matchSolarisPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel, TAccumulator, TAccumulator> matchSynologyPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel, TAccumulator, TAccumulator> matchTmosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel, TAccumulator, TAccumulator> matchAosPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel, TAccumulator, TAccumulator> matchUbuntuPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel, TAccumulator, TAccumulator> matchVCenterPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel, TAccumulator, TAccumulator> matchVoidLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel, TAccumulator, TAccumulator> matchVSpherePlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel, TAccumulator, TAccumulator> matchWindowsPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel, TAccumulator, TAccumulator> matchArchLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel, TAccumulator, TAccumulator> matchClearLinuxPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel, TAccumulator, TAccumulator> matchCumulusPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel, TAccumulator, TAccumulator> matchNetBsdPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel, TAccumulator, TAccumulator> matchDebianPlatformModel,
+                    Matcher<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchAixPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchAlpinePlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchDellOsPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchDevuanPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchDragonFlyBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchElPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchEosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchFedoraPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchFreeBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchGenericBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchGenericLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchGenericUnixPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchAmazonPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchGentooPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchHardenedBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchIosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJunosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchKaliPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchMacOsPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchMacOsxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchMageiaPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchNxosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchOpenBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchAmazonLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchOpensusePlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchOpenWrtPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchOracleLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchOs10PlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchPanOsPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchSlesPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchSmartOsPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchSolarisPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchSynologyPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchTmosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchAosPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchUbuntuPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchVCenterPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchVoidLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchVSpherePlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchWindowsPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchArchLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchClearLinuxPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchCumulusPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchNetBsdPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchDebianPlatformModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Mutable.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
+
+                /// <summary>
                 /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>

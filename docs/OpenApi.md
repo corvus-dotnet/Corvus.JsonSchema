@@ -263,6 +263,31 @@ JsonString nextPage = response.XNextHeader;
 
 ## Request Bodies
 
+### Building a Body Without Closures
+
+Where a body is an object or an array, the client also emits a generic overload taking that type's `Source<TContext>`. It is the client counterpart of the server's `Ok<TContext>(...)` factory: the body is assembled lazily with the caller's context threaded through, and materialised in one pass, so putting a collection in a request body costs no per-item closure.
+
+```csharp
+// Without: the lambda captures `pets`, allocating a closure per call.
+await client.CreatePetsAsync(body: Pets.Build(b => { foreach (Pet p in pets) b.AddItem(p); }));
+
+// With: `pets` is threaded through, and the lambda stays static.
+await client.CreatePetsAsync(
+    body: Pets.Build(in pets, static (in IReadOnlyList<Pet> source, ref Pets.Builder b) =>
+    {
+        foreach (Pet p in source)
+        {
+            b.AddItem(p);
+        }
+    }));
+```
+
+The overload is emitted only where it can be: a body whose type is a scalar has no `Source<TContext>`, so nothing changes there.
+
+### Optional Bodies
+
+A request body that is not marked `required` is optional in the generated signature. A client omits it when it is not supplied, rather than sending an empty one, and a server sees it as absent rather than as an empty value.
+
 ### JSON Bodies (Client)
 
 Object bodies use the generated `Builder` pattern. Required properties are mandatory parameters; optional ones have defaults:
@@ -398,6 +423,22 @@ await foreach (ParsedJsonDocument<ActivityEvent> doc in activityResponse.Enumera
 ```
 
 ## Binary Transfers
+
+### Binary Responses (Server)
+
+A binary response carries its body through the result factory, either as bytes or as a writer, and chooses its content type:
+
+```csharp
+// Bytes you already hold.
+return DownloadPhotoResult.Ok(photo.Data, photo.ContentType);
+
+// Or stream it, for something you do not want to buffer.
+return DownloadPhotoResult.Ok(
+    (stream, ct) => blob.DownloadToAsync(stream, ct),
+    "image/png");
+```
+
+> **Before 5.3.0** this factory took no arguments, so a handler could not supply the body at all and the content type came from whichever one the specification happened to list first. Handlers returning a binary response must now pass a body, which is a compile break with the missing capability inside it.
 
 ### File Upload (Multipart)
 
@@ -1032,6 +1073,34 @@ using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://
 var petsClient = new ApiPetsClient(new HttpClientTransport(httpClient));
 await using var response = await petsClient.ListPetsAsync();
 ```
+
+## Resilience (Polly Integration)
+
+The `Corvus.Text.Json.OpenApi.Polly` package wraps any `IApiTransport` in a [Polly](https://github.com/App-vNext/Polly) resilience pipeline, so retry and circuit-breaking are configured once for the client rather than at every call site. It is the OpenAPI counterpart of `Corvus.Text.Json.AsyncApi.Polly`.
+
+```bash
+dotnet add package Corvus.Text.Json.OpenApi.Polly
+```
+
+```csharp
+using Corvus.Text.Json.OpenApi.Polly;
+using Polly;
+using Polly.Retry;
+
+ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
+    .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 3 })
+    .AddTimeout(TimeSpan.FromSeconds(10))
+    .Build();
+
+await using HttpClientTransport inner = new(httpClient);
+await using ResilientApiTransport transport = new(inner, pipeline);
+
+ApiPetsClient client = new(transport);
+```
+
+Every operation passes through the pipeline and is otherwise unchanged, so the generated client neither knows nor needs to know that it is there. Disposing the resilient transport disposes the one it wraps.
+
+Choose the strategies with the API in mind: retrying a non-idempotent operation can duplicate work, and the pipeline cannot tell which is which.
 
 ## Webhooks and Callbacks
 

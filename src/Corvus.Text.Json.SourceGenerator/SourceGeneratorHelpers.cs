@@ -103,7 +103,12 @@ public static class SourceGeneratorHelpers
                 evaluatorRootTypes.Add(rootType);
             }
 
-            defaultNamespace ??= spec.Namespace;
+            // Prefer the first non-empty namespace: an empty namespace (a global-namespace
+            // target) must not capture the default used for shared generated types.
+            if (string.IsNullOrEmpty(defaultNamespace))
+            {
+                defaultNamespace = spec.Namespace;
+            }
 
             // Only add the named type if the spec.TypeName is not null or empty.
             if (!string.IsNullOrEmpty(spec.TypeName))

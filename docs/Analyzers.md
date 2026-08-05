@@ -80,12 +80,13 @@ The code fix removes the unnecessary cast, letting the implicit conversion handl
 
 **Severity:** Info · **Code fix:** ✅ Yes (non-capturing) · **Category:** Usage
 
-The `Match<TOut>` method on schema-generated union/oneOf types accepts lambda callbacks for each variant. If a lambda does not capture any local variables, it should be marked `static` to avoid allocating a delegate instance on every call.
+The `Match<TOut>` and `MatchEvery<TAccumulator>` methods on schema-generated union types accept lambda callbacks for each variant. If a lambda does not capture any local variables, it should be marked `static` to avoid allocating a delegate instance on every call.
 
-This analyzer inspects each lambda argument to `Match<TOut>` and reports:
+This analyzer inspects each lambda argument to `Match<TOut>` and `MatchEvery<TAccumulator>` and reports:
 
 - **Non-capturing lambdas** — suggests adding the `static` modifier.
-- **Capturing lambdas** — suggests switching to `Match<TContext, TResult>` to pass captured state as an explicit context parameter, avoiding closure allocation.
+- **Capturing lambdas passed to `Match`** — suggests switching to `Match<TContext, TResult>` to pass captured state as an explicit context parameter, avoiding closure allocation.
+- **Capturing lambdas passed to `MatchEvery`** — suggests threading the captured state through the accumulator instead.
 
 ```csharp
 // Before — CTJ003 fires (non-capturing)
@@ -116,7 +117,7 @@ string result = value.Match(
     static (string ctx, JsonNumber n) => ctx + n.ToString());
 ```
 
-> **Note:** The code fix only applies the `static` modifier for non-capturing lambdas. Capturing-lambda refactoring to `Match<TContext, TResult>` requires manual changes.
+> **Note:** The code fix only applies the `static` modifier for non-capturing lambdas. Capturing-lambda refactoring to `Match<TContext, TResult>`, or to an accumulator-threaded `MatchEvery`, requires manual changes.
 
 ---
 

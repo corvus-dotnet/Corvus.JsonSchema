@@ -862,6 +862,38 @@ public readonly partial struct SemanticReleaseSchema
                 }
 
                 /// <summary>
+                /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                /// </summary>
+                /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
+                /// <param name="matchJsonArray">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray"/>.</param>
+                /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                /// <returns>The accumulator returned by the last match function called.</returns>
+                public TAccumulator MatchEvery<TAccumulator>(
+                    TAccumulator accumulator,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonArray, TAccumulator, TAccumulator> matchJsonArray,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                {
+                    bool matched = false;
+
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable.From(this), accumulator);
+                    }
+
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
+                    {
+                        matched = true;
+                        accumulator = matchJsonArray(Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable.From(this), accumulator);
+                    }
+
+                    return matched ? accumulator : defaultMatch(this, accumulator);
+                }
+
+                /// <summary>
                 /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>

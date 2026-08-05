@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class AsyncApi26GeneratedEndToEndTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting/streetlights/1/0/action/{streetlightId}/lighting/measured";
+        "smartylighting/streetlights/1/0/action/1/lighting/measured";
 
     [TestMethod]
     public async Task Producer_PublishTurnOnOff_UsesSubscribeOperationChannel()
@@ -46,7 +46,7 @@ public class AsyncApi26GeneratedEndToEndTests
         MockLightMeasurementHandler handler = new();
         await using Streetlights26.ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
 
-        await consumer.StartAsync();
+        await consumer.StartAsync("1");
 
         await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,

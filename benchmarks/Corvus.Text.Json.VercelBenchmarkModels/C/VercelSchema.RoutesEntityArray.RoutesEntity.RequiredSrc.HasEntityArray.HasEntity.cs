@@ -772,6 +772,38 @@ public readonly partial struct VercelSchema
 
                             return defaultMatch(this);
                         }
+
+                        /// <summary>
+                        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                        /// </summary>
+                        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                        /// <param name="matchRequiredTypeAndValue">Match a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue"/>.</param>
+                        /// <param name="matchRequiredKeyAndType">Match a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType"/>.</param>
+                        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                        /// <returns>The accumulator returned by the last match function called.</returns>
+                        public TAccumulator MatchEvery<TAccumulator>(
+                            TAccumulator accumulator,
+                            Matcher<Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue, TAccumulator, TAccumulator> matchRequiredTypeAndValue,
+                            Matcher<Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType, TAccumulator, TAccumulator> matchRequiredKeyAndType,
+                            Matcher<Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity, TAccumulator, TAccumulator> defaultMatch)
+                        {
+                            bool matched = false;
+
+                            if (Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue.JsonSchema.Evaluate(_parent, _idx))
+                            {
+                                matched = true;
+                                accumulator = matchRequiredTypeAndValue(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue.From(this), accumulator);
+                            }
+
+                            if (Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.JsonSchema.Evaluate(_parent, _idx))
+                            {
+                                matched = true;
+                                accumulator = matchRequiredKeyAndType(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.From(this), accumulator);
+                            }
+
+                            return matched ? accumulator : defaultMatch(this, accumulator);
+                        }
                     }
                 }
             }

@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-08-03T20:40:08.9230402\u002B00:00",
+  "generatedAt": "2026-08-05T11:47:05.1243652\u002B00:00",
   "generatedFiles": [
     "ListPetsRequest.cs",
     "ListPetsResponse.cs",
@@ -47,7 +47,7 @@
     "Models/UpdatePetWithFormFormBody.StatusEntity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B7e79ed55d13b74953d0a034ec3ebc42f6485be6c",
+  "generatorVersion": "1.0.0\u002B3cdaa97d928a2f4b8c7c897e9426544b3e55ef06",
   "includePaths": [],
   "rootNamespace": "Petstore.V2.Client",
   "specFileHash": "10cc3488325cfb61d4a68bc721ede20dcd9b93cb9533a03071189478971208ca",

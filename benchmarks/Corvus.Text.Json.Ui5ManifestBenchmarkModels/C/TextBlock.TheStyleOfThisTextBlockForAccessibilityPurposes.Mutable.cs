@@ -533,6 +533,38 @@ public readonly partial struct TextBlock
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchTextBlockStyle">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.TextBlockStyle"/>.</param>
+            /// <param name="matchJsonNull">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.TextBlockStyle, TAccumulator, TAccumulator> matchTextBlockStyle,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.Ui5ManifestBenchmark.Current.TextBlockStyle.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchTextBlockStyle(Corvus.Ui5ManifestBenchmark.Current.TextBlockStyle.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonNull(Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

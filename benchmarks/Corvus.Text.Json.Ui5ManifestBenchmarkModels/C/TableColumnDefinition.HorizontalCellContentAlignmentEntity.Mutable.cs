@@ -515,6 +515,38 @@ public readonly partial struct TableColumnDefinition
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchHorizontalAlignment">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment"/>.</param>
+            /// <param name="matchJsonNull">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment, TAccumulator, TAccumulator> matchHorizontalAlignment,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonNull, TAccumulator, TAccumulator> matchJsonNull,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchHorizontalAlignment(Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonNull(Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

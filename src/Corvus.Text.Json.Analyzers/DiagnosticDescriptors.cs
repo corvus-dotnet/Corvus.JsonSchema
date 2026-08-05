@@ -51,7 +51,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor MatchLambdaShouldBeStatic = new(
         id: "CTJ003",
         title: "Match lambda should be static",
-        messageFormat: "Lambda passed to Match is not static — {0}",
+        messageFormat: "Lambda passed to {0} is not static — {1}",
         category: UsageCategory,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,

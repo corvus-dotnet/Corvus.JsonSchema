@@ -1022,6 +1022,62 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchRequiredType">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType"/>.</param>
+        /// <param name="matchImplementationsOfActionRequiredType">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType"/>.</param>
+        /// <param name="matchImplementationsOfActionRequiredType1">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1"/>.</param>
+        /// <param name="matchImplementationsOfActionRequiredType2">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2"/>.</param>
+        /// <param name="matchImplementationsOfActionRequiredType3">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType, TAccumulator, TAccumulator> matchRequiredType,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType, TAccumulator, TAccumulator> matchImplementationsOfActionRequiredType,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1, TAccumulator, TAccumulator> matchImplementationsOfActionRequiredType1,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2, TAccumulator, TAccumulator> matchImplementationsOfActionRequiredType2,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3, TAccumulator, TAccumulator> matchImplementationsOfActionRequiredType3,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.Mutable, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchRequiredType(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchImplementationsOfActionRequiredType(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchImplementationsOfActionRequiredType1(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchImplementationsOfActionRequiredType2(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Mutable.From(this), accumulator);
+            }
+
+            if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchImplementationsOfActionRequiredType3(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Mutable.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
+
+        /// <summary>
         /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>

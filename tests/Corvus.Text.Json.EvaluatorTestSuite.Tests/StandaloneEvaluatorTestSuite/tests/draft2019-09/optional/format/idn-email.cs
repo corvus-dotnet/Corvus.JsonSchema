@@ -88,6 +88,34 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestANonAsciiLocalPartWithAnAsciiDomainIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"δοκιμή@example.com\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestANonAsciiQuotedLocalPartIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\\"δοκιμή\\\"@example.com\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestADomainLabelThatIsNotInUnicodeNfcIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"user@cafe\\u0301.com\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestALocalPartThatIsNotInUnicodeNfcIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"cafe\\u0301@example.com\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

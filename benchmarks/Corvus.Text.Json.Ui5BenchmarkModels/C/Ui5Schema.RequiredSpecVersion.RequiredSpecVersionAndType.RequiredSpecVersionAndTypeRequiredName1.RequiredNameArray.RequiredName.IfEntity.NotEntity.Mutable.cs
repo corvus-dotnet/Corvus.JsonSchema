@@ -887,6 +887,54 @@ public readonly partial struct Ui5Schema
                                     }
 
                                     /// <summary>
+                                    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                                    /// </summary>
+                                    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                                    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                                    /// <param name="matchAnyOf0Entity">Match a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity"/>.</param>
+                                    /// <param name="matchAnyOf1Entity">Match a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity"/>.</param>
+                                    /// <param name="matchAnyOf2Entity">Match a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity"/>.</param>
+                                    /// <param name="matchAnyOf3Entity">Match a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity"/>.</param>
+                                    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                                    /// <returns>The accumulator returned by the last match function called.</returns>
+                                    public TAccumulator MatchEvery<TAccumulator>(
+                                        TAccumulator accumulator,
+                                        Matcher<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity, TAccumulator, TAccumulator> matchAnyOf0Entity,
+                                        Matcher<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity, TAccumulator, TAccumulator> matchAnyOf1Entity,
+                                        Matcher<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity, TAccumulator, TAccumulator> matchAnyOf2Entity,
+                                        Matcher<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity, TAccumulator, TAccumulator> matchAnyOf3Entity,
+                                        Matcher<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.Mutable, TAccumulator, TAccumulator> defaultMatch)
+                                    {
+                                        bool matched = false;
+
+                                        if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                                        {
+                                            matched = true;
+                                            accumulator = matchAnyOf0Entity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.Mutable.From(this), accumulator);
+                                        }
+
+                                        if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                                        {
+                                            matched = true;
+                                            accumulator = matchAnyOf1Entity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity.Mutable.From(this), accumulator);
+                                        }
+
+                                        if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity.JsonSchema.Evaluate(_parent, _idx))
+                                        {
+                                            matched = true;
+                                            accumulator = matchAnyOf2Entity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity.Mutable.From(this), accumulator);
+                                        }
+
+                                        if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity.JsonSchema.Evaluate(_parent, _idx))
+                                        {
+                                            matched = true;
+                                            accumulator = matchAnyOf3Entity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity.Mutable.From(this), accumulator);
+                                        }
+
+                                        return matched ? accumulator : defaultMatch(this, accumulator);
+                                    }
+
+                                    /// <summary>
                                     /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.Mutable" />.
                                     /// </summary>
                                     /// <param name="result">The result of the conversions.</param>

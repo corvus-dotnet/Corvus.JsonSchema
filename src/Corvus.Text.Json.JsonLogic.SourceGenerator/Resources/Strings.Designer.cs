@@ -386,8 +386,8 @@ namespace Resources
         /// <summary>The value was expected to be greater than or equal to</summary>
         public static string @JsonSchema_ExpectedGreaterThanOrEquals => GetResourceString("JsonSchema_ExpectedGreaterThanOrEquals", @"The value was expected to be greater than or equal to");
 
-        /// <summary>The value was expected to be greater than</summary>
-        public static string @JsonSchema_ExpectedLessThan => GetResourceString("JsonSchema_ExpectedLessThan", @"The value was expected to be greater than");
+        /// <summary>The value was expected to be less than</summary>
+        public static string @JsonSchema_ExpectedLessThan => GetResourceString("JsonSchema_ExpectedLessThan", @"The value was expected to be less than");
 
         /// <summary>The value was expected to be less than or equal to</summary>
         public static string @JsonSchema_ExpectedLessThanOrEquals => GetResourceString("JsonSchema_ExpectedLessThanOrEquals", @"The value was expected to be less than or equal to");

@@ -777,6 +777,38 @@ public readonly partial struct AdaptiveCard
             }
 
             /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchBackgroundImage">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.BackgroundImage"/>.</param>
+            /// <param name="matchJsonUriReference">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonUriReference"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.BackgroundImage, TAccumulator, TAccumulator> matchBackgroundImage,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonUriReference, TAccumulator, TAccumulator> matchJsonUriReference,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.SpecifiesTheBackgroundImageOfTheCard.Mutable, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                if (Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchBackgroundImage(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Mutable.From(this), accumulator);
+                }
+
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    matched = true;
+                    accumulator = matchJsonUriReference(Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Mutable.From(this), accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>

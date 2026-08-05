@@ -321,8 +321,9 @@ internal sealed class PhotosHandler : IApiPhotosHandler
                 workspace));
         }
 
-        // For binary responses, hand the body to the result; the endpoint registration middleware streams it to the
-        // client with the given content type.
+        // A binary response carries its body through the result factory. Pass the bytes and the
+        // generated infrastructure writes them to the response stream, with the content type the
+        // handler chooses rather than the one the specification happened to list first.
         return ValueTask.FromResult(DownloadPhotoResult.Ok(photo.Data, photo.ContentType));
     }
 }

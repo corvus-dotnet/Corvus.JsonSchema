@@ -806,5 +806,37 @@ public readonly partial struct CspellSchema
 
             return defaultMatch(this);
         }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchLanguageId">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageId"/>.</param>
+        /// <param name="matchLanguageIdArray">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.LanguageId, TAccumulator, TAccumulator> matchLanguageId,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray, TAccumulator, TAccumulator> matchLanguageIdArray,
+            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageId.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchLanguageId(Corvus.CspellBenchmark.Current.CspellSchema.LanguageId.From(this), accumulator);
+            }
+
+            if (Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray.JsonSchema.Evaluate(_parent, _idx))
+            {
+                matched = true;
+                accumulator = matchLanguageIdArray(Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray.From(this), accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
+        }
     }
 }

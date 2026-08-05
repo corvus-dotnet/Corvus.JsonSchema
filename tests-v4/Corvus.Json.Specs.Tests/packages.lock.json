@@ -490,6 +490,15 @@
           "System.Text.Json": "[10.0.7, )"
         }
       },
+      "corvus.json.codegeneration.openapi20": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "Microsoft.Bcl.Memory": "[10.0.7, )",
+          "System.Collections.Immutable": "[10.0.7, )",
+          "System.Text.Json": "[10.0.7, )"
+        }
+      },
       "corvus.json.codegeneration.openapi30": {
         "type": "Project",
         "dependencies": {
@@ -1065,6 +1074,12 @@
         "dependencies": {
           "Corvus.Json.CodeGeneration": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.3.0, )"
+        }
+      },
+      "corvus.json.codegeneration.openapi20": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration": "[1.0.0, )"
         }
       },
       "corvus.json.codegeneration.openapi30": {

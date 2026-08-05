@@ -205,6 +205,33 @@ public interface IMessageTransport : IAsyncDisposable
         => throw new NotSupportedException("This transport does not support request/reply responders (SubscribeReplyAsync).");
 
     /// <summary>
+    /// Subscribes a responder to a request channel, with protocol-specific metadata.
+    /// </summary>
+    /// <remarks>
+    /// The counterpart of the <see cref="MessageContext"/> overload of <c>SubscribeAsync</c>: a responder
+    /// declared with channel or operation bindings is subscribed with them, exactly as a plain consumer is.
+    /// The default implementation drops the context and forwards, so a transport that has no use for bindings
+    /// is unaffected and one that already implements the responder capability keeps working unchanged.
+    /// </remarks>
+    /// <typeparam name="TRequest">The request payload type the responder parses into.</typeparam>
+    /// <typeparam name="TReply">The reply payload type the handler returns.</typeparam>
+    /// <param name="channelUtf8">The request channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The handler invoked with each request payload and its headers, returning the reply payload.</param>
+    /// <param name="context">The channel and operation bindings the specification declared.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        return SubscribeReplyAsync<TRequest, TReply>(channelUtf8, handler, cancellationToken);
+    }
+
+    /// <summary>
     /// Unsubscribes from messages on the specified channel.
     /// </summary>
     /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>

@@ -956,9 +956,18 @@ public static partial class ValidateWithoutCoreType
 
         try
         {
-            // Normalize the domain
-            email = Validate.IdnEmailReplacePattern.Replace(email, DomainMapper);
-            isMatch = Validate.IdnEmailMatchPattern.IsMatch(email);
+            int atIndex = email.LastIndexOf('@');
+            if (atIndex >= 0 && atIndex < email.Length - 1 && email[atIndex + 1] == '[')
+            {
+                // RFC 6531 extends only the local part; RFC 5321 address-literals are unchanged.
+                isMatch = Validate.IsIdnEmailAddressLiteralMatch(email);
+            }
+            else
+            {
+                // Normalize the domain
+                email = Validate.IdnEmailReplacePattern.Replace(email, DomainMapper);
+                isMatch = Validate.IdnEmailMatchPattern.IsMatch(email);
+            }
 
             // Examines the domain part of the email and normalizes it.
             static string DomainMapper(Match match)

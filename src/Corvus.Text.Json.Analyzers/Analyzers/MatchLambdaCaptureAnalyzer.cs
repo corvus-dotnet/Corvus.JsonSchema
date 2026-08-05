@@ -18,11 +18,13 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Corvus.Text.Json.Analyzers;
 
 /// <summary>
-/// CTJ003: Detects non-static lambda arguments passed to <c>Match</c> methods.
+/// CTJ003: Detects non-static lambda arguments passed to <c>Match</c> and <c>MatchEvery</c> methods.
 /// <list type="bullet">
 /// <item><description>Non-capturing lambdas can simply be made <c>static</c>.</description></item>
-/// <item><description>Capturing lambdas can be converted to the <c>Match&lt;TContext, TResult&gt;</c>
-/// overload to avoid closure allocation.</description></item>
+/// <item><description>Capturing lambdas passed to <c>Match</c> can be converted to the
+/// <c>Match&lt;TContext, TResult&gt;</c> overload to avoid closure allocation.</description></item>
+/// <item><description>Capturing lambdas passed to <c>MatchEvery</c> can thread the captured state
+/// through the accumulator instead.</description></item>
 /// </list>
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -46,23 +48,23 @@ public sealed class MatchLambdaCaptureAnalyzer : DiagnosticAnalyzer
     {
         var invocation = (InvocationExpressionSyntax)context.Node;
 
-        // Check method name is "Match".
+        // Check method name is "Match" or "MatchEvery".
         string? methodName = GetMethodName(invocation);
-        if (methodName != "Match")
+        if (methodName is not ("Match" or "MatchEvery"))
         {
             return;
         }
 
-        // Verify this is actually a call to a Match method (resolve the symbol).
+        // Verify this is actually a call to a Match/MatchEvery method (resolve the symbol).
         SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken);
         if (symbolInfo.Symbol is not IMethodSymbol method)
         {
             return;
         }
 
-        // Check that the method is named "Match" and has the non-context signature
-        // (i.e. Match<TOut>, not Match<TIn, TOut> which already has context).
-        if (method.Name != "Match" || method.TypeArguments.Length != 1)
+        // Check that the method has the single-type-argument signature: Match<TOut> (not the
+        // Match<TIn, TOut> overload, which already has context) or MatchEvery<TAccumulator>.
+        if (method.Name is not ("Match" or "MatchEvery") || method.TypeArguments.Length != 1)
         {
             return;
         }
@@ -92,9 +94,12 @@ public sealed class MatchLambdaCaptureAnalyzer : DiagnosticAnalyzer
             };
             bool captures = dataFlow?.CapturedInside.Length > 0;
 
-            string message = captures
-                ? "consider using Match<TContext, TResult> to avoid closure allocation"
-                : "consider adding the 'static' modifier";
+            string message = (captures, method.Name) switch
+            {
+                (false, _) => "consider adding the 'static' modifier",
+                (true, "MatchEvery") => "consider threading captured state through the accumulator to avoid closure allocation",
+                (true, _) => "consider using Match<TContext, TResult> to avoid closure allocation",
+            };
 
             ImmutableDictionary<string, string?> properties = ImmutableDictionary<string, string?>.Empty
                 .Add(CapturesKey, captures.ToString());
@@ -104,6 +109,7 @@ public sealed class MatchLambdaCaptureAnalyzer : DiagnosticAnalyzer
                     DiagnosticDescriptors.MatchLambdaShouldBeStatic,
                     lambda.GetLocation(),
                     properties,
+                    method.Name,
                     message));
         }
     }

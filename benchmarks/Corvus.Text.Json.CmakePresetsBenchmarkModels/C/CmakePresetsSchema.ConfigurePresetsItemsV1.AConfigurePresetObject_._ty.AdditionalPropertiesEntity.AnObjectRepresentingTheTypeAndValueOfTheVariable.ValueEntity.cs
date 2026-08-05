@@ -727,6 +727,38 @@ public readonly partial struct CmakePresetsSchema
 
                                 return defaultMatch(this);
                             }
+
+                            /// <summary>
+                            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                            /// </summary>
+                            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                            /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonBoolean"/>.</param>
+                            /// <param name="matchJsonString">Match a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonString"/>.</param>
+                            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                            /// <returns>The accumulator returned by the last match function called.</returns>
+                            public TAccumulator MatchEvery<TAccumulator>(
+                                TAccumulator accumulator,
+                                Matcher<Corvus.CmakePresetsBenchmark.Current.JsonBoolean, TAccumulator, TAccumulator> matchJsonBoolean,
+                                Matcher<Corvus.CmakePresetsBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+                                Matcher<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.ValueEntity, TAccumulator, TAccumulator> defaultMatch)
+                            {
+                                bool matched = false;
+
+                                if (Corvus.CmakePresetsBenchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
+                                {
+                                    matched = true;
+                                    accumulator = matchJsonBoolean(Corvus.CmakePresetsBenchmark.Current.JsonBoolean.From(this), accumulator);
+                                }
+
+                                if (Corvus.CmakePresetsBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+                                {
+                                    matched = true;
+                                    accumulator = matchJsonString(Corvus.CmakePresetsBenchmark.Current.JsonString.From(this), accumulator);
+                                }
+
+                                return matched ? accumulator : defaultMatch(this, accumulator);
+                            }
                         }
                     }
                 }

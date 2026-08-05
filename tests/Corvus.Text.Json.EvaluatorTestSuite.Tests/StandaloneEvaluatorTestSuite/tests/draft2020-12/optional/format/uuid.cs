@@ -179,6 +179,27 @@ public class SuiteUuidFormat
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestUrnPrefixedUuidIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"urn:uuid:2eb8aa08-aa98-11ea-b4aa-73b441d16380\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestTrailingHyphenAfterACompleteUuidIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2eb8aa08-aa98-11ea-b4aa-73b441d16380-\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonAsciiDigit২ABengali2IsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"২eb8aa08-aa98-11ea-b4aa-73b441d16380\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

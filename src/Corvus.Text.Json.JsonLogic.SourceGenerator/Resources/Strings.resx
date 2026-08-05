@@ -495,7 +495,7 @@
     <value>The value was expected to be greater than or equal to</value>
   </data>
   <data name="JsonSchema_ExpectedLessThan" xml:space="preserve">
-    <value>The value was expected to be greater than</value>
+    <value>The value was expected to be less than</value>
   </data>
   <data name="JsonSchema_ExpectedLessThanOrEquals" xml:space="preserve">
     <value>The value was expected to be less than or equal to</value>

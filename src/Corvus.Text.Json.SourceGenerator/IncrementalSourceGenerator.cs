@@ -91,7 +91,11 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             }
         }
 
-        return new(context.TargetSymbol.ContainingNamespace.ToDisplayString(), location, rebaseToRootPath, context.TargetSymbol.Name, GetAccessibility(context.TargetSymbol.DeclaredAccessibility), emitEvaluator);
+        string ns = context.TargetSymbol.ContainingNamespace.IsGlobalNamespace
+            ? string.Empty
+            : context.TargetSymbol.ContainingNamespace.ToDisplayString();
+
+        return new(ns, location, rebaseToRootPath, context.TargetSymbol.Name, GetAccessibility(context.TargetSymbol.DeclaredAccessibility), emitEvaluator);
     }
 
     private static SourceGeneratorTools.GeneratedTypeAccessibility GetAccessibility(Accessibility accessibility)
@@ -280,7 +284,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                structDeclarationSyntax
                    .Modifiers
                    .Any(m => m.IsKind(SyntaxKind.PartialKeyword)) &&
-               structDeclarationSyntax.Parent is (FileScopedNamespaceDeclarationSyntax or NamespaceDeclarationSyntax);
+               structDeclarationSyntax.Parent is (FileScopedNamespaceDeclarationSyntax or NamespaceDeclarationSyntax or CompilationUnitSyntax);
     }
 
     private class GlobalOptions(

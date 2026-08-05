@@ -780,4 +780,36 @@ public readonly partial struct TargetElement
 
         return defaultMatch(this);
     }
+
+    /// <summary>
+    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+    /// </summary>
+    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+    /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
+    /// <param name="matchRequiredElementId">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId"/>.</param>
+    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+    /// <returns>The accumulator returned by the last match function called.</returns>
+    public TAccumulator MatchEvery<TAccumulator>(
+        TAccumulator accumulator,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TAccumulator, TAccumulator> matchJsonString,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId, TAccumulator, TAccumulator> matchRequiredElementId,
+        Matcher<Corvus.Ui5ManifestBenchmark.Current.TargetElement, TAccumulator, TAccumulator> defaultMatch)
+    {
+        bool matched = false;
+
+        if (Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchJsonString(Corvus.Ui5ManifestBenchmark.Current.JsonString.From(this), accumulator);
+        }
+
+        if (Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.JsonSchema.Evaluate(_parent, _idx))
+        {
+            matched = true;
+            accumulator = matchRequiredElementId(Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.From(this), accumulator);
+        }
+
+        return matched ? accumulator : defaultMatch(this, accumulator);
+    }
 }

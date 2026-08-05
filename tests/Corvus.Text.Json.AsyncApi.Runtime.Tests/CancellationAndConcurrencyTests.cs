@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 public class CancellationAndConcurrencyTests
 {
     private const string LightMeasurementChannel =
-        "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+        "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
     [TestMethod]
     public async Task RequestAsync_CancellationToken_ThrowsOperationCanceledException()

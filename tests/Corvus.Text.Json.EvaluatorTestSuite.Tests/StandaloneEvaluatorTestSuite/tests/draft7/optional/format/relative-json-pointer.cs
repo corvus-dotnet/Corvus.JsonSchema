@@ -117,6 +117,13 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     }
 
     [TestMethod]
+    public void TestNonAsciiDigitInThePrefixIsNotAllowed()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"١/foo\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestIsNotAValidJsonPointer()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0##\"");
@@ -148,6 +155,13 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     public void TestMultiDigitIntegerPrefix()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"120/foo/bar\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestMultiDigitPrefixWithAZeroFollowedByAnotherDigit()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"100\"");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 

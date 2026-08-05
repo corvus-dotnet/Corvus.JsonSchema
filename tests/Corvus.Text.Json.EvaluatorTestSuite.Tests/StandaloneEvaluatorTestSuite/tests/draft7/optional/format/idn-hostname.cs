@@ -89,9 +89,16 @@ public class SuiteValidationOfInternationalizedHostNames
     }
 
     [TestMethod]
-    public void TestAHostNameWithAComponentTooLong()
+    public void TestASingleLabelOf63CharactersIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실례례테스트례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례테스트례례실례.테스트\"");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestASingleLabelOf64CharactersIsTooLong()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -414,6 +421,90 @@ public class SuiteValidationOfInternationalizedHostNames
     public void TestEmptyString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestZeroWidthNonJoinerMustPassAtEveryOccurrence()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0915\\u094d\\u200c\\u0937x\\u200cy\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestBidiDomainNameWithADigitFirstLabelIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0a.\\u05d0\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestLabelStartingWithADigitBeforeARightToLeftLetterIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0\\u0627\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestLeftToRightLabelContainingARightToLeftLetterIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a\\u05d0\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestRightToLeftLabelMixingBothDigitTypesIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u05d00\\u0660\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToADisallowedCodePointIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--7a\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToABidiRuleViolationIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--0ca24w\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAULabelWhoseALabelFormIsLongerThan63OctetsIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\\u00fc\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestEmptyLabelBetweenTwoDotsIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a..b\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestANameLongerThan253CharactersIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestALabelThatDecodesToOnlyAsciiIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--example-\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonCanonicalPunycodeThatDoesNotReEncodeToItselfIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn---9uc\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
