@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Http;
 
@@ -122,19 +123,7 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// would allocate once per row to reproduce a value that never changes. Built without an intermediate concatenated
     /// string for the same reason.
     /// </remarks>
-    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.ownerGroupTagKeyUtf8 ??= BuildOwnerGroupTagKey(this.InternalTagPrefix);
-
-    /// <summary>The dimension an owner group is stamped under, after the reserved prefix.</summary>
-    private static ReadOnlySpan<byte> OwnerGroupDimensionUtf8 => "tenant"u8;
-
-    private static byte[] BuildOwnerGroupTagKey(string internalTagPrefix)
-    {
-        int prefixLength = Encoding.UTF8.GetByteCount(internalTagPrefix);
-        byte[] key = new byte[prefixLength + OwnerGroupDimensionUtf8.Length];
-        Encoding.UTF8.GetBytes(internalTagPrefix, key);
-        OwnerGroupDimensionUtf8.CopyTo(key.AsSpan(prefixLength));
-        return key;
-    }
+    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.ownerGroupTagKeyUtf8 ??= OwnerGroupTag.KeyFor(this.InternalTagPrefix);
 
     // The stack budget for a built internal-tag key (prefix + dimension); both are short identifiers, so this is never
     // exceeded in practice — a longer dimension falls back to a pooled rent.
@@ -312,10 +301,6 @@ internal sealed class ControlPlaneAccess
     // requests: a shell with no mandated rules is immutable and holds only the prefix.
     private static readonly SecurityShell DefaultReservedKeyspace = new([]);
 
-    // The owner-group tag key for a deployment with no policy to configure a prefix. A static literal rather than a
-    // built array: with no policy the prefix cannot differ from the default, so there is nothing to derive.
-    private static ReadOnlySpan<byte> DefaultOwnerGroupTagKeyUtf8 => "sys:tenant"u8;
-
     private readonly IHttpContextAccessor? httpContextAccessor;
     private readonly ControlPlaneRowSecurityPolicy? policy;
 
@@ -432,7 +417,7 @@ internal sealed class ControlPlaneAccess
     /// <summary>Gets the internal tag key an owner group is stamped under (ADR 0065) as UTF-8, e.g. <c>sys:tenant</c> —
     /// the key the tenancy scan matches each environment's tags against. Cached by the policy, or the default keyspace's
     /// when the deployment stamps nothing, so the scan never re-encodes it.</summary>
-    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.policy is { } p ? p.OwnerGroupTagKeyUtf8 : DefaultOwnerGroupTagKeyUtf8;
+    public ReadOnlySpan<byte> OwnerGroupTagKeyUtf8 => this.policy is { } p ? p.OwnerGroupTagKeyUtf8 : OwnerGroupTag.DefaultKeyUtf8;
 
     /// <summary>Maps source credential usage grants to internal usage tags (empty when unscoped).</summary>
     /// <param name="grants">The operator-supplied usage grants.</param>
@@ -522,7 +507,7 @@ internal sealed class ControlPlaneAccess
         // group read from a claim named 'tid' or 'org' still lands on the house 'tenant' dimension a §16.5.4 team
         // grant names; otherwise a grant and the stamp it is meant to match would key on different dimensions. Both
         // operands are compile-time constants, so this folds to the literal "sys:tenant".
-        private const string OwnerGroupTagKey = SecurityShell.DefaultInternalPrefix + "tenant";
+        private const string OwnerGroupTagKey = SecurityShell.DefaultInternalPrefix + OwnerGroupTag.Dimension;
 
         /// <inheritdoc/>
         public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;

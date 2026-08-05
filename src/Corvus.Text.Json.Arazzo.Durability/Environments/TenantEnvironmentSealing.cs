@@ -37,7 +37,7 @@ public static class TenantEnvironmentSealing
         for (int i = 0; i < environments.Count; ++i)
         {
             Environment environment = environments[i];
-            if (!IsPlatform(environment) && IsTenantOwned(environment, ownerGroupKeyUtf8) && !HasActiveGeneration(environment))
+            if (!IsPlatform(environment) && OwnerGroupTag.IsTenantOwned(environment, ownerGroupKeyUtf8) && !HasActiveGeneration(environment))
             {
                 return true;
             }
@@ -54,29 +54,6 @@ public static class TenantEnvironmentSealing
         => environment.Platform.IsNotUndefined() && (bool)environment.Platform;
 
     private static ReadOnlySpan<byte> ActiveUtf8 => "Active"u8;
-
-    // Whether the environment carries a non-empty owner-group tag. Read entirely inside the enumeration: CurrentValue
-    // may point into the enumerator's pooled unescape scratch, which Dispose returns.
-    private static bool IsTenantOwned(in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
-    {
-        SecurityTagSet.Utf8Enumerator e = environment.ManagementTagsValue.EnumerateUtf8();
-        try
-        {
-            while (e.MoveNext())
-            {
-                if (e.CurrentKey.SequenceEqual(ownerGroupKeyUtf8) && !e.CurrentValue.IsEmpty)
-                {
-                    return true;
-                }
-            }
-        }
-        finally
-        {
-            e.Dispose();
-        }
-
-        return false;
-    }
 
     // Whether the environment holds at least one ACTIVE generation. Retired generations protect nothing, so an
     // environment whose only generations are retired counts as unsealed.
