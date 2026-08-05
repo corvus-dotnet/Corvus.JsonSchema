@@ -281,6 +281,21 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        return this.SubscribeAsync(
+            channelUtf8,
+            (payload, context, ct) => handler(payload, context.Headers, ct),
+            default,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
@@ -311,6 +326,25 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         return this.SubscribeReplyToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryResponder<TRequest, TReply> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return this.SubscribeReplyToCoreNatsAsync(
+            channel,
+            channelUtf8,
+            (request, context, ct) => handler(request, context.Headers, ct),
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -502,7 +536,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         string channel,
         string streamName,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -647,15 +681,25 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                 {
                                     JsonElement headers = headersDoc?.RootElement ?? default;
 
-                                    if (this.middleware is not null)
-                                    {
-                                        await this.middleware(
-                                            (ct) => handler(payload, headers, ct),
+                                        if (this.middleware is not null)
+                                        {
+                                            await this.middleware(
+                                            (ct) => handler(payload, new MessageDeliveryContext
+                                            {
+                                                ChannelUtf8 = channelUtf8,
+                                                Headers = headers,
+                                                NativeMessage = msg,
+                                            }, ct),
                                             cts.Token).ConfigureAwait(false);
-                                    }
-                                    else
-                                    {
-                                        await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                        }
+                                        else
+                                        {
+                                            await handler(payload, new MessageDeliveryContext
+                                            {
+                                                ChannelUtf8 = channelUtf8,
+                                                Headers = headers,
+                                                NativeMessage = msg,
+                                            }, cts.Token).ConfigureAwait(false);
                                     }
 
                                     await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
@@ -718,7 +762,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -842,12 +886,22 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                         if (this.middleware is not null)
                                         {
                                             await this.middleware(
-                                                (ct) => handler(payload, headers, ct),
+                                                (ct) => handler(payload, new MessageDeliveryContext
+                                                {
+                                                    ChannelUtf8 = channelUtf8,
+                                                    Headers = headers,
+                                                    NativeMessage = msg,
+                                                }, ct),
                                                 cts.Token).ConfigureAwait(false);
                                         }
                                         else
                                         {
-                                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                            await handler(payload, new MessageDeliveryContext
+                                            {
+                                                ChannelUtf8 = channelUtf8,
+                                                Headers = headers,
+                                                NativeMessage = msg,
+                                            }, cts.Token).ConfigureAwait(false);
                                         }
                                     }
                                 }
@@ -904,7 +958,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MessageDeliveryResponder<TRequest, TReply> handler,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -1029,13 +1083,23 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                         {
                                             TReply captured = default;
                                             await this.middleware(
-                                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                                                async (ct) => captured = await handler(request, new MessageDeliveryContext
+                                                {
+                                                    ChannelUtf8 = channelUtf8,
+                                                    Headers = headers,
+                                                    NativeMessage = msg,
+                                                }, ct).ConfigureAwait(false),
                                                 cts.Token).ConfigureAwait(false);
                                             reply = captured;
                                         }
                                         else
                                         {
-                                            reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                                            reply = await handler(request, new MessageDeliveryContext
+                                            {
+                                                ChannelUtf8 = channelUtf8,
+                                                Headers = headers,
+                                                NativeMessage = msg,
+                                            }, cts.Token).ConfigureAwait(false);
                                         }
 
                                         // Publish the reply to the request's reply-to subject. NATS correlates

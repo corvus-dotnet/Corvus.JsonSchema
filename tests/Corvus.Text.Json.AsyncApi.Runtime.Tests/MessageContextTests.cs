@@ -99,6 +99,30 @@ public class MessageContextTests
     }
 
     [TestMethod]
+    public async Task SubscribeAsync_WithDeliveryContext_AdaptsExistingTransport()
+    {
+        await using InMemoryMessageTransport transport = new();
+
+        string? channel = null;
+        MessageDeliveryContext receivedContext = default;
+
+        await ((IMessageTransport)transport).SubscribeAsync<JsonElement>(
+            "orders.created"u8.ToArray(),
+            (payload, context, _) =>
+            {
+                channel = Encoding.UTF8.GetString(context.ChannelUtf8.Span);
+                receivedContext = context;
+                return ValueTask.CompletedTask;
+            },
+            in MessageContext context);
+
+        await transport.DeliverAsync<JsonElement>("orders.created", Encoding.UTF8.GetBytes("""{"v":42}"""));
+
+        Assert.AreEqual("orders.created", channel);
+        Assert.IsTrue(receivedContext.NativeMessage is null);
+    }
+
+    [TestMethod]
     public async Task RequestAsync_WithContext_DelegatesToSimpleOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

@@ -64,6 +64,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         }
 
         string rootNamespace = settings.RootNamespace ?? "GeneratedAsyncApi";
+        string lockMode = settings.Mode + (settings.WithMessageContext ? ":message-context" : string.Empty);
         string specFilePath = Path.GetFullPath(settings.SpecFile);
 
         byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
@@ -91,7 +92,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         if (!settings.Force)
         {
             if (AsyncApiLockFile.TryLoad(outputPath, out AsyncApiLockFileModel existingLock)
-                && AsyncApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, settings.Mode, filter))
+                && AsyncApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, lockMode, filter))
             {
                 AnsiConsole.MarkupLine("[green]Up to date — skipping generation.[/] Use --force to regenerate.");
                 return 0;
@@ -150,14 +151,16 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
             {
                 AsyncApi26CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>());
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.WithMessageContext);
                 files = generator.Generate(specRoot, filter, referenceResolver);
             }
             else
             {
                 AsyncApi30CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>());
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.WithMessageContext);
                 files = generator.Generate(specRoot, filter, referenceResolver);
             }
 
@@ -190,7 +193,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
             AnsiConsole.MarkupLine($"[green]Generated {generatedFileNames.Count} files ({filteredFiles.Count} client + {modelFileNames?.Count ?? 0} model) in {outputPath}[/]");
 
             // Write lock file and clean up backup
-            AsyncApiLockFileModel lockFile = AsyncApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.Mode, filter, generatedFileNames, specUrl);
+            AsyncApiLockFileModel lockFile = AsyncApiLockFile.Create(in specRoot, specVersion, rootNamespace, lockMode, filter, generatedFileNames, specUrl);
             AsyncApiLockFile.Save(in lockFile, outputPath);
             AsyncApiLockFile.DeleteBackup(outputPath);
 

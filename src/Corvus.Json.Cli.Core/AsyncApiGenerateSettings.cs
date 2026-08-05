@@ -38,6 +38,10 @@ internal sealed class AsyncApiGenerateSettings : AsyncApiSettings
     [CommandOption("--yaml")]
     [Description("Enable YAML support. When set, the spec file and any external references may be YAML, JSON, or a mixture. Auto-detected from .yaml/.yml extensions if not explicitly set.")]
     public bool? SupportYaml { get; init; }
+
+    [CommandOption("--with-message-context")]
+    [Description("Generate receive handlers that receive MessageDeliveryContext. This changes the generated handler signatures and is opt-in.")]
+    public bool WithMessageContext { get; init; }
 }
 
 #endif

@@ -174,6 +174,40 @@ public interface IMessageTransport : IAsyncDisposable
     }
 
     /// <summary>
+    /// Subscribes to messages and delivers protocol-neutral runtime metadata alongside each typed payload.
+    /// </summary>
+    /// <typeparam name="TPayload">The payload type.</typeparam>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The message handler.</param>
+    /// <param name="context">The static contract and binding metadata.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    /// <remarks>
+    /// The default implementation adapts to the original handler overload. Existing transport implementations
+    /// therefore remain compatible; transports that can expose native delivery objects may override this member.
+    /// </remarks>
+    ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        return SubscribeAsync<TPayload>(
+            channelUtf8,
+            (payload, headers, ct) => handler(
+                payload,
+                new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                },
+                ct),
+            context,
+            cancellationToken);
+    }
+
+    /// <summary>
     /// Subscribes to request messages on a channel and replies to each — the responder counterpart of
     /// <see cref="RequestAsync{TRequest, TReply}(ReadOnlyMemory{byte}, ReadOnlyMemory{byte}, TRequest, ReadOnlyMemory{byte}, JsonWorkspace, JsonElement, CancellationToken)"/>.
     /// </summary>
@@ -229,6 +263,38 @@ public interface IMessageTransport : IAsyncDisposable
         where TReply : struct, IJsonElement<TReply>
     {
         return SubscribeReplyAsync<TRequest, TReply>(channelUtf8, handler, cancellationToken);
+    }
+
+    /// <summary>
+    /// Subscribes a responder and delivers protocol-neutral runtime metadata alongside each typed request.
+    /// </summary>
+    /// <typeparam name="TRequest">The request payload type.</typeparam>
+    /// <typeparam name="TReply">The reply payload type.</typeparam>
+    /// <param name="channelUtf8">The request channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The responder handler.</param>
+    /// <param name="context">The static contract and binding metadata.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryResponder<TRequest, TReply> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        return SubscribeReplyAsync<TRequest, TReply>(
+            channelUtf8,
+            (request, headers, ct) => handler(
+                request,
+                new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                },
+                ct),
+            context,
+            cancellationToken);
     }
 
     /// <summary>
