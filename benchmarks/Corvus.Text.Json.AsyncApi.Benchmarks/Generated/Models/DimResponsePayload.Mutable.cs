@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -43,7 +43,8 @@ public readonly partial struct DimResponsePayload
         /// <summary>
         /// Initializes a new instance of the <see cref="Mutable"/> struct.
         /// </summary>
-        /// <param name="value">The value from which to construct the instance.</param>
+        /// <param name="parent">The document that contains the element.</param>
+        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
@@ -113,7 +114,7 @@ public readonly partial struct DimResponsePayload
         /// <summary>
         /// Converts the instance to a JsonElement.
         /// </summary>
-        /// <param name="value">The instance of this type.</param>
+        /// <param name="instance">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator JsonElement(Mutable instance)
@@ -124,7 +125,7 @@ public readonly partial struct DimResponsePayload
         /// <summary>
         /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
         /// </summary>
-        /// <param name="value">The instance of this type.</param>
+        /// <param name="instance">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
         public static explicit operator Mutable(DimResponsePayload instance)
@@ -141,7 +142,7 @@ public readonly partial struct DimResponsePayload
         /// <summary>
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
-        /// <param name="value">The <see cref="Mutable"/> instance.</param>
+        /// <param name="instance">The <see cref="Mutable"/> instance.</param>
         /// <returns>An immutable instance of a <see cref="DimResponsePayload"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator DimResponsePayload(Mutable instance)
@@ -152,7 +153,8 @@ public readonly partial struct DimResponsePayload
         /// <summary>
         /// Gets an instance of the JSON value from another element.
         /// </summary>
-        /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+        /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+        /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Mutable From<T>(in T instance)
@@ -169,11 +171,11 @@ public readonly partial struct DimResponsePayload
         /// The actual brightness applied.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Mutable AppliedPercentage
+        public AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Mutable AppliedPercentage
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AppliedPercentageUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AppliedPercentageUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Mutable value))
                 {
                     return value;
                 }
@@ -193,11 +195,11 @@ public readonly partial struct DimResponsePayload
         /// Whether the dimming succeeded.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Mutable Status
+        public AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Mutable value))
                 {
                     return value;
                 }
@@ -217,11 +219,11 @@ public readonly partial struct DimResponsePayload
         /// The streetlight that was dimmed.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Mutable StreetlightId
+        public AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Mutable StreetlightId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetlightIdUtf8, out AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Mutable value))
                 {
                     return value;
                 }
@@ -263,7 +265,7 @@ public readonly partial struct DimResponsePayload
         /// Set the <c>appliedPercentage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAppliedPercentage(in AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Source value)
+        public void SetAppliedPercentage(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source value)
         {
             CheckValidInstance();
 
@@ -308,7 +310,7 @@ public readonly partial struct DimResponsePayload
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Source value)
+        public void SetStatus(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source value)
         {
             CheckValidInstance();
 
@@ -339,7 +341,7 @@ public readonly partial struct DimResponsePayload
         /// Set the <c>streetlightId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStreetlightId(in AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Source value)
+        public void SetStreetlightId(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source value)
         {
             CheckValidInstance();
 
@@ -513,12 +515,16 @@ public readonly partial struct DimResponsePayload
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source _createArg1;
+        private readonly AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source _createArg2;
+        private readonly AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source _createArg3;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -531,7 +537,15 @@ public readonly partial struct DimResponsePayload
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(AsyncApiBenchmark.Generated.DimResponsePayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(AsyncApiBenchmark.Generated.Models.DimResponsePayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source arg1, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source arg2, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source arg3)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(DimResponsePayload instance) => new(JsonElement.From(instance));
 
@@ -547,6 +561,13 @@ public readonly partial struct DimResponsePayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -565,6 +586,13 @@ public readonly partial struct DimResponsePayload
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -583,6 +611,13 @@ public readonly partial struct DimResponsePayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -601,6 +636,13 @@ public readonly partial struct DimResponsePayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -619,6 +661,13 @@ public readonly partial struct DimResponsePayload
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -652,7 +701,7 @@ public readonly partial struct DimResponsePayload
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, AsyncApiBenchmark.Generated.DimResponsePayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, AsyncApiBenchmark.Generated.Models.DimResponsePayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -768,9 +817,9 @@ public readonly partial struct DimResponsePayload
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Source status,
-            in AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId,
-            in AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default)
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source status,
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId,
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default)
         {
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
             streetlightId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StreetlightId, ref builder);
@@ -781,9 +830,9 @@ public readonly partial struct DimResponsePayload
         /// Creates an instance of a <see cref="DimResponsePayload"/>.
         /// </summary>
         public void Create(
-            in AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Source status,
-            in AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId,
-            in AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default)
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source status,
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId,
+            in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default)
         {
             Create(ref _builder, status, streetlightId, appliedPercentage);
         }
@@ -808,6 +857,20 @@ public readonly partial struct DimResponsePayload
             Builder ovb = new(o);
             value(context, ref ovb);
             o = ovb._builder;
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source arg1, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source arg2, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source arg3, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3);
             o.EndObject();
         }
     }
@@ -842,6 +905,18 @@ public readonly partial struct DimResponsePayload
     }
 
     /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="status">The value of the <c>"status"</c> property.</param>
+    /// <param name="streetlightId">The value of the <c>"streetlightId"</c> property.</param>
+    /// <param name="appliedPercentage">The value of the <c>"appliedPercentage"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source status, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId, scoped in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default)
+    {
+        return new Source(status, streetlightId, appliedPercentage);
+    }
+
+    /// <summary>
     /// Creates and initializes a mutable document from a value.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
@@ -850,6 +925,29 @@ public readonly partial struct DimResponsePayload
     /// <returns>An instance of a mutable document initialized with the given value.</returns>
     public static JsonDocumentBuilder<Mutable> CreateBuilder(
         JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+    {
+        // Create the document builder without a MetadataDb
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+        value.AddAsItem(ref cvb);
+        Debug.Assert(cvb.MemberCount == 1);
+        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+        return documentBuilder;
+    }
+
+    /// <summary>
+    /// Creates and initializes a mutable document from a context-threaded value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+    /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>An instance of a mutable document initialized with the given value.</returns>
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+        JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
     {
         // Create the document builder without a MetadataDb
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -916,7 +1014,7 @@ public readonly partial struct DimResponsePayload
     /// <param name="appliedPercentage">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.Generated.DimResponsePayload.WhetherTheDimmingSucceeded.Source status, in AsyncApiBenchmark.Generated.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId, in AsyncApiBenchmark.Generated.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source status, in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId, in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -937,5 +1035,114 @@ public readonly partial struct DimResponsePayload
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<DimResponsePayload, Mutable>(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimResponsePayload> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimResponsePayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimResponsePayload> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimResponsePayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimResponsePayload> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimResponsePayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="status">The value of the property.</param>
+    /// <param name="streetlightId">The value of the property.</param>
+    /// <param name="appliedPercentage">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<DimResponsePayload> Create(in AsyncApiBenchmark.Generated.Models.DimResponsePayload.WhetherTheDimmingSucceeded.Source status, in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheStreetlightThatWasDimmed.Source streetlightId, in AsyncApiBenchmark.Generated.Models.DimResponsePayload.TheActualBrightnessApplied.Source appliedPercentage = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(status, streetlightId, appliedPercentage);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<DimResponsePayload>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
     }
 }

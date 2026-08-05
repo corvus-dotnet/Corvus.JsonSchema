@@ -4461,7 +4461,7 @@ public sealed class OpenApi32CodeGenerator
         if (link.Description is not null)
         {
             w.WriteLine("/// <summary>");
-            w.WriteLine($"/// {link.Description}");
+            w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(link.Description)}");
             w.WriteLine("/// </summary>");
         }
 
@@ -6489,6 +6489,8 @@ public sealed class OpenApi32CodeGenerator
         }
 
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+        w.WriteLine("/// <param name=\"validationMode\">The validation mode applied to the request before it is sent.</param>");
+        w.WriteLine("/// <param name=\"responseValidationMode\">The validation mode applied to the response body.</param>");
     }
 
     private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false)

@@ -92,11 +92,16 @@ public sealed class BenchmarkTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// The reply is pre-parsed at setup and kept alive for the benchmark duration, so the
+    /// <paramref name="workspace"/> that would own a per-call reply is not used.
+    /// </remarks>
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>

@@ -15,14 +15,19 @@ using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
+const string StreetlightId = "lamp-42";
+
 // ── Set up the consumer side ─────────────────────────────────────────────────
+// The measurement channel template declares a {streetlightId} parameter, so
+// StartAsync takes the id and subscribes to the concrete channel the template
+// composes to.
 LightMeasurementHandler handler = new();
 ReceiveLightMeasurementConsumer consumer = new(
     transport,
     handler,
     validationMode: ValidationMode.Basic);
 
-await consumer.StartAsync();
+await consumer.StartAsync(StreetlightId);
 
 // ── Set up the producer side ─────────────────────────────────────────────────
 TurnOnProducer producer = new(transport, ValidationMode.Basic);
@@ -34,7 +39,7 @@ TurnOnProducer producer = new(transport, ValidationMode.Basic);
 // handler.
 await producer.PublishTurnOnOffAsync(
     payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
-    streetlightId: "lamp-42");
+    streetlightId: StreetlightId);
 
 Console.WriteLine($"Published command; measurement handler received: {handler.ReceivedCount}");
 
@@ -42,11 +47,12 @@ Console.WriteLine($"Published command; measurement handler received: {handler.Re
 // The measurement is not produced by the command producer. In a real system, a
 // streetlight or telemetry gateway would publish this to the broker, and the
 // broker would deliver the raw bytes to the generated consumer. DeliverAsync
-// simulates that broker delivery path.
-const string MeasuredChannelTemplate = "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+// simulates that broker delivery path, on the concrete channel the consumer
+// subscribed to.
+string measuredChannel = $"smartylighting.streetlights.1.0.action.{StreetlightId}.lighting.measured";
 ReadOnlyMemory<byte> sensorReading = """{"lumens":1024,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray();
 await transport.DeliverAsync<LightMeasuredPayload>(
-    MeasuredChannelTemplate,
+    measuredChannel,
     sensorReading);
 
 Console.WriteLine($"Delivered sensor reading; measurement handler received: {handler.ReceivedCount}");
@@ -57,7 +63,7 @@ Console.WriteLine($"Last measurement: {handler.LastLumens} lumens");
 // error policy dead-letters invalid messages.
 ReadOnlyMemory<byte> badData = """{"lumens":-5,"sentAt":"2026-05-25T12:01:00Z"}"""u8.ToArray();
 await transport.DeliverAsync<LightMeasuredPayload>(
-    MeasuredChannelTemplate,
+    measuredChannel,
     badData);
 
 Console.WriteLine($"After bad data: handler still has {handler.ReceivedCount} valid message(s)");

@@ -46,7 +46,8 @@ public readonly partial struct Media
     /// <summary>
     /// Initializes a new instance of the <see cref="Media"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name="parent">The document that contains the element.</param>
+    /// <param name="idx">The index of the element within the document.</param>
     internal Media(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
@@ -383,7 +384,7 @@ public readonly partial struct Media
     /// <summary>
     /// Converts the instance to a JsonElement.
     /// </summary>
-    /// <param name="value">The instance of this type.</param>
+    /// <param name="instance">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator JsonElement(Media instance)
@@ -394,7 +395,7 @@ public readonly partial struct Media
     /// <summary>
     /// Converts the instance from a JsonElement.
     /// </summary>
-    /// <param name="value">The instance of this type as a JsonElement.</param>
+    /// <param name="instance">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Media(JsonElement instance)
@@ -405,7 +406,8 @@ public readonly partial struct Media
     /// <summary>
     /// Gets an instance of the JSON value from another element.
     /// </summary>
-    /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+    /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+    /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Media From<T>(in T instance)
@@ -539,7 +541,7 @@ public readonly partial struct Media
     ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
     /// </summary>
     /// <param name="reader">The reader to read.</param>
-    /// <param name="element">Receives the parsed element.</param>
+    /// <param name="result">Receives the parsed element.</param>
     /// <returns>
     ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
     ///   <see langword="false"/> if the reader ran out of data while parsing.

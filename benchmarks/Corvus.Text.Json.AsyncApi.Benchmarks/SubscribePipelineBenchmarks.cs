@@ -4,6 +4,7 @@
 
 using System.Text;
 using AsyncApiBenchmark.Generated;
+using AsyncApiBenchmark.Generated.Models;
 using AsyncApiBenchmark.Infrastructure;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json;

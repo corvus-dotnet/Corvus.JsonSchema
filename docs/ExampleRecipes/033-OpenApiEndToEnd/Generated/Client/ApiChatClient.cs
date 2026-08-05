@@ -37,6 +37,8 @@ public sealed class ApiChatClient : IApiChatClient
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<StartVetChatResponse> StartVetChatAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -70,6 +72,8 @@ public sealed class ApiChatClient : IApiChatClient
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<StartVetChatResponse> StartVetChatAsync<TContext>(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -105,6 +109,8 @@ public sealed class ApiChatClient : IApiChatClient
     /// <param name="petId">The petId parameter.</param>
     /// <param name="since">The since parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<StreamPetActivityResponse> StreamPetActivityAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonDateTime.Source since = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

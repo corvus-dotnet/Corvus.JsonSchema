@@ -7104,6 +7104,22 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void CovSpec_ResponseLinks_MultiLineLinkDescription_EmitsSingleEscapedDocCommentLine()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "/// Retrieve the created item by its id. Use this link after create &amp; before any update.",
+                StringComparison.Ordinal),
+            "Multi-line link description should be flattened onto a single XML-escaped doc-comment line");
+        Assert.IsFalse(
+            resp.Content.Contains("\nUse this link after create", StringComparison.Ordinal),
+            "The raw line break in the link description must not reach the emitted code");
+    }
+
+    [TestMethod]
     public void CovSpec_ResponseLinks_ClientMethod_UsesLocalAsyncCaptureWhenRequestExpr()
     {
         IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();

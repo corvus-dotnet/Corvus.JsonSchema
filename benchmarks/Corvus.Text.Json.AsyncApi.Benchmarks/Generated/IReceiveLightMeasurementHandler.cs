@@ -17,5 +17,5 @@ public interface IReceiveLightMeasurementHandler
     /// </summary>
     /// <param name="payload">The deserialized message payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask HandleLightMeasuredAsync(AsyncApiBenchmark.Generated.LightMeasuredPayload payload, CancellationToken cancellationToken = default);
+    ValueTask HandleLightMeasuredAsync(AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payload, CancellationToken cancellationToken = default);
 }

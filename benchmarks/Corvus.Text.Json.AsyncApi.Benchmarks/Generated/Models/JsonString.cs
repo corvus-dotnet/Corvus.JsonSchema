@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark.Generated;
+namespace AsyncApiBenchmark.Generated.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -46,7 +46,8 @@ public readonly partial struct JsonString
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonString"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name="parent">The document that contains the element.</param>
+    /// <param name="idx">The index of the element within the document.</param>
     internal JsonString(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
@@ -135,7 +136,7 @@ public readonly partial struct JsonString
     /// <summary>
     /// Converts the instance to a JsonElement.
     /// </summary>
-    /// <param name="value">The instance of this type.</param>
+    /// <param name="instance">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator JsonElement(JsonString instance)
@@ -146,7 +147,7 @@ public readonly partial struct JsonString
     /// <summary>
     /// Converts the instance from a JsonElement.
     /// </summary>
-    /// <param name="value">The instance of this type as a JsonElement.</param>
+    /// <param name="instance">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator JsonString(JsonElement instance)
@@ -157,7 +158,8 @@ public readonly partial struct JsonString
     /// <summary>
     /// Gets an instance of the JSON value from another element.
     /// </summary>
-    /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+    /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+    /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonString From<T>(in T instance)
@@ -183,10 +185,13 @@ public readonly partial struct JsonString
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonString ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonString>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -206,10 +211,13 @@ public readonly partial struct JsonString
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonString ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonString>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -229,10 +237,13 @@ public readonly partial struct JsonString
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonString ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonString>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -270,16 +281,19 @@ public readonly partial struct JsonString
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static JsonString ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonString>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
     ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
     /// </summary>
     /// <param name="reader">The reader to read.</param>
-    /// <param name="element">Receives the parsed element.</param>
+    /// <param name="result">Receives the parsed element.</param>
     /// <returns>
     ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
     ///   <see langword="false"/> if the reader ran out of data while parsing.
