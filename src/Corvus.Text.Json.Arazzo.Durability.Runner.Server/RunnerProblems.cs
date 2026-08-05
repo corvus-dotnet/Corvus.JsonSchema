@@ -18,6 +18,9 @@ internal static class RunnerProblems
     /// <summary>The problem type for a save whose sequence was not the persisted sequence plus one.</summary>
     internal const string CheckpointSupersededType = "https://corvus-oss.org/arazzo/runner/problems/checkpoint-superseded";
 
+    /// <summary>The problem type for a request a quota refused.</summary>
+    internal const string QuotaExceededType = "https://corvus-oss.org/arazzo/runner/problems/quota-exceeded";
+
     /// <summary>
     /// The refusal for a lease that is not current. A run outside the principal's bindings, one held by another runner,
     /// and one that does not exist all produce exactly this, which is what keeps them indistinguishable.
@@ -103,6 +106,28 @@ internal static class RunnerProblems
             status: 409,
             title: "Checkpoint superseded",
             type: CheckpointSupersededType);
+
+    /// <summary>
+    /// The refusal for a request a quota declined, naming the quota and the counter it was measured against so the
+    /// runner can back off against the dimension it exhausted rather than against everything it does.
+    /// </summary>
+    /// <param name="rejection">The quota's refusal.</param>
+    /// <returns>The problem body.</returns>
+    /// <remarks>
+    /// Distinguishable from every other refusal on purpose (ADR 0065 decision 3). It is the one non-2xx a runner is
+    /// allowed to hold on rather than fail the advance for, because a chatty legitimate workflow must not be faulted
+    /// mid-advance after its external calls have landed. That exemption is why the type is stable and matched, and why
+    /// it is bounded on the runner side: a fabricated quota refusal is indistinguishable from a real one, so an
+    /// unbounded hold would be a silent stall primitive.
+    /// </remarks>
+    internal static QuotaProblem.Source QuotaExceeded(in Quotas.RunnerQuotaRejection rejection)
+        => QuotaProblem.Build(
+            counter: rejection.Counter,
+            detail: "The request was declined by a quota. Retry after the interval the Retry-After header carries.",
+            quota: rejection.Quota,
+            status: 429,
+            title: "Quota exceeded",
+            type: QuotaExceededType);
 
     /// <summary>
     /// The lease-lost refusal in the shape the save operation answers with. The save's <c>409</c> carries either
