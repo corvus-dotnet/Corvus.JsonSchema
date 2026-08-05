@@ -103,6 +103,21 @@
 <pre><code class="language-csharp">public static JsonString From&lt;T&gt;(in T instance)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
+<h3 id="type-parameters">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>T</code></td>
+<td>The type of the <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> from which to instantiate the instance.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="parameters">Parameters</h3>
 <table>
 <thead>
@@ -116,7 +131,7 @@
 <tr>
 <td><code>instance</code></td>
 <td><code>T</code></td>
-<td></td>
+<td>The <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> value from which to instantiate the instance.</td>
 </tr>
 </tbody>
 </table>

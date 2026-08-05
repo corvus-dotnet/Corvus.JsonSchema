@@ -401,10 +401,11 @@ ReceiveLightMeasurementConsumer consumer = new(
 </tbody>
 </table>
 <h3 id="consumer-lifecycle">Consumer Lifecycle</h3>
-<pre><code class="language-csharp">await consumer.StartAsync();    // Subscribe to the channel
+<pre><code class="language-csharp">await consumer.StartAsync(StreetlightId);    // Subscribe to the channel
 // ... messages are published and auto-delivered ...
-await consumer.StopAsync();     // Unsubscribe and clean up
+await consumer.StopAsync();                  // Unsubscribe and clean up
 </code></pre>
+<p>The channel address template declares a <code>{streetlightId}</code> parameter, so <code>StartAsync</code> takes a value for it and subscribes to the concrete channel the template composes to.</p>
 <h3 id="how-inmemorymessagetransport-works">How InMemoryMessageTransport Works</h3>
 <p>Unlike manual <code>DeliverAsync()</code> calls, <code>InMemoryMessageTransport.PublishAsync()</code> <strong>automatically delivers</strong> to active subscribers — just like a real broker (Kafka/NATS/MQTT). When you publish to a channel, any consumer subscribed to that channel immediately receives it.</p>
 <p>In a production consumer, your application would not normally publish directly to the same transport it consumes from. The physical streetlight, or a telemetry gateway representing it, would publish the measurement to the broker. This recipe writes to <code>InMemoryMessageTransport</code> only to simulate that external telemetry source in a self-contained console app.</p>
