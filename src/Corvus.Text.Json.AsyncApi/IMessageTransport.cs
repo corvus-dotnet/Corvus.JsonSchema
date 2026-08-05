@@ -91,14 +91,18 @@ public interface IMessageTransport : IAsyncDisposable
     /// The memory must remain valid until this method completes. For GUIDs, use
     /// <c>Guid.TryFormat(Span&lt;byte&gt;, out _, "D")</c> to format directly to a <c>byte[36]</c>
     /// without allocating an intermediate string.</param>
+    /// <param name="workspace">Takes ownership of the parsed reply's payload and headers documents. The returned
+    /// reply is a view over documents this workspace owns, so it stays valid until the workspace is disposed -
+    /// dispose the workspace once the reply is no longer needed (a generated caller threads the run's workspace).</param>
     /// <param name="headers">Optional message headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The reply payload and headers.</returns>
+    /// <returns>The reply payload and headers, owned by <paramref name="workspace"/>.</returns>
     ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -114,21 +118,24 @@ public interface IMessageTransport : IAsyncDisposable
     /// <param name="request">The request payload.</param>
     /// <param name="correlationIdUtf8">A correlation identifier linking request to reply, as UTF-8 bytes.</param>
     /// <param name="context">The message context containing bindings and content type.</param>
+    /// <param name="workspace">Takes ownership of the parsed reply's payload and headers documents; dispose it once
+    /// the reply is no longer needed.</param>
     /// <param name="headers">Optional message headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The reply payload and headers.</returns>
+    /// <returns>The reply payload and headers, owned by <paramref name="workspace"/>.</returns>
     ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
         in MessageContext context,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        return RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken);
+        return RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, workspace, headers, cancellationToken);
     }
 
     /// <summary>
@@ -165,6 +172,37 @@ public interface IMessageTransport : IAsyncDisposable
     {
         return SubscribeAsync(channelUtf8, handler, cancellationToken);
     }
+
+    /// <summary>
+    /// Subscribes to request messages on a channel and replies to each — the responder counterpart of
+    /// <see cref="RequestAsync{TRequest, TReply}(ReadOnlyMemory{byte}, ReadOnlyMemory{byte}, TRequest, ReadOnlyMemory{byte}, JsonWorkspace, JsonElement, CancellationToken)"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For every request delivered on <paramref name="channelUtf8"/> the transport parses the typed
+    /// request, invokes <paramref name="handler"/> to obtain the reply payload, and publishes that reply
+    /// to the request's reply-to address correlated to the request. The transport owns correlation: it
+    /// reads the request's reply-to address and correlation identifier from the native broker fields (the
+    /// same ones <c>RequestAsync</c> sets) — the handler never sees the correlation plumbing.
+    /// </para>
+    /// <para>
+    /// This is an optional capability: a transport opts in by overriding this member. The default
+    /// implementation throws <see cref="NotSupportedException"/>.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="TRequest">The request payload type the responder parses into.</typeparam>
+    /// <typeparam name="TReply">The reply payload type the handler returns.</typeparam>
+    /// <param name="channelUtf8">The request channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The handler invoked with each request payload and its headers, returning the reply payload.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+        => throw new NotSupportedException("This transport does not support request/reply responders (SubscribeReplyAsync).");
 
     /// <summary>
     /// Unsubscribes from messages on the specified channel.

@@ -719,6 +719,8 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
             ConnectionUri = AmqpFixture.ConnectionUri,
@@ -740,6 +742,7 @@ public class AmqpTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -748,6 +751,8 @@ public class AmqpTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
             ConnectionUri = AmqpFixture.ConnectionUri,
@@ -773,12 +778,15 @@ public class AmqpTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — create a fresh transport for request/reply
         AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
@@ -853,7 +861,8 @@ public class AmqpTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -863,8 +872,144 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — model two services on the same broker exchange: a responder service and a
+        // separate requester service. The reply routes back via the request's ReplyTo/CorrelationId.
+        static AmqpTransportOptions Options() => new()
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.responder",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-responder",
+        };
+
+        AmqpMessageTransport responder = await AmqpMessageTransport.CreateAsync(Options());
+        AmqpMessageTransport requester = await AmqpMessageTransport.CreateAsync(Options());
+
+        try
+        {
+            ReadOnlyMemory<byte> requestChannel = "amqp.test.responder.request"u8.ToArray();
+            ReadOnlyMemory<byte> replyChannel = "amqp.test.responder.reply"u8.ToArray();
+            byte[] correlationId = "amqp-responder-001"u8.ToArray();
+
+            // The responder service: doubles the request's "value" field into the reply.
+            await responder.SubscribeReplyAsync<JsonElement, JsonElement>(
+                requestChannel,
+                (request, headers, ct) =>
+                {
+                    int value = request.GetProperty("value"u8).GetInt32();
+
+                    // The reply document must outlive the handler (the transport serialises the returned element
+                    // afterward), so hand it to the test's workspace, which disposes it after the round-trip.
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
+                    return ValueTask.FromResult(replyDoc.RootElement);
+                });
+
+            await Task.Delay(500);
+
+            // Act — the requester service sends a request.
+            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+            (JsonElement replyPayload, _) = await requester.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace);
+
+            // Assert — the responder doubled the value.
+            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+            Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+
+            await responder.UnsubscribeAsync(requestChannel);
+        }
+        finally
+        {
+            await responder.DisposeAsync();
+            await requester.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — same two-transport setup as RequestReplyResponderRoundTrip, but drives the
+        // one-shot primitive ReceiveOneAndReplyAsync that generated Arazzo responder steps call.
+        static AmqpTransportOptions Options() => new()
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.responder",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-responder",
+        };
+
+        AmqpMessageTransport responder = await AmqpMessageTransport.CreateAsync(Options());
+        AmqpMessageTransport requester = await AmqpMessageTransport.CreateAsync(Options());
+
+        try
+        {
+            ReadOnlyMemory<byte> requestChannel = "amqp.test.responder.request.once"u8.ToArray();
+            ReadOnlyMemory<byte> replyChannel = "amqp.test.responder.reply.once"u8.ToArray();
+            byte[] correlationId = "amqp-responder-once-001"u8.ToArray();
+
+            // The responder service: start as a background task — it will handle one request
+            // then unsubscribe itself.
+            System.Threading.Tasks.Task responderTask = responder.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+                requestChannel,
+                (request, headers) =>
+                {
+                    int value = request.GetProperty("value"u8).GetInt32();
+
+                    // The reply document must outlive the handler (the transport serialises the returned element
+                    // afterward), so hand it to the test's workspace, which disposes it after the round-trip.
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
+                    return ValueTask.FromResult(replyDoc.RootElement);
+                }).AsTask();
+
+            await Task.Delay(500);
+
+            // Act — the requester service sends a request.
+            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+            (JsonElement replyPayload, _) = await requester.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace);
+
+            // Assert — the responder doubled the value.
+            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+            Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+
+            // Await the one-shot wrapper to confirm it completed cleanly.
+            await responderTask;
+        }
+        finally
+        {
+            await responder.DisposeAsync();
+            await requester.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task RequestReplyRoundtripWithHeadersForwardsHeaders()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — verify that headers are included in request messages
         AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
         {
@@ -947,6 +1092,7 @@ public class AmqpTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             headersDoc.RootElement);
 
         // Assert — reply received and headers were in the request

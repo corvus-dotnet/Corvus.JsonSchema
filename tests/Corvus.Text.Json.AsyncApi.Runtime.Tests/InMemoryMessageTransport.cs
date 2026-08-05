@@ -70,6 +70,7 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> replyChannelUtf8,
         TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
+        JsonWorkspace workspace,
         JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
@@ -94,7 +95,7 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
             this.pendingRequests[correlationId] = tcs;
         }
 
-        return CompleteRequestAsync<TReply>(tcs, cancellationToken);
+        return CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -220,17 +221,23 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
     private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
+        JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
         (byte[] replyBytes, byte[] headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        TReply reply = JsonElementHelpers.ParseValue<TReply>(replyBytes);
+        // The returned reply and headers are owned by the caller's workspace (disposed with it).
+        ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyBytes);
+        workspace.TakeOwnership(replyDoc);
+        TReply reply = replyDoc.RootElement;
 
         JsonElement headers = default;
         if (headerBytes.Length > 0)
         {
-            headers = JsonElementHelpers.ParseValue<JsonElement>(headerBytes);
+            ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
+            workspace.TakeOwnership(headersDoc);
+            headers = headersDoc.RootElement;
         }
 
         return (reply, headers);

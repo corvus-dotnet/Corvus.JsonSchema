@@ -31,6 +31,10 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
     private readonly JsonElement entryDocumentRoot;
     private readonly Uri baseUri;
 
+    // Optional hook for loading an external document (of any URI scheme) from a virtualized source,
+    // consulted before the file-system fallback (see the OpenAPI resolver for the rationale).
+    private readonly Func<Uri, byte[]?>? externalDocumentLoader;
+
     private readonly Dictionary<string, JsonElement> registeredDocuments = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ParsedJsonDocument<JsonElement>> loadedDocuments = new(StringComparer.Ordinal);
     private readonly Stack<(string Key, JsonElement Root)> baseStack = new();
@@ -47,6 +51,31 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
     /// </param>
     /// <exception cref="ArgumentException"><paramref name="entryDocumentPath"/> is not an absolute path.</exception>
     public AsyncApiExternalReferenceResolver(JsonElement entryDocumentRoot, string entryDocumentPath)
+        : this(entryDocumentRoot, ToFileBaseUri(entryDocumentPath), null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AsyncApiExternalReferenceResolver"/> class with an
+    /// explicit base URI (which need not be a file path) and an optional loader for virtualized external
+    /// documents.
+    /// </summary>
+    /// <param name="entryDocumentRoot">The root element of the entry (main) AsyncAPI document.</param>
+    /// <param name="baseUri">The absolute base URI the entry document was retrieved from (RFC 3986 §5).</param>
+    /// <param name="externalDocumentLoader">
+    /// An optional callback that loads an external document's raw UTF-8 JSON bytes by its resolved
+    /// absolute URI (or <see langword="null"/> when it cannot), consulted before the file-system fallback.
+    /// Documents it returns are owned (and disposed) by this resolver.
+    /// </param>
+    public AsyncApiExternalReferenceResolver(JsonElement entryDocumentRoot, Uri baseUri, Func<Uri, byte[]?>? externalDocumentLoader = null)
+    {
+        ArgumentNullException.ThrowIfNull(baseUri);
+        this.entryDocumentRoot = entryDocumentRoot;
+        this.baseUri = baseUri;
+        this.externalDocumentLoader = externalDocumentLoader;
+    }
+
+    private static Uri ToFileBaseUri(string entryDocumentPath)
     {
         if (!Path.IsPathFullyQualified(entryDocumentPath))
         {
@@ -55,8 +84,7 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
                 nameof(entryDocumentPath));
         }
 
-        this.entryDocumentRoot = entryDocumentRoot;
-        this.baseUri = new Uri(entryDocumentPath);
+        return new Uri(entryDocumentPath);
     }
 
     private Uri CurrentBaseUri => this.baseStack.Count > 0
@@ -341,7 +369,15 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
             return NavigateFragment(loaded.RootElement, fragment, out result);
         }
 
-        // 3. Fall back to file-system loading for file:// URIs
+        // 3. Try the injected loader (a virtualized document source) for any scheme.
+        if (this.externalDocumentLoader is { } loader && loader(resolvedUri) is { } bytes)
+        {
+            ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+            this.loadedDocuments[key] = doc;
+            return NavigateFragment(doc.RootElement, fragment, out result);
+        }
+
+        // 4. Fall back to file-system loading for file:// URIs
         if (resolvedUri.IsFile)
         {
             string filePath = resolvedUri.LocalPath;

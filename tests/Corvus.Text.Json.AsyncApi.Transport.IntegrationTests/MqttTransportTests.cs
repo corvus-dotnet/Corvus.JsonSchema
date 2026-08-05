@@ -680,6 +680,8 @@ public class MqttTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — create a requester transport
         MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
@@ -732,7 +734,8 @@ public class MqttTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -744,8 +747,138 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — a Corvus responder transport answers requests via SubscribeReplyAsync,
+        // and a separate Corvus requester transport issues the request via RequestAsync.
+        MqttMessageTransport responderTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-responder-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-requester-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/reqreply-typed/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reqreply-typed/reply"u8.ToArray();
+
+        // Register the responder: it reads the request's "value" and returns value * 2.
+        await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "mqtt-typed-roundtrip-1"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert — the responder computed 21 * 2 = 42.
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — a Corvus responder transport answers a single request via
+        // ReceiveOneAndReplyAsync (the primitive used by generated Arazzo responder steps),
+        // and a separate Corvus requester transport issues the request via RequestAsync.
+        MqttMessageTransport responderTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-responder-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-requester-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/reqreply-typed/request/once"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reqreply-typed/reply/once"u8.ToArray();
+
+        // Start the one-shot responder as a background task before the requester sends.
+        // The handler reads the request's "value" and returns value * 2.
+        System.Threading.Tasks.Task responderTask = responderTransport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            }).AsTask();
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "mqtt-typed-roundtrip-once-1"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert — the responder computed 21 * 2 = 42.
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
+        await responderTask;
+        await responderTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
             Host = MqttFixture.Host,
@@ -766,6 +899,7 @@ public class MqttTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -774,6 +908,8 @@ public class MqttTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
         {
             Host = MqttFixture.Host,
@@ -797,7 +933,8 @@ public class MqttTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]

@@ -668,6 +668,8 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtripWithResponder()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         // Arrange — requester transport subscribes to the reply channel so the relay forwards replies to it
         WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
@@ -755,7 +757,8 @@ public class WebSocketTransportTests
             requestChannel,
             replyChannel,
             requestDoc.RootElement,
-            correlationId);
+            correlationId,
+            workspace);
 
         // Assert
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
@@ -766,8 +769,139 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — a responder transport subscribes to the request channel via SubscribeReplyAsync,
+        // and a requester transport subscribes to the reply channel so the relay forwards replies to it.
+        WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "ws/test/reqreply-responder/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reqreply-responder/reply"u8.ToArray();
+
+        // The requester must be subscribed to the reply channel so the relay forwards the reply to it
+        // (correlationId match takes priority over the dummy handler).
+        await requesterTransport.SubscribeAsync<JsonElement>(
+            replyChannel,
+            (_, _, _) => ValueTask.CompletedTask);
+
+        // Register the responder: it reads the request's "value", computes value + 1, and replies.
+        await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "ws-responder-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":41}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await responderTransport.DisposeAsync();
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // Arrange — a responder transport handles exactly one request via ReceiveOneAndReplyAsync,
+        // and a requester transport subscribes to the reply channel so the relay forwards replies to it.
+        WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "ws/test/reqreply-responder/request/once"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reqreply-responder/reply/once"u8.ToArray();
+
+        // The requester must be subscribed to the reply channel so the relay forwards the reply to it
+        // (correlationId match takes priority over the dummy handler).
+        await requesterTransport.SubscribeAsync<JsonElement>(
+            replyChannel,
+            (_, _, _) => ValueTask.CompletedTask);
+
+        // Start the one-shot responder: it reads the request's "value", computes value + 1, and replies.
+        System.Threading.Tasks.Task responderTask = responderTransport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            }).AsTask();
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "ws-responder-once-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":41}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await responderTask;
+        await responderTransport.DisposeAsync();
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
@@ -786,6 +920,7 @@ public class WebSocketTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 default,
                 cts.Token));
 
@@ -795,6 +930,8 @@ public class WebSocketTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
@@ -816,7 +953,8 @@ public class WebSocketTransportTests
                 channel,
                 channel,
                 doc.RootElement,
-                "corr"u8.ToArray()));
+                "corr"u8.ToArray(),
+                workspace));
     }
 
     [TestMethod]

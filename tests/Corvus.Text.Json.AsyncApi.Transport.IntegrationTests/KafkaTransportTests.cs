@@ -546,6 +546,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
@@ -572,6 +574,7 @@ public class KafkaTransportTests
                 replyChannel,
                 requestDoc.RootElement,
                 correlationId,
+                workspace,
                 cancellationToken: cts.Token));
 
         await transport.DisposeAsync();
@@ -580,6 +583,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
@@ -601,7 +606,7 @@ public class KafkaTransportTests
 
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await transport.RequestAsync<JsonElement, JsonElement>(
-                channel, channel, doc.RootElement, "corr"u8.ToArray()));
+                channel, channel, doc.RootElement, "corr"u8.ToArray(), workspace));
     }
 
     [TestMethod]
@@ -653,6 +658,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task RequestReplyRoundtrip()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         string requestTopic = $"kafka-reqrep-req-{topicSuffix}";
         string replyTopic = $"kafka-reqrep-rep-{topicSuffix}";
@@ -767,6 +774,7 @@ public class KafkaTransportTests
             replyChannel,
             requestDoc.RootElement,
             correlationId,
+            workspace,
             requestHeaders.RootElement,
             requestCts.Token);
 
@@ -777,6 +785,152 @@ public class KafkaTransportTests
         try { await responderTask; }
         catch (OperationCanceledException) { }
 
+        await clientTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string requestTopic = $"kafka-resp-req-{topicSuffix}";
+        string replyTopic = $"kafka-resp-rep-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        // Set up a Corvus responder via SubscribeReplyAsync: it reads each request,
+        // computes a reply, and the transport routes it back correlated to the request.
+        KafkaMessageTransport responderTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-reply-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                // Compute a reply from the request: double the supplied number.
+                int n = request.GetProperty("n"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{n * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        // Give the responder time to start (group coordination + partition assignment).
+        await Task.Delay(5000);
+
+        // Create a client transport that issues the request via RequestAsync.
+        KafkaMessageTransport clientTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-client-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"n":21}"""u8.ToArray());
+        byte[] correlationId = Guid.NewGuid().ToString("D").Substring(0, 36).Select(c => (byte)c).ToArray();
+
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(30));
+        (JsonElement replyPayloadElement, JsonElement replyHeaders) = await clientTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace,
+            cancellationToken: requestCts.Token);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);
+        Assert.AreEqual(42, replyPayloadElement.GetProperty("doubled"u8).GetInt32());
+
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+        await clientTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up
+        // deterministically (disposed with this workspace once the round-trip is done).
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string requestTopic = $"kafka-resp-req-{topicSuffix}-once";
+        string replyTopic = $"kafka-resp-rep-{topicSuffix}-once";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        // Set up a Corvus responder via ReceiveOneAndReplyAsync: it reads exactly one request,
+        // computes a reply, unsubscribes itself, and completes.
+        KafkaMessageTransport responderTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-reply-group-" + topicSuffix + "-once",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        System.Threading.Tasks.Task responderTask = responderTransport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers) =>
+            {
+                // Compute a reply from the request: double the supplied number.
+                int n = request.GetProperty("n"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{n * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element afterward) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            }).AsTask();
+
+        // Give the responder time to start (group coordination + partition assignment).
+        await Task.Delay(5000);
+
+        // Create a client transport that issues the request via RequestAsync.
+        KafkaMessageTransport clientTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-client-" + topicSuffix + "-once",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"n":21}"""u8.ToArray());
+        byte[] correlationId = Guid.NewGuid().ToString("D").Substring(0, 36).Select(c => (byte)c).ToArray();
+
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(30));
+        (JsonElement replyPayloadElement, JsonElement replyHeaders) = await clientTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace,
+            cancellationToken: requestCts.Token);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);
+        Assert.AreEqual(42, replyPayloadElement.GetProperty("doubled"u8).GetInt32());
+
+        await responderTask;
+        await responderTransport.DisposeAsync();
         await clientTransport.DisposeAsync();
     }
 
