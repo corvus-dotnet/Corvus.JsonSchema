@@ -2103,6 +2103,38 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ParameterizedConsumer_EmitsChannelParameterAndConcreteAddress()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Parameterized", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("SubscribeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        StringAssert.Contains(consumer.Content, "public ValueTask StartAsync(string orderId, CancellationToken cancellationToken = default)");
+        StringAssert.Contains(consumer.Content, "private const string ChannelAddressTemplate = \"orders.{orderId}.created\";");
+        StringAssert.Contains(consumer.Content, "channel = channel.Replace(\"{orderId}\", orderId, StringComparison.Ordinal);");
+        StringAssert.Contains(consumer.Content, "this.subscribedChannelUtf8");
+        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8");
+        StringAssert.Contains(consumer.Content, "SubscribeAsync<Corvus.Text.Json.JsonElement>(this.subscribedChannelUtf8!, this.HandleMessageAsync, cancellationToken)");
+    }
+
+    [TestMethod]
+    public void Compile_ParameterizedConsumer_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Parameterized", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        DynamicCompiler.AssertCompiles(files, "Parameterized.Generated");
+    }
+
+    [TestMethod]
     public void Compile_ConsumerDynamicMultiMessage_GeneratedCodeCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
