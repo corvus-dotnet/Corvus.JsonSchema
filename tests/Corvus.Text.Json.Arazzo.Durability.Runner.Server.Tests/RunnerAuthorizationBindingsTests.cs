@@ -22,6 +22,9 @@ public sealed class RunnerAuthorizationBindingsTests
     private const string Production = "production";
     private const string Staging = "staging";
     private const string Platform = "platform";
+    private const string AcmeOne = "acme-one";
+    private const string AcmeTwo = "acme-two";
+    private const string ZeusOne = "zeus-one";
 
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -32,9 +35,9 @@ public sealed class RunnerAuthorizationBindingsTests
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
         await fixture.AuthorizeAsync(Staging, "runner-2", Machine);
 
-        IReadOnlyList<string> resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
 
-        resolved.ShouldBe([Production, Staging], ignoreOrder: true);
+        resolved.Environments.ShouldBe([Production, Staging], ignoreOrder: true);
     }
 
     [TestMethod]
@@ -45,7 +48,7 @@ public sealed class RunnerAuthorizationBindingsTests
         Fixture fixture = await Fixture.StartAsync();
         await fixture.RegisterAsync(Production, "runner-1", Machine);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -54,7 +57,7 @@ public sealed class RunnerAuthorizationBindingsTests
         Fixture fixture = await Fixture.StartAsync();
         await fixture.AuthorizeAsync(Production, "runner-1", "machine-b");
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -64,10 +67,10 @@ public sealed class RunnerAuthorizationBindingsTests
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Quarantined);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -77,15 +80,15 @@ public sealed class RunnerAuthorizationBindingsTests
         // the property: stale until the window elapses, gone immediately after.
         Fixture fixture = await Fixture.StartAsync();
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBe([Production]);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(29));
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBe([Production]);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(2));
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -94,12 +97,12 @@ public sealed class RunnerAuthorizationBindingsTests
         // A deployment does not get to choose a slower fence: asking for an hour gets thirty seconds.
         Fixture fixture = await Fixture.StartAsync(TimeSpan.FromHours(1));
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBe([Production]);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(31));
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -107,11 +110,11 @@ public sealed class RunnerAuthorizationBindingsTests
     {
         Fixture fixture = await Fixture.StartAsync(TimeSpan.Zero);
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBe([Production]);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -123,7 +126,7 @@ public sealed class RunnerAuthorizationBindingsTests
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
         await fixture.AuthorizeAsync(Platform, "runner-2", Machine);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -133,7 +136,7 @@ public sealed class RunnerAuthorizationBindingsTests
         Fixture fixture = await Fixture.StartAsync();
         await fixture.AuthorizeAsync(Platform, "runner-1", Machine);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBe([Platform]);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Platform]);
     }
 
     [TestMethod]
@@ -144,7 +147,68 @@ public sealed class RunnerAuthorizationBindingsTests
         Fixture fixture = await Fixture.StartAsync();
         await fixture.AuthorizeAsync("deleted-environment", "runner-1", Machine);
 
-        (await fixture.Bindings.ResolveAsync(Machine, default)).ShouldBeEmpty();
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task The_tenant_is_the_owner_group_of_the_bound_environments()
+    {
+        // The counter a per-tenant quota is measured against (ADR 0065 decision 3). It comes from the same read and the
+        // same cache window as the environments, so a revoked runner stops being charged when it stops being offered
+        // work rather than on some other schedule.
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.AuthorizeAsync(AcmeOne, "runner-1", Machine);
+        await fixture.AuthorizeAsync(AcmeTwo, "runner-2", Machine);
+
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+
+        resolved.Environments.ShouldBe([AcmeOne, AcmeTwo], ignoreOrder: true);
+        resolved.Tenant.ShouldBe("acme");
+    }
+
+    [TestMethod]
+    public async Task An_environment_carrying_no_owner_group_resolves_no_tenant()
+    {
+        // A deployment that publishes nothing to tell owner groups apart has exactly one tenant by construction, so its
+        // usage counts against the deployment rather than against a named group. Not an error.
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.AuthorizeAsync(Production, "runner-1", Machine);
+
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+
+        resolved.Environments.ShouldBe([Production]);
+        resolved.Tenant.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_principal_bound_across_two_owner_groups_is_bound_to_nothing()
+    {
+        // The same argument as the platform/tenant pair: a binding spanning owner groups is a cross-tenant handle, which
+        // is exactly what the tenancy invariant exists to prevent. It also leaves no unambiguous answer to which tenant
+        // the usage is charged, and picking one would make the answer depend on binding order — a quota counter a caller
+        // could steer by arranging its own authorizations.
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.AuthorizeAsync(AcmeOne, "runner-1", Machine);
+        await fixture.AuthorizeAsync(ZeusOne, "runner-2", Machine);
+
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+
+        resolved.Environments.ShouldBeEmpty();
+        resolved.Tenant.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_prefix_that_disagrees_with_the_stamp_resolves_no_tenant()
+    {
+        // The silent failure the shared derivation exists to prevent, asserted at this layer too: the reach is resolved
+        // correctly and the counter is not, so every tenant would share one bucket while nothing reports a problem.
+        Fixture fixture = await Fixture.StartAsync(internalTagPrefix: "corp:");
+        await fixture.AuthorizeAsync(AcmeOne, "runner-1", Machine);
+
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+
+        resolved.Environments.ShouldBe([AcmeOne]);
+        resolved.Tenant.ShouldBeNull();
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider
@@ -171,21 +235,34 @@ public sealed class RunnerAuthorizationBindingsTests
 
         public RunnerAuthorizationBindings Bindings { get; }
 
-        public static async ValueTask<Fixture> StartAsync(TimeSpan? cacheWindow = null)
+        public static async ValueTask<Fixture> StartAsync(TimeSpan? cacheWindow = null, string? internalTagPrefix = null)
         {
             var clock = new TestClock(T0);
             var authorizations = new InMemoryEnvironmentRunnerAuthorizationStore(clock);
             var environments = new InMemoryEnvironmentStore(clock);
 
             // Two tenant environments and the control plane's own, which is marked rather than named: a name is chosen
-            // by the party the exclusion defends against.
+            // by the party the exclusion defends against. None of the three carries an owner group, which is the shape
+            // of a deployment that publishes nothing to tell tenancies apart.
             await AddAsync(environments, Environments.Environment.Draft(Production, "Production", null, default));
             await AddAsync(environments, Environments.Environment.Draft(Staging, "Staging", null, default));
             await AddAsync(environments, Environments.Environment.DraftPlatform(Platform, "Platform", null, default));
 
-            var bindings = new RunnerAuthorizationBindings(authorizations, environments, cacheWindow, timeProvider: clock);
+            // And three that do, across two owner groups.
+            await AddAsync(environments, Owned(AcmeOne, "acme"));
+            await AddAsync(environments, Owned(AcmeTwo, "acme"));
+            await AddAsync(environments, Owned(ZeusOne, "zeus"));
+
+            var bindings = new RunnerAuthorizationBindings(authorizations, environments, cacheWindow, timeProvider: clock, internalTagPrefix: internalTagPrefix);
             return new Fixture(authorizations, clock, bindings);
         }
+
+        private static ParsedJsonDocument<Environments.Environment> Owned(string name, string ownerGroup)
+            => Environments.Environment.Draft(
+                name,
+                null,
+                null,
+                SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + OwnerGroupTag.Dimension, ownerGroup)]));
 
         private static async ValueTask AddAsync(IEnvironmentStore environments, ParsedJsonDocument<Environments.Environment> draft)
         {

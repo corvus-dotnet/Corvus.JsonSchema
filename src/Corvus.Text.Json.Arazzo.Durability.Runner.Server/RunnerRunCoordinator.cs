@@ -69,8 +69,9 @@ public sealed class RunnerRunCoordinator
         // The environment is resolved from the principal's bindings and never taken from the request, so a runner cannot
         // ask for another tenant's work. A principal bound to nothing is offered nothing, which is the correct answer for
         // one whose authorization is pending or revoked.
-        IReadOnlyList<string> environments = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
-        if (environments.Count == 0 || hostedVersions.Count == 0)
+        RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> environments = resolved.Environments;
+        if (resolved.Count == 0 || hostedVersions.Count == 0)
         {
             return null;
         }
@@ -310,8 +311,9 @@ public sealed class RunnerRunCoordinator
     // and is the same rule the single-run claim applies.
     private async ValueTask<(IReadOnlyList<string> Environments, HashSet<string> Hosted)?> BeginSweepAsync(string principal, IReadOnlyCollection<string> hostedVersions, CancellationToken cancellationToken)
     {
-        IReadOnlyList<string> environments = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
-        if (environments.Count == 0 || hostedVersions.Count == 0)
+        RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> environments = resolved.Environments;
+        if (resolved.Count == 0 || hostedVersions.Count == 0)
         {
             return null;
         }

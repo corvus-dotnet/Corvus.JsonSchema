@@ -30,29 +30,33 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
     /// is capped here rather than left to a deployment to choose badly.</summary>
     public static readonly TimeSpan MaximumCacheWindow = TimeSpan.FromSeconds(30);
 
-    private static readonly string[] None = [];
-
     private readonly IEnvironmentRunnerAuthorizationStore authorizations;
     private readonly IEnvironmentStore environments;
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan cacheWindow;
     private readonly int cacheCapacity;
+    private readonly byte[] ownerGroupTagKey;
     private readonly ConcurrentDictionary<string, Entry> cache = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="RunnerAuthorizationBindings"/> class.</summary>
     /// <param name="authorizations">The runner-authorization records.</param>
-    /// <param name="environments">The environment records, read to tell a tenant environment from the platform's own.</param>
+    /// <param name="environments">The environment records, read to tell a tenant environment from the platform's own
+    /// and to read the owner group a principal's usage is counted against.</param>
     /// <param name="cacheWindow">How long a resolution may be reused, bounded by <see cref="MaximumCacheWindow"/>. Pass
     /// <see cref="TimeSpan.Zero"/> to resolve on every request.</param>
     /// <param name="cacheCapacity">The most principals to cache. A principal is authenticated, so the population is
     /// bounded in practice; the cap is there so it is bounded by construction too.</param>
     /// <param name="timeProvider">The time source for cache expiry; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="internalTagPrefix">The deployment's reserved internal tag prefix, or <see langword="null"/> for the
+    /// default. It must be the prefix the control plane stamps owner groups under: a prefix that disagrees resolves
+    /// every principal's tenant to none, which reports nothing and puts every tenant on one quota counter.</param>
     public RunnerAuthorizationBindings(
         IEnvironmentRunnerAuthorizationStore authorizations,
         IEnvironmentStore environments,
         TimeSpan? cacheWindow = null,
         int cacheCapacity = 1024,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        string? internalTagPrefix = null)
     {
         ArgumentNullException.ThrowIfNull(authorizations);
         ArgumentNullException.ThrowIfNull(environments);
@@ -62,23 +66,26 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
         this.environments = environments;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.cacheCapacity = cacheCapacity;
+        this.ownerGroupTagKey = internalTagPrefix is null
+            ? OwnerGroupTag.DefaultKeyUtf8.ToArray()
+            : OwnerGroupTag.KeyFor(internalTagPrefix);
 
         TimeSpan requested = cacheWindow ?? MaximumCacheWindow;
         this.cacheWindow = requested < TimeSpan.Zero || requested > MaximumCacheWindow ? MaximumCacheWindow : requested;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IReadOnlyList<string>> ResolveAsync(string principal, CancellationToken cancellationToken)
+    public async ValueTask<RunnerBindings> ResolveAsync(string principal, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         if (this.cache.TryGetValue(principal, out Entry cached) && cached.ExpiresAt > now)
         {
-            return cached.Environments;
+            return cached.Bindings;
         }
 
-        IReadOnlyList<string> resolved = await this.ReadBindingsAsync(principal, cancellationToken).ConfigureAwait(false);
+        RunnerBindings resolved = await this.ReadBindingsAsync(principal, cancellationToken).ConfigureAwait(false);
 
         // Evict wholesale rather than by age: entries all share one window, so a full cache is a cache about to expire
         // anyway, and tracking per-entry recency to remove one of them would cost more than it saves.
@@ -91,7 +98,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
         return resolved;
     }
 
-    private async ValueTask<IReadOnlyList<string>> ReadBindingsAsync(string principal, CancellationToken cancellationToken)
+    private async ValueTask<RunnerBindings> ReadBindingsAsync(string principal, CancellationToken cancellationToken)
     {
         // The unpaged read, deliberately. This query is scoped to one principal, so its result is the environments a
         // single runner serves — bounded by the deployment's environment count rather than by its runner or run count,
@@ -109,18 +116,21 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
 
         if (bound is null)
         {
-            return None;
+            return RunnerBindings.None;
         }
 
         return await this.SeparatedAsync(bound, cancellationToken).ConfigureAwait(false);
     }
 
-    // Applies ADR 0065 decision 2's exclusivity rule and drops a binding whose environment no longer exists.
-    private async ValueTask<IReadOnlyList<string>> SeparatedAsync(List<string> bound, CancellationToken cancellationToken)
+    // Applies ADR 0065 decision 2's exclusivity rule, drops a binding whose environment no longer exists, and reads the
+    // owner group the principal's usage is counted against.
+    private async ValueTask<RunnerBindings> SeparatedAsync(List<string> bound, CancellationToken cancellationToken)
     {
         List<string>? live = null;
         bool holdsPlatform = false;
         bool holdsTenant = false;
+        string? owner = null;
+        bool spansOwners = false;
 
         foreach (string environment in bound)
         {
@@ -141,6 +151,20 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
                 holdsTenant = true;
             }
 
+            // Read in the same pass as the platform marker, off the record already in hand. A second read to answer
+            // "which tenant" would double this loop's store traffic on the path every claim goes through.
+            if (OwnerGroupTag.Read(record.RootElement, this.ownerGroupTagKey) is { } group)
+            {
+                if (owner is null)
+                {
+                    owner = group;
+                }
+                else if (!string.Equals(owner, group, StringComparison.Ordinal))
+                {
+                    spansOwners = true;
+                }
+            }
+
             (live ??= []).Add(environment);
         }
 
@@ -148,13 +172,18 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
         // so it resolves to nothing at all. Picking a side would leave the route open in whichever direction was kept,
         // and the rule is re-checked here per request precisely because a binding written before it was enforced, or
         // written concurrently, would otherwise pass unexamined.
-        if (holdsPlatform && holdsTenant)
+        //
+        // A principal bound across two owner groups is refused for the same reason and by the same shape of argument: it
+        // is a cross-tenant handle, which is what the tenancy invariant exists to prevent, and it leaves no unambiguous
+        // answer to which tenant its usage is charged. Picking one would make the answer depend on binding order — a
+        // quota counter a caller could steer by arranging its own authorizations.
+        if ((holdsPlatform && holdsTenant) || spansOwners)
         {
-            return None;
+            return RunnerBindings.None;
         }
 
-        return live ?? (IReadOnlyList<string>)None;
+        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner);
     }
 
-    private readonly record struct Entry(IReadOnlyList<string> Environments, DateTimeOffset ExpiresAt);
+    private readonly record struct Entry(RunnerBindings Bindings, DateTimeOffset ExpiresAt);
 }

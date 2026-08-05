@@ -16,33 +16,40 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// </remarks>
 public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindings
 {
-    private static readonly string[] None = [];
-
-    private readonly IReadOnlyDictionary<string, string[]> bindings;
+    private readonly IReadOnlyDictionary<string, RunnerBindings> bindings;
 
     /// <summary>Initializes a new instance of the <see cref="DeclaredRunnerEnvironmentBindings"/> class.</summary>
     /// <param name="bindings">The environments each machine principal serves. A principal absent from the map is bound
     /// to nothing, which is the fail-closed reading of a principal the deployment has not declared.</param>
-    public DeclaredRunnerEnvironmentBindings(IReadOnlyDictionary<string, IReadOnlyList<string>> bindings)
+    /// <param name="tenants">The tenant each machine principal's usage is counted against, or <see langword="null"/>
+    /// when the deployment names none. A deployment that declares its runners by name typically has one tenant, so the
+    /// common case is to omit this and have every principal count against the deployment.</param>
+    public DeclaredRunnerEnvironmentBindings(
+        IReadOnlyDictionary<string, IReadOnlyList<string>> bindings,
+        IReadOnlyDictionary<string, string>? tenants = null)
     {
         ArgumentNullException.ThrowIfNull(bindings);
 
-        var map = new Dictionary<string, string[]>(bindings.Count, StringComparer.Ordinal);
+        var map = new Dictionary<string, RunnerBindings>(bindings.Count, StringComparer.Ordinal);
         foreach ((string principal, IReadOnlyList<string> environments) in bindings)
         {
-            map[principal] = [.. environments];
+            string? tenant = tenants is not null && tenants.TryGetValue(principal, out string? declared) && !string.IsNullOrEmpty(declared)
+                ? declared
+                : null;
+
+            map[principal] = new RunnerBindings([.. environments], tenant);
         }
 
         this.bindings = map;
     }
 
     /// <inheritdoc/>
-    public ValueTask<IReadOnlyList<string>> ResolveAsync(string principal, CancellationToken cancellationToken)
+    public ValueTask<RunnerBindings> ResolveAsync(string principal, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(principal);
         cancellationToken.ThrowIfCancellationRequested();
 
-        return ValueTask.FromResult<IReadOnlyList<string>>(
-            this.bindings.TryGetValue(principal, out string[]? environments) ? environments : None);
+        return ValueTask.FromResult(
+            this.bindings.TryGetValue(principal, out RunnerBindings resolved) ? resolved : RunnerBindings.None);
     }
 }

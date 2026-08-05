@@ -24,11 +24,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// </remarks>
 public interface IRunnerEnvironmentBindings
 {
-    /// <summary>Resolves the environments <paramref name="principal"/> is currently bound to.</summary>
+    /// <summary>Resolves what <paramref name="principal"/> is currently bound to.</summary>
     /// <param name="principal">The authenticated machine principal.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The bound environments, in the order the runner should be offered work from them. An empty result is
-    /// normal and not an error: a principal that is registered but not yet authorized, or whose authorization was
-    /// revoked, is bound to nothing and is offered nothing.</returns>
-    ValueTask<IReadOnlyList<string>> ResolveAsync(string principal, CancellationToken cancellationToken);
+    /// <returns>The bound environments, in the order the runner should be offered work from them, and the tenant the
+    /// principal's usage is counted against. <see cref="RunnerBindings.None"/> is normal and not an error: a principal
+    /// that is registered but not yet authorized, or whose authorization was revoked, is bound to nothing and is
+    /// offered nothing.</returns>
+    /// <remarks>The tenant is resolved here rather than by a separate lookup because it comes from the same read and
+    /// must share the same staleness bound. A quota counter resolved on its own schedule would keep charging a tenant
+    /// whose runner has already been revoked, or charge one whose bindings have already moved.</remarks>
+    ValueTask<RunnerBindings> ResolveAsync(string principal, CancellationToken cancellationToken);
 }

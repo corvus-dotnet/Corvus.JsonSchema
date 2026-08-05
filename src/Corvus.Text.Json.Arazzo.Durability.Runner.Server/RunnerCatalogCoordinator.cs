@@ -61,7 +61,7 @@ public sealed class RunnerCatalogCoordinator
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
-        IReadOnlyList<string> environments = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> environments = (await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false)).Environments;
         if (environments.Count == 0)
         {
             // Bound to nothing, so there is nothing to host. The same answer a pending or revoked runner gets, and it
@@ -225,7 +225,7 @@ public sealed class RunnerCatalogCoordinator
 
     private async ValueTask<bool> IsAvailableToAsync(string principal, string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
-        IReadOnlyList<string> environments = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> environments = (await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false)).Environments;
         foreach (string environment in environments)
         {
             using ParsedJsonDocument<AvailabilityEntry>? entry = await this.availability.GetAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
