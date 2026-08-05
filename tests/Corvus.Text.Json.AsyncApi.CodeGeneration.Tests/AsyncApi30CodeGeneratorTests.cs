@@ -2297,6 +2297,22 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ParameterizedConsumer_WithReferencedParameter_ComposesTheAddress()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer-ref.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("ParameterizedRef", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("SubscribeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        StringAssert.Contains(consumer.Content, "public ValueTask StartAsync(string orderId, CancellationToken cancellationToken = default)");
+        StringAssert.Contains(consumer.Content, "written += Encoding.UTF8.GetBytes(orderId, channelUtf8.AsSpan(written));");
+    }
+
+    [TestMethod]
     public void Compile_ConsumerDynamicMultiMessage_GeneratedCodeCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
