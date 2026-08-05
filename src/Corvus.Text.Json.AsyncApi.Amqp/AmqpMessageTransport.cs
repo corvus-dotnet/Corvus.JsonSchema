@@ -181,7 +181,20 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync<TPayload>(channel, channelUtf8, (payload, context, ct) => handler(payload, context.Headers, ct), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync<TPayload>(channel, channelUtf8, handler, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -442,7 +455,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -578,11 +591,21 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     {
                         if (this.middleware is not null)
                         {
-                            await this.middleware((ct) => handler(payload, headers, ct), cts.Token).ConfigureAwait(false);
+                            await this.middleware((ct) => handler(payload, new MessageDeliveryContext
+                            {
+                                ChannelUtf8 = channelUtf8,
+                                Headers = headers,
+                                NativeMessage = args,
+                            }, ct), cts.Token).ConfigureAwait(false);
                         }
                         else
                         {
-                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                            await handler(payload, new MessageDeliveryContext
+                            {
+                                ChannelUtf8 = channelUtf8,
+                                Headers = headers,
+                                NativeMessage = args,
+                            }, cts.Token).ConfigureAwait(false);
                         }
 
                         await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);

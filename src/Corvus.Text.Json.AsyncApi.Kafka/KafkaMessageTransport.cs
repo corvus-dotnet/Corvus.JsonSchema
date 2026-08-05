@@ -150,6 +150,20 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
+        MessageContext emptyContext = default;
+        return this.SubscribeAsync<TPayload>(channelUtf8, (payload, context, ct) => handler(payload, context.Headers, ct), in emptyContext, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
@@ -451,7 +465,7 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         IConsumer<Null, byte[]> consumer,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -580,11 +594,21 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                         {
                             if (this.middleware is not null)
                             {
-                                await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                                await this.middleware((ct) => handler(payload, new MessageDeliveryContext
+                                {
+                                    ChannelUtf8 = channelUtf8,
+                                    Headers = headers,
+                                    NativeMessage = result,
+                                }, ct), cancellationToken).ConfigureAwait(false);
                             }
                             else
                             {
-                                await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                                await handler(payload, new MessageDeliveryContext
+                                {
+                                    ChannelUtf8 = channelUtf8,
+                                    Headers = headers,
+                                    NativeMessage = result,
+                                }, cancellationToken).ConfigureAwait(false);
                             }
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

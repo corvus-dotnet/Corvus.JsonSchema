@@ -39,7 +39,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private readonly ClientWebSocket webSocket;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
-    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, byte[], CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>> replyHandlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
@@ -120,9 +120,21 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        MessageContext emptyContext = default;
+        return this.SubscribeAsync<TPayload>(channelUtf8, (payload, context, ct) => handler(payload, context.Headers, ct), in emptyContext, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
-        this.handlers[channel] = (payload, headers, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
+        this.handlers[channel] = (payload, headers, envelope, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, envelope, ct);
 
         this.options.Heartbeat?.Start(channel, "websocket");
 
@@ -325,10 +337,10 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             }
 
             if (payload.ValueKind != JsonValueKind.Undefined &&
-                this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? handler))
+                this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, byte[], CancellationToken, ValueTask>? handler))
             {
                 this.options.Heartbeat?.Tick(channel, "websocket");
-                await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                await handler(payload, headers, envelopeBytes, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -369,9 +381,10 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private async ValueTask DispatchToHandlerAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         JsonElement payload,
         JsonElement headers,
+        byte[] envelopeBytes,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -380,11 +393,21 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             TPayload typedPayload = JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload);
             if (this.middleware is not null)
             {
-                await this.middleware((ct) => handler(typedPayload, headers, ct), cancellationToken).ConfigureAwait(false);
+                await this.middleware((ct) => handler(typedPayload, new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                    NativeMessage = envelopeBytes,
+                }, ct), cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await handler(typedPayload, headers, cancellationToken).ConfigureAwait(false);
+                await handler(typedPayload, new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                    NativeMessage = envelopeBytes,
+                }, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

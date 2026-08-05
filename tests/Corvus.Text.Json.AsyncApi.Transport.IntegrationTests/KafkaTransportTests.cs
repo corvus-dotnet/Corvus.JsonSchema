@@ -4,6 +4,7 @@
 
 using System.Text;
 using Confluent.Kafka;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Kafka;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 
@@ -1087,6 +1088,26 @@ public class KafkaTransportTests
                 default,
                 default,
                 new Exception("test")));
+    }
+
+    [TestMethod]
+    public async Task DeliveryContextExposesNativeMessage()
+    {
+        string topic = CreateTopicName("kafka-delivery-context");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
+        TaskCompletionSource<MessageDeliveryContext> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        MessageContext staticContext = default;
+        await s_transport.SubscribeAsync<JsonElement>(channel, new MessageDeliveryHandler<JsonElement>((_, context, _) =>
+        {
+            received.TrySetResult(context);
+            return ValueTask.CompletedTask;
+        }), in staticContext);
+        await Task.Delay(500);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id":1}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        MessageDeliveryContext context = await received.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsNotNull(context.NativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
     }
 
     private static string CreateTopicName(string prefix)

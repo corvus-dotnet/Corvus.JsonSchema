@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Mqtt;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using MQTTnet;
@@ -1083,6 +1084,25 @@ public class MqttTransportTests
         await transport.UnsubscribeAsync(channel);
         await transport.DisposeAsync();
         await rawClient.DisconnectAsync();
+    }
+
+    [TestMethod]
+    public async Task DeliveryContextExposesNativeMessage()
+    {
+        ReadOnlyMemory<byte> channel = "mqtt/test/delivery-context"u8.ToArray();
+        TaskCompletionSource<MessageDeliveryContext> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        MessageContext staticContext = default;
+        await s_transport.SubscribeAsync<JsonElement>(channel, new MessageDeliveryHandler<JsonElement>((_, context, _) =>
+        {
+            received.TrySetResult(context);
+            return ValueTask.CompletedTask;
+        }), in staticContext);
+        await Task.Delay(200);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id":1}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        MessageDeliveryContext context = await received.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsNotNull(context.NativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy

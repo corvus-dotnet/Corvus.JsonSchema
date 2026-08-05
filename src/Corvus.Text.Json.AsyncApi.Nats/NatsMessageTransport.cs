@@ -281,7 +281,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        return this.SubscribeAsync(
+        return this.SubscribeAsync<TPayload>(
             channelUtf8,
             (payload, context, ct) => handler(payload, context.Headers, ct),
             default,
@@ -325,7 +325,11 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return this.SubscribeReplyToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+        return this.SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
+            channel,
+            channelUtf8,
+            (request, context, ct) => handler(request, context.Headers, ct),
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -340,10 +344,10 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return this.SubscribeReplyToCoreNatsAsync(
+        return this.SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
             channel,
             channelUtf8,
-            (request, context, ct) => handler(request, context.Headers, ct),
+            handler,
             cancellationToken);
     }
 
@@ -681,25 +685,25 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                 {
                                     JsonElement headers = headersDoc?.RootElement ?? default;
 
-                                        if (this.middleware is not null)
+                                    if (this.middleware is not null)
+                                    {
+                                        await this.middleware(
+                                        (ct) => handler(payload, new MessageDeliveryContext
                                         {
-                                            await this.middleware(
-                                            (ct) => handler(payload, new MessageDeliveryContext
-                                            {
-                                                ChannelUtf8 = channelUtf8,
-                                                Headers = headers,
-                                                NativeMessage = msg,
-                                            }, ct),
-                                            cts.Token).ConfigureAwait(false);
-                                        }
-                                        else
+                                            ChannelUtf8 = channelUtf8,
+                                            Headers = headers,
+                                            NativeMessage = msg,
+                                        }, ct),
+                                        cts.Token).ConfigureAwait(false);
+                                    }
+                                    else
+                                    {
+                                        await handler(payload, new MessageDeliveryContext
                                         {
-                                            await handler(payload, new MessageDeliveryContext
-                                            {
-                                                ChannelUtf8 = channelUtf8,
-                                                Headers = headers,
-                                                NativeMessage = msg,
-                                            }, cts.Token).ConfigureAwait(false);
+                                            ChannelUtf8 = channelUtf8,
+                                            Headers = headers,
+                                            NativeMessage = msg,
+                                        }, cts.Token).ConfigureAwait(false);
                                     }
 
                                     await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);

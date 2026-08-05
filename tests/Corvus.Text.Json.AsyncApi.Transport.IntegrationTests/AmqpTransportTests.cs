@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Amqp;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using RabbitMQ.Client;
@@ -1229,6 +1230,25 @@ public class AmqpTransportTests
 
         await transport.UnsubscribeAsync(channel);
         await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeliveryContextExposesNativeMessage()
+    {
+        ReadOnlyMemory<byte> channel = "amqp.test.delivery-context"u8.ToArray();
+        TaskCompletionSource<MessageDeliveryContext> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        MessageContext staticContext = default;
+        await s_transport.SubscribeAsync<JsonElement>(channel, new MessageDeliveryHandler<JsonElement>((_, context, _) =>
+        {
+            received.TrySetResult(context);
+            return ValueTask.CompletedTask;
+        }), in staticContext);
+        await Task.Delay(300);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id":1}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        MessageDeliveryContext context = await received.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsNotNull(context.NativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy

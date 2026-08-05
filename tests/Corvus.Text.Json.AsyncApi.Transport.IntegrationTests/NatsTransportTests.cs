@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Nats;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using NATS.Client.Core;
@@ -70,6 +71,30 @@ public class NatsTransportTests
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
         await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task DeliveryContextExposesNativeMessageAndSubscriptionSubject()
+    {
+        ReadOnlyMemory<byte> subscription = "test.delivery.*"u8.ToArray();
+        ReadOnlyMemory<byte> publishedSubject = "test.delivery.orders"u8.ToArray();
+        TaskCompletionSource<MessageDeliveryContext> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        MessageContext staticContext = default;
+
+        await s_transport.SubscribeAsync<JsonElement>(subscription, new MessageDeliveryHandler<JsonElement>((_, context, _) =>
+        {
+            received.TrySetResult(context);
+            return ValueTask.CompletedTask;
+        }), in staticContext);
+
+        await Task.Delay(100);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id":1}"""u8.ToArray());
+        await s_transport.PublishAsync(publishedSubject, doc.RootElement);
+
+        MessageDeliveryContext context = await received.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsNotNull(context.NativeMessage);
+        CollectionAssert.AreEqual(subscription.ToArray(), context.ChannelUtf8.ToArray());
+        await s_transport.UnsubscribeAsync(subscription);
     }
 
     [TestMethod]

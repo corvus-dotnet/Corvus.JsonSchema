@@ -46,7 +46,7 @@ public sealed class MqttMessageTransport : IMessageTransport
     private readonly IMqttClient client;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
-    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessageReceivedEventArgs, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<MqttApplicationMessage>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private bool disposed;
 
@@ -152,7 +152,20 @@ public sealed class MqttMessageTransport : IMessageTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync<TPayload>(channel, channelUtf8, (payload, context, ct) => handler(payload, context.Headers, ct), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync<TPayload>(channel, channelUtf8, handler, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -377,12 +390,12 @@ public sealed class MqttMessageTransport : IMessageTransport
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageDeliveryHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.handlers[channel] = (args, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, args, ct);
 
         this.options.Heartbeat?.Start(channel, "mqtt");
 
@@ -402,7 +415,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         where TReply : struct, IJsonElement<TReply>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.handlers[channel] = (args, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, args, ct);
 
         this.options.Heartbeat?.Start(channel, "mqtt");
 
@@ -532,9 +545,9 @@ public sealed class MqttMessageTransport : IMessageTransport
             return Task.CompletedTask;
         }
 
-        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? handler))
+        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessageReceivedEventArgs, CancellationToken, ValueTask>? handler))
         {
-            return handler(args.ApplicationMessage, CancellationToken.None).AsTask();
+            return handler(args, CancellationToken.None).AsTask();
         }
 
         return Task.CompletedTask;
@@ -544,12 +557,13 @@ public sealed class MqttMessageTransport : IMessageTransport
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
-        MqttApplicationMessage message,
+        MessageDeliveryHandler<TPayload> handler,
+        MqttApplicationMessageReceivedEventArgs args,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
         this.options.Heartbeat?.Tick(channel, "mqtt");
+        MqttApplicationMessage message = args.ApplicationMessage;
 
         ParsedJsonDocument<TPayload> payloadDoc;
         try
@@ -636,11 +650,21 @@ public sealed class MqttMessageTransport : IMessageTransport
                 {
                     if (this.middleware is not null)
                     {
-                        await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                        await this.middleware((ct) => handler(payload, new MessageDeliveryContext
+                        {
+                            ChannelUtf8 = channelUtf8,
+                            Headers = headers,
+                            NativeMessage = args,
+                        }, ct), cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                        await handler(payload, new MessageDeliveryContext
+                        {
+                            ChannelUtf8 = channelUtf8,
+                            Headers = headers,
+                            NativeMessage = args,
+                        }, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -698,12 +722,13 @@ public sealed class MqttMessageTransport : IMessageTransport
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
         Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
-        MqttApplicationMessage message,
+        MqttApplicationMessageReceivedEventArgs args,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
         this.options.Heartbeat?.Tick(channel, "mqtt");
+        MqttApplicationMessage message = args.ApplicationMessage;
 
         ParsedJsonDocument<TRequest> requestDoc;
         try

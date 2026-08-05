@@ -131,6 +131,24 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
     /// <inheritdoc/>
     public ValueTask SubscribeAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
+        MessageDeliveryHandler<TPayload> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        MessageContext contextCopy = context;
+
+        return this.inner.SubscribeAsync(
+            channelUtf8,
+            CreateInstrumentedDeliveryHandler(handler, destination),
+            in contextCopy,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         in MessageContext context,
         CancellationToken cancellationToken)
@@ -434,6 +452,45 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
                         { "messaging.operation.name", "process" },
                         { "messaging.destination.name", destination },
                     });
+            }
+            catch (Exception ex)
+            {
+                RecordError(activity, ex);
+                throw;
+            }
+            finally
+            {
+                RecordDuration(AsyncApiTelemetry.ProcessDuration, startTimestamp, "process", destination);
+            }
+        };
+    }
+
+    private MessageDeliveryHandler<TPayload> CreateInstrumentedDeliveryHandler<TPayload>(
+        MessageDeliveryHandler<TPayload> handler,
+        string destination)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        return async (payload, context, ct) =>
+        {
+            JsonElement headers = context.Headers;
+            ActivityContext parentContext = default;
+            bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
+
+            using Activity? activity = hasParent
+                ? AsyncApiTelemetry.ActivitySource.StartActivity($"process {destination}", ActivityKind.Consumer, parentContext)
+                : AsyncApiTelemetry.ActivitySource.StartActivity($"process {destination}", ActivityKind.Consumer);
+
+            SetCommonTags(activity, "process", destination);
+            long startTimestamp = Stopwatch.GetTimestamp();
+            try
+            {
+                await handler(payload, context, ct).ConfigureAwait(false);
+                AsyncApiTelemetry.MessagesConsumed.Add(1, new TagList
+                {
+                    { "messaging.system", this.messagingSystem },
+                    { "messaging.operation.name", "process" },
+                    { "messaging.destination.name", destination },
+                });
             }
             catch (Exception ex)
             {
