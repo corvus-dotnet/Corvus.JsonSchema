@@ -185,7 +185,9 @@
     <Compile Include="Corvus\Text\Json\Document\Internal\ArrayEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.PropertyMap.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\IJsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocumentCloning.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\IWorkspaceManagedDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\Internal\IWorkspaceCreatedDocument.cs" />
     <Compile Include="Corvus\Text\Json\Document\ArrayEnumerator{T}.cs" />
     <Compile Include="Corvus\Text\Json\Document\Utf8IriReferenceValue.cs" />
     <Compile Include="Corvus\Text\Json\Document\Utf8UriReferenceValue.cs" />
@@ -198,6 +200,7 @@
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.String.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\FixedStringJsonDocument.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\FixedJsonValueDocument.cs" />
+    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\ValuelessJsonDocument.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\UniqueItemsHashSet.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\PropertySchemaMatchers.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\MatchIndex.cs" />
@@ -291,6 +294,7 @@
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.cs" />
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.MultiSegment.cs" />
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.TryGet.cs" />
+    <Compile Include="Corvus\Text\Json\RefTuple.cs" />
     <Compile Include="Corvus\Text\Json\StackHelper.cs" />
     <Compile Include="Corvus\Text\Json\Internal\CodeGenThrowHelper.cs" />
     <Compile Include="Corvus\Text\Json\UriTemplate\Utf8UriTemplate.cs" />
