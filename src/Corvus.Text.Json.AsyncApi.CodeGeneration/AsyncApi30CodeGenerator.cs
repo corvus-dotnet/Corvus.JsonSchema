@@ -2405,25 +2405,35 @@ public sealed class AsyncApi30CodeGenerator
             if (IsResponderOperation(op))
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                string replyPayloadType = ReplyPayloadTypeNameOf(op);
                 string contextArg = (useDeliveryContext || hasBindingContext) ? ", context" : string.Empty;
+                string legacyHandler = hasBindingContext
+                    ? $"new Func<{payloadType}, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask<{replyPayloadType}>>(this.HandleMessageAsync)"
+                    : "this.HandleMessageAsync";
                 w.WriteLine(useDeliveryContext
-                    ? $"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync, context, cancellationToken){suffix};"
-                    : $"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                    ? $"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {replyPayloadType}>({subscribeAddr}, this.HandleMessageAsync, context, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {replyPayloadType}>({subscribeAddr}, {legacyHandler}{contextArg}, cancellationToken){suffix};");
             }
             else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
                 string contextArg = (useDeliveryContext || hasBindingContext) ? ", context" : string.Empty;
+                string legacyHandler = hasBindingContext
+                    ? $"new Func<{payloadType}, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask>(this.HandleMessageAsync)"
+                    : "this.HandleMessageAsync";
                 w.WriteLine(useDeliveryContext
                     ? $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, context, cancellationToken){suffix};"
-                    : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                    : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, {legacyHandler}{contextArg}, cancellationToken){suffix};");
             }
             else
             {
                 string contextArg = (useDeliveryContext || hasBindingContext) ? ", context" : string.Empty;
+                string legacyHandler = hasBindingContext
+                    ? "new Func<Corvus.Text.Json.JsonElement, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask>(this.HandleMessageAsync)"
+                    : "this.HandleMessageAsync";
                 w.WriteLine(useDeliveryContext
                     ? $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, context, cancellationToken){suffix};"
-                    : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                    : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, {legacyHandler}{contextArg}, cancellationToken){suffix};");
             }
         }
 
@@ -2537,9 +2547,16 @@ public sealed class AsyncApi30CodeGenerator
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
             string replyType = ReplyPayloadTypeNameOf(op);
 
-            string deliveryParameter = this.generateMessageDeliveryContext ? ", MessageDeliveryContext deliveryContext" : string.Empty;
-            w.WriteLine($"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers{deliveryParameter}, CancellationToken cancellationToken)");
+            string handlerParameters = this.generateMessageDeliveryContext
+                ? $"{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken"
+                : $"{payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken";
+            w.WriteLine($"private ValueTask<{replyType}> HandleMessageAsync({handlerParameters})");
             w.OpenBrace();
+            if (this.generateMessageDeliveryContext)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
+
             w.WriteLine("if (this.validationMode != ValidationMode.None)");
             w.OpenBrace();
             w.WriteLine("ValidatePayload(payload, this.validationMode);");
@@ -2571,9 +2588,15 @@ public sealed class AsyncApi30CodeGenerator
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
 
-            string deliveryParameter = this.generateMessageDeliveryContext ? ", MessageDeliveryContext deliveryContext" : string.Empty;
-            w.WriteLine($"private async ValueTask HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers{deliveryParameter}, CancellationToken cancellationToken)");
+            string handlerParameters = this.generateMessageDeliveryContext
+                ? $"{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken"
+                : $"{payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken";
+            w.WriteLine($"private async ValueTask HandleMessageAsync({handlerParameters})");
             w.OpenBrace();
+            if (this.generateMessageDeliveryContext)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
 
             string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
@@ -2644,9 +2667,16 @@ public sealed class AsyncApi30CodeGenerator
             string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
 
-            string deliveryParameter = this.generateMessageDeliveryContext ? ", MessageDeliveryContext deliveryContext" : string.Empty;
-            w.WriteLine($"private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers{deliveryParameter}, CancellationToken cancellationToken)");
+            string handlerParameters = this.generateMessageDeliveryContext
+                ? "Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken"
+                : "Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken";
+            w.WriteLine($"private async ValueTask HandleMessageAsync({handlerParameters})");
             w.OpenBrace();
+            if (this.generateMessageDeliveryContext)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
+
             w.WriteLine("try");
             w.OpenBrace();
             w.WriteLine(this.generateMessageDeliveryContext

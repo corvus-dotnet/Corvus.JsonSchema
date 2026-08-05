@@ -2248,7 +2248,7 @@ public class AsyncApi30CodeGeneratorTests
 
         StringAssert.Contains(consumer.Content, "MessageContext context = new()");
         StringAssert.Contains(consumer.Content, "OperationBindingsJson = OperationBindingsBytes");
-        StringAssert.Contains(consumer.Content, "this.HandleMessageAsync, context, cancellationToken");
+        StringAssert.Contains(consumer.Content, "new Func<Corvus.Text.Json.JsonElement, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask>(this.HandleMessageAsync), context, cancellationToken");
     }
 
     [TestMethod]

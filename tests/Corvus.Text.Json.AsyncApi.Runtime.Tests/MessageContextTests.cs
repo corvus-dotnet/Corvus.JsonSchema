@@ -85,11 +85,16 @@ public class MessageContextTests
         {
             ContentType = "application/json",
         };
+        Func<JsonElement, JsonElement, CancellationToken, ValueTask> handler = (_, _, _) =>
+        {
+            handlerCalled = true;
+            return ValueTask.CompletedTask;
+        };
 
         // Use the default interface method overload that accepts MessageContext
         await ((IMessageTransport)transport).SubscribeAsync<JsonElement>(
             "ch"u8.ToArray(),
-            (_, _, _) => { handlerCalled = true; return ValueTask.CompletedTask; },
+            handler,
             in context);
 
         ReadOnlyMemory<byte> msg = Encoding.UTF8.GetBytes("""{"v":42}""");
@@ -105,6 +110,7 @@ public class MessageContextTests
 
         string? channel = null;
         MessageDeliveryContext receivedContext = default;
+        MessageContext context = default;
 
         await ((IMessageTransport)transport).SubscribeAsync<JsonElement>(
             "orders.created"u8.ToArray(),
@@ -114,7 +120,7 @@ public class MessageContextTests
                 receivedContext = context;
                 return ValueTask.CompletedTask;
             },
-            in MessageContext context);
+            in context);
 
         await transport.DeliverAsync<JsonElement>("orders.created", Encoding.UTF8.GetBytes("""{"v":42}"""));
 
