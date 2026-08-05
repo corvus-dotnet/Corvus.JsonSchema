@@ -1191,6 +1191,20 @@ await producer.PublishTurnOnOffAsync(
 // Wire: publishes to &quot;smartylighting.streetlights.1.0.action.lamp-42.turn.on&quot;
 </code></pre>
 <p>The generated code constructs the channel address from the template using zero-allocation UTF-8 byte manipulation with pooled buffers — no string concatenation or allocation on the hot path.</p>
+<h3 id="consumers">Consumers</h3>
+<p>A consumer for a parameterised channel takes the same parameters on <code>StartAsync</code>, and subscribes to the address they compose:</p>
+<pre><code class="language-csharp">await using ReceiveLightMeasurementConsumer consumer = new(transport, handler);
+
+// Subscribes to &quot;smartylighting.streetlights.1.0.action.lamp-42.lighting.measured&quot;
+await consumer.StartAsync(streetlightId: &quot;lamp-42&quot;);
+</code></pre>
+<p>A <code>ReadOnlySpan&lt;char&gt;</code> overload sits beneath the <code>string</code> one, so a caller that already holds a span does not create a string just to have it measured and copied:</p>
+<pre><code class="language-csharp">await consumer.StartAsync(streetlightId: idSpan);
+</code></pre>
+<p>The address is composed the same way the producer composes its own: the template is split when the code is generated, so its literal parts are <code>u8</code> literals and only the parameter values are transcoded, filled once into the array the subscription retains. The dead-letter address is built from those same bytes rather than by concatenating a second string.</p>
+<blockquote>
+<p><strong>Before 5.3.0</strong> a consumer for a parameterised channel had no parameters on <code>StartAsync</code> and subscribed to the template <em>literally</em>, placeholder and all — so it listened on a channel no publisher ever wrote to. Supplying the parameters is therefore a breaking change with a fix inside it: the call that compiled before was subscribing to nothing real.</p>
+</blockquote>
 <h2 id="message-headers">Message Headers</h2>
 <p>When an AsyncAPI message defines a <code>headers</code> schema (directly or via message traits), the generated code produces typed header structures. Headers provide metadata about the message — correlation IDs, trace context, content versioning — separate from the payload.</p>
 <h3 id="defining-headers-in-the-spec">Defining Headers in the Spec</h3>

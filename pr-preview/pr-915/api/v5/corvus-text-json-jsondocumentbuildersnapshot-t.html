@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/502cf95c174d368a6410d2feed5ba0be010c6311/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilderSnapshot.cs#L18">JsonDocumentBuilderSnapshot.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/e4f33bc8332b8665fde9bb82c5b61c0fdb8c3d64/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilderSnapshot.cs#L18">JsonDocumentBuilderSnapshot.cs</a></p>
 <p>A snapshot of a <a href="/Corvus.JsonSchema/pr-preview/pr-915/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a>'s state that can be used to cheaply restore a builder to its initial state via <a href="/Corvus.JsonSchema/pr-preview/pr-915/api/v5/corvus-text-json-jsondocumentbuilder-t.restore.html"><code>Restore</code></a>, avoiding the cost of re-traversing the source document.</p>
 <pre><code class="language-csharp">public sealed class JsonDocumentBuilderSnapshot&lt;T&gt; : IDisposable
     where T : struct, IMutableJsonElement&lt;T&gt;
