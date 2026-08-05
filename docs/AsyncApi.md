@@ -890,6 +890,27 @@ await producer.PublishTurnOnOffAsync(
 
 The generated code constructs the channel address from the template using zero-allocation UTF-8 byte manipulation with pooled buffers — no string concatenation or allocation on the hot path.
 
+### Consumers
+
+A consumer for a parameterised channel takes the same parameters on `StartAsync`, and subscribes to the address they compose:
+
+```csharp
+await using ReceiveLightMeasurementConsumer consumer = new(transport, handler);
+
+// Subscribes to "smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"
+await consumer.StartAsync(streetlightId: "lamp-42");
+```
+
+A `ReadOnlySpan<char>` overload sits beneath the `string` one, so a caller that already holds a span does not create a string just to have it measured and copied:
+
+```csharp
+await consumer.StartAsync(streetlightId: idSpan);
+```
+
+The address is composed the same way the producer composes its own: the template is split when the code is generated, so its literal parts are `u8` literals and only the parameter values are transcoded, filled once into the array the subscription retains. The dead-letter address is built from those same bytes rather than by concatenating a second string.
+
+> **Before 5.3.0** a consumer for a parameterised channel had no parameters on `StartAsync` and subscribed to the template *literally*, placeholder and all — so it listened on a channel no publisher ever wrote to. Supplying the parameters is therefore a breaking change with a fix inside it: the call that compiled before was subscribing to nothing real.
+
 ## Message Headers
 
 When an AsyncAPI message defines a `headers` schema (directly or via message traits), the generated code produces typed header structures. Headers provide metadata about the message — correlation IDs, trace context, content versioning — separate from the payload.
