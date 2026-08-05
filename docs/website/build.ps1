@@ -775,6 +775,10 @@ foreach ($descriptorFile in $descriptorFiles) {
     # Point them at the GitHub source
     $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBlobRef/docs/copilot/`$1)"
 
+    # Rewrite links to the deep Arazzo design docs (docs/arazzo/**) — the ADRs, guides,
+    # and reference — which are not published as website pages. Point them at the GitHub source.
+    $docBody = $docBody -replace '\(arazzo/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBlobRef/docs/arazzo/`$1)"
+
     # Rewrite links to ExampleRecipes from doc pages:
     #   ../ExampleRecipes/029-OpenApiClient/  -> /examples/open-api-client.html
     #   ../ExampleRecipes/029-OpenApiClient   -> /examples/open-api-client.html
