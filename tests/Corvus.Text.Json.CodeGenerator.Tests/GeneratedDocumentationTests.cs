@@ -74,6 +74,24 @@ public class GeneratedDocumentationTests
     }
 
     [TestMethod]
+    [DataRow("complex-validation.json")]
+    [DataRow("composed-type.json")]
+    [DataRow("array-type.json")]
+    [DataRow("pure-oneof.json")]
+    [DataRow("const-properties.json")]
+    public async Task JsonSchemaV4EngineOutput_HasNoDocumentationMismatchDiagnostics(string schemaFile)
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", schemaFile);
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --engine V4 --rootNamespace DocCheck.V4Models --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Generation failed. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        AssertNoDocumentationMismatchDiagnostics(_outputDir);
+    }
+
+    [TestMethod]
     public async Task OpenApiClientOutput_HasNoDocumentationMismatchDiagnostics()
     {
         string spec = CodeGeneratorRunner.GetFixturePath("OpenApi", "doc-comments-3.0.json");
