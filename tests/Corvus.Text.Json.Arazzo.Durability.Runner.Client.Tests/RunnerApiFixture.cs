@@ -90,7 +90,9 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     /// <summary>Gets the runner's transport, for components that take one directly.</summary>
     public HttpClientTransport Transport { get; }
 
-    public static async Task<RunnerApiFixture> StartAsync()
+    public static async Task<RunnerApiFixture> StartAsync(
+        Action<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas.RunnerQuotaOptions>? quotas = null,
+        RunnerQuotaHoldOptions? hold = null)
     {
         var clock = new TestClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
@@ -118,12 +120,15 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
             await next(context);
         });
 
-        app.MapArazzoRunnerApi(store, catalog, availability, bindings, requireAuthorization: false, timeProvider: clock);
+        var quotaOptions = new Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas.RunnerQuotaOptions();
+        quotas?.Invoke(quotaOptions);
+
+        app.MapArazzoRunnerApi(store, catalog, availability, bindings, requireAuthorization: false, timeProvider: clock, quotaOptions: quotaOptions);
         await app.StartAsync();
 
-        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner);
-        (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer);
-        (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger);
+        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner, hold);
+        (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer, hold);
+        (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger, hold);
         return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
     }
 
@@ -194,12 +199,12 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 
     // One transport per principal, because the principal is what the server scopes every operation by: this is how
     // a deployment's two runners differ, so the test's two clients differ the same way.
-    private static (HttpClient Http, HttpClientTransport Transport, ArazzoRunnerClient Client) Connect(WebApplication app, string principal)
+    private static (HttpClient Http, HttpClientTransport Transport, ArazzoRunnerClient Client) Connect(WebApplication app, string principal, RunnerQuotaHoldOptions? hold)
     {
         HttpClient http = app.GetTestClient();
         http.DefaultRequestHeaders.Add("X-Test-Principal", principal);
         var transport = new HttpClientTransport(http);
-        return (http, transport, new ArazzoRunnerClient(transport));
+        return (http, transport, new ArazzoRunnerClient(transport, hold));
     }
 
     private async ValueTask SaveAsync(string runId, byte[] checkpoint)

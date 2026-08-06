@@ -49,6 +49,35 @@ public sealed class RunnerLeaseLostException : RunnerApiException
 }
 
 /// <summary>
+/// A quota refused the request, and this advance has spent the allowance it is permitted to wait one out.
+/// </summary>
+/// <remarks>
+/// The advance fails here exactly as it would on any other non-2xx, which is the bound on ADR 0065 decision 3's
+/// exemption. Holding indefinitely would be a silent stall: a fabricated refusal looks the same as a real one, the
+/// background renewer keeps the lease alive so the run never fails over, and a quota hold raises no audit event. This
+/// exception is the loud ending that makes the exemption safe to have.
+/// </remarks>
+public sealed class RunnerQuotaExhaustedException : RunnerApiException
+{
+    /// <summary>Initializes a new instance of the <see cref="RunnerQuotaExhaustedException"/> class.</summary>
+    /// <param name="what">What the runner was trying to do.</param>
+    /// <param name="quota">The quota that refused, as the refusal named it.</param>
+    /// <param name="counter">The counter it was measured against, as the refusal named it.</param>
+    public RunnerQuotaExhaustedException(string what, string quota, string counter)
+        : base(HttpStatusCode.TooManyRequests, $"A quota refused the attempt to {what}, and this advance has spent its allowance for waiting one out. Quota '{quota}' on counter '{counter}'.")
+    {
+        this.Quota = quota;
+        this.Counter = counter;
+    }
+
+    /// <summary>Gets the quota that refused.</summary>
+    public string Quota { get; }
+
+    /// <summary>Gets the counter it was measured against.</summary>
+    public string Counter { get; }
+}
+
+/// <summary>
 /// The proposed checkpoint sequence was not the persisted sequence plus one, so nothing was written.
 /// </summary>
 /// <remarks>

@@ -33,12 +33,17 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly IApiCheckpointsClient checkpoints;
     private readonly IApiCatalogClient catalog;
     private readonly ConcurrentDictionary<string, string> heldLeases = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, RunnerQuotaHold> quotaHolds = new(StringComparer.Ordinal);
+    private readonly RunnerQuotaHoldOptions holdOptions;
+    private readonly TimeProvider timeProvider;
     private readonly bool ownsClients;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
-    public ArazzoRunnerClient(IApiTransport transport)
-        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true)
+    /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
+    /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
+    public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null)
+        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider)
     {
     }
 
@@ -48,7 +53,9 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="checkpoints">The checkpoints client.</param>
     /// <param name="catalog">The catalog client, which serves what this runner may execute and the artifacts for it.</param>
     /// <param name="ownsClients">Whether disposing this disposes the clients.</param>
-    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false)
+    /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
+    /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
+    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(leases);
@@ -60,6 +67,8 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         this.checkpoints = checkpoints;
         this.catalog = catalog;
         this.ownsClients = ownsClients;
+        this.holdOptions = holdOptions ?? new RunnerQuotaHoldOptions();
+        this.timeProvider = timeProvider ?? TimeProvider.System;
         this.Checkpoints = new RunnerApiCheckpointStore(this);
     }
 
@@ -326,14 +335,36 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     public async ValueTask<DateTimeOffset> RenewAsync(WorkflowRunId runId, TimeSpan? extension = null, CancellationToken cancellationToken = default)
     {
         string token = this.RequireLease(runId);
-        LeaseRenewal.Source body = extension is { } requested
-            ? LeaseRenewal.Build(leaseSeconds: (long)requested.TotalSeconds)
-            : default;
 
-        await using RenewLeaseResponse response = await this.leases.RenewLeaseAsync(runId.Value, token, body, cancellationToken).ConfigureAwait(false);
+        RunnerQuotaHold hold = this.HoldFor(runId);
+        RenewLeaseResponse response = await this.SendRenewalAsync(runId, token, extension, cancellationToken).ConfigureAwait(false);
+
+        // The renewal shares the advance's hold allowance rather than having its own. A renewal refused while a save is
+        // also being refused is one overload, not two, and giving each operation a private budget is how a bounded hold
+        // becomes an unbounded one by arithmetic.
+        while (response.StatusCode == 429)
+        {
+            long? retryAfter = response.RetryAfterHeader.IsNotUndefined() ? (long)response.RetryAfterHeader : null;
+            if (!await hold.TryWaitAsync(retryAfter, cancellationToken).ConfigureAwait(false))
+            {
+                QuotaProblem refusal = response.TooManyRequestsBody;
+                var exhausted = new RunnerQuotaExhaustedException(
+                    $"renew the lease for run '{runId.Value}'",
+                    refusal.IsNotUndefined() && refusal.Quota.IsNotUndefined() ? (string)refusal.Quota : "unknown",
+                    refusal.IsNotUndefined() && refusal.Counter.IsNotUndefined() ? (string)refusal.Counter : "unknown");
+                await response.DisposeAsync().ConfigureAwait(false);
+                throw exhausted;
+            }
+
+            await response.DisposeAsync().ConfigureAwait(false);
+            response = await this.SendRenewalAsync(runId, token, extension, cancellationToken).ConfigureAwait(false);
+        }
+
+        await using RenewLeaseResponse held = response;
         if (response.StatusCode == 409)
         {
             this.heldLeases.TryRemove(runId.Value, out _);
+            this.quotaHolds.TryRemove(runId.Value, out _);
             throw new RunnerLeaseLostException(runId);
         }
 
@@ -356,6 +387,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <c>finally</c> without first working out whether it still holds the lease.</remarks>
     public async ValueTask ReleaseAsync(WorkflowRunId runId, CancellationToken cancellationToken = default)
     {
+        this.quotaHolds.TryRemove(runId.Value, out _);
         if (!this.heldLeases.TryRemove(runId.Value, out string? token))
         {
             return;
@@ -381,6 +413,18 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         await this.checkpoints.DisposeAsync().ConfigureAwait(false);
     }
 
+    // Not async, deliberately, and rebuilt per attempt: LeaseRenewal.Source holds its context by reference, so it
+    // cannot live across an await. Building it and starting the send happen here, synchronously; the retry loop awaits
+    // only the response. The claim path is shaped the same way and for the same reason.
+    private ValueTask<RenewLeaseResponse> SendRenewalAsync(WorkflowRunId runId, string token, TimeSpan? extension, CancellationToken cancellationToken)
+    {
+        LeaseRenewal.Source body = extension is { } requested
+            ? LeaseRenewal.Build(leaseSeconds: (long)requested.TotalSeconds)
+            : default;
+
+        return this.leases.RenewLeaseAsync(runId.Value, token, body, cancellationToken);
+    }
+
     internal static RunnerApiException Refused(string what, int status)
         => new((System.Net.HttpStatusCode)status, $"The runner API refused to {what} ({status}).");
 
@@ -391,5 +435,14 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
             ? token
             : throw new RunnerLeaseLostException(runId);
 
-    internal void Forget(WorkflowRunId runId) => this.heldLeases.TryRemove(runId.Value, out _);
+    internal void Forget(WorkflowRunId runId)
+    {
+        this.heldLeases.TryRemove(runId.Value, out _);
+        this.quotaHolds.TryRemove(runId.Value, out _);
+    }
+
+    // One advance's allowance for waiting out quota refusals. Keyed by run and dropped with the lease, because the lease
+    // is held for exactly the advance: taken at the claim, given up when the advance ends.
+    internal RunnerQuotaHold HoldFor(WorkflowRunId runId)
+        => this.quotaHolds.GetOrAdd(runId.Value, static (_, s) => new RunnerQuotaHold(s.Options, s.Clock), (Options: this.holdOptions, Clock: this.timeProvider));
 }

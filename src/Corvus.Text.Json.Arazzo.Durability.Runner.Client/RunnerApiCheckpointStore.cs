@@ -21,35 +21,53 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
     public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
         string token = this.owner.RequireLease(id);
-        await using LoadCheckpointResponse response = await this.owner.CheckpointsClient
-            .LoadCheckpointAsync(id.Value, token, cancellationToken)
-            .ConfigureAwait(false);
+        RunnerQuotaHold hold = this.owner.HoldFor(id);
 
-        if (response.StatusCode == 409)
+        while (true)
         {
-            this.owner.Forget(id);
-            throw new RunnerLeaseLostException(id);
+            await using LoadCheckpointResponse response = await this.owner.CheckpointsClient
+                .LoadCheckpointAsync(id.Value, token, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.StatusCode == 429)
+            {
+                // A quota refusal is waited out rather than failed on, boundedly (ADR 0065 decision 3). Nothing was
+                // read, so a resend is the same request rather than a repeat of a partial one.
+                if (await hold.TryWaitAsync(RetryAfter(response.RetryAfterHeader), cancellationToken).ConfigureAwait(false))
+                {
+                    continue;
+                }
+
+                throw Exhausted($"load the checkpoint for run '{id.Value}'", response.TooManyRequestsBody);
+            }
+
+            if (response.StatusCode == 409)
+            {
+                this.owner.Forget(id);
+                throw new RunnerLeaseLostException(id);
+            }
+
+            if (response.StatusCode == 404)
+            {
+                // The lease is current and the row is absent. A fresh run legitimately has none; a runner that believed
+                // it held state for this run treats it as a fault, which is its judgement to make rather than this
+                // store's.
+                return null;
+            }
+
+            if (response.StatusCode != 200 || !response.TryGetOkStream(out Stream? body))
+            {
+                throw ArazzoRunnerClient.Refused($"load the checkpoint for run '{id.Value}'", response.StatusCode);
+            }
+
+            using var buffer = new MemoryStream();
+            await body.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+            // The etag the run threads is not the predicate on this path — the sequence inside the document is (ADR 0065
+            // decision 6) — so it carries the persisted sequence rather than a store etag, and nothing reads it back.
+            long persisted = SequenceHeader(response);
+            return new WorkflowCheckpoint(buffer.ToArray(), new WorkflowEtag(persisted.ToString(CultureInfo.InvariantCulture)));
         }
-
-        if (response.StatusCode == 404)
-        {
-            // The lease is current and the row is absent. A fresh run legitimately has none; a runner that believed it
-            // held state for this run treats it as a fault, which is its judgement to make rather than this store's.
-            return null;
-        }
-
-        if (response.StatusCode != 200 || !response.TryGetOkStream(out Stream? body))
-        {
-            throw ArazzoRunnerClient.Refused($"load the checkpoint for run '{id.Value}'", response.StatusCode);
-        }
-
-        using var buffer = new MemoryStream();
-        await body.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-
-        // The etag the run threads is not the predicate on this path — the sequence inside the document is (ADR 0065
-        // decision 6) — so it carries the persisted sequence rather than a store etag, and nothing reads it back.
-        long persisted = SequenceHeader(response);
-        return new WorkflowCheckpoint(buffer.ToArray(), new WorkflowEtag(persisted.ToString(CultureInfo.InvariantCulture)));
     }
 
     /// <inheritdoc/>
@@ -72,35 +90,66 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, string token, long sequence, CancellationToken cancellationToken)
     {
-        using var body = new ReadOnlyMemoryStream(checkpointUtf8);
-        await using SaveCheckpointResponse response = await this.owner.CheckpointsClient
-            .SaveCheckpointAsync(id.Value, token, sequence, body, cancellationToken)
-            .ConfigureAwait(false);
+        RunnerQuotaHold hold = this.owner.HoldFor(id);
 
-        if (response.StatusCode == 409)
+        while (true)
         {
-            // Both refusals land here and are told apart by the problem type, because both mean the same thing about
-            // the write — nothing was stored — and different things about what the runner should do next.
-            CheckpointWriteProblem problem = response.ConflictBody;
-            if (problem.IsNotUndefined() && problem.Type.IsNotUndefined() && problem.Type.ValueEquals(RunnerProblemTypes.LeaseLost))
+            // A fresh stream per attempt over the same buffer, so the resend is byte-identical (ADR 0065 decision 6)
+            // rather than a rewind of a stream the last attempt may have partly consumed.
+            using var body = new ReadOnlyMemoryStream(checkpointUtf8);
+            await using SaveCheckpointResponse response = await this.owner.CheckpointsClient
+                .SaveCheckpointAsync(id.Value, token, sequence, body, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.StatusCode == 429)
             {
-                this.owner.Forget(id);
-                throw new RunnerLeaseLostException(id);
+                // The refusal is reached before anything is written, so nothing was stored and the resend is not a
+                // duplicate write.
+                if (await hold.TryWaitAsync(RetryAfter(response.RetryAfterHeader), cancellationToken).ConfigureAwait(false))
+                {
+                    continue;
+                }
+
+                throw Exhausted($"save the checkpoint for run '{id.Value}'", response.TooManyRequestsBody);
             }
 
-            long accepted = problem.IsNotUndefined() && problem.AcceptedSequence.IsNotUndefined()
-                ? (long)problem.AcceptedSequence
-                : 0;
-            throw new CheckpointSupersededException(id, sequence, accepted);
-        }
+            if (response.StatusCode == 409)
+            {
+                // Both refusals land here and are told apart by the problem type, because both mean the same thing about
+                // the write — nothing was stored — and different things about what the runner should do next.
+                CheckpointWriteProblem problem = response.ConflictBody;
+                if (problem.IsNotUndefined() && problem.Type.IsNotUndefined() && problem.Type.ValueEquals(RunnerProblemTypes.LeaseLost))
+                {
+                    this.owner.Forget(id);
+                    throw new RunnerLeaseLostException(id);
+                }
 
-        if (response.StatusCode != 204)
-        {
-            throw ArazzoRunnerClient.Refused($"save the checkpoint for run '{id.Value}'", response.StatusCode);
-        }
+                long accepted = problem.IsNotUndefined() && problem.AcceptedSequence.IsNotUndefined()
+                    ? (long)problem.AcceptedSequence
+                    : 0;
+                throw new CheckpointSupersededException(id, sequence, accepted);
+            }
 
-        return new WorkflowEtag(sequence.ToString(CultureInfo.InvariantCulture));
+            if (response.StatusCode != 204)
+            {
+                throw ArazzoRunnerClient.Refused($"save the checkpoint for run '{id.Value}'", response.StatusCode);
+            }
+
+            return new WorkflowEtag(sequence.ToString(CultureInfo.InvariantCulture));
+        }
     }
+
+    // The refusal's Retry-After, or null when it carried none. It is advice from the control plane, and the hold clamps
+    // it: ADR 0065 puts the runner and the control plane in mutual distrust, so an unclamped value would let whoever
+    // answers park a runner for as long as they liked with one header.
+    private static long? RetryAfter(Models.Schema header)
+        => header.IsNotUndefined() ? (long)header : null;
+
+    private static RunnerQuotaExhaustedException Exhausted(string what, QuotaProblem problem)
+        => new(
+            what,
+            problem.IsNotUndefined() && problem.Quota.IsNotUndefined() ? (string)problem.Quota : "unknown",
+            problem.IsNotUndefined() && problem.Counter.IsNotUndefined() ? (string)problem.Counter : "unknown");
 
     // A read-only stream over the caller's buffer, so the body is sent without a copy. The buffer is alive for the
     // duration of the send: the caller may reuse it once SaveAsync returns, and this save is awaited before it does.
