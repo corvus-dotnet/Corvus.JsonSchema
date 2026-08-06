@@ -11,31 +11,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 /// The receive side of the access-decision exchange in the control-plane system runner (design §16.5.1). It subscribes
 /// (through <see cref="ReceiveAccessDecisionConsumer"/>) to the <c>access.decision</c> channel and, for each decision,
 /// delivers the message to the approval run suspended awaiting it — matched by the request-id correlation the run
-/// registered when it sent its approval-required notification — resuming that run, and only that run, over the shared
-/// durable store. This is what advances a governed approval once an administrator's decision is published.
+/// registered when it sent its approval-required notification — resuming that run, and only that run. This is what
+/// advances a governed approval once an administrator's decision is published.
+///
+/// How the delivery reaches durable state is the host's choice, not this handler's: a system runner reaches it through
+/// the runner API and holds no store credential (ADR 0065), while an in-process host reaches the store directly.
 /// </summary>
 public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
 {
     /// <summary>The channel the decision is delivered on — the same channel the suspended run awaits.</summary>
     private const string DecisionChannel = "access.decision";
 
-    private readonly WorkflowWorker worker;
-    private readonly WorkflowResumer resumer;
-    private readonly string? runnerEnvironment;
+    private readonly IWorkflowMessageDelivery delivery;
     private readonly ILogger<AccessDecisionResumeHandler> logger;
 
     /// <summary>Initializes a new instance of the <see cref="AccessDecisionResumeHandler"/> class.</summary>
-    /// <param name="worker">The worker that leases and resumes suspended runs over the shared durable store.</param>
-    /// <param name="resumer">The resumer that re-enters a run's generated executor.</param>
-    /// <param name="runnerEnvironment">The single environment this runner serves (§5.5), so a decision resumes only an
-    /// approval run pinned to it and never one in another environment that happens to await the same channel. A runner
-    /// always supplies its environment; <see langword="null"/> is the env-agnostic form (an in-process host).</param>
+    /// <param name="delivery">Delivers the decision to the runs awaiting it. The environment scoping (or, over the
+    /// runner API, the server-side binding intersection that replaces it) is bound into the delivery rather than
+    /// decided here.</param>
     /// <param name="logger">Logs each decision receipt and how many suspended runs it resumed.</param>
-    public AccessDecisionResumeHandler(WorkflowWorker worker, WorkflowResumer resumer, string? runnerEnvironment, ILogger<AccessDecisionResumeHandler> logger)
+    public AccessDecisionResumeHandler(IWorkflowMessageDelivery delivery, ILogger<AccessDecisionResumeHandler> logger)
     {
-        this.worker = worker ?? throw new ArgumentNullException(nameof(worker));
-        this.resumer = resumer ?? throw new ArgumentNullException(nameof(resumer));
-        this.runnerEnvironment = runnerEnvironment;
+        this.delivery = delivery ?? throw new ArgumentNullException(nameof(delivery));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -53,8 +50,8 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
         SwModels.JsonString requestIdValue = payload.RequestId;
         string? requestId = requestIdValue.IsNotUndefined() ? (string)requestIdValue : null;
 
-        int resumed = await this.worker.DeliverMessageAsync(
-            DecisionChannel, requestId, (JsonElement)payload, this.resumer, this.runnerEnvironment, cancellationToken).ConfigureAwait(false);
+        int resumed = await this.delivery.DeliverAsync(
+            DecisionChannel, requestId, (JsonElement)payload, cancellationToken).ConfigureAwait(false);
 
         // Make the exchange visible: without this the runner resumes the run silently and the operator sees nothing.
         // Resuming zero runs is an ANOMALY, not routine: a decision was published for a request that has no approval run

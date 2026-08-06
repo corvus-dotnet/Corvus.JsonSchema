@@ -19,23 +19,17 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </summary>
 public sealed class KycVerdictResumeHandler : IReceiveKycVerdictHandler
 {
-    private readonly WorkflowWorker worker;
-    private readonly WorkflowResumer resumer;
-    private readonly string? runnerEnvironment;
+    private readonly IWorkflowMessageDelivery delivery;
     private readonly ILogger<KycVerdictResumeHandler> logger;
 
     /// <summary>Initializes a new instance of the <see cref="KycVerdictResumeHandler"/> class.</summary>
-    /// <param name="worker">The worker that leases + resumes suspended runs over the shared store.</param>
-    /// <param name="resumer">The resumer that re-enters a run's generated executor.</param>
-    /// <param name="runnerEnvironment">The single environment this runner serves (§5.5), so a verdict resumes only a run
-    /// pinned to it and never one in another environment that happens to await the same channel. A runner always supplies
-    /// its environment; <see langword="null"/> is the env-agnostic form (an in-process host).</param>
+    /// <param name="delivery">Delivers the verdict to the runs awaiting it. Over the runner API the candidate set is
+    /// intersected server-side with the environments this runner's machine principal is bound to, so the environment
+    /// filter this handler used to apply is enforced rather than cooperative.</param>
     /// <param name="logger">Logs each verdict receipt and how many suspended runs it resumed, so the async exchange is visible in the runner's logs.</param>
-    public KycVerdictResumeHandler(WorkflowWorker worker, WorkflowResumer resumer, string? runnerEnvironment, ILogger<KycVerdictResumeHandler> logger)
+    public KycVerdictResumeHandler(IWorkflowMessageDelivery delivery, ILogger<KycVerdictResumeHandler> logger)
     {
-        this.worker = worker ?? throw new ArgumentNullException(nameof(worker));
-        this.resumer = resumer ?? throw new ArgumentNullException(nameof(resumer));
-        this.runnerEnvironment = runnerEnvironment;
+        this.delivery = delivery ?? throw new ArgumentNullException(nameof(delivery));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -49,7 +43,7 @@ public sealed class KycVerdictResumeHandler : IReceiveKycVerdictHandler
 
         // Deliver on the channel matched by the account-id correlation: only the run that suspended awaiting this
         // account's verdict resumes; any other suspended async runs stay put.
-        int resumed = await this.worker.DeliverMessageAsync("kyc.verdict", accountId, element, this.resumer, this.runnerEnvironment, cancellationToken).ConfigureAwait(false);
+        int resumed = await this.delivery.DeliverAsync("kyc.verdict", accountId, element, cancellationToken).ConfigureAwait(false);
 
         // Make the async exchange visible: without this the runner resumes the run silently and the operator sees "nothing happened".
         this.logger.LogInformation(

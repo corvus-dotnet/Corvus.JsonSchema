@@ -33,7 +33,7 @@ namespace Corvus.Text.Json.Arazzo.Runner;
 public sealed class WorkflowDispatchService(
     ArazzoRunnerClient client,
     WorkflowResumer resumer,
-    RunnerOptions options,
+    RunnerHostedVersions hostedVersions,
     ILogger<WorkflowDispatchService> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
@@ -49,8 +49,10 @@ public sealed class WorkflowDispatchService(
         {
             try
             {
-                string[] hostedIds = await this.HostedWorkflowIdsAsync(stoppingToken).ConfigureAwait(false);
-                if (hostedIds.Length > 0)
+                // The runner's single answer to what it has baked, shared with the message listeners so a delivery and
+                // a dispatch never disagree about it.
+                IReadOnlyList<string> hostedIds = await hostedVersions.GetAsync(stoppingToken).ConfigureAwait(false);
+                if (hostedIds.Count > 0)
                 {
                     int dispatched = await dispatcher.DispatchClaimableAsync(hostedIds, resumer, stoppingToken).ConfigureAwait(false);
 
@@ -82,31 +84,5 @@ public sealed class WorkflowDispatchService(
                 break;
             }
         }
-    }
-
-    private async Task<string[]> HostedWorkflowIdsAsync(CancellationToken cancellationToken)
-    {
-        // The versions this runner may execute, as the control plane resolves them from this runner's environment
-        // bindings rather than from the catalog at large. Refreshed each cycle, so a newly-published version is picked
-        // up (and a newly-revoked binding drops away) without a restart.
-        IReadOnlyList<RunnerHostedVersion> hosted = await client.ListHostedVersionsAsync(cancellationToken).ConfigureAwait(false);
-
-        // A durable schedule (#896) is a run of the built-in scheduler workflow rather than a catalogued version, so its
-        // reserved id is never in the listing and is added here instead. It is added only on a runner that opts in (and
-        // so has the scheduler wired into its resumer), because a schedule run claimed by a runner that cannot resume it
-        // would simply fault.
-        bool servesSchedules = options.ServesSchedules;
-        var ids = new string[hosted.Count + (servesSchedules ? 1 : 0)];
-        for (int i = 0; i < hosted.Count; ++i)
-        {
-            ids[i] = hosted[i].ToWorkflowId();
-        }
-
-        if (servesSchedules)
-        {
-            ids[^1] = ScheduleHostedWorkflow.ScheduleWorkflowId;
-        }
-
-        return ids;
     }
 }

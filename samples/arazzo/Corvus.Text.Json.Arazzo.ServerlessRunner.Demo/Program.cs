@@ -202,6 +202,11 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     runnerRegistrar,
     heartbeatInterval: null,
     runnerApi: runnerClient));
+// The runner's single answer to what it has baked, shared by dispatch, the due-timer sweep and every message
+// listener. One instance, so a delivery and a dispatch can never disagree about which versions this runner can run.
+builder.Services.AddSingleton(sp => new RunnerHostedVersions(
+    runnerClient,
+    sp.GetRequiredService<RunnerOptions>().ServesSchedules));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 WebApplication app = builder.Build();

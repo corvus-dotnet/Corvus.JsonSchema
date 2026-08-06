@@ -242,6 +242,11 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     runnerRegistrar,
     heartbeatInterval: null,
     runnerApi: runnerClient));
+// The runner's single answer to what it has baked, shared by dispatch, the due-timer sweep and every message
+// listener. One instance, so a delivery and a dispatch can never disagree about which versions this runner can run.
+builder.Services.AddSingleton(sp => new RunnerHostedVersions(
+    runnerClient,
+    sp.GetRequiredService<RunnerOptions>().ServesSchedules));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 WebApplication app = builder.Build();
@@ -251,9 +256,10 @@ WebApplication app = builder.Build();
 var decisionConsumer = new ReceiveAccessDecisionConsumer(
     decisionsTransport,
     new AccessDecisionResumeHandler(
-        new WorkflowWorker(stateStore, options.RunnerId),
-        catalogResumer,
-        runnerEnvironment,
+        new RunnerApiMessageDelivery(
+            new RunnerApiWorker(runnerClient),
+            app.Services.GetRequiredService<RunnerHostedVersions>(),
+            catalogResumer),
         app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<AccessDecisionResumeHandler>()));
 
 // Start the decision consumer now the process is up: it subscribes to access.decision and resumes the suspended run.

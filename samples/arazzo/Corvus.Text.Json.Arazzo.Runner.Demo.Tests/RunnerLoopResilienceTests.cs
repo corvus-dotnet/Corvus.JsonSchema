@@ -28,16 +28,18 @@ public sealed class RunnerLoopResilienceTests
     public async Task Dispatch_loop_survives_runner_api_faults_and_keeps_polling()
     {
         var transport = new ThrowingApiTransport();
+        var client = new ArazzoRunnerClient(transport);
         using var service = new WorkflowDispatchService(
-            new ArazzoRunnerClient(transport),
+            client,
             resumer: null!, // never reached: listing the hosted versions faults first, and the loop must absorb that
-            new RunnerOptions("runner-under-test", "development"),
+            new RunnerHostedVersions(client, servesSchedules: false),
             NullLogger<WorkflowDispatchService>.Instance);
 
         await service.StartAsync(CancellationToken.None);
 
-        // The poll interval is 2s and the first cycle runs immediately: two observed requests prove the
-        // loop survived the first fault and came back for another cycle.
+        // The poll interval is 2s and the first cycle runs immediately: two observed requests prove the loop survived
+        // the first fault and came back for another cycle. The hosted-version cache does not mask this — a faulted
+        // resolution caches nothing, so every tick genuinely re-attempts it.
         DateTime deadline = DateTime.UtcNow.AddSeconds(15);
         while (transport.Requests < 2 && DateTime.UtcNow < deadline)
         {

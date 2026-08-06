@@ -323,6 +323,11 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     runnerRegistrar,
     heartbeatInterval: null,
     runnerApi: runnerClient));
+// The runner's single answer to what it has baked, shared by dispatch, the due-timer sweep and every message
+// listener. One instance, so a delivery and a dispatch can never disagree about which versions this runner can run.
+builder.Services.AddSingleton(sp => new RunnerHostedVersions(
+    runnerClient,
+    sp.GetRequiredService<RunnerOptions>().ServesSchedules));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 // A startup self-check (design §13.5): resolve the seeded credential references against Vault using only the
@@ -336,9 +341,10 @@ WebApplication app = builder.Build();
 var verdictConsumer = new ReceiveKycVerdictConsumer(
     verdictsTransport,
     new KycVerdictResumeHandler(
-        new WorkflowWorker(stateStore, options.RunnerId),
-        catalogResumer,
-        runnerEnvironment,
+        new RunnerApiMessageDelivery(
+            new RunnerApiWorker(runnerClient),
+            app.Services.GetRequiredService<RunnerHostedVersions>(),
+            catalogResumer),
         app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<KycVerdictResumeHandler>()));
 
 // Start the KYC verdict consumer now the process is up: it subscribes to kyc.verdict and resumes suspended async runs.

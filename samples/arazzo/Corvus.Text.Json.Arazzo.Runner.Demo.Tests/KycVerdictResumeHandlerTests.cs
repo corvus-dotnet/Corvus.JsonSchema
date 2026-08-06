@@ -42,7 +42,9 @@ public sealed class KycVerdictResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "test-runner");
-        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
+        var handler = new KycVerdictResumeHandler(
+            new StoreWorkflowMessageDelivery(worker, resumer, "development"),
+            NullLogger<KycVerdictResumeHandler>.Instance);
 
         // A verdict for an account nobody awaits resumes nothing — both runs stay suspended.
         using (ParsedJsonDocument<NModels.KycVerdictPayload> stray = ParsedJsonDocument<NModels.KycVerdictPayload>.Parse(
@@ -97,7 +99,9 @@ public sealed class KycVerdictResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "test-runner");
-        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
+        var handler = new KycVerdictResumeHandler(
+            new StoreWorkflowMessageDelivery(worker, resumer, "development"),
+            NullLogger<KycVerdictResumeHandler>.Instance);
 
         using ParsedJsonDocument<NModels.KycVerdictPayload> anonymous = ParsedJsonDocument<NModels.KycVerdictPayload>.Parse(
             """{"verified":false,"score":0.1}"""u8.ToArray());
@@ -128,7 +132,9 @@ public sealed class KycVerdictResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "test-runner");
-        var handler = new KycVerdictResumeHandler(worker, resumer, "development", NullLogger<KycVerdictResumeHandler>.Instance);
+        var handler = new KycVerdictResumeHandler(
+            new StoreWorkflowMessageDelivery(worker, resumer, "development"),
+            NullLogger<KycVerdictResumeHandler>.Instance);
 
         // The development runner's verdict consumer resumes ONLY the development-pinned run, never the production-pinned
         // one that awaits the same channel and correlation (§5.5 message-delivery credential boundary).

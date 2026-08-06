@@ -41,7 +41,9 @@ public sealed class AccessDecisionResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "system-runner");
-        var handler = new AccessDecisionResumeHandler(worker, resumer, "system", NullLogger<AccessDecisionResumeHandler>.Instance);
+        var handler = new AccessDecisionResumeHandler(
+            new StoreWorkflowMessageDelivery(worker, resumer, "system"),
+            NullLogger<AccessDecisionResumeHandler>.Instance);
 
         // A decision for a request nobody awaits resumes nothing — both runs stay suspended.
         using (ParsedJsonDocument<SwModels.AccessDecisionPayload> stray = Decision("req-9"))
@@ -82,7 +84,9 @@ public sealed class AccessDecisionResumeHandlerTests
         };
 
         var worker = new WorkflowWorker(store, "system-runner");
-        var handler = new AccessDecisionResumeHandler(worker, resumer, "system", NullLogger<AccessDecisionResumeHandler>.Instance);
+        var handler = new AccessDecisionResumeHandler(
+            new StoreWorkflowMessageDelivery(worker, resumer, "system"),
+            NullLogger<AccessDecisionResumeHandler>.Instance);
 
         // The system runner's decision consumer resumes ONLY the system-pinned approval run, never the development-pinned
         // one that awaits the same channel and correlation (§5.5 message-delivery credential boundary).
