@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
@@ -17,25 +18,30 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
     private readonly RunnerRunCoordinator coordinator;
     private readonly RunnerPrincipalAccessor principals;
     private readonly RunnerApiOptions options;
+    private readonly RunnerQuotaGate quotas;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerCheckpointsHandler"/> class.</summary>
     /// <param name="checkpoints">The checkpoint coordinator that terminates saves into the store.</param>
     /// <param name="coordinator">The store-facing coordinator, for the lease check every operation makes.</param>
     /// <param name="principals">Reads the authenticated machine principal from the current request.</param>
+    /// <param name="quotas">Meters the deployment's checkpoint quotas.</param>
     /// <param name="options">The deployment's body bounds; defaults are used when omitted.</param>
     public ArazzoRunnerCheckpointsHandler(
         WorkflowCheckpointCoordinator checkpoints,
         RunnerRunCoordinator coordinator,
         RunnerPrincipalAccessor principals,
+        RunnerQuotaGate quotas,
         RunnerApiOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(checkpoints);
         ArgumentNullException.ThrowIfNull(coordinator);
         ArgumentNullException.ThrowIfNull(principals);
+        ArgumentNullException.ThrowIfNull(quotas);
 
         this.checkpoints = checkpoints;
         this.coordinator = coordinator;
         this.principals = principals;
+        this.quotas = quotas;
         this.options = options ?? new RunnerApiOptions();
     }
 
@@ -45,6 +51,14 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return LoadCheckpointResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        // Metered before the lease is checked, so a caller hammering this surface is turned away without a store read.
+        // Doing it the other way round would let a refused caller drive the store at whatever rate it liked, which is
+        // the load the quota exists to stop.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Checkpoint, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return LoadCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         var id = new WorkflowRunId((string)parameters.RunId);
@@ -76,6 +90,11 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             return SaveCheckpointResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
         }
 
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Checkpoint, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return SaveCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
+        }
+
         var id = new WorkflowRunId((string)parameters.RunId);
         if (!await this.coordinator.HoldsLeaseAsync(principal, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
         {
@@ -89,6 +108,14 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             if (overCap)
             {
                 return SaveCheckpointResult.Status413(RunnerProblems.CheckpointTooLarge(), workspace);
+            }
+
+            // The volume is charged here: after the body is measured and before anything is written, so a refusal
+            // persists nothing. Charging it on the way in is not possible, because a Content-Length is the caller's
+            // claim about its own body and the cap above exists precisely because that claim may be a lie.
+            if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, principal, length, cancellationToken).ConfigureAwait(false) is { } tooMuch)
+            {
+                return SaveCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(tooMuch), workspace, RunnerQuotaGate.RetryAfterSeconds(tooMuch));
             }
 
             // Project (and thereby validate) the index from the received bytes here, so a malformed body is a clean 400

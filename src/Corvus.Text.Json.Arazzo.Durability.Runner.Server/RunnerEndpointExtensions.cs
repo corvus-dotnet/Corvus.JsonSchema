@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -39,6 +40,11 @@ public static class RunnerEndpointExtensions
     /// sets this <see langword="false"/>: every operation derives its lease ownership from the principal, so without one
     /// there is nothing to own a lease.</param>
     /// <param name="timeProvider">The time source; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="quotas">Meters the deployment's quotas (ADR 0065 decision 3), or <see langword="null"/> for an
+    /// in-process <see cref="TokenBucketRunnerQuotaGuard"/> over <paramref name="quotaOptions"/>. Pass
+    /// <see cref="NoRunnerQuotaGuard.Instance"/> to enforce none.</param>
+    /// <param name="quotaOptions">The quota settings for the default guard; defaults are used when omitted, and this is
+    /// ignored when <paramref name="quotas"/> is supplied.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// The host must register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>): the machine
@@ -54,7 +60,9 @@ public static class RunnerEndpointExtensions
         IRunnerLeaseEpochSource? epochs = null,
         string? requiredScope = ExecuteScope,
         bool requireAuthorization = true,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IRunnerQuotaGuard? quotas = null,
+        RunnerQuotaOptions? quotaOptions = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -68,11 +76,15 @@ public static class RunnerEndpointExtensions
         var checkpoints = new WorkflowCheckpointCoordinator(store, timeProvider);
         var catalogCoordinator = new RunnerCatalogCoordinator(catalog, availability, bindings, resolved);
 
+        // Metering is on unless the deployment says otherwise. The alternative default leaves every deployment that did
+        // not think about quotas with none, and the load a quota bounds is not the load anyone plans for.
+        var gate = new RunnerQuotaGate(bindings, quotas ?? new TokenBucketRunnerQuotaGuard(quotaOptions, timeProvider));
+
         return endpoints.MapApiEndpoints(
-            new ArazzoRunnerClaimsHandler(coordinator, principals),
-            new ArazzoRunnerLeasesHandler(coordinator, principals),
-            new ArazzoRunnerCheckpointsHandler(checkpoints, coordinator, principals, resolved),
-            new ArazzoRunnerCatalogHandler(catalogCoordinator, principals),
+            new ArazzoRunnerClaimsHandler(coordinator, principals, gate),
+            new ArazzoRunnerLeasesHandler(coordinator, principals, gate),
+            new ArazzoRunnerCheckpointsHandler(checkpoints, coordinator, principals, gate, resolved),
+            new ArazzoRunnerCatalogHandler(catalogCoordinator, principals, gate),
             requireAuthorization ? (in EndpointDescriptor _, IEndpointConventionBuilder builder) => Authorize(builder, requiredScope) : null);
     }
 

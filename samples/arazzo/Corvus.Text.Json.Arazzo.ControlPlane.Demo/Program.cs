@@ -955,6 +955,10 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
 // Mapped only when authentication is enforced. Every operation derives its lease ownership and its reach from the
 // authenticated principal, so with authentication off there is no principal, nothing to own a lease, and nothing the
 // API could safely answer. The runner processes only run in the secured (AppHost) topology in any case.
+//
+// Quotas (ADR 0065 decision 3) are metered with the deployment defaults, because no guard is passed. That is the
+// production posture rather than a demo shortcut: the defaults sit well clear of what the sample runners generate, so
+// the demo exercises the metered path without ever reaching a refusal.
 if (requireAuthorization)
 {
     app.MapGroup("/arazzo/runner/v1").MapArazzoRunnerApi(

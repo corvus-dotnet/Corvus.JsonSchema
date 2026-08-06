@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
@@ -13,17 +14,21 @@ public sealed class ArazzoRunnerCatalogHandler : IApiCatalogHandler
 {
     private readonly RunnerCatalogCoordinator coordinator;
     private readonly RunnerPrincipalAccessor principals;
+    private readonly RunnerQuotaGate quotas;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerCatalogHandler"/> class.</summary>
     /// <param name="coordinator">The catalog-facing coordinator.</param>
     /// <param name="principals">Reads the authenticated machine principal from the current request.</param>
-    public ArazzoRunnerCatalogHandler(RunnerCatalogCoordinator coordinator, RunnerPrincipalAccessor principals)
+    /// <param name="quotas">Meters the deployment's catalog-read quota.</param>
+    public ArazzoRunnerCatalogHandler(RunnerCatalogCoordinator coordinator, RunnerPrincipalAccessor principals, RunnerQuotaGate quotas)
     {
         ArgumentNullException.ThrowIfNull(coordinator);
         ArgumentNullException.ThrowIfNull(principals);
+        ArgumentNullException.ThrowIfNull(quotas);
 
         this.coordinator = coordinator;
         this.principals = principals;
+        this.quotas = quotas;
     }
 
     /// <inheritdoc/>
@@ -32,6 +37,11 @@ public sealed class ArazzoRunnerCatalogHandler : IApiCatalogHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return ListHostedVersionsResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Catalog, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return ListHostedVersionsResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         int? limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : null;
@@ -50,6 +60,11 @@ public sealed class ArazzoRunnerCatalogHandler : IApiCatalogHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return GetVersionDocumentResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Catalog, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return GetVersionDocumentResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         ReadOnlyMemory<byte>? document = await this.coordinator.GetDocumentAsync(
@@ -75,6 +90,11 @@ public sealed class ArazzoRunnerCatalogHandler : IApiCatalogHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return GetHostedVersionResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Catalog, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return GetHostedVersionResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         string baseWorkflowId = (string)parameters.BaseWorkflowId;

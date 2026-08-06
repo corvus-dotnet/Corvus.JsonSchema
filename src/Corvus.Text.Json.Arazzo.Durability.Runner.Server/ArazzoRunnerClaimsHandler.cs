@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
@@ -13,17 +14,21 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
 {
     private readonly RunnerRunCoordinator coordinator;
     private readonly RunnerPrincipalAccessor principals;
+    private readonly RunnerQuotaGate quotas;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClaimsHandler"/> class.</summary>
     /// <param name="coordinator">The store-facing coordinator.</param>
     /// <param name="principals">Reads the authenticated machine principal from the current request.</param>
-    public ArazzoRunnerClaimsHandler(RunnerRunCoordinator coordinator, RunnerPrincipalAccessor principals)
+    /// <param name="quotas">Meters the deployment's claim quota.</param>
+    public ArazzoRunnerClaimsHandler(RunnerRunCoordinator coordinator, RunnerPrincipalAccessor principals, RunnerQuotaGate quotas)
     {
         ArgumentNullException.ThrowIfNull(coordinator);
         ArgumentNullException.ThrowIfNull(principals);
+        ArgumentNullException.ThrowIfNull(quotas);
 
         this.coordinator = coordinator;
         this.principals = principals;
+        this.quotas = quotas;
     }
 
     /// <inheritdoc/>
@@ -32,6 +37,13 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return ClaimRunResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        // A claim returns the run's row, so it is a bulk read path in its own right and not merely a scheduling call
+        // (ADR 0065). The batch cap bounds one request; this bounds their rate.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Claim, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return ClaimRunResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         // The hosted versions are realised as strings here and nowhere earlier: this is the leaf where they become the
@@ -71,6 +83,13 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
             return ClaimDueTimersResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
         }
 
+        // A claim returns the run's row, so it is a bulk read path in its own right and not merely a scheduling call
+        // (ADR 0065). The batch cap bounds one request; this bounds their rate.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Claim, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return ClaimDueTimersResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
+        }
+
         List<string> hosted = Realise(parameters.Body.HostedVersions);
         IReadOnlyList<ClaimedRunRecord> claims = await this.coordinator.ClaimDueAsync(
             principal,
@@ -88,6 +107,13 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return ClaimAwaitingMessageResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        // A claim returns the run's row, so it is a bulk read path in its own right and not merely a scheduling call
+        // (ADR 0065). The batch cap bounds one request; this bounds their rate.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Claim, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return ClaimAwaitingMessageResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         List<string> hosted = Realise(parameters.Body.HostedVersions);

@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
@@ -13,17 +14,21 @@ public sealed class ArazzoRunnerLeasesHandler : IApiLeasesHandler
 {
     private readonly RunnerRunCoordinator coordinator;
     private readonly RunnerPrincipalAccessor principals;
+    private readonly RunnerQuotaGate quotas;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerLeasesHandler"/> class.</summary>
     /// <param name="coordinator">The store-facing coordinator.</param>
     /// <param name="principals">Reads the authenticated machine principal from the current request.</param>
-    public ArazzoRunnerLeasesHandler(RunnerRunCoordinator coordinator, RunnerPrincipalAccessor principals)
+    /// <param name="quotas">Meters the deployment's lease-renewal quota.</param>
+    public ArazzoRunnerLeasesHandler(RunnerRunCoordinator coordinator, RunnerPrincipalAccessor principals, RunnerQuotaGate quotas)
     {
         ArgumentNullException.ThrowIfNull(coordinator);
         ArgumentNullException.ThrowIfNull(principals);
+        ArgumentNullException.ThrowIfNull(quotas);
 
         this.coordinator = coordinator;
         this.principals = principals;
+        this.quotas = quotas;
     }
 
     /// <inheritdoc/>
@@ -32,6 +37,11 @@ public sealed class ArazzoRunnerLeasesHandler : IApiLeasesHandler
         if (this.principals.Resolve() is not { } principal)
         {
             return RenewLeaseResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.LeaseRenewal, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return RenewLeaseResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
         TimeSpan? requested = parameters.Body.IsNotUndefined() && parameters.Body.LeaseSeconds.IsNotUndefined()

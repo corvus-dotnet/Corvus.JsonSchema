@@ -20,6 +20,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
 using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests;
 
@@ -261,7 +262,7 @@ public sealed class RunnerApiEndToEndTests
 
         public TestClock Clock { get; } = clock;
 
-        public static async Task<Host> StartAsync(RunnerApiOptions? options = null)
+        public static async Task<Host> StartAsync(RunnerApiOptions? options = null, RunnerQuotaOptions? quotaOptions = null)
         {
             var clock = new TestClock(T0);
             var store = new InMemoryWorkflowStateStore(clock);
@@ -290,7 +291,7 @@ public sealed class RunnerApiEndToEndTests
                 await next(context);
             });
 
-            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, options, requireAuthorization: false, timeProvider: clock);
+            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, options, requireAuthorization: false, timeProvider: clock, quotaOptions: quotaOptions);
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store, clock);
