@@ -28,7 +28,7 @@ public sealed class RunnerRegistrationServiceTests
             registry,
             environments: null!,
             runnerAuthorizations: null!,
-            catalog: null!, // registration is exercised elsewhere; its failure path is already non-fatal by design
+            EmptyCatalog(),
             new RunnerOptions("runner-under-test", "development"),
             NullLogger<RunnerRegistrationService>.Instance,
             providedIsolation: RunIsolationModel.InProcess,
@@ -61,7 +61,7 @@ public sealed class RunnerRegistrationServiceTests
             new FlakyRegistry(failures: 0),
             environments: null!,
             runnerAuthorizations: null!,
-            catalog: null!,
+            EmptyCatalog(),
             new RunnerOptions("mis-wired-runner", "development", IsolationModel: "Isolated"),
             NullLogger<RunnerRegistrationService>.Instance,
             providedIsolation: RunIsolationModel.InProcess,
@@ -77,6 +77,73 @@ public sealed class RunnerRegistrationServiceTests
         });
         ex.Message.ShouldContain("advertises Isolated");
         ex.Message.ShouldContain("provides only InProcess");
+    }
+
+    [TestMethod]
+    public async Task Registering_through_the_control_plane_without_a_runner_api_refuses_to_start()
+    {
+        // The versions a runner advertises are the ones the control plane resolves for its machine principal (ADR 0065),
+        // so the authenticated topology has to be able to ask. Without the client it would register an empty set
+        // forever, and the control plane's IsVersionHostedAsync would believe it — a silent failure to be dispatchable
+        // that looks exactly like "no work available".
+        using var service = new RunnerRegistrationService(
+            new FlakyRegistry(failures: 0),
+            environments: null!,
+            runnerAuthorizations: null!,
+            catalog: null,
+            new RunnerOptions("api-less-runner", "development"),
+            NullLogger<RunnerRegistrationService>.Instance,
+            providedIsolation: RunIsolationModel.InProcess,
+            registrar: Registrar(),
+            heartbeatInterval: TimeSpan.FromMilliseconds(10),
+            runnerApi: null);
+
+        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        {
+            await service.StartAsync(CancellationToken.None);
+            await service.ExecuteTask!;
+        });
+
+        ex.Message.ShouldContain("no runner-API client");
+    }
+
+    [TestMethod]
+    public async Task Registering_store_direct_without_a_catalog_refuses_to_start()
+    {
+        // The store-direct topology has no control plane to ask, so it reads the catalog itself. With neither source the
+        // runner would heartbeat forever and never register, because a registration failure is non-fatal by design —
+        // which is exactly the shape of failure that hides.
+        using var service = new RunnerRegistrationService(
+            new FlakyRegistry(failures: 0),
+            environments: null!,
+            runnerAuthorizations: null!,
+            catalog: null,
+            new RunnerOptions("catalog-less-runner", "development"),
+            NullLogger<RunnerRegistrationService>.Instance,
+            providedIsolation: RunIsolationModel.InProcess,
+            registrar: null,
+            heartbeatInterval: TimeSpan.FromMilliseconds(10));
+
+        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        {
+            await service.StartAsync(CancellationToken.None);
+            await service.ExecuteTask!;
+        });
+
+        ex.Message.ShouldContain("no catalog");
+    }
+
+    // A registrar that is never called: the guard under test runs before any registration attempt, so this only has to
+    // exist.
+    private static ControlPlaneRunnerRegistrar Registrar()
+        => new(new HttpClient { BaseAddress = new Uri("https://control-plane.invalid") }, "https://control-plane.invalid", "development", "https://idp.invalid/token", "client", "secret");
+
+    // An empty catalog over in-memory stores: enough to satisfy the store-direct topology's requirement without the test
+    // caring what is in it.
+    private static SecuredWorkflowCatalog EmptyCatalog()
+    {
+        var runs = new InMemoryWorkflowStateStore();
+        return new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), runs, "test");
     }
 
     private sealed class FlakyRegistry(int failures) : IRunnerRegistry

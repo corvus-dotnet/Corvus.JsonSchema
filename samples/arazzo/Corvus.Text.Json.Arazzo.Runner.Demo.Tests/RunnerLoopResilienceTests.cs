@@ -4,6 +4,7 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 
 using Microsoft.Extensions.Logging.Abstractions;

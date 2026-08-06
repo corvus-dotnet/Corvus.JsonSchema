@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
 namespace Corvus.Text.Json.Arazzo.Runner;
@@ -24,12 +25,13 @@ public sealed class RunnerRegistrationService(
     IRunnerRegistry registry,
     IEnvironmentStore environments,
     IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
-    SecuredWorkflowCatalog catalog,
+    SecuredWorkflowCatalog? catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger,
     RunIsolationModel providedIsolation,
     ControlPlaneRunnerRegistrar? registrar = null,
-    TimeSpan? heartbeatInterval = null) : BackgroundService
+    TimeSpan? heartbeatInterval = null,
+    ArazzoRunnerClient? runnerApi = null) : BackgroundService
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
 
@@ -53,6 +55,21 @@ public sealed class RunnerRegistrationService(
         {
             throw new InvalidOperationException(
                 $"Runner '{options.RunnerId}' advertises {advertised} isolation but its execution backend provides only {providedIsolation} (ADR 0058): a runner must not advertise more isolation than it provides. Set RunnerOptions.IsolationModel to at most {providedIsolation}, or wire an execution backend that provides {advertised}.");
+        }
+
+        // The two registration topologies need different things, and a host that supplies neither would otherwise fail
+        // on the first heartbeat rather than at start-up. Fatal for the same reason the check above is: it is a deploy
+        // misconfiguration, not a transient fault.
+        if (registrar is not null && runnerApi is null)
+        {
+            throw new InvalidOperationException(
+                $"Runner '{options.RunnerId}' registers through the control plane but was given no runner-API client. The versions it advertises are the ones the control plane resolves for its machine principal (ADR 0065), so it needs the runner API to ask. Pass an ArazzoRunnerClient, or drop the registrar to use the store-direct topology.");
+        }
+
+        if (registrar is null && catalog is null)
+        {
+            throw new InvalidOperationException(
+                $"Runner '{options.RunnerId}' registers store-direct but was given no catalog. That topology has no control plane to ask, so it reads the catalog itself. Pass a SecuredWorkflowCatalog, or configure a registrar and a runner-API client.");
         }
 
         DateTimeOffset startedAt = DateTimeOffset.UtcNow;
@@ -120,30 +137,42 @@ public sealed class RunnerRegistrationService(
 
     private async Task RegisterAsync(DateTimeOffset startedAt, CancellationToken cancellationToken)
     {
-        // Snapshot the catalog: the runner advertises every catalogued version as hosted-and-loaded. "loaded" means this
-        // runner re-enters the version's compiled executor.dll to execute its runs — the real HostedWorkflowResumer path.
-        // The control plane's IsVersionHostedAsync uses loaded == true to confirm a live host before accepting a trigger.
-        CatalogPage page = await catalog.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
-
         if (registrar is not null)
         {
+            // The versions this runner advertises are the ones the control plane says it may execute, asked for over the
+            // runner API under this runner's own machine principal (ADR 0065). It reads no catalog and holds no store
+            // credential to do it.
+            //
+            // This is also what makes the advertisement true. Reading the catalog directly advertised every version in
+            // the deployment, while dispatch only ever offers the binding-resolved ones — so a runner routinely claimed
+            // to host versions it would never be given, and the control plane's IsVersionHostedAsync believed it. Asking
+            // the same surface that decides what may be claimed makes the two answers the same answer.
+            //
+            // Before an administrator authorizes this runner the list is legitimately empty, and advertising nothing is
+            // correct: an unauthorized runner is not dispatchable, so claiming to host anything would be the lie. The
+            // heartbeat re-registers once the authorization lands.
+            IReadOnlyList<RunnerHostedVersion> hosted = await runnerApi!.ListHostedVersionsAsync(cancellationToken).ConfigureAwait(false);
+
             // Authenticated registration (design §5.5/§16.4): the runner authenticates as its machine principal and POSTs its
             // self-description. The control plane derives the trusted principal from the token and stamps the environment, the
             // reach tags (from the environment's managementTags), and the last-seen instant — so the runner supplies none of
             // those. A different principal re-registering the same runnerId is refused server-side (409).
-            byte[] body = BuildRegistrationBody(startedAt, page);
+            byte[] body = BuildRegistrationBody(startedAt, hosted);
             string status = await registrar.RegisterAsync(body, cancellationToken).ConfigureAwait(false);
             logger.LogInformation(
-                "Runner {RunnerId} registered with the control plane as an authenticated machine principal (hosting {Count} catalog version(s)); its authorization to serve '{Environment}' is {Status}.",
+                "Runner {RunnerId} registered with the control plane as an authenticated machine principal (hosting {Count} version(s) it is bound to); its authorization to serve '{Environment}' is {Status}.",
                 options.RunnerId,
-                page.Versions.Count,
+                hosted.Count,
                 options.Environment,
                 status);
             return;
         }
 
         // Store-direct fallback (a bare two-process run with no control-plane API / Keycloak): the runner writes its own
-        // registration and an idempotent Pending authorization straight into the shared store. No machine principal is bound.
+        // registration and an idempotent Pending authorization straight into the shared store. No machine principal is
+        // bound, and there is no runner API to ask, so the catalog is read here and only here. The system context is
+        // honest in this topology: the runner already holds the store.
+        CatalogPage page = await catalog!.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
         RunnerRegistration registration = await this.BuildRegistrationAsync(startedAt, page, cancellationToken).ConfigureAwait(false);
         await registry.RegisterAsync(registration, cancellationToken).ConfigureAwait(false);
         using ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
@@ -158,7 +187,7 @@ public sealed class RunnerRegistrationService(
 
     // The authenticated-registration request body (RunnerRegistrationRequest): the runner's self-description only. The
     // control plane stamps the environment, reach tags, and last-seen instant, so they are deliberately absent here.
-    private byte[] BuildRegistrationBody(DateTimeOffset startedAt, CatalogPage page)
+    private byte[] BuildRegistrationBody(DateTimeOffset startedAt, IReadOnlyList<RunnerHostedVersion> hosted)
     {
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
@@ -169,7 +198,7 @@ public sealed class RunnerRegistrationService(
             writer.WriteNumber("maxConcurrency", options.MaxConcurrency);
             writer.WriteStartArray("transports");
             writer.WriteEndArray();
-            WriteHostedVersions(writer, page);
+            WriteHostedVersions(writer, hosted);
             if (options.ServesSchedules)
             {
                 writer.WriteBoolean("servesSchedules", true);
@@ -245,7 +274,26 @@ public sealed class RunnerRegistrationService(
         return RunnerRegistration.FromJson(buffer.WrittenMemory);
     }
 
-    // The catalog versions this runner hosts (advertised hosted-and-loaded), written identically for both registration paths.
+    // The versions the control plane resolved for this runner, advertised hosted-and-loaded. "loaded" means this runner
+    // re-enters the version's compiled executor.dll to execute its runs — the real HostedWorkflowResumer path — and the
+    // control plane's IsVersionHostedAsync uses it to confirm a live host before accepting a trigger.
+    private static void WriteHostedVersions(Utf8JsonWriter writer, IReadOnlyList<RunnerHostedVersion> hosted)
+    {
+        writer.WriteStartArray("hostedVersions");
+        foreach (RunnerHostedVersion version in hosted)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("baseWorkflowId", version.BaseWorkflowId);
+            writer.WriteNumber("versionNumber", version.VersionNumber);
+            writer.WriteString("hash", version.Hash);
+            writer.WriteBoolean("loaded", true);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+    }
+
+    // The store-direct path's counterpart, over a catalog page. Same shape on the wire.
     private static void WriteHostedVersions(Utf8JsonWriter writer, CatalogPage page)
     {
         writer.WriteStartArray("hostedVersions");

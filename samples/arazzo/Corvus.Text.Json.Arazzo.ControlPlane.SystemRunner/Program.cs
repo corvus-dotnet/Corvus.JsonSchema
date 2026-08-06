@@ -239,7 +239,9 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<RunnerOptions>(),
     sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
     catalogResumerBackend.IsolationModel,
-    runnerRegistrar));
+    runnerRegistrar,
+    heartbeatInterval: null,
+    runnerApi: runnerClient));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 WebApplication app = builder.Build();

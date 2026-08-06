@@ -320,7 +320,9 @@ builder.Services.AddHostedService(sp => new RunnerRegistrationService(
     sp.GetRequiredService<RunnerOptions>(),
     sp.GetRequiredService<ILogger<RunnerRegistrationService>>(),
     catalogResumerBackend.IsolationModel,
-    runnerRegistrar));
+    runnerRegistrar,
+    heartbeatInterval: null,
+    runnerApi: runnerClient));
 builder.Services.AddHostedService<WorkflowDispatchService>();
 
 // A startup self-check (design §13.5): resolve the seeded credential references against Vault using only the
