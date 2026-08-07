@@ -45,6 +45,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly IEnvironmentStore? environmentStore;
     private readonly IAvailabilityStore? availabilityStore;
     private readonly IWorkflowDeploymentStore? deployments;
+    private readonly Capacity.IControlPlaneCapacityGuard? capacity;
     private readonly WorkflowSimulator? simulator;
     private readonly ILogger? auditLogger;
 
@@ -72,7 +73,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="deployments">The workflow-deployment store (ADR 0055, ADR 0059); when supplied, the start gate holds a run
     /// pinned to an <see cref="RunIsolationModel.Isolated"/> environment until that environment's serverless function is deployed
     /// (live at its invoke URL). <see langword="null"/> skips the dispatch-ready check, for an in-process-only deployment.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null, IWorkflowDeploymentStore? deployments = null)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null, IWorkflowDeploymentStore? deployments = null, Capacity.IControlPlaneCapacityGuard? capacity = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -85,6 +86,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.environmentStore = environmentStore;
         this.availabilityStore = availabilityStore;
         this.deployments = deployments;
+        this.capacity = capacity;
         this.simulator = simulator;
         this.auditLogger = auditLogger;
     }
@@ -497,6 +499,20 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     }
 
     /// <inheritdoc/>
+    // The capacity refusal, in the same shape the runner API's quota refusals use so one client shape reads both.
+    private static Models.QuotaProblem.Source CapacityProblem(in Capacity.ControlPlaneCapacityRejection rejection)
+        => Models.QuotaProblem.Build(
+            counter: rejection.Counter,
+            detail: $"The limit '{rejection.Quota}' for '{rejection.Counter}' is reached ({rejection.Observed} of {rejection.Limit}). This is a standing limit: release capacity rather than waiting.",
+            quota: rejection.Quota,
+            status: 429,
+            title: "Capacity exceeded",
+            type: Capacity.ControlPlaneCapacityNames.ProblemType);
+
+    // Advisory only. A standing limit clears by releasing capacity, never by waiting, so a longer interval here would
+    // imply a promise the limit cannot keep.
+    private static Models.RetryAfterSeconds.Source CapacityRetryAfter() => (Models.RetryAfterSeconds.Source)60L;
+
     public async ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
@@ -610,6 +626,31 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // string realised here is the value the generated header binder already round-tripped (parsed string ->
         // JsonString), alongside the workflowId string the handler already resolves — not an added allocation on a hot
         // firing loop (that loop lives on the runner side, which fires through a pooled HttpClient).
+        // The tenant's standing capacity (ADR 0065 decision 3), checked last of the gates and immediately before the run
+        // is created, so a caller refused for any other reason never learns capacity state -- and so the count is as
+        // close to the write as it can be, since nothing here holds a lock and a concurrent start can still land between
+        // them. The limit is a bound on accumulation, not a mutual exclusion, so a small overshoot under concurrency is
+        // accepted; what it must never do is drift without limit, and the next start sees the higher count.
+        //
+        // The count is scoped by the caller's READ REACH, which is what makes it the tenant's population rather than the
+        // deployment's. The owner group is read only to name the counter in the refusal.
+        if (this.capacity is { } guard)
+        {
+            string counter = this.access.CallerOwnerGroup() ?? Capacity.ControlPlaneCapacityNames.Deployment;
+
+            // Concurrency first: it is the limit a healthy tenant actually meets, and it releases itself, so reporting
+            // it in preference to the storage limit points the caller at the one that will clear.
+            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, ctx, cancellationToken).ConfigureAwait(false) is { } busy)
+            {
+                return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(busy), workspace, CapacityRetryAfter());
+            }
+
+            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, ctx, cancellationToken).ConfigureAwait(false) is { } full)
+            {
+                return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(full), workspace, CapacityRetryAfter());
+            }
+        }
+
         WorkflowRunId runId;
         if (parameters.IdempotencyKey.IsNotUndefined() && (string)parameters.IdempotencyKey is { Length: > 0 } idempotencyKey)
         {

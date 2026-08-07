@@ -475,6 +475,27 @@ internal sealed class ControlPlaneAccess
     // the holder here pays a single FromTags off the hot list paths — which now take the SecurityTagSet directly.
     public IReadOnlyList<CredentialUsageGrant> CallerIdentityGrants() => this.DescribeUsageScope(SecurityTagSet.FromTags(this.InternalTags()));
 
+    /// <summary>The caller's owner group, for naming the counter a capacity limit was measured against.</summary>
+    /// <returns>The owner group, or <see langword="null"/> when the caller carries none.</returns>
+    /// <remarks>
+    /// For reporting only. What a capacity count is actually scoped by is the caller's READ REACH, which the count
+    /// applies itself -- so a deployment that enforces reach measures the tenant's population whether or not the tenant
+    /// can be named here, and one that does not enforce reach could not be made tenant-scoped by naming it.
+    /// </remarks>
+    public string? CallerOwnerGroup()
+    {
+        ReadOnlySpan<byte> key = this.OwnerGroupTagKeyUtf8;
+        foreach (SecurityTag tag in this.InternalTags())
+        {
+            if (Encoding.UTF8.GetByteCount(tag.Key) == key.Length && Encoding.UTF8.GetBytes(tag.Key).AsSpan().SequenceEqual(key))
+            {
+                return string.IsNullOrEmpty(tag.Value) ? null : tag.Value;
+            }
+        }
+
+        return null;
+    }
+
     // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
     // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
     // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten

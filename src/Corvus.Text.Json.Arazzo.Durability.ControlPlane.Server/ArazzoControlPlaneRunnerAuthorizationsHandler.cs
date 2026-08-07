@@ -44,6 +44,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly IWorkflowLeaseAdministration? leaseAdministration;
     private readonly string subjectClaimType;
     private readonly ReadOnlyMemory<byte> enrolmentSecret;
+    private readonly Capacity.IControlPlaneCapacityGuard? capacity;
     private readonly ILogger? auditLogger;
 
     // The audited resource kind for every decision on this surface (design §850).
@@ -63,6 +64,8 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// <param name="enrolmentSecret">The secret enrolment tokens are minted and validated with (ADR 0065 decision 2), or
     /// empty to accept none. A deployment that leaves it empty admits only runners an administrator has pre-authorized by
     /// id, which is workable for a fixed fleet and not for one that scales itself.</param>
+    /// <param name="capacity">Bounds how many runners may be registered for an environment (ADR 0065 decision 3), or
+    /// <see langword="null"/> to enforce no capacity limit.</param>
     /// <param name="auditLogger">The logger for the §850 runner-authorization audit (who authorized/quarantined/revoked which runner); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
@@ -73,6 +76,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         IWorkflowLeaseAdministration? leaseAdministration = null,
         string subjectClaimType = "sub",
         ReadOnlyMemory<byte> enrolmentSecret = default,
+        Capacity.IControlPlaneCapacityGuard? capacity = null,
         ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(authorizations);
@@ -87,6 +91,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         this.administration = administration;
         this.access = access;
         this.leaseAdministration = leaseAdministration;
+        this.capacity = capacity;
         this.subjectClaimType = subjectClaimType;
         this.enrolmentSecret = enrolmentSecret;
         this.auditLogger = auditLogger;
@@ -179,6 +184,15 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             {
                 GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-unnamed-pre-authorization");
                 return AuthorizeRunnerResult.BadRequest(UnnamedPreAuthorizationProblem(environment, runnerId), workspace);
+            }
+
+            // The same cap, at the other place a row is created. Without it an administrator could pre-authorize past
+            // the environment's limit and the rows would exist before any runner presented itself.
+            if (this.capacity is { } preAuthCapacity
+                && await preAuthCapacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } atCapacity)
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-capacity");
+                return AuthorizeRunnerResult.TooManyRequests(CapacityProblem(atCapacity), workspace, RetryAfter());
             }
 
             fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), expectedPrincipal, cancellationToken).ConfigureAwait(false);
@@ -280,6 +294,23 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                         existing is null ? "refused-not-pre-authorized" : "refused-principal-conflict");
                     return RegisterRunnerResult.NotFound(NotPreAuthorizedProblem(), workspace);
                 }
+            }
+        }
+
+        // The environment's registered-runner cap (ADR 0065 decision 3), and ONLY on the enrolment path, because only
+        // enrolment creates a row. A registration by an already-authorized runner is a heartbeat re-registration that
+        // adds nothing to the count, so capping it would break every existing runner in an environment the moment it
+        // filled -- a far worse outcome than refusing the new one.
+        //
+        // Checked after the authorization gate above, never before it: answering 429 to a caller that has not proved a
+        // pre-authorization or a valid token would tell it the environment exists and is full, which is exactly the
+        // enumeration the single non-disclosing refusal closes.
+        if (enrolled && this.capacity is { } enrolmentCapacity)
+        {
+            if (await enrolmentCapacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } full)
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-capacity");
+                return RegisterRunnerResult.TooManyRequests(CapacityProblem(full), workspace, RetryAfter());
             }
         }
 
@@ -847,6 +878,21 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     // supplied, because echoing the environment or the runner id back would make the three causes distinguishable by
     // their bodies even where the status matched, and distinguishing them is exactly the enumeration this closes. Which
     // cause it was is recorded in the audit log instead, where the operator who needs it can see it and the caller cannot.
+    // The capacity refusal. It names the limit and what it was measured against, in the same shape the runner API's
+    // quota refusals use, so one client shape reads both surfaces.
+    private static Models.QuotaProblem.Source CapacityProblem(in Capacity.ControlPlaneCapacityRejection rejection)
+        => Models.QuotaProblem.Build(
+            counter: rejection.Counter,
+            detail: $"The limit '{rejection.Quota}' for '{rejection.Counter}' is reached ({rejection.Observed} of {rejection.Limit}). This is a standing limit: release capacity rather than waiting.",
+            quota: rejection.Quota,
+            status: 429,
+            title: "Capacity exceeded",
+            type: Capacity.ControlPlaneCapacityNames.ProblemType);
+
+    // Advisory only, and deliberately short. A standing limit is cleared by releasing capacity, never by waiting, so a
+    // long interval here would imply a promise the limit cannot keep.
+    private static Models.RetryAfterSeconds.Source RetryAfter() => (Models.RetryAfterSeconds.Source)60L;
+
     private static Models.ProblemDetails.Source NotPreAuthorizedProblem()
         => Problem(
             "runner-not-pre-authorized",

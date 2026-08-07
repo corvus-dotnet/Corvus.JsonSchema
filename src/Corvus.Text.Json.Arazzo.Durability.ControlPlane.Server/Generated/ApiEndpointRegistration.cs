@@ -4411,6 +4411,10 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -12148,6 +12152,10 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -12372,6 +12380,10 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";

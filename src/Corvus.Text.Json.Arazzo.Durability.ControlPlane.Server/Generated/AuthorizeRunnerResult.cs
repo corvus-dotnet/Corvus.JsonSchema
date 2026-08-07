@@ -19,11 +19,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 public readonly struct AuthorizeRunnerResult
 {
-    private AuthorizeRunnerResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private AuthorizeRunnerResult(int statusCode, JsonElement body, string? contentType, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds retryAfter = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.RetryAfter = retryAfter;
     }
 
     /// <summary>Gets the HTTP status code.</summary>
@@ -34,6 +35,11 @@ public readonly struct AuthorizeRunnerResult
 
     /// <summary>Gets the content type for the response body.</summary>
     public string? ContentType { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>Retry-After</c> response header.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds RetryAfter { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -136,6 +142,28 @@ public readonly struct AuthorizeRunnerResult
         => new(409, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json");
 
     /// <summary>
+    /// Creates a 429 TooManyRequests result.
+    /// </summary>
+    /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="retryAfter">The value for the <c>Retry-After</c> response header.</param>
+    /// <returns>A <see cref="AuthorizeRunnerResult"/> with status 429.</returns>
+    public static AuthorizeRunnerResult TooManyRequests(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.QuotaProblem.Source body, JsonWorkspace workspace, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds.Source retryAfter = default) => new(429, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.QuotaProblem.CreateBuilder(workspace, body, 30).RootElement, "application/problem+json", retryAfter: retryAfter.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds.CreateBuilder(workspace, retryAfter, 30).RootElement);
+    /// <summary>
+    /// Creates a 429 TooManyRequests result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="retryAfter">The value for the <c>Retry-After</c> response header.</param>
+    /// <returns>A <see cref="AuthorizeRunnerResult"/> with status 429.</returns>
+    public static AuthorizeRunnerResult TooManyRequests<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.QuotaProblem.Source<TContext> body, JsonWorkspace workspace, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds.Source retryAfter = default)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(429, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.QuotaProblem.CreateBuilder(workspace, in body, 30).RootElement, "application/problem+json", retryAfter: retryAfter.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryAfterSeconds.CreateBuilder(workspace, retryAfter, 30).RootElement);
+
+    /// <summary>
     /// Validates the response body against the schema for the current status code.
     /// </summary>
     /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
@@ -149,6 +177,7 @@ public readonly struct AuthorizeRunnerResult
             403 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             404 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
             409 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ProblemDetails.From(this.Body).EvaluateSchema(),
+            429 => Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.QuotaProblem.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }
@@ -163,5 +192,22 @@ public readonly struct AuthorizeRunnerResult
         {
             this.Body.WriteTo(writer);
         }
+    }
+
+    /// <summary>
+    /// Writes the response headers using the specified callback.
+    /// </summary>
+    /// <typeparam name="TState">The state type passed to the callback.</typeparam>
+    /// <param name="callback">A callback that receives the header name and value.</param>
+    /// <param name="state">State to pass to the callback.</param>
+    public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+        if (!this.RetryAfter.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8RetryAfter = "Retry-After"u8;
+            using RawUtf8JsonString rawRetryAfter = JsonMarshal.GetRawUtf8Value(this.RetryAfter);
+            callback(nameUtf8RetryAfter, rawRetryAfter.Span, state);
+        }
+
     }
 }

@@ -1,8 +1,8 @@
-# ADR 0066. Rate and capacity limiting on the runner API
+# ADR 0066. Rate and capacity limiting across the runner API and the control plane
 
-Date: 2026-08-07. Status: **Accepted**. Scope: the runner API's quota enforcement (#876, ADR 0065
-phase A, decision 3). This records how the quotas ADR 0065 requires are actually metered, what the
-shipped implementation does **not** deliver, and why a runner is allowed to wait a refusal out.
+Date: 2026-08-07. Status: **Accepted**. Scope: quota and capacity enforcement for ADR 0065 decision 3
+(#876). This records how the limits ADR 0065 requires are actually enforced, what the shipped
+implementation does **not** deliver, and why a runner is allowed to wait a refusal out.
 
 ## Context
 
@@ -140,11 +140,56 @@ fails over or faults, and a quota hold raises no audit event. The run would sit 
 effects it never checkpointed with nothing anywhere reporting a problem. The bounds are what make the
 exemption safe to have, and exceeding them fails the advance loudly.
 
-The dimensions this ADR does **not** cover are the store-magnitude ones — a registered-runner cap per
-environment, a run-count cap, a total payload-bytes quota, and a parked-wait cap. Those are
-magnitudes rather than rates, they are measured on the control plane's start and registration paths
-rather than on the runner API, and a token bucket is the wrong shape for three of the four. They are
-tracked separately.
+## Amendment: the standing magnitudes
+
+Decision 3's remaining dimensions are **magnitudes, not rates**, and a token bucket is the wrong
+instrument for them. A bucket bounds flow; a magnitude is a standing total that must survive a
+restart, and a bucket-based cap would forget everything the store still held the moment a process
+recycled. They are therefore enforced by a separate seam, `IControlPlaneCapacityGuard`, measured
+against the store on each check rather than cached — a cached magnitude is wrong in the direction
+that matters, admitting work a tenant no longer has room for for as long as the window lasts. Every
+count is bounded at the limit, so a tenant far above its cap costs the same to refuse as one just
+over it.
+
+**A capacity refusal is not a rate refusal wearing a different name.** Waiting does not clear it: the
+caller has to release capacity before the request is admitted. The contract therefore documents
+`Retry-After` on these operations as **advisory rather than a promise**, which is the opposite of its
+meaning on the runner API, where the bounded hold depends on it being accurate.
+
+**The run-count cap is two limits, not one.** They bound different resources and neither substitutes
+for the other. `ConcurrentRuns` bounds what is in flight (Pending, Running, or Suspended); it is what
+stops one tenant occupying the dispatch capacity every tenant shares, and it releases itself as runs
+finish. `StoredRuns` bounds what the store holds whatever the status; a tenant can sit at zero
+concurrency and still hold millions of terminal rows. Because `WorkflowQuery` carries one status at a
+time, concurrency costs up to three bounded counts, each capped by what is still unaccounted for and
+short-circuiting the moment the limit is reached.
+
+**`StoredRuns` ships disabled, and that is a decision rather than caution.** Stored runs do not
+release themselves: there is no automatic retention, so a completed run keeps its row until it is
+purged. Enforcing the limit before a reclamation path exists would refuse new runs to a perfectly
+well-behaved tenant that had merely been running for long enough, while it sat completely idle — a
+slow outage rather than a limit. The scheduled retention sweep is what makes it safe to enable, and
+the default becomes non-zero in the same change that lands the sweep.
+
+**The registered-runner cap guards row creation, not registration.** Enforcing it on every
+registration would refuse heartbeat re-registration for every existing runner the moment an
+environment filled, taking down the fleet the cap was protecting. It therefore fires only where a row
+is actually created: an enrolment-token registration, and an administrator pre-authorizing an unknown
+runner. It is also checked *after* the authorization gate, never before, because answering `429` to a
+caller that has proved neither a pre-authorization nor a valid token would tell it the environment
+exists and is full — the enumeration decision 3's single non-disclosing refusal closes.
+
+**The check is not mutually exclusive with the write.** Nothing holds a lock, so a concurrent start
+can land between the count and the create. A capacity limit bounds accumulation, not
+concurrency-of-decision; a bounded overshoot is accepted, and the next request sees the higher count.
+Guaranteeing otherwise would need a lock on the hot path that the limit does not justify.
+
+**Two of decision 3's magnitudes are deliberately not here**: the parked-wait cap and the total
+payload-bytes quota. Both are incurred when a checkpoint is written, which happens through the runner
+API — and that assembly does not reference the control-plane server. Enforcing them from the
+control-plane seam would invert the dependency ADR 0065 exists to establish, exactly as routing the
+message listeners through it would have. They are bounded on the checkpoint write path instead,
+against a guard that path can see, and are tracked separately.
 
 The claim path is rate-limited here but **not yet audited**, which decision 3 also requires of it.
 There is no audit seam in the runner API to attach one to, and inventing it here would be guessing at

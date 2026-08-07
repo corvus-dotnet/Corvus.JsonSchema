@@ -911,6 +911,7 @@
           },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/CapacityExceeded" },
           "422": {
             "description": "The inputs failed validation against the version's baked inputs schema.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
@@ -3472,7 +3473,8 @@
         "responses": {
           "200": { "description": "The runner's authorization to serve the environment (Pending until an administrator authorizes it).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentRunnerAuthorizationView" } } } },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/CapacityExceeded" }
         }
       }
     },
@@ -3522,7 +3524,8 @@
           "400": { "$ref": "#/components/responses/BadRequest" },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/CapacityExceeded" }
         }
       },
       "delete": {
@@ -5573,6 +5576,44 @@
             }
           }
         }
+      },
+      "CapacityExceeded": {
+        "description": "A standing capacity limit for the tenant is reached (ADR 0065 decision 3). Unlike a rate limit this does not clear on its own: the caller has to release capacity (purge terminal runs, deregister runners, resolve parked waits) before the request will be admitted. Retry-After is therefore advisory rather than a promise.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying. Advisory only: a standing limit is cleared by releasing capacity, not by waiting.",
+            "schema": { "$ref": "#/components/schemas/RetryAfterSeconds" }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": { "$ref": "#/components/schemas/QuotaProblem" },
+            "examples": {
+              "runCount": {
+                "summary": "The tenant's run-count cap is reached",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/capacity-exceeded",
+                  "title": "Capacity exceeded",
+                  "status": 429,
+                  "detail": "The run-count cap for this tenant is reached. Purge terminal runs before starting another; completing a run does not release its stored row.",
+                  "quota": "run-count/tenant",
+                  "counter": "acme"
+                }
+              },
+              "registeredRunners": {
+                "summary": "The environment's registered-runner cap is reached",
+                "value": {
+                  "type": "https://corvus-oss.org/arazzo/control-plane/problems/capacity-exceeded",
+                  "title": "Capacity exceeded",
+                  "status": 429,
+                  "detail": "The registered-runner cap for environment 'production' is reached. Deregister a runner before registering another.",
+                  "quota": "registered-runners/environment",
+                  "counter": "production"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "links": {
@@ -6407,6 +6448,30 @@
         "description": "An optional note recorded with an authorize, quarantine, reinstate, or revoke decision.",
         "properties": {
           "reason": { "type": "string", "description": "An optional human-readable justification for the decision." }
+        }
+      },
+      "RetryAfterSeconds": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Seconds to wait before retrying."
+      },
+      "QuotaProblem": {
+        "type": "object",
+        "description": "A capacity rejection, naming the limit and the counter it was measured against so a caller can act on the right dimension rather than guessing. Shaped identically to the runner API's QuotaProblem so one client shape reads both surfaces.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string" },
+          "quota": {
+            "type": "string",
+            "description": "The limit that rejected the request."
+          },
+          "counter": {
+            "type": "string",
+            "description": "The counter it was measured against, for example the tenant or environment it applies to."
+          }
         }
       },
       "ProblemDetails": {

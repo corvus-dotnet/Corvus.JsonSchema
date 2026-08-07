@@ -71,6 +71,8 @@ public static class ControlPlaneEndpointExtensions
     /// only, eight hours.
     /// </param>
     /// <param name="accessRequestSubjectClaimType">The claim type identifying the requesting subject (and that a grant keys on); default <c>sub</c>.</param>
+    /// <param name="capacityOptions">The deployment's standing capacity limits (ADR 0065 decision 3); defaults are used
+    /// when omitted. The stored-run limit defaults to disabled, because nothing reclaims stored runs yet.</param>
     /// <param name="runnerEnrolmentSecret">The secret runner enrolment tokens are minted and validated with (ADR 0065
     /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
     /// <param name="selfElevationEligibility">
@@ -100,7 +102,8 @@ public static class ControlPlaneEndpointExtensions
         Action<IAccessRequestApprovalService>? onApprovalServiceBuilt = null,
         INativeBuildJobStore? nativeBuildJobStore = null,
         IWorkflowDeploymentStore? workflowDeploymentStore = null, ReadOnlyMemory<byte> runnerEnrolmentSecret = default,
-        string? ownerGroupClaimType = "tenant")
+        string? ownerGroupClaimType = "tenant",
+        Capacity.ControlPlaneCapacityOptions? capacityOptions = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -289,10 +292,15 @@ public static class ControlPlaneEndpointExtensions
         // Governed by the environment's administrators; the approver inbox spans the environments the caller administers.
         // The store itself was resolved above (shared with the environments isolation-raise fence).
 
+        // The standing capacity limits (ADR 0065 decision 3). Measured against the store, because a magnitude cannot be
+        // measured anywhere else. The limits themselves decide what is enforced: an unset one enforces nothing, and the
+        // stored-run limit is unset by default because nothing reclaims stored runs yet.
+        var capacityGuard = new Capacity.StoreControlPlaneCapacityGuard(management, runnerAuthStore, capacityOptions);
+
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, auditLogger);
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditLogger);
         var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditLogger: auditLogger);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
@@ -313,7 +321,7 @@ public static class ControlPlaneEndpointExtensions
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore, capacityGuard),
             availabilityHandler,
             nativeBuildsHandler,
             deploymentsHandler,
