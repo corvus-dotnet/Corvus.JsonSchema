@@ -55,6 +55,37 @@ public class KafkaTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        string topic = CreateTopicName("kafka-context");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        object? nativeMessage = null;
+
+        MessageContext messageContext = default;
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+                received.Release();
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(5000);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual(topic, receivedChannel);
+        Assert.IsNotNull(nativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         string topic = CreateTopicName("kafka-roundtrip");

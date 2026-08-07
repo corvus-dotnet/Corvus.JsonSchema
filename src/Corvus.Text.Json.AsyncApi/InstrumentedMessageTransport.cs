@@ -33,7 +33,7 @@ namespace Corvus.Text.Json.AsyncApi;
 /// </code>
 /// </para>
 /// </remarks>
-public sealed class InstrumentedMessageTransport : IMessageTransport
+public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransport
 {
     private readonly IMessageTransport inner;
     private readonly string messagingSystem;
@@ -125,6 +125,28 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         return this.inner.SubscribeAsync(
             channelUtf8,
             CreateInstrumentedHandler(handler, destination),
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        if (this.inner is not IMessageDeliveryContextTransport contextTransport)
+        {
+            throw new NotSupportedException("The wrapped transport does not expose message delivery context.");
+        }
+
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        MessageContext contextCopy = context;
+        return contextTransport.SubscribeWithDeliveryContextAsync(
+            channelUtf8,
+            CreateInstrumentedContextHandler(handler, destination),
+            in contextCopy,
             cancellationToken);
     }
 
@@ -447,6 +469,50 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         };
     }
 
+    private Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> CreateInstrumentedContextHandler<TPayload>(
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        string destination)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        return async (payload, context, ct) =>
+        {
+            JsonElement headers = context.Headers;
+            ActivityContext parentContext = default;
+            bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
+
+            using Activity? activity = hasParent
+                ? AsyncApiTelemetry.ActivitySource.StartActivity(
+                    $"process {destination}", ActivityKind.Consumer, parentContext)
+                : AsyncApiTelemetry.ActivitySource.StartActivity(
+                    $"process {destination}", ActivityKind.Consumer);
+
+            SetCommonTags(activity, "process", destination);
+            long startTimestamp = Stopwatch.GetTimestamp();
+            try
+            {
+                await handler(payload, context, ct).ConfigureAwait(false);
+
+                AsyncApiTelemetry.MessagesConsumed.Add(
+                    1,
+                    new TagList
+                    {
+                        { "messaging.system", this.messagingSystem },
+                        { "messaging.operation.name", "process" },
+                        { "messaging.destination.name", destination },
+                    });
+            }
+            catch (Exception ex)
+            {
+                RecordError(activity, ex);
+                throw;
+            }
+            finally
+            {
+                RecordDuration(AsyncApiTelemetry.ProcessDuration, startTimestamp, "process", destination);
+            }
+        };
+    }
+
     private void SetCommonTags(Activity? activity, string operationName, string destination)
     {
         if (activity is { IsAllDataRequested: true })
@@ -497,3 +563,5 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         }
     }
 }
+
+// End of file.

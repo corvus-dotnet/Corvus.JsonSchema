@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.AsyncApi.AzureServiceBus;
 /// <summary>
 /// Azure Service Bus message transport.
 /// </summary>
-public sealed class AzureServiceBusMessageTransport : IMessageTransport
+public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTransport
 {
     private readonly AzureServiceBusTransportOptions options;
     private readonly ServiceBusClient client;
@@ -316,9 +316,25 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
-    public async ValueTask SubscribeAsync<TPayload>(
+    public ValueTask SubscribeAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
+
+    private async ValueTask SubscribeCoreAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -398,12 +414,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                     if (this.middleware is not null)
                     {
                         await this.middleware(
-                            (ct) => handler(payload, headersElement, ct),
+                            (ct) => handler.Invoke(payload, channelUtf8, headersElement, args.Message, ct),
                             cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await handler(payload, headersElement, cancellationToken).ConfigureAwait(false);
+                        await handler.Invoke(payload, channelUtf8, headersElement, args.Message, cancellationToken).ConfigureAwait(false);
                     }
 
                     await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);

@@ -46,6 +46,37 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
+
+        MessageContext messageContext = default;
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("{\"source\":\"test\"}"u8.ToArray());
+        await s_publisher.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("ws/test/context", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         ReadOnlyMemory<byte> channel = "ws/test/roundtrip"u8.ToArray();

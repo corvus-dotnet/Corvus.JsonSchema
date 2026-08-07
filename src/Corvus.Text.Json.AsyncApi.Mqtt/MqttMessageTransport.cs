@@ -34,7 +34,7 @@ namespace Corvus.Text.Json.AsyncApi.Mqtt;
 /// the publish completes.
 /// </para>
 /// </remarks>
-public sealed class MqttMessageTransport : IMessageTransport
+public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -152,7 +152,20 @@ public sealed class MqttMessageTransport : IMessageTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -377,7 +390,7 @@ public sealed class MqttMessageTransport : IMessageTransport
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -544,7 +557,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         MqttApplicationMessage message,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
@@ -636,11 +649,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 {
                     if (this.middleware is not null)
                     {
-                        await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                        await this.middleware((ct) => handler.Invoke(payload, channelUtf8, headers, message, ct), cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                        await handler.Invoke(payload, channelUtf8, headers, message, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

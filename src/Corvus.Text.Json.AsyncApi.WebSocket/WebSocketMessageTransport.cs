@@ -27,7 +27,7 @@ namespace Corvus.Text.Json.AsyncApi.WebSocket;
 /// envelope's <c>channel</c> field and dispatching to the appropriate handler.
 /// </para>
 /// </remarks>
-public sealed class WebSocketMessageTransport : IMessageTransport
+public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -40,6 +40,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> contextHandlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>> replyHandlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
@@ -88,6 +89,22 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         // Build and rent envelope bytes so they survive the async send
         (byte[] rented, int length) = BuildPublishEnvelopeRented(channel, in payload, in headers, correlationId: null);
 
+        return SendAndReturnAsync(rented, length, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        this.contextHandlers[channel] = (payload, headers, ct) => this.DispatchToContextHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
+        this.options.Heartbeat?.Start(channel, "websocket");
+        (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
         return SendAndReturnAsync(rented, length, cancellationToken);
     }
 
@@ -325,6 +342,12 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             }
 
             if (payload.ValueKind != JsonValueKind.Undefined &&
+                this.contextHandlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? contextHandler))
+            {
+                this.options.Heartbeat?.Tick(channel, "websocket");
+                await contextHandler(payload, headers, cancellationToken).ConfigureAwait(false);
+            }
+            else if (payload.ValueKind != JsonValueKind.Undefined &&
                 this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? handler))
             {
                 this.options.Heartbeat?.Tick(channel, "websocket");
@@ -418,6 +441,43 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             {
                 AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
             }
+        }
+    }
+
+    private async ValueTask DispatchToContextHandlerAsync<TPayload>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        JsonElement payload,
+        JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        try
+        {
+            TPayload typedPayload = JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload);
+            MessageDeliveryContext context = new()
+            {
+                ChannelUtf8 = channelUtf8,
+                Headers = headers,
+                NativeMessage = null,
+            };
+            if (this.middleware is not null)
+            {
+                await this.middleware((ct) => handler(typedPayload, context, ct), cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await handler(typedPayload, context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            MessageErrorContext errorContext = new(channelUtf8, MessageErrorKind.Handler, payload, headers);
+            await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
         }
     }
 
