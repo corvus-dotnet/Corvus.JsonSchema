@@ -69,8 +69,13 @@ internal sealed class ArazzoGenerateCommand : AsyncCommand<ArazzoGenerateSetting
         try
         {
             var digests = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            // This is the developer-tool case, so it retrieves: the operator pointed the CLI at a document tree and
+            // expects its local files and remote sources to resolve, and the lock file re-resolves each of them to
+            // detect drift. A host compiling a document that arrived over an API must not do this, which is why the
+            // resolution is stated here rather than inherited.
             IReadOnlyList<string> written = await ArazzoGenerationDriver
-                .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, settings.Durable, cancellationToken, progress: m => AnsiConsole.WriteLine(m), resolvedSourceDigests: digests)
+                .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, settings.Durable, cancellationToken, progress: m => AnsiConsole.WriteLine(m), resolvedSourceDigests: digests, resolution: ArazzoDocumentResolution.Retrieved)
                 .ConfigureAwait(false);
 
             foreach (string path in written)

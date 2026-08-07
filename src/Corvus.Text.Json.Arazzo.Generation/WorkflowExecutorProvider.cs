@@ -268,9 +268,17 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             Directory.CreateDirectory(outputPath);
 
             this.progress?.Invoke($"Generating executor for '{workflowId}'...");
+
+            // Registry-only, stated rather than inherited from the default. Every document this package may legitimately
+            // reach is registered above, and a package that is not self-contained has already been skipped, so a
+            // reference the registry does not satisfy is a reference out of the package. Resolving one would make the
+            // control plane fetch, on the package author's behalf, whatever URI they wrote — a local file, a mounted
+            // secret, or a cloud instance-metadata endpoint. Naming the policy here means a later change to the default
+            // cannot quietly reopen that on the one path where the input is attacker-authored.
             ArazzoGenerationDriver.GenerateAsync(
                 retrievalUri, RootNamespace, outputPath, clientName: null, this.durable,
-                CancellationToken.None, registered, this.progress, schemaDocuments)
+                CancellationToken.None, registered, this.progress, schemaDocuments,
+                resolution: ArazzoDocumentResolution.RegisteredOnly)
                 .GetAwaiter().GetResult();
 
             var generatedCode = new List<GeneratedCodeFile>();

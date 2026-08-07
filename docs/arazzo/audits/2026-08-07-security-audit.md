@@ -122,10 +122,47 @@ item you cannot see directly in the code.
   that exempts release from quota metering. A test pins this so it is not "fixed" later.
 
 ### P0-3 · DIV · `TB-1` · `$ref` loader reaches `file://` and `http://` inside the control plane
+
+> **Resolved.** The finding held on verification, and the preferred option was confirmed lossless rather
+> than assumed. See the threat model's [findings ledger](../reference/threat-model.md#12-findings-ledger)
+> (H2). The two options turned out not to be alternatives — see *One option per caller* below.
+
 - **Where:** `ArazzoGenerationDriver.cs:353-376`, via `OpenApiSourceGenerator.cs:86` and `ExternalReferenceResolver.cs:411-465`
 - **Divergence:** the in-memory package registry is the intended source. It is implemented as a *shortcut* with fall-through to `File.ReadAllBytes(uri.LocalPath)` and a bare `new HttpClient().GetByteArrayAsync(uri)`, with no scheme allowlist, host or private-range fencing, size limit or redirect policy, and a 100 second sync-over-async block. It runs in the control-plane process at catalog-add on an attacker-supplied package. ADR 0052's deferral of SSRF fencing covers the *source fetch* surface, not this loader.
 - **Impact:** `UO-7`, `UO-5`. A `$self` of `http://169.254.169.254/…` retrieves the control plane's instance credentials, and `file:///etc/` reads local files and mounted secrets. Content surfaces through generated models and `buildError`.
 - **Acceptance criteria:** restrict to the registry, which is preferred because packages are self-contained per `WorkflowExecutorProvider.cs:222-249`, or add a scheme allowlist, private-range and rebinding fencing, a size cap and a redirect policy. Test that a `$ref` naming a non-registry URI fails closed.
+- **One option per caller, not two alternatives.** The loader has exactly two entry points and they want
+  opposite things. `WorkflowExecutorProvider` registers the Arazzo document, every declared
+  `sourceDescription` and every extra schema document in memory, and *already refuses* packages that are
+  not self-contained (an `arazzo`-type cross-document source is skipped as "not self-contained", and a
+  declared source missing from the package is skipped). So on that path everything legitimately
+  resolvable is registered, and any fall-through is by construction reaching outside the package:
+  registry-only is lossless there, verified rather than assumed. `ArazzoGenerateCommand` (the CLI) is the
+  other entry point, and local **and remote** resolution is load-bearing for it — `ArazzoLockFile` records
+  each resolved source's digest and re-resolves them to decide whether a regeneration can be skipped
+  (#871). Applying "restrict to the registry" globally would have broken that.
+- **The class defect was that policy was implicit.** Passing `registeredDocuments` only ever *added*
+  sources; it never restricted them, so any embedder calling `GenerateAsync` with in-memory documents
+  silently inherited file and `http(s)` reach. The fix is an explicit `ArazzoDocumentResolution` stated
+  per caller, with `RegisteredOnly = 0` so `default` is the closed value and forgetting fails closed with
+  a build error naming the unresolvable reference. That is deliberately the inverse of the P0-5 trap,
+  where `default(struct)` zeroes the limits and switches the control off; a test asserts the zero value is
+  named `RegisteredOnly` so a later reordering of the members cannot invert it. The control-plane call
+  site names the policy explicitly as well as relying on the default, because a safe default protects
+  callers that do not exist yet while an explicit statement protects this one from the default changing.
+- **A test that asserted the outcome instead of the behaviour.** The first version of the network test
+  asserted only that the loader returned `null` for a metadata address. It **passed with the fix
+  reverted**, because a loader that does attempt the fetch also returns `null` once the request fails —
+  betrayed only by the 100 seconds it spent blocked in the sync-over-async call. It now asserts that no
+  connection is opened, observed by a loopback listener, and fails in both directions as intended. Worth
+  generalising alongside the P0-2 note: an assertion is only evidence if the defect and the fix produce
+  *different observables*.
+- **Raised separately, not folded in.** After this change the retrieval path is reachable only from the
+  CLI, where it still uses a bare `new HttpClient()` with auto-redirect on, no scheme allowlist, no size
+  cap and a 100 second sync-over-async block. That is out of this finding's scope (which is the
+  control-plane process) and cannot simply be deleted because of #871, but it is the same shape one host
+  removed, against a CI runner that often carries cloud identity. `SourceDocumentFetcher` already
+  implements redirect-safe, origin-checked fetching and is the port-don't-rebuild candidate.
 
 ### P0-4 · DIV · `TB-1` · Three codegen sites bypass the escaping convention
 - **Where:** `WorkflowExecutorEmitter.cs:1326, 1328, 1333`; correct usage at `:1433`; helper at `EmitText.cs:21-53`

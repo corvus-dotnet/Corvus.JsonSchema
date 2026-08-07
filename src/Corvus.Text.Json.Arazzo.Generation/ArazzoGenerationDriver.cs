@@ -33,9 +33,11 @@ public static class ArazzoGenerationDriver
     /// Documents the caller has already loaded (the Arazzo document and/or any of its OpenAPI/AsyncAPI
     /// sources), keyed by the absolute URI they should resolve as. A <c>sourceDescriptions[].url</c> (or
     /// the Arazzo document itself) that resolves to a registered URI is taken from memory instead of the
-    /// file system — so source documents may come from anywhere. Unregistered references fall back to the
-    /// file system (and <c>http(s)</c>). <see langword="null"/> or empty means file-system loading only.
+    /// file system — so source documents may come from anywhere.
     /// </param>
+    /// <param name="resolution">What the loader may reach for a reference the registered documents do not satisfy.
+    /// Defaults to <see cref="ArazzoDocumentResolution.RegisteredOnly"/>, which fails closed: a host compiling a
+    /// document that arrived over an API must not be made to fetch whatever that document names.</param>
     /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static Task<IReadOnlyList<string>> GenerateAsync(
@@ -47,7 +49,8 @@ public static class ArazzoGenerationDriver
         CancellationToken cancellationToken,
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
         Action<string>? progress = null,
-        IDictionary<string, string>? resolvedSourceDigests = null)
+        IDictionary<string, string>? resolvedSourceDigests = null,
+        ArazzoDocumentResolution resolution = ArazzoDocumentResolution.RegisteredOnly)
     {
         ArgumentException.ThrowIfNullOrEmpty(arazzoFilePath);
 
@@ -55,7 +58,7 @@ public static class ArazzoGenerationDriver
         // file URI of its full path (so a registered in-memory copy under the same URI is preferred).
         return GenerateAsync(
             new Uri(Path.GetFullPath(arazzoFilePath)), rootNamespace, outputPath, clientName, durable,
-            cancellationToken, registeredDocuments, progress, resolvedSourceDigests: resolvedSourceDigests);
+            cancellationToken, registeredDocuments, progress, resolvedSourceDigests: resolvedSourceDigests, resolution: resolution);
     }
 
     /// <summary>
@@ -64,7 +67,21 @@ public static class ArazzoGenerationDriver
     /// whether a regeneration can be skipped (#871).
     /// </summary>
     /// <returns>A loader mapping an absolute URI to the document bytes, or <see langword="null"/> if it cannot be loaded.</returns>
-    public static Func<Uri, byte[]?> CreateFileSystemDocumentLoader() => BuildDocumentLoader(null);
+    /// <remarks>This is the developer-tool loader: it retrieves whatever its operator pointed it at. A host compiling a
+    /// document that arrived over an API wants <see cref="CreateDocumentLoader"/> with
+    /// <see cref="ArazzoDocumentResolution.RegisteredOnly"/> instead.</remarks>
+    public static Func<Uri, byte[]?> CreateFileSystemDocumentLoader()
+        => BuildDocumentLoader(null, ArazzoDocumentResolution.Retrieved);
+
+    /// <summary>
+    /// Builds the document loader the generation pipeline resolves every document through, stating what it may reach
+    /// for a reference the registered documents do not satisfy.
+    /// </summary>
+    /// <param name="registeredDocuments">Documents already in memory, keyed by the absolute URI they resolve as.</param>
+    /// <param name="resolution">What to do with a reference none of them satisfies.</param>
+    /// <returns>A loader mapping an absolute URI to the document bytes, or <see langword="null"/> if it cannot be loaded.</returns>
+    public static Func<Uri, byte[]?> CreateDocumentLoader(IReadOnlyList<RegisteredDocument>? registeredDocuments, ArazzoDocumentResolution resolution)
+        => BuildDocumentLoader(registeredDocuments, resolution);
 
     /// <summary>
     /// Generates an Arazzo document's workflows (and the OpenAPI clients/models its sources reference) where
@@ -89,6 +106,10 @@ public static class ArazzoGenerationDriver
     /// each of its OpenAPI/AsyncAPI/Arazzo sources) is recorded here as <c>absolute-uri → lowercase-hex SHA-256</c> of the
     /// exact bytes loaded. The CLI writes these into the Arazzo lock file so a regeneration is reproducible and can be
     /// skipped when no source has changed (#871).</param>
+    /// <param name="resolution">What the loader may reach for a reference the registered documents do not satisfy.
+    /// Defaults to <see cref="ArazzoDocumentResolution.RegisteredOnly"/>, which is what in-memory generation of a
+    /// self-contained package wants: every document it may legitimately reach is already registered, so anything else
+    /// is a reference out of the package and is refused rather than fetched.</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
         Uri arazzoRetrievalUri,
@@ -100,14 +121,15 @@ public static class ArazzoGenerationDriver
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
         Action<string>? progress = null,
         IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null,
-        IDictionary<string, string>? resolvedSourceDigests = null)
+        IDictionary<string, string>? resolvedSourceDigests = null,
+        ArazzoDocumentResolution resolution = ArazzoDocumentResolution.RegisteredOnly)
     {
         ArgumentNullException.ThrowIfNull(arazzoRetrievalUri);
 
         // Record the digest of every document the loader resolves (the single choke point every source flows through), so
         // the lock file can pin each source and a regeneration can detect drift (#871). Absent the capture map, the raw
         // loader is used unchanged (no per-load work).
-        Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments);
+        Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments, resolution);
         if (resolvedSourceDigests is not null)
         {
             Func<Uri, byte[]?> inner = documentLoader;
@@ -315,7 +337,7 @@ public static class ArazzoGenerationDriver
     /// (in-memory) documents — by their registration URI, then by their declared <c>$self</c> identity
     /// (Arazzo §5.5.2) — then the local file system (YAML auto-converted), then <c>http(s)</c>.
     /// </summary>
-    private static Func<Uri, byte[]?> BuildDocumentLoader(IReadOnlyList<RegisteredDocument>? registeredDocuments)
+    private static Func<Uri, byte[]?> BuildDocumentLoader(IReadOnlyList<RegisteredDocument>? registeredDocuments, ArazzoDocumentResolution resolution)
     {
         Dictionary<string, byte[]>? registry = null;
 
@@ -348,6 +370,16 @@ public static class ArazzoGenerationDriver
             if (bySelf is not null && bySelf.TryGetValue(uri.AbsoluteUri, out byte[]? byIdentity))
             {
                 return byIdentity;
+            }
+
+            // Everything below leaves the caller's own document set. A caller that assembled that set itself has said
+            // so, and a reference it does not satisfy is a reference outside the package: resolving it would make this
+            // process fetch, on the document author's behalf, whatever the URI names — a local file, a mounted secret,
+            // or a cloud instance-metadata endpoint. Returning nothing here is what turns that into a build error
+            // naming the unresolvable reference.
+            if (resolution == ArazzoDocumentResolution.RegisteredOnly)
+            {
+                return null;
             }
 
             if (uri.IsFile)

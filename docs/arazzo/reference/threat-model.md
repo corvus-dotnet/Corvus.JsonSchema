@@ -181,7 +181,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
 | Code injection into the generated executor | **Partial**. `EmitText.Quote` at every emission site but three | Prevention on the shipped path rests on an incidental property of the emitted text, not a control | H3 |
-| SSRF and local file read via `$ref` resolution | **Absent**. No scheme allowlist, host fencing, size or redirect policy | Cloud instance credentials and local secrets readable at catalog-add | H2 |
+| SSRF and local file read via `$ref` resolution | **Holds** at catalog-add. The loader resolves registered documents only, so a reference out of the package is refused rather than retrieved, and the policy is named at the call site rather than defaulted into | The developer CLI still retrieves, by design, and its retrieval is unfenced. That is a different host and a different trust position, tracked separately | H2 |
 | Resource exhaustion via YAML alias expansion | **Absent**. Limits declared, never read | Roughly 300 bytes expands to gigabytes on any fetched source | H6 |
 | Deserialization gadget chains | **Holds**. Tags collapse to a closed enum, no type-directed deserialization, output is always a JSON DOM | None. There is no gadget surface | |
 | Deep-nesting stack exhaustion | **Holds**. Canonical depth bound 64, non-overflow recursion, YAML depth 64 | None found | |
@@ -320,6 +320,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Client-side `Retry-After` clamp, 10s single, 30s total, 4 attempts | Holds | `RunnerQuotaHoldOptions.cs:79-110` |
 | Executor never names a URL, source name bound by the host | Holds | `TransportSelection.cs:14-33`, `AotHostAppAssembler.cs:34-56` |
 | Runtime expressions are a fixed prefix table plus JSON Pointer, unrecognised forms degrade to literal | Holds | `ArazzoExpression.cs:89-257` |
+| Document resolution is a stated policy per caller, closed by default, registry-only where the input is attacker-authored | Holds | `ArazzoDocumentResolution.cs`, `WorkflowExecutorProvider.cs` |
 | Uniform 1s regex timeouts on every criterion and JSONPath | Holds | `RegexCriterionInliner.cs:121`, `CompiledCriterion.cs:108-249` |
 | Canonicalisation, ordinal sort, duplicate-key rejection, lone surrogates throw, depth 64 | Holds | `JsonCanonicalizer.cs:122-125, 195-201, 424-439` |
 | Closed signature-algorithm switch, trust root from operator config, verifier required on build and deploy | Holds | `TrustStoreExecutorPackageVerifier.cs:38-66`, `WorkflowAotBuildService.cs:36` |
@@ -429,9 +430,9 @@ detection, CON containment, REC recovery.
 | UO-2 state forgery | H39, H9 | NONE | NONE | PART | WEAK | **One.** Only the monotonic sequence, which a preceding read reveals, and which H40 shows validates a client-authored number |
 | UO-3 privilege escalation | H10 | WEAK | WEAK | PART | NONE | **One, aligned.** Four holes on one path: no reach on `security:*`, guard checks wrong verbs, ceiling pinned by a definable name, revocation does not propagate |
 | UO-4 code execution | H3, H16 | PART | WEAK | NONE | WEAK | **One, accidental.** Prevention rests on an incidental property of emitted text, with no sandbox behind it on the default backend |
-| UO-5 credential theft | H4, H2 | NONE | NONE | WEAK | WEAK | **Zero.** No destination validation, no egress control, no resolution audit, secrets in unscrubbable strings |
+| UO-5 credential theft | H4 | NONE | NONE | WEAK | WEAK | **Zero.** No destination validation, no egress control, no resolution audit, secrets in unscrubbable strings. Closing H2 removed the catalog-add route to a mounted secret, not the credential-binding route |
 | UO-6 supply chain | H13, H16 | GOOD | WEAK | PART | PART | **Three.** The strongest chain here. Its weakness is that it signs whatever the generator emitted |
-| UO-7 SSRF | H2 | NONE | NONE | NONE | NONE | **Zero.** Delegated to deployment egress controls the code cannot verify exist |
+| UO-7 SSRF | H15, ASU-3 | PART | NONE | NONE | NONE | **Zero at run time, one at catalog-add.** Closing H2 removed the control plane's own `$ref` fetch, which was the one path the platform could fence in code. What remains is a workflow step's outbound call and the source fetch, both delegated to deployment egress controls the code cannot verify exist |
 | UO-8 denial of service | H14, H6 | NONE | PART | WEAK | WEAK | **One.** Runner quotas, designed for a different threat, shape but never terminate the loop |
 | UO-9 integrity loss | H8, anchor is phase B | NONE | NONE | NONE | NONE | **Zero until phase B, accepted.** The divergence to close first is the epoch, fielded and contract-published but never compared, so phase B would inherit it |
 | UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is good but change-blind, tenant-less and non-durable |
@@ -493,7 +494,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | ID | Sev | Class | Finding | Boundary | Status |
 |----|-----|-------|---------|----------|--------|
 | H1 | Crit | DIV | Checkpoint endpoint has no scope, reach check, lease or audit. The ADR 0062 token primitive is implemented and sound but never passed | TB-2 | **Closed** |
-| H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | Open |
+| H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | **Closed** |
 | H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | Open |
 | H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
 | H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | **Closed** |
@@ -580,7 +581,7 @@ each divergence into the layer meant to close it, where it is considerably more 
 |---|--------|--------|--------|
 | 1 | Require the checkpoint token on the surface, serve no surface without a secret to validate it, and share one coordinator instance | H1 | **Done** |
 | 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 | **Done** |
-| 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | Open |
+| 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | **Done** |
 | 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | Open |
 | 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | Open |
 | 6 | Remove both reintroduced security-mode defaults | Posture | Open |
