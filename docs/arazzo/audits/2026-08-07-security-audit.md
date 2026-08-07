@@ -242,9 +242,42 @@ item you cannot see directly in the code.
   sibling-paths pattern this audit keeps finding.
 
 ### P0-6 · DIV · `TB-2` · `ControlPlaneSecurityMode` has a default in two places
+
+> **Resolved, and it was three places rather than two.** The sweep this item calls for also surfaced a
+> separate and more serious permissive default outside the security-mode type: see *What the sweep
+> found* below. Threat model [§7.2](../reference/threat-model.md#7-control-inventory).
 - **Where:** `ArazzoControlPlaneEnvironmentsHandler.cs:85`, whose parameter defaults to `Open`; `samples/.../Program.cs:412`, whose config binding defaults to `false`
 - **Divergence:** ADR 0016 exists specifically to eliminate insecure-by-omission and states there is no default. Two places reintroduce one. The handler default is latent because the single production call site passes it explicitly, but a second caller omitting it makes ADR 0065's tenancy gate return `Admitted` unconditionally.
 - **Acceptance criteria:** remove the parameter default; make the host config binding required with no fallback, failing startup when absent.
+- **A third site in the same file.** `ArazzoControlPlaneEnvironmentsHandler` also has a *public*
+  constructor documented as building an unscoped handler, which chained into the internal one and
+  inherited the default silently. Its behaviour is correct — System reach is what it exists for — but the
+  posture was implicit at a public API boundary, so it now names `Open` explicitly.
+- **`= default` would have been an inert fix.** The first attempt at "remove the parameter default"
+  replaced `= ControlPlaneSecurityMode.Open` with `= default`. `Open` is the enum's **zero value**, so
+  that changes nothing, builds green, and reads as a fix in the diff. For a security posture there is no
+  safe default value, only a required choice: the parameter is now leading and required. Compare P0-3,
+  where the zero value was *chosen* to be the closed one, and P0-5, where zero meant "off" and had to be
+  reinterpreted at the point of use. Same language feature, three different correct answers.
+- **The demo binds explicitly rather than defaulting.** `GetValue("...", false)` became a required read
+  that throws when unset, with an `appsettings.json` stating `false` for the standalone demo. The
+  behaviour is unchanged for both topologies; what changed is that a lost environment variable or a
+  mistyped key now fails startup instead of silently serving the control plane unauthenticated.
+- **What the sweep found, which is not a security-mode default at all.**
+  `Corvus.Text.Json.Validator.JsonSchema.Options` defaults `allowFileSystemAndHttpResolution` to
+  **true**, and nothing in `src/` or `samples/` sets it. `ArazzoControlPlaneCatalogHandler` compiles a
+  schema built from the workflow's own inputs schema — copied **verbatim** out of the tenant's package by
+  `WriteValidationWrapper`'s `subSchema.WriteTo` — through that default, which registers a
+  `FileSystemDocumentResolver` and an `HttpClientDocumentResolver`. So an authored `$ref` of
+  `file:///…` or `http://169.254.169.254/…` is fetched by the control plane at run-start validation.
+  That is H2's impact on a path P0-3 did not touch: P0-3 fixed the Arazzo *document* loader in one
+  assembly, and this is the JSON Schema *document resolver* in another, reached from the same upload.
+  All three control-plane compilation sites are now confined. Fixed in its own commit, with tests that
+  pin the mechanism in both directions.
+- **One of those sites was also an availability dependency.** `InputsMetaSchema` compiles a literal
+  `$ref` to `https://json-schema.org/…`. The built-in metaschema resolver is registered first and so
+  answers it today, but nothing guaranteed that ordering — leaving the HTTP resolver registered put a
+  live fetch of a third-party CDN one resolver-ordering change away from every host's startup path.
 
 ### P0-7 · DIV · `TB-5` · Checkpoint save is a blind write of the reach-critical index
 - **Where:** `ArazzoRunnerCheckpointsHandler.cs:138, 143`; `WorkflowCheckpointCoordinator.cs:142`; `PostgresWorkflowStateStore.cs:166-172, 184-208`; `InMemoryWorkflowStateStore.cs:59`

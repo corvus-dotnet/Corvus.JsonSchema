@@ -181,6 +181,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
 | Code injection into the generated executor | **Holds**. Every emission site routes an authored identifier through `EmitText`: `Quote` for a literal, `XmlDocText` for a doc comment | The escaping is the whole control. No identifier charset is enforced at the API ingress, so the generator is what has to be right | H3 |
+| SSRF and local file read via schema `$ref` resolution | **Holds**. The JSON Schema compiler is confined to supplied documents wherever the control plane compiles, which is the sibling of the loader below and was reached from the same uploaded package | The library default remains permissive, so a future call site that does not confine reopens it | H2 |
 | SSRF and local file read via `$ref` resolution | **Holds** at catalog-add. The loader resolves registered documents only, so a reference out of the package is refused rather than retrieved, and the policy is named at the call site rather than defaulted into | The developer CLI still retrieves, by design, and its retrieval is unfenced. That is a different host and a different trust position, tracked separately | H2 |
 | Resource exhaustion via YAML alias expansion | **Holds**. Both limits enforced at the single point every expansion passes through, with an unset value resolving to the documented default | The size bound is on expanded bytes, which is what the growth consumes; a document under the bound still costs what it declares | H6 |
 | Deserialization gadget chains | **Holds**. Tags collapse to a closed enum, no type-directed deserialization, output is always a JSON DOM | None. There is no gadget surface | |
@@ -311,6 +312,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Environment key registration proves possession, one pinned algorithm, freshness before signature, identifier bounds, length-framed tuple | Holds | `EnvironmentKeyPossession.cs:54+` |
 | Deny-by-default reach, empty rule set admits nothing, untagged row invisible, unranked comparison denies, policy starts denying | Holds | `SecurityFilter.cs:56-105`, `PersistentRowSecurityPolicy.cs:37` |
 | One security-rule AST walk, backends supply fragments only, every value bound | Holds | `ISecurityRuleSqlEmitter.cs`, `SqlSecurityRuleEmitter.cs:56` |
+| Schema compilation confined to supplied documents on every control-plane path, so an authored `$ref` is refused rather than fetched | Holds | `ArazzoControlPlaneCatalogHandler.cs`, `ArazzoControlPlaneWorkspaceHandler.cs` |
 | Reserved `sys:` keyspace refused independently of the policy | Holds | `ControlPlaneRowSecurity.cs:386-395` |
 | Wildcard binding cannot confer unrestricted reach | Holds | `PersistentRowSecurityPolicy.cs:126, 362-366` |
 | Machine principal from the token only, lease ownership derived server-side | Holds | `RunnerPrincipalAccessor.cs:47-62`, `MachinePrincipal.cs:52-65` |
@@ -343,7 +345,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Repeated adversarial design review with residues published | Holds | Ten rounds in ADR 0065, two defects surfaced only when the spec was made executable |
 | API-first, endpoint scopes generated from the contract | Holds | An endpoint cannot ship without a declared scope |
 | Warning-free build, warnings as errors everywhere | Holds | Catches correctness, not security classes |
-| Explicit security posture with no default ([ADR 0016](../adr/0016-control-plane-security-mode.md)) | Partial | The enum is as designed, but a host config binding and a handler parameter reintroduce a default |
+| Explicit security posture with no default ([ADR 0016](../adr/0016-control-plane-security-mode.md)) | Holds | The posture is a required leading parameter, the public unscoped overload names its own, and the demo's binding fails startup when unset. `Open` is the enum's zero value, so no parameter default could have been safe |
 | Shared store-conformance suite | Partial | Asserts the functional contract, not reach pushdown, which is why H12 passes it |
 | Static analysis | Absent | No SAST in any workflow |
 | Dependency vulnerability scanning | Absent | No NuGet audit, no vulnerable-package check, no npm audit |

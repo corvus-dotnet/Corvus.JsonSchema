@@ -2141,9 +2141,15 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// <summary>The JSON Schema 2020-12 meta-schema, compiled once — validates the CONTENT of embedded inputs
     /// schemas (pass 4). The meta-schema ships embedded and auto-resolves through the validator's cache.</summary>
     private static readonly Lazy<ValidatorSchema> InputsMetaSchema = new(() =>
-        ValidatorSchema.FromText("{\"$ref\":\"https://json-schema.org/draft/2020-12/schema\"}", "corvus:meta/inputs-2020-12"));
+        ValidatorSchema.FromText("{\"$ref\":\"https://json-schema.org/draft/2020-12/schema\"}", "corvus:meta/inputs-2020-12", ConfinedSchemaResolution));
 
     /// <summary>The embedded Arazzo meta-schemas, compiled once and picked by the document's declared <c>arazzo</c> version.</summary>
+    // Schema compilation is confined to the documents supplied to it. These two schemas are the platform's own, so the
+    // reference that matters is the one to the JSON Schema metaschema — and that resolves from the built-in metaschema
+    // resolver, which is registered whatever this setting says. Left on the default, compiling them would instead put a
+    // live fetch of json-schema.org on the startup path of every host.
+    private static readonly ValidatorSchema.Options ConfinedSchemaResolution = new(allowFileSystemAndHttpResolution: false);
+
     private static class ArazzoMetaSchema
     {
         private static readonly Lazy<ValidatorSchema> Arazzo10 = new(() => Load("Arazzo10", "https://spec.openapis.org/arazzo/1.0/schema/embedded"));
@@ -2166,7 +2172,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             using Stream stream = typeof(ArazzoMetaSchema).Assembly.GetManifestResourceStream($"Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.{name}.json")
                 ?? throw ServerThrowHelper.GetMetaSchemaMissingException(name);
             using var reader = new StreamReader(stream, Encoding.UTF8);
-            return ValidatorSchema.FromText(reader.ReadToEnd(), canonicalUri);
+            return ValidatorSchema.FromText(reader.ReadToEnd(), canonicalUri, ConfinedSchemaResolution);
         }
     }
 

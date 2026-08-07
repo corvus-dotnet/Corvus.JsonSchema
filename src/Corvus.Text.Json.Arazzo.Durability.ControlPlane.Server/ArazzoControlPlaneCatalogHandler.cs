@@ -682,6 +682,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         Resolved,
     }
 
+    // One instance: the options carry no per-schema state, and building them per compilation would allocate a resolver
+    // set per call on a path that already caches its compiled schemas.
+    private static readonly ValidatorSchema.Options ConfinedSchemaResolution = new(allowFileSystemAndHttpResolution: false);
+
     private static (bool Valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> Errors) Validate(ValidatorSchema schema, in Corvus.Text.Json.JsonElement value)
     {
         using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -723,7 +727,16 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             return (SchemaResolution.SchemaMissing, default!);
         }
 
-        ValidatorSchema schema = ValidatorSchema.FromText(Encoding.UTF8.GetString(schemaDocument), "corvus:catalog/" + cacheKey);
+        // Confined to the documents supplied here. The schema being compiled is built from the workflow's OWN inputs
+        // schema, copied verbatim out of the tenant's package, so a $ref in it is a URI the package author chose. Left
+        // on the default, JsonSchema.Options registers a file-system and an HTTP document resolver, and that $ref
+        // becomes a local file read or a request to anything this process can reach — the same shape as the Arazzo
+        // document loader's, one assembly over. Metaschema resolution is registered independently of this flag, so
+        // confining it costs nothing a well-formed schema needs.
+        ValidatorSchema schema = ValidatorSchema.FromText(
+            Encoding.UTF8.GetString(schemaDocument),
+            "corvus:catalog/" + cacheKey,
+            ConfinedSchemaResolution);
         if (SchemaCache.Count >= MaxCachedSchemas)
         {
             SchemaCache.Clear();
