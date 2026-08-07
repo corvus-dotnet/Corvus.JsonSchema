@@ -242,7 +242,7 @@ public static class ControlPlaneEndpointExtensions
         // lifecycle, and the environments handler consults it (with the runner registry) to fence an isolation-floor raise
         // (ADR 0058) — refusing to raise an environment's requiredIsolation while an under-isolated runner stays authorized.
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore, securityMode: securityMode);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore);
 
         // The kit surfaces that key token custody by principal read the authenticated principal through the
         // accessor in the modes whose access binding carries none (ScopesOnly).

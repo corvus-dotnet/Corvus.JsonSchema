@@ -70,11 +70,18 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="administration">The environment-administration governance service.</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
     public ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, string actor = "control-plane")
-        : this(store, administration, new ControlPlaneAccess(), null, actor)
+        : this(ControlPlaneSecurityMode.Open, store, administration, new ControlPlaneAccess(), null, actor)
     {
+        // Open is stated here rather than inherited from a parameter default. This overload exists to build a handler
+        // that runs every request with System reach, which IS the Open posture, so naming it is what makes the choice
+        // legible at the one place that makes it — and stops a reader assuming a scoped default they are not getting.
     }
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneEnvironmentsHandler"/> class.</summary>
+    /// <param name="securityMode">The deployment's security posture. Required and leading, with no default: ADR 0016
+    /// exists to remove insecure-by-omission, and a parameter default here reintroduced one — silently, because
+    /// <see cref="ControlPlaneSecurityMode.Open"/> is the enum's zero value, so even <c>= default</c> would have been
+    /// the unauthenticated posture.</param>
     /// <param name="store">The persistent environment store the data-plane endpoints delegate to.</param>
     /// <param name="administration">The environment-administration governance service (current-administrator gating).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request, the internal tags stamped onto
@@ -82,7 +89,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ControlPlaneSecurityMode securityMode = ControlPlaneSecurityMode.Open)
+    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);

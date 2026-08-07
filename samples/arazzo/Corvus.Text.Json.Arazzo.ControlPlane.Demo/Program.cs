@@ -409,7 +409,12 @@ Func<ClaimsPrincipal, AccessRequest, bool> eligibleForSelfElevation =
 // The BFF session cookie name, shared by the cookie config and the library anti-forgery check (§16.3).
 const string SessionCookieName = "arazzo.session";
 
-bool requireAuthorization = builder.Configuration.GetValue("ControlPlane:RequireAuthorization", false);
+// Stated, never defaulted. ADR 0016 exists to remove insecure-by-omission, and a posture that falls back to "off" when
+// the setting is missing is the same defect one layer out: a typo in the key name, or a compose file that lost the
+// variable, silently serves the whole control plane unauthenticated. Absent configuration is a startup failure.
+bool requireAuthorization = builder.Configuration.GetValue<bool?>("ControlPlane:RequireAuthorization")
+    ?? throw new InvalidOperationException(
+        "ControlPlane:RequireAuthorization must be set explicitly to true or false. There is no default: it decides whether this host authenticates anyone at all (ADR 0016).");
 if (requireAuthorization)
 {
     // Three ways in (§16.3): browser users via the BFF (interactive OIDC → an HttpOnly cookie session); API
