@@ -75,6 +75,15 @@ public static class ControlPlaneEndpointExtensions
     /// when omitted. The stored-run limit defaults to disabled, because nothing reclaims stored runs yet.</param>
     /// <param name="runnerEnrolmentSecret">The secret runner enrolment tokens are minted and validated with (ADR 0065
     /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
+    /// <param name="checkpointSecret">The secret the serverless checkpoint surface validates run-scoped checkpoint
+    /// tokens with (ADR 0062), shared with whichever component mints them. Leave it empty to serve no checkpoint
+    /// surface at all: its caller is a baked function holding no principal, so the token is the only thing that can say
+    /// which run a callback may touch, and a surface mapped without one admits any caller the host authenticates to
+    /// every run in the deployment. It must be at least <see cref="CheckpointToken.MinimumSecretBytes"/> bytes.</param>
+    /// <param name="checkpoints">The host's checkpoint coordinator. A host that also maps the runner API must build one
+    /// and pass it to both, because ADR 0065 decision 6 requires the per-run single-flight interlock to be per run
+    /// rather than per component. When <see langword="null"/> a private one is built over
+    /// <paramref name="workflowStateStore"/>.</param>
     /// <param name="selfElevationEligibility">
     /// An optional predicate deciding whether a requester is eligible to self-elevate a request (§16.5.3); when it
     /// returns <see langword="true"/> the request is auto-approved without a human approver. Default: never eligible.
@@ -103,7 +112,9 @@ public static class ControlPlaneEndpointExtensions
         INativeBuildJobStore? nativeBuildJobStore = null,
         IWorkflowDeploymentStore? workflowDeploymentStore = null, ReadOnlyMemory<byte> runnerEnrolmentSecret = default,
         string? ownerGroupClaimType = "tenant",
-        Capacity.ControlPlaneCapacityOptions? capacityOptions = null)
+        Capacity.ControlPlaneCapacityOptions? capacityOptions = null,
+        ReadOnlyMemory<byte> checkpointSecret = default,
+        WorkflowCheckpointCoordinator? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -121,6 +132,13 @@ public static class ControlPlaneEndpointExtensions
         if ((securityMode is ControlPlaneSecurityMode.Open or ControlPlaneSecurityMode.ScopesOnly) && rowSecurity is not null)
         {
             ServerThrowHelper.ThrowRowSecurityPolicyForbidden(securityMode);
+        }
+
+        // A weak checkpoint secret is caught where it is configured rather than on the first callback that presents a
+        // token signed with it, which would be a silent downgrade of the one credential that surface has.
+        if (!checkpointSecret.IsEmpty && checkpointSecret.Length < CheckpointToken.MinimumSecretBytes)
+        {
+            ServerThrowHelper.ThrowCheckpointSecretTooShort(nameof(checkpointSecret));
         }
 
         bool gateScopes = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.ScopesOnly;
@@ -344,11 +362,20 @@ public static class ControlPlaneEndpointExtensions
         // The serverless checkpoint surface (ADR 0055): a baked, Native-AOT function advances a run out of process and
         // loads/saves its checkpoint here rather than binding a store SDK. It is not part of the generated OpenAPI
         // surface (raw octet-stream bytes + an ETag + a write-sequence header, not a JSON model), so it is hand-mapped.
-        // Present only when a state store is wired; authenticated in every mode but Open (a dedicated scope is deferred
-        // to the deploy work).
-        if (workflowStateStore is not null)
+        //
+        // It is present only when a checkpoint secret is configured, because the token IS this surface's reach gate
+        // (ADR 0062). Its caller is a machine acting for one run and holding no principal of its own, so there is no
+        // identity to derive reach from; what bounds it is a run-scoped token the dispatcher minted. Mapping it without
+        // one leaves the ambient authorization as the only gate, and that admits any authenticated caller to every run
+        // in the deployment — and admits everyone in Open. A deployment that dispatches no serverless runs configures
+        // no secret and serves no such surface, which is the ADR 0016 posture: absent rather than open.
+        if (workflowStateStore is not null && !checkpointSecret.IsEmpty)
         {
-            endpoints.MapWorkflowCheckpointEndpoints(workflowStateStore, requireAuthorization: securityMode != ControlPlaneSecurityMode.Open);
+            endpoints.MapWorkflowCheckpointEndpoints(
+                workflowStateStore,
+                requireAuthorization: securityMode != ControlPlaneSecurityMode.Open,
+                authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret.Span, token, id.Value, DateTimeOffset.UtcNow),
+                checkpoints: checkpoints);
         }
 
         return endpoints;

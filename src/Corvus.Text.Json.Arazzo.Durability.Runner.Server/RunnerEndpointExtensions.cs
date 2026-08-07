@@ -45,6 +45,11 @@ public static class RunnerEndpointExtensions
     /// <see cref="NoRunnerQuotaGuard.Instance"/> to enforce none.</param>
     /// <param name="quotaOptions">The quota settings for the default guard; defaults are used when omitted, and this is
     /// ignored when <paramref name="quotas"/> is supplied.</param>
+    /// <param name="checkpoints">The host's checkpoint coordinator. A host that also maps the serverless checkpoint
+    /// surface must build one and pass it to both: ADR 0065 decision 6 requires the per-run single-flight interlock to
+    /// be per run rather than per component, and two coordinators over one store hold one gate each, which is exactly
+    /// the shape that lets two honest components author the same run concurrently. When <see langword="null"/> a
+    /// private one is built, which is correct only for a host mapping the runner API alone.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// The host must register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>): the machine
@@ -62,7 +67,8 @@ public static class RunnerEndpointExtensions
         bool requireAuthorization = true,
         TimeProvider? timeProvider = null,
         IRunnerQuotaGuard? quotas = null,
-        RunnerQuotaOptions? quotaOptions = null)
+        RunnerQuotaOptions? quotaOptions = null,
+        WorkflowCheckpointCoordinator? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -73,7 +79,7 @@ public static class RunnerEndpointExtensions
         RunnerApiOptions resolved = options ?? new RunnerApiOptions();
         var principals = new RunnerPrincipalAccessor(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), resolved);
         var coordinator = new RunnerRunCoordinator(store, bindings, resolved, epochs, timeProvider);
-        var checkpoints = new WorkflowCheckpointCoordinator(store, timeProvider);
+        WorkflowCheckpointCoordinator checkpointCoordinator = checkpoints ?? new WorkflowCheckpointCoordinator(store, timeProvider);
         var catalogCoordinator = new RunnerCatalogCoordinator(catalog, availability, bindings, resolved);
 
         // Metering is on unless the deployment says otherwise. The alternative default leaves every deployment that did
@@ -83,7 +89,7 @@ public static class RunnerEndpointExtensions
         return endpoints.MapApiEndpoints(
             new ArazzoRunnerClaimsHandler(coordinator, principals, gate),
             new ArazzoRunnerLeasesHandler(coordinator, principals, gate),
-            new ArazzoRunnerCheckpointsHandler(checkpoints, coordinator, principals, gate, resolved),
+            new ArazzoRunnerCheckpointsHandler(checkpointCoordinator, coordinator, principals, gate, resolved),
             new ArazzoRunnerCatalogHandler(catalogCoordinator, principals, gate),
             requireAuthorization ? (in EndpointDescriptor _, IEndpointConventionBuilder builder) => Authorize(builder, requiredScope) : null);
     }

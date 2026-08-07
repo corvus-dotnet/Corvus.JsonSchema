@@ -22,7 +22,7 @@ Options considered: (a) a cloud-native identity — the function presents its ma
 - **Shape.** The token is `{expiryUnixSeconds}.{base64url(HMAC-SHA256(secret, "runId:expiry"))}` — a symmetric HMAC over the run id and an expiry. The run id is *bound by the signature but not transmitted*, because the checkpoint endpoint already knows it from the request URL. It needs no cloud identity provider, and it is **opaque to the function**, which never interprets it — it only carries it.
 - **Mint.** The runner's `ServerlessRunExecutionBackend` mints one per dispatch (an optional `checkpointTokenIssuer`) and writes it into the invocation as `checkpointToken`. When no issuer is configured, no token is carried and the surface is not token-authenticated (the existing behaviour).
 - **Present.** `ServerlessInvocationHandler` reads `checkpointToken` from the invocation and sets it as `Authorization: Bearer` on the per-invocation checkpoint client, so it rides every load and save. The token is optional, so its absence is not an error.
-- **Validate.** `MapWorkflowCheckpointEndpoints` takes an optional `authenticateCheckpointToken` delegate: `(runId, token) => CheckpointToken.TryValidate(secret, token, runId, now)`. When supplied, a request without a valid token is a `401`; validation checks the HMAC (in constant time) against the **URL's** run id and the token's expiry, so a token minted for another run does not validate on this one. It composes with — and is independent of — the ambient `requireAuthorization`.
+- **Validate.** `MapWorkflowCheckpointEndpoints` takes an `authenticateCheckpointToken` delegate: `(runId, token) => CheckpointToken.TryValidate(secret, token, runId, now)`. A request without a valid token is a `401`; validation checks the HMAC (in constant time) against the **URL's** run id and the token's expiry, so a token minted for another run does not validate on this one. It composes with — and is independent of — the ambient `requireAuthorization`. (This delegate was optional as originally shipped, which is what left the mechanism inert; it is required as of the 2026-08-07 amendment below.)
 
 The token binds the run via the URL rather than transmitting a claim, so it is the minimal credential: a valid token proves only "the runner authorised checkpoints for *this* run, until *this* time".
 
@@ -31,14 +31,14 @@ The token binds the run via the URL rather than transmitting a claim, so it is t
 - **Blast radius is one run, briefly.** A leaked token authenticates only its own run and only until it expires. It cannot be replayed against a different run (the signature is over the run id) nor after expiry.
 - **Vendor-neutral and self-contained.** Symmetric HMAC means no dependency on a cloud IdP or a JWT library, and the token validates in-endpoint with no auth-middleware registration, so the same mechanism works for any serverless vendor and for a purpose-built listener host.
 - **The function stays a dumb carrier.** It holds no signing key and interprets nothing — it copies an opaque string from the invocation to a header. Only the runner (mint) and the checkpoint surface (validate) know the secret, and in the common topology they are the same host, so the secret need not travel.
-- **Additive and backward-compatible.** Every new parameter is optional; the existing call sites (`MapArazzoControlPlane`, the demo host, the local gates) pass nothing and behave exactly as before. Turning the feature on is a host-wiring choice: configure the issuer on the backend and the authenticator on the surface with a shared secret.
+- **Turning it on is a host-wiring choice.** Configure the issuer on the backend and the authenticator on the surface with a shared secret. The authenticator was optional when this was introduced, which is what left the mechanism inert; the amendment below makes it required.
 - **It is the prerequisite for a public checkpoint listener.** With this, the checkpoint surface can be exposed to a real cloud function (or a scale-to-zero listener that stands in for the runner in a CI run-to-completion test) without being an open write endpoint. Extending the token to a run-scoped OIDC/JWT credential, or moving the shared secret into the environment's key custody (as the executor signing keys are, ADR 0059), is a later refinement this shape does not preclude.
 
 ## Security review (2026-07-29)
 
 An adversarial review confirmed the token primitive is sound: without the secret it could not be forged, cross-run-reused, timing-attacked, or made malleable. (Comparing the canonical base64url signature *text* rather than decoded bytes neutralises base64 malleability; HMAC is not length-extendable; and the signed message `{runId}:{expiry}` has a unique decomposition because the validator supplies both fields independently and the expiry is a canonical decimal, so a colon in a run id cannot forge a cross-run collision.) It surfaced the following, which shape how the mechanism must be used.
 
-- **The mechanism must be wired to have any effect.** As introduced it is capability-only: the token issuer and authenticator are optional, and the shipped call sites (the production `MapArazzoControlPlane`, the demo runner, the local gates) pass neither, so the checkpoint surface is either Open (development only, `ControlPlaneSecurityMode.Open`) or requires an ambient OIDC principal that a machine callback cannot present. **Exposing the checkpoint surface to the internet requires wiring the issuer on the backend and the authenticator on the surface with a shared secret**; until then the token authenticates nothing. This is the integration the public-listener work performs, and it is also the fix for the pre-existing open-when-`Open` posture of the demo surface.
+- **The mechanism must be wired to have any effect.** As introduced it was capability-only: the token issuer and authenticator were optional, and the shipped call sites (the production `MapArazzoControlPlane`, the demo runner, the local gates) passed neither, so the checkpoint surface was either Open (development only, `ControlPlaneSecurityMode.Open`) or required an ambient OIDC principal that a machine callback cannot present. The token authenticated nothing anywhere but the public listener. **This is now closed** — see the amendment below.
 - **Hardening applied.** `Issue`/`TryValidate` reject a secret shorter than `MinimumSecretBytes` (256 bits), so a weak key is caught at mint; the expiry must be canonical (no sign, whitespace, or leading zeros), so exactly one token string authenticates a run; and the function refuses to send a token over a non-HTTPS checkpoint URL (loopback exempt), so a bearer credential never crosses the internet in cleartext.
 - **Deployment obligations and residual risks.** The token is a bearer credential: it rides the invocation payload (keep it out of the cloud platform's invocation logs) and the callback channel (HTTPS, now enforced), and within its lifetime it can be replayed — mitigated by a short lifetime (which must still exceed a single invocation's duration, or checkpoints mid-run start failing) and, for saves, by the monotonic write-sequence that drops a replayed or stale checkpoint. The shared secret's custody, entropy source, and rotation (a key id enabling old+new during a roll) are the deploying host's responsibility; a validator-side maximum-lifetime ceiling and moving the secret into the environment's key custody (ADR 0059) are refinements this shape does not preclude.
 
@@ -54,3 +54,40 @@ The public checkpoint listener (`Corvus.Text.Json.Arazzo.ServerlessCheckpointLis
 - **Reachability proof.** Over public HTTPS the deployed listener answers `GET /health` `200`, `GET /demo/echo` `{"status":"ok"}`, a no-token checkpoint request `401`, a valid-token request `404` (the token validated and the store was queried — no checkpoint yet), and a token minted for a *different* run `401` (run-scoping holds over the internet). The valid-token `404` proves the deployed container reached the real Azure Storage account, so the surface is a genuine token-authenticated public endpoint, not an open write endpoint.
 
 The run-to-completion gates then share that listener's store: each seeds a Pending run into the same Azure Storage account, dispatches a real function with a run-scoped token and the listener as `checkpointUrl` and `echo` source, and reads the run back `Completed` from that store — the deployed worker having authenticated every checkpoint callback to the public listener, which terminated them into the shared store. Three gates prove the mechanism is vendor-neutral over the one listener: `ServerlessRealCloudCheckpointListenerTests` (a local Azure Functions runtime image), `ArmFunctionAppLiveDeployTests` (a real Flex Consumption app that also tears itself down), and `ServerlessRealCloudCheckpointListenerLambdaTests` (an AWS Lambda under LocalStack). All three were verified live against the deployed listener.
+
+
+## Amendment: the token is required, not optional (2026-08-07)
+
+A security audit against the [threat model](../reference/threat-model.md) recorded finding **H1**: this
+mechanism was implemented, sound, and applied on exactly one of five call sites. `MapArazzoControlPlane`,
+the serverless runner demo, and both local execution gates all mapped the checkpoint surface with no
+authenticator, so it fell through to the host's ambient authorization. That admits any authenticated
+caller to every run in the deployment, and in `ControlPlaneSecurityMode.Open` admits everyone. The one
+correctly wired site was the public listener, which is the pattern the audit calls a mitigation applied
+to one of two sibling paths.
+
+The capability-only shape is what allowed it. So the shape changes.
+
+- **`authenticateCheckpointToken` is a required parameter of `MapWorkflowCheckpointEndpoints`.** A host
+  cannot map this surface without deciding how a callback proves which run it may touch. That
+  forecloses the whole class rather than the four instances of it.
+- **`MapArazzoControlPlane` takes a `checkpointSecret`, and maps no checkpoint surface without one.**
+  Absent rather than open, which is the [ADR 0016](0016-control-plane-security-mode.md) posture. A
+  deployment that dispatches no out-of-process runs needs no such surface, and one that does must say
+  so by configuring the secret. A secret below `CheckpointToken.MinimumSecretBytes` fails the mapping
+  rather than the first callback.
+- **The token is this surface's reach gate, and no reach or lease check is added alongside it.** The
+  audit proposed gating on reach and lease as the runner API twin does. That does not fit: the caller
+  is a dispatched function holding no principal to derive reach from and no lease, which is the exact
+  case this ADR exists to answer. Requiring a lease here would refuse every legitimate callback. What
+  bounds the caller is that the token names one run and expires.
+- **Ambient authorization still composes with it.** The two answer different questions: the principal
+  says a caller belongs to the deployment, the token says which run it may read and overwrite.
+
+The residual risk is unchanged and is the one this shape accepts: a bearer token is replayable within
+its lifetime, bounded to the run it names.
+
+Separately, [ADR 0065](0065-control-plane-owns-store-runners-encrypt-payload.md) decision 6 requires the
+per-run single-flight interlock to be **per run, not per component**. The coordinator holds that
+interlock in memory, and a host mapping both the checkpoint surface and the runner API built one each,
+which is precisely a lock held per component. Both map methods now take the host's coordinator.

@@ -157,6 +157,13 @@ internal static class ServerThrowHelper
     public static void ThrowRowSecurityPolicyForbidden(ControlPlaneSecurityMode securityMode)
         => throw new ArgumentException(SR.Format(SR.RowSecurityPolicyForbidden, securityMode), "rowSecurity");
 
+    /// <summary>Throws when the configured checkpoint secret is shorter than a full-strength key.</summary>
+    /// <param name="paramName">The parameter carrying the secret.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowCheckpointSecretTooShort(string paramName)
+        => throw new ArgumentException(SR.Format(SR.CheckpointSecretTooShort, CheckpointToken.MinimumSecretBytes), paramName);
+
     /// <summary>Throws when a required 'name' field is missing.</summary>
     [DoesNotReturn]
     [StackTraceHidden]

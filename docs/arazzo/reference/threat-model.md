@@ -196,7 +196,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Capability bypass, invoking an operation without the scope | **Holds**. Scopes generated from the OpenAPI contract, enforced per endpoint | An endpoint cannot ship without a declared scope | |
 | Reach bypass, touching a row outside the principal's grant | **Partial**. Deny-by-default, non-disclosing 404, pre-refresh denies, wildcard cannot confer unrestricted [reach](UBIQUITOUSLANGUAGE.md#reach) | The `security:*` handlers construct no access context at all | H10 |
 | Privilege escalation by self-granting | **Partial**. Self-elevation guard, access-request ceiling, independent decision on approve | Guard inspects only write and purge, ceiling pinned by rule name, `grant` and `settle` lack the own-request check | H10 |
-| Unauthenticated or unscoped surface on the API host | **Absent** on the checkpoint surface | Any authenticated principal reads or writes any run's plaintext | H1 |
+| Unauthenticated or unscoped surface on the API host | **Holds**. The checkpoint surface requires a run-scoped token, and is not mapped at all without a secret to validate one | The token is a bearer credential, so it is replayable within its lifetime, bounded to the one run it names | H1 |
 | Identity spoofing via request-derived dimensions | **Absent**. No cross-check between ambient and token-derived tenant | Tenant becomes a function of the URL, and the self-elevation guard becomes context-local | H21 |
 | Existence disclosure and enumeration | **Partial**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)) | Denials are unaudited, so probing is quiet by design *and* by omission | H11 |
 | Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits | No rate limiting on any browser-facing or governance endpoint, and capacity counts are reach-scoped so deployment-global in two postures | H41 |
@@ -327,7 +327,9 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | OAuth broker state, CSPRNG, single-use, principal and provider bound, PKCE, 10 minute TTL | Holds | `ProviderBroker.cs:38-42, 166-232` |
 | [Tenancy ledger](UBIQUITOUSLANGUAGE.md#tenancy-ledger), append-only, CAS-serialised, held in the environment store | Holds | `Environments/TenancyLedger.cs` |
 | Server-authoritative permission gating, every UI gate has a verified server twin | Holds | `ControlPlaneAuthorization.cs:125-185` |
-| Checkpoint token primitive, HMAC, run-bound, constant-time, canonical expiry | Holds, **but not wired** (H1) | `CheckpointToken.cs` |
+| Checkpoint token primitive, HMAC, run-bound, constant-time, canonical expiry | Holds | `CheckpointToken.cs` |
+| Checkpoint surface requires the run-scoped token, and is absent rather than open when no secret is configured | Holds | `WorkflowCheckpointEndpoints.cs:40-45`, `ControlPlaneEndpointExtensions.cs` |
+| One checkpoint coordinator per host, so the single-flight interlock is per run rather than per component | Holds | `RunnerEndpointExtensions.cs`, `WorkflowCheckpointEndpoints.cs` |
 | Envelope and payload split, unified MAC, blind indexes, tenant anchor, initiator sealing, re-key sweep | Designed | `Durability/Anchoring/*`, conformance-tested |
 
 ### 7.2 Process
@@ -407,7 +409,7 @@ Quality of what *is* recorded:
 | [Eligibility](UBIQUITOUSLANGUAGE.md#eligibility) confers nothing at rest | Holds | Standing privilege does not accumulate |
 | Immutable content-hashed versions, insert-only ids | Holds | Version overwrite and squatting |
 | Source credentials are references | Partial | Inverted in practice by H4 |
-| "The environment is the blast radius" | Partial | H1 makes it the deployment, H12 makes a list a cross-tenant read |
+| "The environment is the blast radius" | Partial | H12 makes a list a cross-tenant read. H1 used to make it the deployment and no longer does |
 | Encryption at rest | Partial | Opt-in and silent when unset. Even enabled it leaves status, workflow id, environment, timings, correlation ids and the tenant label cleartext, with an index on the tag pair |
 | Per-run isolation on serverless | Partial | Per environment and version. Warm containers reuse a process |
 | Revocation | Absent | Does not fence in-flight leases and does not propagate across replicas |
@@ -422,8 +424,8 @@ detection, CON containment, REC recovery.
 
 | Outcome | Worst path | PRV | DET | CON | REC | Layers between attacker and outcome |
 |---------|-----------|-----|-----|-----|-----|--------------------------------------|
-| UO-1 cross-tenant read | H1 | NONE | NONE | NONE | WEAK | **Zero.** Authentication only. Scope, reach, lease, quota, encryption and audit all absent on this path |
-| UO-2 state forgery | H1, H39, H9 | NONE | NONE | PART | WEAK | **One.** Only the monotonic sequence, which a preceding read reveals, and which H40 shows validates a client-authored number |
+| UO-1 cross-tenant read | H10, H12 | NONE | NONE | NONE | WEAK | **Zero.** `security:read` builds no access context, so it enumerates every tenant. Closing H1 removed the checkpoint surface from this path but did not raise the score, because H10 reaches the same outcome with nothing in the way |
+| UO-2 state forgery | H39, H9 | NONE | NONE | PART | WEAK | **One.** Only the monotonic sequence, which a preceding read reveals, and which H40 shows validates a client-authored number |
 | UO-3 privilege escalation | H10 | WEAK | WEAK | PART | NONE | **One, aligned.** Four holes on one path: no reach on `security:*`, guard checks wrong verbs, ceiling pinned by a definable name, revocation does not propagate |
 | UO-4 code execution | H3, H16 | PART | WEAK | NONE | WEAK | **One, accidental.** Prevention rests on an incidental property of emitted text, with no sandbox behind it on the default backend |
 | UO-5 credential theft | H4, H2 | NONE | NONE | WEAK | WEAK | **Zero.** No destination validation, no egress control, no resolution audit, secrets in unscrubbable strings |
@@ -438,7 +440,7 @@ detection, CON containment, REC recovery.
 
 Four patterns explain nearly every straight-through path, and each predicts defects not yet found.
 
-1. **Provenance is verified everywhere, authority almost nowhere.** The system checks exhaustively *what* an artifact is, digests, signatures, attestations, content hashes, and rarely checks *who is asking*. The checkpoint endpoint, both sidecar surfaces, the anonymous Azure invoke and the unauthenticated sample services all execute cryptographically verified artifacts for an unauthenticated caller.
+1. **Provenance is verified everywhere, authority almost nowhere.** The system checks exhaustively *what* an artifact is, digests, signatures, attestations, content hashes, and rarely checks *who is asking*. Both sidecar surfaces, the anonymous Azure invoke and the unauthenticated sample services all execute cryptographically verified artifacts for an unauthenticated caller. The checkpoint endpoint was the fourth until H1 was closed, and what closed it was giving that surface a credential to check rather than another artifact to verify.
 2. **The mitigation was applied to one of two sibling paths.** Redirects fixed on the fetch path, not the run path. Reach pushdown real on five backends, in process on four. The lease check on the runner API, not its control-plane twin. The empty-identity guard on the explicit path, not the derived one. The disclosure tier on one of three routes to the same data. **This is the most productive pattern to sweep for.**
 3. **A declared control that nothing enforces.** YAML limits declared and never read. The epoch published in the contract and never compared. Sub-workflow depth enforced only in test paths. Pushdown asserted by a default interface implementation. The heartbeat reaper implemented twelve times and called zero. Dependabot pointed at a directory that does not exist. In every case the artefact of the control exists, which is what stops anyone re-checking, and in several a document asserts it works.
 4. **Detection would have caught all of the above, and is the thinnest layer.** No read audit, no runner-API telemetry, no authentication-failure signal, no egress record, and an audit primitive that is deliberately change-blind. Every finding here is currently unobservable in production.
@@ -467,7 +469,7 @@ residues, which is unusually good practice and the reason this register can be a
 | AR-14 | Availability inverts relative to [ADR 0023](../adr/0023-two-process-store-as-queue.md). The control plane is on the hot path of every checkpoint of every tenant | Standing |
 | AR-15 | SSRF fencing is delegated to deployment egress controls (ADR 0052), a deliberate decision that leaves the platform unable to express or verify the control | Until decided |
 | AR-16 | Not every backend can host a sealed environment. Expiring leases by principal and atomic row-plus-index CAS become conformance requirements | Phase B |
-| AR-17 | Phase A leaves the control plane the sole custodian of tenant plaintext, compensated by a write-time tenancy invariant, which H1 bypasses, so the compensation is weaker in practice than in design | Phase B |
+| AR-17 | Phase A leaves the control plane the sole custodian of tenant plaintext, compensated by a write-time tenancy invariant. H1 used to bypass that invariant; with it closed the compensation is as strong in practice as in design | Phase B |
 
 ### Assumptions about the deployment
 
@@ -487,52 +489,65 @@ Evidence that a control named above is absent or divergent, from the current aud
 severity, not by ID. **DIV** means built but not conformant, so the design is already right and the
 fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 
-| ID | Sev | Class | Finding | Boundary |
-|----|-----|-------|---------|----------|
-| H1 | Crit | DIV | Checkpoint endpoint has no scope, reach check, lease or audit. The ADR 0062 token primitive is implemented and sound but never passed | TB-2 |
-| H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 |
-| H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 |
-| H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 |
-| H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 |
-| H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 |
-| H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 |
-| H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 |
-| H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 |
-| H11 | Crit | DIV | Runner API emits nothing, and there is no read audit anywhere | All |
-| H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 |
-| H7 | High | DIV | Interim checkpoint protector diverges from the design it stands in for, run-id-only AAD, no key id, opt-in and silent | TB-4 |
-| H12 | High | DIV | Reach pushdown is self-attested by a default interface implementation, and four of nine backends filter in process | TB-4 |
-| H13 | High | DIV | Content hash is over canonical bytes while raw bytes are stored and compiled | TB-1, TB-8 |
-| H14 | High | GAP | No step budget, run deadline or production recursion cap, so the platform can be aimed at a third party | TB-7 |
-| H15 | High | GAP | No egress control on three backends, and the default isolation model has no boundary at all | TB-6, TB-7 |
-| H16 | High | GAP | Build container is root, unconfined and network-live, with an unpinned restore | TB-8 |
-| H17 | High | GAP | No security headers, session cookie not `Secure`, logout does not revoke | TB-3 |
-| H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 |
-| H19 | High | DIV | Anonymous Azure invoke, and SSRF-with-reflection behind a read scope | TB-6, TB-2 |
-| H40 | High | DIV | Sequence validation compares against a number the client wrote | TB-5 |
-| H41 | High | DIV | Quota and capacity counters collapse cross-tenant | TB-2, TB-5 |
-| H20 | Med | DIV | Empty administrator identity administers everything, and the first mutation persists it | TB-2 |
-| H21 | Med | DIV | Ambient identity makes the tenant a function of the URL | TB-2 |
-| H22 | Med | DIV | Policy refresh has no scheduler, so early revocation does not propagate across replicas | TB-2 |
-| H23 | Med | GAP | Payload disclosure has three routes and one is gated. Sensitivity is anchored to a catalog version a draft lacks | TB-2, TB-3 |
-| H24 | Med | DIV | Bootstrap re-run re-creates deleted grants and can append a second genesis administrator | TB-2 |
-| H25 | Med | GAP | Channel-address wildcard injection subscribes across every tenant on a shared broker | TB-7 |
-| H26 | Med | GAP | Dynamic criteria built from response data, so a source rewrites the assertion checking it | TB-7 |
-| H27 | Med | DIV | `javascript:` URI XSS in the catalog owner link, `escapeHtml` does not validate schemes | TB-3 |
-| H28 | Med | GAP | Open redirect on the login return | TB-3 |
-| H29 | Med | GAP | `allowReserved` path parameters skip encoding, so `../` escapes a gateway prefix | TB-7 |
-| H30 | Med | DIV | Lambda redeploy never refreshes function environment | TB-8 |
-| H31 | Med | DIV | Deploy resource names are non-injective and update has no ownership check | TB-8 |
-| H32 | Med | DIV | Snapshot restore replays the guest CSPRNG | TB-6 |
-| H35 | Med | DIV | Secrets held in unscrubbable strings throughout the provider layer | TB-10 |
-| H38 | Med | GAP | Sample source services have no authentication | TB-7 |
-| H42 | Med | GAP | Directory identity widening, attribute shadowing, and membership cache latency | TB-9 |
-| H43 | Med | DIV | Directory search fails open on the default merged source | TB-9 |
-| H44 | Med | GAP | LDAP cleartext bind constructible, and no HTTP adapter asserts an https base URL | TB-9 |
-| H33 | Low | DIV | TLV integer overflow defeats the length guard | TB-1 |
-| H34 | Low | DIV | Unbounded assembly-load-context growth, ADR 0024 promises unload-on-obsolete | TB-6 |
-| H36 | Low | GAP | Vendored CodeMirror has no provenance record and no CI rebuild-diff | TB-3 |
-| H37 | Low | GAP | `/ui` serves the whole kit directory | TB-3 |
+| ID | Sev | Class | Finding | Boundary | Status |
+|----|-----|-------|---------|----------|--------|
+| H1 | Crit | DIV | Checkpoint endpoint has no scope, reach check, lease or audit. The ADR 0062 token primitive is implemented and sound but never passed | TB-2 | **Closed** |
+| H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | Open |
+| H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | Open |
+| H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
+| H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | Open |
+| H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 | Open |
+| H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 | Open |
+| H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 | Open |
+| H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 | Open |
+| H11 | Crit | DIV | Runner API emits nothing, and there is no read audit anywhere | All | Open |
+| H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 | Open |
+| H7 | High | DIV | Interim checkpoint protector diverges from the design it stands in for, run-id-only AAD, no key id, opt-in and silent | TB-4 | Open |
+| H12 | High | DIV | Reach pushdown is self-attested by a default interface implementation, and four of nine backends filter in process | TB-4 | Open |
+| H13 | High | DIV | Content hash is over canonical bytes while raw bytes are stored and compiled | TB-1, TB-8 | Open |
+| H14 | High | GAP | No step budget, run deadline or production recursion cap, so the platform can be aimed at a third party | TB-7 | Open |
+| H15 | High | GAP | No egress control on three backends, and the default isolation model has no boundary at all | TB-6, TB-7 | Open |
+| H16 | High | GAP | Build container is root, unconfined and network-live, with an unpinned restore | TB-8 | Open |
+| H17 | High | GAP | No security headers, session cookie not `Secure`, logout does not revoke | TB-3 | Open |
+| H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 | Open |
+| H19 | High | DIV | Anonymous Azure invoke, and SSRF-with-reflection behind a read scope | TB-6, TB-2 | Open |
+| H40 | High | DIV | Sequence validation compares against a number the client wrote | TB-5 | Open |
+| H41 | High | DIV | Quota and capacity counters collapse cross-tenant | TB-2, TB-5 | Open |
+| H20 | Med | DIV | Empty administrator identity administers everything, and the first mutation persists it | TB-2 | Open |
+| H21 | Med | DIV | Ambient identity makes the tenant a function of the URL | TB-2 | Open |
+| H22 | Med | DIV | Policy refresh has no scheduler, so early revocation does not propagate across replicas | TB-2 | Open |
+| H23 | Med | GAP | Payload disclosure has three routes and one is gated. Sensitivity is anchored to a catalog version a draft lacks | TB-2, TB-3 | Open |
+| H24 | Med | DIV | Bootstrap re-run re-creates deleted grants and can append a second genesis administrator | TB-2 | Open |
+| H25 | Med | GAP | Channel-address wildcard injection subscribes across every tenant on a shared broker | TB-7 | Open |
+| H26 | Med | GAP | Dynamic criteria built from response data, so a source rewrites the assertion checking it | TB-7 | Open |
+| H27 | Med | DIV | `javascript:` URI XSS in the catalog owner link, `escapeHtml` does not validate schemes | TB-3 | Open |
+| H28 | Med | GAP | Open redirect on the login return | TB-3 | Open |
+| H29 | Med | GAP | `allowReserved` path parameters skip encoding, so `../` escapes a gateway prefix | TB-7 | Open |
+| H30 | Med | DIV | Lambda redeploy never refreshes function environment | TB-8 | Open |
+| H31 | Med | DIV | Deploy resource names are non-injective and update has no ownership check | TB-8 | Open |
+| H32 | Med | DIV | Snapshot restore replays the guest CSPRNG | TB-6 | Open |
+| H35 | Med | DIV | Secrets held in unscrubbable strings throughout the provider layer | TB-10 | Open |
+| H38 | Med | GAP | Sample source services have no authentication | TB-7 | Open |
+| H42 | Med | GAP | Directory identity widening, attribute shadowing, and membership cache latency | TB-9 | Open |
+| H43 | Med | DIV | Directory search fails open on the default merged source | TB-9 | Open |
+| H44 | Med | GAP | LDAP cleartext bind constructible, and no HTTP adapter asserts an https base URL | TB-9 | Open |
+| H33 | Low | DIV | TLV integer overflow defeats the length guard | TB-1 | Open |
+| H34 | Low | DIV | Unbounded assembly-load-context growth, ADR 0024 promises unload-on-obsolete | TB-6 | Open |
+| H36 | Low | GAP | Vendored CodeMirror has no provenance record and no CI rebuild-diff | TB-3 | Open |
+| H37 | Low | GAP | `/ui` serves the whole kit directory | TB-3 | Open |
+
+**Status** records what has since been done, so the ledger stays a live record rather than the snapshot
+the audit produced. A row is **Closed** only when the control it names is enforced in code and a test
+exercises it. Re-running the audit re-scores every row, including the closed ones.
+
+**H1, closed.** The run-scoped token is now required on the surface rather than optional
+(`WorkflowCheckpointEndpoints.cs`), and the control plane maps the surface only when it is given a
+checkpoint secret (`ControlPlaneEndpointExtensions.cs`), so the posture is absent rather than open. The
+audit's suggested reach-and-lease gate was **not** applied, and deliberately: the caller is a dispatched
+function holding no principal and no lease, which is the case [ADR 0062](../adr/0062-authenticated-serverless-checkpoint-callbacks.md)
+exists to solve. The token *is* this surface's reach gate. Both surfaces that author checkpoints now
+share one coordinator, which is what [ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md) decision 6
+means by an interlock that is per run rather than per component.
 
 Two notes the table cannot carry.
 
@@ -560,22 +575,22 @@ that currently diverge from their specifications. Wiring the anchor to a lease w
 compared, or sealing payloads behind a marker interface that certifies pushdown by default, carries
 each divergence into the layer meant to close it, where it is considerably more expensive to find.
 
-| # | Action | Closes |
-|---|--------|--------|
-| 1 | Pass the checkpoint-token authenticator and a dedicated scope, gate on reach and lease as the runner API twin does, and share one coordinator instance | H1 |
-| 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 |
-| 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 |
-| 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 |
-| 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 |
-| 6 | Remove both reintroduced security-mode defaults | Posture |
-| 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 |
-| 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor |
-| 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 |
-| 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 |
-| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 |
-| 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 |
-| 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 |
-| 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 |
-| 15 | Authenticate both sidecar surfaces and scope the guest read to the invoking sandbox | H9 |
-| 16 | Fix the process layer, Dependabot path, SAST, dependency scanning, lock files, `SECURITY.md`, ADR implementation status | Process controls |
-| 17 | Decide and record the GAP items as ADRs, egress policy, resource governance, audit durability, security headers, rate limiting, draft disclosure tier | GAP class |
+| # | Action | Closes | Status |
+|---|--------|--------|--------|
+| 1 | Require the checkpoint token on the surface, serve no surface without a secret to validate it, and share one coordinator instance | H1 | **Done** |
+| 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 | Open |
+| 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | Open |
+| 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | Open |
+| 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | Open |
+| 6 | Remove both reintroduced security-mode defaults | Posture | Open |
+| 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | Open |
+| 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | Open |
+| 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 | Open |
+| 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | Open |
+| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | Open |
+| 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | Open |
+| 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | Open |
+| 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | Open |
+| 15 | Authenticate both sidecar surfaces and scope the guest read to the invoking sandbox | H9 | Open |
+| 16 | Fix the process layer, Dependabot path, SAST, dependency scanning, lock files, `SECURITY.md`, ADR implementation status | Process controls | Open |
+| 17 | Decide and record the GAP items as ADRs, egress policy, resource governance, audit durability, security headers, rate limiting, draft disclosure tier | GAP class | Open |

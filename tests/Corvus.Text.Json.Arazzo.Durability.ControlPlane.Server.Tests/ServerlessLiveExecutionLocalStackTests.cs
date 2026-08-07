@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
 using System.Text;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
@@ -131,9 +132,16 @@ public sealed class ServerlessLiveExecutionLocalStackTests
         // function writes back lands where the assertions read it.
         int hostPort = ServerlessLiveExecutionSupport.FreeTcpPort();
         var store = new InMemoryWorkflowStateStore();
+
+        // The gate runs the production credential path (ADR 0062): the surface validates the run-scoped token the
+        // dispatch below mints, so what is proven is the wiring a real deployment uses rather than an open surface.
+        byte[] checkpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
         WebApplication host = WebApplication.CreateSlimBuilder().Build();
         host.Urls.Add($"http://0.0.0.0:{hostPort}");
-        host.MapWorkflowCheckpointEndpoints(store, requireAuthorization: false);
+        host.MapWorkflowCheckpointEndpoints(
+            store,
+            requireAuthorization: false,
+            authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
         host.MapGet("/demo/echo", () => Results.Json(new { status = "ok" }));
         await host.StartAsync();
         try
@@ -192,7 +200,8 @@ public sealed class ServerlessLiveExecutionLocalStackTests
                 // its environment, and the checkpoint base URL the function calls back to (trailing slash so the
                 // function-side store's relative 'runs/{id}/checkpoint' resolves against it).
                 string checkpointBaseUrl = $"http://host.containers.internal:{hostPort}/";
-                string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{checkpointBaseUrl}}"}""";
+                string checkpointToken = ServerlessLiveExecutionSupport.IssueCheckpointToken(checkpointSecret, runId);
+                string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{checkpointBaseUrl}}","checkpointToken":"{{checkpointToken}}"}""";
                 InvokeResponse invoke = await client.InvokeAsync(new InvokeRequest
                 {
                     FunctionName = functionName,

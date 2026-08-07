@@ -875,6 +875,13 @@ var sourceFetcher = new SourceDocumentFetcher(
 // Captured from the endpoint mapping so the demo can seed its pending access request through the SAME submission path a
 // real caller uses (starting the approval run), rather than writing it straight to the store with no run to enact it.
 IAccessRequestApprovalService? seedApprovalService = null;
+
+// One checkpoint coordinator for this host, shared by every surface that authors a checkpoint. ADR 0065 decision 6
+// requires the per-run single-flight interlock to be per run rather than per component, and the coordinator holds that
+// interlock in memory — two instances over one store would hold one gate each, which is exactly the shape that lets two
+// honest components author the same run at once. This host maps the runner API below, and would map the serverless
+// checkpoint surface too if it were given a checkpoint secret, so the instance is built here and passed to both.
+var checkpointCoordinator = new WorkflowCheckpointCoordinator(stateStore);
 app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     management,
     catalog,
@@ -922,7 +929,12 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // store lights up the catalog handler's dispatch gate (a run of an Isolated-backend version is refused until its
     // deployment reaches Deployed); passing the build-job store lets the build worker (Phase 3b) drain it here.
     nativeBuildJobStore: nativeBuildJobStore,
-    workflowDeploymentStore: workflowDeploymentStore);
+    workflowDeploymentStore: workflowDeploymentStore,
+    // No checkpoint secret, so this host serves no serverless checkpoint surface (ADR 0062). It does not need one: the
+    // serverless runner dispatches functions at its own surface and is the process that mints their tokens. Absent
+    // rather than open is the ADR 0016 posture — a surface mapped without a secret would admit any caller this host
+    // authenticates to every run in the deployment, and everyone at all in Open.
+    checkpoints: checkpointCoordinator);
 
 // The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
 // credential to execute. It shares this host's stores because the demo is one process; the point of the split is that
@@ -944,7 +956,8 @@ if (requireAuthorization)
         stateStore,
         catalogStore,
         availabilityStore,
-        new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore));
+        new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore),
+        checkpoints: checkpointCoordinator);
 }
 
 // oscar's PENDING access request (the approver-inbox content): seeded THROUGH the approval service, exactly as a real

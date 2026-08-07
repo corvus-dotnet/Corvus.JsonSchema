@@ -66,6 +66,13 @@ item you cannot see directly in the code.
 ## 3. P0, void a claimed control and are cheap
 
 ### P0-1 · DIV · `TB-2` · Checkpoint endpoint is unauthenticated in every meaningful sense
+
+> **Resolved.** The finding held on verification. See the threat model's
+> [findings ledger](../reference/threat-model.md#12-findings-ledger) (H1) and the 2026-08-07 amendment
+> to [ADR 0062](../adr/0062-authenticated-serverless-checkpoint-callbacks.md). Acceptance criteria 1
+> and 2 were **not** applied as written, and deliberately: see *Deviation* below. The finding text is
+> left as measured.
+
 - **Where:** `ControlPlaneEndpointExtensions.cs:351`; `WorkflowCheckpointEndpoints.cs:40, 45, 57-75, 78-134, 141-145, 152-157`
 - **Divergence:** ADR 0062 specifies run-scoped token authentication. The token primitive (`CheckpointToken.cs`) is implemented and sound, with HMAC, run binding, constant-time compare and canonical expiry. `MapWorkflowCheckpointEndpoints` is called **without** `authenticateCheckpointToken`, so it defaults to `null` and `Authenticated()` returns `true` unconditionally. Neither handler constructs an `AccessContext`, so ADR 0004 reach never runs. The only gate is a bare `RequireAuthorization()` with no policy or scope.
 - **Impact:** `UO-1`, `UO-2`, `UO-5`. Any authenticated principal reads and overwrites any run's plaintext by id, in any environment. Unauthenticated in `Open`. Voids ADRs 0001, 0004, 0013 and 0065 on one surface.
@@ -74,6 +81,19 @@ item you cannot see directly in the code.
   2. Declare a dedicated scope in the OpenAPI contract.
   3. Use the **same** `WorkflowCheckpointCoordinator` instance as the runner API. ADR 0065 §6 requires the single-flight interlock to be per run, not per component, and two currently exist (`RunnerEndpointExtensions.cs:78`, `WorkflowCheckpointEndpoints.cs:45`).
   4. Test: a principal with an unrelated scope gets 404 or 403 for a run outside reach, and a valid lease holder succeeds.
+- **Deviation, and why.** Criteria 1 and 2 do not fit this surface. Its caller is a dispatched
+  function that holds no OIDC principal and no lease, since the dispatching runner holds the lease.
+  That is the case ADR 0062 exists to answer, and requiring `HoldsLeaseAsync` here would refuse every
+  legitimate callback. The run-scoped token **is** this surface's reach gate. Criterion 2 does not
+  apply either, because the surface is deliberately outside the generated contract, being raw
+  octet-stream and hand-mapped. Criteria 3 and 4 were applied as written.
+- **Also found, which the audit did not name.** The sweep the audit recommends paid off here.
+  `MapWorkflowCheckpointEndpoints` had five call sites; **four** passed no authenticator and one did.
+  The audit named only the control plane, but the surface that actually receives function callbacks
+  in the demo composition is the serverless runner's own
+  (`ServerlessRunner.Demo/Program.cs:221`), which was fully open and whose backend minted no token.
+  The fix therefore closes the class rather than the instance: the authenticator is now a **required**
+  parameter, so the surface cannot be mapped unauthenticated anywhere.
 
 ### P0-2 · DIV · `TB-5` · Revocation fence expires zero leases
 - **Where:** `ArazzoControlPlaneRunnerAuthorizationsHandler.cs:566-571`; `RunnerRunCoordinator.cs:97, 225-243, 290-303`

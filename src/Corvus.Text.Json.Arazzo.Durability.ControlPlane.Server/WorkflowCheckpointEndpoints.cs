@@ -34,15 +34,17 @@ public static class WorkflowCheckpointEndpoints
     /// </summary>
     /// <param name="endpoints">The endpoint route builder.</param>
     /// <param name="store">The real state store a checkpoint terminates into.</param>
-    /// <param name="requireAuthorization">Whether to require an authenticated principal (every mode but Open); a dedicated checkpoint scope is deferred to the deploy work.</param>
-    /// <param name="authenticateCheckpointToken">An optional run-scoped checkpoint-token authenticator (ADR 0062): given the request's run and the presented bearer token, returns whether it authorises checkpoints for that run. When supplied, a request without a valid token is a 401 — this is how a publicly reachable checkpoint surface authenticates a serverless function's callback (e.g. <c>(id, token) =&gt; CheckpointToken.TryValidate(secret, token, id.Value, now)</c>). When <see langword="null"/>, only <paramref name="requireAuthorization"/> (the host's ambient authorization) applies.</param>
+    /// <param name="requireAuthorization">Whether to require an authenticated principal in addition to the token (every mode but Open). The two compose: the ambient principal says a caller belongs to the deployment, the token says which run it may touch.</param>
+    /// <param name="authenticateCheckpointToken">The run-scoped checkpoint-token authenticator (ADR 0062): given the request's run and the presented bearer token, returns whether it authorises checkpoints for that run. A request without a valid token is a 401 — this is how the checkpoint surface authenticates a serverless function's callback (e.g. <c>(id, token) =&gt; CheckpointToken.TryValidate(secret, token, id.Value, now)</c>). It is required rather than optional because the caller is a machine acting for one run, holding no principal of its own: without it the surface's only gate is the host's ambient authorization, which admits any authenticated caller to any run.</param>
+    /// <param name="checkpoints">The host's checkpoint coordinator. Pass the same instance every checkpoint-authoring surface in this host uses — ADR 0065 decision 6 requires the per-run single-flight interlock to be per run, not per component, and the coordinator holds that interlock in memory. When <see langword="null"/> a private one is built, which is correct only for a host mapping this surface alone.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunId, string, bool>? authenticateCheckpointToken = null)
+    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunId, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(authenticateCheckpointToken);
 
-        var coordinator = new WorkflowCheckpointCoordinator(store);
+        WorkflowCheckpointCoordinator coordinator = checkpoints ?? new WorkflowCheckpointCoordinator(store);
 
         IEndpointConventionBuilder get = endpoints.MapGet("/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
@@ -147,15 +149,11 @@ public static class WorkflowCheckpointEndpoints
         return endpoints;
     }
 
-    // When a checkpoint-token authenticator is configured, the request must carry a valid run-scoped bearer token; without
-    // one it is a 401. When none is configured the surface relies on the host's ambient authorization (requireAuthorization).
-    private static bool Authenticated(HttpContext context, WorkflowRunId id, Func<WorkflowRunId, string, bool>? authenticate)
+    // The request must carry a valid run-scoped bearer token; without one it is a 401. This runs whatever the host's
+    // ambient authorization is, because the two answer different questions: ambient authorization says the caller
+    // belongs to the deployment, and only the token says which run it is entitled to read and overwrite.
+    private static bool Authenticated(HttpContext context, WorkflowRunId id, Func<WorkflowRunId, string, bool> authenticate)
     {
-        if (authenticate is null)
-        {
-            return true;
-        }
-
         string? token = BearerToken(context.Request);
         if (token is null || !authenticate(id, token))
         {

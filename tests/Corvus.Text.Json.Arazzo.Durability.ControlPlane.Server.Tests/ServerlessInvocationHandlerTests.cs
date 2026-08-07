@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
@@ -32,6 +33,8 @@ public sealed class ServerlessInvocationHandlerTests
 {
     private static readonly WorkflowTransports EmptyTransports =
         new(ImmutableDictionary<string, IApiTransport>.Empty, WorkflowTransports.NoMessageTransports);
+
+    private static readonly byte[] CheckpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
     public async Task Advances_a_run_and_checkpoints_it_back_through_the_live_runner_surface()
@@ -104,8 +107,13 @@ public sealed class ServerlessInvocationHandlerTests
 
     private static WorkflowTransports NoTransports(WorkflowDescriptor descriptor, SecurityTagSet tags) => EmptyTransports;
 
+    // The invocation carries the run-scoped checkpoint token the dispatcher minted (ADR 0062), which the handler sets as
+    // Authorization: Bearer on its per-invocation checkpoint client. Without it the surface refuses every callback.
     private static byte[] Invocation(string runId, string checkpointUrl)
-        => Encoding.UTF8.GetBytes($$"""{"runId":"{{runId}}","environment":"development","checkpointUrl":"{{checkpointUrl}}"}""");
+    {
+        string token = CheckpointToken.Issue(CheckpointSecret, runId, DateTimeOffset.UtcNow.AddMinutes(10));
+        return Encoding.UTF8.GetBytes($$"""{"runId":"{{runId}}","environment":"development","checkpointUrl":"{{checkpointUrl}}","checkpointToken":"{{token}}"}""");
+    }
 
     private static async Task SeedPendingRun(IWorkflowStateStore store, string runId, string workflowId)
     {
@@ -164,7 +172,7 @@ public sealed class ServerlessInvocationHandlerTests
             builder.Logging.ClearProviders();
 
             WebApplication app = builder.Build();
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open, workflowStateStore: store);
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open, workflowStateStore: store, checkpointSecret: CheckpointSecret);
             await app.StartAsync();
 
             TestServer server = app.GetTestServer();

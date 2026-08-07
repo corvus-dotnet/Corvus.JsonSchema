@@ -120,6 +120,9 @@
   <data name="RowSecurityPolicyForbidden" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} grants full (System) row reach and would ignore a row-security policy; omit rowSecurity, or use Scoped/RowSecurityOnly to enforce it.</value>
   </data>
+  <data name="CheckpointSecretTooShort" xml:space="preserve">
+    <value>The checkpoint secret must be at least {0} bytes of high-entropy key material; leave it empty to serve no checkpoint surface.</value>
+  </data>
   <data name="NameRequired" xml:space="preserve">
     <value>A 'name' is required.</value>
   </data>

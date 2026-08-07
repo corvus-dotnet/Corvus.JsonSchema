@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Generation;
@@ -159,9 +160,16 @@ internal static class ServerlessLiveExecutionSupport
         // assertions read it.
         int hostPort = FreeTcpPort();
         var store = new InMemoryWorkflowStateStore();
+
+        // The gate runs the production credential path (ADR 0062): the surface validates the run-scoped token the
+        // dispatch below mints, so what is proven is the wiring a real deployment uses rather than an open surface.
+        byte[] checkpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
         WebApplication host = WebApplication.CreateSlimBuilder().Build();
         host.Urls.Add($"http://0.0.0.0:{hostPort}");
-        host.MapWorkflowCheckpointEndpoints(store, requireAuthorization: false);
+        host.MapWorkflowCheckpointEndpoints(
+            store,
+            requireAuthorization: false,
+            authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
         host.MapGet("/demo/echo", () => Results.Json(new { status = "ok" }));
         await host.StartAsync();
         try
@@ -199,7 +207,8 @@ internal static class ServerlessLiveExecutionSupport
                 // store's relative 'runs/{id}/checkpoint' resolves against it). The [Function("invoke")] returns the outcome
                 // document verbatim, so a full advance responds with a Completed outcome.
                 string checkpointBaseUrl = $"http://host.containers.internal:{hostPort}/";
-                string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{checkpointBaseUrl}}"}""";
+                string checkpointToken = IssueCheckpointToken(checkpointSecret, runId);
+                string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{checkpointBaseUrl}}","checkpointToken":"{{checkpointToken}}"}""";
                 var invokeUri = new UriBuilder(Uri.UriSchemeHttp, functions.Hostname, functions.GetMappedPublicPort(80), "/api/invoke").Uri;
 
                 // The isolated worker warms after the container is up; dispatch is at-least-once, and re-invoking resumes

@@ -22,6 +22,13 @@ bool seedExampleData = !string.Equals(builder.Configuration["SeedExampleData"], 
 // Vault AppRole trust above).
 string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 
+// The checkpoint CALLBACK secret (ADR 0062), which is a different thing from the protection key above: that one wraps
+// checkpoints at rest, this one signs the run-scoped bearer token a dispatched serverless function presents on its
+// callbacks. The serverless runner both mints and validates it, so it is one per-boot value handed to that one process.
+// Without it the runner serves no checkpoint surface at all, which is the point: the token is the only thing that can
+// say which run a function's callback may touch, since the function holds no principal of its own.
+string checkpointCallbackSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+
 // Optional local, UNCOMMITTED GitHub App credentials for the designer's Git integration (workflow-designer §4.7 / D3).
 // Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
 // the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
@@ -633,6 +640,8 @@ if (aotRuntimeVersion is not null)
         // (isProxied:false), and LocalStack's Lambda container reaches the host through the podman host gateway. (This is
         // the one value phase 4 tunes if the LocalStack Lambda network cannot resolve host.containers.internal.)
         .WithEnvironment("Runner__CheckpointBaseUrl", serverlessCheckpointBaseUrl)
+        // The ADR 0062 callback secret this runner mints dispatch tokens with and validates callbacks against.
+        .WithEnvironment("Runner__CheckpointSecret", checkpointCallbackSecret)
         // The deployed environment's source configuration baked into each function's transport binder (ARAZZO_SOURCE__<name>).
         // The demo's single 'echo' source IS this runner (it serves /demo/echo), reached at the same host.containers.internal
         // URL the checkpoint uses — so a serverless-check run's GET resolves and the run completes.

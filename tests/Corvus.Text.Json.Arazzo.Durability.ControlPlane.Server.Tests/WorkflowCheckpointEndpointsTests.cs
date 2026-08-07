@@ -5,6 +5,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -31,6 +32,7 @@ public sealed class WorkflowCheckpointEndpointsTests
 {
     private const string SeqHeader = "X-Arazzo-Checkpoint-Seq";
     private static readonly WorkflowRunId Run = new("run-1");
+    private static readonly byte[] CheckpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
     public async Task Get_of_an_unknown_run_is_404()
@@ -103,6 +105,8 @@ public sealed class WorkflowCheckpointEndpointsTests
         {
             Content = OctetStream(RealCheckpoint(WorkflowRunStatus.Running)),
         };
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Bearer", CheckpointToken.Issue(CheckpointSecret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10)));
         HttpResponseMessage response = await host.Client.SendAsync(request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -142,6 +146,10 @@ public sealed class WorkflowCheckpointEndpointsTests
         byte[] initial = RealCheckpoint(WorkflowRunStatus.Running, cursor: 1);
         await host.Store.SaveAsync(Run, initial, ProjectIndex(initial), WorkflowEtag.None, default);
 
+        // The dispatched function presents the run-scoped token the dispatcher minted for it on every callback, which is
+        // what ServerlessInvocationHandler sets on its per-invocation client.
+        host.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", CheckpointToken.Issue(CheckpointSecret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10)));
         await using var functionStore = new HttpWorkflowStateStore(host.Client);
 
         // The function loads the run, advances it, and checks a new checkpoint in.
@@ -210,20 +218,20 @@ public sealed class WorkflowCheckpointEndpointsTests
             WebApplication app = builder.Build();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store);
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret);
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store);
         }
 
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? scope = null)
-            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint"), scope);
+            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint"), runId, scope);
 
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? scope = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/checkpoint") { Content = OctetStream(body) };
             request.Headers.Add(SeqHeader, sequence.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            return this.SendAsync(request, scope);
+            return this.SendAsync(request, runId, scope);
         }
 
         public async ValueTask DisposeAsync()
@@ -232,8 +240,14 @@ public sealed class WorkflowCheckpointEndpointsTests
             await app.DisposeAsync();
         }
 
-        private Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, string? scope)
+        // Every request carries a valid run-scoped token (ADR 0062), because that is what a dispatched function
+        // presents. These tests are about what the surface does once a caller is entitled to the run; whether it is
+        // entitled at all is ControlPlaneCheckpointSurfaceTests.
+        private Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, string runId, string? scope)
         {
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer", CheckpointToken.Issue(CheckpointSecret, runId, DateTimeOffset.UtcNow.AddMinutes(10)));
+
             if (scope is not null)
             {
                 request.Headers.Add(ScopeAuthHandler.ScopeHeader, scope);

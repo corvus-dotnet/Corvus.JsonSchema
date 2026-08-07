@@ -135,14 +135,24 @@ builder.Services.AddWorkflowDeployWorker(new WorkflowDeployWorkerOptions
     PollInterval = TimeSpan.FromSeconds(2),
 });
 
+// The ADR 0062 callback secret: this runner mints a run-scoped token per dispatch and validates it on the callback, so
+// the invoked function proves which run it is entitled to read and overwrite. Mint and validate are the same process
+// here, so the secret never travels. It is required rather than optional because a checkpoint surface without it has no
+// way to bound a caller that holds no principal, and this surface is reachable from the function's container.
+byte[] checkpointSecret = Convert.FromBase64String(
+    builder.Configuration["Runner:CheckpointSecret"]
+    ?? throw new InvalidOperationException("Runner:CheckpointSecret (base64, at least 32 bytes — the ADR 0062 secret this runner mints and validates checkpoint-callback tokens with) is required. The AppHost injects a per-boot value."));
+
 // The serverless run-execution backend as this runner's resumer (ADR 0055): dispatch and timer-resume advance a claimed
 // run by INVOKING its deployed function. The production DeployedFunctionUrlResolver maps a run's (base workflow, version,
 // environment) to the Deployed function URL from the shared deployment store; the function checkpoints back to
-// checkpointBaseUrl. A resolve failure (no deployed function yet) throws, leaving the run claimable.
+// checkpointBaseUrl, carrying the token minted above. A resolve failure (no deployed function yet) throws, leaving the
+// run claimable.
 var serverlessBackend = new ServerlessRunExecutionBackend(
     new HttpClient(),
     DeployedFunctionUrlResolver.ForStore(deployments, environments),
-    new Uri(checkpointBaseUrl, UriKind.Absolute));
+    new Uri(checkpointBaseUrl, UriKind.Absolute),
+    checkpointTokenIssuer: runId => CheckpointToken.Issue(checkpointSecret, runId.Value, DateTimeOffset.UtcNow.AddHours(1)));
 builder.Services.AddSingleton<WorkflowResumer>(serverlessBackend.AsResumer());
 
 // This runner's machine-principal credentials (design §16.4), required for the same reason as on every other runner:
@@ -216,9 +226,16 @@ app.MapDefaultEndpoints();
 
 // The serverless checkpoint callback surface (ADR 0055): the invoked function GETs the run's checkpoint to restore it and
 // POSTs the advanced checkpoint back here, terminating into the shared state store under the lease this runner holds. The
-// function binds no store SDK — it saves over HTTP, and the dispatching runner terminates that into the real store. Open
-// here (the demo's callback is unauthenticated); a dedicated checkpoint scope is deferred (see WorkflowCheckpointEndpoints).
-app.MapWorkflowCheckpointEndpoints(stateStore, requireAuthorization: false);
+// function binds no store SDK — it saves over HTTP, and the dispatching runner terminates that into the real store.
+//
+// Every request must carry the run-scoped token this runner minted for that dispatch (ADR 0062). There is no ambient
+// principal to require: the caller is a function in a container, and the token is what binds it to one run. The surface
+// is reachable from that container, so an unauthenticated one would let anything on that network read and overwrite
+// every run this runner holds.
+app.MapWorkflowCheckpointEndpoints(
+    stateStore,
+    requireAuthorization: false,
+    authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
 
 // The demo's 'echo' source: a trivial always-200 endpoint the serverless-check workflow calls, served by this runner so
 // a serverless run has a reachable source and can run to completion. The invoked Lambda reaches it at the same
