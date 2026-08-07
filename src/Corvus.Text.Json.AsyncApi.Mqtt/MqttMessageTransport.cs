@@ -152,7 +152,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
