@@ -237,7 +237,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Checkpoint replay or stale write | **Partial**. Single-row CAS, 409 on supersession, monotonic accepted sequence | Header and body sequence are never compared, so the rule validates a number the client wrote | H40 |
 | Superseded or displaced holder writing | **Absent**. [Lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is carried and contract-published but never compared, and unsound as minted | Displaced holder, stale generation and rollback are indistinguishable from a healthy write | H8 |
 | Rollback or substitution by the control plane (AD-4) | **Designed**. Tenant anchor, phase B | Accepted for the phase-A window, booked as AR-9 | |
-| Revocation of a compromised runner | **Absent**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) passes the wrong identifier and bindings are never re-resolved mid-lease | Revocation is a no-op for in-flight work, indefinitely | H5 |
+| Revocation of a compromised runner | **Partial**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) expires leases by the bound machine principal, and renewal and both checkpoint operations re-resolve bindings | Bounded by the resolver's cache window, and by nothing on a replica that has not refreshed its policy | H5, H22 |
 | Cross-tenant denial of service | **Partial**. Per-tenant and per-runner token buckets, test-before-spend, client-side `Retry-After` clamp | Buckets collapse to one counter without owner-group tags, a wholesale cache clear forgives every tenant's deficit | H41 |
 | Observability of the seam | **Absent**. Zero logs, spans or counters in the entire runner API | Every threat in this table executes silently | H11 |
 
@@ -314,6 +314,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Reserved `sys:` keyspace refused independently of the policy | Holds | `ControlPlaneRowSecurity.cs:386-395` |
 | Wildcard binding cannot confer unrestricted reach | Holds | `PersistentRowSecurityPolicy.cs:126, 362-366` |
 | Machine principal from the token only, lease ownership derived server-side | Holds | `RunnerPrincipalAccessor.cs:47-62`, `MachinePrincipal.cs:52-65` |
+| Revocation expires the holder's leases by bound principal, and renewal and both checkpoint operations re-resolve bindings | Holds | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs` fence, `RunnerRunCoordinator.StillBoundAsync` |
 | Registration requires pre-authorization or an enrolment token, re-checked under the store fence | Holds | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs:277-297, 359-366` |
 | Catalog artifacts authorized by path, never bare content hash, and "not yours" answers as "not there" | Holds | `RunnerCatalogCoordinator.cs:134-147, 226-239` |
 | Client-side `Retry-After` clamp, 10s single, 30s total, 4 attempts | Holds | `RunnerQuotaHoldOptions.cs:79-110` |
@@ -412,7 +413,7 @@ Quality of what *is* recorded:
 | "The environment is the blast radius" | Partial | H12 makes a list a cross-tenant read. H1 used to make it the deployment and no longer does |
 | Encryption at rest | Partial | Opt-in and silent when unset. Even enabled it leaves status, workflow id, environment, timings, correlation ids and the tenant label cleartext, with an index on the tag pair |
 | Per-run isolation on serverless | Partial | Per environment and version. Warm containers reuse a process |
-| Revocation | Absent | Does not fence in-flight leases and does not propagate across replicas |
+| Revocation | Partial | Fences in-flight leases and re-authorizes on renewal and checkpoint, but does not propagate across replicas |
 | Rate limiting | Partial | Runner API only, nothing on governance or browser-facing endpoints |
 | Per-tenant capacity | Partial | Reach-scoped, so deployment-global in two postures, and buckets collapse without owner-group tags |
 | Database-level isolation | Absent | No row-level security, no per-tenant credential, runtime account owns the schema |
@@ -434,7 +435,7 @@ detection, CON containment, REC recovery.
 | UO-8 denial of service | H14, H6 | NONE | PART | WEAK | WEAK | **One.** Runner quotas, designed for a different threat, shape but never terminate the loop |
 | UO-9 integrity loss | H8, anchor is phase B | NONE | NONE | NONE | NONE | **Zero until phase B, accepted.** The divergence to close first is the epoch, fielded and contract-published but never compared, so phase B would inherit it |
 | UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is good but change-blind, tenant-less and non-durable |
-| UO-11 revocation fails | H5, H22 | WEAK | PART | PART | NONE | **One.** Lease TTL is the only real bound, and renewal is unlimited and never re-authorized |
+| UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. H22 is what remains: a replica that never refreshes its policy keeps honouring the deleted binding |
 
 ### Why the holes line up
 
@@ -495,7 +496,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | Open |
 | H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | Open |
 | H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
-| H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | Open |
+| H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | **Closed** |
 | H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 | Open |
 | H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 | Open |
 | H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 | Open |
@@ -578,7 +579,7 @@ each divergence into the layer meant to close it, where it is considerably more 
 | # | Action | Closes | Status |
 |---|--------|--------|--------|
 | 1 | Require the checkpoint token on the surface, serve no surface without a secret to validate it, and share one coordinator instance | H1 | **Done** |
-| 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 | Open |
+| 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 | **Done** |
 | 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | Open |
 | 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | Open |
 | 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | Open |

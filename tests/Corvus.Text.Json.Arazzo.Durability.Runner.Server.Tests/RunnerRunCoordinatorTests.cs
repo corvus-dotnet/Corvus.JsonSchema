@@ -212,6 +212,52 @@ public sealed class RunnerRunCoordinatorTests
     }
 
     [TestMethod]
+    public async Task A_revoked_runner_cannot_renew_the_lease_it_already_holds()
+    {
+        // ADR 0027 and ADR 0065 decision 2: revocation takes effect within the binding cache window, whether or not the
+        // runner cooperates. Renewal is where that matters most — an unchecked renewal extends the lease indefinitely,
+        // so a revoked runner keeps its run for as long as it keeps asking.
+        var bindings = new RevocableBindings(Production);
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production, bindings);
+        ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        bindings.Revoke();
+
+        (await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_revoked_runner_cannot_read_or_write_the_checkpoint_of_a_run_it_holds()
+    {
+        // HoldsLeaseAsync is the gate on both checkpoint operations, so re-resolving here is what stops a revoked runner
+        // continuing to read tenant plaintext and overwrite run state under a lease acquired before the revocation.
+        var bindings = new RevocableBindings(Production);
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production, bindings);
+        ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
+
+        bindings.Revoke();
+
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_revoked_runner_may_still_hand_its_run_back()
+    {
+        // Release stays unguarded on purpose. Refusing it would strand the lease on a runner that is trying to give the
+        // work up, which is the one thing a revoked runner can still do that the platform wants.
+        var bindings = new RevocableBindings(Production);
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production, bindings);
+        ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        bindings.Revoke();
+        await fixture.Coordinator.ReleaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default);
+
+        (await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
     public async Task A_release_by_another_principal_does_not_free_the_holders_run()
     {
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
@@ -304,6 +350,22 @@ public sealed class RunnerRunCoordinatorTests
 
     private static DeclaredRunnerEnvironmentBindings Bindings()
         => new(new Dictionary<string, IReadOnlyList<string>> { [Runner] = [Production] });
+
+    // Bindings a test can withdraw mid-run, standing in for an administrator revoking the runner's authorization while
+    // it holds a lease. The real resolver reads the authorization rows per request behind a bounded cache; what matters
+    // to these tests is only that the answer can change between one operation and the next.
+    private sealed class RevocableBindings(string environment) : IRunnerEnvironmentBindings
+    {
+        private readonly string[] bound = [environment];
+        private volatile bool revoked;
+
+        public void Revoke() => this.revoked = true;
+
+        public ValueTask<RunnerBindings> ResolveAsync(string principal, CancellationToken cancellationToken)
+            => ValueTask.FromResult(this.revoked || !string.Equals(principal, Runner, StringComparison.Ordinal)
+                ? RunnerBindings.None
+                : new RunnerBindings(this.bound, null));
+    }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider
     {
@@ -399,17 +461,17 @@ public sealed class RunnerRunCoordinatorTests
 
         public RunnerRunCoordinator Coordinator { get; }
 
-        public static ValueTask<Fixture> EmptyAsync(RunnerApiOptions? options = null)
+        public static ValueTask<Fixture> EmptyAsync(RunnerApiOptions? options = null, IRunnerEnvironmentBindings? bindings = null)
         {
             var clock = new TestClock(T0);
             var store = new CountingStore(clock);
-            var coordinator = new RunnerRunCoordinator(store, Bindings(), options, new MonotonicRunnerLeaseEpochSource(clock), clock);
+            var coordinator = new RunnerRunCoordinator(store, bindings ?? Bindings(), options, new MonotonicRunnerLeaseEpochSource(clock), clock);
             return ValueTask.FromResult(new Fixture(store, clock, coordinator));
         }
 
-        public static async ValueTask<Fixture> WithRunAsync(string runId, WorkflowRunStatus status, string environment)
+        public static async ValueTask<Fixture> WithRunAsync(string runId, WorkflowRunStatus status, string environment, IRunnerEnvironmentBindings? bindings = null)
         {
-            Fixture fixture = await EmptyAsync();
+            Fixture fixture = await EmptyAsync(bindings: bindings);
             await fixture.SeedAsync(runId, status, environment);
             return fixture;
         }

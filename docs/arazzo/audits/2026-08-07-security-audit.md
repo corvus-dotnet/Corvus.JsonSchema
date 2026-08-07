@@ -96,10 +96,30 @@ item you cannot see directly in the code.
   parameter, so the surface cannot be mapped unauthenticated anywhere.
 
 ### P0-2 · DIV · `TB-5` · Revocation fence expires zero leases
+
+> **Resolved.** The finding held on verification, and understated the impact. See *Worse than reported*
+> below, and the threat model's [findings ledger](../reference/threat-model.md#12-findings-ledger) (H5).
+> All four acceptance criteria were applied as written.
+
 - **Where:** `ArazzoControlPlaneRunnerAuthorizationsHandler.cs:566-571`; `RunnerRunCoordinator.cs:97, 225-243, 290-303`
 - **Divergence:** ADR 0027 and ADR 0065 §2 specify that revocation expires in-flight leases server-side, immediately, whether or not the runner cooperates. `FenceRevokedRunnerAsync` calls `ExpireLeasesForOwnerAsync(runnerId)`, the **client-supplied registration id**, while leases are acquired with the machine principal as owner. The comment above it still asserts the pre-0065 model.
 - **Impact:** `UO-11`. Revocation is a no-op for in-flight work. Renewal and both checkpoint operations never re-resolve bindings, so a revoked runner renews indefinitely.
 - **Acceptance criteria:** pass the resolved machine principal; re-resolve bindings on renewal and both checkpoint operations, bounded by the existing 30 second cache; delete the stale comment; test that a revoked runner's next renewal and next save both fail.
+- **Worse than reported.** The fence did not merely expire nothing. It expired leases owned by whatever
+  string the runner id happened to be, and a runner id is client-supplied and administrator-chosen. So
+  registering a runner under an id equal to another principal's name turned that runner's revocation
+  into an expiry of the **victim's** in-flight leases. A fix that expired by principal *and* id would
+  have kept that primitive, which is why the fence now expires by the bound principal only, and why an
+  unbound row fences nothing rather than falling back to the id. Both behaviours are now pinned by test.
+- **A passing test agreed with the bug.** `Revoking_a_runner_fences_the_in_flight_run_it_leases`
+  already existed and exercised the fence, but seeded the lease with owner `"runner-1"`, the runner
+  *id*, which is not what the runner API writes. The fixture encoded the same wrong assumption as the
+  code, so the test passed throughout. It now binds a principal and leases as that principal. Worth
+  generalising: "prefer a test that exercises the control" is not sufficient on its own when the
+  fixture is free to restate the defect.
+- **Deliberately out of scope.** `ReleaseAsync` is not binding-checked. Refusing a revoked runner's
+  release would strand the lease on a runner trying to hand the work back, which is the same reasoning
+  that exempts release from quota metering. A test pins this so it is not "fixed" later.
 
 ### P0-3 · DIV · `TB-1` · `$ref` loader reaches `file://` and `http://` inside the control plane
 - **Where:** `ArazzoGenerationDriver.cs:353-376`, via `OpenApiSourceGenerator.cs:86` and `ExternalReferenceResolver.cs:411-465`

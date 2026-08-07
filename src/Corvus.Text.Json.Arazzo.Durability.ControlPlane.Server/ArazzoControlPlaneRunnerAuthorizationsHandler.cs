@@ -533,7 +533,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // re-applies the fence in case the runner had re-leased anything (harmless if it holds no leases).
         if (fetched.RootElement.IsRevoked)
         {
-            await this.FenceRevokedRunnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
+            await this.FenceRevokedRunnerAsync(fetched.RootElement, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(fetched);
             return RevokeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
         }
@@ -552,7 +552,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // Fence in-flight work AFTER the Revoked status is durable: expire the runner's leases so an authorized peer reclaims
         // its in-flight runs at once (its own next checkpoint write then conflicts). A store without the lease-administration
         // capability skips this; the authorization gate still stops all future dispatch on the next poll.
-        await this.FenceRevokedRunnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
+        await this.FenceRevokedRunnerAsync(decided.RootElement, cancellationToken).ConfigureAwait(false);
 
         // Revoke is a containment action — the most audit-worthy event on this surface — recorded once the removal is durable and fenced.
         GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "revoked");
@@ -563,14 +563,24 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     // The §5.5 in-flight revocation fence: expire every lease the runner holds so an authorized peer reclaims its in-flight
     // runs immediately and the revoked runner's own next optimistic-concurrency write conflicts. Control-plane-enforced (a
     // cooperative self-check is worthless against a compromised runner); a store without the capability cannot fence in-flight
-    // work, but revoke still stops all future dispatch through the authorization gate. The lease owner is the runner id.
-    private async ValueTask FenceRevokedRunnerAsync(string runnerId, CancellationToken cancellationToken)
-    {
-        if (this.leaseAdministration is { } admin)
-        {
-            await admin.ExpireLeasesForOwnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
-        }
-    }
+    // work, but revoke still stops all future dispatch through the authorization gate.
+    //
+    // The owner is the authorization's BOUND MACHINE PRINCIPAL, which is what the runner API writes when it acquires a
+    // lease (ADR 0065 decision 2 derives ownership from the authenticated principal, so a compromised runner cannot
+    // change it by renaming itself). It is emphatically not the runner id: that is client-supplied, and expiring by it
+    // would both miss every real lease and hand an administrator a way to expire an unrelated principal's in-flight work
+    // by registering a runner under an id equal to that principal's name.
+    //
+    // A row with no bound principal has nothing to fence, and that is the whole answer rather than a reason to fall back
+    // to the id. It means an administrator pre-authorized an id that no runner has yet claimed, so no lease exists to
+    // expire; the authorization gate still refuses all future dispatch.
+    //
+    // The owner is read out of the row before any await rather than the element being carried across one, which is what
+    // lets this take the document the caller already holds by reference.
+    private ValueTask FenceRevokedRunnerAsync(in EnvironmentRunnerAuthorization authorization, CancellationToken cancellationToken)
+        => this.leaseAdministration is { } admin && authorization.PrincipalOrNull is { } owner
+            ? new ValueTask(admin.ExpireLeasesForOwnerAsync(owner, cancellationToken).AsTask())
+            : ValueTask.CompletedTask;
 
     /// <inheritdoc/>
     public async ValueTask<ListRunnerAuthorizationsResult> HandleListRunnerAuthorizationsAsync(ListRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

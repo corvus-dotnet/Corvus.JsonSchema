@@ -231,6 +231,15 @@ public sealed class RunnerRunCoordinator
             return null;
         }
 
+        // Renewal re-checks the bindings, because an unchecked renewal is what would let a revoked runner keep a run
+        // indefinitely: each extension pushes the expiry out, so the lease never lapses on its own and the ADR 0027
+        // revocation fence has nothing left to bound it. Re-resolving here is what makes revocation take effect within
+        // the resolver's cache window (ADR 0065 decision 2 caps that at thirty seconds) rather than never.
+        if (!await this.StillBoundAsync(principal, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
         WorkflowLease? extended = await this.store.TryExtendLeaseAsync(
             new WorkflowLease(id, principal, storeToken, default),
             this.options.BoundLease(requestedExtension),
@@ -296,11 +305,27 @@ public sealed class RunnerRunCoordinator
             return false;
         }
 
+        // Both checkpoint operations gate on this, so it is where a revoked runner is stopped from continuing to read
+        // tenant plaintext and overwrite run state under a lease it acquired while still authorized. A binding that has
+        // gone away answers exactly as a lost lease does, which keeps the non-disclosure rule below intact: outside the
+        // bindings, held by a peer, and absent remain indistinguishable.
+        if (!await this.StillBoundAsync(principal, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
         return await this.store.TryExtendLeaseAsync(
             new WorkflowLease(id, principal, storeToken, default),
             TimeSpan.Zero,
             cancellationToken).ConfigureAwait(false) is not null;
     }
+
+    // Whether the principal is still bound to anything at all. An operation on a run it already holds does not need to
+    // know WHICH environments it is bound to — the lease is already run-specific — only that its authorization has not
+    // been withdrawn. Release deliberately does not consult this: refusing a release would strand the lease on a runner
+    // trying to hand the work back, which is the one thing a revoked runner can still usefully do.
+    private async ValueTask<bool> StillBoundAsync(string principal, CancellationToken cancellationToken)
+        => (await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false)).Count > 0;
 
     // Confirms, under the lease, that the run is one this runner should have been offered, and projects what the claim
     // reports. The index query already constrains the candidate set, but it ran before the lease: the run may have been

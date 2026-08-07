@@ -786,19 +786,45 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     [TestMethod]
     public async Task Revoking_a_runner_fences_the_in_flight_run_it_leases()
     {
+        // The lease owner is the MACHINE PRINCIPAL, never the runner id (ADR 0065 decision 2: ownership derives from the
+        // authenticated principal, so a compromised runner cannot change it by renaming itself). This test used to seed
+        // the lease under the runner id, which is not what the runner API writes, so it passed while the fence expired
+        // nothing in production. Binding a principal and leasing as that principal is what makes the assertion real.
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", "svc-runner-a", default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // The runner holds a live lease on a run it is executing. A peer cannot take it while the lease is live.
-        (await host.StateStore.AcquireLeaseAsync("run-1", "runner-1", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await host.StateStore.AcquireLeaseAsync("run-1", "svc-runner-a", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
         (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
 
         // Revoking the runner fences its in-flight work: the lease is expired, so a peer reclaims the run at once.
         (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Revoking_a_runner_does_not_expire_leases_belonging_to_its_id_rather_than_its_principal()
+    {
+        // The complement of the test above, and the reason the fence cannot simply try both: a runner id is
+        // client-supplied and an administrator may name any string. If the fence expired leases owned by the id as well,
+        // a runner could be registered under an id equal to a VICTIM principal's name and its revocation would expire
+        // the victim's in-flight work.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "svc-victim", "runner", "svc-runner-a", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/svc-victim/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // An unrelated principal whose name happens to equal the revoked runner's id holds a live lease.
+        (await host.StateStore.AcquireLeaseAsync("run-2", "svc-victim", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/svc-victim/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Untouched: the fence expires what the revoked runner owns, which is what its bound principal owns.
+        (await host.StateStore.AcquireLeaseAsync("run-2", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
     }
 
     [TestMethod]
