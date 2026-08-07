@@ -69,6 +69,12 @@
   <data name="OpenApiSourceDocumentNotFound" xml:space="preserve">
     <value>The OpenAPI source document '{0}' could not be loaded.</value>
   </data>
+  <data name="ArazzoDocumentInvalid" xml:space="preserve">
+    <value>The Arazzo document at '{0}' does not conform to the Arazzo schema: {1}</value>
+  </data>
+  <data name="ArazzoIdentifierUnsupported" xml:space="preserve">
+    <value>The {0} '{1}' contains characters this generator does not accept. Ids may use letters, digits, '.', '-' and '_', and may be at most {2} characters.</value>
+  </data>
   <data name="ArazzoDocumentNotFound" xml:space="preserve">
     <value>The Arazzo document '{0}' could not be loaded.</value>
   </data>

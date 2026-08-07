@@ -226,6 +226,12 @@ public static class ArazzoGenerationDriver
         {
             ArazzoDocument arazzo = document.RootElement;
 
+            // Everything below turns this document into code, so it is checked first: against the Arazzo schema, and
+            // against the identifier shape this generator is prepared to emit. Placed here rather than at an ingress
+            // because every path that compiles a document arrives here, including each recursively generated
+            // cross-document source, which an ingress check would not see at all.
+            ArazzoDocumentGate.ThrowIfUnacceptable(arazzo, arazzoBytes, baseUri);
+
             if (arazzo.SourceDescriptions.IsNotUndefined())
             {
                 foreach (ArazzoDocument.SourceDescriptionObject source in arazzo.SourceDescriptions.EnumerateArray())

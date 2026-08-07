@@ -43,6 +43,21 @@ internal static class ThrowHelper
     public static FileNotFoundException GetArazzoDocumentNotFoundException(Uri arazzoRetrievalUri)
         => new(SR.Format(SR.ArazzoDocumentNotFound, arazzoRetrievalUri));
 
+    /// <summary>Creates the exception for an Arazzo document that does not conform to the Arazzo schema, for the caller to throw.</summary>
+    /// <param name="retrievalUri">The document's retrieval URI.</param>
+    /// <param name="detail">The first schema violation.</param>
+    /// <returns>The exception to throw.</returns>
+    public static InvalidDataException GetArazzoDocumentInvalidException(Uri retrievalUri, string detail)
+        => new(SR.Format(SR.ArazzoDocumentInvalid, retrievalUri, detail));
+
+    /// <summary>Creates the exception for an identifier this generator will not emit, for the caller to throw.</summary>
+    /// <param name="kind">What the identifier names, for the message.</param>
+    /// <param name="value">The offending identifier.</param>
+    /// <param name="maximumLength">The accepted maximum length.</param>
+    /// <returns>The exception to throw.</returns>
+    public static InvalidDataException GetArazzoIdentifierUnsupportedException(string kind, string value, int maximumLength)
+        => new(SR.Format(SR.ArazzoIdentifierUnsupported, kind, value, maximumLength));
+
     /// <summary>Creates the exception for an Arazzo source document that could not be loaded, for the caller to throw.</summary>
     /// <param name="specUri">The Arazzo source document URI that could not be loaded.</param>
     /// <returns>The exception to throw.</returns>
