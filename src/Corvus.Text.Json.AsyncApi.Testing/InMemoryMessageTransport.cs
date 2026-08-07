@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Testing;
 /// on subscribe delivery — mirroring what a real transport would do.
 /// </para>
 /// </remarks>
-public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -31,6 +31,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     private readonly List<PublishedMessage> publishedMessages = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
     private readonly Dictionary<string, Delegate> subscriptions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Delegate> contextSubscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Delegate> replySubscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, TaskCompletionSource<(byte[] Payload, byte[] Headers)>> pendingRequests = new(StringComparer.Ordinal);
 
@@ -73,12 +74,15 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         Delegate? handler = null;
         lock (this.syncRoot)
         {
-            this.subscriptions.TryGetValue(channel, out handler);
+            if (!this.subscriptions.TryGetValue(channel, out handler))
+            {
+                this.contextSubscriptions.TryGetValue(channel, out handler);
+            }
         }
 
         if (handler is not null)
         {
-            return DeliverToSubscriberAsync<TPayload>(handler, payloadBytes, headerBytes, cancellationToken);
+            return DeliverToSubscriberAsync<TPayload>(handler, channelUtf8, payloadBytes, headerBytes, cancellationToken);
         }
 
         return ValueTask.CompletedTask;
@@ -86,6 +90,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
     private async ValueTask DeliverToSubscriberAsync<TPayload>(
         Delegate handler,
+        ReadOnlyMemory<byte> channelUtf8,
         byte[] payloadBytes,
         byte[] headerBytes,
         CancellationToken cancellationToken)
@@ -104,8 +109,19 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                parsedPayload, parsedHeaders, cancellationToken).ConfigureAwait(false);
+            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
+            {
+                await contextHandler(parsedPayload, new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = parsedHeaders,
+                }, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+                    parsedPayload, parsedHeaders, cancellationToken).ConfigureAwait(false);
+            }
         }
         finally
         {
@@ -234,6 +250,23 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        lock (this.syncRoot)
+        {
+            this.contextSubscriptions[channel] = handler;
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
     public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
@@ -241,6 +274,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
+            this.contextSubscriptions.Remove(channel);
             this.replySubscriptions.Remove(channel);
         }
 
@@ -303,7 +337,8 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         lock (this.syncRoot)
         {
-            if (!this.subscriptions.TryGetValue(channel, out handler!))
+            if (!this.subscriptions.TryGetValue(channel, out handler!) &&
+                !this.contextSubscriptions.TryGetValue(channel, out handler!))
             {
                 throw new InvalidOperationException($"No subscription for channel '{channel}'.");
             }
@@ -322,8 +357,19 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                payload, headers, cancellationToken).ConfigureAwait(false);
+            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
+            {
+                await contextHandler(payload, new MessageDeliveryContext
+                {
+                    ChannelUtf8 = Encoding.UTF8.GetBytes(channel),
+                    Headers = headers,
+                }, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+                    payload, headers, cancellationToken).ConfigureAwait(false);
+            }
         }
         finally
         {

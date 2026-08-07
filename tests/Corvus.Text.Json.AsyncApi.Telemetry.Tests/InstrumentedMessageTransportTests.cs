@@ -150,6 +150,33 @@ public class InstrumentedMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ForwardsContextAndInstrumentation()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "context-test");
+        bool handlerCalled = false;
+        MessageContext messageContext = default;
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            TestChannel,
+            (payload, deliveryContext, ct) =>
+            {
+                handlerCalled = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span) == "test/channel";
+                return ValueTask.CompletedTask;
+            },
+            in messageContext,
+            default);
+
+        await inner.DeliverAsync<JsonElement>("test/channel", TestPayloadJson);
+
+        Assert.IsTrue(handlerCalled);
+        Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public async Task RequestAsync_CreatesActivityWithConversationId()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

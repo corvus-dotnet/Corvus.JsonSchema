@@ -223,6 +223,30 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ConsumerEmitsLegacyAndDeliveryContextVariants()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(streetlightsRoot);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("WithDeliveryContextConsumer"));
+
+        StringAssert.Contains(contextHandler.Content, "MessageDeliveryContext context");
+        StringAssert.Contains(contextConsumer.Content, "IMessageDeliveryContextTransport transport");
+        StringAssert.Contains(contextConsumer.Content, "SubscribeWithDeliveryContextAsync");
+
+        GeneratedFile legacyHandler = files.Single(f => f.FileName.EndsWith("Handler.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        GeneratedFile legacyConsumer = files.Single(f => f.FileName.EndsWith("Consumer.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        Assert.IsFalse(legacyHandler.Content.Contains("MessageDeliveryContext", StringComparison.Ordinal));
+        Assert.IsFalse(legacyConsumer.Content.Contains("SubscribeWithDeliveryContextAsync", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void Generate_TraitsProvideHeadersToMessage()
     {
         // The traits-example.json has a message trait that supplies headers

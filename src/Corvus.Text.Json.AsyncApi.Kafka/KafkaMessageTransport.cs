@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.AsyncApi.Kafka;
 /// independent offset tracking and partition assignment.
 /// </para>
 /// </remarks>
-public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -155,12 +155,31 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
 
         Task consumeTask = Task.Run(
-            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token),
+            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.Legacy(handler), cts.Token),
             CancellationToken.None);
 
         SubscriptionState state = new(consumer, cts, consumeTask);
         this.subscriptions[channel] = state;
 
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+        Task consumeTask = Task.Run(
+            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.WithDeliveryContext(handler), cts.Token),
+            CancellationToken.None);
+        this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
         return ValueTask.CompletedTask;
     }
 
@@ -451,7 +470,7 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         IConsumer<Null, byte[]> consumer,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -580,11 +599,11 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                         {
                             if (this.middleware is not null)
                             {
-                                await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                                await this.middleware((ct) => handler.Invoke(payload, channelUtf8, headers, result, ct), cancellationToken).ConfigureAwait(false);
                             }
                             else
                             {
-                                await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                                await handler.Invoke(payload, channelUtf8, headers, result, cancellationToken).ConfigureAwait(false);
                             }
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

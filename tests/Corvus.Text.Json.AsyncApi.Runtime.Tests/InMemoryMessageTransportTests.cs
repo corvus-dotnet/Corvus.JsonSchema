@@ -69,6 +69,35 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesChannelAndHeaders()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        ReadOnlyMemory<byte> channel = "test/context"u8.ToArray();
+        JsonValueKind? receivedHeadersKind = null;
+        string? receivedChannel = null;
+
+        MessageContext messageContext = default;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await transport.DeliverAsync<JsonElement>(
+            "test/context",
+            Encoding.UTF8.GetBytes("{\"hello\":\"world\"}"),
+            Encoding.UTF8.GetBytes("{\"source\":\"test\"}"));
+
+        Assert.AreEqual("test/context", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+    }
+
+    [TestMethod]
     public async Task UnsubscribeAsync_StopsReceivingMessages()
     {
         await using Testing.InMemoryMessageTransport transport = new();

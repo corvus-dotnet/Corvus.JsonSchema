@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.AsyncApi.Amqp;
 /// <c>{consumerTagPrefix}.{channel}</c>.
 /// </para>
 /// </remarks>
-public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     private static readonly byte[] HeadersKey = "corvus-headers"u8.ToArray();
     private const string HeadersKeyString = "corvus-headers";
@@ -181,7 +181,20 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -442,7 +455,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -578,11 +591,11 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     {
                         if (this.middleware is not null)
                         {
-                            await this.middleware((ct) => handler(payload, headers, ct), cts.Token).ConfigureAwait(false);
+                            await this.middleware((ct) => handler.Invoke(payload, channelUtf8, headers, args, ct), cts.Token).ConfigureAwait(false);
                         }
                         else
                         {
-                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                            await handler.Invoke(payload, channelUtf8, headers, args, cts.Token).ConfigureAwait(false);
                         }
 
                         await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);

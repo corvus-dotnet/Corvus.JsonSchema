@@ -41,6 +41,36 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "test.context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        object? nativeMessage = null;
+
+        MessageContext messageContext = default;
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+                received.Release();
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(500);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("test.context", receivedChannel);
+        Assert.IsNotNull(nativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         // Arrange

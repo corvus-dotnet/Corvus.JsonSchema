@@ -41,6 +41,36 @@ public class AzureServiceBusTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "test-queue"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
+
+        MessageContext messageContext = default;
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(500);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"sensor\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("test-queue", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         // Arrange

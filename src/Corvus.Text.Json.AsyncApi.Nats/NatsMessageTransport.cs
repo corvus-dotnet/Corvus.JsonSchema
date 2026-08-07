@@ -33,7 +33,7 @@ namespace Corvus.Text.Json.AsyncApi.Nats;
 /// eliminating intermediate allocations entirely.
 /// </para>
 /// </remarks>
-public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     private const string HeadersKey = "Corvus-Headers";
     private const string CorrelationIdKey = "Corvus-Correlation-Id";
@@ -290,13 +290,33 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
             // JetStream path: durable consumer
             // Use cached stream name or derive on-demand
             string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
-            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, handler, cancellationToken);
+            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
         }
         else
         {
             // Core NATS path: existing behavior
-            return this.SubscribeToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+            return this.SubscribeToCoreNatsAsync(channel, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
         }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        MessageHandler<TPayload> messageHandler = MessageHandler<TPayload>.WithDeliveryContext(handler);
+        if (this.options.UseJetStream && this.jsContext is not null)
+        {
+            string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
+            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, messageHandler, cancellationToken);
+        }
+
+        return this.SubscribeToCoreNatsAsync(channel, channelUtf8, messageHandler, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -502,7 +522,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         string channel,
         string streamName,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -650,12 +670,12 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                     if (this.middleware is not null)
                                     {
                                         await this.middleware(
-                                            (ct) => handler(payload, headers, ct),
+                                            (ct) => handler.Invoke(payload, channelUtf8, headers, msg, ct),
                                             cts.Token).ConfigureAwait(false);
                                     }
                                     else
                                     {
-                                        await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                        await handler.Invoke(payload, channelUtf8, headers, msg, cts.Token).ConfigureAwait(false);
                                     }
 
                                     await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
@@ -718,7 +738,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -842,12 +862,12 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                         if (this.middleware is not null)
                                         {
                                             await this.middleware(
-                                                (ct) => handler(payload, headers, ct),
+                                                (ct) => handler.Invoke(payload, channelUtf8, headers, msg, ct),
                                                 cts.Token).ConfigureAwait(false);
                                         }
                                         else
                                         {
-                                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                            await handler.Invoke(payload, channelUtf8, headers, msg, cts.Token).ConfigureAwait(false);
                                         }
                                     }
                                 }
