@@ -284,6 +284,25 @@ item you cannot see directly in the code.
 - **Divergence:** ADR 0065's model is *mutual* distrust, so the control plane distrusts the runner for integrity. In practice the index is projected **from the runner's own submitted bytes** and stored verbatim. Every backend then overwrites `environment`, `workflow_id`, `status` and the security tags from that projection, deleting and re-inserting the tag rows. Nothing compares any of it to what the row already held.
 - **Impact:** `UO-2`, `UO-1`. A runner rewrites its own run into another owner group's environment and reach, releases the lease, and the victim's runner claims and executes attacker-authored state with the victim's credentials against the victim's sources. The same primitive re-tags a run into the platform group, or hides it from its owner. ADR 0065's answer is the runner MAC over the region, which is phase B, so an interim server-side check is required.
 - **Acceptance criteria:** on save, validate the submitted index against the stored row. Environment, workflow id and security tags are not runner-mutable for an existing run; only status, cursor and wait fields are. Test that a save carrying a different `environment` is refused.
+- **Uniform absence, which decides the placement.** Checked across AzureStorage, Cosmos, Mongo, MySql,
+  NatsJetStream, Postgres, Redis, SqlServer, Sqlite and the in-memory store: zero comparisons of the
+  submitted index against the stored row. Had it been partial this would be a per-backend conformance
+  problem like H12's pushdown, needing the same check written and then policed nine times. Because the
+  absence is uniform the check belongs **above** the store, in `WorkflowCheckpointCoordinator.SaveAsync`,
+  where it applies once, cannot drift between backends, and covers both checkpoint-authoring surfaces.
+- **The warm path does not re-read the row, which is the trap in this one.** `SaveAsync` loads the store
+  only when the slot is cold; on the ordinary load-then-save path the slot was seeded by `LoadAsync`, so
+  the stored identity is not in hand at save time. The identity is therefore captured when the slot is
+  **seeded**, in both places that seed it. Re-reading per save would have been the obvious fix and would
+  have put a store round trip on the hottest surface in the system. A test covers the warm path
+  specifically, because a fix that only worked on cold slots would pass the obvious test while covering
+  the path an attacker is least likely to be on.
+- **`Rejected` is a new outcome rather than a reuse of `Conflict` or `Superseded`.** Those two are
+  ordinary races a healthy writer retries. This is a write no honest writer produces, so folding it into
+  `Conflict` would tell a runner to retry an attack and would make the one event worth alerting on
+  indistinguishable from routine lease churn.
+- **A fourth test asserts an ordinary advance still applies.** Status, cursor and timings are exactly
+  what a runner is trusted to report; without that test, "refuse everything" passes the other three.
 
 ---
 

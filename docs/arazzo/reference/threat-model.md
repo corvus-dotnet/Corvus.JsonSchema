@@ -233,8 +233,8 @@ checkable rather than a by-product of what a review happened to look at.
 |--------|---------|---------------|----------|
 | Runner impersonation or lease hijack | **Holds**. Machine principal read from the token only, lease ownership derived server-side | The in-memory store mints predictable tokens, which matters only where a principal is shared | |
 | Runner-id squatting at registration | **Holds**. [Pre-authorization](UBIQUITOUSLANGUAGE.md#runner-pre-authorization) or short-TTL [enrolment token](UBIQUITOUSLANGUAGE.md#enrolment-token) required, re-checked under the store fence | None found | |
-| Claiming another environment's work | **Partial**. Environment resolved from bindings at [claim](UBIQUITOUSLANGUAGE.md#claim), never from the request | Pinned at claim, but the pin is a mutable column the runner rewrites afterwards | H39 |
-| **Integrity of what the runner returns**, the control plane's half of mutual distrust | **Absent**. The submitted index is stored verbatim, nothing compares it to the row's existing values | A runner rewrites `environment`, `workflowId` and security tags on its own runs, moving a run into another owner group's environment and reach | H39 |
+| Claiming another environment's work | **Holds**. Environment resolved from bindings at [claim](UBIQUITOUSLANGUAGE.md#claim), never from the request, and the pin is no longer rewritable by a later save | None found | H39 |
+| **Integrity of what the runner returns**, the control plane's half of mutual distrust | **Partial**. The coordinator refuses a save whose index changes the run's environment, workflow id or security tags, above the store and so on every backend | Only the identity fields are compared. The rest of the runner-authored region is still taken on trust until the phase-B MAC covers it | H39 |
 | Checkpoint replay or stale write | **Partial**. Single-row CAS, 409 on supersession, monotonic accepted sequence | Header and body sequence are never compared, so the rule validates a number the client wrote | H40 |
 | Superseded or displaced holder writing | **Absent**. [Lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is carried and contract-published but never compared, and unsound as minted | Displaced holder, stale generation and rollback are indistinguishable from a healthy write | H8 |
 | Rollback or substitution by the control plane (AD-4) | **Designed**. Tenant anchor, phase B | Accepted for the phase-A window, booked as AR-9 | |
@@ -315,6 +315,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Schema compilation confined to supplied documents on every control-plane path, so an authored `$ref` is refused rather than fetched | Holds | `ArazzoControlPlaneCatalogHandler.cs`, `ArazzoControlPlaneWorkspaceHandler.cs` |
 | Reserved `sys:` keyspace refused independently of the policy | Holds | `ControlPlaneRowSecurity.cs:386-395` |
 | Wildcard binding cannot confer unrestricted reach | Holds | `PersistentRowSecurityPolicy.cs:126, 362-366` |
+| Run identity (environment, workflow id, security tags) is not runner-mutable once established, enforced above the store so every backend inherits it | Holds | `WorkflowCheckpointCoordinator.SaveAsync` |
 | Machine principal from the token only, lease ownership derived server-side | Holds | `RunnerPrincipalAccessor.cs:47-62`, `MachinePrincipal.cs:52-65` |
 | Revocation expires the holder's leases by bound principal, and renewal and both checkpoint operations re-resolve bindings | Holds | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs` fence, `RunnerRunCoordinator.StillBoundAsync` |
 | Registration requires pre-authorization or an enrolment token, re-checked under the store fence | Holds | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs:277-297, 359-366` |
@@ -431,7 +432,7 @@ detection, CON containment, REC recovery.
 | Outcome | Worst path | PRV | DET | CON | REC | Layers between attacker and outcome |
 |---------|-----------|-----|-----|-----|-----|--------------------------------------|
 | UO-1 cross-tenant read | H10, H12 | NONE | NONE | NONE | WEAK | **Zero.** `security:read` builds no access context, so it enumerates every tenant. Closing H1 removed the checkpoint surface from this path but did not raise the score, because H10 reaches the same outcome with nothing in the way |
-| UO-2 state forgery | H39, H9 | NONE | NONE | PART | WEAK | **One.** Only the monotonic sequence, which a preceding read reveals, and which H40 shows validates a client-authored number |
+| UO-2 state forgery | H40, H9 | PART | NONE | PART | WEAK | **Two.** The run's identity is now server-checked, so a forged state cannot be re-pointed at another tenant. What remains is the sequence, which H40 shows validates a client-authored number, and the unauthenticated sidecar |
 | UO-3 privilege escalation | H10 | WEAK | WEAK | PART | NONE | **One, aligned.** Four holes on one path: no reach on `security:*`, guard checks wrong verbs, ceiling pinned by a definable name, revocation does not propagate |
 | UO-4 code execution | H3, H16 | PART | WEAK | NONE | WEAK | **One, accidental.** Prevention rests on an incidental property of emitted text, with no sandbox behind it on the default backend |
 | UO-5 credential theft | H4 | NONE | NONE | WEAK | WEAK | **Zero.** No destination validation, no egress control, no resolution audit, secrets in unscrubbable strings. Closing H2 removed the catalog-add route to a mounted secret, not the credential-binding route |
@@ -507,7 +508,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 | Open |
 | H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 | Open |
 | H11 | Crit | DIV | Runner API emits nothing, and there is no read audit anywhere | All | Open |
-| H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 | Open |
+| H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 | **Closed** |
 | H7 | High | DIV | Interim checkpoint protector diverges from the design it stands in for, run-id-only AAD, no key id, opt-in and silent | TB-4 | Open |
 | H12 | High | DIV | Reach pushdown is self-attested by a default interface implementation, and four of nine backends filter in process | TB-4 | Open |
 | H13 | High | DIV | Content hash is over canonical bytes while raw bytes are stored and compiled | TB-1, TB-8 | Open |
@@ -606,7 +607,7 @@ each divergence into the layer meant to close it, where it is considerably more 
 | 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | **Partly done.** Escaping closed at six sites; the identifier pattern is deliberately not added, see the H3 note in §12 |
 | 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | **Done** |
 | 6 | Remove both reintroduced security-mode defaults | Posture | Open |
-| 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | Open |
+| 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | **H39 done**, H40 open |
 | 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | Open |
 | 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 | Open |
 | 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | Open |

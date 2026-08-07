@@ -87,6 +87,7 @@ public sealed class WorkflowCheckpointCoordinator
             slot.LastAppliedSequence = WorkflowCheckpointSerializer.TryReadSequence(checkpoint.Value.Utf8, out long persisted)
                 ? persisted
                 : 0;
+            CaptureIdentity(slot, checkpoint.Value.Utf8);
             slot.Seeded = true;
             appliedSequence = slot.LastAppliedSequence;
         }
@@ -126,7 +127,22 @@ public sealed class WorkflowCheckpointCoordinator
                 slot.LastAppliedSequence = existing is { } row && WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted)
                     ? persisted
                     : 0;
+                if (existing is { } identityRow)
+                {
+                    CaptureIdentity(slot, identityRow.Utf8);
+                }
+
                 slot.Seeded = true;
+            }
+
+            // ADR 0065's mutual distrust, the control plane's half: the runner owns the run's working state and not the
+            // run's identity. The index arrives projected from the runner's own bytes and no store backend compares it
+            // to anything, so this is where a save that re-points a run at another environment, another workflow, or
+            // another owner group is refused. Checked before the sequence rule, so such a save is reported as what it
+            // is rather than as a race the caller should retry.
+            if (slot.IdentityEstablished && !slot.Identity.Matches(index))
+            {
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
             }
 
             // ADR 0065 decision 6: the server validates rather than assigns, accepting only the persisted sequence plus
@@ -141,6 +157,14 @@ public sealed class WorkflowCheckpointCoordinator
             {
                 slot.Etag = await this.store.SaveAsync(id, checkpointUtf8, index, slot.Etag, cancellationToken).ConfigureAwait(false);
                 slot.LastAppliedSequence = sequence;
+
+                // A run with no stored row has no identity to preserve, so its first accepted save is what sets one.
+                if (!slot.IdentityEstablished)
+                {
+                    slot.Identity = RunIdentity.From(index);
+                    slot.IdentityEstablished = true;
+                }
+
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Applied, sequence + 1);
             }
             catch (WorkflowConflictException)
@@ -212,6 +236,33 @@ public sealed class WorkflowCheckpointCoordinator
         }
     }
 
+    // Reads the run's identity out of a stored checkpoint. A row that does not project is left alone rather than
+    // treated as identity-less: the runner API refuses a malformed body before it is ever stored, so an unprojectable
+    // row is a different problem, and inventing an empty identity for it would turn that problem into a free rewrite.
+    private static void CaptureIdentity(RunSlot slot, ReadOnlyMemory<byte> checkpointUtf8)
+    {
+        if (WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry stored))
+        {
+            slot.Identity = RunIdentity.From(stored);
+            slot.IdentityEstablished = true;
+        }
+    }
+
+    /// <summary>
+    /// The part of a run's index the writer does not own: which environment it belongs to, which workflow it is of, and
+    /// the tags that decide who can see and claim it.
+    /// </summary>
+    private readonly record struct RunIdentity(string? Environment, string WorkflowId, SecurityTagSet SecurityTags)
+    {
+        public static RunIdentity From(in WorkflowRunIndexEntry index)
+            => new(index.Environment, index.WorkflowId, index.SecurityTags);
+
+        public bool Matches(in WorkflowRunIndexEntry index)
+            => string.Equals(this.Environment, index.Environment, StringComparison.Ordinal)
+            && string.Equals(this.WorkflowId, index.WorkflowId, StringComparison.Ordinal)
+            && this.SecurityTags.SetEquals(index.SecurityTags);
+    }
+
     private sealed class RunSlot
     {
         public SemaphoreSlim Gate { get; } = new(1, 1);
@@ -221,6 +272,10 @@ public sealed class WorkflowCheckpointCoordinator
         public WorkflowEtag Etag { get; set; }
 
         public bool Seeded { get; set; }
+
+        public RunIdentity Identity { get; set; }
+
+        public bool IdentityEstablished { get; set; }
 
         public long TouchedTimestamp { get; set; }
     }
@@ -252,4 +307,12 @@ public enum CheckpointSaveOutcome
 
     /// <summary>The store rejected the write on an etag conflict, signalling a broken sole-writer invariant; the run stays claimable.</summary>
     Conflict,
+
+    /// <summary>
+    /// The save carried an index that changed something the writer does not own — the run's environment, its workflow
+    /// id, or its security tags. Nothing was written. Distinct from <see cref="Superseded"/> and <see cref="Conflict"/>,
+    /// which are both ordinary races a healthy writer retries: this one is a write no honest writer produces, so a
+    /// caller that sees it has a defect or an attack rather than a lost lease.
+    /// </summary>
+    Rejected,
 }
