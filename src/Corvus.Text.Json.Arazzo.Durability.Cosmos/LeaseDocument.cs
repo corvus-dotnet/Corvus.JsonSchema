@@ -22,6 +22,9 @@ public readonly partial struct LeaseDocument
     /// <summary>Gets the lease expiry in Unix milliseconds.</summary>
     public long ExpiresAtValue => (long)this.ExpiresAt;
 
+    /// <summary>Gets the grant's epoch.</summary>
+    public long EpochValue => (long)this.Epoch;
+
     /// <summary>
     /// Writes a lease document's persisted JSON straight to <paramref name="writer"/> — no intermediate
     /// <see cref="LeaseDocument"/> value and no re-serialization (the store hands this to <c>CosmosJson.WriteToStream</c>
@@ -32,13 +35,15 @@ public readonly partial struct LeaseDocument
     /// <param name="owner">The lease owner.</param>
     /// <param name="token">The lease token.</param>
     /// <param name="expiresAtUnixMs">The lease expiry, Unix milliseconds.</param>
-    public static void WriteJson(Utf8JsonWriter writer, string id, string owner, string token, long expiresAtUnixMs)
+    /// <param name="epoch">The grant's epoch.</param>
+    public static void WriteJson(Utf8JsonWriter writer, string id, string owner, string token, long expiresAtUnixMs, long epoch)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.IdUtf8, id);
         writer.WriteString(JsonPropertyNames.OwnerUtf8, owner);
         writer.WriteString(JsonPropertyNames.TokenUtf8, token);
         writer.WriteNumber(JsonPropertyNames.ExpiresAtUtf8, expiresAtUnixMs);
+        writer.WriteNumber(JsonPropertyNames.EpochUtf8, epoch);
         writer.WriteEndObject();
     }
 

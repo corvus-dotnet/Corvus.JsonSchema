@@ -212,6 +212,64 @@ public sealed class RunnerRunCoordinatorTests
     }
 
     [TestMethod]
+    public async Task A_lease_presented_with_an_epoch_above_the_grant_authorises_nothing()
+    {
+        // ADR 0065 §6's first refusal rule: an epoch above the current grant names a grant this holder never held. The
+        // header is plaintext and the runner writes the epoch it is given into the checkpoint it authors, so an epoch
+        // the server does not check is an epoch the runner chooses.
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
+        ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        string inflated = WithEpoch(claimed.Lease.Token, claimed.Lease.Epoch + 1);
+
+        (await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, inflated, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, inflated, default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_lease_presented_with_an_epoch_below_the_grant_authorises_nothing()
+    {
+        // The second rule, a rollback: an epoch below the run's high-water re-presents a grant the run has moved past.
+        // In phase A the lease header is the epoch's only carrier, so both rules are decided by the same comparison
+        // against the persisted grant; phase B separates them, when the runner's own MAC'd region carries an epoch
+        // independently of the header.
+        //
+        // The superseded epoch is a real one this run really issued, carried on the current grant's own store token,
+        // rather than an arbitrary lower number. An arbitrary one would be refused for being unparseable or for naming
+        // a lease nobody holds, and would pass whether or not anything compares epochs — which is no evidence at all.
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
+        ClaimedRunRecord first = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+        await fixture.Coordinator.ReleaseAsync(Runner, first.RunId, first.Lease.Token, default);
+        ClaimedRunRecord current = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        current.Lease.Epoch.ShouldBeGreaterThan(first.Lease.Epoch);
+        string rolledBack = WithEpoch(current.Lease.Token, first.Lease.Epoch);
+
+        (await fixture.Coordinator.TryRenewAsync(Runner, current.RunId, rolledBack, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, current.RunId, rolledBack, default)).ShouldBeFalse();
+
+        // And the grant itself still works, so what was refused is the epoch and not the run's whole lease.
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, current.RunId, current.Lease.Token, default)).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task A_second_control_plane_instance_over_the_same_store_never_re_issues_a_runs_epoch()
+    {
+        // The runner API is deployed as several instances and a lease outlives the instance that granted it, so an
+        // epoch minted from process-local state is not monotonic for the run — a restart, or simply a second replica,
+        // re-issues values already spent. The store is the only thing that spans both, which is why the counter lives
+        // there.
+        var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
+        ClaimedRunRecord first = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
+        await fixture.Coordinator.ReleaseAsync(Runner, first.RunId, first.Lease.Token, default);
+
+        var second = new RunnerRunCoordinator(fixture.Store, Bindings(), timeProvider: fixture.Clock);
+        ClaimedRunRecord next = (await second.TryClaimAsync(Runner, [Version], null, default))!.Value;
+
+        next.Lease.Epoch.ShouldBeGreaterThan(first.Lease.Epoch);
+    }
+
+    [TestMethod]
     public async Task A_revoked_runner_cannot_renew_the_lease_it_already_holds()
     {
         // ADR 0027 and ADR 0065 decision 2: revocation takes effect within the binding cache window, whether or not the
@@ -351,6 +409,14 @@ public sealed class RunnerRunCoordinatorTests
     private static DeclaredRunnerEnvironmentBindings Bindings()
         => new(new Dictionary<string, IReadOnlyList<string>> { [Runner] = [Production] });
 
+    // Rewrites the epoch a lease header states, leaving the store's own token untouched — what a runner that keeps its
+    // grant but chooses its own epoch presents.
+    private static string WithEpoch(string leaseToken, long epoch)
+    {
+        RunnerLeaseToken.TryParse(leaseToken, out _, out string storeToken).ShouldBeTrue();
+        return RunnerLeaseToken.Issue(epoch, storeToken);
+    }
+
     // Bindings a test can withdraw mid-run, standing in for an administrator revoking the runner's authorization while
     // it holds a lease. The real resolver reads the authorization rows per request behind a bounded cache; what matters
     // to these tests is only that the answer can change between one operation and the next.
@@ -465,7 +531,7 @@ public sealed class RunnerRunCoordinatorTests
         {
             var clock = new TestClock(T0);
             var store = new CountingStore(clock);
-            var coordinator = new RunnerRunCoordinator(store, bindings ?? Bindings(), options, new MonotonicRunnerLeaseEpochSource(clock), clock);
+            var coordinator = new RunnerRunCoordinator(store, bindings ?? Bindings(), options, clock);
             return ValueTask.FromResult(new Fixture(store, clock, coordinator));
         }
 

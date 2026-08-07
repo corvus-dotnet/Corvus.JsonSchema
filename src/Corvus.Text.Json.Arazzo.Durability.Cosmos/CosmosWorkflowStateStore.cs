@@ -211,16 +211,19 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         string token = Guid.NewGuid().ToString("N");
         var partition = new PartitionKey(id.Value);
 
-        // Serialize the lease straight into the pooled write stream — no intermediate LeaseDocument value.
-        Stream BuildLeaseStream() => CosmosJson.WriteToStream(
-            (Id: id.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds()),
-            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt) ctx)
-                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt));
+        // Serialize the lease straight into the pooled write stream — no intermediate LeaseDocument value. The epoch is
+        // advanced from the stored document rather than supplied, so it counts this run's grants across every instance
+        // and every restart (ADR 0065 §6). The document's own ETag is what makes read-then-advance atomic: a concurrent
+        // grant changes it, and the conditional replace below is refused rather than reusing the epoch it read.
+        Stream BuildLeaseStream(long epoch) => CosmosJson.WriteToStream(
+            (Id: id.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds(), Epoch: epoch),
+            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt, long Epoch) ctx)
+                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt, ctx.Epoch));
 
         using ResponseMessage read = await this.leases.ReadItemStreamAsync(id.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (read.StatusCode == HttpStatusCode.NotFound)
         {
-            using var createStream = BuildLeaseStream();
+            using var createStream = BuildLeaseStream(1);
             using ResponseMessage created = await this.leases.CreateItemStreamAsync(createStream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (created.StatusCode is HttpStatusCode.Conflict)
             {
@@ -229,7 +232,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             }
 
             created.EnsureSuccessStatusCode();
-            return new WorkflowLease(id, owner, token, expiresAt);
+            return new WorkflowLease(id, owner, token, expiresAt, 1);
         }
 
         read.EnsureSuccessStatusCode();
@@ -240,8 +243,9 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             return null;
         }
 
+        long granted = existing.EpochValue + 1;
         var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
-        using var replaceStream = BuildLeaseStream();
+        using var replaceStream = BuildLeaseStream(granted);
         using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
         if (replaced.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
         {
@@ -250,7 +254,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         replaced.EnsureSuccessStatusCode();
-        return new WorkflowLease(id, owner, token, expiresAt);
+        return new WorkflowLease(id, owner, token, expiresAt, granted);
     }
 
     /// <inheritdoc/>
@@ -280,17 +284,20 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             return null;
         }
 
+        // Either way the epoch comes back from the stored document, never from the presented lease: an extension does
+        // not mint one, so what the caller gets is the grant's own epoch.
+        long epoch = existing.EpochValue;
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(existing.ExpiresAtValue));
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(existing.ExpiresAtValue), epoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
         var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
         using Stream replaceStream = CosmosJson.WriteToStream(
-            (Id: lease.RunId.Value, Owner: lease.Owner, Token: lease.Token, ExpiresAt: extendedTo.ToUnixTimeMilliseconds()),
-            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt) ctx)
-                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt));
+            (Id: lease.RunId.Value, Owner: lease.Owner, Token: lease.Token, ExpiresAt: extendedTo.ToUnixTimeMilliseconds(), Epoch: epoch),
+            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt, long Epoch) ctx)
+                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt, ctx.Epoch));
         using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
         if (replaced.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
         {
@@ -299,7 +306,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         replaced.EnsureSuccessStatusCode();
-        return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+        return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch);
     }
 
     /// <inheritdoc/>
@@ -314,20 +321,28 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         read.EnsureSuccessStatusCode();
         using CosmosJson.RentedResponse payload = await CosmosJson.ReadAllAsync(read.Content, cancellationToken).ConfigureAwait(false);
-        if (LeaseDocument.FromJson(payload.Memory).TokenValue != lease.Token)
+        LeaseDocument current = LeaseDocument.FromJson(payload.Memory);
+        if (current.TokenValue != lease.Token)
         {
             return;
         }
 
+        // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the ordinary
+        // way a grant ends, and the one a counter kept only alongside a live lease would forget. The document is
+        // re-acquirable at once: every reader tests expiresAt > now. DeleteAsync still removes it with the run.
         var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
-        using ResponseMessage deleted = await this.leases.DeleteItemStreamAsync(lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
-        if (deleted.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
+        using Stream releaseStream = CosmosJson.WriteToStream(
+            (Id: lease.RunId.Value, Owner: current.OwnerValue, Token: current.TokenValue, ExpiresAt: this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds(), Epoch: current.EpochValue),
+            static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt, long Epoch) ctx)
+                => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt, ctx.Epoch));
+        using ResponseMessage released = await this.leases.ReplaceItemStreamAsync(releaseStream, lease.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
+        if (released.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.PreconditionFailed)
         {
             // The lease was already released or superseded.
             return;
         }
 
-        deleted.EnsureSuccessStatusCode();
+        released.EnsureSuccessStatusCode();
     }
 
     /// <inheritdoc/>

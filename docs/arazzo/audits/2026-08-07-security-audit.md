@@ -309,11 +309,54 @@ item you cannot see directly in the code.
 ## 4. P1, divergences phase B would inherit
 
 ### P1-1 · DIV · `TB-5` · Lease epoch is fielded and contract-published but never compared
+
+> **Resolved.** Both defects held. The second one — the mint — decided the shape of the fix, and the
+> first acceptance criterion was met by a different mechanism than the one it names, for a reason given
+> below. Threat model [findings ledger](../reference/threat-model.md#12-findings-ledger) (H8).
 - **Where:** `RunnerLeaseToken.cs:23, 37-44`; `RunnerRunCoordinator.cs:229, 242, 264, 294`; `MonotonicRunnerLeaseEpochSource.cs:32, 36`; `WorkflowLease.cs:22`; `arazzo-runner.openapi.json` `LeaseGrant.epoch`
 - **Divergence:** ADR 0065 §6 specifies two asymmetric epoch rules. The token is `"{epoch}.{storeToken}"` plaintext with no MAC, renewal parses the client's epoch and echoes it back, the lease check and release discard it, and no backend persists it. The OpenAPI contract publishes both refusal rules with no implementation.
 - **Two defects, fix both:** nothing compares the epoch; and the **mint** is a process-global `Interlocked.Increment` that ignores `runId`, seeded from wall-clock milliseconds, so a restart after a burst re-issues spent epochs and two instances order only by NTP skew. Even a correct comparison cannot carry the property on this token shape.
 - **Acceptance criteria:** per-run monotonic epoch persisted server-side; an authenticated token so a client cannot assert one; both §6 rules enforced, with tests for above-grant and below-high-water.
 - **Blocks:** SEQ-2. The tenant anchor is meaningless without this.
+- **The mint decided the shape.** A per-run counter has to live somewhere that outlives the grant, and
+  the only durable per-run thing the control plane has is the store. So the epoch became part of
+  `WorkflowLease`, minted and persisted by the store on acquire, across all ten backends. That is the
+  larger half of the work and the part no comparison could have substituted for.
+- **Release deleted the record on every backend**, which is where the run's high-water would have gone.
+  Release now expires the record in place — the state a lapsed lease already reaches — and `DeleteAsync`
+  stays the only thing that removes it. Every lease reader was checked first: all ten already test
+  `expiresAt > now`, and the SQL claimable queries already spell it `l.run_id IS NULL OR l.expires_at <=
+  now`, so a lingering record reads as unheld everywhere. That is what made one uniform change safe
+  rather than ten different ones.
+- **"An authenticated token" was met by comparison, not by a MAC.** A MAC over the header proves the
+  server issued it once, not that it is current: a runner replaying a previous grant's whole header
+  presents a validly signed epoch. Comparing the presented epoch against the persisted grant fences
+  forgery and replay together and needs no key. Recorded as a deviation from the criterion as written,
+  because it is the criterion's property obtained a different way.
+- **The two §6 rules are one comparison in phase A**, and that is conformance rather than a shortcut.
+  The lease header is the epoch's only carrier here, so an epoch above the current grant and one below
+  the run's high-water are the same mismatch against the same stored value. They separate in phase B,
+  when the runner's MAC'd region carries an epoch independently of the header. Both are tested
+  separately anyway, so the tests survive that split.
+- **`MonotonicRunnerLeaseEpochSource` and its interface are deleted rather than reimplemented.** A
+  per-run epoch read from the store leaves an injectable epoch source with nothing to decide, and
+  keeping the seam would have left a supported way to reintroduce exactly this finding.
+- **Measured against real servers, not reasoned about.** The conformance suite is where the epoch tests
+  live precisely so every backend has to answer them, and eight of the ten only run under containers.
+  Running them found a real defect: Mongo's acquire had to move from `UpdateOne` to `FindOneAndUpdate`
+  to return the epoch it minted, and `findAndModify` reports a duplicate key as a *command* failure
+  rather than the write error `UpdateOne` raised, so the existing `catch` no longer matched and three
+  pre-existing lease tests failed. Postgres 284/284; MySQL, SQL Server, Redis, Mongo, NATS and Azure
+  Storage 282/284 each (two lease-administration tests are skipped where the capability is not
+  implemented); Cosmos 40/42 on the workflow-state suite.
+- **One test was written, passed, and was not evidence.** The below-high-water case first presented
+  `grantedEpoch - 1`. Against the defect that is `-1`, which `RunnerLeaseToken.TryParse` rejects as
+  malformed before any comparison — so the test passed against the defect and the fix alike. It now
+  takes a second grant of the same run and presents the *first* grant's epoch on the *second* grant's
+  store token, which is a real rollback, plus an assertion that the unmodified grant still works, so
+  what is refused is the epoch and not the lease. Four tests fail with the comparison reverted, and nine
+  with the store's mint reverted as well; two of the four are pre-existing tests that turn out to have
+  been asserting `Epoch > 0` against a number nothing had ever persisted.
 
 ### P1-2 · DIV · `TB-4` · Reach pushdown is self-attested, and four of nine backends filter in process
 - **Where:** `RowSecurityFilter.cs:28` (default interface implementation) and `:41-47` (the guard); `MongoWorkflowStateStore.cs:431-435`; `RedisWorkflowStateStore.cs:418-419, 466-489`; `NatsJetStreamWorkflowStateStore.cs:381-397`; Azure Storage `:461, 555`

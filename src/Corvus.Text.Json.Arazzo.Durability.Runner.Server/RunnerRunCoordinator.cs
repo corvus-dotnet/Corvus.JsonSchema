@@ -11,9 +11,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// lease, and what a stale one may still do — are decided in one place and are testable without a web host.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Every method takes the authenticated machine principal rather than reading an owner from the request. That is the
 /// whole of ADR 0065 decision 2 at this layer: the lease's owner is the principal, the store's predicate includes it,
 /// and revocation expires leases by principal, so a compromised runner cannot rename itself into another's leases.
+/// </para>
+/// <para>
+/// The same rule decides the grant's epoch. It is minted and persisted by the store, per run, and every operation
+/// compares the epoch the caller presents against the one the store reports rather than believing it — the ADR 0065 §6
+/// pair, an epoch above the current grant naming a grant this holder never held and one below the run's high-water
+/// re-presenting a grant the run has moved past.
+/// </para>
 /// </remarks>
 public sealed class RunnerRunCoordinator
 {
@@ -21,7 +29,6 @@ public sealed class RunnerRunCoordinator
     private readonly IWorkflowDispatchIndex index;
     private readonly IWorkflowWaitIndex waits;
     private readonly IRunnerEnvironmentBindings bindings;
-    private readonly IRunnerLeaseEpochSource epochs;
     private readonly RunnerApiOptions options;
     private readonly TimeProvider timeProvider;
 
@@ -29,14 +36,12 @@ public sealed class RunnerRunCoordinator
     /// <param name="store">The durable run store. The control plane owns it exclusively; no runner holds a credential for it.</param>
     /// <param name="bindings">Resolves the environments a machine principal may execute runs for.</param>
     /// <param name="options">The deployment's lease and body bounds; defaults are used when omitted.</param>
-    /// <param name="epochs">Mints the epoch each lease grant carries; defaults to <see cref="MonotonicRunnerLeaseEpochSource"/>.</param>
     /// <param name="timeProvider">The time source for claim queries; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <exception cref="ArgumentException"><paramref name="store"/> does not implement <see cref="IWorkflowDispatchIndex"/>, without which no run can be offered.</exception>
     public RunnerRunCoordinator(
         IWorkflowStateStore store,
         IRunnerEnvironmentBindings bindings,
         RunnerApiOptions? options = null,
-        IRunnerLeaseEpochSource? epochs = null,
         TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(store);
@@ -49,7 +54,6 @@ public sealed class RunnerRunCoordinator
             ?? throw new ArgumentException("The runner API's store must implement IWorkflowWaitIndex; without it a suspended run's timer would never fire and a delivered message would reach nothing.", nameof(store));
         this.bindings = bindings;
         this.options = options ?? new RunnerApiOptions();
-        this.epochs = epochs ?? new MonotonicRunnerLeaseEpochSource(timeProvider);
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -245,10 +249,15 @@ public sealed class RunnerRunCoordinator
             this.options.BoundLease(requestedExtension),
             cancellationToken).ConfigureAwait(false);
 
-        // The epoch is the grant's, not the extension's: one is minted per grant, so renewing does not invalidate a
-        // checkpoint already written under it. The store keeps the same token across an extension, so the presented
-        // header value stays valid and is echoed unchanged.
-        return extended is { } lease ? new RunnerLeaseGrant(leaseToken!, lease.ExpiresAt, epoch) : null;
+        // The epoch reported is the store's, and the presented one has to match it. The epoch is the grant's rather than
+        // the extension's — one is minted per grant, so renewing does not invalidate a checkpoint already written under
+        // it — and the store keeps the same token across an extension, so the header value stays valid unchanged.
+        //
+        // The mismatch is caught after the extension rather than before it, which costs one round trip fewer and gives
+        // away nothing: only the current holder gets past the store's own token-and-owner predicate at all, so what was
+        // extended is a lease this caller genuinely holds and could have extended by presenting the epoch it was given.
+        // What is refused is the epoch it claimed, not the lease it holds.
+        return extended is { } lease && lease.Epoch == epoch ? new RunnerLeaseGrant(leaseToken!, lease.ExpiresAt, lease.Epoch) : null;
     }
 
     /// <summary>
@@ -264,7 +273,9 @@ public sealed class RunnerRunCoordinator
     /// without the check, a token belonging to another principal would release that principal's lease. The outcome is
     /// not reported, and deliberately so. The postcondition the operation promises — this principal does not hold this
     /// run — is true whether the lease was current, had already lapsed, or was never this principal's, and reporting
-    /// which would tell a caller about a lease it does not hold.
+    /// which would tell a caller about a lease it does not hold. The presented epoch is not compared, for the same
+    /// reason the bindings are not re-checked here: refusing a release would strand the run on a holder trying to hand
+    /// the work back, and the token is already what proves the holder is this one.
     /// </remarks>
     public async ValueTask ReleaseAsync(string principal, WorkflowRunId id, string? leaseToken, CancellationToken cancellationToken)
     {
@@ -300,7 +311,7 @@ public sealed class RunnerRunCoordinator
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
-        if (!RunnerLeaseToken.TryParse(leaseToken, out _, out string storeToken))
+        if (!RunnerLeaseToken.TryParse(leaseToken, out long epoch, out string storeToken))
         {
             return false;
         }
@@ -314,10 +325,14 @@ public sealed class RunnerRunCoordinator
             return false;
         }
 
-        return await this.store.TryExtendLeaseAsync(
+        // A mismatched epoch answers as a lost lease does, and joins the same set: the caller learns that this lease
+        // does not authorise this operation, never which of the reasons it was.
+        WorkflowLease? current = await this.store.TryExtendLeaseAsync(
             new WorkflowLease(id, principal, storeToken, default),
             TimeSpan.Zero,
-            cancellationToken).ConfigureAwait(false) is not null;
+            cancellationToken).ConfigureAwait(false);
+
+        return current is { } lease && lease.Epoch == epoch;
     }
 
     // Whether the principal is still bound to anything at all. An operation on a run it already holds does not need to
@@ -386,8 +401,7 @@ public sealed class RunnerRunCoordinator
             return null;
         }
 
-        long epoch = this.epochs.NextEpoch(held.RunId);
-        var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(epoch, held.Token), held.ExpiresAt, epoch);
+        var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
         return new ClaimedRunRecord(held.RunId, entry.WorkflowId, environment, grant);
     }
 
@@ -408,8 +422,7 @@ public sealed class RunnerRunCoordinator
             return null;
         }
 
-        long epoch = this.epochs.NextEpoch(held.RunId);
-        var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(epoch, held.Token), held.ExpiresAt, epoch);
+        var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
         return new ClaimedRunRecord(held.RunId, entry.WorkflowId, environment, grant);
     }
 }

@@ -236,7 +236,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Claiming another environment's work | **Holds**. Environment resolved from bindings at [claim](UBIQUITOUSLANGUAGE.md#claim), never from the request, and the pin is no longer rewritable by a later save | None found | H39 |
 | **Integrity of what the runner returns**, the control plane's half of mutual distrust | **Partial**. The coordinator refuses a save whose index changes the run's environment, workflow id or security tags, above the store and so on every backend | Only the identity fields are compared. The rest of the runner-authored region is still taken on trust until the phase-B MAC covers it | H39 |
 | Checkpoint replay or stale write | **Partial**. Single-row CAS, 409 on supersession, monotonic accepted sequence | Header and body sequence are never compared, so the rule validates a number the client wrote | H40 |
-| Superseded or displaced holder writing | **Absent**. [Lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is carried and contract-published but never compared, and unsound as minted | Displaced holder, stale generation and rollback are indistinguishable from a healthy write | H8 |
+| Superseded or displaced holder writing | **Partial**. The [lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is minted per run by the store, persisted with the lease record, and compared on renewal and on both checkpoint operations, so a presented epoch that is not the current grant's authorises nothing | Sound within one store generation only. The epoch is not yet paired with a [store incarnation](UBIQUITOUSLANGUAGE.md#store-incarnation), so a restore takes every run's counter back and re-issues epochs already spent, and rollback by the control plane itself stays undetectable until the tenant anchor exists | H8 |
 | Rollback or substitution by the control plane (AD-4) | **Designed**. Tenant anchor, phase B | Accepted for the phase-A window, booked as AR-9 | |
 | Revocation of a compromised runner | **Partial**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) expires leases by the bound machine principal, and renewal and both checkpoint operations re-resolve bindings | Bounded by the resolver's cache window, and by nothing on a replica that has not refreshed its policy | H5, H22 |
 | Cross-tenant denial of service | **Partial**. Per-tenant and per-runner token buckets, test-before-spend, client-side `Retry-After` clamp | Buckets collapse to one counter without owner-group tags, a wholesale cache clear forgives every tenant's deficit | H41 |
@@ -439,7 +439,7 @@ detection, CON containment, REC recovery.
 | UO-6 supply chain | H13, H16 | GOOD | WEAK | PART | PART | **Three.** The strongest chain here. Its weakness is that it signs whatever the generator emitted |
 | UO-7 SSRF | H15, ASU-3 | PART | NONE | NONE | NONE | **Zero at run time, one at catalog-add.** Closing H2 removed the control plane's own `$ref` fetch, which was the one path the platform could fence in code. What remains is a workflow step's outbound call and the source fetch, both delegated to deployment egress controls the code cannot verify exist |
 | UO-8 denial of service | H14, H41 | NONE | PART | WEAK | WEAK | **One.** Runner quotas, designed for a different threat, shape but never terminate the loop. Closing H6 removed the parse-time amplifier; what remains is a run with no step budget and no wall clock, which no quota terminates |
-| UO-9 integrity loss | H8, anchor is phase B | NONE | NONE | NONE | NONE | **Zero until phase B, accepted.** The divergence to close first is the epoch, fielded and contract-published but never compared, so phase B would inherit it |
+| UO-9 integrity loss | anchor is phase B | WEAK | NONE | NONE | NONE | **Zero until phase B, accepted.** Closing H8 raised prevention off the floor — the epoch is now the run's own, persisted and compared, so phase B no longer inherits a counter it could not order by. Nothing else moved: the control plane still holds every copy of the run, so it can roll one back and no layer here would see it |
 | UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is good but change-blind, tenant-less and non-durable |
 | UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. H22 is what remains: a replica that never refreshes its policy keeps honouring the deleted binding |
 
@@ -449,7 +449,7 @@ Four patterns explain nearly every straight-through path, and each predicts defe
 
 1. **Provenance is verified everywhere, authority almost nowhere.** The system checks exhaustively *what* an artifact is, digests, signatures, attestations, content hashes, and rarely checks *who is asking*. Both sidecar surfaces, the anonymous Azure invoke and the unauthenticated sample services all execute cryptographically verified artifacts for an unauthenticated caller. The checkpoint endpoint was the fourth until H1 was closed, and what closed it was giving that surface a credential to check rather than another artifact to verify.
 2. **The mitigation was applied to one of two sibling paths.** Redirects fixed on the fetch path, not the run path. Reach pushdown real on five backends, in process on four. The lease check on the runner API, not its control-plane twin. The empty-identity guard on the explicit path, not the derived one. The disclosure tier on one of three routes to the same data. **This is the most productive pattern to sweep for.**
-3. **A declared control that nothing enforces.** YAML limits declared and never read. The epoch published in the contract and never compared. Sub-workflow depth enforced only in test paths. Pushdown asserted by a default interface implementation. The heartbeat reaper implemented twelve times and called zero. Dependabot pointed at a directory that does not exist. In every case the artefact of the control exists, which is what stops anyone re-checking, and in several a document asserts it works.
+3. **A declared control that nothing enforces.** YAML limits declared and never read *(closed)*. The epoch published in the contract and never compared *(closed)*. Sub-workflow depth enforced only in test paths. Pushdown asserted by a default interface implementation. The heartbeat reaper implemented twelve times and called zero. Dependabot pointed at a directory that does not exist. In every case the artefact of the control exists, which is what stops anyone re-checking, and in several a document asserts it works. Closing two of them showed the pattern has a second half: both were *declared and unsound* rather than merely unenforced, so enforcing what was written would have produced a control that ran and still carried nothing. Check that the declared thing is worth enforcing before enforcing it.
 4. **Detection would have caught all of the above, and is the thinnest layer.** No read audit, no runner-API telemetry, no authentication-failure signal, no egress record, and an audit primitive that is deliberately change-blind. Every finding here is currently unobservable in production.
 
 ## 11. Accepted risks and assumptions
@@ -504,7 +504,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
 | H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | **Closed** |
 | H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 | **Closed** |
-| H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 | Open |
+| H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 | **Closed** |
 | H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 | Open |
 | H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 | Open |
 | H11 | Crit | DIV | Runner API emits nothing, and there is no read audit anywhere | All | Open |
@@ -582,6 +582,23 @@ currently executable. What prevents it is an incidental structural property of t
 control, and a refactor to single-line emission makes it live with nothing to catch that. It is ranked
 Critical on that basis rather than on a working exploit against the default configuration.
 
+**H8, closed, and the authentication came from a different direction than the audit proposed.** The
+criterion asked for "an authenticated token so a client cannot assert an epoch", which reads as a MAC
+over the header value. A MAC proves the server issued the token once; it does not prove the token is
+*current*, so a runner replaying a previous grant's whole header would still present a validly signed
+epoch. The epoch is instead persisted with the lease record and compared against what the caller
+presents, which fences forgery and replay together, and needs no key. That is also why the two ADR 0065
+§6 rules are one comparison here rather than two: the lease header is the epoch's only carrier in phase
+A, so above-grant and below-high-water are the same mismatch. Phase B separates them, when the runner's
+MAC'd region carries an epoch independently of the header.
+
+The mint mattered more than the comparison. A per-run counter needs somewhere to live that outlives the
+grant, and the release path deleted the lease record on every backend, so the run's high-water went with
+it. Release now expires the record in place instead — the state a lapsed lease already reaches — and
+`DeleteAsync` remains the only thing that removes it. Every lease reader already tested
+`expiresAt > now`, so a lingering record reads as unheld on all ten backends, which is what made the
+change safe to make uniformly rather than per backend.
+
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine
 store backends, with uniform parameterisation, typed Mongo filters and constant Redis and NATS
 prefixes. A mechanical sweep of all 86 UI components found no HTML-injection XSS. The OAuth broker
@@ -594,10 +611,12 @@ Ordered by risk removed per unit of work, and by dependency. Detail, acceptance 
 backlog live in the audit result.
 
 **Close divergence before building the next layer on it.** Phase B builds freshness and integrity on
-top of the lease token, the store reach predicate, the run-id key and the audit primitive, four things
-that currently diverge from their specifications. Wiring the anchor to a lease whose epoch is never
-compared, or sealing payloads behind a marker interface that certifies pushdown by default, carries
-each divergence into the layer meant to close it, where it is considerably more expensive to find.
+top of the lease token, the store reach predicate, the run-id key and the audit primitive. The lease
+token is now sound: its epoch is the run's, persisted and compared, so the anchor has an ordering key to
+be built on. The other three still diverge. Sealing payloads behind a marker interface that certifies
+pushdown by default, or keying a tombstone by a run id every backend stores without its environment,
+carries each divergence into the layer meant to close it, where it is considerably more expensive to
+find.
 
 | # | Action | Closes | Status |
 |---|--------|--------|--------|
@@ -606,9 +625,9 @@ each divergence into the layer meant to close it, where it is considerably more 
 | 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | **Done** |
 | 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | **Partly done.** Escaping closed at six sites; the identifier pattern is deliberately not added, see the H3 note in §12 |
 | 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | **Done** |
-| 6 | Remove both reintroduced security-mode defaults | Posture | Open |
+| 6 | Remove both reintroduced security-mode defaults | Posture | **Done.** Three sites, not two; the §7 control state was updated at the time and this row was missed |
 | 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | **H39 done**, H40 open |
-| 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | Open |
+| 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | **Done.** The epoch is authenticated by comparison against the persisted grant rather than by a MAC over the token, see the H8 note in §12 |
 | 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 | Open |
 | 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | Open |
 | 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | Open |

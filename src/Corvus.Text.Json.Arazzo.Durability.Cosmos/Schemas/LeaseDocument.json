@@ -3,7 +3,7 @@
   "title": "LeaseDocument",
   "description": "The Azure Cosmos DB document shape for a single-owner workflow lease.",
   "type": "object",
-  "required": ["id", "owner", "token", "expiresAt"],
+  "required": ["id", "owner", "token", "expiresAt", "epoch"],
   "properties": {
     "id": {
       "type": "string",
@@ -21,6 +21,12 @@
       "type": "integer",
       "format": "int64",
       "description": "Lease expiry, Unix milliseconds."
+    },
+    "epoch": {
+      "type": "integer",
+      "format": "int64",
+      "minimum": 1,
+      "description": "The grant's epoch: a per-run counter advanced on every grant of this run's lease, persisted so it survives release, expiry and the process that granted it."
     }
   },
   "additionalProperties": true

@@ -193,22 +193,27 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand merge = connection.CreateCommand();
+
+        // The epoch is advanced from the row rather than supplied, so it counts this run's grants across every instance
+        // and every restart (ADR 0065 §6), and OUTPUT reports the granted value in the same statement that mints it — a
+        // separate read could not tell this grant's epoch from the next one's.
         merge.CommandText =
             """
             MERGE workflow_leases WITH (HOLDLOCK) AS target
             USING (SELECT @id AS run_id) AS source ON target.run_id = source.run_id
             WHEN MATCHED AND (target.expires_at <= @now OR target.owner = @owner) THEN
-                UPDATE SET owner = @owner, token = @token, expires_at = @expires_at
+                UPDATE SET owner = @owner, token = @token, expires_at = @expires_at, epoch = target.epoch + 1
             WHEN NOT MATCHED THEN
-                INSERT (run_id, owner, token, expires_at) VALUES (@id, @owner, @token, @expires_at);
+                INSERT (run_id, owner, token, expires_at, epoch) VALUES (@id, @owner, @token, @expires_at, 1)
+            OUTPUT inserted.epoch;
             """;
         merge.Parameters.AddWithValue("@id", id.Value);
         merge.Parameters.AddWithValue("@owner", owner);
         merge.Parameters.AddWithValue("@token", token);
         merge.Parameters.AddWithValue("@expires_at", expiresAt.ToUnixTimeMilliseconds());
         merge.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
-        int affected = await merge.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return affected > 0 ? new WorkflowLease(id, owner, token, expiresAt) : null;
+        object? granted = await merge.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return granted is long epoch ? new WorkflowLease(id, owner, token, expiresAt, epoch) : null;
     }
 
     /// <inheritdoc/>
@@ -223,41 +228,48 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         // The predicate is the same either way: this run's lease, carrying this token, held by this owner, and unexpired.
         // Its three conjuncts are the three ways a presented lease stops being current — superseded, stolen, and lapsed
         // (an administrative fence expires in place, so it lands on the third).
+        // Either way the epoch comes back from the row, never from the presented lease: an extension does not mint one,
+        // so what the caller gets is the grant's own epoch.
         if (extension == TimeSpan.Zero)
         {
             await using SqlCommand select = connection.CreateCommand();
-            select.CommandText = "SELECT expires_at FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+            select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
             select.Parameters.AddWithValue("@id", lease.RunId.Value);
             select.Parameters.AddWithValue("@token", lease.Token);
             select.Parameters.AddWithValue("@owner", lease.Owner);
             select.Parameters.AddWithValue("@now", nowMs);
-            object? current = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-            return current is long expiresAtMs
-                ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs))
+            await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+                ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(0)), reader.GetInt64(1))
                 : null;
         }
 
         DateTimeOffset extendedTo = now + extension;
         await using SqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at OUTPUT inserted.epoch WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
         update.Parameters.AddWithValue("@id", lease.RunId.Value);
         update.Parameters.AddWithValue("@token", lease.Token);
         update.Parameters.AddWithValue("@owner", lease.Owner);
         update.Parameters.AddWithValue("@expires_at", extendedTo.ToUnixTimeMilliseconds());
         update.Parameters.AddWithValue("@now", nowMs);
-        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return affected > 0 ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo) : null;
+        object? held = await update.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return held is long epoch ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch) : null;
     }
 
     /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using SqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM workflow_leases WHERE run_id = @id AND token = @token;";
-        delete.Parameters.AddWithValue("@id", lease.RunId.Value);
-        delete.Parameters.AddWithValue("@token", lease.Token);
-        await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the ordinary way
+        // a grant ends, and the one a counter kept only alongside a live lease would forget. The row is re-acquirable at
+        // once: every reader tests expires_at > now. DeleteAsync still removes it with the run.
+        await using SqlCommand release = connection.CreateCommand();
+        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE run_id = @id AND token = @token;";
+        release.Parameters.AddWithValue("@id", lease.RunId.Value);
+        release.Parameters.AddWithValue("@token", lease.Token);
+        release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
+        await release.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -588,7 +600,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 run_id NVARCHAR(450) NOT NULL PRIMARY KEY,
                 owner NVARCHAR(255) NOT NULL,
                 token NVARCHAR(255) NOT NULL,
-                expires_at BIGINT NOT NULL
+                expires_at BIGINT NOT NULL,
+                epoch BIGINT NOT NULL
             );
         END;
         """;

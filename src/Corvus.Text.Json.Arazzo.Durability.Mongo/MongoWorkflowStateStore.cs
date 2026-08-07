@@ -25,6 +25,10 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
+    // The server's duplicate-key error, which a command failure reports as a bare code where a write error carries a
+    // category.
+    private const int DuplicateKeyErrorCode = 11000;
+
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
     private readonly bool ownsClient;
@@ -195,18 +199,27 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             Builders<BsonDocument>.Filter.Or(
                 Builders<BsonDocument>.Filter.Lte("expiresAt", now.ToUnixTimeMilliseconds()),
                 Builders<BsonDocument>.Filter.Eq("owner", owner)));
+
+        // The epoch is advanced from the document rather than supplied, so it counts this run's grants across every
+        // instance and every restart (ADR 0065 §6); $inc creates the field at 1, so a run's first grant is the
+        // contract's floor. The updated document is returned by the same atomic operation that takes the lease, because
+        // a separate read could not tell this grant's epoch from the next one's.
         UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
             .Set("owner", owner)
             .Set("token", token)
-            .Set("expiresAt", expiresAt.ToUnixTimeMilliseconds());
+            .Set("expiresAt", expiresAt.ToUnixTimeMilliseconds())
+            .Inc("epoch", 1L);
+        var options = new FindOneAndUpdateOptions<BsonDocument> { IsUpsert = true, ReturnDocument = ReturnDocument.After };
         try
         {
-            await this.leases.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true }, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt);
+            BsonDocument granted = await this.leases.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(id, owner, token, expiresAt, granted["epoch"].ToInt64());
         }
-        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        catch (MongoCommandException ex) when (ex.Code == DuplicateKeyErrorCode)
         {
             // A lease already exists and is held by another owner (the conditional upsert collided on _id).
+            // `findAndModify` reports that collision as a failed command rather than as the write error an update
+            // raises, so it is matched on the server error code rather than on the write error's category.
             return null;
         }
     }
@@ -227,21 +240,24 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             Builders<BsonDocument>.Filter.Eq("owner", lease.Owner),
             Builders<BsonDocument>.Filter.Gt("expiresAt", now.ToUnixTimeMilliseconds()));
 
+        // Either way the epoch comes back from the document, never from the presented lease: an extension does not mint
+        // one, so what the caller gets is the grant's own epoch.
         if (extension == TimeSpan.Zero)
         {
             BsonDocument? current = await this.leases.Find(filter).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
             return current is null
                 ? null
-                : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(current["expiresAt"].ToInt64()));
+                : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(current["expiresAt"].ToInt64()), current["epoch"].ToInt64());
         }
 
         DateTimeOffset extendedTo = now + extension;
         UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update.Set("expiresAt", extendedTo.ToUnixTimeMilliseconds());
 
-        // MatchedCount, not ModifiedCount: an extension that lands on the millisecond already stored modifies nothing,
-        // and the lease it names is still current.
-        UpdateResult result = await this.leases.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.MatchedCount > 0 ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo) : null;
+        // The updated document, not a matched count: an extension that lands on the millisecond already stored modifies
+        // nothing and the lease it names is still current, and the document is also where the grant's epoch is read.
+        var options = new FindOneAndUpdateOptions<BsonDocument> { ReturnDocument = ReturnDocument.After };
+        BsonDocument? extended = await this.leases.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
+        return extended is null ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, extended["epoch"].ToInt64());
     }
 
     /// <inheritdoc/>
@@ -250,7 +266,12 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
             Builders<BsonDocument>.Filter.Eq("_id", lease.RunId.Value),
             Builders<BsonDocument>.Filter.Eq("token", lease.Token));
-        await this.leases.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
+
+        // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the ordinary way
+        // a grant ends, and the one a counter kept only alongside a live lease would forget. The document is
+        // re-acquirable at once: every reader tests expiresAt > now. DeleteAsync still removes it with the run.
+        UpdateDefinition<BsonDocument> release = Builders<BsonDocument>.Update.Set("expiresAt", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
+        await this.leases.UpdateOneAsync(filter, release, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

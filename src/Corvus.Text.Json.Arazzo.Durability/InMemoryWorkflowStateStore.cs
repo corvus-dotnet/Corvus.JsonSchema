@@ -84,15 +84,20 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         lock (this.gate)
         {
-            if (this.leases.TryGetValue(id.Value, out LeaseRecord existing) && existing.ExpiresAt > now && existing.Owner != owner)
+            bool held = this.leases.TryGetValue(id.Value, out LeaseRecord existing);
+            if (held && existing.ExpiresAt > now && existing.Owner != owner)
             {
                 return ValueTask.FromResult<WorkflowLease?>(null);
             }
 
             string token = (++this.leaseToken).ToString(System.Globalization.CultureInfo.InvariantCulture);
             DateTimeOffset expiresAt = now + ttl;
-            this.leases[id.Value] = new LeaseRecord(owner, token, expiresAt);
-            return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(id, owner, token, expiresAt));
+
+            // The epoch counts this run's grants, so it comes from the record the run's previous grant left behind rather
+            // than from anything this process holds (ADR 0065 §6).
+            long epoch = held ? existing.Epoch + 1 : 1;
+            this.leases[id.Value] = new LeaseRecord(owner, token, expiresAt, epoch);
+            return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(id, owner, token, expiresAt, epoch));
         }
     }
 
@@ -113,14 +118,16 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 return ValueTask.FromResult<WorkflowLease?>(null);
             }
 
+            // The epoch reported is the stored one, never the presented one: the caller states a claim and the store
+            // answers with the grant's own epoch, which is what the §6 rules are then decided against.
             if (extension == TimeSpan.Zero)
             {
-                return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, existing.ExpiresAt));
+                return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, existing.ExpiresAt, existing.Epoch));
             }
 
             DateTimeOffset expiresAt = now + extension;
             this.leases[lease.RunId.Value] = existing with { ExpiresAt = expiresAt };
-            return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, expiresAt));
+            return ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(lease.RunId, existing.Owner, existing.Token, expiresAt, existing.Epoch));
         }
     }
 
@@ -131,9 +138,12 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         lock (this.gate)
         {
+            // Expired in place rather than removed, so the run's epoch survives its holder handing it back — the ordinary
+            // way a grant ends, and the one a counter kept only alongside a live lease would forget. Expiring at exactly
+            // now makes the run acquirable at once: every reader tests ExpiresAt > now.
             if (this.leases.TryGetValue(lease.RunId.Value, out LeaseRecord existing) && existing.Token == lease.Token)
             {
-                this.leases.Remove(lease.RunId.Value);
+                this.leases[lease.RunId.Value] = existing with { ExpiresAt = this.timeProvider.GetUtcNow() };
             }
         }
 
@@ -414,5 +424,5 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
     private readonly record struct AwaitingFilter(string Channel, string? CorrelationId, string? RunnerEnvironment);
 
-    private readonly record struct LeaseRecord(string Owner, string Token, DateTimeOffset ExpiresAt);
+    private readonly record struct LeaseRecord(string Owner, string Token, DateTimeOffset ExpiresAt, long Epoch);
 }

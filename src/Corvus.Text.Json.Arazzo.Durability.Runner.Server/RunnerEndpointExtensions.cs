@@ -32,7 +32,6 @@ public static class RunnerEndpointExtensions
     /// <param name="catalog">The catalog the control plane owns, which executor artifacts are served from.</param>
     /// <param name="availability">What each environment has made available, which is what a runner may execute.</param>
     /// <param name="options">The deployment's lease and body bounds; defaults are used when omitted.</param>
-    /// <param name="epochs">Mints the epoch each lease grant carries; defaults to <see cref="MonotonicRunnerLeaseEpochSource"/>.</param>
     /// <param name="requiredScope">The scope to require, or <see langword="null"/> to require only an authenticated
     /// principal. A deployment identifying runners by client certificate has no scopes to require and passes
     /// <see langword="null"/>; one issuing tokens leaves the default.</param>
@@ -62,7 +61,6 @@ public static class RunnerEndpointExtensions
         IAvailabilityStore availability,
         IRunnerEnvironmentBindings bindings,
         RunnerApiOptions? options = null,
-        IRunnerLeaseEpochSource? epochs = null,
         string? requiredScope = ExecuteScope,
         bool requireAuthorization = true,
         TimeProvider? timeProvider = null,
@@ -78,7 +76,7 @@ public static class RunnerEndpointExtensions
 
         RunnerApiOptions resolved = options ?? new RunnerApiOptions();
         var principals = new RunnerPrincipalAccessor(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), resolved);
-        var coordinator = new RunnerRunCoordinator(store, bindings, resolved, epochs, timeProvider);
+        var coordinator = new RunnerRunCoordinator(store, bindings, resolved, timeProvider);
         WorkflowCheckpointCoordinator checkpointCoordinator = checkpoints ?? new WorkflowCheckpointCoordinator(store, timeProvider);
         var catalogCoordinator = new RunnerCatalogCoordinator(catalog, availability, bindings, resolved);
 

@@ -172,25 +172,29 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         DateTimeOffset expiresAt = now + ttl;
         string token = Guid.NewGuid().ToString("N");
-        byte[] value = LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds());
 
+        // The epoch is advanced from the stored entry rather than supplied, so it counts this run's grants across every
+        // instance and every restart (ADR 0065 §6). The entry's own revision is what makes read-then-advance atomic: a
+        // concurrent grant moves it, and the conditional update below is refused rather than reusing the epoch it read.
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
         try
         {
             if (entry is not { Value: { } current })
             {
-                await this.leases.CreateAsync(id.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false);
-                return new WorkflowLease(id, owner, token, expiresAt);
+                await this.leases.CreateAsync(id.Value, LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), 1), cancellationToken: cancellationToken).ConfigureAwait(false);
+                return new WorkflowLease(id, owner, token, expiresAt, 1);
             }
 
-            (string currentOwner, _, long currentExpiresAt) = LeaseCodec.Decode(current);
+            (string currentOwner, _, long currentExpiresAt, long currentEpoch) = LeaseCodec.Decode(current);
             if (currentExpiresAt > now.ToUnixTimeMilliseconds() && currentOwner != owner)
             {
                 return null;
             }
 
+            long granted = currentEpoch + 1;
+            byte[] value = LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), granted);
             await this.leases.UpdateAsync(id.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt);
+            return new WorkflowLease(id, owner, token, expiresAt, granted);
         }
         catch (NatsKVException)
         {
@@ -213,23 +217,25 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
         // The three ways a presented lease stops being current — superseded, stolen, and lapsed (an administrative fence
         // expires in place, so it lands on the third).
-        (string currentOwner, string currentToken, long currentExpiresAt) = LeaseCodec.Decode(current);
+        (string currentOwner, string currentToken, long currentExpiresAt, long currentEpoch) = LeaseCodec.Decode(current);
         if (currentToken != lease.Token || currentOwner != lease.Owner || currentExpiresAt <= now.ToUnixTimeMilliseconds())
         {
             return null;
         }
 
+        // Either way the epoch comes back from the stored entry, never from the presented lease: an extension does not
+        // mint one, so what the caller gets is the grant's own epoch.
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt));
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), currentEpoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
-        byte[] value = LeaseCodec.Encode(lease.Owner, lease.Token, extendedTo.ToUnixTimeMilliseconds());
+        byte[] value = LeaseCodec.Encode(lease.Owner, lease.Token, extendedTo.ToUnixTimeMilliseconds(), currentEpoch);
         try
         {
             await this.leases.UpdateAsync(lease.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, currentEpoch);
         }
         catch (NatsKVException)
         {
@@ -242,9 +248,18 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);
-        if (entry is { Value: { } current } && LeaseCodec.Decode(current).Token == lease.Token)
+        if (entry is { Value: { } current })
         {
-            await this.leases.DeleteAsync(lease.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
+            (string owner, string token, _, long epoch) = LeaseCodec.Decode(current);
+            if (token == lease.Token)
+            {
+                // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the
+                // ordinary way a grant ends, and the one a counter kept only alongside a live lease would forget. The
+                // entry is re-acquirable at once: every reader tests expiresAt > now. DeleteAsync still purges it with
+                // the run.
+                byte[] released = LeaseCodec.Encode(owner, token, this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds(), epoch);
+                await this.leases.UpdateAsync(lease.RunId.Value, released, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 
@@ -354,7 +369,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 bool live = false;
                 if (leaseEntry is { Value: { } value })
                 {
-                    (_, _, long expiresAt) = LeaseCodec.Decode(value);
+                    (_, _, long expiresAt, _) = LeaseCodec.Decode(value);
                     live = expiresAt > now.ToUnixTimeMilliseconds();
                 }
 
@@ -609,26 +624,28 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
     private static class LeaseCodec
     {
-        public static byte[] Encode(string owner, string token, long expiresAt)
+        public static byte[] Encode(string owner, string token, long expiresAt, long epoch)
             => PersistedJson.ToArray(
-                (owner, token, expiresAt),
-                static (Utf8JsonWriter writer, in (string Owner, string Token, long ExpiresAt) c) =>
+                (owner, token, expiresAt, epoch),
+                static (Utf8JsonWriter writer, in (string Owner, string Token, long ExpiresAt, long Epoch) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("owner", c.Owner);
                     writer.WriteString("token", c.Token);
                     writer.WriteNumber("expiresAt", c.ExpiresAt);
+                    writer.WriteNumber("epoch", c.Epoch);
                     writer.WriteEndObject();
                 });
 
-        public static (string Owner, string Token, long ExpiresAt) Decode(byte[] value)
+        public static (string Owner, string Token, long ExpiresAt, long Epoch) Decode(byte[] value)
         {
             using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(value);
             JsonElement root = document.RootElement;
             return (
                 root.GetProperty("owner"u8).GetString()!,
                 root.GetProperty("token"u8).GetString()!,
-                root.GetProperty("expiresAt"u8).GetInt64());
+                root.GetProperty("expiresAt"u8).GetInt64(),
+                root.GetProperty("epoch"u8).GetInt64());
         }
     }
 }

@@ -193,11 +193,16 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         DateTimeOffset expiresAt = now + ttl;
         string token = Guid.NewGuid().ToString("N");
-        var entity = new TableEntity(LeasePartition, id.Value)
+
+        // The epoch is advanced from the stored entity rather than supplied, so it counts this run's grants across every
+        // instance and every restart (ADR 0065 §6). The entity's own ETag is what makes read-then-advance atomic: a
+        // concurrent grant changes it, and the conditional write below is refused rather than reusing the epoch it read.
+        TableEntity Entity(long epoch) => new(LeasePartition, id.Value)
         {
             ["Owner"] = owner,
             ["Token"] = token,
             ["ExpiresAt"] = expiresAt.ToUnixTimeMilliseconds(),
+            ["Epoch"] = epoch,
         };
 
         NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, id.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -205,8 +210,8 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         {
             if (!existing.HasValue)
             {
-                await this.leases.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
-                return new WorkflowLease(id, owner, token, expiresAt);
+                await this.leases.AddEntityAsync(Entity(1), cancellationToken).ConfigureAwait(false);
+                return new WorkflowLease(id, owner, token, expiresAt, 1);
             }
 
             long currentExpiresAt = existing.Value!.GetInt64("ExpiresAt") ?? 0;
@@ -216,8 +221,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 return null;
             }
 
-            await this.leases.UpdateEntityAsync(entity, existing.Value.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt);
+            long granted = (existing.Value.GetInt64("Epoch") ?? 0) + 1;
+            await this.leases.UpdateEntityAsync(Entity(granted), existing.Value.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(id, owner, token, expiresAt, granted);
         }
         catch (RequestFailedException ex) when (ex.Status is 409 or 412)
         {
@@ -248,9 +254,12 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             return null;
         }
 
+        // Either way the epoch comes back from the stored entity, never from the presented lease: an extension does not
+        // mint one, so what the caller gets is the grant's own epoch.
+        long epoch = current.GetInt64("Epoch") ?? 0;
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt));
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), epoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
@@ -259,12 +268,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             ["Owner"] = lease.Owner,
             ["Token"] = lease.Token,
             ["ExpiresAt"] = extendedTo.ToUnixTimeMilliseconds(),
+            ["Epoch"] = epoch,
         };
 
         try
         {
             await this.leases.UpdateEntityAsync(extended, current.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
+            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch);
         }
         catch (RequestFailedException ex) when (ex.Status is 404 or 412)
         {
@@ -279,9 +289,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, lease.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (existing is { HasValue: true, Value: { } current } && current.GetString("Token") == lease.Token)
         {
+            // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the
+            // ordinary way a grant ends, and the one a counter kept only alongside a live lease would forget. The entity
+            // is re-acquirable at once: every reader tests ExpiresAt > now. DeleteAsync still removes it with the run.
+            current["ExpiresAt"] = this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
             try
             {
-                await this.leases.DeleteEntityAsync(LeasePartition, lease.RunId.Value, current.ETag, cancellationToken).ConfigureAwait(false);
+                await this.leases.UpdateEntityAsync(current, current.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex) when (ex.Status is 404 or 412)
             {

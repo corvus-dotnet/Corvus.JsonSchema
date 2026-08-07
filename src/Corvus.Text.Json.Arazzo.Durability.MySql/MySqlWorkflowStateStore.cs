@@ -252,22 +252,30 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand upsert = connection.CreateCommand();
+
+        // The epoch is advanced from the row rather than supplied, so it counts this run's grants across every instance
+        // and every restart (ADR 0065 §6). MySQL has no RETURNING, so the granted value is read back by the token just
+        // written: the token is freshly minted, so a row carrying it is this grant and no other, which also makes the
+        // read the success test — the upsert's affected count cannot distinguish "took the lease" from "left the
+        // holder's row exactly as it was".
         upsert.CommandText =
             """
-            INSERT INTO workflow_leases (run_id, owner, token, expires_at)
-            VALUES (@id, @owner, @token, @expires_at) AS new
+            INSERT INTO workflow_leases (run_id, owner, token, expires_at, epoch)
+            VALUES (@id, @owner, @token, @expires_at, 1) AS new
             ON DUPLICATE KEY UPDATE
                 owner = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.owner, workflow_leases.owner),
                 token = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.token, workflow_leases.token),
-                expires_at = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.expires_at, workflow_leases.expires_at);
+                expires_at = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.expires_at, workflow_leases.expires_at),
+                epoch = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, workflow_leases.epoch + 1, workflow_leases.epoch);
+            SELECT epoch FROM workflow_leases WHERE run_id = @id AND token = @token;
             """;
         upsert.Parameters.AddWithValue("@id", id.Value);
         upsert.Parameters.AddWithValue("@owner", owner);
         upsert.Parameters.AddWithValue("@token", token);
         upsert.Parameters.AddWithValue("@expires_at", expiresAt.ToUnixTimeMilliseconds());
         upsert.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
-        int affected = await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return affected > 0 ? new WorkflowLease(id, owner, token, expiresAt) : null;
+        object? granted = await upsert.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return granted is long epoch ? new WorkflowLease(id, owner, token, expiresAt, epoch) : null;
     }
 
     /// <inheritdoc/>
@@ -287,35 +295,40 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             return await ReadCurrentLeaseAsync(connection, lease, nowMs, cancellationToken).ConfigureAwait(false);
         }
 
+        // The row is read back rather than the affected count believed, for two reasons that meet here. A connection
+        // string carrying UseAffectedRows reports rows *changed* rather than matched, so an extension landing on the
+        // millisecond already stored writes nothing and reports zero on a lease the store still holds; and MySQL has no
+        // RETURNING, so the grant's epoch has to be read anyway. One command, so it is still one round trip.
         DateTimeOffset extendedTo = now + extension;
         await using MySqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        update.CommandText =
+            """
+            UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
+            SELECT epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
+            """;
         update.Parameters.AddWithValue("@id", lease.RunId.Value);
         update.Parameters.AddWithValue("@token", lease.Token);
         update.Parameters.AddWithValue("@owner", lease.Owner);
         update.Parameters.AddWithValue("@expires_at", extendedTo.ToUnixTimeMilliseconds());
         update.Parameters.AddWithValue("@now", nowMs);
-        int affected = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        if (affected > 0)
-        {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo);
-        }
-
-        // A connection string carrying UseAffectedRows reports rows *changed* rather than rows matched, so an extension
-        // that lands on the millisecond already stored writes nothing and reports zero. Re-read under the same predicate
-        // rather than reporting a lease lost that the store still holds.
-        return await ReadCurrentLeaseAsync(connection, lease, nowMs, cancellationToken).ConfigureAwait(false);
+        object? held = await update.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return held is long epoch ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch) : null;
     }
 
     /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM workflow_leases WHERE run_id = @id AND token = @token;";
-        delete.Parameters.AddWithValue("@id", lease.RunId.Value);
-        delete.Parameters.AddWithValue("@token", lease.Token);
-        await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // Expired in place rather than deleted, so the run's epoch survives its holder handing it back — the ordinary way
+        // a grant ends, and the one a counter kept only alongside a live lease would forget. The row is re-acquirable at
+        // once: every reader tests expires_at > now. DeleteAsync still removes it with the run.
+        await using MySqlCommand release = connection.CreateCommand();
+        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE run_id = @id AND token = @token;";
+        release.Parameters.AddWithValue("@id", lease.RunId.Value);
+        release.Parameters.AddWithValue("@token", lease.Token);
+        release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
+        await release.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -594,14 +607,14 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static async ValueTask<WorkflowLease?> ReadCurrentLeaseAsync(MySqlConnection connection, WorkflowLease lease, long nowMs, CancellationToken cancellationToken)
     {
         await using MySqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT expires_at FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
         select.Parameters.AddWithValue("@id", lease.RunId.Value);
         select.Parameters.AddWithValue("@token", lease.Token);
         select.Parameters.AddWithValue("@owner", lease.Owner);
         select.Parameters.AddWithValue("@now", nowMs);
-        object? current = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-        return current is long expiresAtMs
-            ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs))
+        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(0)), reader.GetInt64(1))
             : null;
     }
 
@@ -645,7 +658,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             run_id VARCHAR(255) PRIMARY KEY NOT NULL,
             owner VARCHAR(255) NOT NULL,
             token VARCHAR(255) NOT NULL,
-            expires_at BIGINT NOT NULL
+            expires_at BIGINT NOT NULL,
+            epoch BIGINT NOT NULL
         );
         """,
     ];

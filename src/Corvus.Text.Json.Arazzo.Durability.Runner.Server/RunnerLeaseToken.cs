@@ -20,10 +20,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// </para>
 /// <para>
 /// The epoch rides along because the contract's renewal must report the epoch of the grant being extended, and a grant
-/// mints one epoch rather than one per extension. <strong>In phase A the epoch is carried, not enforced</strong>: nothing
-/// reads it back, so a runner rewriting its own copy gains nothing. ADR 0065 decision 6 makes it a fence in phase B, when
-/// a checkpoint's epoch is compared against the grant's — which requires the grant's epoch to be persisted with the lease
-/// row and paired with the store incarnation, neither of which exists yet.
+/// mints one epoch rather than one per extension. It is not the caller's to assert: the store persists the grant's epoch
+/// with the lease row, and every operation compares the presented value against it, so a runner rewriting its own copy
+/// presents a lease that authorises nothing. That is the ADR 0065 §6 pair as phase A can state it — an epoch above the
+/// current grant names a grant this holder never held, one below re-presents a grant the run has moved past, and the
+/// header being the epoch's only carrier here is what makes the same comparison decide both. Phase B separates them,
+/// when the runner's own MAC'd region carries an epoch independently of the header, and pairs the epoch with the store
+/// incarnation, which does not exist yet.
 /// </para>
 /// </remarks>
 public static class RunnerLeaseToken

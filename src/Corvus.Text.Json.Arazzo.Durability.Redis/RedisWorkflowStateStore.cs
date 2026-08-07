@@ -59,41 +59,51 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return newVersion
         """;
 
-    // Acquire if the lease is absent, expired, or already ours. KEYS: lease hash. ARGV: owner, token, expiresAt, now.
+    // Acquire if the lease is absent, expired, or already ours, and mint the run's next epoch (ADR 0065 §6) — HINCRBY
+    // creates the field at 1, so a run's first grant is the contract's floor. The granted epoch is the return value,
+    // because it is minted by the same atomic script that takes the lease and a later read could not tell this grant's
+    // epoch from the next one's. Zero means the lease was not taken; the store never mints zero.
+    // KEYS: lease hash. ARGV: owner, token, expiresAt, now.
     private const string AcquireLeaseScript =
         """
         local owner = redis.call('HGET', KEYS[1], 'owner')
         local exp = redis.call('HGET', KEYS[1], 'expires_at')
         if (not owner) or (tonumber(exp) <= tonumber(ARGV[4])) or (owner == ARGV[1]) then
             redis.call('HSET', KEYS[1], 'owner', ARGV[1], 'token', ARGV[2], 'expires_at', ARGV[3])
-            return 1
+            return redis.call('HINCRBY', KEYS[1], 'epoch', 1)
         end
         return 0
         """;
 
-    // Extend only the lease we still hold, and report its expiry either way. The three conjuncts are the three ways a
-    // presented lease stops being current — superseded, stolen, and lapsed (an administrative fence expires in place, so
-    // it lands on the third). An extension of 0 verifies without writing, which is what an operation performed under a
-    // lease needs. KEYS: lease hash. ARGV: owner, token, extended expiry, now, whether to write.
+    // Extend only the lease we still hold, and report its expiry and the grant's epoch either way. The three conjuncts
+    // are the three ways a presented lease stops being current — superseded, stolen, and lapsed (an administrative fence
+    // expires in place, so it lands on the third). An extension of 0 verifies without writing, which is what an
+    // operation performed under a lease needs. The epoch reported is the stored one, never the presented one: an
+    // extension does not mint an epoch, so what the caller gets back is the grant's own.
+    // KEYS: lease hash. ARGV: owner, token, extended expiry, now, whether to write.
     private const string ExtendLeaseScript =
         """
         local owner = redis.call('HGET', KEYS[1], 'owner')
         local token = redis.call('HGET', KEYS[1], 'token')
         local exp = redis.call('HGET', KEYS[1], 'expires_at')
         if (not owner) or (owner ~= ARGV[1]) or (token ~= ARGV[2]) or (tonumber(exp) <= tonumber(ARGV[4])) then
-            return -1
+            return {-1, 0}
         end
+        local epoch = tonumber(redis.call('HGET', KEYS[1], 'epoch'))
         if ARGV[5] == '1' then
             redis.call('HSET', KEYS[1], 'expires_at', ARGV[3])
-            return tonumber(ARGV[3])
+            return {tonumber(ARGV[3]), epoch}
         end
-        return tonumber(exp)
+        return {tonumber(exp), epoch}
         """;
 
-    // Release only if we still hold the lease. KEYS: lease hash. ARGV: token.
+    // Release only if we still hold the lease. Expired in place rather than deleted, so the run's epoch survives its
+    // holder handing it back — the ordinary way a grant ends, and the one a counter kept only alongside a live lease
+    // would forget. The hash is re-acquirable at once: every reader tests expires_at > now. DeleteAsync still removes it
+    // with the run. KEYS: lease hash. ARGV: token, now.
     private const string ReleaseLeaseScript =
         """
-        if redis.call('HGET', KEYS[1], 'token') == ARGV[1] then redis.call('DEL', KEYS[1]); return 1 end
+        if redis.call('HGET', KEYS[1], 'token') == ARGV[1] then redis.call('HSET', KEYS[1], 'expires_at', ARGV[2]); return 1 end
         return 0
         """;
 
@@ -231,7 +241,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             AcquireLeaseScript,
             [LeaseKey(id.Value)],
             [owner, token, expiresAt.ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds()]).ConfigureAwait(false);
-        return (long)result == 1 ? new WorkflowLease(id, owner, token, expiresAt) : null;
+        long epoch = (long)result;
+        return epoch > 0 ? new WorkflowLease(id, owner, token, expiresAt, epoch) : null;
     }
 
     /// <inheritdoc/>
@@ -247,15 +258,18 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             [LeaseKey(lease.RunId.Value)],
             [lease.Owner, lease.Token, (now + extension).ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds(), write ? "1" : "0"]).ConfigureAwait(false);
 
-        long expiresAtMs = (long)result;
-        return expiresAtMs < 0 ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs));
+        long[] held = (long[])result!;
+        return held[0] < 0 ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(held[0]), held[1]);
     }
 
     /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        await this.database.ScriptEvaluateAsync(ReleaseLeaseScript, [LeaseKey(lease.RunId.Value)], [lease.Token]).ConfigureAwait(false);
+        await this.database.ScriptEvaluateAsync(
+            ReleaseLeaseScript,
+            [LeaseKey(lease.RunId.Value)],
+            [lease.Token, this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds()]).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

@@ -235,6 +235,65 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Every_grant_of_a_runs_lease_carries_a_higher_epoch_than_the_last()
+    {
+        // ADR 0065 §6. The epoch is the run's, not the process's: it is what a checkpoint is ordered by, so a grant must
+        // never be issued under an epoch some earlier grant of the same run already used. Handing the run back is the
+        // ordinary way a grant ends, and it is the case a counter kept alongside the live lease gets wrong.
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+
+        WorkflowLease first = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+        await store.ReleaseLeaseAsync(first, default);
+        WorkflowLease second = (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(1), default))!.Value;
+
+        clock.Advance(TimeSpan.FromMinutes(2));
+        WorkflowLease third = (await store.AcquireLeaseAsync("run-1", "worker-c", TimeSpan.FromMinutes(1), default))!.Value;
+
+        first.Epoch.ShouldBeGreaterThan(0);
+        second.Epoch.ShouldBeGreaterThan(first.Epoch);
+        third.Epoch.ShouldBeGreaterThan(second.Epoch);
+    }
+
+    [TestMethod]
+    public async Task A_runs_epoch_is_its_own_and_does_not_move_with_another_runs_grants()
+    {
+        // Two runs are ordered independently: the contract's floor is 1 per run, so a busy run must not push a quiet
+        // one's first grant up, and a quiet one must not let a busy one's epoch be reused.
+        IWorkflowStateStore store = await this.NewStoreAsync();
+
+        WorkflowLease busy = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+        await store.ReleaseLeaseAsync(busy, default);
+        await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default);
+
+        WorkflowLease quiet = (await store.AcquireLeaseAsync("run-2", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+
+        quiet.Epoch.ShouldBe(1);
+    }
+
+    [TestMethod]
+    public async Task Extending_a_lease_reports_the_epoch_the_store_granted_rather_than_the_one_presented()
+    {
+        // The presented lease is a claim and the returned one is the fact. A caller that rewrites its own copy of the
+        // epoch must get the store's answer back, because that answer is what the epoch rules are then decided against.
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+
+        WorkflowLease? verified = await store.TryExtendLeaseAsync(held with { Epoch = long.MaxValue }, TimeSpan.Zero, default);
+        WorkflowLease? extended = await store.TryExtendLeaseAsync(held with { Epoch = 0 }, TimeSpan.FromMinutes(5), default);
+
+        // Asserted before the comparisons, because a store that reports no epoch at all would satisfy them: nought
+        // equals nought, and the test would agree with a backend that has none of this.
+        held.Epoch.ShouldBeGreaterThan(0);
+        verified.ShouldNotBeNull();
+        verified.Value.Epoch.ShouldBe(held.Epoch);
+        extended.ShouldNotBeNull();
+
+        // One epoch per grant, not one per extension: renewing must not invalidate a checkpoint already written under it.
+        extended.Value.Epoch.ShouldBe(held.Epoch);
+    }
+
+    [TestMethod]
     public async Task A_superseded_lease_is_not_extended()
     {
         var clock = new TestClock(T0);
