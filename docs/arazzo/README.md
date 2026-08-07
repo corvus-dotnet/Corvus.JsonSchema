@@ -73,6 +73,18 @@ does not, and links them for the rest.
 | [`reference/threat-model.md`](reference/threat-model.md) | The threat model, in swiss-cheese form: assets, adversaries, trust boundaries, the threats at each, and the controls, detection and containment that answer them. The standing artefact a security audit measures against. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
 
+## Audits
+
+`audits/` holds dated, point-in-time measurements of the built system against the
+[threat model](reference/threat-model.md). An audit classifies each finding as a divergence to fix,
+sequenced work to build, or a design gap to decide, and carries acceptance criteria and dependency
+ordering, so it is the document that drives remediation work. Re-running an audit adds a new dated
+file here; the threat model is amended rather than replaced.
+
+| Audit | Covers |
+|-------|--------|
+| [`audits/2026-08-07-security-audit.md`](audits/2026-08-07-security-audit.md) | Security audit across all ten trust boundaries: 28 divergences, 16 design gaps, the accepted-risk register, and the prioritised backlog. |
+
 ## Architecture Decision Records
 
 See [`adr/README.md`](adr/README.md) for the full index (50 ADRs across the access model, the engine and
