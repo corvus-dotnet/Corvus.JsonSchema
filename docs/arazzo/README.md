@@ -70,6 +70,7 @@ does not, and links them for the rest.
 | [`reference/arazzo-runner.openapi.json`](reference/arazzo-runner.openapi.json) | The OpenAPI 3.2 contract for the runner API (ADR 0065): the only path from a runner to durable run state, served as a separately deployable component. The server and the runner's client are both generated from it. |
 | [`reference/control-plane-use-cases.md`](reference/control-plane-use-cases.md) | The use-case catalog: the jobs each persona brings to each surface, with stable ids. |
 | [`reference/control-plane-observability-coverage.md`](reference/control-plane-observability-coverage.md) | The observability coverage catalog: the span, metric, and audit log each governed action emits, per surface. |
+| [`reference/threat-model.md`](reference/threat-model.md) | The threat model, in swiss-cheese form: assets, adversaries, trust boundaries, the threats at each, and the controls, detection and containment that answer them. The standing artefact a security audit measures against. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
 
 ## Architecture Decision Records
