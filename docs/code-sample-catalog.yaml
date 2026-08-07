@@ -675,12 +675,12 @@ main-docs:
       - {index: 58, language: bash, lines: [1257, 1259]}
       - {index: 59, language: csharp, lines: [1261, 1272], category: compilable, verified: false}
       - {index: 60, language: bash, lines: [1282, 1284]}
-      - {index: 61, language: bash, lines: [1302, 1320]}
-      - {index: 62, language: bash, lines: [1324, 1326]}
-      - {index: 63, language: , lines: [1330, 1340]}
-      - {index: 64, language: bash, lines: [1353, 1359]}
-      - {index: 65, language: csharp, lines: [1395, 1400], category: compilable, verified: false}
-      - {index: 66, language: , lines: [1414, 1419]}
+      - {index: 61, language: bash, lines: [1303, 1321]}
+      - {index: 62, language: bash, lines: [1325, 1327]}
+      - {index: 63, language: , lines: [1331, 1341]}
+      - {index: 64, language: bash, lines: [1354, 1360]}
+      - {index: 65, language: csharp, lines: [1396, 1401], category: compilable, verified: false}
+      - {index: 66, language: , lines: [1415, 1420]}
   - path: "docs/AsyncApiMessageResumption.md"
     blocks:
       - {index: 0, language: , lines: [26, 32]}

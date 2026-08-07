@@ -147,6 +147,32 @@ public class ReferencedComponentsTests
     }
 
     [TestMethod]
+    public void Generate_DanglingReference_RecordsDiagnosticAndCompletes()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "dangling-ref-3.0.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("DanglingRef", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("SubscribeOrdersConsumer")),
+            "The intact operation should still generate");
+        Assert.AreEqual(1, generator.Diagnostics.Count, "The dangling operation reference should record exactly one diagnostic");
+        Assert.AreEqual("#/operations/brokenOp", generator.Diagnostics[0].Location);
+        Assert.AreEqual(AsyncApiGenerationDiagnosticSeverity.Warning, generator.Diagnostics[0].Severity);
+    }
+
+    [TestMethod]
+    public void Generate_CleanSpec_RecordsNoDiagnostics()
+    {
+        var generator = new AsyncApi30CodeGenerator("ReferencedComponents", new Dictionary<string, string>());
+        generator.Generate(root);
+
+        Assert.AreEqual(0, generator.Diagnostics.Count, "A fully resolvable spec should generate without diagnostics");
+    }
+
+    [TestMethod]
     public void Generate_ReferencedEverything_Compiles()
     {
         var generator = new AsyncApi30CodeGenerator("ReferencedComponents", new Dictionary<string, string>());

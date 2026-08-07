@@ -1,0 +1,32 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Dangling reference",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "orders": {
+      "address": "orders.created",
+      "messages": {
+        "OrderCreated": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "subscribeOrders": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/orders" },
+      "messages": [
+        { "$ref": "#/channels/orders/messages/OrderCreated" }
+      ]
+    },
+    "brokenOp": { "$ref": "#/components/operations/Missing" }
+  }
+}

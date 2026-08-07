@@ -16,6 +16,7 @@ public sealed class AsyncApi26CodeGenerator
 {
     private readonly AsyncApi30CodeGenerator emitter;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
+    private readonly List<AsyncApiGenerationDiagnostic> diagnostics = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AsyncApi26CodeGenerator"/> class.
@@ -160,11 +161,19 @@ public sealed class AsyncApi26CodeGenerator
         OperationFilter? filter = null,
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
+        this.diagnostics.Clear();
+
         (List<AsyncApi30CodeGenerator.OperationInfo> sendOps, List<AsyncApi30CodeGenerator.OperationInfo> receiveOps) =
             this.CollectOperations(doc, filter, referenceResolver);
 
         return this.emitter.GenerateOperations(sendOps, receiveOps, []);
     }
+
+    /// <summary>
+    /// Gets the problems the most recent <see cref="Generate"/> call encountered and worked
+    /// around, such as references that did not resolve. Empty when generation was clean.
+    /// </summary>
+    public IReadOnlyList<AsyncApiGenerationDiagnostic> Diagnostics => this.diagnostics;
 
     /// <summary>
     /// Describes the document's channel operations with the generated producer/consumer details an Arazzo
@@ -210,7 +219,7 @@ public sealed class AsyncApi26CodeGenerator
             }
 
             List<AsyncApi30CodeGenerator.MessageInfo> messages = this.CollectOperationMessages(operation, doc, referenceResolver);
-            List<AsyncApi30CodeGenerator.ChannelParameter> parameters = CollectChannelParameters(operation.Channel, doc, referenceResolver);
+            List<AsyncApi30CodeGenerator.ChannelParameter> parameters = CollectChannelParameters(operation.Channel, doc, referenceResolver, this.diagnostics, operation.ChannelName);
             AsyncApi30CodeGenerator.ReplyInfo? reply = this.CollectReplyInfo(operation.Operation, doc, referenceResolver);
 
             string? operationBindingsJson = operation.Operation.TryGetProperty("bindings"u8, out JsonElement operationBindings) &&
@@ -475,7 +484,9 @@ public sealed class AsyncApi26CodeGenerator
     private static List<AsyncApi30CodeGenerator.ChannelParameter> CollectChannelParameters(
         JsonElement channel,
         JsonElement doc,
-        IAsyncApiReferenceResolver? resolver)
+        IAsyncApiReferenceResolver? resolver,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null,
+        string? channelName = null)
     {
         List<AsyncApi30CodeGenerator.ChannelParameter> parameters = [];
         if (!channel.TryGetProperty("parameters"u8, out JsonElement parametersElement) ||
@@ -489,6 +500,16 @@ public sealed class AsyncApi26CodeGenerator
             // A parameter entry may be a Reference Object; resolve it (and a referenced
             // schema) so description, enum, and default survive the indirection.
             JsonElement parameter = ResolveRef(parameterProp.Value, doc, resolver);
+            if (diagnostics is not null &&
+                parameter.TryGetProperty("$ref"u8, out JsonElement unresolvedRef) &&
+                unresolvedRef.ValueKind == JsonValueKind.String)
+            {
+                diagnostics.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/channels/{channelName}/parameters/{parameterProp.Name}",
+                    "The parameter is a $ref that does not resolve; the argument keeps its name but loses description, enum, and default."));
+            }
+
             string? description = GetString(parameter, "description"u8);
             string? defaultValue = null;
             string[]? enumValues = null;
