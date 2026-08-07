@@ -180,14 +180,14 @@ checkable rather than a by-product of what a review happened to look at.
 
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
-| Code injection into the generated executor | **Partial**. `EmitText.Quote` at every emission site but three | Prevention on the shipped path rests on an incidental property of the emitted text, not a control | H3 |
+| Code injection into the generated executor | **Holds**. Every emission site routes an authored identifier through `EmitText`: `Quote` for a literal, `XmlDocText` for a doc comment | The escaping is the whole control. No identifier charset is enforced at the API ingress, so the generator is what has to be right | H3 |
 | SSRF and local file read via `$ref` resolution | **Holds** at catalog-add. The loader resolves registered documents only, so a reference out of the package is refused rather than retrieved, and the policy is named at the call site rather than defaulted into | The developer CLI still retrieves, by design, and its retrieval is unfenced. That is a different host and a different trust position, tracked separately | H2 |
 | Resource exhaustion via YAML alias expansion | **Absent**. Limits declared, never read | Roughly 300 bytes expands to gigabytes on any fetched source | H6 |
 | Deserialization gadget chains | **Holds**. Tags collapse to a closed enum, no type-directed deserialization, output is always a JSON DOM | None. There is no gadget surface | |
 | Deep-nesting stack exhaustion | **Holds**. Canonical depth bound 64, non-overflow recursion, YAML depth 64 | None found | |
 | Identity and hash confusion between documents | **Partial**. Correct ordinal sort, duplicate-key rejection, surrogate handling, but hash and compiled bytes differ | Two documents share one version identity while being different compiler inputs | H13 |
 | Malformed package container | **Partial**. Size caps and charset checks, length guard defeated by overflow | Documented clean-failure contract is false, and the exception escapes the validate catch filter | H33 |
-| Unconstrained identifiers reaching downstream sinks | **Absent**. Zero pattern validators across 1,237 generated model files | Root cause of injection into codegen, MSBuild and logs | H3, H16, H11 |
+| Unconstrained identifiers reaching downstream sinks | **Absent**. Zero pattern validators, and neither the metaschema pass nor the semantic analyzer runs on `POST /catalog` — both are reached only from the designer's validate and publish gate | An uploaded package is compiled and run without its document ever being schema-checked. Codegen escaping is therefore the only barrier, not a second one | H3, H16, H11 |
 
 ### TB-2 Client to governance API
 
@@ -322,6 +322,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Runtime expressions are a fixed prefix table plus JSON Pointer, unrecognised forms degrade to literal | Holds | `ArazzoExpression.cs:89-257` |
 | Document resolution is a stated policy per caller, closed by default, registry-only where the input is attacker-authored | Holds | `ArazzoDocumentResolution.cs`, `WorkflowExecutorProvider.cs` |
 | Uniform 1s regex timeouts on every criterion and JSONPath | Holds | `RegexCriterionInliner.cs:121`, `CompiledCriterion.cs:108-249` |
+| Authored identifiers reach generated source only through `EmitText.Quote` (literals) or `EmitText.XmlDocText` (doc comments) | Holds | `EmitText.cs`, `WorkflowExecutorEmitter.cs` |
 | Canonicalisation, ordinal sort, duplicate-key rejection, lone surrogates throw, depth 64 | Holds | `JsonCanonicalizer.cs:122-125, 195-201, 424-439` |
 | Closed signature-algorithm switch, trust root from operator config, verifier required on build and deploy | Holds | `TrustStoreExecutorPackageVerifier.cs:38-66`, `WorkflowAotBuildService.cs:36` |
 | Central `escapeHtml` at 584 sites, no dangerous sinks, no user-supplied SVG | Holds | `base.js:184-191` |
@@ -495,7 +496,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 |----|-----|-------|---------|----------|--------|
 | H1 | Crit | DIV | Checkpoint endpoint has no scope, reach check, lease or audit. The ADR 0062 token primitive is implemented and sound but never passed | TB-2 | **Closed** |
 | H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | **Closed** |
-| H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | Open |
+| H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | **Closed** |
 | H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
 | H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | **Closed** |
 | H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 | Open |
@@ -553,6 +554,23 @@ means by an interlock that is per run rather than per component.
 
 Two notes the table cannot carry.
 
+**H3, closed on the escaping, deliberately not on the identifier pattern.** The audit named three
+unescaped sites; there are **six**. The other three write `workflowId` into generated `///` XML
+documentation comments, where a line break ends the comment and everything after it is compiled as
+code — a breakout in *both* emission modes, with none of the accidental protection the literal sites
+had. All six now route through `EmitText`.
+
+The second half of the remediation, an identifier charset pattern, is **not** being added, and the
+reason is worth recording because it is not cost. The Arazzo 1.1 reference schema is not ours to
+constrain. The semantic analyzer is ours, but it and the metaschema pass share a single production
+call site (`ArazzoControlPlaneWorkspaceHandler.CollectDiagnosticsAsync`), reached only from the
+designer's validate endpoint and its publish gate. `POST /catalog` runs neither. A pattern in either
+place would therefore constrain documents authored in the designer and not documents uploaded to the
+API, which is the surface the finding is about — a control that reads as defence in depth while
+covering the wrong path is worse than a recorded gap. The gap is now recorded in
+[§6](#6-threats-by-boundary) under unconstrained identifiers, and closing it means validating the
+document at catalog-add, which is a compatibility decision rather than a conformance fix.
+
 **H3 severity.** Two reviewers disagreed and the distinction is load-bearing. On the durable emission,
 which every construction site uses, `workflowId` is emitted twice with an intervening newline inside a
 ternary, forcing an even quote count and foreclosing the breakout, so the shipped wiring is not
@@ -582,7 +600,7 @@ each divergence into the layer meant to close it, where it is considerably more 
 | 1 | Require the checkpoint token on the surface, serve no surface without a secret to validate it, and share one coordinator instance | H1 | **Done** |
 | 2 | Pass the machine principal to the revocation fence, re-resolve bindings on renewal and checkpoint, delete the stale comment | H5 | **Done** |
 | 3 | Restrict the `$ref` loader to the package registry, or fence scheme, host, size and redirects | H2 | **Done** |
-| 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | Open |
+| 4 | Quote the three `workflowId` sites, add a pattern to the metaschema and analyzer | H3 | **Partly done.** Escaping closed at six sites; the identifier pattern is deliberately not added, see the H3 note in §12 |
 | 5 | Enforce the YAML alias limits, and fix the default-initialisation path so the defaults apply | H6 | Open |
 | 6 | Remove both reintroduced security-mode defaults | Posture | Open |
 | 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | Open |

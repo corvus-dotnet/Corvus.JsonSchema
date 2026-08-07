@@ -53,6 +53,45 @@ internal static class EmitText
     }
 
     /// <summary>
+    /// Renders a string as text that is safe to place inside a generated <c>///</c> XML documentation comment.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The comment-safe text.</returns>
+    /// <remarks>
+    /// Two different things can go wrong, and a value authored in an Arazzo document can do both. A line break ends the
+    /// <c>///</c> comment, so whatever follows is compiled as code — the same breakout as an unterminated string
+    /// literal, one context over. An angle bracket or ampersand makes the comment badly formed XML, which is a
+    /// diagnostic in every consuming project that documents its public API. Line breaks therefore collapse to a space
+    /// and the XML metacharacters are entity-escaped.
+    /// </remarks>
+    public static string XmlDocText(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        foreach (char c in value)
+        {
+            switch (c)
+            {
+                case '&': builder.Append("&amp;"); break;
+                case '<': builder.Append("&lt;"); break;
+                case '>': builder.Append("&gt;"); break;
+                case '\r': break;
+                case '\n': builder.Append(' '); break;
+                default:
+                    // Every other control character is dropped rather than rendered: none of them carry meaning in a
+                    // comment, and a stray one is only a way to make generated source hard to read back.
+                    if (c >= ' ')
+                    {
+                        builder.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
     /// Lower-cases the first character (PascalCase → camelCase) for local-variable names.
     /// </summary>
     /// <param name="value">The value.</param>

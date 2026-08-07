@@ -1225,7 +1225,7 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine();
         writer.Append("namespace ").Append(options.Namespace).AppendLine(";");
         writer.AppendLine();
-        writer.Append("/// <summary>Generated executor for the '").Append(workflowId).AppendLine("' workflow.</summary>");
+        writer.Append("/// <summary>Generated executor for the '").Append(EmitText.XmlDocText(workflowId)).AppendLine("' workflow.</summary>");
 
         // The class is partial so [GeneratedRegex] partial methods (emitted for regex criteria) can be
         // completed by the regular-expression source generator at the consumer's compile.
@@ -1268,7 +1268,7 @@ public static class WorkflowExecutorEmitter
             ? "System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> transports, "
             : "IApiTransport transport, ";
 
-        writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
+        writer.Append("    /// <summary>Executes the '").Append(EmitText.XmlDocText(workflowId)).AppendLine("' workflow.</summary>");
         writer.Append("    public static async ValueTask<").Append(returnType)
             .Append("> ExecuteAsync(").Append(transportParameter).Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
             .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
@@ -1317,20 +1317,27 @@ public static class WorkflowExecutorEmitter
             writer.AppendLine("        context.SetInputs(inputs);");
         }
 
+        // The activity name carries the workflowId, which is authored in the document the platform compiles, so it is
+        // built as one complete literal here rather than appended into an open one below. Every other emission site
+        // routes such a value through EmitText.Quote; these three did not, and what kept the durable form from being a
+        // clean breakout was only that it emits the id twice with a newline between them — a property of the layout,
+        // not a control, and one a refactor to a single line would have silently removed.
+        string activityName = EmitText.Quote("workflow." + workflowId);
+
         if (options.Durable)
         {
             // The run's correlation id IS its W3C trace id (captured at creation). Re-establish it as the
             // root span's trace context so a resumed run — and the OpenAPI/AsyncAPI calls its steps make —
             // continues the original trace; when absent, fall back to the ambient Activity.Current.
             writer.Append("        using Activity? activity = run?.CorrelationId is { Length: 32 } correlationTraceId")
-                .Append(" ? ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId)
-                .AppendLine("\", ActivityKind.Internal, new ActivityContext(ActivityTraceId.CreateFromString(correlationTraceId), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded))");
-            writer.Append("            : ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
+                .Append(" ? ArazzoTelemetry.ActivitySource.StartActivity(").Append(activityName)
+                .AppendLine(", ActivityKind.Internal, new ActivityContext(ActivityTraceId.CreateFromString(correlationTraceId), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded))");
+            writer.Append("            : ArazzoTelemetry.ActivitySource.StartActivity(").Append(activityName).AppendLine(");");
             writer.AppendLine("        if (activity is not null && run?.CorrelationId is { } correlationId) { activity.SetTag(ArazzoTelemetry.CorrelationIdTag, correlationId); }");
         }
         else
         {
-            writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
+            writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(").Append(activityName).AppendLine(");");
         }
 
         writer.AppendLine("        ArazzoTelemetry.WorkflowsStarted.Add(1);");
@@ -1425,7 +1432,7 @@ public static class WorkflowExecutorEmitter
             : sources.Count > 0 ? $"apiTransports[{EmitText.Quote(sources[0])}], " : "default(IApiTransport)!, ";
 
         writer.AppendLine();
-        writer.Append("/// <summary>Host adapter for the '").Append(workflowId).AppendLine("' workflow — the non-generic IHostedWorkflow an execution host loads and runs.</summary>");
+        writer.Append("/// <summary>Host adapter for the '").Append(EmitText.XmlDocText(workflowId)).AppendLine("' workflow — the non-generic IHostedWorkflow an execution host loads and runs.</summary>");
         writer.Append("public sealed class ").Append(options.ClassName).AppendLine("Host : IHostedWorkflow");
         writer.AppendLine("{");
         writer.AppendLine("    /// <inheritdoc/>");

@@ -165,10 +165,42 @@ item you cannot see directly in the code.
   implements redirect-safe, origin-checked fetching and is the port-don't-rebuild candidate.
 
 ### P0-4 · DIV · `TB-1` · Three codegen sites bypass the escaping convention
+
+> **Resolved on the escaping; the identifier pattern deliberately not done.** The finding held, and
+> undercounted the sites — there are six, not three. See *Six sites, not three* and *Why no pattern*
+> below, and the threat model's [findings ledger](../reference/threat-model.md#12-findings-ledger) (H3).
 - **Where:** `WorkflowExecutorEmitter.cs:1326, 1328, 1333`; correct usage at `:1433`; helper at `EmitText.cs:21-53`
 - **Divergence:** every other emission site routes attacker-controlled strings through `EmitText.Quote`. These three append `workflowId` raw into an open C# string literal. `Arazzo11.json:116-120` declares it as a bare `type: string` with no pattern, the analyzer checks uniqueness and length only, and catalog-add performs no metaschema validation.
 - **Impact, stated precisely:** `UO-4`, `UO-6`. On the **non-durable** emission this is clean remote code execution. On the **durable** emission, which every construction site here uses, it degrades to a compile failure, because `workflowId` is emitted twice with an intervening newline inside a ternary, forcing an even quote count. What prevents live execution on the shipped wiring is an incidental structural property of the emitted text, not a control. A refactor to single-line emission makes it live and nothing would catch it.
 - **Acceptance criteria:** wrap all three in `EmitText.Quote`; add a charset pattern to the metaschema and an analyzer check; test that a `workflowId` containing a quote and a newline produces a compilable, semantically inert executor.
+- **Six sites, not three.** The three named sites append `workflowId` into an open C# string literal.
+  Three more (`:1228`, `:1271`, `:1435`) append it into generated `///` XML documentation comments,
+  where a newline ends the comment and the remainder is compiled as code. Those are a clean breakout
+  in **both** emission modes: the ternary-and-newline accident that made the durable literal sites
+  merely a compile failure does not apply to them. They admit a second, quieter failure too, since a
+  bare `<` makes the comment badly formed XML, a diagnostic in every consuming project that documents
+  its public API. Fixed with a new `EmitText.XmlDocText`.
+- **How the extra sites were found, which is the transferable part.** Not by inspection. A sweep tuned
+  to the audit's shape (an emitted quote followed by a raw append) found exactly three and agreed with
+  the audit, which is precisely why it looked like confirmation. That sweep pattern had *already* been
+  wrong once, an earlier version finding only one of the three known sites, and matching the expected
+  count is what stopped the search. What found the other three was an assertion that the payload must
+  not appear as code anywhere in the output, which does not care which syntactic context the injection
+  lives in.
+- **Why no pattern.** The Arazzo 1.1 reference schema is not ours to constrain, so the metaschema is
+  out. The semantic analyzer is ours, but it shares a single production call site with the metaschema
+  pass (`ArazzoControlPlaneWorkspaceHandler.CollectDiagnosticsAsync`), reached only from the designer's
+  validate endpoint and its publish gate. `POST /catalog` runs neither, so a pattern in either place
+  would constrain designer-authored documents and not uploaded packages, which is the surface this
+  finding is about. A control that reads as defence in depth while covering the wrong path is worse
+  than a recorded gap, so it is recorded in the threat model instead. The substantive fix is to
+  validate the document at catalog-add at all, raised separately as a compatibility decision.
+- **Tested by parsing, after three heuristics failed.** Substring assertions flagged safe placements
+  (the payload inside a comment, a `<` inside a literal). A balanced-quote heuristic missed a payload
+  that closes and reopens a literal to restore an even count. The suite now parses the emitted source
+  with Roslyn and requires zero syntax errors, which is the property the criteria name, plus a
+  structural check for the doc-comment breakout, since that one produces *valid* C# containing an
+  attacker's type and parsing alone cannot see it. Eight of twelve rows fail with the fix reverted.
 
 ### P0-5 · DIV · `TB-1` · YAML alias-expansion limits are declared, documented, and never read
 - **Where:** `YamlReaderOptions.cs:30-31, 57, 63`; expansion at `YamlToJsonConverter.cs:3993-4001, 4080-4104, 4258-4272`; `docs/Yaml.md:178, 594`
