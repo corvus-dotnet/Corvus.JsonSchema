@@ -203,11 +203,43 @@ item you cannot see directly in the code.
   attacker's type and parsing alone cannot see it. Eight of twelve rows fail with the fix reverted.
 
 ### P0-5 · DIV · `TB-1` · YAML alias-expansion limits are declared, documented, and never read
+
+> **Resolved.** The finding held, and understated it: the billion-laughs document does not merely expand,
+> it raises `OutOfMemoryException` in under seven seconds from roughly 400 bytes of YAML. Two acceptance
+> details were corrected against the code, see *Corrections* below. Threat model
+> [findings ledger](../reference/threat-model.md#12-findings-ledger) (H6).
 - **Where:** `YamlReaderOptions.cs:30-31, 57, 63`; expansion at `YamlToJsonConverter.cs:3993-4001, 4080-4104, 4258-4272`; `docs/Yaml.md:178, 594`
 - **Divergence:** `MaxAliasExpansionDepth` and `MaxAliasExpansionSize` appear in exactly four places, all inside their own options file. No parser reads them, the matching error resources (`Strings.resx:92, 95`) are never thrown, and `docs/Yaml.md` presents the protection as an advantage over YamlDotNet.
 - **Impact:** `UO-8`. Roughly 300 bytes expands to gigabytes on any fetched or uploaded source. The 16 MiB fetch cap bounds input, not amplified output.
 - **Trap:** every call site passes `YamlReaderOptions options = default`, and `default(struct)` skips the parameterless constructor, so both limits read as `0`. Reading the option naively either no-ops or throws on the first alias. **Fix the default-initialisation path in the same change.**
 - **Acceptance criteria:** enforce both during expansion; treat `0` as "use the documented default"; test the classic billion-laughs document for a clean `InvalidDataException`.
+- **Measured, not inferred.** Before the fix: billion-laughs with defaults, `OutOfMemoryException` after
+  6.9s; with `MaxAliasExpansionSize = 64` explicitly set, `OutOfMemoryException` after 3.8s, which is
+  what proves the option was unread rather than merely mis-tuned; with `default(YamlReaderOptions)`,
+  `OutOfMemoryException` after 3.6s. After: all refused promptly. Four of six rows fail with the guard
+  reverted, each for its own reason.
+- **Corrections against the code, which wins.** (1) The criterion names `InvalidDataException`;
+  `YamlException` is this converter's convention and is what `docs/Yaml.md` already promises, so that is
+  what is thrown and asserted. (2) The size limit was documented as a count of *nodes* in three places.
+  The observed failure is memory exhaustion, and a node count does not bound memory — a million short
+  scalars and a million long ones differ by orders of magnitude. It is enforced on expanded **bytes**,
+  and the XML doc, the resource string and `docs/Yaml.md` were corrected to say so. Enforcing bytes
+  while documenting nodes would have been a fresh instance of this very finding.
+- **The trap was subtler than "someone forgot".** Three of the five options on `YamlReaderOptions` are
+  enums whose documented default is the first member, so value `0`, so `default(struct)` lands on them
+  correctly. The zero-value discipline *was* applied. It breaks only on the two `int` limits, where `0`
+  cannot be made to mean `64` — so the struct looks safe by construction and for most of its surface is.
+  Both limits now resolve an unset value to the documented default at the point of use, which is the only
+  place that can be right when every call site passes `options = default`.
+- **The depth limit is a distinct control, not a spare.** There is already a parse-time nesting guard,
+  but an alias is written as pre-serialized bytes, so the depth an expansion adds to the OUTPUT never
+  passes through it: a shallow document can emit arbitrarily deep JSON. Depth is measured once per anchor
+  at capture and carried in the anchor entry, so a heavily referenced alias costs one comparison rather
+  than a rescan.
+- **Charged at the resolution point, not the call sites.** Both limits are applied inside
+  `TryGetAnchorData`, which every expansion passes through whether the alias appeared as a value or as a
+  mapping key. Charging at the two call sites instead would have been the mitigation-on-one-of-two-
+  sibling-paths pattern this audit keeps finding.
 
 ### P0-6 · DIV · `TB-2` · `ControlPlaneSecurityMode` has a default in two places
 - **Where:** `ArazzoControlPlaneEnvironmentsHandler.cs:85`, whose parameter defaults to `Open`; `samples/.../Program.cs:412`, whose config binding defaults to `false`

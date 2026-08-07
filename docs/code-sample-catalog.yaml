@@ -1513,23 +1513,23 @@ main-docs:
       - {index: 5, language: csharp, lines: [90, 101], category: compilable, verified: false}
       - {index: 6, language: yaml, lines: [152, 164]}
       - {index: 7, language: json, lines: [168, 174]}
-      - {index: 8, language: yaml, lines: [184, 193]}
-      - {index: 9, language: csharp, lines: [207, 225], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [258, 271], category: compilable, verified: false}
-      - {index: 11, language: , lines: [275, 288]}
-      - {index: 12, language: csharp, lines: [292, 310], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [318, 327], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [341, 353], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [357, 366], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [372, 377], category: compilable, verified: false}
-      - {index: 17, language: csharp, lines: [381, 385], category: compilable, verified: false}
-      - {index: 18, language: csharp, lines: [391, 418], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [426, 433], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [459, 466], category: compilable, verified: false}
-      - {index: 21, language: csharp, lines: [470, 473], category: compilable, verified: false}
-      - {index: 22, language: yaml, lines: [477, 493]}
-      - {index: 23, language: csharp, lines: [498, 502], category: compilable, verified: false}
-      - {index: 24, language: csharp, lines: [626, 636], category: compilable, verified: false}
+      - {index: 8, language: yaml, lines: [188, 197]}
+      - {index: 9, language: csharp, lines: [211, 229], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [262, 275], category: compilable, verified: false}
+      - {index: 11, language: , lines: [279, 292]}
+      - {index: 12, language: csharp, lines: [296, 314], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [322, 331], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [345, 357], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [361, 370], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [376, 381], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [385, 389], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [395, 422], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [430, 437], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [463, 470], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [474, 477], category: compilable, verified: false}
+      - {index: 22, language: yaml, lines: [481, 497]}
+      - {index: 23, language: csharp, lines: [502, 506], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [630, 640], category: compilable, verified: false}
 
 v4-docs:
   - path: "docs/V4/GettingStartedWithJsonSchemaCodeGeneration.md"

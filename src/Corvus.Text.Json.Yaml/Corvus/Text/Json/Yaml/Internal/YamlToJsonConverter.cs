@@ -90,10 +90,16 @@ internal ref struct YamlToJsonConverter
     private int _anchorDataUsed;
     private int _anchorCount;
 
-    // Each anchor entry is 4 ints: (nameOffset, nameLength, dataOffset, dataLength) = 16 bytes
+    // Each anchor entry is 5 ints: (nameOffset, nameLength, dataOffset, dataLength, dataDepth) = 20 bytes
     // Stored in _anchorEntries, max 64 inline
-    private const int AnchorEntrySize = 4;
+    private const int AnchorEntrySize = 5;
     private int[]? _anchorEntries;
+
+    // Total bytes alias expansion has added to the output. An anchor holds the SERIALIZED bytes of the node it names,
+    // so an anchor whose node references earlier aliases captures their expansion too and each level multiplies. This
+    // is the counter that bounds that: without it a few hundred bytes of YAML exhausts the process's memory, which is
+    // what the billion-laughs shape does.
+    private int _aliasExpansionBytes;
 
     // Active anchor tracking
     private int _activeAnchorNameStart;
@@ -132,6 +138,7 @@ internal ref struct YamlToJsonConverter
         _anchorDataBuffer = null;
         _anchorDataUsed = 0;
         _anchorCount = 0;
+        _aliasExpansionBytes = 0;
         _anchorEntries = null;
         _activeAnchorNameStart = -1;
         _activeAnchorNameLength = 0;
@@ -4100,6 +4107,9 @@ internal ref struct YamlToJsonConverter
             _anchorEntries[entryBase + 1] = _activeAnchorNameLength;
             _anchorEntries[entryBase + 2] = _anchorDataUsed;
             _anchorEntries[entryBase + 3] = dataLength;
+
+            // Measured once, at capture, so an alias pays only a comparison however many times it is referenced.
+            _anchorEntries[entryBase + 4] = MeasureJsonDepth(captured);
             _anchorCount++;
             _anchorDataUsed += dataLength;
         }
@@ -4194,6 +4204,9 @@ internal ref struct YamlToJsonConverter
         _anchorEntries[entryBase + 1] = _activeAnchorNameLength;
         _anchorEntries[entryBase + 2] = _anchorDataUsed;
         _anchorEntries[entryBase + 3] = totalLength;
+
+        // A quoted scalar, so it nests nothing.
+        _anchorEntries[entryBase + 4] = 0;
         _anchorCount++;
         _anchorDataUsed += totalLength;
         _activeAnchorNameStart = -1;
@@ -4217,6 +4230,10 @@ internal ref struct YamlToJsonConverter
 
             if (name.SequenceEqual(_anchorNameBuffer.AsSpan(nameOffset, nameLength)))
             {
+                // Charge the expansion before handing the bytes over, so a refusal happens instead of the write rather
+                // than after it. Both limits are checked here because this is the one place every expansion passes
+                // through, whichever syntactic position the alias appeared in.
+                ChargeAliasExpansion(dataLength, _anchorEntries[entryBase + 4]);
                 data = _anchorDataBuffer.AsSpan(dataOffset, dataLength);
                 return true;
             }
@@ -4227,6 +4244,91 @@ internal ref struct YamlToJsonConverter
     }
 
     /// <summary>
+    /// Accounts for one alias expansion against both configured limits, throwing when either is exceeded.
+    /// </summary>
+    /// <param name="dataLength">The bytes this expansion adds to the output.</param>
+    /// <param name="dataDepth">The nesting depth of the anchored value.</param>
+    private void ChargeAliasExpansion(int dataLength, int dataDepth)
+    {
+        // Size is what bounds memory. An anchor holds serialized bytes, so each level of a billion-laughs document
+        // multiplies what the next level captures, and the growth shows up here long before the document is finished.
+        int size = _options.EffectiveMaxAliasExpansionSize;
+        if (dataLength > size - _aliasExpansionBytes)
+        {
+            ThrowAliasExpansionSizeExceeded(size);
+        }
+
+        _aliasExpansionBytes += dataLength;
+
+        // Depth is a separate control, not a spare one. The parse-time nesting guard counts the structure it READS;
+        // an alias is written as pre-serialized bytes, so the depth those bytes add to the OUTPUT never passes through
+        // it. A shallow document can therefore emit arbitrarily deep JSON, which is what this bounds.
+        int depth = _options.EffectiveMaxAliasExpansionDepth;
+        if (_depth + dataDepth > depth)
+        {
+            ThrowAliasExpansionDepthExceeded(depth);
+        }
+    }
+
+    /// <summary>
+    /// Measures the maximum nesting depth of a serialized JSON value, for the alias-expansion depth limit.
+    /// </summary>
+    /// <param name="data">The serialized JSON value.</param>
+    /// <returns>The greatest nesting depth within it.</returns>
+    private static int MeasureJsonDepth(ReadOnlySpan<byte> data)
+    {
+        int depth = 0;
+        int maximum = 0;
+        bool inString = false;
+        bool escaped = false;
+
+        foreach (byte b in data)
+        {
+            if (inString)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (b == (byte)'\\')
+                {
+                    escaped = true;
+                }
+                else if (b == (byte)'"')
+                {
+                    inString = false;
+                }
+
+                continue;
+            }
+
+            switch (b)
+            {
+                case (byte)'"':
+                    inString = true;
+                    break;
+                case (byte)'[':
+                case (byte)'{':
+                    depth++;
+                    if (depth > maximum)
+                    {
+                        maximum = depth;
+                    }
+
+                    break;
+                case (byte)']':
+                case (byte)'}':
+                    depth--;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return maximum;
+    }
+
+    /// <summary>
     /// Resets the anchor table for a new document.
     /// </summary>
     private void ResetAnchorTable()
@@ -4234,6 +4336,7 @@ internal ref struct YamlToJsonConverter
         _anchorNamesUsed = 0;
         _anchorDataUsed = 0;
         _anchorCount = 0;
+        _aliasExpansionBytes = 0;
         _activeAnchorNameStart = -1;
         _secondaryTagRedefined = false;
         _hasYamlDirective = false;
@@ -4766,6 +4869,18 @@ internal ref struct YamlToJsonConverter
             SR.Format(SR.UnterminatedFlowSequence, _line, _column),
             _line,
             _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowAliasExpansionSizeExceeded(int limit)
+    {
+        throw new YamlException(SR.Format(SR.AliasExpansionSizeExceeded, limit), _line, _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowAliasExpansionDepthExceeded(int limit)
+    {
+        throw new YamlException(SR.Format(SR.AliasExpansionDepthExceeded, limit), _line, _column);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

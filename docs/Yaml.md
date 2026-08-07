@@ -175,7 +175,11 @@ Produces (with `YamlSchema.Yaml11` for merge key support):
 
 ### Billion-laughs protection
 
-Alias expansion is bounded by `MaxAliasExpansionDepth` (default 64) and `MaxAliasExpansionSize` (default 1,000,000 nodes). Malicious YAML that attempts exponential expansion via nested aliases will be rejected with a `YamlException`.
+Alias expansion is bounded by `MaxAliasExpansionDepth` (default 64) and `MaxAliasExpansionSize` (default 1,000,000 bytes). Malicious YAML that attempts exponential expansion via nested aliases is rejected with a `YamlException`.
+
+An anchor holds the serialized bytes of the node it names, so an anchor whose node references earlier aliases captures their expansion too and each level multiplies. The size limit bounds that growth, and is measured in bytes because bytes are what the expansion consumes. The depth limit is a separate control rather than a spare one. The parser's own nesting guard counts the structure it reads, while an alias is written as pre-serialized bytes, so the depth an alias adds to the output never passes through it and a shallow document could otherwise emit arbitrarily deep JSON.
+
+Both limits treat an unset (zero) value as the documented default, because `default(YamlReaderOptions)` skips the parameterless constructor and every overload that takes options accepts one.
 
 ## Block scalars
 

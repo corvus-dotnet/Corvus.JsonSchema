@@ -93,7 +93,7 @@
     <value>Alias expansion depth limit of {0} exceeded. This may indicate a circular or deeply nested anchor/alias structure.</value>
   </data>
   <data name="AliasExpansionSizeExceeded" xml:space="preserve">
-    <value>Alias expansion size limit of {0} nodes exceeded. This may indicate a billion-laughs attack.</value>
+    <value>Alias expansion size limit of {0} bytes exceeded. This may indicate a billion-laughs attack.</value>
   </data>
   <data name="UndefinedAlias" xml:space="preserve">
     <value>Undefined alias '*{0}' at line {1}, column {2}.</value>

@@ -13,9 +13,15 @@ namespace Corvus.Text.Json.Yaml;
 /// </summary>
 public readonly struct YamlReaderOptions
 {
+    /// <summary>The documented alias-expansion depth limit, applied when none is configured.</summary>
+    internal const int DefaultMaxAliasExpansionDepth = 64;
+
+    /// <summary>The documented alias-expansion size limit in bytes, applied when none is configured.</summary>
+    internal const int DefaultMaxAliasExpansionSize = 1_000_000;
+
     /// <summary>
     /// Gets the default options: Core schema, single-document required, error on duplicate keys,
-    /// max alias expansion depth of 64, max alias expansion size of 1,000,000 nodes.
+    /// max alias expansion depth of 64, max alias expansion size of 1,000,000 bytes.
     /// </summary>
     public static readonly YamlReaderOptions Default = new();
 
@@ -27,8 +33,8 @@ public readonly struct YamlReaderOptions
         this.Schema = YamlSchema.Core;
         this.DocumentMode = YamlDocumentMode.SingleRequired;
         this.DuplicateKeyBehavior = DuplicateKeyBehavior.Error;
-        this.MaxAliasExpansionDepth = 64;
-        this.MaxAliasExpansionSize = 1_000_000;
+        this.MaxAliasExpansionDepth = DefaultMaxAliasExpansionDepth;
+        this.MaxAliasExpansionSize = DefaultMaxAliasExpansionSize;
     }
 
     /// <summary>
@@ -57,8 +63,14 @@ public readonly struct YamlReaderOptions
     public int MaxAliasExpansionDepth { get; init; }
 
     /// <summary>
-    /// Gets the maximum total number of nodes that can be produced
-    /// by alias expansion. Defaults to 1,000,000.
+    /// Gets the maximum total number of bytes that alias expansion may add to the
+    /// output. Defaults to 1,000,000.
     /// </summary>
     public int MaxAliasExpansionSize { get; init; }
+
+    /// <summary>Gets the alias-expansion depth limit to enforce, resolving an unset value to the documented default.</summary>
+    internal int EffectiveMaxAliasExpansionDepth => this.MaxAliasExpansionDepth > 0 ? this.MaxAliasExpansionDepth : DefaultMaxAliasExpansionDepth;
+
+    /// <summary>Gets the alias-expansion size limit to enforce, resolving an unset value to the documented default.</summary>
+    internal int EffectiveMaxAliasExpansionSize => this.MaxAliasExpansionSize > 0 ? this.MaxAliasExpansionSize : DefaultMaxAliasExpansionSize;
 }
