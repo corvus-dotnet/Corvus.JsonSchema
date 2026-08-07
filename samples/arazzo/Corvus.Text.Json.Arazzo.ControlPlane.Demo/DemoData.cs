@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using Corvus.Text.Json;
+using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Execution;
@@ -39,6 +40,52 @@ public static class DemoData
     /// on it set-equals that caller (<see cref="WorkflowIdentity.SameAdministrator"/>).</summary>
     public static SecurityTagSet GroupIdentity(string group)
         => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", group), IssuerTag]);
+
+    /// <summary>
+    /// A Keycloak principal's row identity: its group tags (§16.5.4) PLUS its per-person subject PLUS the deployment
+    /// issuer (§16.5.5).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Declared here rather than inline at the host so the identity a caller resolves to is defined once. It has to
+    /// agree with <see cref="GroupIdentity"/> and with the seeded grants, and a second copy drifts silently: a binding
+    /// keyed on a dimension the resolver does not stamp simply never matches, and the caller is left with the read
+    /// baseline as though no grant existed.
+    /// </para>
+    /// <para>
+    /// Note which claims are dimensions. <c>groups</c> and <c>sub</c> are; <c>preferred_username</c> is NOT, so a
+    /// binding keyed on it can never match however the principal is authenticated.
+    /// </para>
+    /// <para>
+    /// Stamping <c>sys:sub</c> makes a live member's identity a STRICT SUPERSET of a group-only grant, so the member
+    /// administers and reaches it by MEMBERSHIP rather than set-equality. A principal with no groups (a DevApiKey)
+    /// carries no identity and resolves through the unscoped path.
+    /// </para>
+    /// </remarks>
+    /// <param name="principal">The authenticated principal.</param>
+    /// <returns>The principal's internal identity tags.</returns>
+    public static IReadOnlyList<SecurityTag> ResolveInternalTags(ClaimsPrincipal? principal)
+    {
+        SecurityTag[] groups = principal?.FindAll("groups")
+            .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? [];
+        if (groups.Length == 0)
+        {
+            return groups;
+        }
+
+        string? sub = principal?.FindFirst("sub")?.Value;
+        bool hasSub = !string.IsNullOrEmpty(sub);
+        var tags = new SecurityTag[groups.Length + (hasSub ? 2 : 1)];
+        Array.Copy(groups, tags, groups.Length);
+        int next = groups.Length;
+        if (hasSub)
+        {
+            tags[next++] = new SecurityTag(SecurityShell.DefaultInternalPrefix + "sub", sub!);
+        }
+
+        tags[next] = IssuerTag;
+        return tags;
+    }
 
     /// <summary>Builds the live <see cref="WorkflowResumer"/> that re-enters a run's compiled executor (§5/§8): it
     /// resolves the run's catalogued executor through the loader and runs it against transports rooted at the sample's

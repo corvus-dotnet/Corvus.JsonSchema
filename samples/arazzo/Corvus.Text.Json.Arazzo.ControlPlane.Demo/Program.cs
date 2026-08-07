@@ -389,28 +389,7 @@ var entitlements = new PersistentRowSecurityPolicy(
     // by MEMBERSHIP (§16.5.4 — caller contains founder), not set-equality — exercising the membership model live rather
     // than keeping every identity set-equal. A principal with no groups (e.g. a DevApiKey) carries no identity here and
     // resolves through the unscoped / System path (unchanged).
-    internalTagResolver: static principal =>
-    {
-        SecurityTag[] groups = principal?.FindAll("groups")
-            .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? [];
-        if (groups.Length == 0)
-        {
-            return groups;
-        }
-
-        string? sub = principal?.FindFirst("sub")?.Value;
-        bool hasSub = !string.IsNullOrEmpty(sub);
-        var tags = new SecurityTag[groups.Length + (hasSub ? 2 : 1)];
-        Array.Copy(groups, tags, groups.Length);
-        int next = groups.Length;
-        if (hasSub)
-        {
-            tags[next++] = new SecurityTag(SecurityShell.DefaultInternalPrefix + "sub", sub!);
-        }
-
-        tags[next] = DemoData.IssuerTag;
-        return tags;
-    },
+    internalTagResolver: DemoData.ResolveInternalTags,
     orderings: labelOrderings);
 await entitlements.RefreshAsync();
 

@@ -20,11 +20,14 @@ namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo.Tests;
 [TestClass]
 public sealed class KeycloakClaimsTransformerTests
 {
-    // The standing read baseline every group member holds (mirrors KeycloakClaimsTransformer.DomainReadScopes).
+    // The standing read baseline every group member holds. Must match KeycloakClaimsTransformer.DomainReadScopes:
+    // runs:outputs:read joined that baseline with the step-output disclosure tier (#859) and this copy was not updated,
+    // which nothing caught because the demo solution is not in the standard test gate (#231).
     private static readonly string[] ReadBaseline =
     [
         ControlPlaneScopes.CatalogRead,
         ControlPlaneScopes.RunsRead,
+        ControlPlaneScopes.RunsOutputsRead,
         ControlPlaneScopes.CredentialsRead,
         ControlPlaneScopes.AdministratorsRead,
         ControlPlaneScopes.SecurityRead,
@@ -40,17 +43,19 @@ public sealed class KeycloakClaimsTransformerTests
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
 
-        // The per-principal grant an approval/self-elevation persists: keyed on the subject claim, granting a scope.
-        using (ParsedJsonDocument<SecurityBindingDocument> grant = SecurityBindingDocument.Draft("preferred_username", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]))
+        // The per-principal grant an approval/self-elevation persists, keyed on `sub` — the dimension the deployment's
+        // identity resolver actually stamps (as sys:sub). It was keyed on preferred_username, which the resolver does
+        // not stamp, so it could never have matched.
+        using (ParsedJsonDocument<SecurityBindingDocument> grant = SecurityBindingDocument.Draft("sub", "alice-sub", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]))
         {
             (await store.AddBindingAsync(grant.RootElement, "approver", default)).Dispose();
         }
 
-        var entitlements = new PersistentRowSecurityPolicy(store);
+        var entitlements = new PersistentRowSecurityPolicy(store, internalTagResolver: DemoData.ResolveInternalTags);
         await entitlements.RefreshAsync();
         var transformer = new KeycloakClaimsTransformer(entitlements);
 
-        ClaimsPrincipal alice = Principal(("preferred_username", "alice"), ("groups", "payments"));
+        ClaimsPrincipal alice = Principal(("preferred_username", "alice"), ("sub", "alice-sub"), ("groups", "payments"));
         ClaimsPrincipal mapped = await transformer.TransformAsync(alice);
 
         HashSet<string> scopes = Scopes(mapped);
@@ -67,7 +72,7 @@ public sealed class KeycloakClaimsTransformerTests
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
 
-        var entitlements = new PersistentRowSecurityPolicy(store);
+        var entitlements = new PersistentRowSecurityPolicy(store, internalTagResolver: DemoData.ResolveInternalTags);
         await entitlements.RefreshAsync();
         var transformer = new KeycloakClaimsTransformer(entitlements);
 
@@ -94,16 +99,20 @@ public sealed class KeycloakClaimsTransformerTests
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
 
-        using (ParsedJsonDocument<SecurityBindingDocument> tier3 = SecurityBindingDocument.Draft("groups", "arazzo-admins", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, scopes: ControlPlaneScopes.All))
+        // Keyed on the identity DIMENSION `group` (singular), not the Keycloak claim name `groups`. The resolver stamps
+        // sys:group=<value> per group claim, which is what DemoData.GroupIdentity builds and what the seeded founder
+        // grant carries. A binding keyed on `groups` resolves to sys:groups, matches nothing, and confers nothing --
+        // silently, because conferring nothing is indistinguishable from a principal that simply holds no grant.
+        using (ParsedJsonDocument<SecurityBindingDocument> tier3 = SecurityBindingDocument.Draft("group", "arazzo-admins", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, scopes: ControlPlaneScopes.All))
         {
             (await store.AddBindingAsync(tier3.RootElement, "bootstrap", default)).Dispose();
         }
 
-        var entitlements = new PersistentRowSecurityPolicy(store);
+        var entitlements = new PersistentRowSecurityPolicy(store, internalTagResolver: DemoData.ResolveInternalTags);
         await entitlements.RefreshAsync();
         var transformer = new KeycloakClaimsTransformer(entitlements);
 
-        ClaimsPrincipal admin = Principal(("preferred_username", "arazzo-admin"), ("groups", "arazzo-admins"));
+        ClaimsPrincipal admin = Principal(("preferred_username", "arazzo-admin"), ("sub", "admin-sub"), ("groups", "arazzo-admins"));
         ClaimsPrincipal mapped = await transformer.TransformAsync(admin);
 
         HashSet<string> scopes = Scopes(mapped);
@@ -118,7 +127,7 @@ public sealed class KeycloakClaimsTransformerTests
     {
         var store = new InMemorySecurityPolicyStore();
         await SecurityBootstrap.SeedAsync(store);
-        var entitlements = new PersistentRowSecurityPolicy(store);
+        var entitlements = new PersistentRowSecurityPolicy(store, internalTagResolver: DemoData.ResolveInternalTags);
         await entitlements.RefreshAsync();
         var transformer = new KeycloakClaimsTransformer(entitlements);
 

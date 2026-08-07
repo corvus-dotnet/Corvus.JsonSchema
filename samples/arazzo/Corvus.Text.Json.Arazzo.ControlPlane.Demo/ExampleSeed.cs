@@ -262,6 +262,17 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // an operator start is.
         (await context.Availability.MakeAvailableAsync("nightly-reconcile", 2, "development", "demo", cancellationToken)).Entry.Dispose();
 
+        // The async onboarding version is "Available in" development because the demo seeds a LIVE run of it there that
+        // suspends awaiting a KYC verdict, and a runner may only resume what its environment has been made available.
+        // Without this the seeded run exists for a version no runner in development is offered, so the verdict arrives
+        // on the broker and resumes nothing — the async exchange the demo exists to show silently does not happen.
+        //
+        // This was latent until the message listeners moved onto the runner API (ADR 0065). The store-backed delivery
+        // ignored availability entirely, so the run resumed regardless; the runner API intersects with what the control
+        // plane resolved for the runner, which is the governance rule actually being enforced. The demo data was
+        // depending on the gap rather than illustrating the rule.
+        (await context.Availability.MakeAvailableAsync("onboard-customer-async", 1, "development", "demo", cancellationToken)).Entry.Dispose();
+
         // Security personas (§14.2/§15/§16.5): three archetypes beyond the genesis admin, so the governance surfaces
         // show reach-scoping, the administration split, and the PIM lifecycle out of the box. The realm import defines
         // the matching Keycloak groups + users (oscar/observers, erin/env-admins, wanda/reconcile-owners); everyone
