@@ -290,12 +290,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             // JetStream path: durable consumer
             // Use cached stream name or derive on-demand
             string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
-            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
         }
         else
         {
             // Core NATS path: existing behavior
-            return this.SubscribeToCoreNatsAsync(channel, channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+            return this.SubscribeToCoreNatsAsync(channel, channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
         }
     }
 

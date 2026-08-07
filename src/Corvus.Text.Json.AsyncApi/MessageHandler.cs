@@ -26,7 +26,7 @@ internal readonly struct MessageHandler<TPayload>
 
     public bool UsesDeliveryContext => this.contextHandler is not null;
 
-    public static MessageHandler<TPayload> Legacy(
+    public static MessageHandler<TPayload> WithoutDeliveryContext(
         Func<TPayload, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask> handler)
         => new(handler, null);
 

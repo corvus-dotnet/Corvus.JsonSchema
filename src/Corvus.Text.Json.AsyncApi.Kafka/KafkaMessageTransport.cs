@@ -155,7 +155,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
 
         Task consumeTask = Task.Run(
-            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.Legacy(handler), cts.Token),
+            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cts.Token),
             CancellationToken.None);
 
         SubscriptionState state = new(consumer, cts, consumeTask);

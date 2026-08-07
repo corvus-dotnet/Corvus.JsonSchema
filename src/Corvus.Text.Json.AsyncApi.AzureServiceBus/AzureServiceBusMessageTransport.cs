@@ -321,7 +321,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
-        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.Legacy(handler), cancellationToken);
+        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
 
     /// <inheritdoc/>
     public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
