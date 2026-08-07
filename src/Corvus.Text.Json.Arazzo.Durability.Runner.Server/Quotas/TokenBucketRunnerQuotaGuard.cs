@@ -70,6 +70,23 @@ public sealed class TokenBucketRunnerQuotaGuard : IRunnerQuotaGuard
         return new ValueTask<RunnerQuotaRejection?>((RunnerQuotaRejection?)null);
     }
 
+    /// <inheritdoc/>
+    public ValueTask SpendAsync(RunnerQuotaKind kind, string? tenant, string principal, long cost, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (cost > 0)
+        {
+            // Both scopes, unconditionally. The bucket is allowed to go negative: the overshoot is what refuses the
+            // caller's next request, which is how a cost discovered too late to refuse still has an effect.
+            this.Spend(kind, RunnerQuotaScope.Tenant, tenant, cost);
+            this.Spend(kind, RunnerQuotaScope.Runner, principal, cost);
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
     // Whether this scope would admit the charge, without spending it.
     private RunnerQuotaRejection? Test(RunnerQuotaKind kind, RunnerQuotaScope scope, string? counter, long cost)
     {

@@ -55,6 +55,23 @@ public sealed class RunnerQuotaGate
         return await meter.TryAcquireAsync(kind, resolved.Tenant, principal, cost, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Charges a cost discovered after the work was done.</summary>
+    /// <param name="kind">The dimension being charged.</param>
+    /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="cost">What to charge.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the charge is applied.</returns>
+    public async ValueTask SpendAsync(RunnerQuotaKind kind, string principal, long cost, CancellationToken cancellationToken)
+    {
+        if (this.guard is not { } meter || cost <= 0)
+        {
+            return;
+        }
+
+        RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        await meter.SpendAsync(kind, resolved.Tenant, principal, cost, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>The <c>Retry-After</c> value for a refusal, in whole seconds.</summary>
     /// <param name="rejection">The refusal.</param>
     /// <returns>The seconds to wait, never negative.</returns>

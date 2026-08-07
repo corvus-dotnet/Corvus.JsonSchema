@@ -27,4 +27,11 @@ public sealed class NoRunnerQuotaGuard : IRunnerQuotaGuard
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<RunnerQuotaRejection?>((RunnerQuotaRejection?)null);
     }
+
+    /// <inheritdoc/>
+    public ValueTask SpendAsync(RunnerQuotaKind kind, string? tenant, string principal, long cost, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.CompletedTask;
+    }
 }

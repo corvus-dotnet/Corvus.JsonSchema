@@ -185,6 +185,35 @@ public sealed class RunnerApiQuotaEndToEndTests
         }
     }
 
+    [TestMethod]
+    public async Task Reading_checkpoints_is_metered_by_volume_one_request_late()
+    {
+        // A read has no size until it has been read, so the volume cannot refuse the read that incurs it. What it must
+        // do is CARRY the cost: the first read succeeds and takes the counter into deficit, and the next one is refused.
+        // Without that the read path would be entirely unmetered while appearing configured.
+        await using Host host = await Host.StartAsync(o =>
+        {
+            o.RunnerCheckpointBytes = new RunnerQuotaLimit(1, 8);
+            o.TenantCheckpointBytes = RunnerQuotaLimit.None;
+            o.RunnerCheckpoints = RunnerQuotaLimit.None;
+        });
+
+        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        string lease = await host.ClaimLeaseAsync(Runner);
+
+        // The seeded checkpoint is far larger than the 8-byte allowance, so this read overshoots it.
+        using HttpResponseMessage first = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await first.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(8, "the read has to exceed the allowance for the deficit to be the thing under test");
+
+        // The debt is carried, so the next read is refused by the volume quota rather than the request quota.
+        using HttpResponseMessage second = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        second.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+        using Stj.JsonDocument body = Stj.JsonDocument.Parse(await second.Content.ReadAsStringAsync());
+        body.RootElement.GetProperty("quota").GetString().ShouldBe("checkpoint-bytes/runner");
+    }
+
     private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);

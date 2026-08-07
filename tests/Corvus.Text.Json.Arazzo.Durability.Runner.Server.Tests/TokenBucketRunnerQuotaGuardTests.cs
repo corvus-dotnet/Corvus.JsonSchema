@@ -337,6 +337,71 @@ public sealed class TokenBucketRunnerQuotaGuardTests
         (await fixture.CheckpointAsync(Runner)).ShouldNotBeNull();
     }
 
+    [TestMethod]
+    public async Task A_late_charge_is_applied_and_can_take_the_counter_into_deficit()
+    {
+        // The point of SpendAsync: a cost discovered after the work is done still lands. The counter goes negative, and
+        // the deficit is what refuses the caller's next request -- metering a read one request late rather than never.
+        Fixture fixture = Fixture.With(o =>
+        {
+            o.RunnerCheckpointBytes = new RunnerQuotaLimit(1, 100);
+            o.TenantCheckpointBytes = RunnerQuotaLimit.None;
+        });
+
+        // A read far larger than the whole allowance. It cannot be refused -- it already happened.
+        await fixture.Guard.SpendAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 5000, default);
+
+        // The debt is carried, so even a one-byte probe is refused now.
+        RunnerQuotaRejection refused = (await fixture.Guard.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 1, default)).ShouldNotBeNull();
+        refused.Quota.ShouldBe("checkpoint-bytes/runner");
+    }
+
+    [TestMethod]
+    public async Task A_late_charge_is_repaid_by_refill()
+    {
+        // The deficit is not permanent: it drains at the configured rate, so an overshoot costs the caller time rather
+        // than locking it out.
+        Fixture fixture = Fixture.With(o =>
+        {
+            o.RunnerCheckpointBytes = new RunnerQuotaLimit(100, 100);
+            o.TenantCheckpointBytes = RunnerQuotaLimit.None;
+        });
+
+        await fixture.Guard.SpendAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 300, default);
+        (await fixture.Guard.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 1, default)).ShouldNotBeNull();
+
+        // 300 spent against a 100-byte bucket is a 200-byte deficit; two seconds at 100/s repays it.
+        fixture.Clock.Advance(TimeSpan.FromSeconds(3));
+        (await fixture.Guard.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 1, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_late_charge_hits_both_scopes()
+    {
+        // A tenant's aggregate has to see read volume too, or one runner's oversized reads are invisible to it.
+        Fixture fixture = Fixture.With(o =>
+        {
+            o.RunnerCheckpointBytes = RunnerQuotaLimit.None;
+            o.TenantCheckpointBytes = new RunnerQuotaLimit(1, 100);
+        });
+
+        await fixture.Guard.SpendAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 5000, default);
+
+        // Charged to the tenant, so a DIFFERENT runner in the same tenant is refused as well.
+        RunnerQuotaRejection refused = (await fixture.Guard.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Peer, 1, default)).ShouldNotBeNull();
+        refused.Quota.ShouldBe("checkpoint-bytes/tenant");
+    }
+
+    [TestMethod]
+    public async Task A_late_charge_of_nothing_changes_nothing()
+    {
+        Fixture fixture = Fixture.With(o => o.RunnerCheckpointBytes = new RunnerQuotaLimit(1, 10));
+
+        await fixture.Guard.SpendAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 0, default);
+
+        (await fixture.Guard.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, Tenant, Runner, 10, default)).ShouldBeNull();
+    }
+
     private sealed class TestClock(DateTimeOffset now) : TimeProvider
     {
         private DateTimeOffset now = now;

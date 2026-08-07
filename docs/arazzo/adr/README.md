@@ -82,6 +82,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0063](0063-microguest-backend-hyperlight-unikraft-warm-snapshot.md) | The micro-guest execution backend runs the AOT executor in a Hyperlight micro-VM restored from a warm snapshot | Accepted |
 | [0064](0064-microguest-snapshots-after-warmup-init-run-split.md) | The micro-guest snapshots after guest warm-up: init once, restore-and-run per advance | Accepted |
 | [0065](0065-control-plane-owns-store-runners-encrypt-payload.md) | The control plane owns the store and fronts all checkpointing; runners encrypt the checkpoint payload | Accepted |
+| [0066](0066-runner-api-rate-and-capacity-limiting.md) | Rate and capacity limiting on the runner API: two scopes, in-process buckets, and a bounded runner-side hold | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog

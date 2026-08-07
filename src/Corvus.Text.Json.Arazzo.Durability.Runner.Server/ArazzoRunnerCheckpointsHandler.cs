@@ -61,6 +61,14 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             return LoadCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
         }
 
+        // A read has no size until it has been read, so the volume is metered in two halves. This is the first: a
+        // one-byte charge that asks whether the caller has any read allowance left at all, and refuses when previous
+        // reads have already taken it into deficit. The bytes actually moved are charged below.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.CheckpointBytes, principal, 1, cancellationToken).ConfigureAwait(false) is { } drained)
+        {
+            return LoadCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(drained), workspace, RunnerQuotaGate.RetryAfterSeconds(drained));
+        }
+
         var id = new WorkflowRunId((string)parameters.RunId);
 
         // Reading a run's state is a tenant-data read, so it takes the same interlock as writing it. The check is also
@@ -78,6 +86,12 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             // anchor entry for this run faults rather than treating it as fresh.
             return LoadCheckpointResult.NotFound(RunnerProblems.NoCheckpoint(), workspace);
         }
+
+        // The second half: the bytes this read actually moved. It cannot refuse — the work is done and the caller has
+        // paid for it — but it carries the cost, so a caller reading far more than its allowance is refused on its next
+        // request rather than never. Metering a read one request late is the price of not knowing its size in advance;
+        // not metering it at all would leave the read path free.
+        await this.quotas.SpendAsync(RunnerQuotaKind.CheckpointBytes, principal, load.Checkpoint.Length, cancellationToken).ConfigureAwait(false);
 
         return LoadCheckpointResult.Ok(load.Checkpoint, workspace, xArazzoCheckpointSeq: load.LastAppliedSequence);
     }
