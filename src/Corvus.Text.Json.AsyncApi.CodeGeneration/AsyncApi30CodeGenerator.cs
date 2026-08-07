@@ -70,10 +70,12 @@ public sealed class AsyncApi30CodeGenerator
         {
             string channelName = channelProp.Name;
 
-            AsyncApiDocument.Channel channel = channelProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(channelProp.Value, doc, referenceResolver, out JsonElement resolvedChannel))
+            {
+                continue;
+            }
+
+            AsyncApiDocument.Channel channel = resolvedChannel;
 
             if (channel.IsUndefined())
             {
@@ -131,10 +133,14 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
+    /// </param>
     /// <returns>An array of <see cref="AsyncApiOperationSummary"/> records.</returns>
     public static AsyncApiOperationSummary[] ListOperations(
         AsyncApiDocument doc,
-        OperationFilter? filter = null)
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
     {
         List<AsyncApiOperationSummary> result = [];
 
@@ -145,10 +151,12 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(operationProp.Value, doc, referenceResolver, out JsonElement resolvedOperation))
+            {
+                continue;
+            }
+
+            AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
             if (operation.IsUndefined())
             {
@@ -166,7 +174,7 @@ public sealed class AsyncApi30CodeGenerator
                 : OperationAction.Receive;
 
             // Resolve channel reference to get address
-            string channelAddress = ResolveChannelAddress(operation, doc);
+            string channelAddress = ResolveChannelAddress(operation, doc, referenceResolver);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -233,8 +241,11 @@ public sealed class AsyncApi30CodeGenerator
     /// Lists all servers defined in the AsyncAPI 3.0 specification.
     /// </summary>
     /// <param name="doc">The parsed AsyncAPI document.</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
+    /// </param>
     /// <returns>An array of <see cref="ServerInfo"/> records.</returns>
-    public static ServerInfo[] ListServers(AsyncApiDocument doc)
+    public static ServerInfo[] ListServers(AsyncApiDocument doc, IAsyncApiReferenceResolver? referenceResolver = null)
     {
         List<ServerInfo> result = [];
 
@@ -246,10 +257,13 @@ public sealed class AsyncApi30CodeGenerator
         foreach (var serverProp in doc.ServersValue.EnumerateObject())
         {
             string name = serverProp.Name;
-            AsyncApiDocument.Type300Server server = serverProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Server: static (in AsyncApiDocument.Type300Server s) => s,
-                defaultMatch: static (in AsyncApiDocument.Servers.AdditionalPropertiesEntity _) => default);
+
+            if (!TryResolveEntry(serverProp.Value, doc, referenceResolver, out JsonElement resolvedServer))
+            {
+                continue;
+            }
+
+            AsyncApiDocument.Type300Server server = resolvedServer;
 
             if (server.IsUndefined())
             {
@@ -266,10 +280,13 @@ public sealed class AsyncApi30CodeGenerator
                 foreach (var varProp in server.Variables.EnumerateObject())
                 {
                     string varName = varProp.Name;
-                    AsyncApiDocument.ServerVariable variable = varProp.Value.Match(
-                        matchReference: static (in AsyncApiDocument.Reference _) => default,
-                        matchServerVariable: static (in AsyncApiDocument.ServerVariable v) => v,
-                        defaultMatch: static (in AsyncApiDocument.ServerVariables.AdditionalPropertiesEntity _) => default);
+
+                    if (!TryResolveEntry(varProp.Value, doc, referenceResolver, out JsonElement resolvedVariable))
+                    {
+                        continue;
+                    }
+
+                    AsyncApiDocument.ServerVariable variable = resolvedVariable;
 
                     if (variable.IsUndefined())
                     {
@@ -314,7 +331,7 @@ public sealed class AsyncApi30CodeGenerator
 
                     if (schemeName is not null)
                     {
-                        string schemeType = ResolveSecuritySchemeType(doc, schemeName);
+                        string schemeType = ResolveSecuritySchemeType(doc, schemeName, referenceResolver);
                         securitySchemes.Add(new SecuritySchemeInfo(schemeName, schemeType));
                     }
                 }
@@ -349,10 +366,9 @@ public sealed class AsyncApi30CodeGenerator
         if (doc.ChannelsValue.IsNotUndefined() &&
             doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
         {
-            AsyncApiDocument.Channel channel = channelEntity.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            AsyncApiDocument.Channel channel = TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel)
+                ? (AsyncApiDocument.Channel)resolvedChannel
+                : default;
 
             if (channel.IsNotUndefined() && channel.Bindings.IsNotUndefined())
             {
@@ -379,10 +395,12 @@ public sealed class AsyncApi30CodeGenerator
             string channelRef = $"#/channels/{channelName}";
             foreach (var opProp in doc.OperationsValue.EnumerateObject())
             {
-                AsyncApiDocument.Type300Operation operation = opProp.Value.Match(
-                    matchReference: static (in AsyncApiDocument.Reference _) => default,
-                    matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                    defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+                if (!TryResolveEntry(opProp.Value, doc, resolver, out JsonElement resolvedOperation))
+                {
+                    continue;
+                }
+
+                AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
                 if (operation.IsUndefined())
                 {
@@ -421,26 +439,21 @@ public sealed class AsyncApi30CodeGenerator
             doc.ChannelsValue.IsNotUndefined() &&
             doc.ChannelsValue.TryGetProperty(channelName, out var chEntityForMsg))
         {
-            AsyncApiDocument.Channel channelForMsg = chEntityForMsg.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            AsyncApiDocument.Channel channelForMsg = TryResolveEntry(chEntityForMsg, doc, resolver, out JsonElement resolvedChannelForMsg)
+                ? (AsyncApiDocument.Channel)resolvedChannelForMsg
+                : default;
 
             if (channelForMsg.IsNotUndefined() && channelForMsg.Messages.IsNotUndefined())
             {
                 if (channelForMsg.Messages.TryGetProperty(messageName, out var msgEntity))
                 {
-                    AsyncApiDocument.MessageObject msg = msgEntity.Match(
-                        matchReference: static (in AsyncApiDocument.Reference _) => default,
-                        matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
-                        defaultMatch: static (in AsyncApiDocument.ChannelMessages.AdditionalPropertiesEntity _) => default);
+                    AsyncApiDocument.MessageObject msg = TryResolveEntry(msgEntity, doc, resolver, out JsonElement resolvedMsg)
+                        ? (AsyncApiDocument.MessageObject)resolvedMsg
+                        : default;
 
                     if (msg.IsNotUndefined() && msg.Bindings.IsNotUndefined())
                     {
-                        messageBindings = msg.Bindings.Match(
-                            matchReference: static (in AsyncApiDocument.Reference _) => default,
-                            matchMessageBindingsObject: static (in AsyncApiDocument.MessageBindingsObject b) => b,
-                            defaultMatch: static (in AsyncApiDocument.MessageObject.BindingsEntity _) => default);
+                        messageBindings = AsyncApiDocument.MessageBindingsObject.From(ResolveRef(msg.Bindings, doc, resolver));
                     }
                 }
             }
@@ -505,10 +518,12 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(operationProp.Value, doc, referenceResolver, out JsonElement resolvedOperation))
+            {
+                continue;
+            }
+
+            AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
             if (operation.IsUndefined())
             {
@@ -524,7 +539,7 @@ public sealed class AsyncApi30CodeGenerator
                 ? OperationAction.Send
                 : OperationAction.Receive;
 
-            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(operation, doc);
+            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(operation, doc, referenceResolver);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -539,7 +554,7 @@ public sealed class AsyncApi30CodeGenerator
             // Extract channel name and allowed servers
             string? channelName = ExtractChannelName(operation, doc);
             IReadOnlyList<string>? allowedServers = channelName is not null
-                ? GetChannelAllowedServers(doc, channelName)
+                ? GetChannelAllowedServers(doc, channelName, referenceResolver)
                 : null;
 
             // Collect security schemes from the servers this operation is allowed to use
@@ -762,7 +777,10 @@ public sealed class AsyncApi30CodeGenerator
         {
             foreach (var msgProp in channel.Messages.EnumerateObject())
             {
-                // Match discriminates references (collected separately) from inline messages
+                // Match deliberately leaves references alone here: a channel message that is a
+                // $ref into components.messages gets its schema pointers from the separate
+                // components.Messages pass in CollectSchemaPointers, so resolving it here
+                // would collect the same payload twice.
                 AsyncApiDocument.MessageObject msg = msgProp.Value.Match(
                     matchReference: static (in AsyncApiDocument.Reference _) => default,
                     matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
@@ -811,12 +829,12 @@ public sealed class AsyncApi30CodeGenerator
         return GetChannelAddressInfo(channel, channelName).Address;
     }
 
-    private static string ResolveChannelAddress(JsonElement operation, AsyncApiDocument doc)
+    private static string ResolveChannelAddress(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
-        return ResolveChannelAddressInfo(operation, doc).Address;
+        return ResolveChannelAddressInfo(operation, doc, resolver).Address;
     }
 
-    private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc)
+    private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         // Check operation traits for channel property fallback
         if (!TryGetPropertyWithTraits(operation, "channel"u8, doc, null, out JsonElement channelRef))
@@ -839,10 +857,9 @@ public sealed class AsyncApi30CodeGenerator
             if (channels.IsNotUndefined() &&
                 channels.TryGetProperty(channelName, out AsyncApiDocument.Channels.AdditionalPropertiesEntity channelEntity))
             {
-                AsyncApiDocument.Channel channel = channelEntity.Match(
-                    matchReference: static (in AsyncApiDocument.Reference _) => default,
-                    matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                    defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+                AsyncApiDocument.Channel channel = TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel)
+                    ? (AsyncApiDocument.Channel)resolvedChannel
+                    : default;
 
                 if (channel.IsNotUndefined())
                 {
@@ -874,7 +891,7 @@ public sealed class AsyncApi30CodeGenerator
         return null;
     }
 
-    private static IReadOnlyList<string>? GetChannelAllowedServers(AsyncApiDocument doc, string channelName)
+    private static IReadOnlyList<string>? GetChannelAllowedServers(AsyncApiDocument doc, string channelName, IAsyncApiReferenceResolver? resolver = null)
     {
         if (doc.ChannelsValue.IsUndefined())
         {
@@ -886,10 +903,9 @@ public sealed class AsyncApi30CodeGenerator
             return null;
         }
 
-        AsyncApiDocument.Channel channel = channelEntity.Match(
-            matchReference: static (in AsyncApiDocument.Reference _) => default,
-            matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-            defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+        AsyncApiDocument.Channel channel = TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel)
+            ? (AsyncApiDocument.Channel)resolvedChannel
+            : default;
 
         if (channel.IsUndefined() || channel.Servers.IsUndefined())
         {
@@ -1313,6 +1329,21 @@ public sealed class AsyncApi30CodeGenerator
     private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         return ResolveRef(element, doc, resolver, out _);
+    }
+
+    // Resolves a map entry that may be a Reference Object (in AsyncAPI 3.0 nearly every
+    // object is referenceable). Returns false when the element is a reference that cannot
+    // be resolved (dangling, or external with no resolver), so the caller can skip it the
+    // same way it skips a malformed entry.
+    private static bool TryResolveEntry(
+        JsonElement element,
+        AsyncApiDocument doc,
+        IAsyncApiReferenceResolver? resolver,
+        out JsonElement resolved)
+    {
+        resolved = ResolveRef(element, doc, resolver);
+        AsyncApiDocument.Reference asRef = resolved;
+        return !asRef.Ref.IsNotUndefined();
     }
 
     // Extracts a message's AsyncAPI Correlation ID as (name, location). The message's `correlationId` is
@@ -3106,13 +3137,13 @@ public sealed class AsyncApi30CodeGenerator
         return result;
     }
 
-    private static string ResolveSecuritySchemeType(AsyncApiDocument doc, string schemeName)
+    private static string ResolveSecuritySchemeType(AsyncApiDocument doc, string schemeName, IAsyncApiReferenceResolver? resolver = null)
     {
         if (doc.ComponentsValue.IsNotUndefined() && doc.ComponentsValue.SecuritySchemes.IsNotUndefined())
         {
             if (doc.ComponentsValue.SecuritySchemes.TryGetProperty(schemeName, out var element) && element.IsNotUndefined())
             {
-                var schemeEntity = AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity.From(element);
+                var schemeEntity = AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity.From(ResolveRef(element, doc, resolver));
                 return schemeEntity.Match<string>(
                     matchReference: static (in AsyncApiDocument.Reference _) => "unknown",
                     matchSecurityScheme: static (in AsyncApiDocument.SecurityScheme scheme) =>

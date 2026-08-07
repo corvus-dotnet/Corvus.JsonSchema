@@ -1,0 +1,37 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Parameterized consumer with referenced parameter (2.6)",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "orders/{orderId}/created": {
+      "parameters": {
+        "orderId": { "$ref": "#/components/parameters/OrderId" }
+      },
+      "publish": {
+        "operationId": "onOrderCreated",
+        "message": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "OrderId": {
+        "description": "The order identifier.",
+        "schema": {
+          "type": "string",
+          "enum": ["standard", "priority"],
+          "default": "standard"
+        }
+      }
+    }
+  }
+}

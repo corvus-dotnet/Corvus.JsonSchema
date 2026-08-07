@@ -210,7 +210,7 @@ public sealed class AsyncApi26CodeGenerator
             }
 
             List<AsyncApi30CodeGenerator.MessageInfo> messages = this.CollectOperationMessages(operation, doc, referenceResolver);
-            List<AsyncApi30CodeGenerator.ChannelParameter> parameters = CollectChannelParameters(operation.Channel);
+            List<AsyncApi30CodeGenerator.ChannelParameter> parameters = CollectChannelParameters(operation.Channel, doc, referenceResolver);
             AsyncApi30CodeGenerator.ReplyInfo? reply = this.CollectReplyInfo(operation.Operation, doc, referenceResolver);
 
             string? operationBindingsJson = operation.Operation.TryGetProperty("bindings"u8, out JsonElement operationBindings) &&
@@ -472,7 +472,10 @@ public sealed class AsyncApi26CodeGenerator
         }
     }
 
-    private static List<AsyncApi30CodeGenerator.ChannelParameter> CollectChannelParameters(JsonElement channel)
+    private static List<AsyncApi30CodeGenerator.ChannelParameter> CollectChannelParameters(
+        JsonElement channel,
+        JsonElement doc,
+        IAsyncApiReferenceResolver? resolver)
     {
         List<AsyncApi30CodeGenerator.ChannelParameter> parameters = [];
         if (!channel.TryGetProperty("parameters"u8, out JsonElement parametersElement) ||
@@ -483,13 +486,18 @@ public sealed class AsyncApi26CodeGenerator
 
         foreach (var parameterProp in parametersElement.EnumerateObject())
         {
-            JsonElement parameter = parameterProp.Value;
+            // A parameter entry may be a Reference Object; resolve it (and a referenced
+            // schema) so description, enum, and default survive the indirection.
+            JsonElement parameter = ResolveRef(parameterProp.Value, doc, resolver);
             string? description = GetString(parameter, "description"u8);
             string? defaultValue = null;
             string[]? enumValues = null;
 
-            if (parameter.TryGetProperty("schema"u8, out JsonElement schema) &&
-                schema.ValueKind == JsonValueKind.Object)
+            JsonElement schema = parameter.TryGetProperty("schema"u8, out JsonElement schemaRef)
+                ? ResolveRef(schemaRef, doc, resolver)
+                : default;
+
+            if (schema.ValueKind == JsonValueKind.Object)
             {
                 defaultValue = GetString(schema, "default"u8);
                 if (schema.TryGetProperty("enum"u8, out JsonElement enumElement) &&
