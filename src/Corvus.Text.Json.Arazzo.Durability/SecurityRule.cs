@@ -166,20 +166,35 @@ public sealed class SecurityRule
     }
 
     /// <summary>
-    /// Translates the rule into a SQL <c>WHERE</c> boolean fragment (design §14.4) that selects exactly the rows
+    /// Translates the rule into a boolean predicate in the backend's own query language (design §14.4) that selects
+    /// exactly the rows
     /// <see cref="IsSatisfiedBy(in SecurityTagSet, IReadOnlyDictionary{string, IReadOnlyList{string}})"/> would admit,
-    /// using the backend's dialect/schema fragments. The principal's claims are resolved to bound values here (they are
-    /// query-time constants); tag-key operands become correlated <c>EXISTS</c> subqueries over the row's security tags.
+    /// using the backend's fragments. The principal's claims are resolved to bound values here (they are query-time
+    /// constants); tag-key operands become tests over the row's security tags.
     /// </summary>
+    /// <remarks>
+    /// This walk is the single definition of what a rule means to a query engine. Every backend goes through it, so
+    /// the ways a rule can be got wrong — admitting an untagged row, admitting a value the ordering does not rank,
+    /// treating "some value matches" as "every value matches" — are decided once here rather than re-derived per
+    /// backend.
+    /// </remarks>
+    /// <typeparam name="TPredicate">The backend's boolean fragment type.</typeparam>
+    /// <param name="emitter">The backend's fragment provider (stateful per query; accumulates bound operands).</param>
+    /// <param name="claims">The principal's claims: claim name → its values.</param>
+    /// <returns>A boolean fragment.</returns>
+    public TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+    {
+        ArgumentNullException.ThrowIfNull(emitter);
+        ArgumentNullException.ThrowIfNull(claims);
+        return this.root.ToPredicate(emitter, claims);
+    }
+
+    /// <summary>The string specialisation of <see cref="ToPredicate{TPredicate}"/>, for a SQL backend.</summary>
     /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
     /// <param name="claims">The principal's claims: claim name → its values.</param>
     /// <returns>A boolean SQL fragment.</returns>
     public string ToSqlPredicate(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-    {
-        ArgumentNullException.ThrowIfNull(emitter);
-        ArgumentNullException.ThrowIfNull(claims);
-        return this.root.ToSql(emitter, claims);
-    }
+        => this.ToPredicate(emitter, claims);
 
     // Evaluates every rule in the set against one row's tags, parsing the row tags ONCE into pooled scratch + a slice
     // table (the SecurityTagSpanSort core), so a multi-rule filter pays one parse per row. The slices index unescaped
@@ -371,7 +386,7 @@ public sealed class SecurityRule
     {
         public abstract bool Evaluate(RowTags rows, in Utf8ClaimSet claims);
 
-        public abstract string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
+        public abstract TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims);
     }
 
     private sealed class OrNode(Node left, Node right) : Node
@@ -379,8 +394,8 @@ public sealed class SecurityRule
         public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
             => left.Evaluate(rows, in claims) || right.Evaluate(rows, in claims);
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => emitter.OrElse(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.OrElse(left.ToPredicate(emitter, claims), right.ToPredicate(emitter, claims));
     }
 
     private sealed class AndNode(Node left, Node right) : Node
@@ -388,8 +403,8 @@ public sealed class SecurityRule
         public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
             => left.Evaluate(rows, in claims) && right.Evaluate(rows, in claims);
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => emitter.AndAlso(left.ToSql(emitter, claims), right.ToSql(emitter, claims));
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.AndAlso(left.ToPredicate(emitter, claims), right.ToPredicate(emitter, claims));
     }
 
     private sealed class NotNode(Node inner) : Node
@@ -397,8 +412,8 @@ public sealed class SecurityRule
         public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
             => !inner.Evaluate(rows, in claims);
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
-            => emitter.Negate(inner.ToSql(emitter, claims));
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+            => emitter.Negate(inner.ToPredicate(emitter, claims));
     }
 
     private sealed class ComparisonNode(Operand left, Op op, Operand right) : Node
@@ -409,9 +424,9 @@ public sealed class SecurityRule
             return op == Op.Equal ? intersects : !intersects;
         }
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
         {
-            string intersects;
+            TPredicate intersects;
             if (left.IsTagKey && right.IsTagKey)
             {
                 // Both operands are row data: two tag keys share a value.
@@ -454,7 +469,7 @@ public sealed class SecurityRule
         public override bool Evaluate(RowTags rows, in Utf8ClaimSet claims)
             => OperandNonEmpty(operand, rows, in claims);
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
             => operand.IsTagKey
                 ? emitter.ExistsTagKey(emitter.Parameter(operand.Value))
                 : (operand.ResolveKnown(claims).Count > 0 ? emitter.TrueLiteral : emitter.FalseLiteral);
@@ -518,7 +533,7 @@ public sealed class SecurityRule
             return false;
         }
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
         {
             if (this.left.IsTagKey)
             {
@@ -634,7 +649,7 @@ public sealed class SecurityRule
             };
         }
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
         {
             if (this.ascendingUtf8.Length == 0 || !this.TryResolveBound(claims, out int boundRank))
             {
@@ -787,7 +802,7 @@ public sealed class SecurityRule
             return false;
         }
 
-        public override string ToSql(ISecurityRuleSqlEmitter emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        public override TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter, IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
         {
             if (quantifier == ClaimsQuantifier.Superset)
             {
@@ -813,7 +828,10 @@ public sealed class SecurityRule
             }
 
             // Intersects: OR over each claim key of "the row has a tag (key, v) with v in the claim's values".
-            string? predicate = null;
+            // Whether anything has been folded in yet is tracked explicitly: a predicate type is not constrained to
+            // be nullable, so "no term yet" cannot be spelled as null.
+            TPredicate predicate = emitter.FalseLiteral;
+            bool anyTerm = false;
             foreach (KeyValuePair<string, IReadOnlyList<string>> claim in claims)
             {
                 if (claim.Value.Count == 0)
@@ -828,12 +846,13 @@ public sealed class SecurityRule
                     valuePlaceholders.Add(emitter.Parameter(value));
                 }
 
-                string term = emitter.ExistsTagValueIn(keyPlaceholder, valuePlaceholders);
-                predicate = predicate is null ? term : emitter.OrElse(predicate, term);
+                TPredicate term = emitter.ExistsTagValueIn(keyPlaceholder, valuePlaceholders);
+                predicate = anyTerm ? emitter.OrElse(predicate, term) : term;
+                anyTerm = true;
             }
 
-            // No claim can cover any tag → the principal shares nothing.
-            return predicate ?? emitter.FalseLiteral;
+            // No claim can cover any tag → the principal shares nothing, and the seed stands.
+            return predicate;
         }
     }
 

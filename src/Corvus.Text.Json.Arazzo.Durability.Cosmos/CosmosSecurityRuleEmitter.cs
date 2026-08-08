@@ -46,7 +46,7 @@ public sealed class CosmosSecurityRuleEmitter(string arrayPath, string keyProper
            $"AND NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE st.{keyProperty} = {keyPlaceholder} AND st.{valueProperty} NOT IN ({string.Join(", ", valuePlaceholders)})))";
 
     /// <inheritdoc/>
-    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
+    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyToken, IReadOnlyList<string> ValueTokens)> claimEntries)
     {
         if (claimEntries.Count == 0)
         {
@@ -55,7 +55,7 @@ public sealed class CosmosSecurityRuleEmitter(string arrayPath, string keyProper
 
         string covered = string.Join(
             " OR ",
-            claimEntries.Select(e => $"(st.{keyProperty} = {e.KeyPlaceholder} AND st.{valueProperty} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
+            claimEntries.Select(e => $"(st.{keyProperty} = {e.KeyToken} AND st.{valueProperty} IN ({string.Join(", ", e.ValueTokens)}))"));
 
         return $"NOT EXISTS (SELECT VALUE st FROM st IN {arrayPath} WHERE NOT ({covered}))";
     }

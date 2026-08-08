@@ -73,7 +73,7 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
            $"AND NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND st.{this.keyColumn} = {keyPlaceholder} AND st.{this.valueColumn} NOT IN ({string.Join(", ", valuePlaceholders)})))";
 
     /// <inheritdoc/>
-    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyPlaceholder, IReadOnlyList<string> ValuePlaceholders)> claimEntries)
+    public string ExistsAllTagsCovered(IReadOnlyList<(string KeyToken, IReadOnlyList<string> ValueTokens)> claimEntries)
     {
         // No claims → no tag can be covered, so "no uncovered tag" reduces to "the row has no tag at all".
         // Emitting this (rather than a true literal) keeps the rule-level SQL equal to the in-memory evaluator
@@ -85,7 +85,7 @@ public sealed class SqlSecurityRuleEmitter : ISecurityRuleSqlEmitter
 
         string covered = string.Join(
             " OR ",
-            claimEntries.Select(e => $"(st.{this.keyColumn} = {e.KeyPlaceholder} AND st.{this.valueColumn} IN ({string.Join(", ", e.ValuePlaceholders)}))"));
+            claimEntries.Select(e => $"(st.{this.keyColumn} = {e.KeyToken} AND st.{this.valueColumn} IN ({string.Join(", ", e.ValueTokens)}))"));
 
         return $"NOT EXISTS (SELECT 1 FROM {this.tagTable} st WHERE {this.CorrelateOuter("st")} AND NOT ({covered}))";
     }

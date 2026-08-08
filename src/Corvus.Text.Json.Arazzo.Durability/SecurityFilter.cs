@@ -76,15 +76,22 @@ public sealed class SecurityFilter
     }
 
     /// <summary>
-    /// Translates the filter into a SQL <c>WHERE</c> boolean fragment (design §14.4) selecting exactly the rows
-    /// <see cref="IsSatisfiedBy(in SecurityTagSet)"/> would admit — using the backend's dialect/schema fragments. Deny-by-default: an
-    /// empty filter (no rules) selects nothing (<see cref="ISecurityRuleSqlEmitter.FalseLiteral"/>), and the
-    /// conjunction of the rules' predicates is further guarded by <see cref="ISecurityRuleSqlEmitter.ExistsAnyTag"/>
-    /// so an untagged row is never selected.
+    /// Translates the filter into a boolean predicate in the backend's own query language (design §14.4) selecting
+    /// exactly the rows <see cref="IsSatisfiedBy(in SecurityTagSet)"/> would admit — using the backend's fragments.
+    /// Deny-by-default: an empty filter (no rules) selects nothing
+    /// (<see cref="ISecurityRulePredicateEmitter{TPredicate}.FalseLiteral"/>), and the conjunction of the rules'
+    /// predicates is further guarded by <see cref="ISecurityRulePredicateEmitter{TPredicate}.ExistsAnyTag"/> so an
+    /// untagged row is never selected.
     /// </summary>
-    /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
-    /// <returns>A boolean SQL fragment.</returns>
-    public string ToSqlPredicate(ISecurityRuleSqlEmitter emitter)
+    /// <remarks>
+    /// The two guards here are the whole of the fail-closed property, and they are applied to every backend by
+    /// construction: a backend supplies fragments and cannot reach the decision about what an empty rule set or an
+    /// untagged row means.
+    /// </remarks>
+    /// <typeparam name="TPredicate">The backend's boolean fragment type.</typeparam>
+    /// <param name="emitter">The backend's fragment provider (stateful per query; accumulates bound operands).</param>
+    /// <returns>A boolean fragment.</returns>
+    public TPredicate ToPredicate<TPredicate>(ISecurityRulePredicateEmitter<TPredicate> emitter)
     {
         ArgumentNullException.ThrowIfNull(emitter);
 
@@ -95,12 +102,17 @@ public sealed class SecurityFilter
         }
 
         // Deny-by-default for unclassified rows: every rule must hold AND the row must carry at least one tag.
-        string predicate = emitter.ExistsAnyTag();
+        TPredicate predicate = emitter.ExistsAnyTag();
         foreach (SecurityRule rule in this.rules)
         {
-            predicate = emitter.AndAlso(predicate, rule.ToSqlPredicate(emitter, this.claims));
+            predicate = emitter.AndAlso(predicate, rule.ToPredicate(emitter, this.claims));
         }
 
         return predicate;
     }
+
+    /// <summary>The string specialisation of <see cref="ToPredicate{TPredicate}"/>, for a SQL backend.</summary>
+    /// <param name="emitter">The backend's SQL fragment provider (stateful per query; accumulates bound parameters).</param>
+    /// <returns>A boolean SQL fragment.</returns>
+    public string ToSqlPredicate(ISecurityRuleSqlEmitter emitter) => this.ToPredicate(emitter);
 }
