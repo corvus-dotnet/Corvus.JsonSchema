@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Execution;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using JsonMarshal = Corvus.Runtime.InteropServices.JsonMarshal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 
@@ -26,6 +25,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string ObsoleteStatus = nameof(CatalogStatus.Obsolete);
+
+    // The §14.4 reach translator. It holds no per-query state (a BSON filter carries its operands as values), so one
+    // shared instance serves every query without allocating.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
 
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
@@ -195,18 +198,15 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             }
         }
 
-        // Row-security reach (§14.2) is applied in process over each version's persisted security tags (see the
-        // class remarks), so the server-side Limit is dropped when a reach filter is present: stream the
-        // sortKey-ordered cursor and take limit+1 *matching* versions, preserving keyset paging.
-        IFindFluent<BsonDocument, BsonDocument> find = this.versions.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
-        if (query.Security is null)
-        {
-            find = find.Limit(limit + 1);
-        }
+        // The reach is part of the server-side filter (see BuildFilter), so every version the cursor yields is one the
+        // principal may see and the page is bounded the same way with or without a reach filter: limit+1 versions, the
+        // extra one being the keyset look-ahead.
+        IFindFluent<BsonDocument, BsonDocument> find = this.versions.Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"))
+            .Limit(limit + 1);
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
-        // parsed once into a pooled, disposable document; the row-security reach (§14.2) is applied in process over the
-        // version's persisted security tags, so non-matches and the look-ahead row are disposed immediately rather than
+        // parsed once into a pooled, disposable document, and the look-ahead row is disposed immediately rather than
         // kept in the batch.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
         string? nextSortKey = null;
@@ -219,12 +219,6 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 foreach (BsonDocument document in cursor.Current)
                 {
                     ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                    if (query.Security is { } security && !SatisfiesReach(candidate.RootElement, security))
-                    {
-                        candidate.Dispose();
-                        continue;
-                    }
-
                     if (matches.Count == limit)
                     {
                         // There is at least one more matching row beyond this page; the last kept row is the cursor.
@@ -253,31 +247,11 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         FilterDefinition<BsonDocument> filter = this.BuildFilter(query);
 
+        // The reach is part of the filter (see BuildFilter), so both counts are native whether or not one is present:
+        // a base is counted when ANY version the principal may see matches, which is the grouping the server does.
         if (query.DistinctWorkflows)
         {
-            if (query.Security is { } distinctReach)
-            {
-                // Reach is applied in process (over each version's persisted security tags), so a base is counted when
-                // ANY of its versions matches the filter AND passes reach. Stream the field-filtered versions and count
-                // distinct base ids, bounded one past the cap.
-                var bases = new HashSet<string>(StringComparer.Ordinal);
-                using IAsyncCursor<BsonDocument> cursor = await this.versions.Find(filter).ToCursorAsync(cancellationToken).ConfigureAwait(false);
-                while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    foreach (BsonDocument document in cursor.Current)
-                    {
-                        using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                        if (SatisfiesReach(candidate.RootElement, distinctReach) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
-                        {
-                            return (cap, true);
-                        }
-                    }
-                }
-
-                return (bases.Count, false);
-            }
-
-            // No reach: count distinct base workflows server-side (group by base, limit to cap+1 groups, count them).
+            // Count distinct base workflows server-side (group by base, limit to cap+1 groups, count them).
             AggregateCountResult? distinct = await this.versions.Aggregate()
                 .Match(filter)
                 .Group(new BsonDocument("_id", "$baseWorkflowId"))
@@ -288,27 +262,6 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             return distinctTotal > cap ? (cap, true) : ((int)distinctTotal, false);
         }
 
-        if (query.Security is { } reach)
-        {
-            // Reach applied in process: stream the field-filtered versions and count the reach-passers, bounded.
-            int matched = 0;
-            using IAsyncCursor<BsonDocument> cursor = await this.versions.Find(filter).ToCursorAsync(cancellationToken).ConfigureAwait(false);
-            while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-            {
-                foreach (BsonDocument document in cursor.Current)
-                {
-                    using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                    if (SatisfiesReach(candidate.RootElement, reach) && ++matched > cap)
-                    {
-                        return (cap, true);
-                    }
-                }
-            }
-
-            return (matched, false);
-        }
-
-        // No reach: native bounded count of matching versions.
         long total = await this.versions.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
         return total > cap ? (cap, true) : ((int)total, false);
     }
@@ -355,19 +308,14 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             .AppendStage<BsonDocument>(addRankStage)
             .AppendStage<BsonDocument>(precedenceSortStage);
 
-        if (query.Security is { } security)
-        {
-            // Row-security reach (§14.2) is applied in process over each version's persisted security tags and cannot
-            // be expressed as a pipeline stage, so the winning version per base must be chosen AFTER reach — grouping
-            // server-side could otherwise pick a representative the principal cannot see. Stream the precedence-sorted
-            // versions and take the FIRST reach-passing version of each base as its representative (the stream is
-            // already in precedence order within each base), keyset-paged by base id with a +1 lookahead.
-            return await this.CollapseReachedRepresentativesAsync(ranked, security, after, limit, cancellationToken).ConfigureAwait(false);
-        }
-
-        // No reach filter: collapse server-side. $group by base id takes the $first document (the representative, given
-        // the precedence sort), then $match on base id > cursor, re-sort by base id, and $limit (limit + 1) for the
-        // lookahead. The representative document is projected back out of the group's $first.
+        // Collapse server-side. $group by base id takes the $first document (the representative, given the precedence
+        // sort), then $match on base id > cursor, re-sort by base id, and $limit (limit + 1) for the lookahead. The
+        // representative document is projected back out of the group's $first.
+        //
+        // The reach is already in the $match that opened the pipeline, so only versions the principal may see reach
+        // the $group and the representative is the best-precedence version AMONG THOSE — which is what a collapse
+        // performed after reach gives. Grouping before applying reach would be the wrong answer, and is why this
+        // could not be a server-side collapse until the reach became a predicate.
         var groupStage = new BsonDocument("$group", new BsonDocument
         {
             ["_id"] = "$baseWorkflowId",
@@ -405,69 +353,6 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                     }
 
                     matches.Add(ReadVersion(document));
-                }
-            }
-        }
-        catch
-        {
-            matches.Dispose();
-            throw;
-        }
-
-        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
-    }
-
-    // The reach-filtered distinct collapse: the pipeline yields matching versions in (base asc, precedence) order; the
-    // first reach-passing version of each base is its representative. Keyset-paged by base id alone with a +1 lookahead.
-    private async ValueTask<CatalogPage> CollapseReachedRepresentativesAsync(IAggregateFluent<BsonDocument> ranked, SecurityFilter security, string? after, int limit, CancellationToken cancellationToken)
-    {
-        var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? nextBaseId = null;
-        string? currentBase = null;
-        try
-        {
-            using IAsyncCursor<BsonDocument> cursor = await ranked.ToCursorAsync(cancellationToken).ConfigureAwait(false);
-            bool full = false;
-            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-            {
-                foreach (BsonDocument document in cursor.Current)
-                {
-                    string baseId = document["baseWorkflowId"].AsString;
-
-                    // Skip further versions of a base whose representative we've already taken (or that had none),
-                    // and skip bases at/before the keyset cursor.
-                    if (baseId == currentBase)
-                    {
-                        continue;
-                    }
-
-                    ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                    if (!SatisfiesReach(candidate.RootElement, security))
-                    {
-                        candidate.Dispose();
-                        continue;
-                    }
-
-                    // This is the first reach-passing (best-precedence) version of a new base: it is the representative.
-                    currentBase = baseId;
-
-                    if (after is not null && string.CompareOrdinal(baseId, after) <= 0)
-                    {
-                        candidate.Dispose();
-                        continue;
-                    }
-
-                    if (matches.Count == limit)
-                    {
-                        // There is at least one more matching base workflow beyond this page; the cursor is the last
-                        // kept row's base id alone.
-                        nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
-                        candidate.Dispose();
-                        full = true;
-                        break;
-                    }
-
-                    matches.Add(candidate);
                 }
             }
         }
@@ -524,15 +409,15 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             filter = b.And(filter, b.All("tags", query.Tags.ToList())); // $all = contains every queried tag
         }
 
-        return filter;
-    }
+        if (query.Security is { } security)
+        {
+            // Row-security reach (§14.2) pushed down as an indexed predicate over the mirrored securityTags array
+            // (§14.4): the server returns only versions the principal may see, so no other tenant's catalog entry is
+            // read, paged over, counted or considered as a distinct-mode representative.
+            filter = b.And(filter, security.ToPredicate(SecurityEmitter));
+        }
 
-    private static bool SatisfiesReach(in CatalogVersion version, SecurityFilter security)
-    {
-        SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
-            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
-            : SecurityTagSet.Empty;
-        return security.IsSatisfiedBy(securityTags);
+        return filter;
     }
 
     /// <inheritdoc/>
@@ -894,6 +779,11 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         var bySortKey = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("sortKey"));
         var byStatus = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status"));
         var byWorkflowIdLower = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("workflowIdLower"));
-        await this.versions.Indexes.CreateManyAsync([byBaseVersion, bySortKey, byStatus, byWorkflowIdLower], cancellationToken).ConfigureAwait(false);
+
+        // The §14.4 reach index: compound multikey over the mirrored tag array's key and value. Both keys are inside
+        // the SAME array, so this indexes one array rather than parallel ones, and it gives an $elemMatch on
+        // (k, v in …) tight bounds — the difference between a reach-filtered search being indexed and being a scan.
+        var bySecurityTags = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("securityTags.k").Ascending("securityTags.v"));
+        await this.versions.Indexes.CreateManyAsync([byBaseVersion, bySortKey, byStatus, byWorkflowIdLower, bySecurityTags], cancellationToken).ConfigureAwait(false);
     }
 }

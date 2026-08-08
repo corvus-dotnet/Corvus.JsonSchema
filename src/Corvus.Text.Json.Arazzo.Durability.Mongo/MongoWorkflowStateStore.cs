@@ -29,6 +29,10 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     // category.
     private const int DuplicateKeyErrorCode = 11000;
 
+    // The §14.4 reach translator. It holds no per-query state (a BSON filter carries its operands as values), so one
+    // shared instance serves every query without allocating.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
+
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
     private readonly bool ownsClient;
@@ -446,15 +450,13 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
         }
 
-        // Row-security reach (§14.2) is applied in process over the embedded securityTags array (see the class
-        // remarks), so the server-side Limit is dropped when a reach filter is present: stream the _id-ordered
-        // cursor and take Limit+1 *matching* rows, preserving keyset paging.
+        // The reach is part of the server-side filter (see BuildFilter), so every row the cursor yields is one the
+        // principal may see and the page is bounded the same way with or without a reach filter: Limit+1 rows, the
+        // extra one being the keyset look-ahead.
         var listings = new List<WorkflowRunListing>(query.Limit + 1);
-        IFindFluent<BsonDocument, BsonDocument> find = this.runs.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("_id"));
-        if (query.Security is null)
-        {
-            find = find.Limit(query.Limit + 1);
-        }
+        IFindFluent<BsonDocument, BsonDocument> find = this.runs.Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+            .Limit(query.Limit + 1);
 
         using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
         while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
@@ -462,11 +464,6 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             foreach (BsonDocument document in cursor.Current)
             {
                 SecurityTagSet securityTags = ReadSecurityTags(document);
-                if (query.Security is { } security && !security.IsSatisfiedBy(securityTags))
-                {
-                    continue;
-                }
-
                 string? correlationId = document["correlationId"].IsBsonNull ? null : document["correlationId"].AsString;
                 TagSet tags = MongoTags.Read(document);
                 var entry = new WorkflowRunIndexEntry(
@@ -498,42 +495,15 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
-        // No reach filter → a native bounded count: CountDocuments with a Limit stops the server one past the cap.
-        if (query.Security is null)
-        {
-            long total = await this.runs.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
-            return total > cap ? (cap, true) : ((int)total, false);
-        }
-
-        // Reach is applied in process over the embedded securityTags array (see the class remarks), so stream the
-        // server-filtered set (projecting only the security tags) and bounded-count the rows the reach admits.
-        int count = 0;
-        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter)
-            .Project(Builders<BsonDocument>.Projection.Include("securityTags"))
-            .ToCursorAsync(cancellationToken).ConfigureAwait(false);
-        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-        {
-            foreach (BsonDocument document in cursor.Current)
-            {
-                if (query.Security is { } security && !security.IsSatisfiedBy(ReadSecurityTags(document)))
-                {
-                    continue;
-                }
-
-                if (++count > cap)
-                {
-                    return (cap, true);
-                }
-            }
-        }
-
-        return (count, false);
+        // The reach is part of the filter, so counting is native whether or not one is present: CountDocuments with a
+        // Limit stops the server one past the cap instead of the client tallying rows it streamed across the wire.
+        long total = await this.runs.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     // Builds the shared server-side visibility filter (status / workflow / draft-exclusion / timestamps / correlation /
-    // tags), WITHOUT the keyset cursor and WITHOUT the §14.2 reach (which Mongo applies in process over the embedded
-    // securityTags array). QueryAsync adds the cursor + client-side reach; CountAsync reuses this. Both share it so the
-    // server-side predicate cannot drift.
+    // tags / §14.2 reach), WITHOUT the keyset cursor. QueryAsync adds the cursor; CountAsync reuses this as-is. Both
+    // share it so the predicate that decides what a principal may see cannot drift between listing and counting.
     private static FilterDefinition<BsonDocument> BuildFilter(in WorkflowQuery query)
     {
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
@@ -584,6 +554,15 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
             // filter-builder leaf the driver requires — the stored row tags are never materialized.
             filter = b.And(filter, b.All("tags", query.Tags.ToList()));
+        }
+
+        if (query.Security is { } security)
+        {
+            // Row-security reach (§14.2) pushed down as an indexed predicate over the embedded securityTags array
+            // (§14.4): the server returns only rows the principal may see, so no other tenant's run is ever read,
+            // paged over or counted here. The empty-rule-set and untagged-row denials are decided by SecurityFilter,
+            // not by the emitter.
+            filter = b.And(filter, security.ToPredicate(SecurityEmitter));
         }
 
         return filter;
@@ -642,6 +621,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         var due = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status").Ascending("dueAt"));
         var awaiting = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("status").Ascending("awaitingChannel").Ascending("awaitingCorrelationId"));
-        await this.runs.Indexes.CreateManyAsync([due, awaiting], cancellationToken).ConfigureAwait(false);
+
+        // The §14.4 reach index: compound multikey over the embedded tag array's key and value. Both keys are inside
+        // the SAME array, so this indexes one array rather than parallel ones, and it gives an $elemMatch on
+        // (k, v in …) tight bounds — the difference between a reach-filtered list being indexed and being a scan.
+        var securityTags = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("securityTags.k").Ascending("securityTags.v"));
+        await this.runs.Indexes.CreateManyAsync([due, awaiting, securityTags], cancellationToken).ConfigureAwait(false);
     }
 }
