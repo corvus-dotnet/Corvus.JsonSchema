@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
@@ -32,6 +34,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     private const string RunsContainer = "arazzo-runs";
     private const string IndexTable = "arazzoindex";
     private const string LeasesTable = "arazzoleases";
+    private const string LabelsTable = "arazzolabels";
+
+    // Candidate run ids travel in the query string, so they are requested in chunks rather than as one disjunction
+    // that would eventually exceed the URL length limit.
+    private const int CandidateChunkSize = 32;
 
     // The Blob SDK defaults to the newest REST API version, which the Azurite emulator (and older real
     // accounts) may not yet recognise. Pin to a broadly-supported version so requests are accepted everywhere;
@@ -41,13 +48,17 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     private readonly BlobContainerClient runs;
     private readonly TableClient index;
     private readonly TableClient leases;
+    private readonly TableClient labels;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageWorkflowStateStore(BlobContainerClient runs, TableClient index, TableClient leases, TimeProvider timeProvider)
+    private AzureStorageWorkflowStateStore(BlobContainerClient runs, TableClient index, TableClient leases, TableClient labels, TimeProvider timeProvider)
     {
         this.runs = runs;
         this.index = index;
         this.leases = leases;
+        this.labels = labels;
+        this.labelIndex = new AzureStorageSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -83,6 +94,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         await blobService.GetBlobContainerClient(RunsContainer).CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(IndexTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(LeasesTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned container and tables.</summary>
@@ -133,7 +145,8 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         BlobContainerClient runs = blobService.GetBlobContainerClient(RunsContainer);
         TableClient index = tableService.GetTableClient(IndexTable);
         TableClient leases = tableService.GetTableClient(LeasesTable);
-        return new ValueTask<AzureStorageWorkflowStateStore>(new AzureStorageWorkflowStateStore(runs, index, leases, timeProvider ?? TimeProvider.System));
+        TableClient labels = tableService.GetTableClient(LabelsTable);
+        return new ValueTask<AzureStorageWorkflowStateStore>(new AzureStorageWorkflowStateStore(runs, index, leases, labels, timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>
@@ -166,8 +179,52 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             throw new WorkflowConflictException(id, expected);
         }
 
+        // §14.4 label index. The ordering is what keeps it safe to be imprecise: entries are ADDED before the row
+        // becomes visible and REMOVED after it stops being, so an interrupted save can only leave a label pointing
+        // at a row that no longer carries it — which the exact reach evaluation discards — never omit one that does,
+        // which would hide the run from a principal entitled to see it.
+        HashSet<string> desired = AzureStorageSecurityLabelIndex.TokensFor(indexEntry.SecurityTags);
+        HashSet<string> previous = expected.IsNone
+            ? []
+            : await this.ReadSecurityLabelTokensAsync(id, cancellationToken).ConfigureAwait(false);
+
+        foreach (string token in desired)
+        {
+            if (!previous.Contains(token))
+            {
+                await this.labels.UpsertEntityAsync(new TableEntity(token, id.Value), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         await this.index.UpsertEntityAsync(BuildIndexEntity(id, indexEntry), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+
+        foreach (string token in previous)
+        {
+            if (!desired.Contains(token))
+            {
+                await this.labels.DeleteEntityAsync(token, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         return new WorkflowEtag(etag.ToString());
+    }
+
+    // The tokens the run's CURRENT row occupies, so a save writes only the difference. A run's security tags are
+    // established at creation and refused thereafter by the checkpoint coordinator, so both differences are empty on
+    // the common checkpoint path and this read is all the label index costs a hot save.
+    private async ValueTask<HashSet<string>> ReadSecurityLabelTokensAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            Response<TableEntity> existing = await this.index.GetEntityAsync<TableEntity>(
+                IndexPartition, id.Value, SecurityTagsColumnOnly, cancellationToken).ConfigureAwait(false);
+            return AzureStorageSecurityLabelIndex.TokensFor(
+                SecurityTagSet.FromJsonStringOrEmpty(existing.Value.GetString("SecurityTagsJson")));
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return [];
+        }
     }
 
     /// <inheritdoc/>
@@ -307,9 +364,19 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     /// <inheritdoc/>
     public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
+        // Read the run's labels while its row still exists, then drop the row before its labels — the same ordering
+        // the save path uses, and for the same reason: a surviving label is discarded by the exact reach evaluation
+        // when nothing loads behind it, whereas dropping labels first would strand a still-visible run.
+        HashSet<string> tokens = await this.ReadSecurityLabelTokensAsync(id, cancellationToken).ConfigureAwait(false);
+
         await this.runs.GetBlobClient(id.Value).DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.index.DeleteEntityAsync(IndexPartition, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
         await this.leases.DeleteEntityAsync(LeasePartition, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+
+        foreach (string token in tokens)
+        {
+            await this.labels.DeleteEntityAsync(token, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -468,11 +535,21 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
         }
 
+        // §14.4: narrow to the candidate rows the label index admits before reading anything. A null plan means the
+        // index could not narrow and the query runs as it always did; an empty one means no row qualifies, so the
+        // page is empty without a single row read.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return WorkflowContinuationToken.Paginate([], query.Limit);
+        }
+
         // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
-        // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
-        // paging stays correct: filter the materialised stream, then take.
+        // client-side, as is the exact reach evaluation over the candidates the index proposed. Both must run before
+        // the keyset "take Limit (plus one to detect a further page)" cut so paging stays correct: filter the
+        // materialised stream, then take.
         var runs = new List<WorkflowRunListing>();
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, after, cancellationToken).ConfigureAwait(false))
         {
             WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
             if (!MatchesClientSide(query, entry))
@@ -495,11 +572,18 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     {
         string filter = BuildVisibilityFilter(query);
 
-        // Tags and the §14.2 reach are applied in process (Table OData cannot match inside the serialized tag JSON),
-        // so stream the server-filtered entities and bounded-count the rows the client-side filter admits, stopping
+        // Same narrowing as the list, so a count can never consider a row the list would not have shown.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        // Tags and the exact §14.2 reach are applied in process (Table OData cannot match inside the serialized tag
+        // JSON), so stream the candidate entities and bounded-count the rows the client-side filter admits, stopping
         // one past the cap. Same filter as the list, so the reach cannot drift.
         int count = 0;
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, after: null, cancellationToken).ConfigureAwait(false))
         {
             if (MatchesClientSide(query, ReadIndexEntity(entity)) && ++count > cap)
             {
@@ -508,6 +592,63 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         }
 
         return (count, false);
+    }
+
+    // Resolves the reach to the candidate run ids the label index admits (§14.4). Null means "the index could not
+    // narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what the
+    // principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // Streams the index entities a query should consider, in ascending run-id order.
+    //
+    // With no candidate set this is the plain partition query it always was. With one, the run ids are requested
+    // explicitly, so rows outside the principal's reach are never read, never paged over and never counted. The ids
+    // are chunked because they travel in the query string: one enormous disjunction would eventually exceed the URL
+    // limit, and the chunk boundary is safe because the ids are sorted, so each chunk's rows still arrive in order.
+    private async IAsyncEnumerable<TableEntity> QueryIndexAsync(
+        string filter,
+        IReadOnlySet<string>? candidates,
+        string? after,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (candidates is null)
+        {
+            await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                yield return entity;
+            }
+
+            yield break;
+        }
+
+        string[] ordered = [.. candidates.Where(id => after is null || string.CompareOrdinal(id, after) > 0).OrderBy(id => id, StringComparer.Ordinal)];
+        for (int start = 0; start < ordered.Length; start += CandidateChunkSize)
+        {
+            ReadOnlySpan<string> chunk = ordered.AsSpan(start, Math.Min(CandidateChunkSize, ordered.Length - start));
+            var disjunction = new StringBuilder(filter);
+            disjunction.Append(" and (");
+            for (int i = 0; i < chunk.Length; ++i)
+            {
+                if (i > 0)
+                {
+                    disjunction.Append(" or ");
+                }
+
+                // Every id is bound through CreateQueryFilter, so a run id can never be read as OData syntax.
+                disjunction.Append(TableClient.CreateQueryFilter($"RowKey eq {chunk[i]}"));
+            }
+
+            disjunction.Append(')');
+
+            await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(disjunction.ToString(), cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                yield return entity;
+            }
+        }
     }
 
     // Builds the shared server-side OData filter (partition / status / workflow / draft-exclusion / correlation /
@@ -633,6 +774,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         return entity;
     }
+
+    // A save needs only the previous tag set to work out which label entries to add or drop, never the whole row.
+    private static readonly string[] SecurityTagsColumnOnly = ["SecurityTagsJson"];
 
     private static WorkflowRunIndexEntry ReadIndexEntity(TableEntity entity)
     {

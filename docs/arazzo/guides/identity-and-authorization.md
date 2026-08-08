@@ -148,9 +148,14 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
 - **Every backend honours the reach predicate.** The relational stores, Cosmos and Mongo push it server-side
   (`SqlSecurityRuleEmitter` / `CosmosSecurityRuleEmitter` / `MongoSecurityRuleEmitter`, each supplying fragments
   to the one `ISecurityRulePredicateEmitter` walk, so the rule semantics are decided once and not per backend).
-  InMemory streams and filters per row because it *is* the memory; Redis, NATS and Azure Storage still do so,
-  which is a gap rather than a design choice — they hold the tags in an opaque JSON string or value and need a
-  queryable secondary index before they can carry a predicate.
+  A backend whose query language cannot express the grammar narrows through a **security-label index** instead
+  (`SecurityLabelQueryEmitter` over that same walk, resolved by `SecurityLabelQueryResolver` against the
+  backend's `ISecurityLabelIndex`). The plan it produces is a sound *over*-approximation of the row set and the
+  exact evaluation then runs over the candidates it returns, so an imprecise plan costs throughput and can never
+  widen reach; the deployment's mandated wrapper rule (§14.3) maps to an exact label, which is what keeps a
+  query inside its tenant however far the user rule degrades. Azure Storage does this for runs. Its catalog
+  store, Redis and NATS still stream-and-filter per row, which is a gap rather than a design choice. InMemory
+  streams and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag

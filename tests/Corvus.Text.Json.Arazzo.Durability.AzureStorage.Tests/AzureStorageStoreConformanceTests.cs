@@ -67,7 +67,7 @@ public sealed class AzureStorageStoreConformanceTests : WorkflowStateStoreConfor
             }
         }
 
-        foreach (string table in new[] { "arazzoindex", "arazzoleases" })
+        foreach (string table in new[] { "arazzoindex", "arazzoleases", "arazzolabels" })
         {
             TableClient client = tableService.GetTableClient(table);
             try
