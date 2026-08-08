@@ -145,9 +145,12 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   **service operator** (`AccessContext.System`) purges across tenants. Run purge enumerates through the *same*
   reach-filtered query path `ListAsync` uses (so it is subsumed by query correctness); catalog purge filters its
   `ListObsoleteAsync` candidates by `PurgeReach`.
-- **Every backend honours the reach predicate.** The relational stores and Cosmos push it server-side
-  (`SqlSecurityRuleEmitter` / `CosmosSecurityRuleEmitter`); InMemory, Mongo, Redis, NATS, and Azure Storage
-  stream-and-filter per row.
+- **Every backend honours the reach predicate.** The relational stores, Cosmos and Mongo push it server-side
+  (`SqlSecurityRuleEmitter` / `CosmosSecurityRuleEmitter` / `MongoSecurityRuleEmitter`, each supplying fragments
+  to the one `ISecurityRulePredicateEmitter` walk, so the rule semantics are decided once and not per backend).
+  InMemory streams and filters per row because it *is* the memory; Redis, NATS and Azure Storage still do so,
+  which is a gap rather than a design choice — they hold the tags in an opaque JSON string or value and need a
+  queryable secondary index before they can carry a predicate.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag

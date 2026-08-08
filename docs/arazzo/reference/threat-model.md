@@ -311,7 +311,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 |---------|-------|----------|
 | Environment key registration proves possession, one pinned algorithm, freshness before signature, identifier bounds, length-framed tuple | Holds | `EnvironmentKeyPossession.cs:54+` |
 | Deny-by-default reach, empty rule set admits nothing, untagged row invisible, unranked comparison denies, policy starts denying | Holds | `SecurityFilter.cs:56-105`, `PersistentRowSecurityPolicy.cs:37` |
-| One security-rule AST walk, backends supply fragments only, every value bound | Holds | `ISecurityRuleSqlEmitter.cs`, `SqlSecurityRuleEmitter.cs:56` |
+| One security-rule AST walk, backends supply fragments only, every value bound | Holds | `ISecurityRulePredicateEmitter.cs`, `SecurityRule.ToPredicate`, `SqlSecurityRuleEmitter.cs:56` |
 | Schema compilation confined to supplied documents on every control-plane path, so an authored `$ref` is refused rather than fetched | Holds | `ArazzoControlPlaneCatalogHandler.cs`, `ArazzoControlPlaneWorkspaceHandler.cs` |
 | Reserved `sys:` keyspace refused independently of the policy | Holds | `ControlPlaneRowSecurity.cs:386-395` |
 | Wildcard binding cannot confer unrestricted reach | Holds | `PersistentRowSecurityPolicy.cs:126, 362-366` |
