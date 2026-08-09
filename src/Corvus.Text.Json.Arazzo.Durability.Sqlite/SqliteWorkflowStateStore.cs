@@ -35,6 +35,9 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         this.timeProvider = timeProvider;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Provisions the store's schema (tables and indexes) against a file database.</summary>
     /// <remarks>
     /// SQLite is the deliberate exception to the prepare/connect split: it is an embedded, single-process

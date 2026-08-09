@@ -46,6 +46,9 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Provisions the catalog schema (table and indexes) against a file database.</summary>
     /// <param name="connectionString">A Microsoft.Data.Sqlite connection string.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

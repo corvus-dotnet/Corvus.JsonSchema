@@ -68,6 +68,9 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
     /// <param name="configuration">A StackExchange.Redis configuration string.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

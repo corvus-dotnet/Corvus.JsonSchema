@@ -47,6 +47,9 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the catalog schema (table and indexes). This performs DDL, so it requires a credential
     /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged

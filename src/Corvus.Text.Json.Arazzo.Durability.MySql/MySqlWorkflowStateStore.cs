@@ -36,6 +36,9 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.timeProvider = timeProvider;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the store's schema (tables and indexes). This performs DDL, so it requires a user
     /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged

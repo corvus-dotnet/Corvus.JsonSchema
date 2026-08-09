@@ -62,6 +62,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         this.timeProvider = timeProvider;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Provisions the store's blob container and tables over the given connection string.</summary>
     /// <remarks>See <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/> for the privilege rationale.</remarks>
     /// <param name="connectionString">An Azure Storage connection string for a credential permitted to create the container and tables.</param>

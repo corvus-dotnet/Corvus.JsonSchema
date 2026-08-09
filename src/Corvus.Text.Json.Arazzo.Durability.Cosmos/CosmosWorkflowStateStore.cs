@@ -52,6 +52,9 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         this.ownsClient = ownsClient;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Provisions the store's database and containers over the given connection string.</summary>
     /// <remarks>See <see cref="PrepareAsync(CosmosClient, string, CancellationToken)"/> for the privilege rationale.</remarks>
     /// <param name="connectionString">An Azure Cosmos DB connection string (typically the account key, which has management-plane rights).</param>

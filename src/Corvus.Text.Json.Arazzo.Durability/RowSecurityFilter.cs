@@ -19,13 +19,13 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public interface ISupportsRowSecurityFilter
 {
     /// <summary>
-    /// Gets a value indicating whether this store actually pushes the reach filter down. A concrete store that
-    /// carries the marker returns <see langword="true"/>; a delegating decorator (for example an encrypting wrapper)
-    /// overrides it to forward the <em>wrapped</em> store's capability, so wrapping a non-pushdown store stays
-    /// fail-closed — a reach filter against it still throws in <see cref="RowSecurityPushdown.EnsureSupported"/>
-    /// rather than being silently dropped and leaking rows.
+    /// Gets a value indicating whether this store actually pushes the reach filter down. There is deliberately no
+    /// default: every implementer states its answer, so a new store cannot inherit a claim it does not honour. A
+    /// delegating decorator (for example an encrypting wrapper) forwards the <em>wrapped</em> store's capability,
+    /// so wrapping a non-pushdown store stays fail-closed — a reach filter against it still throws in
+    /// <see cref="RowSecurityPushdown.EnsureSupported"/> rather than being silently dropped and leaking rows.
     /// </summary>
-    bool SupportsRowSecurityFilter => true;
+    bool SupportsRowSecurityFilter { get; }
 }
 
 /// <summary>Guards against a row-security reach filter being silently ignored by a store that does not push it down.</summary>

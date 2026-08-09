@@ -320,20 +320,19 @@ public abstract class WorkflowCatalogStoreConformance
         (await store.CountAsync(new CatalogQuery(BaseWorkflowId: "gamma"), 100, default)).ShouldBe((3, false));
         (await store.CountAsync(new CatalogQuery(BaseWorkflowId: "gamma", DistinctWorkflows: true), 100, default)).ShouldBe((1, false));
 
-        // The count honours the read reach exactly like the search — only where the store pushes the filter down.
-        if (store is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
-        {
-            var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        // The count honours the read reach exactly like the search. Every store pushes the filter down (§14.4),
+        // and the interface default is gone, so the reach half of this test can no longer be skipped silently.
+        ((ISupportsRowSecurityFilter)store).SupportsRowSecurityFilter.ShouldBeTrue();
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
 
-            // A reach the versions satisfy (tenant=acme) admits all, in each mode.
-            var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
-            (await store.CountAsync(new CatalogQuery(Security: acme), 100, default)).ShouldBe((6, false));
-            (await store.CountAsync(new CatalogQuery(DistinctWorkflows: true, Security: acme), 100, default)).ShouldBe((3, false));
+        // A reach the versions satisfy (tenant=acme) admits all, in each mode.
+        var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
+        (await store.CountAsync(new CatalogQuery(Security: acme), 100, default)).ShouldBe((6, false));
+        (await store.CountAsync(new CatalogQuery(DistinctWorkflows: true, Security: acme), 100, default)).ShouldBe((3, false));
 
-            // A reach they do not satisfy (tenant=globex) admits none.
-            var globex = new SecurityFilter([SecurityRule.Compile("tenant == 'globex'")], claims);
-            (await store.CountAsync(new CatalogQuery(Security: globex), 100, default)).ShouldBe((0, false));
-        }
+        // A reach they do not satisfy (tenant=globex) admits none.
+        var globex = new SecurityFilter([SecurityRule.Compile("tenant == 'globex'")], claims);
+        (await store.CountAsync(new CatalogQuery(Security: globex), 100, default)).ShouldBe((0, false));
     }
 
     [TestMethod]
@@ -564,11 +563,6 @@ public abstract class WorkflowCatalogStoreConformance
     public async Task Search_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
-        if (store is not ISupportsRowSecurityFilter)
-        {
-            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
-            return;
-        }
 
         // Each base id gets a version carrying a distinct security-tag shape (single, multi, none, ordered, unranked).
         (string Base, SecurityTag[] Tags)[] rows =

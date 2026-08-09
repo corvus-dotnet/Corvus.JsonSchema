@@ -55,6 +55,9 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the catalog's key/value bucket. Creating a KV bucket creates a JetStream stream, which
     /// requires stream-management permissions, so run this once at deploy/migration time, separately from the

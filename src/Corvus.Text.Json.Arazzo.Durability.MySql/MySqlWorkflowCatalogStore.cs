@@ -46,6 +46,9 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the catalog schema (table and indexes). This performs DDL, so it requires a user permitted to
     /// create tables; run it once at deploy/migration time, separately from the least-privileged user used to

@@ -738,11 +738,6 @@ public abstract class WorkflowStateStoreConformance
     public async Task Query_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        if (store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
-        {
-            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
-            return;
-        }
 
         // Runs spanning single-value, multi-value and no-tag shapes.
         (string Id, SecurityTag[] Tags)[] rows =
@@ -846,11 +841,6 @@ public abstract class WorkflowStateStoreConformance
     public async Task Deleting_a_run_removes_its_security_tags()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        if (store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
-        {
-            Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
-            return;
-        }
 
         var index = (IWorkflowWaitIndex)store;
         var filter = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
@@ -894,18 +884,17 @@ public abstract class WorkflowStateStoreConformance
         // A cap exactly at the total is not capped (the cap+1th row is absent).
         (await index.CountAsync(new WorkflowQuery(), 5, default)).ShouldBe((5, false));
 
-        // The count honours the read reach exactly like the list — only where the store pushes the filter down.
-        if (store is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
-        {
-            var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
-            var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
+        // The count honours the read reach exactly like the list. Every store pushes the filter down (§14.4),
+        // and the interface default is gone, so the reach half of this test can no longer be skipped silently.
+        ((ISupportsRowSecurityFilter)store).SupportsRowSecurityFilter.ShouldBeTrue();
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
 
-            // Three of the five are tenant=acme.
-            (await index.CountAsync(new WorkflowQuery(Security: acme), 100, default)).ShouldBe((3, false));
+        // Three of the five are tenant=acme.
+        (await index.CountAsync(new WorkflowQuery(Security: acme), 100, default)).ShouldBe((3, false));
 
-            // Reach and cap compose: a cap below the admitted count still caps.
-            (await index.CountAsync(new WorkflowQuery(Security: acme), 2, default)).ShouldBe((2, true));
-        }
+        // Reach and cap compose: a cap below the admitted count still caps.
+        (await index.CountAsync(new WorkflowQuery(Security: acme), 2, default)).ShouldBe((2, true));
     }
 
     private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)

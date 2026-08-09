@@ -145,6 +145,9 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.ownsConnection = ownsConnection;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
     /// <remarks>
     /// Redis has no schema — keys appear on first write — so there is nothing to provision. This method is

@@ -50,6 +50,9 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         this.versions = database.GetCollection<BsonDocument>("catalogVersions");
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the store's indexes. Creating indexes requires the <c>createIndex</c> privilege, so run this
     /// once at deploy/migration time, separately from the least-privileged user used to

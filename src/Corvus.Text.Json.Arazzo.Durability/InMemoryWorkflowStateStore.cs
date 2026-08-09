@@ -27,6 +27,9 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     // Takes the filter by reference so a query's criteria travel as a context instead of being captured, which keeps
     // every Snapshot predicate static.
     private delegate bool EntryPredicate<TContext>(in TContext context, in Entry entry);

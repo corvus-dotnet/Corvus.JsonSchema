@@ -46,6 +46,9 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the catalog schema (table and indexes). This performs DDL, so it requires a login permitted
     /// to create tables; run it once at deploy/migration time, separately from the least-privileged login used

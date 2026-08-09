@@ -67,6 +67,9 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         this.signer = signer;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>Provisions the store's blob container and table over the given connection string.</summary>
     /// <remarks>See <see cref="PrepareAsync(BlobServiceClient, TableServiceClient, CancellationToken)"/> for the privilege rationale.</remarks>
     /// <param name="connectionString">An Azure Storage connection string for a credential permitted to create the container and table.</param>

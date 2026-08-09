@@ -46,6 +46,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         this.timeProvider = timeProvider;
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the store's key/value buckets. Creating a KV bucket creates a JetStream stream, which
     /// requires stream-management permissions, so run this once at deploy/migration time, separately from the

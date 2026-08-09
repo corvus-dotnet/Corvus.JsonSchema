@@ -49,6 +49,9 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         this.leases = database.GetCollection<BsonDocument>("workflow_leases");
     }
 
+    /// <inheritdoc/>
+    public bool SupportsRowSecurityFilter => true;
+
     /// <summary>
     /// Provisions the store's indexes. Creating indexes requires the <c>createIndex</c> privilege, so run this
     /// once at deploy/migration time, separately from the least-privileged user used to
