@@ -163,6 +163,94 @@ public sealed class SecurityLabelQueryTests
         index.Lookups.ShouldNotContain(("team", "payments"));
     }
 
+    [TestMethod]
+    public async Task The_compiled_program_and_the_resolver_agree_on_every_rule_shape()
+    {
+        // Compile() is the seam for a backend that executes the set algebra natively (Redis) instead of
+        // supplying point lookups. Its program must denote exactly the set the shared resolver computes —
+        // including the null (no narrowing) versus empty (no rows) distinction — or the two consumption paths
+        // would drift per backend, which is the failure §14.4 exists to prevent.
+        var index = new FakeLabelIndex(Rows);
+
+        List<(SecurityFilter Filter, string Rule)> corpus =
+        [
+            .. RuleShapes.Select(r => (new SecurityFilter([SecurityRule.Compile(r)], Claims()), r)),
+            .. OrderedShapes.Select(r => (new SecurityFilter([SecurityRule.Compile(r, Classification())], Claims()), r)),
+            (new SecurityFilter([], Claims()), "<empty rule set>"),
+            (new SecurityFilter([SecurityRule.Compile("tenant == 'acme'"), SecurityRule.Compile("!(team == 'hr')")], Claims()), "<wrapper AND un-narrowable>"),
+        ];
+
+        foreach ((SecurityFilter filter, string ruleText) in corpus)
+        {
+            SecurityLabelQuery plan = filter.ToPredicate(SecurityLabelQueryEmitter.Instance);
+            IReadOnlySet<string>? resolved = await SecurityLabelQueryResolver.ResolveAsync(plan, index, default);
+            IReadOnlySet<string>? interpreted = Interpret(plan.Compile());
+
+            if (resolved is null)
+            {
+                interpreted.ShouldBeNull($"rule '{ruleText}': the resolver said no-narrowing but the program narrowed");
+            }
+            else
+            {
+                interpreted.ShouldNotBeNull($"rule '{ruleText}': the resolver narrowed but the program said no-narrowing");
+                interpreted.OrderBy(x => x, StringComparer.Ordinal)
+                    .ShouldBe(resolved.OrderBy(x => x, StringComparer.Ordinal), $"rule '{ruleText}'");
+            }
+        }
+    }
+
+    // Executes a compiled program the way a set-native backend does — pushes look up a label set over the same
+    // row corpus the FakeLabelIndex serves, operations pop and combine — so the differential test compares the
+    // two consumption paths over identical data.
+    private static IReadOnlySet<string>? Interpret(IReadOnlyList<SecurityLabelInstruction>? program)
+    {
+        if (program is null)
+        {
+            return null;
+        }
+
+        var stack = new Stack<HashSet<string>>();
+        foreach (SecurityLabelInstruction instruction in program)
+        {
+            switch (instruction.Kind)
+            {
+                case SecurityLabelInstructionKind.PushLabel:
+                    stack.Push(Rows.Where(r => r.Tags.Any(t => t.Key == instruction.Key && t.Value == instruction.Value)).Select(r => r.Id).ToHashSet(StringComparer.Ordinal));
+                    break;
+
+                case SecurityLabelInstructionKind.PushKey:
+                    stack.Push(Rows.Where(r => r.Tags.Any(t => t.Key == instruction.Key)).Select(r => r.Id).ToHashSet(StringComparer.Ordinal));
+                    break;
+
+                case SecurityLabelInstructionKind.Union:
+                    {
+                        HashSet<string> accumulated = stack.Pop();
+                        for (int i = 1; i < instruction.Count; ++i)
+                        {
+                            accumulated.UnionWith(stack.Pop());
+                        }
+
+                        stack.Push(accumulated);
+                        break;
+                    }
+
+                default:
+                    {
+                        HashSet<string> accumulated = stack.Pop();
+                        for (int i = 1; i < instruction.Count; ++i)
+                        {
+                            accumulated.IntersectWith(stack.Pop());
+                        }
+
+                        stack.Push(accumulated);
+                        break;
+                    }
+            }
+        }
+
+        return stack.Count == 0 ? new HashSet<string>(StringComparer.Ordinal) : stack.Pop();
+    }
+
     private static async ValueTask AssertSoundAsync(FakeLabelIndex index, SecurityFilter filter, string ruleText)
     {
         IReadOnlySet<string>? candidates = await ResolveAsync(index, filter);

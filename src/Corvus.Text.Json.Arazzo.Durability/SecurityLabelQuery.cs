@@ -7,8 +7,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <summary>
 /// A plan for narrowing a candidate row set using a backend's security-label index (design §14.4), for the
 /// backends whose query language cannot express a <see cref="SecurityRule"/> directly. It is produced by
-/// <see cref="SecurityLabelQueryEmitter"/> and consumed by <see cref="SecurityLabelQueryResolver"/>; a backend
-/// supplies only the two lookups on <see cref="ISecurityLabelIndex"/> and never inspects this structure.
+/// <see cref="SecurityLabelQueryEmitter"/> and consumed in one of two ways, so a backend never inspects this
+/// structure itself: a point-lookup backend supplies the two lookups on <see cref="ISecurityLabelIndex"/> to
+/// <see cref="SecurityLabelQueryResolver"/>, and a backend with native set operations (Redis) executes the flat
+/// program <see cref="Compile"/> emits.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -158,6 +160,71 @@ public sealed class SecurityLabelQuery
         }
 
         return new SecurityLabelQuery(QueryKind.Intersect, null, null, Combine(QueryKind.Intersect, left, right));
+    }
+
+    /// <summary>
+    /// Compiles the plan to a flat postfix program for a backend that executes the set algebra natively
+    /// (server-side set operations) rather than supplying point lookups to <see cref="SecurityLabelQueryResolver"/>.
+    /// </summary>
+    /// <remarks>
+    /// The program mirrors the resolver's contract: <see langword="null"/> means the plan is
+    /// <see cref="Universe"/> — the index cannot narrow, and the caller should run its unnarrowed query — and an
+    /// empty program means the plan is <see cref="Empty"/> — no row qualifies, and the caller should answer
+    /// without querying. A non-empty program contains only pushes and set operations, because
+    /// <see cref="Union(SecurityLabelQuery, SecurityLabelQuery)"/> and
+    /// <see cref="Intersect(SecurityLabelQuery, SecurityLabelQuery)"/> collapse the identities at construction,
+    /// so <see cref="Universe"/> and <see cref="Empty"/> can only ever be the root. Executing it over a stack —
+    /// pushes look up a label set, operations pop <see cref="SecurityLabelInstruction.Count"/> sets and push the
+    /// combined set — leaves the candidate set as the single remaining entry.
+    /// </remarks>
+    /// <returns>The program, or <see langword="null"/> for "no narrowing possible".</returns>
+    public IReadOnlyList<SecurityLabelInstruction>? Compile()
+    {
+        if (this.kind == QueryKind.Universe)
+        {
+            return null;
+        }
+
+        if (this.kind == QueryKind.Empty)
+        {
+            return [];
+        }
+
+        var program = new List<SecurityLabelInstruction>();
+        Emit(this, program);
+        return program;
+
+        static void Emit(SecurityLabelQuery node, List<SecurityLabelInstruction> program)
+        {
+            switch (node.kind)
+            {
+                case QueryKind.Label:
+                    program.Add(new(SecurityLabelInstructionKind.PushLabel, node.key, node.value, 0));
+                    break;
+
+                case QueryKind.AnyValueOfKey:
+                    program.Add(new(SecurityLabelInstructionKind.PushKey, node.key, null, 0));
+                    break;
+
+                case QueryKind.Union:
+                case QueryKind.Intersect:
+                    foreach (SecurityLabelQuery child in node.Children)
+                    {
+                        Emit(child, program);
+                    }
+
+                    program.Add(new(
+                        node.kind == QueryKind.Union ? SecurityLabelInstructionKind.Union : SecurityLabelInstructionKind.Intersect,
+                        null,
+                        null,
+                        node.Children.Count));
+                    break;
+
+                default:
+                    // The factories collapse Universe and Empty at construction, so neither can sit below the root.
+                    throw new System.Diagnostics.UnreachableException();
+            }
+        }
     }
 
     // Flattens same-kind children so a long chain of binary ANDs resolves as one n-ary intersection rather than

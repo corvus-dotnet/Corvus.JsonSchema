@@ -154,8 +154,11 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   exact evaluation then runs over the candidates it returns, so an imprecise plan costs throughput and can never
   widen reach; the deployment's mandated wrapper rule (§14.3) maps to an exact label, which is what keeps a
   query inside its tenant however far the user rule degrades. Azure Storage does this for both its run and
-  catalog stores (`arazzolabels` / `arazzocataloglabels`). Redis and NATS still stream-and-filter per row,
-  which is a gap rather than a design choice. InMemory streams and filters because it *is* the memory.
+  catalog stores (`arazzolabels` / `arazzocataloglabels`). Redis does it for runs with a SET per label,
+  maintained inside the atomic save script and resolved server-side in one read-only Lua evaluation of the
+  compiled plan (`SecurityLabelQuery.Compile`), so only the final candidate set crosses the wire; its catalog
+  store and NATS still stream-and-filter per row, which is a gap rather than a design choice. InMemory streams
+  and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag

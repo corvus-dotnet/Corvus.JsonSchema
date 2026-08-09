@@ -27,9 +27,17 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
     private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
-    // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes. Returns the new
-    // version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset. ARGV: id, expected ("" = create),
-    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"", securityTagsJson|"", environment|"", resumeRequestedAt|"".
+    // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes and the §14.4
+    // security-label sets. Returns the new version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset.
+    // ARGV: id, expected ("" = create), checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"", securityTagsJson|"", environment|"", resumeRequestedAt|"".
+    //
+    // The label diff decodes the persisted tag JSON with cjson only when it changed; a run's security tags are
+    // fixed at creation, so the common checkpoint path is one string comparison and no set touches. The set
+    // names ('arazzo:label:v:' .. byte-length .. ':' .. key .. value, and 'arazzo:label:k:' .. key) must match
+    // RedisSecurityLabels byte-for-byte — Lua's # is the UTF-8 byte length of the decoded tag string, which is
+    // why the C# side prefixes with GetByteCount, and the length prefix is what keeps the concatenation
+    // injective. Running inside the atomic script, the diff cannot be interrupted between row and label, which
+    // is stronger than the add-before-visible/remove-after ordering the non-atomic backends rely on.
     private const string SaveScript =
         """
         local cur = redis.call('HGET', KEYS[1], 'version')
@@ -42,6 +50,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             newVersion = tonumber(cur) + 1
         end
         local oldChannel = redis.call('HGET', KEYS[1], 'awaiting_channel')
+        local oldSecurity = redis.call('HGET', KEYS[1], 'security_tags_json') or ''
         redis.call('HSET', KEYS[1], 'checkpoint', ARGV[3], 'version', newVersion, 'status', ARGV[4], 'workflow_id', ARGV[5], 'created_at', ARGV[6], 'updated_at', ARGV[7])
         if ARGV[8] ~= '' then redis.call('HSET', KEYS[1], 'due_at', ARGV[8]) else redis.call('HDEL', KEYS[1], 'due_at') end
         if ARGV[9] ~= '' then redis.call('HSET', KEYS[1], 'awaiting_channel', ARGV[9]) else redis.call('HDEL', KEYS[1], 'awaiting_channel') end
@@ -56,6 +65,22 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if ARGV[4] == 'Suspended' and ARGV[8] ~= '' then redis.call('ZADD', KEYS[3], ARGV[8], ARGV[1]) else redis.call('ZREM', KEYS[3], ARGV[1]) end
         if oldChannel then redis.call('SREM', 'arazzo:awaiting:' .. oldChannel, ARGV[1]) end
         if ARGV[4] == 'Suspended' and ARGV[9] ~= '' then redis.call('SADD', 'arazzo:awaiting:' .. ARGV[9], ARGV[1]) end
+        if oldSecurity ~= ARGV[14] then
+            local function labelKeys(json)
+                local keys = {}
+                if json ~= '' then
+                    for _, tag in ipairs(cjson.decode(json)) do
+                        keys['arazzo:label:v:' .. #tag.key .. ':' .. tag.key .. tag.value] = true
+                        keys['arazzo:label:k:' .. tag.key] = true
+                    end
+                end
+                return keys
+            end
+            local oldKeys = labelKeys(oldSecurity)
+            local newKeys = labelKeys(ARGV[14])
+            for k in pairs(newKeys) do if not oldKeys[k] then redis.call('SADD', k, ARGV[1]) end end
+            for k in pairs(oldKeys) do if not newKeys[k] then redis.call('SREM', k, ARGV[1]) end end
+        end
         return newVersion
         """;
 
@@ -276,7 +301,14 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue channel = await this.database.HashGetAsync(RunKey(id.Value), "awaiting_channel").ConfigureAwait(false);
+
+        // Read the run's labels while its hash still exists, then drop the hash before its label entries — the
+        // §14.4 ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it,
+        // whereas dropping labels first would strand a still-visible run.
+        RedisValue[] pre = await this.database.HashGetAsync(RunKey(id.Value), ["awaiting_channel", "security_tags_json"]).ConfigureAwait(false);
+        RedisValue channel = pre[0];
+        SecurityTagSet securityTags = pre[1].IsNull ? default : SecurityTagSet.FromJsonStringOrEmpty((string)pre[1]!);
+
         await this.database.KeyDeleteAsync(RunKey(id.Value)).ConfigureAwait(false);
         await this.database.KeyDeleteAsync(LeaseKey(id.Value)).ConfigureAwait(false);
         await this.database.SetRemoveAsync(AllKey, id.Value).ConfigureAwait(false);
@@ -284,6 +316,11 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if (!channel.IsNull)
         {
             await this.database.SetRemoveAsync(AwaitingKey(channel!), id.Value).ConfigureAwait(false);
+        }
+
+        foreach (string setKey in RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.RunLabelPrefix, securityTags))
+        {
+            await this.database.SetRemoveAsync(setKey, id.Value).ConfigureAwait(false);
         }
     }
 
@@ -429,8 +466,27 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
         }
 
-        RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
-        string[] ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
+        // §14.4: narrow to the candidate runs the label sets admit before reading anything. A null answer means
+        // the index could not narrow and the sweep runs as it always did; an empty one means no run qualifies,
+        // so the page is empty without a single hash read. With candidates in hand the all-runs set is not even
+        // consulted — the candidates ARE the ids to consider, and a stale label entry resolves to a hash that no
+        // longer exists, which the empty-hash skip below already discards.
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.RunLabelPrefix, query.Security).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return WorkflowContinuationToken.Paginate([], query.Limit);
+        }
+
+        string[] ids;
+        if (candidates is null)
+        {
+            RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+            ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
+        }
+        else
+        {
+            ids = [.. candidates.OrderBy(static s => s, StringComparer.Ordinal)];
+        }
 
         var runs = new List<WorkflowRunListing>();
         foreach (string id in ids)
@@ -479,15 +535,31 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
     {
-        RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+        // Same narrowing as the list, so a count can never consider a run the list would not have shown (§14.4).
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.RunLabelPrefix, query.Security).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        IEnumerable<string> ids;
+        if (candidates is null)
+        {
+            RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+            ids = members.Select(v => (string)v!);
+        }
+        else
+        {
+            ids = candidates;
+        }
 
         // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
         // one past the cap. No client-side sort needed — a count is order-independent.
         int count = 0;
-        foreach (RedisValue member in members)
+        foreach (string member in ids)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey((string)member!)).ConfigureAwait(false);
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(member)).ConfigureAwait(false);
             if (entries.Length == 0)
             {
                 continue;
@@ -563,8 +635,9 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             return false;
         }
 
-        // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach filter
-        // in process over the persisted security tags — the only correct option for a key/value backend.
+        // Row-security reach (§14.2): the exact evaluation over the run's persisted tags. Redis cannot filter
+        // inside the serialized tag JSON, so the query first narrows to the candidates the label sets admit
+        // (§14.4) and this check then decides each one — an imprecise plan costs throughput, never reach.
         SecurityTagSet securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default;
         return query.Security is not { } security || security.IsSatisfiedBy(securityTags);
     }
