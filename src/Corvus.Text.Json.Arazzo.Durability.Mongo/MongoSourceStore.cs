@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -20,12 +19,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// queryable scalar fields, and the etag travels in a queryable field as well as inside the document.
 /// </summary>
 /// <remarks>
-/// Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — applied in memory
-/// over the small candidate set for a name, since a deployment keeps those reach-disjoint. The driver pools connections
-/// internally, so the store is naturally concurrent.
+/// Management point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory over
+/// the small candidate set for a name, since a deployment keeps those reach-disjoint; list/count push the reach into
+/// the query over the multikey-indexed <c>securityTags</c> mirror (the same predicate, applied by the server), so
+/// out-of-reach rows never leave the store. The driver pools connections internally, so the store is naturally
+/// concurrent.
 /// </remarks>
 public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
 {
+    // The §14.2 reach predicate translated to a Mongo filter over the securityTags mirror ({ k, v } array elements).
+    // The emitter is immutable, so one instance serves every query.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
+
     private readonly IMongoClient client;
     private readonly bool ownsClient;
     private readonly TimeProvider timeProvider;
@@ -111,6 +116,10 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
             ["name"] = draft.NameValue,
             ["tags"] = tags,
             ["etag"] = etag.Value!,
+
+            // The queryable mirror of the management tags the §14.2 list/count reach predicate evaluates server-side;
+            // a re-tagging update re-sets it in step (see UpdateAsync).
+            ["securityTags"] = MongoSecurityTags.ToBson(draft.ManagementTagsValue),
             ["doc"] = new BsonBinaryData(json),
         };
         try
@@ -159,16 +168,23 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
                 b.And(b.Eq("_id.n", cursor.Name), b.Gt("_id.t", cursor.TieBreaker)));
         }
 
+        // The §14.2 read reach pushed into the query over the securityTags mirror (the same predicate context.Admits
+        // evaluates, but applied by the server against the multikey index), so out-of-reach rows never leave the
+        // store and the server-side limit is a true page bound.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter = b.And(filter, reach.ToPredicate(SecurityEmitter));
+        }
+
         SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Ascending("_id.n").Ascending("_id.t");
 
         var docs = new PooledDocumentList<RegisteredSource>(pageSize);
         bool hasMore = false;
         try
         {
-            // Reach (§14.2) is a per-row predicate applied in memory as we stream; the cursor is consumed only until the
-            // page fills, so we read ≈ pageSize / selectivity rows rather than the whole collection. A FURTHER visible row
-            // beyond the page is the signal to emit a continuation token — the row key of the last *included* source.
-            using IAsyncCursor<BsonDocument> mongoCursor = await this.sources.Find(filter).Sort(sort).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            // Every row the cursor yields is already admitted, so the loop is a pure page fill; the (pageSize + 1)th
+            // row is the lookahead that signals a continuation token — the row key of the last *included* source.
+            using IAsyncCursor<BsonDocument> mongoCursor = await this.sources.Find(filter).Sort(sort).Limit(pageSize + 1).ToCursorAsync(cancellationToken).ConfigureAwait(false);
             string lastName = string.Empty, lastTags = string.Empty;
             bool stop = false;
             while (!stop && await mongoCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
@@ -180,14 +196,6 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
                     bool kept = false;
                     try
                     {
-                        SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!context.Admits(AccessVerb.Read, tags))
-                        {
-                            continue;
-                        }
-
                         if (docs.Count == pageSize)
                         {
                             hasMore = true;
@@ -235,9 +243,18 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
         }
 
         byte[] json = SourceSerialization.SerializeUpdated(existing, name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        var update = Builders<BsonDocument>.Update
+        UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update
             .Set("etag", SourceSerialization.EtagOf(json).Value!)
             .Set("doc", new BsonBinaryData(json));
+
+        // A draft that supplies management tags re-tags the row's reach scope (a store-level replace; an omitted set
+        // is carried forward), so the securityTags mirror the list/count reach predicate reads is re-set in the same
+        // write — left stale, the listing keeps deciding by the old tags and drifts from this store's own get.
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            update = update.Set("securityTags", MongoSecurityTags.ToBson(draft.ManagementTagsValue));
+        }
+
         await this.sources.UpdateOneAsync(
             Builders<BsonDocument>.Filter.Eq("_id", Key(name, tags!)),
             update,
@@ -266,6 +283,25 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
             Builders<BsonDocument>.Filter.Eq("_id", Key(name, tags!)),
             cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Empty;
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter = reach.ToPredicate(SecurityEmitter);
+        }
+
+        // A native bounded count: the same reach predicate the list pushes down, with the server told to stop counting
+        // one row past the cap — the (cap + 1)th admitted row trips Capped.
+        long total = await this.sources.CountDocumentsAsync(
+            filter,
+            new CountOptions { Limit = cap + 1 },
+            cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -314,6 +350,11 @@ public sealed class MongoSourceStore : ISourceStore, IAsyncDisposable
     private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)
     {
         var byName = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("name"));
-        await this.sources.Indexes.CreateOneAsync(byName, options: null, cancellationToken).ConfigureAwait(false);
+
+        // Multikey index over the securityTags mirror so the pushed-down §14.2 reach predicate is an index lookup, not
+        // a collection scan.
+        var bySecurityTags = new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("securityTags.k").Ascending("securityTags.v"));
+        await this.sources.Indexes.CreateManyAsync([byName, bySecurityTags], cancellationToken).ConfigureAwait(false);
     }
 }

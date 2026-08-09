@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -18,15 +17,20 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// inside the document, for the optimistic-concurrency check.
 /// </summary>
 /// <remarks>
-/// Reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — applied in memory over the
-/// single document for an id (a working copy outside reach is reported as absent, non-disclosing), and per row in keyset
-/// order for the list. Because every query is on the <c>_id</c> (the automatic primary index), the store needs no
-/// secondary index and so no provisioning step: the operational user needs only <c>readWrite</c>. The driver pools
-/// connections internally, so the store is naturally concurrent. The document is carried bytes-to-bytes (#803): rows
-/// bind the raw JSON as a BSON binary and read it straight back, never a per-op re-parse into BSON.
+/// Point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory over the single
+/// document for an id (a working copy outside reach is reported as absent, non-disclosing); list/count push the reach
+/// into the query over the multikey-indexed <c>securityTags</c> mirror (the same predicate, applied by the server), so
+/// out-of-reach rows never leave the store — which is why the store now has a <see cref="PrepareAsync(string, string, CancellationToken)"/>
+/// provisioning step for that index. The driver pools connections internally, so the store is naturally concurrent.
+/// The document is carried bytes-to-bytes (#803): rows bind the raw JSON as a BSON binary and read it straight back,
+/// never a per-op re-parse into BSON.
 /// </remarks>
 public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyncDisposable
 {
+    // The §14.2 reach predicate translated to a Mongo filter over the securityTags mirror ({ k, v } array elements).
+    // The emitter is immutable, so one instance serves every query.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
+
     private readonly IMongoClient client;
     private readonly bool ownsClient;
     private readonly TimeProvider timeProvider;
@@ -39,6 +43,37 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
         this.timeProvider = timeProvider;
         IMongoDatabase database = client.GetDatabase(databaseName);
         this.workingCopies = database.GetCollection<BsonDocument>("workspaceWorkflows");
+    }
+
+    /// <summary>Provisions the store's indexes over a connection string.</summary>
+    /// <remarks>
+    /// Creating indexes requires the <c>createIndex</c> privilege, so run this once at deploy/migration time, separately
+    /// from the least-privileged user used to <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/>
+    /// the store for operation. (The collection itself is created lazily on first write, so the operational user needs
+    /// only <c>readWrite</c>.)
+    /// </remarks>
+    /// <param name="connectionString">A MongoDB connection string for a user permitted to create indexes.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the indexes exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(string connectionString, string databaseName = "arazzo", CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var client = new MongoClient(connectionString);
+        await using var store = new MongoWorkspaceWorkflowStore(client, databaseName, ownsClient: true, TimeProvider.System);
+        await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Provisions the store's indexes over a caller-supplied client (the caller retains ownership).</summary>
+    /// <param name="client">A configured MongoDB client permitted to create indexes.</param>
+    /// <param name="databaseName">The database to use; defaults to <c>arazzo</c>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes once the indexes exist (the operation is idempotent).</returns>
+    public static async ValueTask PrepareAsync(IMongoClient client, string databaseName = "arazzo", CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        await using var store = new MongoWorkspaceWorkflowStore(client, databaseName, ownsClient: false, TimeProvider.System);
+        await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against a database.</summary>
@@ -83,6 +118,10 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
         {
             ["_id"] = id,
             ["etag"] = etag.Value!,
+
+            // The queryable mirror of the management tags the §14.2 list/count reach predicate evaluates server-side;
+            // the tags are immutable on save, so the mirror never needs an update-side re-sync.
+            ["securityTags"] = MongoSecurityTags.ToBson(draft.ManagementTagsValue),
             ["doc"] = new BsonBinaryData(json),
         };
         await this.workingCopies.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -117,16 +156,24 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
         // key we hand back.
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
         FilterDefinition<BsonDocument> filter = hasCursor ? b.Gt("_id", cursor.Id) : b.Empty;
+
+        // The §14.2 read reach pushed into the query over the securityTags mirror (the same predicate context.Admits
+        // evaluates, but applied by the server against the multikey index), so out-of-reach rows never leave the
+        // store and the server-side limit is a true page bound.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter = b.And(filter, reach.ToPredicate(SecurityEmitter));
+        }
+
         SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Ascending("_id");
 
         var docs = new PooledDocumentList<WorkspaceWorkflow>(pageSize);
         bool hasMore = false;
         try
         {
-            // Reach (§14.2) is a per-row predicate applied in memory as we stream; the cursor is consumed only until the
-            // page fills, so we read ≈ pageSize / selectivity rows rather than the whole collection. A FURTHER visible row
-            // beyond the page is the signal to emit a continuation token — the row key of the last *included* working copy.
-            using IAsyncCursor<BsonDocument> mongoCursor = await this.workingCopies.Find(filter).Sort(sort).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            // Every row the cursor yields is already admitted, so the loop is a pure page fill; the (pageSize + 1)th
+            // row is the lookahead that signals a continuation token — the row key of the last *included* working copy.
+            using IAsyncCursor<BsonDocument> mongoCursor = await this.workingCopies.Find(filter).Sort(sort).Limit(pageSize + 1).ToCursorAsync(cancellationToken).ConfigureAwait(false);
             string lastId = string.Empty;
             bool stop = false;
             while (!stop && await mongoCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
@@ -138,14 +185,6 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
                     bool kept = false;
                     try
                     {
-                        SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!context.Admits(AccessVerb.Read, tags))
-                        {
-                            continue;
-                        }
-
                         if (docs.Count == pageSize)
                         {
                             hasMore = true;
@@ -225,6 +264,25 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Empty;
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter = reach.ToPredicate(SecurityEmitter);
+        }
+
+        // A native bounded count: the same reach predicate the list pushes down, with the server told to stop counting
+        // one row past the cap — the (cap + 1)th admitted row trips Capped.
+        long total = await this.workingCopies.CountDocumentsAsync(
+            filter,
+            new CountOptions { Limit = cap + 1 },
+            cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)
@@ -236,6 +294,15 @@ public sealed class MongoWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)
+    {
+        // Multikey index over the securityTags mirror so the pushed-down §14.2 reach predicate is an index lookup, not
+        // a collection scan.
+        var bySecurityTags = new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("securityTags.k").Ascending("securityTags.v"));
+        await this.workingCopies.Indexes.CreateOneAsync(bySecurityTags, options: null, cancellationToken).ConfigureAwait(false);
+    }
 
     // Finds the single working copy with the given id the caller's reach for the verb admits, returning its bytes (the id
     // is the sole key — the _id — so a scalar lookup suffices). A working copy outside reach is invisible (non-disclosing).

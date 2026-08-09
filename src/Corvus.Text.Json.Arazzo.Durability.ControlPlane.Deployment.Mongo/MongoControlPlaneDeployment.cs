@@ -64,8 +64,7 @@ public static class MongoControlPlaneDeployment
 
         // MongoDB creates collections lazily on first write, so only the stores that need explicit index setup are
         // prepared here; the rest (RunnerRegistry, EnvironmentRunnerAuthorizationStore, DraftRunStore,
-        // DraftRunTraceStore, WorkspaceWorkflowStore, SecurityPolicyStore, AccessRequestStore,
-        // AvailabilityRequestStore) auto-create.
+        // DraftRunTraceStore, SecurityPolicyStore, AccessRequestStore, AvailabilityRequestStore) auto-create.
         await MongoWorkflowStateStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoWorkflowCatalogStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoSourceCredentialStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
@@ -75,5 +74,6 @@ public static class MongoControlPlaneDeployment
         await MongoSourceStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoEnvironmentAdministratorStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoObservedIdentityStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
+        await MongoWorkspaceWorkflowStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
     }
 }

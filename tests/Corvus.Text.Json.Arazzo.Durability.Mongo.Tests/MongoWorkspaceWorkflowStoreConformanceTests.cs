@@ -43,9 +43,8 @@ public sealed class MongoWorkspaceWorkflowStoreConformanceTests : WorkspaceWorkf
     /// <inheritdoc/>
     protected override async ValueTask<IWorkspaceWorkflowStore> CreateStoreAsync(TimeProvider timeProvider)
     {
-        // The working-copy store keys and pages purely on the automatic _id index, so there is nothing to provision —
-        // dropping the collection is a fresh, empty store.
         await client.GetDatabase(DatabaseName).DropCollectionAsync("workspaceWorkflows");
+        await MongoWorkspaceWorkflowStore.PrepareAsync(client, DatabaseName);
         return await MongoWorkspaceWorkflowStore.ConnectAsync(client, DatabaseName, timeProvider);
     }
 }
