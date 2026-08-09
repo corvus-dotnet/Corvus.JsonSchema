@@ -5,7 +5,7 @@
 using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
-using Corvus.Runtime.InteropServices;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Microsoft.Azure.Cosmos;
@@ -23,10 +23,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// flows through Corvus.Text.Json.
 /// </summary>
 /// <remarks>
-/// Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — applied in memory
-/// over the single document for an id (a working copy outside reach is reported as absent, non-disclosing), and per row
-/// in keyset order for the list. Because the id is the whole key, a management lookup is a point read
-/// (<see cref="Container.ReadItemStreamAsync"/>) and the list keyset-seeks server-side on the id. Optimistic concurrency
+/// Management point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory over
+/// the single document for an id (a working copy outside reach is reported as absent, non-disclosing); list/count push
+/// the reach into the query as an <c>EXISTS</c> over the envelope's <c>securityTags</c> mirror (the same predicate,
+/// applied by Cosmos), so out-of-reach rows never leave the store. Because the id is the whole key, a management
+/// lookup is a point read (<see cref="Container.ReadItemStreamAsync"/>) and the list keyset-seeks server-side on the
+/// id with a server-side page bound. Optimistic concurrency
 /// is the etag carried inside the document, checked in process by <see cref="WorkspaceWorkflowSerialization"/> (a stale
 /// save/delete throws <see cref="WorkspaceWorkflowConflictException"/>) rather than a Cosmos <c>If-Match</c> — mirroring
 /// the sibling backends, so the shared conformance contract holds. The document is carried bytes-to-bytes (#803):
@@ -155,12 +157,32 @@ public sealed class CosmosWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsy
         }
 
         // Keyset seek in the id total order — the id is globally unique, so it is the whole key (the tie-breaker is
-        // empty) and is fully seekable/orderable server-side (it is both the item id and the partition key). The query
-        // seeks strictly past the cursor id; reach cannot be pushed to Cosmos so it is a per-row check applied in memory
-        // as we stream, and streaming stops once a further visible row beyond the page is seen.
-        QueryDefinition query = hasCursor
-            ? new QueryDefinition("SELECT c.doc FROM c WHERE c.pk > @id ORDER BY c.pk").WithParameter("@id", cursor.Id)
-            : new QueryDefinition("SELECT c.doc FROM c ORDER BY c.pk");
+        // empty) and is fully seekable/orderable server-side (it is both the item id and the partition key). The §14.2
+        // read reach is pushed into the query as an EXISTS over the envelope's securityTags mirror (the same predicate
+        // context.Admits evaluates, but applied by Cosmos), so with the cursor also fully server-side the page read is
+        // bounded server-side to the page plus its lookahead row.
+        var conditions = new List<string>(2);
+        var parameters = new List<(string Name, string Value)>();
+        if (hasCursor)
+        {
+            conditions.Add("c.pk > @id");
+            parameters.Add(("@id", cursor.Id));
+        }
+
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.doc FROM c");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY c.pk OFFSET 0 LIMIT @limit");
+        var query = new QueryDefinition(sql.ToString()).WithParameter("@limit", pageSize + 1);
+        foreach ((string name, string value) in parameters)
+        {
+            query = query.WithParameter(name, value);
+        }
 
         var docs = new PooledDocumentList<WorkspaceWorkflow>(pageSize);
         bool hasMore = false;
@@ -174,14 +196,6 @@ public sealed class CosmosWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsy
                 try
                 {
                     string id = cand.RootElement.IdValue;
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
                     if (docs.Count == pageSize)
                     {
                         hasMore = true;
@@ -269,6 +283,43 @@ public sealed class CosmosWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsy
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var conditions = new List<string>(1);
+        var parameters = new List<(string Name, string Value)>();
+        AppendReachCondition(conditions, parameters, context);
+
+        // Bounded count: Cosmos has no bounded server-side COUNT, so read at most cap + 1 admitted row markers and
+        // count them client-side; the (cap + 1)th trips Capped. Same reach predicate as the list
+        // (AppendReachCondition) — the count can never drift from the list it annotates.
+        var sql = new StringBuilder("SELECT VALUE 1 FROM c");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" OFFSET 0 LIMIT @cap");
+        var query = new QueryDefinition(sql.ToString()).WithParameter("@cap", cap + 1);
+        foreach ((string name, string value) in parameters)
+        {
+            query = query.WithParameter(name, value);
+        }
+
+        int total = 0;
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            total += CosmosJson.ReadDocuments(page.Memory).Count;
+        }
+
+        return total > cap ? (cap, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient)
@@ -281,22 +332,35 @@ public sealed class CosmosWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsy
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
-    // Serializes the {id, pk, doc} envelope into a pooled stream and builds the caller's pooled return document from the
-    // same working-copy bytes. The working copy's document is embedded verbatim (no SDK serializer); the id is the item
-    // id and (as pk) the partition key ListAsync seeks/orders on. On any failure building the stream, the return document
-    // is disposed before the exception escapes.
+    // Serializes the {id, pk, securityTags, doc} envelope into a pooled stream and builds the caller's pooled return
+    // document from the same working-copy bytes. The working copy's document is embedded verbatim (no SDK serializer);
+    // the id is the item id and (as pk) the partition key ListAsync seeks/orders on; securityTags mirrors the
+    // document's management tags queryably so the §14.2 reach predicate can be pushed into list/count (the tags are
+    // immutable on save, so the mirror never drifts). On any failure building the stream, the return document is
+    // disposed before the exception escapes.
     private static Stream EnvelopeStream(string id, byte[] doc, out ParsedJsonDocument<WorkspaceWorkflow> document)
     {
         document = PersistedJson.ToPooledDocument<WorkspaceWorkflow>(doc);
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Doc: doc),
-                static (Utf8JsonWriter writer, in (string Id, byte[] Doc) c) =>
+                (Id: id, Tags: document.RootElement.ManagementTagsValue, Doc: doc),
+                static (Utf8JsonWriter writer, in (string Id, SecurityTagSet Tags, byte[] Doc) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Id);
+                    writer.WritePropertyName("securityTags"u8);
+                    writer.WriteStartArray();
+                    foreach (SecurityTag tag in c.Tags)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("k"u8, tag.Key);
+                        writer.WriteString("v"u8, tag.Value);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
 
                     // The working-copy document is itself JSON, so embed it verbatim as a nested value — no base64 wrap
                     // (which would be a spurious encode here + decode on read). It is valid JSON we produced, so skip
@@ -311,6 +375,26 @@ public sealed class CosmosWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsy
             document.Dispose();
             throw;
         }
+    }
+
+    // Appends the §14.2 read-reach predicate: an EXISTS over the envelope's securityTags mirror (the same rules
+    // context.Admits evaluates, translated by CosmosSecurityRuleEmitter). A null reach (unrestricted) adds nothing.
+    // Shared by ListAsync and CountAsync so the count can never drift from the list it annotates.
+    private static void AppendReachCondition(List<string> conditions, List<(string Name, string Value)> parameters, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+        {
+            string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+            parameters.Add((name, value));
+            return name;
+        });
+        conditions.Add(reach.ToSqlPredicate(emitter));
     }
 
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)

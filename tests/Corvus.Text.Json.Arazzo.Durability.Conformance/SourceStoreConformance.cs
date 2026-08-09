@@ -297,6 +297,38 @@ public abstract class SourceStoreConformance
     }
 
     [TestMethod]
+    public async Task An_update_and_delete_still_address_the_row_after_a_re_tag()
+    {
+        ISourceStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "petstore", "system", Tenant("acme"));
+
+        // Re-tag, then keep operating on the row. The row's storage identity is its frozen create-time key; a store
+        // that re-derives that key from the row's current tags loses the row the moment a re-tag changes them.
+        using (ParsedJsonDocument<RegisteredSource> reTag = RegisteredSource.Draft("petstore", null, default, null, null, Tenant("globex")))
+        using (ParsedJsonDocument<RegisteredSource>? updated = await store.UpdateAsync("petstore", reTag.RootElement, WorkflowEtag.None, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+        }
+
+        // A subsequent ordinary update must still find and replace the same row...
+        using (ParsedJsonDocument<RegisteredSource> rename = RegisteredSource.Draft("petstore", null, default, "renamed", null, SecurityTagSet.Empty))
+        using (ParsedJsonDocument<RegisteredSource>? renamed = await store.UpdateAsync("petstore", rename.RootElement, WorkflowEtag.None, "dave", AccessContext.System, default))
+        {
+            renamed.ShouldNotBeNull();
+            renamed!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
+        }
+
+        // ...and a delete must actually remove it (a delete that misses the row but reports true would leave it
+        // behind for every future read).
+        (await store.DeleteAsync("petstore", WorkflowEtag.None, AccessContext.System, default)).ShouldBeTrue();
+        (await store.GetAsync("petstore", AccessContext.System, default)).ShouldBeNull();
+        using (SourcePage page = await store.ListAsync(AccessContext.System, 10, default, default))
+        {
+            page.Sources.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
     public async Task Management_reads_are_reach_filtered_and_non_disclosing()
     {
         ISourceStore store = await this.NewStoreAsync();

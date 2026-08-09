@@ -334,6 +334,38 @@ public abstract class EnvironmentStoreConformance
     }
 
     [TestMethod]
+    public async Task An_update_and_delete_still_address_the_row_after_a_re_tag()
+    {
+        IEnvironmentStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "production", "system", Tenant("acme"));
+
+        // Re-tag, then keep operating on the row. The row's storage identity is its frozen create-time key; a store
+        // that re-derives that key from the row's current tags loses the row the moment a re-tag changes them.
+        using (ParsedJsonDocument<Environment> reTag = Environment.Draft("production", null, null, Tenant("globex")))
+        using (ParsedJsonDocument<Environment>? updated = await store.UpdateAsync("production", reTag.RootElement, WorkflowEtag.None, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+        }
+
+        // A subsequent ordinary update must still find and replace the same row...
+        using (ParsedJsonDocument<Environment> rename = Environment.Draft("production", "renamed", null, SecurityTagSet.Empty))
+        using (ParsedJsonDocument<Environment>? renamed = await store.UpdateAsync("production", rename.RootElement, WorkflowEtag.None, "dave", AccessContext.System, default))
+        {
+            renamed.ShouldNotBeNull();
+            renamed!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
+        }
+
+        // ...and a delete must actually remove it (a delete that misses the row but reports true would leave it
+        // behind for every future read).
+        (await store.DeleteAsync("production", WorkflowEtag.None, AccessContext.System, default)).ShouldBeTrue();
+        (await store.GetAsync("production", AccessContext.System, default)).ShouldBeNull();
+        using (EnvironmentPage page = await store.ListAsync(AccessContext.System, 10, default, default))
+        {
+            page.Environments.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
     public async Task Management_reads_are_reach_filtered_and_non_disclosing()
     {
         IEnvironmentStore store = await this.NewStoreAsync();

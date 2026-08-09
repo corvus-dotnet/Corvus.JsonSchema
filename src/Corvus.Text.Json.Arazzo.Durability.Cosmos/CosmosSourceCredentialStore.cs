@@ -7,7 +7,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
-using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -26,16 +25,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// read through the Cosmos <em>stream</em> APIs (no SDK serializer), so persistence flows through Corvus.Text.Json.
 /// </summary>
 /// <remarks>
-/// Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) and the usage path by
-/// label-superset — applied in memory over the candidate set for a (sourceName, environment), since a deployment keeps
-/// those reach-disjoint. The document id is a deterministic, opaque hash of the tag discriminator, so a duplicate
-/// (sourceName, environment, tags) create collides on the item id and surfaces as a <see cref="HttpStatusCode.Conflict"/>.
+/// Management point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) and the usage
+/// path by label-superset — applied in memory over the bounded candidate set for a (sourceName, environment), since a
+/// deployment keeps those reach-disjoint; list/count push the management reach into the query as an <c>EXISTS</c> over
+/// the envelope's <c>securityTags</c> mirror (the same predicate, applied by Cosmos), so out-of-reach rows never leave
+/// the store. The document id is a deterministic, opaque hash of the tag discriminator, so a duplicate (sourceName,
+/// environment, tags) create collides on the item id and surfaces as a <see cref="HttpStatusCode.Conflict"/>; the
+/// discriminator itself is stored on the envelope (<c>tags</c>) so later updates and deletes keep addressing the row
+/// after a re-tag changes the document's management tags.
 /// </remarks>
 public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsyncDisposable
 {
     private const string ContainerId = "workflow_credentials";
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
+    private static readonly byte[] TagsProperty = "tags"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container container;
@@ -119,7 +123,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         string itemId = ItemId(tags);
         byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using Stream stream = EnvelopeStream(itemId, partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        using Stream stream = EnvelopeStream(itemId, partition, tags, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.CreateItemStreamAsync(stream, new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -161,48 +165,64 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             hasCursor = SourceCredentialContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
         }
 
-        // Keyset seek in the stable total order (sourceName, environment, discriminator). Cosmos cannot push the
-        // security-reach predicate — reach is a per-row check applied in memory as we stream — and the discriminator is
-        // not a stored envelope property (it is recomputed from each binding's own immutable tags), so only the first
-        // two key parts are seekable/orderable server-side. The query seeks past the cursor's (sourceName, environment)
-        // and re-includes the cursor's exact (sourceName, environment) so the in-memory tie-breaker comparison can skip
-        // rows up to and including it; the cross-partition ORDER BY needs a composite index on (sourceName, environment)
-        // (a deployment concern). Streaming stops once a further visible row beyond the page is seen, so we read only as
-        // far as the page (plus one) requires, never the whole container.
-        QueryDefinition query = hasCursor
-            ? new QueryDefinition(
-                    "SELECT c.doc FROM c WHERE c.sourceName > @s OR (c.sourceName = @s AND c.environment >= @e) ORDER BY c.sourceName, c.environment")
-                .WithParameter("@s", cursor.SourceName)
-                .WithParameter("@e", cursor.Environment)
-            : new QueryDefinition("SELECT c.doc FROM c ORDER BY c.sourceName, c.environment");
+        // Keyset seek in the stable total order (sourceName, environment, discriminator), with the §14.2 management
+        // read reach pushed into the query as an EXISTS over the envelope's securityTags mirror (the same predicate
+        // context.Admits evaluates, but applied by Cosmos), so out-of-reach rows never leave the store. Only the first
+        // two key parts are orderable server-side (the discriminator tie-break needs a composite index Cosmos is not
+        // provisioned with), so the query seeks past the cursor's (sourceName, environment), re-includes the cursor's
+        // exact pair, and the in-memory comparison below skips the bounded few same-pair rows at or before the cursor;
+        // the cross-partition ORDER BY needs a composite index on (sourceName, environment) (a deployment concern).
+        // Streaming stops once a further admitted row beyond the page is seen, so we read only as far as the page
+        // (plus one) requires, never the whole container.
+        var conditions = new List<string>(2);
+        var parameters = new List<(string Name, string Value)>();
+        if (hasCursor)
+        {
+            conditions.Add("(c.sourceName > @s OR (c.sourceName = @s AND c.environment >= @e))");
+            parameters.Add(("@s", cursor.SourceName));
+            parameters.Add(("@e", cursor.Environment));
+        }
+
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.doc, c.tags FROM c");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY c.sourceName, c.environment");
+        var query = new QueryDefinition(sql.ToString());
+        foreach ((string name, string value) in parameters)
+        {
+            query = query.WithParameter(name, value);
+        }
 
         var docs = new PooledDocumentList<SourceCredentialBinding>(pageSize);
         bool hasMore = false;
         try
         {
             string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
-            await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
+            await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
             {
+                ReadOnlyMemory<byte> json = CosmosJson.GetRawValue(element, DocProperty);
+                if (json.IsEmpty)
+                {
+                    continue;
+                }
+
                 ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
                 bool kept = false;
                 try
                 {
                     string source = cand.RootElement.SourceNameValue;
                     string environment = cand.RootElement.EnvironmentValue;
-                    string tie = ItemIdSeedFor(cand.RootElement);
+                    string tie = CosmosJson.GetString(element, TagsProperty) ?? string.Empty;
 
                     // The server seek re-includes the cursor's exact (sourceName, environment), so skip any row at or before
                     // the cursor in the full (sourceName, environment, discriminator) order — the discriminator tie-break is
-                    // resolved here since it is not a stored, orderable property.
+                    // resolved here since it is not a server-orderable property.
                     if (hasCursor && CompareKey(source, environment, tie, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
-                    {
-                        continue;
-                    }
-
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
                     {
                         continue;
                     }
@@ -252,7 +272,9 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         string partition = PartitionKey(sourceName, environment);
         byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
 
-        using Stream stream = EnvelopeStream(ItemId(tags!), partition, json, out ParsedJsonDocument<SourceCredentialBinding> document);
+        // The envelope is rebuilt from the updated document under the FROZEN create-time discriminator (the row's
+        // storage identity), so its securityTags mirror follows a re-tag while the item id stays put.
+        using Stream stream = EnvelopeStream(ItemId(tags!), partition, tags!, json, out ParsedJsonDocument<SourceCredentialBinding> document);
         try
         {
             using ResponseMessage response = await this.container.ReplaceItemStreamAsync(stream, ItemId(tags!), new PartitionKey(partition), cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -290,6 +312,43 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         }
 
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var conditions = new List<string>(1);
+        var parameters = new List<(string Name, string Value)>();
+        AppendReachCondition(conditions, parameters, context);
+
+        // Bounded count: Cosmos has no bounded server-side COUNT, so read at most cap + 1 admitted row markers and
+        // count them client-side; the (cap + 1)th trips Capped. Same reach predicate as the list
+        // (AppendReachCondition) — the count can never drift from the list it annotates.
+        var sql = new StringBuilder("SELECT VALUE 1 FROM c");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" OFFSET 0 LIMIT @cap");
+        var query = new QueryDefinition(sql.ToString()).WithParameter("@cap", cap + 1);
+        foreach ((string name, string value) in parameters)
+        {
+            query = query.WithParameter(name, value);
+        }
+
+        int total = 0;
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            total += CosmosJson.ReadDocuments(page.Memory).Count;
+        }
+
+        return total > cap ? (cap, true) : (total, false);
     }
 
     /// <inheritdoc/>
@@ -361,24 +420,39 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
         return CosmosItemId.Compose("scred-", discriminator);
     }
 
-    // Serializes the {id, pk, sourceName, environment, doc:base64} envelope into a pooled stream and builds the
-    // caller's pooled return document from the same binding bytes. The binding doc is base64'd verbatim (no SDK
-    // serializer); sourceName/environment are projected so EvaluateSourceAccessAsync can query by source across
-    // partitions. On any failure building the stream, the return document is disposed before the exception escapes.
-    private static Stream EnvelopeStream(string id, string partition, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
+    // Serializes the {id, pk, sourceName, environment, tags, securityTags, doc} envelope into a pooled stream and
+    // builds the caller's pooled return document from the same binding bytes. The binding doc is embedded verbatim (no
+    // SDK serializer); sourceName/environment are projected so EvaluateSourceAccessAsync can query by source across
+    // partitions; tags carries the FROZEN create-time discriminator so updates/deletes keep addressing the row after a
+    // re-tag; securityTags mirrors the document's CURRENT management tags (never the usage tags — reach is a
+    // management concern) queryably so the §14.2 reach predicate can be pushed into list/count. On any failure
+    // building the stream, the return document is disposed before the exception escapes.
+    private static Stream EnvelopeStream(string id, string partition, string discriminator, byte[] doc, out ParsedJsonDocument<SourceCredentialBinding> document)
     {
         document = PersistedJson.ToPooledDocument<SourceCredentialBinding>(doc);
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Partition: partition, Source: document.RootElement.SourceNameValue, Environment: document.RootElement.EnvironmentValue, Doc: doc),
-                static (Utf8JsonWriter writer, in (string Id, string Partition, string Source, string Environment, byte[] Doc) c) =>
+                (Id: id, Partition: partition, Source: document.RootElement.SourceNameValue, Environment: document.RootElement.EnvironmentValue, Discriminator: discriminator, Tags: document.RootElement.ManagementTagsValue, Doc: doc),
+                static (Utf8JsonWriter writer, in (string Id, string Partition, string Source, string Environment, string Discriminator, SecurityTagSet Tags, byte[] Doc) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Partition);
                     writer.WriteString("sourceName"u8, c.Source);
                     writer.WriteString("environment"u8, c.Environment);
+                    writer.WriteString("tags"u8, c.Discriminator);
+                    writer.WritePropertyName("securityTags"u8);
+                    writer.WriteStartArray();
+                    foreach (SecurityTag tag in c.Tags)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("k"u8, tag.Key);
+                        writer.WriteString("v"u8, tag.Value);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
 
                     // The binding document is itself JSON, so embed it verbatim as a nested value — no base64 wrap (which
                     // would be a spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
@@ -392,6 +466,26 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             document.Dispose();
             throw;
         }
+    }
+
+    // Appends the §14.2 read-reach predicate: an EXISTS over the envelope's securityTags mirror (the same rules
+    // context.Admits evaluates, translated by CosmosSecurityRuleEmitter). A null reach (unrestricted) adds nothing.
+    // Shared by ListAsync and CountAsync so the count can never drift from the list it annotates.
+    private static void AppendReachCondition(List<string> conditions, List<(string Name, string Value)> parameters, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+        {
+            string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+            parameters.Add((name, value));
+            return name;
+        });
+        conditions.Add(reach.ToSqlPredicate(emitter));
     }
 
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
@@ -408,29 +502,31 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     }
 
     // Finds the single binding for (sourceName, environment) the caller's reach for the verb admits, returning its
-    // bytes and its tag discriminator (the document id seed). A binding outside reach is invisible (non-disclosing).
+    // bytes and its STORED tag discriminator (the document id seed, read back from the envelope rather than
+    // recomputed — after a management re-tag the document's tags no longer derive the id). A binding outside reach is
+    // invisible (non-disclosing).
     private async ValueTask<(byte[]? Json, string? Tags)> FindForManagementAsync(string sourceName, string environment, AccessVerb verb, AccessContext context, CancellationToken cancellationToken)
     {
         string partition = PartitionKey(sourceName, environment);
         var query = new QueryDefinition("SELECT c.doc, c.tags FROM c");
-        await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(query, partition, cancellationToken).ConfigureAwait(false))
         {
+            ReadOnlyMemory<byte> json = CosmosJson.GetRawValue(element, DocProperty);
+            if (json.IsEmpty)
+            {
+                continue;
+            }
+
             using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
             if (context.Admits(verb, candidate.RootElement.ManagementTagsValue))
             {
                 // The bytes outlive the response page (the caller may update/delete from them), so copy them out.
-                return (json.ToArray(), ItemIdSeedFor(candidate.RootElement));
+                return (json.ToArray(), CosmosJson.GetString(element, TagsProperty));
             }
         }
 
         return (null, null);
     }
-
-    // The tag discriminator (the item-id seed) recomputed from a candidate's own immutable tags — the projection only
-    // carried the doc, and the binding holds its management/usage tags, so the discriminator is reconstructed rather
-    // than re-read from the envelope's tags field.
-    private static string ItemIdSeedFor(SourceCredentialBinding binding)
-        => SourceCredentialKey.Discriminator(binding.ManagementTagsValue, binding.UsageTagsValue);
 
     // Orders two bindings by the stable total key (sourceName, environment, discriminator), ordinally — matching the
     // Cosmos string ORDER BY — so the in-memory keyset skip past the cursor agrees with the server-side seek on the
@@ -452,6 +548,22 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
     // keeps the bytes past it (e.g. for an update) copies them (ToArray), a transient consumer parses them in place.
     private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(query, partition, cancellationToken).ConfigureAwait(false))
+        {
+            ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(element, DocProperty);
+            if (!doc.IsEmpty)
+            {
+                yield return doc;
+            }
+        }
+    }
+
+    // Yields each result envelope's raw element bytes (a slice into the pooled response page), so the consumer can
+    // extract the embedded doc and any projected envelope properties (e.g. the stored tag discriminator) from the same
+    // element. The slice is valid only for the duration of the consumer's iteration step; a consumer that keeps bytes
+    // past it copies them (ToArray), a transient consumer parses them in place.
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(QueryDefinition query, string? partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         QueryRequestOptions? options = partition is null ? null : new QueryRequestOptions { PartitionKey = new PartitionKey(partition) };
         using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query, requestOptions: options);
         while (iterator.HasMoreResults)
@@ -461,11 +573,7 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
             foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
             {
-                ReadOnlyMemory<byte> doc = CosmosJson.GetRawValue(element, DocProperty);
-                if (!doc.IsEmpty)
-                {
-                    yield return doc;
-                }
+                yield return element;
             }
         }
     }

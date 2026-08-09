@@ -368,6 +368,43 @@ public abstract class SourceCredentialStoreConformance
     }
 
     [TestMethod]
+    public async Task An_update_and_delete_still_address_the_binding_after_a_re_tag()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        using (await store.AddAsync(Tagged("petstore", "production", "acme"), "system", default))
+        {
+        }
+
+        // Re-tag the management scope, then keep operating on the binding. The binding's storage identity is its
+        // frozen create-time key; a store that re-derives that key from the current tags loses the row on re-tag.
+        using (ParsedJsonDocument<SourceCredentialBinding>? updated = await store.UpdateAsync("petstore", "production", Tagged("petstore", "production", "globex"), WorkflowEtag.None, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+        }
+
+        // A subsequent ordinary update (a secret rotation, tags omitted) must still find and replace the same row...
+        SourceCredentialDefinition rotate = Tagged("petstore", "production", "globex") with
+        {
+            ManagementTags = SecurityTagSet.Empty,
+            SecretRefs = [new SecretReferenceDefinition("value", "keyvault://petstore-rotated")],
+        };
+        using (ParsedJsonDocument<SourceCredentialBinding>? rotated = await store.UpdateAsync("petstore", "production", rotate, WorkflowEtag.None, "dave", AccessContext.System, default))
+        {
+            rotated.ShouldNotBeNull();
+            rotated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
+        }
+
+        // ...and a delete must actually remove it (a delete that misses the row but reports true would leave it
+        // behind for every future read).
+        (await store.DeleteAsync("petstore", "production", WorkflowEtag.None, AccessContext.System, default)).ShouldBeTrue();
+        (await store.GetAsync("petstore", "production", AccessContext.System, default)).ShouldBeNull();
+        using (SourceCredentialPage page = await store.ListAsync(AccessContext.System, 10, default, default))
+        {
+            page.Bindings.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
     public async Task Management_reads_are_reach_filtered_and_non_disclosing()
     {
         ISourceCredentialStore store = await this.NewStoreAsync();
