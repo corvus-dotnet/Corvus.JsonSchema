@@ -67,17 +67,20 @@ public sealed class AzureStorageCatalogStoreConformanceTests : WorkflowCatalogSt
             }
         }
 
-        TableClient catalog = tableService.GetTableClient("arazzocatalog");
-        try
+        foreach (string table in new[] { "arazzocatalog", "arazzocataloglabels" })
         {
-            await foreach (TableEntity entity in catalog.QueryAsync<TableEntity>())
+            TableClient client = tableService.GetTableClient(table);
+            try
             {
-                await catalog.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+                await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+                {
+                    await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+                }
             }
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404)
-        {
-            // The table does not exist yet — nothing to reset.
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                // The table does not exist yet — nothing to reset.
+            }
         }
 
         return await AzureStorageWorkflowCatalogStore.ConnectAsync(blobService, tableService, timeProvider);

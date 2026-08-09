@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
@@ -22,15 +24,22 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <remarks>
 /// The RowKey is the version number formatted <c>D10</c> so Table storage's natural (PartitionKey, RowKey) order
 /// is exactly the catalog's (base workflow id, version number) sort order, and the
-/// <c>{base}{version:D10}</c> keyset token pages identically to every other backend. Provision the container and
-/// table once with <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
-/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
+/// <c>{base}{version:D10}</c> keyset token pages identically to every other backend. Reach-filtered queries
+/// narrow through the <c>arazzocataloglabels</c> companion table (design §14.4) exactly as the run store narrows
+/// through <c>arazzolabels</c>; the label entry's row id is that same <c>{base}{version:D10}</c> sort key.
+/// Provision the container and tables once with <see cref="PrepareAsync(string, CancellationToken)"/>, then open
+/// the store with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
 public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter
 {
     private const string ObsoleteStatus = nameof(CatalogStatus.Obsolete);
     private const string CatalogContainer = "arazzo-catalog";
     private const string CatalogTable = "arazzocatalog";
+    private const string LabelsTable = "arazzocataloglabels";
+
+    // Candidate version ids travel in the query string, so they are requested in chunks rather than as one
+    // disjunction that would eventually exceed the URL length limit.
+    private const int CandidateChunkSize = 32;
 
     // The Blob SDK defaults to the newest REST API version, which the Azurite emulator (and older real
     // accounts) may not yet recognise. Pin to a broadly-supported version so requests are accepted everywhere;
@@ -39,15 +48,19 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
     private readonly BlobContainerClient packages;
     private readonly TableClient catalog;
+    private readonly TableClient labels;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly IExecutorPackageSigner? signer;
 
-    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
+    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TableClient labels, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.packages = packages;
         this.catalog = catalog;
+        this.labels = labels;
+        this.labelIndex = new AzureStorageSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
@@ -85,6 +98,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         await blobService.GetBlobContainerClient(CatalogContainer).CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(CatalogTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned container and table.</summary>
@@ -143,7 +157,8 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         BlobContainerClient packages = blobService.GetBlobContainerClient(CatalogContainer);
         TableClient catalog = tableService.GetTableClient(CatalogTable);
-        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
+        TableClient labels = tableService.GetTableClient(LabelsTable);
+        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, labels, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <inheritdoc/>
@@ -214,9 +229,19 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             filter = filter is null ? clause : filter + " and " + clause;
         }
 
+        // §14.4: narrow to the candidate versions the label index admits before reading anything. A null plan means
+        // the index could not narrow and the query runs as it always did; an empty one means no version qualifies,
+        // so the page is empty without a single row read. Sound in distinct mode too: a base is included when ANY
+        // of its versions matches, and every version the exact reach admits is in the candidate superset.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return CatalogPage.Create(PooledDocumentList<CatalogVersion>.Empty);
+        }
+
         if (query.DistinctWorkflows)
         {
-            return await this.QueryDistinctWorkflowsAsync(query, filter, after, limit, cancellationToken).ConfigureAwait(false);
+            return await this.QueryDistinctWorkflowsAsync(query, filter, candidates, after, limit, cancellationToken).ConfigureAwait(false);
         }
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
@@ -225,7 +250,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         string? nextSortKey = null;
         try
         {
-            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            await foreach (TableEntity entity in this.QueryCatalogAsync(filter, candidates, after, cancellationToken).ConfigureAwait(false))
             {
                 string sortKey = SortKey(entity.PartitionKey, ParseRowKey(entity.RowKey));
                 if (after is not null && string.CompareOrdinal(sortKey, after) <= 0)
@@ -278,12 +303,19 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             filter = filter is null ? clause : filter + " and " + clause;
         }
 
+        // Same narrowing as the search, so a count can never consider a row the search would not have shown (§14.4).
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
         // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
         // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap.
         if (query.DistinctWorkflows)
         {
             var bases = new HashSet<string>(StringComparer.Ordinal);
-            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            await foreach (TableEntity entity in this.QueryCatalogAsync(filter, candidates, after: null, cancellationToken).ConfigureAwait(false))
             {
                 using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
                 if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
@@ -296,7 +328,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         }
 
         int count = 0;
-        await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryCatalogAsync(filter, candidates, after: null, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
             if (Matches(candidate.RootElement, query) && ++count > cap)
@@ -317,12 +349,14 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     // parsed once to filter + rank, retaining only the winning per-base TableEntity; the page window's winners are
     // re-parsed into the pooled batch. Table (PartitionKey, RowKey) order is byte-ordinal, so the bases arrive already in
     // StringComparer.Ordinal order — the same order the keyset cursor (the last emitted base id alone) advances through.
-    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? filter, string? after, int limit, CancellationToken cancellationToken)
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? filter, IReadOnlySet<string>? candidates, string? after, int limit, CancellationToken cancellationToken)
     {
         // Collect the best-matching representative entity per base id. The dictionary is ordinal-ordered so the emit
-        // loop below walks bases in byte-ordinal (== StringComparer.Ordinal) order, matching the keyset cursor.
+        // loop below walks bases in byte-ordinal (== StringComparer.Ordinal) order, matching the keyset cursor. The
+        // candidate cut (§14.4) does not take the cursor: it is a (base, version) sort key while this mode's cursor
+        // is a base id alone, and the collapse ranks representatives over every candidate version regardless.
         var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
-        await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryCatalogAsync(filter, candidates, after: null, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
             if (!Matches(candidate.RootElement, query))
@@ -391,6 +425,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         TagSet tags;
         string? obsoletedBy;
         DateTimeOffset? obsoletedAt;
+        SecurityTagSet currentSecurityTags;
 
         // The current row is read into a pooled, disposable document only to source the unchanged fields; its
         // field accessors return OWNED COPIES, so the values are safe after the document is disposed.
@@ -406,18 +441,48 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             tags = patch.Tags ?? current.TagsValue;
             obsoletedBy = newlyObsolete ? patch.UpdatedBy : reactivated ? null : current.ObsoletedByOrNull;
             obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
+            currentSecurityTags = current.SecurityTagsValue;
         }
 
         WriteGovernance(entity, status, tags, owner, patch.UpdatedBy, now, obsoletedBy, obsoletedAt);
 
-        // Re-tag (§14.2): replace the encoded SecurityTags property (which in-process reach-filtering reads) with the
-        // effective set; absent → the property is left unchanged.
+        // Re-tag (§14.2): replace the encoded SecurityTags property (which the exact reach evaluation reads) with the
+        // effective set; absent → the property and the label index are left unchanged. The index diff keeps the §14.4
+        // ordering: entries for the NEW tags are added before the row carries them and entries for the removed ones
+        // are dropped only after it stops, so an interrupted re-tag can only leave a stale entry — which the exact
+        // evaluation discards — never a row whose current tags have no entry, which would hide it.
+        HashSet<string>? previousTokens = null;
+        HashSet<string>? desiredTokens = null;
         if (patch.SecurityTags is { } newSecurityTags)
         {
             entity["SecurityTags"] = EncodeSecurityTags(newSecurityTags);
+
+            string rowId = SortKey(baseWorkflowId, versionNumber);
+            previousTokens = AzureStorageSecurityLabelIndex.TokensFor(currentSecurityTags);
+            desiredTokens = AzureStorageSecurityLabelIndex.TokensFor(newSecurityTags);
+            foreach (string token in desiredTokens)
+            {
+                if (!previousTokens.Contains(token))
+                {
+                    await this.labels.UpsertEntityAsync(new TableEntity(token, rowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
 
         await this.catalog.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+
+        if (previousTokens is not null && desiredTokens is not null)
+        {
+            string rowId = SortKey(baseWorkflowId, versionNumber);
+            foreach (string token in previousTokens)
+            {
+                if (!desiredTokens.Contains(token))
+                {
+                    await this.labels.DeleteEntityAsync(token, rowId, ETag.All, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         return ReadVersion(entity);
     }
 
@@ -452,10 +517,22 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+
+        // Read the version's labels while its row still exists, then drop the row before its labels — the same
+        // ordering as every other write path (§14.4): a crash mid-delete leaves a stale label entry, harmless when
+        // nothing loads behind it, whereas dropping labels first would strand a still-visible version.
+        HashSet<string> tokens = await this.ReadSecurityLabelTokensAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+
         Response response = await this.catalog
             .DeleteEntityAsync(baseWorkflowId, RowKey(versionNumber), ETag.All, cancellationToken)
             .ConfigureAwait(false);
         await this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber)).DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        string rowId = SortKey(baseWorkflowId, versionNumber);
+        foreach (string token in tokens)
+        {
+            await this.labels.DeleteEntityAsync(token, rowId, ETag.All, cancellationToken).ConfigureAwait(false);
+        }
 
         // DeleteEntityAsync returns 404 (not an exception) when no entity existed.
         return response.Status != 404;
@@ -549,8 +626,9 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             return false;
         }
 
-        // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
-        // reach filter in process over the version's persisted tags — the only correct option for this backend.
+        // Row-security reach (§14.2): the exact evaluation over the version's persisted tags. Table OData cannot
+        // match inside the serialized security tags, so the query first narrows to the candidates the label index
+        // admits (§14.4) and this check then decides each one — an imprecise plan costs throughput, never reach.
         if (query.Security is not { } security)
         {
             return true;
@@ -698,6 +776,17 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
                     .UploadAsync(BinaryData.FromBytes(projection.CanonicalPackage), overwrite: true, cancellationToken)
                     .ConfigureAwait(false);
 
+                // §14.4 label index: entries are ADDED before the version row becomes visible, so an interrupted add
+                // can only leave a label pointing at a row that never landed — which the exact reach evaluation
+                // discards — never a visible row with no label, which would hide it from a narrowed query. On a 409
+                // the loser's entries for the lost number stay behind: the winner upserted its own tokens for that
+                // same id, so deleting could remove a token the winner's row needs, while a stale entry is harmless
+                // by the index's contract.
+                foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(securityTags))
+                {
+                    await this.labels.UpsertEntityAsync(new TableEntity(token, SortKey(baseWorkflowId, versionNumber)), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                }
+
                 await this.catalog.AddEntityAsync(BuildEntity(version.RootElement), cancellationToken).ConfigureAwait(false);
                 return version;
             }
@@ -734,6 +823,91 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         return max;
     }
 
+    // Resolves the reach to the candidate version ids the label index admits (§14.4). Null means "the index could
+    // not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what the
+    // principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // Streams the catalog entities a query should consider, in (base workflow id, version) order.
+    //
+    // With no candidate set this is the scan it always was. With one, the candidate versions are requested by
+    // explicit (PartitionKey, RowKey) pairs, so rows outside the principal's reach are never read, never paged over
+    // and never counted. The ids are chunked because they travel in the query string: one enormous disjunction
+    // would eventually exceed the URL limit, and the chunk boundary is safe because the pairs are sorted, so each
+    // chunk's rows still arrive in order.
+    private async IAsyncEnumerable<TableEntity> QueryCatalogAsync(
+        string? filter,
+        IReadOnlySet<string>? candidates,
+        string? after,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (candidates is null)
+        {
+            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                yield return entity;
+            }
+
+            yield break;
+        }
+
+        // A candidate id is the sort key the label index stores — the base workflow id with the D10 version
+        // appended — so splitting on the fixed-width suffix recovers the entity key, and ordering by the
+        // (partition, row) pair keeps the stream in the order the unnarrowed scan delivers.
+        (string Base, string Row)[] ordered = [.. candidates
+            .Where(id => after is null || string.CompareOrdinal(id, after) > 0)
+            .Select(id => (Base: id[..^10], Row: id[^10..]))
+            .OrderBy(pair => pair.Base, StringComparer.Ordinal)
+            .ThenBy(pair => pair.Row, StringComparer.Ordinal)];
+        for (int start = 0; start < ordered.Length; start += CandidateChunkSize)
+        {
+            ReadOnlySpan<(string Base, string Row)> chunk = ordered.AsSpan(start, Math.Min(CandidateChunkSize, ordered.Length - start));
+            var disjunction = new StringBuilder();
+            if (filter is not null)
+            {
+                disjunction.Append(filter).Append(" and ");
+            }
+
+            disjunction.Append('(');
+            for (int i = 0; i < chunk.Length; ++i)
+            {
+                if (i > 0)
+                {
+                    disjunction.Append(" or ");
+                }
+
+                // Both parts are bound through CreateQueryFilter, so an id can never be read as OData syntax.
+                disjunction.Append(TableClient.CreateQueryFilter($"(PartitionKey eq {chunk[i].Base} and RowKey eq {chunk[i].Row})"));
+            }
+
+            disjunction.Append(')');
+
+            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(disjunction.ToString(), cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                yield return entity;
+            }
+        }
+    }
+
+    // The tokens the version's CURRENT row occupies, so a delete tears down exactly the entries its tags wrote.
+    private async ValueTask<HashSet<string>> ReadSecurityLabelTokensAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        try
+        {
+            Response<TableEntity> existing = await this.catalog.GetEntityAsync<TableEntity>(
+                baseWorkflowId, RowKey(versionNumber), SecurityTagsColumnOnly, cancellationToken).ConfigureAwait(false);
+            return AzureStorageSecurityLabelIndex.TokensFor(DecodeSecurityTags(existing.Value.GetString("SecurityTags")));
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return [];
+        }
+    }
+
     private async ValueTask<byte[]?> LoadPackageAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         BlobClient blob = this.packages.GetBlobClient(BlobName(baseWorkflowId, versionNumber));
@@ -747,6 +921,9 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             return null;
         }
     }
+
+    // Only the security tags are needed, so the delete's pre-read never carries the row's payload back across the wire.
+    private static readonly string[] SecurityTagsColumnOnly = ["SecurityTags"];
 
     // A base workflow's best-matching representative during a distinct-workflow scan: the winning version's Table entity
     // (re-parsed into the pooled batch for the emitted page) plus the fields the precedence compares (lower status rank
