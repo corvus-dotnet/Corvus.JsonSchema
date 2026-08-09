@@ -27,11 +27,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// does — the keyset cannot be pushed as a server-side range filter. Instead the plain key columns are pulled, sorted in
 /// memory into the contractual <c>(subjectValue, subjectKind)</c> total order, paged, and only the page's documents are
 /// fetched.</para>
-/// <para>Reach-filtering (§17.1) is applied in process: Table OData cannot match inside the serialized identity tags, so
-/// each admitted candidate is materialised and its tags checked against the caller's <see cref="SecurityFilter"/> — the
-/// catalog store's idiom (§14.2). An unrestricted (System) reach touches no candidate's tags. Provision the table once
-/// with <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
-/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.</para>
+/// <para>Reach-filtering (§17.1): Table OData cannot match inside the serialized identity tags, so a scoped search
+/// first narrows to the candidates the security-label entities admit (§14.4) — per-label partitions in this same
+/// table (the <c>v~</c>/<c>k~</c> token families, which sort below the primary floor), maintained by
+/// <see cref="SeenAsync"/>'s tag diff and resolved through the shared point-lookup resolver — and the exact
+/// per-candidate check then decides each row. An unrestricted (System) reach touches no candidate's tags and no
+/// label partition. Provision the table once with <see cref="PrepareAsync(string, CancellationToken)"/>, then open
+/// the store with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.</para>
 /// </remarks>
 public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
 {
@@ -55,11 +57,17 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     private const string PrimaryPartitionFloor = "~";
 
     private readonly TableClient identities;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
     private AzureStorageObservedIdentityStore(TableClient identities, TimeProvider timeProvider)
     {
         this.identities = identities;
+
+        // The label entities live in this same table (the v~/k~ partition-token families are disjoint from the
+        // ~-prefixed primary partitions and the digest: index partitions, and sort below the primary floor), so
+        // the index shares the table client and no extra table or privilege is needed.
+        this.labelIndex = new AzureStorageSecurityLabelIndex(identities);
         this.timeProvider = timeProvider;
     }
 
@@ -127,6 +135,7 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         // alive through the synchronous merge) — no pooled read buffer, no copy.
         (byte[]? existing, string? oldDigest) = await this.ReadDocumentAsync(kindToken, valueKey, cancellationToken).ConfigureAwait(false);
         byte[] json;
+        SecurityTagSet previousTags = SecurityTagSet.Empty;
         if (existing is null)
         {
             json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
@@ -135,6 +144,25 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         {
             using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
             json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+            previousTags = SecurityTagSet.CopyFrom(current.RootElement.IdentityTags);
+        }
+
+        // §14.4 security-label entities, diffed against the tags the document already read carries — the same
+        // retraction discipline as the digest index below, in the ordering that keeps an imprecise index safe:
+        // entries for the NEW tags land before the primary entity carries them and entries for the removed ones
+        // are dropped only after it stops, so an interrupted sighting can only leave a stale entry — which the
+        // exact reach evaluation discards — never an identity whose current tags have no entry, which would hide
+        // it from the reach it belongs to. The entity's RowKey is the (kind, value) fold the digest index already
+        // uses, so a candidate id maps straight back to the primary entity's keys.
+        string labelRowId = DigestRowKey(kindToken, valueKey);
+        HashSet<string> desiredTokens = AzureStorageSecurityLabelIndex.TokensFor(identity);
+        HashSet<string> previousTokens = AzureStorageSecurityLabelIndex.TokensFor(previousTags);
+        foreach (string token in desiredTokens)
+        {
+            if (!previousTokens.Contains(token))
+            {
+                await this.identities.UpsertEntityAsync(new TableEntity(token, labelRowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         // The new digest is carried on the primary entity (so the next re-sighting knows which index entity to retract)
@@ -176,6 +204,14 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 [SubjectValueColumn] = valueKey,
             };
             await this.identities.UpsertEntityAsync(indexEntity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (string token in previousTokens)
+        {
+            if (!desiredTokens.Contains(token))
+            {
+                await this.identities.DeleteEntityAsync(token, labelRowId, ETag.All, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 
@@ -285,37 +321,76 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
         // a single candidate's tags — only a scoped reach pays the per-candidate materialise-and-check cost (§17.1).
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
+        // §14.4: narrow to the candidate identities the label entities admit before reading anything. A null
+        // answer means the index could not narrow and the primary-partition listing runs as it always did; an
+        // empty one means no identity qualifies, so the page is empty without a single entity read. A candidate
+        // id is the (kind, value) fold, so the kind/prefix filters apply to a decoded candidate BEFORE any fetch,
+        // and a stale entry resolves to a primary entity that is gone, which the fetch below skips.
+        IReadOnlySet<string>? candidates = readReach is null
+            ? null
+            : await SecurityLabelQueryResolver.ResolveAsync(
+                readReach.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
         // The contractual order is (subjectValue, subjectKind). Table storage orders by (PartitionKey, RowKey) =
         // (Enc(value), Enc(kind)), but Enc is URL-safe base64 and therefore NOT ordinal-order-preserving, so the keyset
         // cannot be pushed as a server-side range filter. Instead the entity keys (decoded into the plain
-        // SubjectValue/SubjectKind columns) are pulled, sorted in memory into the total order, paged, and only the page's
-        // documents are fetched.
-        // Enumerate only the primary entities — the secondary digest-index entities (PartitionKey "digest:"…) share this
-        // table and carry the same SubjectKind/SubjectValue columns, so without this floor they would leak into the page.
-        string primaryOnly = TableClient.CreateQueryFilter($"PartitionKey ge {PrimaryPartitionFloor}");
+        // SubjectValue/SubjectKind columns, or from the candidate ids) are pulled, sorted in memory into the total
+        // order, paged, and only the page's documents are fetched.
         var keys = new List<EntityKey>();
-        await foreach (TableEntity entity in this.identities.QueryAsync<TableEntity>(
-            primaryOnly, select: [SubjectKindColumn, SubjectValueColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        if (candidates is not null)
         {
-            if (entity.GetString(SubjectValueColumn) is not { } subjectValue ||
-                entity.GetString(SubjectKindColumn) is not { } subjectKind)
+            foreach (string candidate in candidates)
             {
-                continue;
-            }
+                if (!TryParseLabelRowId(candidate, out string subjectKind, out string subjectValue))
+                {
+                    continue;
+                }
 
-            // Cheap server-unexpressible filters applied before the document fetch: the optional kind equality and the
-            // prefix (ordinal, the order the contract pages by).
-            if (kindToken is not null && !string.Equals(subjectKind, kindToken, StringComparison.Ordinal))
+                if (kindToken is not null && !string.Equals(subjectKind, kindToken, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (prefixStr.Length > 0 && !subjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                keys.Add(new EntityKey(subjectValue, subjectKind));
+            }
+        }
+        else
+        {
+            // Enumerate only the primary entities — the secondary digest-index and label entities share this table
+            // and sort below the floor, so without it they would leak into the page.
+            string primaryOnly = TableClient.CreateQueryFilter($"PartitionKey ge {PrimaryPartitionFloor}");
+            await foreach (TableEntity entity in this.identities.QueryAsync<TableEntity>(
+                primaryOnly, select: [SubjectKindColumn, SubjectValueColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
             {
-                continue;
-            }
+                if (entity.GetString(SubjectValueColumn) is not { } subjectValue ||
+                    entity.GetString(SubjectKindColumn) is not { } subjectKind)
+                {
+                    continue;
+                }
 
-            if (prefixStr.Length > 0 && !subjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
-            {
-                continue;
-            }
+                // Cheap server-unexpressible filters applied before the document fetch: the optional kind equality and the
+                // prefix (ordinal, the order the contract pages by).
+                if (kindToken is not null && !string.Equals(subjectKind, kindToken, StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
-            keys.Add(new EntityKey(subjectValue, subjectKind));
+                if (prefixStr.Length > 0 && !subjectValue.StartsWith(prefixStr, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                keys.Add(new EntityKey(subjectValue, subjectKind));
+            }
         }
 
         keys.Sort(static (a, b) =>
@@ -338,16 +413,18 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                 }
 
                 // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one.
-                TableEntity entity = (await this.identities.GetEntityAsync<TableEntity>(
-                    PartitionKey(key.SubjectValue), RowKey(key.SubjectKind), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
-                if (entity.GetBinary(DocColumn) is not { } json)
+                // If-exists rather than a throwing get: a label-derived candidate may be stale (its primary entity
+                // gone, or not yet visible in the add-before-visible window), and skipping is the §14.4 contract.
+                NullableResponse<TableEntity> fetched = await this.identities.GetEntityIfExistsAsync<TableEntity>(
+                    PartitionKey(key.SubjectValue), RowKey(key.SubjectKind), [DocColumn], cancellationToken).ConfigureAwait(false);
+                if (!fetched.HasValue || fetched.Value!.GetBinary(DocColumn) is not { } json)
                 {
                     continue;
                 }
 
-                // Reach filter (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags.
-                // Table OData cannot match inside the serialized tags, so materialise the candidate and check in process —
-                // the catalog store's idiom. An unrestricted reach skips this entirely (no materialisation).
+                // Reach filter (§17.1): the exact evaluation over the candidate's persisted tags — the label
+                // entities only propose a superset (§14.4), so this check still decides every row a caller sees.
+                // An unrestricted reach skips this entirely (no materialisation).
                 if (readReach is not null)
                 {
                     bool admitted;
@@ -454,6 +531,31 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     private static string DigestPartition(string digest) => DigestPartitionPrefix + digest;
 
     private static string DigestRowKey(string kindToken, string value) => Enc(kindToken) + "~" + Enc(value);
+
+    // Inverts DigestRowKey for a label-entity row id: Enc always begins with '~' and base64url never contains it,
+    // so the joiner-plus-leading-'~' pair ("~~") occurs exactly once — everything before it (past the leading '~')
+    // is the kind's base64, everything after is the value's.
+    private static bool TryParseLabelRowId(string rowId, out string kindToken, out string value)
+    {
+        kindToken = string.Empty;
+        value = string.Empty;
+        int joiner = rowId.IndexOf("~~", 1, StringComparison.Ordinal);
+        if (rowId.Length < 2 || rowId[0] != '~' || joiner < 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            kindToken = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(1, joiner - 1)));
+            value = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(joiner + 2)));
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
 
     // URL-safe base64 of the UTF-8 bytes (forbidden / and + remapped to _ and -). The base64 alphabet plus '=' and those
     // two replacements are all permitted in a Table key. A leading '~' guarantees a non-empty key even for the empty

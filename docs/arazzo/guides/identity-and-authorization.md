@@ -159,7 +159,9 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   evaluation of the compiled plan (`SecurityLabelQuery.Compile`), so only the final candidate set crosses the
   wire. NATS does it for both of its stores with one labels bucket per store (`arazzo_labels` /
   `arazzo_catalog_labels`) whose keys are per-label subjects, so a label lookup is a subject-filtered key
-  listing resolved through the shared point-lookup resolver. Every backend's run and catalog stores now narrow.
+  listing resolved through the shared point-lookup resolver. Every backend's run and catalog stores now narrow,
+  and so does the observed-identity typeahead (§16.5.4) on every backend — the SQL family, Cosmos and Mongo
+  push its reach into the query; Azure Storage, Redis and NATS narrow it through the same label indexes.
   InMemory streams and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
