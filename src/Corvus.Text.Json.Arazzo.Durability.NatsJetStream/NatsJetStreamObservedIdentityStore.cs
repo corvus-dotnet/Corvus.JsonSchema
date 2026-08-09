@@ -27,9 +27,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// column, mirroring how the catalog and source-credential stores derive and prefix-scan their keys.</para>
 /// <para>The KV store has no server-side ordering or filtering, so — mirroring the catalog store's scan-and-page
 /// approach — <see cref="SearchAsync"/> scans the bucket, applies the kind filter, the prefix lower bound, and the
-/// §17.1 read-reach in memory over each candidate's persisted identity tags, sorts the matches by the composite sort
+/// exact §17.1 read-reach over each candidate's persisted identity tags, sorts the matches by the composite sort
 /// key with <see cref="string.CompareOrdinal(string, string)"/>, keyset-pages here, and detects a next page with one
-/// extra match. An unrestricted (System) reach skips the per-row materialisation entirely. Create instances with
+/// extra match. A reach-scoped search first narrows to the candidates the security-label entries admit (§14.4) —
+/// per-label keys in this same bucket under the <c>v.</c>/<c>k.</c> namespaces, maintained by
+/// <see cref="SeenAsync"/>'s tag diff and resolved by subject-filtered key listings — so identities outside the
+/// caller's reach are never read. An unrestricted (System) reach skips both entirely. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with
 /// <see cref="PrepareAsync(string, CancellationToken)"/>.</para>
 /// </remarks>
@@ -51,12 +54,17 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
+    private readonly NatsSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
     private NatsJetStreamObservedIdentityStore(NatsConnection? ownedConnection, INatsKVStore store, TimeProvider timeProvider)
     {
         this.ownedConnection = ownedConnection;
         this.store = store;
+
+        // The label entries live in this same bucket (the v./k. key namespaces are disjoint from oid./digx./digof.),
+        // so the index shares the store handle and no extra bucket or privilege is needed.
+        this.labelIndex = new NatsSecurityLabelIndex(store);
         this.timeProvider = timeProvider;
     }
 
@@ -137,18 +145,45 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
         // the synchronous merge) — no pooled read buffer, no copy.
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
         byte[] json;
+        SecurityTagSet previousTags = SecurityTagSet.Empty;
         if (entry is { Value: { } existing })
         {
             using ParsedJsonDocument<ObservedIdentity> current = ParsedJsonDocument<ObservedIdentity>.Parse(existing.AsMemory());
             json = ObservedIdentitySerialization.SerializeUpserted(current.RootElement, kind, value, label, identity, complete, now, provenance);
+            previousTags = SecurityTagSet.CopyFrom(current.RootElement.IdentityTags);
         }
         else
         {
             json = ObservedIdentitySerialization.SerializeNew(kind, value, label, identity, complete, now, provenance);
         }
 
+        // §14.4 security-label entries, diffed against the tags the document already read carries — the same
+        // retraction discipline as the digest re-index below, in the ordering that keeps an imprecise index safe:
+        // entries for the NEW tags land before the document carries them and entries for the removed ones are
+        // dropped only after it stops, so an interrupted sighting can only leave a stale entry — which the exact
+        // reach evaluation discards — never an identity whose current tags have no entry, which would hide it
+        // from the reach it belongs to.
+        string rowId = SortKey(valueKey, kindToken);
+        HashSet<string> desiredEntries = NatsSecurityLabels.EntryKeysFor(identity, rowId);
+        HashSet<string> previousEntries = NatsSecurityLabels.EntryKeysFor(previousTags, rowId);
+        foreach (string entryKey in desiredEntries)
+        {
+            if (!previousEntries.Contains(entryKey))
+            {
+                await this.store.PutAsync(entryKey, Array.Empty<byte>(), cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         await this.store.PutAsync(key, json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.ReindexDigestAsync(kindToken, valueKey, identity, cancellationToken).ConfigureAwait(false);
+
+        foreach (string entryKey in previousEntries)
+        {
+            if (!desiredEntries.Contains(entryKey))
+            {
+                await this.DeleteAsync(entryKey, cancellationToken).ConfigureAwait(false);
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -249,17 +284,26 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
         // touching a single candidate's tags — only a scoped reach pays the per-candidate materialise-and-check cost.
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
+        // §14.4: narrow to the candidate identities the label entries admit before reading anything. A null answer
+        // means the index could not narrow and the key scan runs as it always did; an empty one means no identity
+        // qualifies, so the page is empty without a single document read. The candidate id is the composite sort
+        // key, so the kind/prefix/cursor filters apply to a candidate BEFORE its fetch, and a stale entry resolves
+        // to a key whose document is gone, which the absent-entry skip discards.
+        IReadOnlySet<string>? candidates = readReach is null
+            ? null
+            : await SecurityLabelQueryResolver.ResolveAsync(
+                readReach.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
         // The KV bucket has no server-side ordering or filtering, so — mirroring the catalog store — collect matches,
         // sort by the composite sort key, and keyset-page here. Each match carries its bytes so the page can materialise
         // its pooled documents without a second fetch.
         var matches = new List<(string SortKey, string Value, string Kind, byte[] Json)>();
-        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach ((string key, (string SubjectValue, string SubjectKind) parts) in this.ScanCandidateKeysAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string SubjectValue, string SubjectKind) parts))
-            {
-                continue;
-            }
-
             if (kindToken is not null && !string.Equals(parts.SubjectKind, kindToken, StringComparison.Ordinal))
             {
                 continue;
@@ -285,9 +329,9 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 continue;
             }
 
-            // Reach filter (§17.1): a scoped caller discovers an identity only when their read-reach admits its tags —
-            // materialise the candidate to read its identity tags, the same per-row reach idiom the catalog store uses.
-            // An unrestricted reach skips this entirely (no materialisation), so System search keeps its floor.
+            // Reach filter (§17.1): the exact evaluation over the candidate's persisted tags — the label entries
+            // only propose a superset (§14.4), so this check still decides every row a caller sees. An
+            // unrestricted reach skips this entirely (no materialisation), so System search keeps its floor.
             if (readReach is not null)
             {
                 bool admitted;
@@ -511,6 +555,41 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
 
         await this.store.PutAsync(DigestMemberKey(newDigest, kindToken, value), Array.Empty<byte>(), cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.store.PutAsync(digestOfKey, Encoding.UTF8.GetBytes(newDigest), cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    // Streams the (key, parsed parts) pairs a search should consider. With no candidate set this is the bucket
+    // key scan it always was (skipping the digest/label index namespaces); with one, each candidate sort key is
+    // split back into its (value, kind) parts and addressed directly, so identities outside the reach are never
+    // listed, never parsed and never read.
+    private async IAsyncEnumerable<(string Key, (string SubjectValue, string SubjectKind) Parts)> ScanCandidateKeysAsync(
+        IReadOnlySet<string>? candidates,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (candidates is not null)
+        {
+            foreach (string candidate in candidates)
+            {
+                int separator = candidate.IndexOf(SortKeySeparator, StringComparison.Ordinal);
+                if (separator < 0)
+                {
+                    continue;
+                }
+
+                string subjectValue = candidate[..separator];
+                string subjectKind = candidate[(separator + 1)..];
+                yield return (Key(subjectKind, subjectValue), (subjectValue, subjectKind));
+            }
+
+            yield break;
+        }
+
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (key.StartsWith(KeyPrefix, StringComparison.Ordinal) && TryParseKey(key, out (string SubjectValue, string SubjectKind) parts))
+            {
+                yield return (key, parts);
+            }
+        }
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)
