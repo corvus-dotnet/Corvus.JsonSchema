@@ -48,6 +48,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0014](0014-direct-grant-versus-request-only.md) | Direct grant versus request-only, split by binding type | Accepted |
 | [0015](0015-access-overview-server-aggregated.md) | The access overview is server-aggregated | Accepted |
 | [0016](0016-control-plane-security-mode.md) | `ControlPlaneSecurityMode`: one explicit posture, no insecure default | Accepted |
+| [0067](0067-reach-enforced-by-the-store-proven-on-the-wire.md) | Reach is enforced by the store, mirrored queryably, and proven on the wire | Accepted |
 
 ### Engine and durability
 
