@@ -33,13 +33,18 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     // Reserve the next version number for a base id, atomically. KEYS: per-base counter. Returns the new number.
     private const string ReserveVersionScript = "return redis.call('INCR', KEYS[1])";
 
-    // Store the version hash and add it to the ordering index, atomically. KEYS: version hash, index zset.
-    // ARGV: sortKey, then the (field, value) pairs to HSET.
+    // Store the version hash, add it to the ordering index and to its §14.4 security-label sets, atomically.
+    // KEYS: version hash, index zset. ARGV: sortKey, label-set count, the label-set keys (built by
+    // RedisSecurityLabels on the C# side, so the script needs no tag decoding), then the (field, value) pairs
+    // to HSET. Atomicity is what keeps the label sets sound here: there is no window in which the version is
+    // visible without its labels, which would hide it from a narrowed query.
     private const string StoreScript =
         """
         redis.call('ZADD', KEYS[2], 0, ARGV[1])
+        local labels = tonumber(ARGV[2])
+        for i = 3, 2 + labels do redis.call('SADD', ARGV[i], ARGV[1]) end
         local args = {}
-        for i = 2, #ARGV do args[#args + 1] = ARGV[i] end
+        for i = 3 + labels, #ARGV do args[#args + 1] = ARGV[i] end
         redis.call('HSET', KEYS[1], unpack(args))
         return 1
         """;
@@ -179,8 +184,28 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
-        RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
-        Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
+        // §14.4: narrow to the candidate versions the label sets admit before reading anything. A null answer
+        // means the index could not narrow and the index-set sweep runs as it always did; an empty one means no
+        // version qualifies, so the page is empty without a single doc read. With candidates in hand the ordering
+        // index is not even consulted — a candidate id IS the sort key — and a stale label resolving to a deleted
+        // doc falls into the existing null-doc skip. Sound in distinct mode too: a base is included when ANY of
+        // its versions matches, and every version the exact reach admits is in the candidate superset.
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.CatalogLabelPrefix, query.Security).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return CatalogPage.Create(PooledDocumentList<CatalogVersion>.Empty);
+        }
+
+        RedisValue[] sortKeys;
+        if (candidates is null)
+        {
+            sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
+            Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
+        }
+        else
+        {
+            sortKeys = [.. candidates.OrderBy(static s => s, StringComparer.Ordinal).Select(static s => (RedisValue)s)];
+        }
 
         if (query.DistinctWorkflows)
         {
@@ -239,7 +264,16 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
     {
-        RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
+        // Same narrowing as the search, so a count can never consider a row the search would not have shown (§14.4).
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.CatalogLabelPrefix, query.Security).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        RedisValue[] sortKeys = candidates is null
+            ? await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false)
+            : [.. candidates.Select(static s => (RedisValue)s)];
 
         // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
         // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap; order-independent.
@@ -362,15 +396,49 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         }
 
         byte[] updatedDoc;
+        SecurityTagSet currentSecurityTags;
         using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse((byte[])value!))
         {
             // Patch only the changed governance fields through the mutable builder; every other field — including the
             // security tags — is carried bytes-to-bytes (no per-field string realisation, and no longer dropping the
             // securityTags the field-by-field rebuild used to strip).
             updatedDoc = CatalogVersion.CreatePatchedBytes(currentDoc.RootElement, patch, now);
+            currentSecurityTags = SecurityTagSet.CopyFrom(currentDoc.RootElement.SecurityTags);
+        }
+
+        // Re-tag (§14.2): when the patch replaces the security tags, move the label-set entries by the diff, in
+        // the §14.4 ordering — entries for the NEW tags are added before the doc carries them and entries for the
+        // removed ones are dropped only after it stops, so an interrupted re-tag can only leave a stale entry —
+        // which the exact evaluation discards — never a doc whose current tags have no entry, which would hide it.
+        HashSet<string>? previousKeys = null;
+        HashSet<string>? desiredKeys = null;
+        string sortKey = SortKey(baseWorkflowId, versionNumber);
+        if (patch.SecurityTags is { } newSecurityTags)
+        {
+            previousKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.CatalogLabelPrefix, currentSecurityTags);
+            desiredKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.CatalogLabelPrefix, newSecurityTags);
+            foreach (string setKey in desiredKeys)
+            {
+                if (!previousKeys.Contains(setKey))
+                {
+                    await this.database.SetAddAsync(setKey, sortKey).ConfigureAwait(false);
+                }
+            }
         }
 
         await this.database.HashSetAsync(key, DocField, updatedDoc).ConfigureAwait(false);
+
+        if (previousKeys is not null && desiredKeys is not null)
+        {
+            foreach (string setKey in previousKeys)
+            {
+                if (!desiredKeys.Contains(setKey))
+                {
+                    await this.database.SetRemoveAsync(setKey, sortKey).ConfigureAwait(false);
+                }
+            }
+        }
+
         return ParsedJsonDocument<CatalogVersion>.Parse(updatedDoc);
     }
 
@@ -404,8 +472,20 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     public async ValueTask<bool> DeleteAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        // Read the version's labels while its doc still exists, then drop the doc before its label entries — the
+        // §14.4 ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it,
+        // whereas dropping labels first would strand a still-visible version.
+        HashSet<string> labelSetKeys = await this.ReadSecurityLabelSetKeysAsync(baseWorkflowId, versionNumber).ConfigureAwait(false);
+
         bool existed = await this.database.KeyDeleteAsync(VersionKey(baseWorkflowId, versionNumber)).ConfigureAwait(false);
-        await this.database.SortedSetRemoveAsync(IndexKey, SortKey(baseWorkflowId, versionNumber)).ConfigureAwait(false);
+        string sortKey = SortKey(baseWorkflowId, versionNumber);
+        await this.database.SortedSetRemoveAsync(IndexKey, sortKey).ConfigureAwait(false);
+        foreach (string setKey in labelSetKeys)
+        {
+            await this.database.SetRemoveAsync(setKey, sortKey).ConfigureAwait(false);
+        }
+
         return existed;
     }
 
@@ -443,8 +523,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         foreach (CatalogVersionRef reference in versions)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await this.database.KeyDeleteAsync(VersionKey(reference.BaseWorkflowId, reference.VersionNumber)).ConfigureAwait(false);
-            await this.database.SortedSetRemoveAsync(IndexKey, SortKey(reference.BaseWorkflowId, reference.VersionNumber)).ConfigureAwait(false);
+            await this.DeleteAsync(reference.BaseWorkflowId, reference.VersionNumber, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -515,8 +594,9 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             return false;
         }
 
-        // Row-security reach (§14.2): Redis has no server-side filtering, so apply the reach filter in process
-        // over the version's persisted security tags — the only correct option for a key/value backend.
+        // Row-security reach (§14.2): the exact evaluation over the version's persisted tags. Redis cannot filter
+        // inside the serialized tag JSON, so the query first narrows to the candidates the label sets admit
+        // (§14.4) and this check then decides each one — an imprecise plan costs throughput, never reach.
         if (query.Security is { } security)
         {
             SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
@@ -529,6 +609,20 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         }
 
         return true;
+    }
+
+    // The label-set keys the version's CURRENT doc occupies, so a delete tears down exactly the entries its tags
+    // wrote. An absent doc yields no keys.
+    private async ValueTask<HashSet<string>> ReadSecurityLabelSetKeysAsync(string baseWorkflowId, int versionNumber)
+    {
+        RedisValue value = await this.database.HashGetAsync(VersionKey(baseWorkflowId, versionNumber), DocField).ConfigureAwait(false);
+        if (value.IsNull)
+        {
+            return [];
+        }
+
+        using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse((byte[])value!);
+        return RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.CatalogLabelPrefix, SecurityTagSet.CopyFrom(doc.RootElement.SecurityTags));
     }
 
     private async ValueTask<ParsedJsonDocument<CatalogVersion>> AddCoreAsync(string baseWorkflowId, ReadOnlyMemory<byte> packageUtf8, CatalogMetadata metadata, CancellationToken cancellationToken)
@@ -562,15 +656,20 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             securityTags: metadata.SecurityTags);
 
         // Store the CatalogVersion JSON document verbatim in the "doc" field and the package alongside; the
-        // sorted-set index orders by sortKey for keyset paging.
+        // sorted-set index orders by sortKey for keyset paging, and the version's §14.4 label-set entries land
+        // in the same atomic script (member = the sort key, the same id the reach resolution yields).
+        string sortKey = SortKey(baseWorkflowId, versionNumber);
+        HashSet<string> labelSetKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.CatalogLabelPrefix, metadata.SecurityTags);
         RedisValue[] argv =
         [
-            SortKey(baseWorkflowId, versionNumber),
+            sortKey,
+            labelSetKeys.Count,
+            .. labelSetKeys.Select(k => (RedisValue)k),
             DocField, versionDoc,
             PackageField, projection.CanonicalPackage,
         ];
 
-        await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);
+        await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey), IndexKey], argv).ConfigureAwait(false);
         return ParsedJsonDocument<CatalogVersion>.Parse(versionDoc);
     }
 
