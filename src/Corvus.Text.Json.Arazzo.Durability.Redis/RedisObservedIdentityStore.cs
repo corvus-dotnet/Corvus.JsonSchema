@@ -60,8 +60,16 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     // reads the record's previously-indexed digest and, when the identity changed, SREMs the sortKey from the OLD
     // digest's SET (the required re-sighting retraction); it then SADDs the sortKey to the new digest's SET and records
     // the new digest — or, for the empty identity (no digest), simply clears the record's digestOf so it is not indexed.
+    // The §14.4 label diff is gated on the digest comparison the script already makes: the digest is computed
+    // from the tag SET, so digest equality IS tag-set equality and the common re-sighting (same identity) pays no
+    // cjson work and no set touches. When the identity changed, the OLD tags come from the previous document
+    // (captured before the SET overwrites it) and the NEW ones from the incoming document; the set names
+    // ('arazzo:obid:label:v:' .. byte-length .. ':' .. key .. value, and 'arazzo:obid:label:k:' .. key) must
+    // match RedisSecurityLabels byte-for-byte. Running inside the atomic script, the diff cannot be interrupted
+    // between document and label.
     private const string StoreScript =
         """
+        local oldDoc = redis.call('GET', KEYS[1])
         redis.call('SET', KEYS[1], ARGV[1])
         redis.call('ZADD', KEYS[2], 0, ARGV[2])
         local oldDigest = redis.call('GET', KEYS[3])
@@ -73,6 +81,22 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
         else
             redis.call('SADD', ARGV[4] .. ARGV[3], ARGV[2])
             redis.call('SET', KEYS[3], ARGV[3])
+        end
+        if (oldDigest or '') ~= ARGV[3] then
+            local function labelKeys(tags)
+                local keys = {}
+                if tags then
+                    for _, tag in ipairs(tags) do
+                        keys['arazzo:obid:label:v:' .. #tag.key .. ':' .. tag.key .. tag.value] = true
+                        keys['arazzo:obid:label:k:' .. tag.key] = true
+                    end
+                end
+                return keys
+            end
+            local oldKeys = labelKeys(oldDoc and cjson.decode(oldDoc).identityTags or nil)
+            local newKeys = labelKeys(cjson.decode(ARGV[1]).identityTags)
+            for k in pairs(newKeys) do if not oldKeys[k] then redis.call('SADD', k, ARGV[2]) end end
+            for k in pairs(oldKeys) do if not newKeys[k] then redis.call('SREM', k, ARGV[2]) end end
         end
         return 1
         """;
@@ -254,11 +278,33 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
 
         SecurityFilter? readReach = context.Reach(AccessVerb.Read);
 
+        // §14.4: narrow to the candidate identities the label sets admit before reading anything, resolved
+        // server-side in one Lua evaluation of the compiled plan. A null answer means the index could not narrow
+        // and the sweep runs as it always did; an empty one means no identity qualifies, so the page is empty
+        // without a single document read. A candidate id is the sort key, so the kind/prefix/cursor filters below
+        // apply to it before its fetch, and a stale entry resolves to a key whose document is gone, which the
+        // absent-lease skip discards.
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.ObservedIdentityLabelPrefix, readReach).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
         // Redis has no server-side ordering for a sorted set's members by value, so the keyset scan runs over the index
         // sortKeys in memory: they are the small (value \0 kind) tuples (no documents), so order them ordinally, seek
-        // strictly past the cursor, then fetch each candidate's document lazily — only up to what the page needs.
-        RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
-        Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
+        // strictly past the cursor, then fetch each candidate's document lazily — only up to what the page needs. With
+        // candidates in hand the ordering index is not even consulted — the candidates ARE the sort keys to consider.
+        RedisValue[] sortKeys;
+        if (candidates is null)
+        {
+            sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
+            Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
+        }
+        else
+        {
+            sortKeys = [.. candidates.OrderBy(static s => s, StringComparer.Ordinal).Select(static s => (RedisValue)s)];
+        }
+
         string? cursorSortKey = hasCursor ? SortKey(cursor.SubjectValue, cursor.SubjectKind) : null;
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);

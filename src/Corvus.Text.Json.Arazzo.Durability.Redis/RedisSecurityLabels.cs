@@ -38,6 +38,9 @@ internal static class RedisSecurityLabels
     /// <summary>The label-set key prefix for the catalog store's row ids (the <c>{base}{version:D10}</c> sort key).</summary>
     internal const string CatalogLabelPrefix = "arazzo:catalog:label:";
 
+    /// <summary>The label-set key prefix for the observed-identity store's row ids (the <c>{value}\0{kind}</c> sort key).</summary>
+    internal const string ObservedIdentityLabelPrefix = "arazzo:obid:label:";
+
     // Interprets the compiled plan program over a stack of Lua tables, entirely server-side. ARGV is the
     // postfix token stream: 'S' <set key> pushes a label set's members; 'U' <n> / 'I' <n> pop n sets and push
     // their union / intersection. Read-only — no temp keys to clean up, safe on a replica — and the whole
