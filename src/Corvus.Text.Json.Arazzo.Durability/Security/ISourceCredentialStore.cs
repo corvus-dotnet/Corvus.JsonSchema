@@ -82,11 +82,13 @@ public interface ISourceCredentialStore
     }
 
     /// <summary>Updates the binding for (<paramref name="sourceName"/>, <paramref name="environment"/>) the caller's
-    /// write reach admits, under optimistic concurrency. The (sourceName, environment) identity, the security tags, and
-    /// the created-* audit fields are immutable; only the references and non-secret metadata are replaced.</summary>
+    /// write reach admits, under optimistic concurrency. The (sourceName, environment) identity, the usage tags, and the
+    /// created-* audit fields are immutable; the references and non-secret metadata are replaced, and a draft that
+    /// supplies management tags re-tags the reach scope (§14.2) while one that omits them carries the stored tags
+    /// forward.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
-    /// <param name="draft">The new content as a draft (its identity and security tags are ignored — those are immutable
+    /// <param name="draft">The new content as a draft (its identity and usage tags are ignored — those are immutable
     /// and carried forward from the stored binding); the store reads it synchronously, so a pooled draft may be disposed
     /// once the call returns.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>

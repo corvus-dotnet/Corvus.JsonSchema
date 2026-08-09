@@ -76,10 +76,11 @@ public interface IEnvironmentStore
     }
 
     /// <summary>Updates the environment named <paramref name="name"/> the caller's write reach admits, under optimistic
-    /// concurrency. The <c>name</c>, the management tags, and the created-* audit fields are immutable; only the display
-    /// name and description are replaced (carried bytes-to-bytes from the draft).</summary>
+    /// concurrency. The <c>name</c> and the created-* audit fields are immutable; the display name and description are
+    /// replaced, and a draft that supplies management tags re-tags the reach scope (§14.2) while one that omits them
+    /// carries the stored tags forward — all bytes-to-bytes.</summary>
     /// <param name="name">The environment name.</param>
-    /// <param name="draft">The new content as a draft (its name and tags are ignored — immutable, carried forward); read
+    /// <param name="draft">The new content as a draft (its name is ignored — immutable, carried forward); read
     /// synchronously, so a pooled draft may be disposed once the call returns.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the environment (for audit).</param>

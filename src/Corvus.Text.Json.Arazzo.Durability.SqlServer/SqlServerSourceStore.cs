@@ -89,7 +89,7 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         }
 
         // Mirror the management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator) so
-        // the §14.2 read reach can be pushed into the list/count query. Atomic; tags are immutable so no update re-sync.
+        // the §14.2 read reach can be pushed into the list/count query. Atomic; a re-tagging update rebuilds the mirror in step (see UpdateAsync).
         await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, tags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -189,13 +189,31 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         }
 
         byte[] json = SourceSerialization.SerializeUpdated(existing, name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand update = connection.CreateCommand();
+        update.Transaction = transaction;
         update.CommandText = "UPDATE Sources SET Etag = @etag, Document = @doc WHERE Name = @n AND TagsHash = HASHBYTES('SHA2_256', @t);";
         update.Parameters.AddWithValue("@etag", SourceSerialization.EtagOf(json).Value!);
         update.Parameters.AddWithValue("@doc", json);
         update.Parameters.AddWithValue("@n", name);
         update.Parameters.AddWithValue("@t", tags!);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // A draft that supplies management tags re-tags the row's reach scope (a store-level replace; an omitted set
+        // is carried forward), so the queryable mirror the list/count reach predicate reads is rebuilt in the same
+        // transaction — left stale, the listing keeps deciding by the old tags and drifts from this store's own get.
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            await using SqlCommand clear = connection.CreateCommand();
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM SourceSecurityTags WHERE Name = @n AND TagsHash = HASHBYTES('SHA2_256', @t);";
+            clear.Parameters.AddWithValue("@n", name);
+            clear.Parameters.AddWithValue("@t", tags!);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, transaction, name, tags!, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);
     }
 
@@ -285,7 +303,8 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
     }
 
     // Mirrors a source's management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator)
-    // so the reach can be pushed into the list/count query. Tags are immutable, so this runs only on add.
+    // so the reach can be pushed into the list/count query. Runs on add and again on a re-tagging update, which
+    // clears the old rows first.
     private static async Task SyncSecurityTagsAsync(SqlConnection connection, SqlTransaction transaction, string name, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
     {
         if (managementTags.IsEmpty)

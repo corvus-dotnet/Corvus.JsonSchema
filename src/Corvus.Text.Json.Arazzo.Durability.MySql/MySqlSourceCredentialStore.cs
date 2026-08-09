@@ -123,7 +123,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
         // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)
         // into the queryable side table (keyed by TagsHash, the orderable row discriminator) so the §14.2 read reach can
-        // be pushed into the list/count query. Atomic; tags are immutable so no re-sync on update.
+        // be pushed into the list/count query. Atomic; a re-tagging update rebuilds the mirror in step (see UpdateAsync).
         await SyncSecurityTagsAsync(connection, transaction, draft.SourceNameValue, draft.EnvironmentValue, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -227,14 +227,34 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         }
 
         byte[] json = SourceCredentialSerialization.SerializeUpdated(existing, $"{sourceName}@{environment}", expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        string tagsHash = TagsHash(sourceName, environment, tags!);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand update = connection.CreateCommand();
+        update.Transaction = transaction;
         update.CommandText = "UPDATE SourceCredentials SET Etag = @etag, Document = @doc WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
         update.Parameters.AddWithValue("@etag", SourceCredentialSerialization.EtagOf(json).Value!);
         update.Parameters.AddWithValue("@doc", json);
         update.Parameters.AddWithValue("@s", sourceName);
         update.Parameters.AddWithValue("@e", environment);
-        update.Parameters.AddWithValue("@h", TagsHash(sourceName, environment, tags!));
+        update.Parameters.AddWithValue("@h", tagsHash);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // A draft that supplies management tags re-tags the binding's reach scope (a store-level replace; an omitted
+        // set is carried forward), so the queryable mirror the list/count reach predicate reads is rebuilt in the same
+        // transaction — left stale, the listing keeps deciding by the old tags and drifts from this store's own get.
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            await using MySqlCommand clear = connection.CreateCommand();
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM SourceCredentialSecurityTags WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
+            clear.Parameters.AddWithValue("@s", sourceName);
+            clear.Parameters.AddWithValue("@e", environment);
+            clear.Parameters.AddWithValue("@h", tagsHash);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, transaction, sourceName, environment, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
     }
 
@@ -405,7 +425,7 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
 
     // Mirrors a binding's MANAGEMENT tags into the queryable side table (keyed by TagsHash) so the reach can be pushed
     // into the list/count query. Reach filters on the management tags (distinct from the row's combined mgmt+usage Tags
-    // discriminator). Tags are immutable after creation, so this runs only on add.
+    // discriminator). Runs on add and again on a re-tagging update, which clears the old rows first.
     private static async Task SyncSecurityTagsAsync(MySqlConnection connection, MySqlTransaction transaction, string sourceName, string environment, string tagsHash, SecurityTagSet managementTags, CancellationToken cancellationToken)
     {
         if (managementTags.IsEmpty)

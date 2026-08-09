@@ -117,7 +117,7 @@ public sealed class MySqlSourceStore : ISourceStore, IAsyncDisposable
         }
 
         // Mirror the management tags into the queryable side table (keyed by TagsHash, the orderable row discriminator)
-        // so the §14.2 read reach can be pushed into the list/count query. Atomic; tags are immutable so no update re-sync.
+        // so the §14.2 read reach can be pushed into the list/count query. Atomic; a re-tagging update rebuilds the mirror in step (see UpdateAsync).
         await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -217,13 +217,32 @@ public sealed class MySqlSourceStore : ISourceStore, IAsyncDisposable
         }
 
         byte[] json = SourceSerialization.SerializeUpdated(existing, name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        string tagsHash = TagsHash(name, tags!);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand update = connection.CreateCommand();
+        update.Transaction = transaction;
         update.CommandText = "UPDATE Sources SET Etag = @etag, Document = @doc WHERE Name = @n AND TagsHash = @h;";
         update.Parameters.AddWithValue("@etag", SourceSerialization.EtagOf(json).Value!);
         update.Parameters.AddWithValue("@doc", json);
         update.Parameters.AddWithValue("@n", name);
-        update.Parameters.AddWithValue("@h", TagsHash(name, tags!));
+        update.Parameters.AddWithValue("@h", tagsHash);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // A draft that supplies management tags re-tags the row's reach scope (a store-level replace; an omitted set
+        // is carried forward), so the queryable mirror the list/count reach predicate reads is rebuilt in the same
+        // transaction — left stale, the listing keeps deciding by the old tags and drifts from this store's own get.
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            await using MySqlCommand clear = connection.CreateCommand();
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM SourceSecurityTags WHERE Name = @n AND TagsHash = @h;";
+            clear.Parameters.AddWithValue("@n", name);
+            clear.Parameters.AddWithValue("@h", tagsHash);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, transaction, name, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);
     }
 
@@ -319,7 +338,7 @@ public sealed class MySqlSourceStore : ISourceStore, IAsyncDisposable
     }
 
     // Mirrors a source's management tags into the queryable side table (keyed by TagsHash) so the reach can be pushed
-    // into the list/count query. Management tags are immutable after creation, so this runs only on add.
+    // into the list/count query. Runs on add and again on a re-tagging update, which clears the old rows first.
     private static async Task SyncSecurityTagsAsync(MySqlConnection connection, MySqlTransaction transaction, string name, string tagsHash, SecurityTagSet managementTags, CancellationToken cancellationToken)
     {
         if (managementTags.IsEmpty)

@@ -334,6 +334,40 @@ public abstract class SourceCredentialStoreConformance
     }
 
     [TestMethod]
+    public async Task A_re_tag_moves_the_bindings_reach_scope_for_list_and_count()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        using (await store.AddAsync(Tagged("petstore", "production", "acme"), "system", default))
+        {
+        }
+
+        // Re-tag the binding's management scope from acme to globex. §14.2 reach follows the row's CURRENT management
+        // tags, not any create-time mirror of them: a backend that pushes reach into its query must re-sync whatever
+        // queryable representation it maintains, or its listings drift from its own point reads.
+        using (ParsedJsonDocument<SourceCredentialBinding>? updated = await store.UpdateAsync("petstore", "production", Tagged("petstore", "production", "globex"), WorkflowEtag.None, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+        }
+
+        // The new scope sees the binding, in the list and in the count.
+        using (SourceCredentialPage page = await store.ListAsync(Scope("globex"), 10, default, default))
+        {
+            page.Bindings.Select(b => b.ManagementTagsValue.ToList().Single().Value).ShouldBe(["globex"]);
+        }
+
+        (await store.CountAsync(Scope("globex"), 10, default)).Count.ShouldBe(1);
+
+        // The old scope no longer does: a listing that still admitted the row by its stale create-time tags would leak
+        // it across the authorization boundary.
+        using (SourceCredentialPage page = await store.ListAsync(Scope("acme"), 10, default, default))
+        {
+            page.Bindings.Count.ShouldBe(0);
+        }
+
+        (await store.CountAsync(Scope("acme"), 10, default)).Count.ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task Management_reads_are_reach_filtered_and_non_disclosing()
     {
         ISourceCredentialStore store = await this.NewStoreAsync();

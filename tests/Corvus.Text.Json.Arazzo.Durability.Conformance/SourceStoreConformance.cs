@@ -264,6 +264,39 @@ public abstract class SourceStoreConformance
     }
 
     [TestMethod]
+    public async Task A_re_tag_moves_the_rows_reach_scope_for_list_and_count()
+    {
+        ISourceStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "petstore", "system", Tenant("acme"));
+
+        // Re-tag the source from acme to globex. §14.2 reach follows the row's CURRENT management tags, not any
+        // create-time mirror of them: a backend that pushes reach into its query must re-sync whatever queryable
+        // representation it maintains, or its listings drift from its own point reads.
+        using (ParsedJsonDocument<RegisteredSource> reTag = RegisteredSource.Draft("petstore", null, default, null, null, Tenant("globex")))
+        using (ParsedJsonDocument<RegisteredSource>? updated = await store.UpdateAsync("petstore", reTag.RootElement, WorkflowEtag.None, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+        }
+
+        // The new scope sees the row, in the list and in the count.
+        using (SourcePage page = await store.ListAsync(Scope("globex"), 10, default, default))
+        {
+            page.Sources.Select(s => s.ManagementTagsValue.ToList().Single().Value).ShouldBe(["globex"]);
+        }
+
+        (await store.CountAsync(Scope("globex"), 10, default)).Count.ShouldBe(1);
+
+        // The old scope no longer does: a listing that still admitted the row by its stale create-time tags would leak
+        // it across the authorization boundary.
+        using (SourcePage page = await store.ListAsync(Scope("acme"), 10, default, default))
+        {
+            page.Sources.Count.ShouldBe(0);
+        }
+
+        (await store.CountAsync(Scope("acme"), 10, default)).Count.ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task Management_reads_are_reach_filtered_and_non_disclosing()
     {
         ISourceStore store = await this.NewStoreAsync();

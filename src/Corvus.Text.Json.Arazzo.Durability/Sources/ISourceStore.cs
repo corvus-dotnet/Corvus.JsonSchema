@@ -79,12 +79,13 @@ public interface ISourceStore
     }
 
     /// <summary>Updates the source named <paramref name="name"/> the caller's write reach admits, under optimistic
-    /// concurrency. The <c>name</c>, the <c>type</c>, the management tags, and the created-* audit fields are immutable;
-    /// the display name and description are replaced, and the document is rotated when the draft supplies one (otherwise
-    /// carried forward) — all bytes-to-bytes from the draft / the stored source.</summary>
+    /// concurrency. The <c>name</c>, the <c>type</c>, and the created-* audit fields are immutable; the display name and
+    /// description are replaced, the document is rotated when the draft supplies one (otherwise carried forward), and a
+    /// draft that supplies management tags re-tags the reach scope (§14.2) while one that omits them carries the stored
+    /// tags forward — all bytes-to-bytes from the draft / the stored source.</summary>
     /// <param name="name">The source name.</param>
-    /// <param name="draft">The new content as a draft (its name and type and tags are ignored — immutable, carried
-    /// forward; an undefined document keeps the stored one); read synchronously, so a pooled draft may be disposed once
+    /// <param name="draft">The new content as a draft (its name and type are ignored — immutable, carried forward; an
+    /// undefined document keeps the stored one); read synchronously, so a pooled draft may be disposed once
     /// the call returns.</param>
     /// <param name="expectedEtag">The expected current etag (<see cref="WorkflowEtag.None"/> to overwrite unconditionally).</param>
     /// <param name="actor">The authenticated identity updating the source (for audit).</param>

@@ -112,7 +112,7 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
 
         // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the
         // list/count query (a correlated EXISTS) rather than evaluated per row in memory. Atomic with the row insert;
-        // the tags are immutable, so no re-sync is needed on update.
+        // a re-tagging update rebuilds the mirror in step (see UpdateAsync).
         await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, canonicalTags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -212,13 +212,31 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         }
 
         byte[] json = EnvironmentSerialization.SerializeUpdated(existing, name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand update = connection.CreateCommand();
+        update.Transaction = transaction;
         update.CommandText = "UPDATE Environments SET Etag = @etag, Document = @doc WHERE Name = @n AND Tags = @t;";
         update.Parameters.AddWithValue("etag", EnvironmentSerialization.EtagOf(json).Value!);
         update.Parameters.AddWithValue("doc", json);
         update.Parameters.AddWithValue("n", name);
         update.Parameters.AddWithValue("t", tags!);
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // A draft that supplies management tags re-tags the row's reach scope (a store-level replace; an omitted set
+        // is carried forward), so the queryable mirror the list/count reach predicate reads is rebuilt in the same
+        // transaction — left stale, the listing keeps deciding by the old tags and drifts from this store's own get.
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            await using NpgsqlCommand clear = connection.CreateCommand();
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentSecurityTags WHERE Name = @n AND Tags = @t;";
+            clear.Parameters.AddWithValue("n", name);
+            clear.Parameters.AddWithValue("t", tags!);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, transaction, name, tags!, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<Environment>(json);
     }
 
@@ -313,7 +331,7 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
     }
 
     // Mirrors an environment's management tags into the queryable side table (one row per key/value) so the reach can be
-    // pushed into the list/count query. Management tags are immutable after creation, so this runs only on add.
+    // pushed into the list/count query. Runs on add and again on a re-tagging update, which clears the old rows first.
     private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string name, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
     {
         if (managementTags.IsEmpty)
