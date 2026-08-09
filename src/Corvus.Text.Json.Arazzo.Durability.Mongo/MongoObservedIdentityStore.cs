@@ -18,13 +18,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// (<c>subjectValue \0 subjectKind</c>).
 /// </summary>
 /// <remarks>
-/// <para>The caller's read-reach (§17.1) is applied <strong>in memory</strong> over each candidate's persisted
-/// <c>sys:</c> tags (the catalog/source-credential idiom), so the server-side <c>Limit</c> is dropped when a reach
-/// filter is present: the <c>sortKey</c>-ordered cursor is streamed and the page filled from the admitted rows,
-/// preserving keyset paging. An unrestricted (System) reach skips the per-row materialisation entirely and may push a
-/// server <c>Limit</c>. The prefix is a case-sensitive anchored regex on <c>subjectValue</c> (ordinal, unlike the
-/// catalog's lower-cased match) so the contract's ordinal order is honoured; the keyset bound is a <c>sortKey</c>
-/// comparison (MongoDB's default binary collation is the ordinal order the contract pages by).</para>
+/// <para>The caller's read-reach (§17.1) is <strong>pushed into the query</strong> over a queryable copy of the
+/// identity's <c>sys:</c> tags (the same <c>securityTags</c> multikey shape the run and catalog stores index), so a
+/// reach-filtered search sends only admitted rows and the server-side <c>Limit</c> always applies. The prefix is a
+/// case-sensitive anchored regex on <c>subjectValue</c> (ordinal, unlike the catalog's lower-cased match) so the
+/// contract's ordinal order is honoured; the keyset bound is a <c>sortKey</c> comparison (MongoDB's default binary
+/// collation is the ordinal order the contract pages by).</para>
 /// <para>The driver pools connections internally, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with
 /// <see cref="PrepareAsync(string, string, CancellationToken)"/>.</para>
@@ -34,6 +33,10 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     // The null control char cannot appear in a subjectValue/subjectKind token and is the lowest byte, so it joins the
     // two key parts into a sortKey whose ascending binary order is exactly the contract's (subjectValue, subjectKind).
     private const char Separator = (char)0;
+
+    // The §17.1 read-reach fragments over the queryable securityTags copy — one emitter, the rule semantics shared
+    // with every other backend through the one predicate walk.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
 
     private readonly IMongoClient client;
     private readonly bool ownsClient;
@@ -144,6 +147,12 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
             ["subjectValue"] = valueKey,
             ["doc"] = new BsonBinaryData(json),
 
+            // A queryable copy of the identity's sys: tags (BsonNull when empty, so the emitter's untagged-row
+            // guard holds), which is what lets the §17.1 read-reach push into the search instead of streaming and
+            // discarding rows in process. The full ReplaceOne overwrites it, so a re-sighting that changes the
+            // identity moves the row's reach in step with the document.
+            ["securityTags"] = MongoSecurityTags.ToBson(identity),
+
             // The indexed collision-probe key (§16.5.4): the order-independent digest of the sys: identity, or BsonNull
             // for the empty (unscoped) identity, which never collides. The full ReplaceOne below overwrites this field,
             // so a re-sighting that changes (or clears) the identity rewrites the digest in step with the document.
@@ -199,20 +208,24 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
             filter = b.And(filter, b.Gt("sortKey", SortKey(cursor.SubjectValue, cursor.SubjectKind)));
         }
 
-        // The reach (§17.1) is applied in memory over each candidate's persisted security tags (see the class remarks),
-        // so the server-side Limit is dropped when a reach filter is present: stream the sortKey-ordered cursor and fill
-        // the page from the admitted rows, preserving keyset paging. System reach materialises nothing and may push Limit.
-        IFindFluent<BsonDocument, BsonDocument> find = this.identities.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
-        if (readReach is null)
+        // The reach (§17.1) is pushed into the query over the queryable securityTags copy, so the server sends only
+        // admitted rows and the Limit always applies — a scoped typeahead no longer streams every tenant's
+        // identities to discard them here. SecurityFilter supplies the fail-closed guards (untagged rows denied,
+        // an empty rule set matches nothing) through the shared emitter walk, so the semantics cannot drift.
+        if (readReach is not null)
         {
-            find = find.Limit(pageSize + 1);
+            filter = b.And(filter, readReach.ToPredicate(SecurityEmitter));
         }
+
+        IFindFluent<BsonDocument, BsonDocument> find = this.identities.Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"))
+            .Limit(pageSize + 1);
 
         var docs = new PooledDocumentList<ObservedIdentity>(pageSize);
         string? nextValue = null, nextKind = null;
         try
         {
-            // A FURTHER admitted row beyond the page is the signal to emit a continuation token — the (value, kind) of
+            // A FURTHER row beyond the page is the signal to emit a continuation token — the (value, kind) of
             // the last *included* identity, so the next request seeks strictly past it.
             using IAsyncCursor<BsonDocument> mongoCursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
             string lastValue = string.Empty, lastKind = string.Empty;
@@ -222,18 +235,6 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
                 foreach (BsonDocument document in mongoCursor.Current)
                 {
                     byte[] json = document["doc"].AsBsonBinaryData.Bytes;
-                    if (readReach is not null)
-                    {
-                        using ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json);
-                        SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!readReach.IsSatisfiedBy(identityTags))
-                        {
-                            continue;
-                        }
-                    }
-
                     if (docs.Count == pageSize)
                     {
                         nextValue = lastValue;
@@ -391,6 +392,10 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
         var bySubjectKind = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("subjectKind"));
         var bySubjectValue = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("subjectValue"));
         var byIdentityDigest = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("identityDigest"));
-        await this.identities.Indexes.CreateManyAsync([bySortKey, bySubjectKind, bySubjectValue, byIdentityDigest], cancellationToken).ConfigureAwait(false);
+
+        // The compound multikey index over the queryable tag copy, so the pushed-down §17.1 reach predicate is an
+        // index seek rather than a collection scan — the same shape the run and catalog stores provision.
+        var bySecurityTags = new CreateIndexModel<BsonDocument>(Builders<BsonDocument>.IndexKeys.Ascending("securityTags.k").Ascending("securityTags.v"));
+        await this.identities.Indexes.CreateManyAsync([bySortKey, bySubjectKind, bySubjectValue, byIdentityDigest, bySecurityTags], cancellationToken).ConfigureAwait(false);
     }
 }

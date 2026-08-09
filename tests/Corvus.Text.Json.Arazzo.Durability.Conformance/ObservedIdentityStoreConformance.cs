@@ -184,6 +184,84 @@ public abstract class ObservedIdentityStoreConformance
     }
 
     [TestMethod]
+    public async Task Search_follows_a_re_sighting_that_changes_the_identity_tags()
+    {
+        // A re-sighting refreshes the identity tags, and the row's VISIBILITY must move with them in both
+        // directions: the new tenant's reach discovers it (or the identity is hidden from the reach it belongs
+        // to, an availability failure) and the old tenant's no longer does (or a re-homed identity leaks to its
+        // former tenant). A backend keeping a queryable tag copy or a label index must retire the old entries,
+        // not only add the new — the search sibling of the digest re-index the conflict probe already pins.
+        IObservedIdentityStore store = await this.NewStoreAsync();
+        await store.SeenAsync(Team, Str("mobile"), Str("Mobile"), SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+
+        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str(string.Empty), 10, default, default))
+        {
+            acme.Identities.Single().SubjectValueValue.ShouldBe("mobile");
+        }
+
+        await store.SeenAsync(Team, Str("mobile"), Str("Mobile"), SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
+
+        using (ObservedIdentityPage globex = await store.SearchAsync(ScopeBy("tenant", "globex"), AllKinds, Str(string.Empty), 10, default, default))
+        {
+            globex.Identities.Single().SubjectValueValue.ShouldBe("mobile");
+        }
+
+        using (ObservedIdentityPage acme = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str(string.Empty), 10, default, default))
+        {
+            acme.Identities.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
+    public async Task Search_reach_composes_with_prefix_and_keyset_paging()
+    {
+        // A reach-scoped, prefix-filtered search pages by continuation token exactly as an unscoped one does:
+        // every page holds only admitted rows, the walk visits every admitted row once, and rows outside the
+        // reach or the prefix never surface — however the backend narrows (pushdown, label index, or in-process).
+        IObservedIdentityStore store = await this.NewStoreAsync();
+        for (int i = 0; i < 5; ++i)
+        {
+            await store.SeenAsync(Team, Str($"team-{i}"), default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+            await store.SeenAsync(Team, Str($"team-{i}x"), default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), true, "test", default);
+        }
+
+        await store.SeenAsync(Team, Str("other"), default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), true, "test", default);
+
+        var seen = new List<string>();
+        JsonString token = default;
+        ParsedJsonDocument<JsonString>? tokenDoc = null;
+        try
+        {
+            while (true)
+            {
+                using ObservedIdentityPage page = await store.SearchAsync(ScopeBy("tenant", "acme"), AllKinds, Str("team-"), 2, token, default);
+                foreach (ObservedIdentity identity in page.Identities)
+                {
+                    seen.Add(identity.SubjectValueValue);
+                }
+
+                page.Identities.Count.ShouldBeLessThanOrEqualTo(2);
+                if (page.NextPageToken.IsEmpty)
+                {
+                    break;
+                }
+
+                tokenDoc?.Dispose();
+                tokenDoc = AsPageToken(page.NextPageToken.Span);
+                token = tokenDoc.RootElement;
+            }
+        }
+        finally
+        {
+            tokenDoc?.Dispose();
+        }
+
+        // Every acme team-* row exactly once, in (subjectValue, subjectKind) order; the globex team-*x rows and
+        // the acme non-prefix row never surface.
+        seen.ShouldBe(["team-0", "team-1", "team-2", "team-3", "team-4"]);
+    }
+
+    [TestMethod]
     public async Task FindIdentityConflict_detects_a_different_grantee_with_a_set_equal_identity()
     {
         IObservedIdentityStore store = await this.NewStoreAsync();
