@@ -157,8 +157,10 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   catalog stores (`arazzolabels` / `arazzocataloglabels`). Redis does it for both of its stores too, with a SET
   per label, maintained inside each store's atomic write script and resolved server-side in one read-only Lua
   evaluation of the compiled plan (`SecurityLabelQuery.Compile`), so only the final candidate set crosses the
-  wire. NATS still streams and filters per row, which is a gap rather than a design choice. InMemory streams
-  and filters because it *is* the memory.
+  wire. NATS does it for both of its stores with one labels bucket per store (`arazzo_labels` /
+  `arazzo_catalog_labels`) whose keys are per-label subjects, so a label lookup is a subject-filtered key
+  listing resolved through the shared point-lookup resolver. Every backend's run and catalog stores now narrow.
+  InMemory streams and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag

@@ -27,16 +27,22 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     private const string RunsBucket = "arazzo_runs";
     private const string LeasesBucket = "arazzo_leases";
 
+    private static readonly byte[] EmptyLabelValue = [];
+
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore runs;
     private readonly INatsKVStore leases;
+    private readonly INatsKVStore labels;
+    private readonly NatsSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private NatsJetStreamWorkflowStateStore(NatsConnection? ownedConnection, INatsKVStore runs, INatsKVStore leases, TimeProvider timeProvider)
+    private NatsJetStreamWorkflowStateStore(NatsConnection? ownedConnection, INatsKVStore runs, INatsKVStore leases, INatsKVStore labels, TimeProvider timeProvider)
     {
         this.ownedConnection = ownedConnection;
         this.runs = runs;
         this.leases = leases;
+        this.labels = labels;
+        this.labelIndex = new NatsSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -56,6 +62,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
         await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.RunsLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation, binding to its already-provisioned key/value buckets.</summary>
@@ -80,7 +87,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore runs = await kv.GetStoreAsync(RunsBucket, cancellationToken).ConfigureAwait(false);
             INatsKVStore leases = await kv.GetStoreAsync(LeasesBucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamWorkflowStateStore(connection, runs, leases, timeProvider ?? TimeProvider.System);
+            INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.RunsLabelBucket, cancellationToken).ConfigureAwait(false);
+            return new NatsJetStreamWorkflowStateStore(connection, runs, leases, labels, timeProvider ?? TimeProvider.System);
         }
         catch
         {
@@ -103,6 +111,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(RunsBucket), cancellationToken).ConfigureAwait(false);
         await kv.CreateStoreAsync(new NatsKVConfig(LeasesBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.RunsLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store over a caller-supplied connection (the caller retains ownership).</summary>
@@ -124,7 +133,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore runs = await kv.GetStoreAsync(RunsBucket, cancellationToken).ConfigureAwait(false);
         INatsKVStore leases = await kv.GetStoreAsync(LeasesBucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamWorkflowStateStore(ownedConnection: null, runs, leases, timeProvider ?? TimeProvider.System);
+        INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.RunsLabelBucket, cancellationToken).ConfigureAwait(false);
+        return new NatsJetStreamWorkflowStateStore(ownedConnection: null, runs, leases, labels, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>
@@ -134,21 +144,65 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, Envelope.Encode(index, checkpointUtf8.Span), expected, cancellationToken);
+        => this.SaveCoreAsync(id, Envelope.Encode(index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] value, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] value, SecurityTagSet securityTags, WorkflowEtag expected, CancellationToken cancellationToken)
     {
+        // §14.4 label entries, in the ordering that keeps an imprecise index safe: entries are ADDED before the
+        // envelope becomes visible and REMOVED after it stops carrying the old tags, so an interrupted save can
+        // only leave a stale entry — which the exact reach evaluation discards — never a visible run with no
+        // entry, which would hide it from a narrowed query. KV cannot read one field of an envelope, so the
+        // previous entries come from the label bucket itself: a subject-filtered key listing on the run's own id
+        // token, transferring a handful of keys and never the checkpoint. That reverse lookup also makes the diff
+        // self-healing — entries a crashed or conflicted save stranded are swept by the next successful one. A
+        // run's security tags are fixed at creation, so the common checkpoint path finds both differences empty.
+        HashSet<string> desired = NatsSecurityLabels.EntryKeysFor(securityTags, id.Value);
+        HashSet<string> previous = expected.IsNone
+            ? []
+            : await this.ReadLabelEntryKeysAsync(id.Value, cancellationToken).ConfigureAwait(false);
+
+        foreach (string entryKey in desired)
+        {
+            if (!previous.Contains(entryKey))
+            {
+                await this.labels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        ulong revision;
         try
         {
-            ulong revision = expected.IsNone
+            revision = expected.IsNone
                 ? await this.runs.CreateAsync(id.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false)
                 : await this.runs.UpdateAsync(id.Value, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowEtag(revision.ToString(CultureInfo.InvariantCulture));
         }
         catch (NatsKVException)
         {
+            // The entries added above stay behind as stale — removal here could race the writer that won.
             throw new WorkflowConflictException(id, expected);
         }
+
+        foreach (string entryKey in previous)
+        {
+            if (!desired.Contains(entryKey))
+            {
+                await this.PurgeAsync(this.labels, entryKey, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return new WorkflowEtag(revision.ToString(CultureInfo.InvariantCulture));
+    }
+
+    // The label entries the run's id currently occupies, via the reverse subject filters on its id token.
+    private async ValueTask<HashSet<string>> ReadLabelEntryKeysAsync(string rowId, CancellationToken cancellationToken)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        await foreach (string entryKey in this.labels.GetKeysAsync(NatsSecurityLabels.RowFilters(rowId), cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            keys.Add(entryKey);
+        }
+
+        return keys;
     }
 
     /// <inheritdoc/>
@@ -266,8 +320,18 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
     {
+        // Read the run's label entries while it still exists, then drop the run before its entries — the §14.4
+        // ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it, whereas
+        // dropping entries first would strand a still-visible run.
+        HashSet<string> entryKeys = await this.ReadLabelEntryKeysAsync(id.Value, cancellationToken).ConfigureAwait(false);
+
         await this.PurgeAsync(this.runs, id.Value, cancellationToken).ConfigureAwait(false);
         await this.PurgeAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
+
+        foreach (string entryKey in entryKeys)
+        {
+            await this.PurgeAsync(this.labels, entryKey, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -277,7 +341,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         long cutoff = before.ToUnixTimeMilliseconds();
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when
             // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
@@ -301,7 +365,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped signal-resume: a real runner (non-null runnerEnvironment) resumes an awaiting run only when
             // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
@@ -334,7 +398,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
 
         var hosted = new HashSet<string>(hostedWorkflowIds);
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry entry) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry entry) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             if (!hosted.Contains(entry.WorkflowId))
             {
@@ -393,8 +457,17 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
         }
 
+        // §14.4: narrow to the candidate runs the label bucket admits before reading anything. A null answer
+        // means the index could not narrow and the key scan runs as it always did; an empty one means no run
+        // qualifies, so the page is empty without a single envelope read.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return WorkflowContinuationToken.Paginate([], query.Limit);
+        }
+
         var listings = new List<WorkflowRunListing>();
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
             if (Matches(query, index)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
@@ -415,10 +488,17 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
     {
+        // Same narrowing as the list, so a count can never consider a run the list would not have shown (§14.4).
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
         // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
         // one past the cap. A count is order-independent, so no sort or keyset paging.
         int count = 0;
-        await foreach ((WorkflowRunId _, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId _, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
             if (Matches(query, index) && ++count > cap)
             {
@@ -446,6 +526,10 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
             && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
             && query.Tags.AllContainedIn(index.Tags)
+
+            // Row-security reach (§14.2): the exact evaluation over the run's persisted tags. The query first
+            // narrows to the candidates the label bucket admits (§14.4) and this check then decides each one —
+            // an imprecise plan costs throughput, never reach.
             && (query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true);
 
     /// <inheritdoc/>
@@ -457,8 +541,35 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
     }
 
-    private async IAsyncEnumerable<(WorkflowRunId Id, WorkflowRunIndexEntry Index)> ScanAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    // Resolves the reach to the candidate run ids the label bucket admits (§14.4). Null means "the index could
+    // not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what
+    // the principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // Streams the run entries a query should consider. With no candidate set this is the key scan it always
+    // was; with one, the candidate ids are fetched directly, so runs outside the principal's reach are never
+    // read — and a stale label entry resolves to an id whose envelope is gone, which the existing absent-entry
+    // skip discards.
+    private async IAsyncEnumerable<(WorkflowRunId Id, WorkflowRunIndexEntry Index)> ScanAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        if (candidates is not null)
+        {
+            foreach (string id in candidates)
+            {
+                NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(this.runs, id, cancellationToken).ConfigureAwait(false);
+                if (candidateEntry is { Value: { } candidateValue })
+                {
+                    yield return (new WorkflowRunId(id), Envelope.DecodeIndex(candidateValue));
+                }
+            }
+
+            yield break;
+        }
+
         await foreach (string key in this.runs.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, key, cancellationToken).ConfigureAwait(false);

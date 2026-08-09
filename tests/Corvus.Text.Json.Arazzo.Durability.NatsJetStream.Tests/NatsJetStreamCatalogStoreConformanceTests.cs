@@ -52,7 +52,7 @@ public sealed class NatsJetStreamCatalogStoreConformanceTests : WorkflowCatalogS
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_catalog"],
+            ["arazzo_catalog", "arazzo_catalog_labels"],
             () => NatsJetStreamWorkflowCatalogStore.PrepareAsync(connection));
         return await NatsJetStreamWorkflowCatalogStore.ConnectAsync(connection, timeProvider);
     }

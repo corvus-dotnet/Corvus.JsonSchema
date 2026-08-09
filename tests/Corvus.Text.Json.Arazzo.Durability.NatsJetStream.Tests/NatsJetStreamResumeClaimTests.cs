@@ -65,7 +65,7 @@ public sealed class NatsJetStreamResumeClaimTests
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_runs", "arazzo_leases"],
+            ["arazzo_runs", "arazzo_leases", "arazzo_labels"],
             () => NatsJetStreamWorkflowStateStore.PrepareAsync(connection));
         return await NatsJetStreamWorkflowStateStore.ConnectAsync(connection);
     }

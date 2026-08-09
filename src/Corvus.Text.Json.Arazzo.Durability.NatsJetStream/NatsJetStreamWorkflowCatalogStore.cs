@@ -32,17 +32,23 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 {
     private const string CatalogBucket = "arazzo_catalog";
 
+    private static readonly byte[] EmptyLabelValue = [];
+
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore catalog;
+    private readonly INatsKVStore labels;
+    private readonly NatsSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
     private readonly IExecutorPackageSigner? signer;
 
-    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
+    private NatsJetStreamWorkflowCatalogStore(NatsConnection? ownedConnection, INatsKVStore catalog, INatsKVStore labels, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.ownedConnection = ownedConnection;
         this.catalog = catalog;
+        this.labels = labels;
+        this.labelIndex = new NatsSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
@@ -64,6 +70,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         await using var connection = new NatsConnection(NatsOpts.Default with { Url = url });
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(CatalogBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.CatalogLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the catalog store for operation, binding to its already-provisioned key/value bucket.</summary>
@@ -90,7 +97,8 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer);
+            INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.CatalogLabelBucket, cancellationToken).ConfigureAwait(false);
+            return new NatsJetStreamWorkflowCatalogStore(connection, catalog, labels, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer);
         }
         catch
         {
@@ -112,6 +120,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(CatalogBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.CatalogLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the catalog store over a caller-supplied connection (the caller retains ownership).</summary>
@@ -135,7 +144,8 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore catalog = await kv.GetStoreAsync(CatalogBucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer);
+        INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.CatalogLabelBucket, cancellationToken).ConfigureAwait(false);
+        return new NatsJetStreamWorkflowCatalogStore(ownedConnection: null, catalog, labels, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer);
     }
 
     /// <inheritdoc/>
@@ -190,9 +200,19 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
+        // §14.4: narrow to the candidate versions the label bucket admits before reading anything. A null answer
+        // means the index could not narrow and the key scan runs as it always did; an empty one means no version
+        // qualifies, so the page is empty without a single envelope read. Sound in distinct mode too: a base is
+        // included when ANY of its versions matches, and every version the exact reach admits is in the superset.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return CatalogPage.Create(PooledDocumentList<CatalogVersion>.Empty);
+        }
+
         if (query.DistinctWorkflows)
         {
-            return await this.QueryDistinctWorkflowsAsync(query, after, limit, cancellationToken).ConfigureAwait(false);
+            return await this.QueryDistinctWorkflowsAsync(query, candidates, after, limit, cancellationToken).ConfigureAwait(false);
         }
 
         // The KV bucket has no server-side ordering or filtering, so collect the matching header bytes, sort them by
@@ -200,7 +220,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         // visibility queries. Only the matching rows are parsed (each inspected once for filtering, with the inspection
         // document disposed before it is re-parsed into the owned page), so non-matches never enter the pool.
         var matches = new List<(string SortKey, byte[] Header)>();
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
             CatalogVersionRef reference = candidate.RootElement.Ref;
@@ -247,12 +267,19 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
     {
+        // Same narrowing as the search, so a count can never consider a row the search would not have shown (§14.4).
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(query.Security, cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
         // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
         // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap; order-independent.
         if (query.DistinctWorkflows)
         {
             var bases = new HashSet<string>(StringComparer.Ordinal);
-            await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+            await foreach (byte[] header in this.ScanHeadersAsync(candidates, cancellationToken).ConfigureAwait(false))
             {
                 using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
                 if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
@@ -265,7 +292,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         }
 
         int count = 0;
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
             if (Matches(candidate.RootElement, query) && ++count > cap)
@@ -283,10 +310,10 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     // the reference the client-side UI collapse replaced). The KV bucket has no server-side grouping/ordering, so scan the
     // same filtered set as the version-mode query, group by base id retaining only the winning per-base header bytes, order
     // the bases ordinally, seek strictly past the cursor base id, then re-parse the page window into the pooled batch.
-    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? after, int limit, CancellationToken cancellationToken)
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, IReadOnlySet<string>? candidates, string? after, int limit, CancellationToken cancellationToken)
     {
         var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
             if (!Matches(candidate.RootElement, query))
@@ -351,15 +378,50 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         // The envelope header bytes ARE the current version document JSON; inspect them through a short-lived pooled
         // document, then rebuild the updated header bytes — never cloning a bare value out of the read.
         byte[] updatedHeader;
+        SecurityTagSet currentSecurityTags;
         using (ParsedJsonDocument<CatalogVersion> currentDoc = ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value)))
         {
             // Patch only the changed governance fields through the mutable builder; every other field — including the
             // security tags — is carried bytes-to-bytes (no per-field string realisation, and no longer dropping the
             // securityTags the field-by-field rebuild used to strip).
             updatedHeader = CatalogVersion.CreatePatchedBytes(currentDoc.RootElement, patch, now);
+            currentSecurityTags = SecurityTagSet.CopyFrom(currentDoc.RootElement.SecurityTags);
+        }
+
+        // Re-tag (§14.2): when the patch replaces the security tags, move the label entries by the diff, in the
+        // §14.4 ordering — entries for the NEW tags are added before the envelope carries them and entries for
+        // the removed ones are dropped only after it stops, so an interrupted re-tag can only leave a stale
+        // entry — which the exact evaluation discards — never a version whose current tags have no entry, which
+        // would hide it.
+        HashSet<string>? previousKeys = null;
+        HashSet<string>? desiredKeys = null;
+        if (patch.SecurityTags is { } newSecurityTags)
+        {
+            string sortKey = SortKey(baseWorkflowId, versionNumber);
+            previousKeys = NatsSecurityLabels.EntryKeysFor(currentSecurityTags, sortKey);
+            desiredKeys = NatsSecurityLabels.EntryKeysFor(newSecurityTags, sortKey);
+            foreach (string entryKey in desiredKeys)
+            {
+                if (!previousKeys.Contains(entryKey))
+                {
+                    await this.labels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
 
         await this.catalog.PutAsync(key, Envelope.Encode(updatedHeader, package), cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        if (previousKeys is not null && desiredKeys is not null)
+        {
+            foreach (string entryKey in previousKeys)
+            {
+                if (!desiredKeys.Contains(entryKey))
+                {
+                    await this.PurgeLabelAsync(entryKey, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         return ParsedJsonDocument<CatalogVersion>.Parse(updatedHeader);
     }
 
@@ -396,12 +458,27 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         string key = Key(baseWorkflowId, versionNumber);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
-        if (entry is not { Value: not null })
+        if (entry is not { Value: { } value })
         {
             return false;
         }
 
+        // The version's labels come from the entry the existence check already read; the envelope is dropped
+        // before its label entries — the §14.4 ordering — so an interrupted delete leaves a stale entry, harmless
+        // when nothing loads behind it, never a stranded still-visible version.
+        HashSet<string> entryKeys;
+        using (ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(Envelope.DecodeHeader(value)))
+        {
+            entryKeys = NatsSecurityLabels.EntryKeysFor(SecurityTagSet.CopyFrom(doc.RootElement.SecurityTags), SortKey(baseWorkflowId, versionNumber));
+        }
+
         await this.PurgeAsync(key, cancellationToken).ConfigureAwait(false);
+
+        foreach (string entryKey in entryKeys)
+        {
+            await this.PurgeLabelAsync(entryKey, cancellationToken).ConfigureAwait(false);
+        }
+
         return true;
     }
 
@@ -409,7 +486,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     public async ValueTask<IReadOnlyList<CatalogVersionRef>> ListObsoleteAsync(CancellationToken cancellationToken)
     {
         var refs = new List<CatalogVersionRef>();
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
             if (doc.RootElement.StatusValue == CatalogStatus.Obsolete)
@@ -428,7 +505,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         ArgumentNullException.ThrowIfNull(versions);
         foreach (CatalogVersionRef reference in versions)
         {
-            await this.PurgeAsync(Key(reference.BaseWorkflowId, reference.VersionNumber), cancellationToken).ConfigureAwait(false);
+            await this.DeleteAsync(reference.BaseWorkflowId, reference.VersionNumber, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -494,8 +571,9 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
             return false;
         }
 
-        // Row-security reach (§14.2): the KV store has no server-side filtering, so apply the reach filter in
-        // process over the version's persisted security tags — the only correct option for a key/value backend.
+        // Row-security reach (§14.2): the exact evaluation over the version's persisted tags. The query first
+        // narrows to the candidates the label bucket admits (§14.4) and this check then decides each one — an
+        // imprecise plan costs throughput, never reach.
         if (query.Security is { } security)
         {
             SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
@@ -545,6 +623,16 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
                 executorBuildError: projection.ExecutorBuildError,
                 securityTags: securityTags);
 
+            // §14.4 label entries: ADDED before the version becomes visible, so an interrupted add can only leave
+            // an entry pointing at a version that never landed — which the exact reach evaluation discards — never
+            // a visible version with no entry, which would hide it from a narrowed query. A lost version-number
+            // race leaves the loser's entries behind for an id the winner now owns: deleting could remove an entry
+            // the winner's tags also wrote, so they stay, stale and harmless by the index's contract.
+            foreach (string entryKey in NatsSecurityLabels.EntryKeysFor(securityTags, SortKey(baseWorkflowId, versionNumber)))
+            {
+                await this.labels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+
             byte[] value = Envelope.Encode(header, projection.CanonicalPackage.Span);
             try
             {
@@ -561,7 +649,7 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
     private async ValueTask<int> MaxVersionAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         int max = 0;
-        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (byte[] header in this.ScanHeadersAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             using ParsedJsonDocument<CatalogVersion> doc = ParsedJsonDocument<CatalogVersion>.Parse(header);
             CatalogVersionRef reference = doc.RootElement.Ref;
@@ -574,10 +662,40 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         return max;
     }
 
+    // Resolves the reach to the candidate version ids the label bucket admits (§14.4). Null means "the index
+    // could not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides
+    // what the principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
     // Yields each stored version's header bytes (the version document JSON); callers parse a short-lived pooled
     // document over them to inspect fields, never cloning a bare value out of the scan.
-    private async IAsyncEnumerable<byte[]> ScanHeadersAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    //
+    // With no candidate set this is the key scan it always was. With one, the candidate versions are fetched
+    // directly — a candidate id is the label entries' row id, the {base}{version:D10} sort key, and the
+    // fixed-width suffix splits it back into the entity key — so versions outside the principal's reach are
+    // never read, and a stale label entry resolves to a key whose envelope is gone, which the absent-entry skip
+    // discards.
+    private async IAsyncEnumerable<byte[]> ScanHeadersAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        if (candidates is not null)
+        {
+            foreach (string sortKey in candidates)
+            {
+                NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(
+                    Key(sortKey[..^10], int.Parse(sortKey[^10..], CultureInfo.InvariantCulture)), cancellationToken).ConfigureAwait(false);
+                if (candidateEntry is { Value: { } candidateValue })
+                {
+                    yield return Envelope.DecodeHeader(candidateValue);
+                }
+            }
+
+            yield break;
+        }
+
         await foreach (string key in this.catalog.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
@@ -609,6 +727,20 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         try
         {
             await this.catalog.PurgeAsync(key, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+        }
+        catch (NatsKVKeyDeletedException)
+        {
+        }
+    }
+
+    private async ValueTask PurgeLabelAsync(string entryKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.labels.PurgeAsync(entryKey, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch (NatsKVKeyNotFoundException)
         {
