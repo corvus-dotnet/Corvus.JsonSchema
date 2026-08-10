@@ -667,15 +667,18 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 {
                                     JsonElement headers = headersDoc?.RootElement ?? default;
 
+                                    // Box the native message struct only when a delivery-context
+                                    // handler will consume it; legacy subscriptions discard it.
+                                    object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                     if (this.middleware is not null)
                                     {
                                         await this.middleware(
-                                            (ct) => handler.Invoke(payload, channelUtf8, headers, msg, ct),
+                                            (ct) => handler.Invoke(payload, channelUtf8, headers, nativeMessage, ct),
                                             cts.Token).ConfigureAwait(false);
                                     }
                                     else
                                     {
-                                        await handler.Invoke(payload, channelUtf8, headers, msg, cts.Token).ConfigureAwait(false);
+                                        await handler.Invoke(payload, channelUtf8, headers, nativeMessage, cts.Token).ConfigureAwait(false);
                                     }
 
                                     await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
@@ -859,15 +862,18 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         JsonElement headers = headersDoc?.RootElement ?? default;
 
+                                        // Box the native message struct only when a delivery-context
+                                        // handler will consume it; legacy subscriptions discard it.
+                                        object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                         if (this.middleware is not null)
                                         {
                                             await this.middleware(
-                                                (ct) => handler.Invoke(payload, channelUtf8, headers, msg, ct),
+                                                (ct) => handler.Invoke(payload, channelUtf8, headers, nativeMessage, ct),
                                                 cts.Token).ConfigureAwait(false);
                                         }
                                         else
                                         {
-                                            await handler.Invoke(payload, channelUtf8, headers, msg, cts.Token).ConfigureAwait(false);
+                                            await handler.Invoke(payload, channelUtf8, headers, nativeMessage, cts.Token).ConfigureAwait(false);
                                         }
                                     }
                                 }
