@@ -243,7 +243,9 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         lock (this.syncRoot)
         {
+            // A channel has one subscription: displace any delivery-context handler.
             this.subscriptions[channel] = handler;
+            this.contextSubscriptions.Remove(channel);
         }
 
         return ValueTask.CompletedTask;
@@ -260,7 +262,9 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         lock (this.syncRoot)
         {
+            // A channel has one subscription: displace any legacy handler.
             this.contextSubscriptions[channel] = handler;
+            this.subscriptions.Remove(channel);
         }
 
         return ValueTask.CompletedTask;
@@ -424,7 +428,8 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         lock (this.syncRoot)
         {
-            if (!this.subscriptions.TryGetValue(channel, out handler!))
+            if (!this.subscriptions.TryGetValue(channel, out handler!) &&
+                !this.contextSubscriptions.TryGetValue(channel, out handler!))
             {
                 throw new InvalidOperationException($"No subscription for channel '{channel}'.");
             }
@@ -466,8 +471,19 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                payload, headers, cancellationToken).ConfigureAwait(false);
+            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
+            {
+                await contextHandler(payload, new MessageDeliveryContext
+                {
+                    ChannelUtf8 = Encoding.UTF8.GetBytes(channel),
+                    Headers = headers,
+                }, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+                    payload, headers, cancellationToken).ConfigureAwait(false);
+            }
         }
         finally
         {

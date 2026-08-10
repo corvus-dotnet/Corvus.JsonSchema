@@ -373,4 +373,131 @@ public class InMemoryMessageTransportTests
             () => { transport.DeliverAsync<JsonElement>("no/subscription", payloadJson).AsTask().GetAwaiter().GetResult(); });
         StringAssert.Contains(ex.Message, "no/subscription");
     }
+
+    [TestMethod]
+    public async Task ContextSubscriptionDisplacesLegacySubscription()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int legacyCount = 0;
+        int contextCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            "test/displace"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                legacyCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        MessageContext messageContext = default;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/displace"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":1}"""u8);
+        await transport.PublishAsync("test/displace"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, contextCount, "The context subscription should displace the legacy one.");
+        Assert.AreEqual(0, legacyCount, "The displaced legacy handler should not receive messages.");
+    }
+
+    [TestMethod]
+    public async Task LegacySubscriptionDisplacesContextSubscription()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int legacyCount = 0;
+        int contextCount = 0;
+
+        MessageContext messageContext = default;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/displace-back"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await transport.SubscribeAsync<JsonElement>(
+            "test/displace-back"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                legacyCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":2}"""u8);
+        await transport.PublishAsync("test/displace-back"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, legacyCount, "The legacy subscription should displace the context one.");
+        Assert.AreEqual(0, contextCount, "The displaced context handler should not receive messages.");
+    }
+
+    [TestMethod]
+    public async Task DeliverRaw_ValidJson_ContextSubscription_InvokesHandler()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+        string? channelSeen = null;
+
+        MessageContext messageContext = default;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/raw-context"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                channelSeen = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        DefaultMessageErrorPolicy policy = new(
+            MessageErrorAction.Skip,
+            MessageErrorAction.Skip,
+            MessageErrorAction.Abort);
+
+        MessageErrorAction? action = await transport.DeliverRawAsync<JsonElement>(
+            "test/raw-context",
+            """{"ok":true}"""u8.ToArray(),
+            policy);
+
+        Assert.IsNull(action);
+        Assert.AreEqual(1, contextCount);
+        Assert.AreEqual("test/raw-context", channelSeen);
+    }
+
+    [TestMethod]
+    public async Task DeliverRaw_MalformedJson_ContextSubscription_InvokesPolicy()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+
+        MessageContext messageContext = default;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/raw-context-error"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        DefaultMessageErrorPolicy policy = new(
+            MessageErrorAction.Skip,
+            MessageErrorAction.Skip,
+            MessageErrorAction.Abort);
+
+        MessageErrorAction? action = await transport.DeliverRawAsync<JsonElement>(
+            "test/raw-context-error",
+            "{{{invalid"u8.ToArray(),
+            policy);
+
+        Assert.AreEqual(MessageErrorAction.Skip, action);
+        Assert.AreEqual(0, contextCount);
+    }
 }
