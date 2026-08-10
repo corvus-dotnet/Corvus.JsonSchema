@@ -38,6 +38,10 @@ internal sealed class AsyncApiGenerateSettings : AsyncApiSettings
     [CommandOption("--yaml")]
     [Description("Enable YAML support. When set, the spec file and any external references may be YAML, JSON, or a mixture. Auto-detected from .yaml/.yml extensions if not explicitly set.")]
     public bool? SupportYaml { get; init; }
+
+    [CommandOption("--strict")]
+    [Description("Fail the run when generation produces warnings, such as a $ref that does not resolve. Without this option warnings are printed and generation completes.")]
+    public bool Strict { get; init; }
 }
 
 #endif

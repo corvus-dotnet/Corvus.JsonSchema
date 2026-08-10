@@ -1296,6 +1296,7 @@ corvusjson asyncapi-generate <specFile> [options]
 | `--exclude-channel` | Glob patterns for channels to exclude | None |
 | `--tag` | Filter by operation tags | All |
 | `--specVersion` | Force spec version (`2.6` or `3.0`); auto-detected if omitted | Auto |
+| `--strict` | Fail the run when generation produces warnings (for example a `$ref` that does not resolve); without it warnings are printed and generation completes | `false` |
 
 Examples:
 

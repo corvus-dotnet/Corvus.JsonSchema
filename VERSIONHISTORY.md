@@ -1,5 +1,17 @@
 # Version History
 
+## V5.3.2
+
+V5.3.2 makes the AsyncAPI generators resolve `$ref` at every referenceable position instead of silently dropping the referenced object, and gives generation a diagnostics channel so nothing the generator skips is ever silent again.
+
+### Bug fixes
+
+- **The AsyncAPI generators resolve `$ref` everywhere the specification allows one** — AsyncAPI 3.0 made nearly every object referenceable, but the generator resolved references at only a few positions and silently discarded the rest. A referenced channel produced a consumer subscribed to the channel *key* rather than its real address; referenced operations and servers vanished from the output; bindings behind references never reached the transport; a chained security scheme reported its type as `unknown`; and a 2.6 parameter expressed as a reference kept its argument name but lost its description, enum, and default. Every site now resolves through the shared reference-resolution chain before matching, with regression coverage for each position including compilation of the generated output. The channel-parameter instance of this class was fixed first by [Levy Barbosa (@Levyks)](https://github.com/Levyks) in [#923](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/923), with thanks; that fix is included here. See [#924](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/924).
+
+### New features
+
+- **AsyncAPI generation diagnostics and `asyncapi-generate --strict`** — Generation stays deliberately lenient, but anything the generator skips or degrades (for example a `$ref` that does not resolve) is now recorded as a diagnostic carrying its specification location, exposed as a `Diagnostics` property on both generators and via optional parameters on the public inspection helpers. The CLI prints each diagnostic as a warning after generation, and the new `--strict` option fails the run when any were produced. See [#924](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/924).
+
 ## V5.3.1
 
 V5.3.1 closes out the doc-comment emission defects found while reviewing [#916](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/916): the last place specification text reached a generated doc comment unescaped, and the XML doc comments in generated code that had drifted out of step with the signatures they document.

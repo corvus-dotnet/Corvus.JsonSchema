@@ -106,6 +106,8 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
 
         try
         {
+            List<AsyncApiGenerationDiagnostic> generationDiagnostics = [];
+
             // Collect schema pointers from the spec
             string[] pointers;
             if (AsyncApiShowCommand.IsAsyncApi26Version(specVersion))
@@ -114,7 +116,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
             }
             else if (AsyncApiShowCommand.IsAsyncApi30Version(specVersion))
             {
-                pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
+                pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver, generationDiagnostics);
             }
             else
             {
@@ -152,6 +154,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
                     rootNamespace,
                     schemaTypeMap ?? new Dictionary<string, string>());
                 files = generator.Generate(specRoot, filter, referenceResolver);
+                generationDiagnostics.AddRange(generator.Diagnostics);
             }
             else
             {
@@ -159,6 +162,18 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
                     rootNamespace,
                     schemaTypeMap ?? new Dictionary<string, string>());
                 files = generator.Generate(specRoot, filter, referenceResolver);
+                generationDiagnostics.AddRange(generator.Diagnostics);
+            }
+
+            foreach (AsyncApiGenerationDiagnostic diagnostic in generationDiagnostics)
+            {
+                AnsiConsole.MarkupLineInterpolated($"[yellow]Warning:[/] {diagnostic.Location}: {diagnostic.Message}");
+            }
+
+            if (settings.Strict && generationDiagnostics.Count > 0)
+            {
+                AnsiConsole.MarkupLine($"[red]Generation produced {generationDiagnostics.Count} warning(s) and --strict was specified.[/]");
+                return 1;
             }
 
             // Filter by mode

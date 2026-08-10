@@ -154,6 +154,28 @@ public class AsyncApi26CodeGeneratorTests
         Assert.AreEqual("Streetlights.LightMeasuredPayload", receive.Messages.Single().PayloadTypeName);
     }
 
+    [TestMethod]
+    public void Generate_ParameterizedConsumer_WithReferencedParameter_CarriesParameterMetadata()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer-ref-2.6.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi26CodeGenerator("ParameterizedRef26", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("OnOrderCreatedConsumer"));
+        Assert.IsNotNull(consumer, "The publish operation should generate a consumer class");
+
+        StringAssert.Contains(
+            consumer.Content,
+            "The order identifier.",
+            "The referenced parameter's description should reach the generated doc comment");
+        StringAssert.Contains(
+            consumer.Content,
+            "orderId = \"standard\"",
+            "The referenced parameter's schema default should become the argument default");
+    }
+
     private static Dictionary<string, string> CreateRequestReplySchemaTypeMap()
     {
         return new()
