@@ -29,8 +29,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
     private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
 
-    // Serializes subscription store/remove so displacement can never orphan a running processor.
-    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private bool disposed;
 
     private AzureServiceBusMessageTransport(
@@ -344,6 +342,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -358,7 +357,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        await this.StoreSubscriptionAsync(channel, (tcs, processor), cancellationToken).ConfigureAwait(false);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -473,6 +471,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         };
 
         await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+
+        // Claimed only once the processor is wired and running, so a concurrent subscribe can
+        // never observe — or tear down — a processor this call has not finished starting.
+        await this.ClaimSubscriptionAsync(channel, (tcs, processor)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -502,6 +504,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -516,7 +519,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        await this.StoreSubscriptionAsync(channel, (tcs, processor), cancellationToken).ConfigureAwait(false);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -642,6 +644,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         };
 
         await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+
+        // Claimed only once the processor is wired and running, so a concurrent subscribe can
+        // never observe — or tear down — a processor this call has not finished starting.
+        await this.ClaimSubscriptionAsync(channel, (tcs, processor)).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -649,51 +655,61 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
+        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
         {
-            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
-            {
-                await TearDownSubscriptionAsync(subscription, cancellationToken).ConfigureAwait(false);
-                this.options.Heartbeat?.Stop(channel, "azureservicebus");
-            }
-        }
-        finally
-        {
-            this.subscriptionSemaphore.Release();
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus");
         }
     }
 
     private static async ValueTask TearDownSubscriptionAsync(
-        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription,
-        CancellationToken cancellationToken)
+        string channel,
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription)
     {
         subscription.Completion.TrySetResult();
-        await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
+
+        // Deliberately not the caller's token: StopProcessingAsync drains in-flight handlers,
+        // and on the handler-initiated Abort path the caller's token is the one the handler
+        // was given, so passing it would abandon the drain half-done.
+        try
+        {
+            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Recorded rather than rethrown: teardown must not abort a dispose walking others.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
+
         await subscription.Processor.DisposeAsync().ConfigureAwait(false);
     }
 
-    private async ValueTask StoreSubscriptionAsync(
-        string channel,
-        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription,
-        CancellationToken cancellationToken)
-    {
-        // A channel has one subscription: storing this one displaces whatever was there and
-        // tears the displaced processor down so it cannot keep consuming. Serialized on the
-        // semaphore so racing subscribes cannot orphan a processor.
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) displaced))
-            {
-                await TearDownSubscriptionAsync(displaced, cancellationToken).ConfigureAwait(false);
-            }
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
 
-            this.subscriptions[channel] = subscription;
-        }
-        finally
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
         {
-            this.subscriptionSemaphore.Release();
+            ThrowAlreadySubscribed(channel);
+        }
+    }
+
+    private async ValueTask ClaimSubscriptionAsync(
+        string channel,
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription)
+    {
+        // TryAdd is the authoritative claim on the channel's single subscription slot, so no
+        // lock is needed. A second subscribe is refused rather than displacing the first:
+        // displacing would drain the previous processor on the subscribe path, which a handler
+        // calling back in (the generated Abort path) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, subscription))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            ThrowAlreadySubscribed(channel);
         }
     }
 
@@ -723,14 +739,16 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         this.disposed = true;
 
-        foreach ((TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription in this.subscriptions.Values)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its claim (and cleans itself up) or is torn down by this loop. The
+        // shared teardown records rather than throws, so one stuck processor cannot abort it.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            subscription.Completion.TrySetResult();
-            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
-            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
+            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+            {
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            }
         }
-
-        this.subscriptions.Clear();
 
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);

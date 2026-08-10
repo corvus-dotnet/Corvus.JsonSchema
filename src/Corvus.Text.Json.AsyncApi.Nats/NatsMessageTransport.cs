@@ -54,8 +54,6 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
-    // Serializes subscription store/remove so displacement can never orphan a running consumer.
-    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private bool disposed;
 
     private NatsMessageTransport(NatsTransportOptions options, NatsConnection connection, INatsJSContext? jsContext, string? derivedStreamName)
@@ -307,6 +305,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
         if (this.options.UseJetStream && this.jsContext is not null)
         {
@@ -330,6 +329,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
         return this.SubscribeReplyToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
     }
 
@@ -338,21 +338,15 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
+        if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
-            {
-                await TearDownSubscriptionAsync(state).ConfigureAwait(false);
-            }
-        }
-        finally
-        {
-            this.subscriptionSemaphore.Release();
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
         }
     }
 
-    private static async ValueTask TearDownSubscriptionAsync(SubscriptionState state)
+    private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
     {
         await state.CancellationSource.CancelAsync().ConfigureAwait(false);
 
@@ -362,30 +356,40 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
         catch (OperationCanceledException)
         {
-            // Expected on clean shutdown
+            // Expected on clean shutdown.
+        }
+        catch (Exception ex)
+        {
+            // Recorded rather than rethrown: teardown must not abort a dispose that is
+            // walking every subscription, nor fail an unsubscribe whose entry is already gone.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "nats", ex);
         }
 
         state.CancellationSource.Dispose();
     }
 
-    private async ValueTask StoreSubscriptionAsync(string channel, SubscriptionState state)
-    {
-        // A channel has one subscription: storing this one displaces whatever was there and
-        // tears the displaced consumer down so it cannot keep consuming. Serialized on the
-        // semaphore so racing subscribes cannot orphan a consumer.
-        await this.subscriptionSemaphore.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
-            {
-                await TearDownSubscriptionAsync(displaced).ConfigureAwait(false);
-            }
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
 
-            this.subscriptions[channel] = state;
-        }
-        finally
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
         {
-            this.subscriptionSemaphore.Release();
+            ThrowAlreadySubscribed(channel);
+        }
+    }
+
+    private async ValueTask ClaimSubscriptionAsync(string channel, SubscriptionState state)
+    {
+        // TryAdd is the authoritative claim on the channel's single subscription slot, so no
+        // lock is needed. A second subscribe is refused rather than displacing the first:
+        // displacing would tear the previous consumer down on the subscribe path, which a
+        // handler calling back in (the generated Abort path) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, state))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            ThrowAlreadySubscribed(channel);
         }
     }
 
@@ -436,12 +440,16 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.disposed = true;
 
-        foreach ((string _, SubscriptionState state) in this.subscriptions)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its claim (and cleans itself up) or is torn down by this loop.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            await TearDownSubscriptionAsync(state).ConfigureAwait(false);
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
         }
 
-        this.subscriptions.Clear();
         await this.connection.DisposeAsync().ConfigureAwait(false);
     }
 
@@ -757,7 +765,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.StoreSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
@@ -945,7 +953,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.StoreSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
@@ -1147,7 +1155,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.StoreSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
     }
 
     private static ParsedJsonDocument<JsonElement>? DecodeHeadersDocument(NatsHeaders? headers)

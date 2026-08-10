@@ -47,8 +47,6 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
-    // Serializes subscription store/remove so displacement can never orphan a running consumer.
-    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
     private bool disposed;
 
@@ -217,48 +215,61 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
+        if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
-            {
-                this.options.Heartbeat?.Stop(channel, "amqp");
-                await TearDownSubscriptionAsync(state, cancellationToken).ConfigureAwait(false);
-            }
-        }
-        finally
-        {
-            this.subscriptionSemaphore.Release();
+            this.options.Heartbeat?.Stop(channel, "amqp");
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
         }
     }
 
-    private static async ValueTask TearDownSubscriptionAsync(SubscriptionState state, CancellationToken cancellationToken)
+    private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
     {
         await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-        await state.Channel.BasicCancelAsync(state.ConsumerTag, cancellationToken: cancellationToken).ConfigureAwait(false);
-        await state.Channel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        // Deliberately not the caller's token: on the handler-initiated Abort path that token
+        // is the subscription's own, which the line above has just cancelled, so passing it
+        // would abandon the broker-side cancel and leak the channel.
+        try
+        {
+            await state.Channel.BasicCancelAsync(state.ConsumerTag).ConfigureAwait(false);
+            await state.Channel.CloseAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Recorded rather than rethrown: a broker that has already closed the channel must
+            // not prevent the local handles being released, nor abort a dispose walking others.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+
         await state.Channel.DisposeAsync().ConfigureAwait(false);
         state.CancellationSource.Dispose();
     }
 
-    private async ValueTask StoreSubscriptionAsync(string channel, SubscriptionState state, CancellationToken cancellationToken)
-    {
-        // A channel has one subscription: storing this one displaces whatever was there and
-        // tears the displaced consumer down so it cannot keep consuming. Serialized on the
-        // semaphore so racing subscribes cannot orphan a consumer.
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
-            {
-                await TearDownSubscriptionAsync(displaced, cancellationToken).ConfigureAwait(false);
-            }
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
 
-            this.subscriptions[channel] = state;
-        }
-        finally
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
         {
-            this.subscriptionSemaphore.Release();
+            ThrowAlreadySubscribed(channel);
+        }
+    }
+
+    private async ValueTask ClaimSubscriptionAsync(string channel, SubscriptionState state)
+    {
+        // TryAdd is the authoritative claim on the channel's single subscription slot, so no
+        // lock is needed. A second subscribe is refused rather than displacing the first:
+        // displacing would tear the previous consumer down on the subscribe path, which a
+        // handler calling back in (the generated Abort path) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, state))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            ThrowAlreadySubscribed(channel);
         }
     }
 
@@ -304,16 +315,16 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.disposed = true;
 
-        // Cancel all subscriptions
-        foreach ((string _, SubscriptionState state) in this.subscriptions)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its claim (and cleans itself up) or is torn down by this loop. The
+        // shared teardown records rather than throws, so one broken channel cannot abort it.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-            await state.Channel.CloseAsync().ConfigureAwait(false);
-            await state.Channel.DisposeAsync().ConfigureAwait(false);
-            state.CancellationSource.Dispose();
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
         }
-
-        this.subscriptions.Clear();
 
         await this.publishChannel.CloseAsync().ConfigureAwait(false);
         await this.publishChannel.DisposeAsync().ConfigureAwait(false);
@@ -496,6 +507,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        ThrowIfSubscribed(channel);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
         IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -693,7 +705,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        await this.StoreSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
@@ -739,7 +751,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             consumer: consumer,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        await this.StoreSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -750,6 +762,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
+        ThrowIfSubscribed(channel);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
         IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -994,7 +1007,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        await this.StoreSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag)).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(
