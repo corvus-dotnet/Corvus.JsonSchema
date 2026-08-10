@@ -1,5 +1,14 @@
 # Version History
 
+## V5.4.0
+
+V5.4.0 adds an opt-in delivery-context surface to the AsyncAPI transports and generators, so a consumer can receive transport delivery metadata alongside its payload without an allocating adapter on the delivery path. The feature was contributed by [Levy Barbosa (@Levyks)](https://github.com/Levyks) in [#930](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/930), with thanks, and hardened in review before merging.
+
+### New features
+
+- **AsyncAPI message delivery context** — The new `IMessageDeliveryContextTransport` capability interface adds `SubscribeWithDeliveryContextAsync`, whose handler receives a `MessageDeliveryContext` carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists. All seven transports implement it (AMQP, Azure Service Bus, Kafka, MQTT, NATS, WebSocket, and the in-memory test transport), and the AsyncAPI generators emit `*WithDeliveryContext` handler and consumer variants for receive operations (responders excluded, since a responder's reply path never surfaces the context). A message with a typed headers schema keeps its typed headers parameter in the context variant. The context is valid only for the duration of the handler invocation; transports may recycle the buffers it references once the handler returns. On a channel, the legacy and context subscription APIs displace each other (one subscription per channel, last-write-wins). The internal delivery plumbing stores each subscription's callback in the new public SPI type `Corvus.Text.Json.AsyncApi.Internal.MessageHandler{TPayload}` without a per-delivery adapter delegate, and NATS boxes its native message struct only when a context handler will consume it. See [#930](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/930).
+- **Capability-matched transport instrumentation** — `InstrumentedMessageTransport.Create` returns a wrapper that implements `IMessageDeliveryContextTransport` and/or `IHealthCheckableTransport` exactly when the wrapped transport does, so a capability probe against the wrapper answers for the wrapped transport: delivery-context consumers fail at probe time rather than at subscribe time, and broker health checks keep working when instrumentation is enabled. The constructor keeps its plain-wrapper behavior. See [#930](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/930).
+
 ## V5.3.2
 
 V5.3.2 makes the AsyncAPI generators resolve `$ref` at every referenceable position instead of silently dropping the referenced object, and gives generation a diagnostics channel so nothing the generator skips is ever silent again.
