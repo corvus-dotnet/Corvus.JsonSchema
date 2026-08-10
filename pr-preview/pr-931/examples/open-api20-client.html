@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to generate and use a strongly-typed HTTP client from an [OpenAPI 2.0 (Swagger)](https://spec.openapis.org/oas/v2.0.html) specification using `corvusjson openapi-client`." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, open, api20client, type, maximum, format, items, required, $ref, enum, properties, Build" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to generate and use a strongly-typed HTTP client from an [OpenAPI 2.0 (Swagger)](https://spec.openapis.org/oas/v2.0.html) specification using `corvusjson openapi-client`." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-931/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Open Api20Client - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="open" />
+    <meta property="article:tag" content="api20client" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="items" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="enum" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="Build" />
+    <meta property="og:description" content="This recipe demonstrates how to generate and use a strongly-typed HTTP client from an [OpenAPI 2.0 (Swagger)](https://spec.openapis.org/oas/v2.0.html) specification using `corvusjson openapi-client`." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-931/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Open Api20Client - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/open-api20-client/" />
+    <title>Open Api20Client - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/open-api20-client/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/open-api20-client/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-931/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-931/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-931/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-931/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-931/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-931/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-931/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-931/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-931/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-931/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-931/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-931/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-931/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-931/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Open Api20Client</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">open</span>
+                        <span class="card__tag">api20client</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">items</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">enum</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">Build</span>
+                </div>
+<p>This recipe demonstrates how to generate and use a strongly-typed HTTP client from an <a href="https://spec.openapis.org/oas/v2.0.html">OpenAPI 2.0 (Swagger)</a> specification using <code>corvusjson openapi-client</code>. Many real-world APIs still publish Swagger 2.0 documents; the generator consumes them natively — no up-conversion step — and produces the same client shape as the 3.x generators.</p>
+<blockquote>
+<p><strong>Version compatibility:</strong> The generator auto-detects the spec version from the <code>swagger: &quot;2.0&quot;</code> field, exactly as it detects <code>openapi</code> for 3.x documents. See <a href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-client.html">029-OpenApiClient</a> for the OpenAPI 3.2 version of this recipe.</p>
+</blockquote>
+<h2 id="what-is-different-about-2.0">What Is Different About 2.0</h2>
+<p>OpenAPI 2.0 predates the <code>requestBody</code>/<code>content</code> model of 3.x. The generator lowers the 2.0 shapes onto the same generated-client architecture:</p>
+<table>
+<thead>
+<tr>
+<th>2.0 construct</th>
+<th>What the generator does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>in: body</code> parameter</td>
+<td>Becomes the typed request body, using the operation's effective <code>consumes</code> (default <code>application/json</code>)</td>
+</tr>
+<tr>
+<td><code>in: formData</code> parameters</td>
+<td>Aggregated into a synthesized <code>&lt;Operation&gt;FormBody</code> model type, serialized as <code>application/x-www-form-urlencoded</code> or <code>multipart/form-data</code> per <code>consumes</code></td>
+</tr>
+<tr>
+<td>Parameter Object as schema</td>
+<td>2.0 puts <code>type</code>/<code>maximum</code>/<code>enum</code> directly on the parameter (no nested <code>schema</code>); the generator reads the Parameter Object itself as a draft-04-style schema</td>
+</tr>
+<tr>
+<td><code>collectionFormat</code></td>
+<td><code>csv</code>/<code>ssv</code>/<code>pipes</code>/<code>tsv</code> become delimiter-joined values; <code>multi</code> repeats the query key</td>
+</tr>
+<tr>
+<td><code>host</code> + <code>basePath</code> + <code>schemes</code></td>
+<td>Combined into the server URI (https preferred when both schemes are listed)</td>
+</tr>
+<tr>
+<td><code>#/definitions/...</code></td>
+<td>Model types, same as 3.x <code>#/components/schemas/...</code></td>
+</tr>
+<tr>
+<td>Response <code>schema</code> × <code>produces</code></td>
+<td>Typed response bodies per status code</td>
+</tr>
+<tr>
+<td><code>securityDefinitions</code></td>
+<td>Flows into the request security requirements</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-spec">The Spec</h2>
+<p>File: <code>petstore-2.0.json</code></p>
+<p>The Petstore example expressed as Swagger 2.0. The interesting 2.0-specific parts:</p>
+<pre><code class="language-json">{
+  &quot;swagger&quot;: &quot;2.0&quot;,
+  &quot;info&quot;: { &quot;title&quot;: &quot;Petstore&quot;, &quot;version&quot;: &quot;1.0.0&quot; },
+  &quot;host&quot;: &quot;petstore.example.com&quot;,
+  &quot;basePath&quot;: &quot;/v1&quot;,
+  &quot;schemes&quot;: [&quot;https&quot;],
+  &quot;consumes&quot;: [&quot;application/json&quot;],
+  &quot;produces&quot;: [&quot;application/json&quot;],
+  &quot;paths&quot;: {
+    &quot;/pets&quot;: {
+      &quot;get&quot;: {
+        &quot;operationId&quot;: &quot;listPets&quot;,
+        &quot;parameters&quot;: [
+          { &quot;name&quot;: &quot;limit&quot;, &quot;in&quot;: &quot;query&quot;, &quot;type&quot;: &quot;integer&quot;, &quot;maximum&quot;: 100, &quot;format&quot;: &quot;int32&quot; },
+          { &quot;name&quot;: &quot;tags&quot;, &quot;in&quot;: &quot;query&quot;, &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;collectionFormat&quot;: &quot;csv&quot; }
+        ]
+      },
+      &quot;post&quot;: {
+        &quot;operationId&quot;: &quot;createPet&quot;,
+        &quot;parameters&quot;: [
+          { &quot;name&quot;: &quot;body&quot;, &quot;in&quot;: &quot;body&quot;, &quot;required&quot;: true, &quot;schema&quot;: { &quot;$ref&quot;: &quot;#/definitions/NewPet&quot; } }
+        ]
+      }
+    },
+    &quot;/pets/{petId}&quot;: {
+      &quot;post&quot;: {
+        &quot;operationId&quot;: &quot;updatePetWithForm&quot;,
+        &quot;consumes&quot;: [&quot;application/x-www-form-urlencoded&quot;],
+        &quot;parameters&quot;: [
+          { &quot;name&quot;: &quot;petId&quot;, &quot;in&quot;: &quot;path&quot;, &quot;required&quot;: true, &quot;type&quot;: &quot;string&quot; },
+          { &quot;name&quot;: &quot;name&quot;, &quot;in&quot;: &quot;formData&quot;, &quot;required&quot;: true, &quot;type&quot;: &quot;string&quot; },
+          { &quot;name&quot;: &quot;status&quot;, &quot;in&quot;: &quot;formData&quot;, &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;available&quot;, &quot;pending&quot;, &quot;sold&quot;] }
+        ]
+      }
+    }
+  },
+  &quot;definitions&quot;: {
+    &quot;Pet&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;id&quot;, &quot;name&quot;], &quot;properties&quot;: { &quot;id&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int64&quot; }, &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;tag&quot;: { &quot;type&quot;: &quot;string&quot; } } },
+    &quot;NewPet&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;name&quot;], &quot;properties&quot;: { &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;tag&quot;: { &quot;type&quot;: &quot;string&quot; } } }
+  }
+}
+</code></pre>
+<p>Note that <code>limit</code> carries its constraints (<code>type</code>, <code>maximum</code>, <code>format</code>) directly on the Parameter Object — there is no nested <code>schema</code> for non-body parameters in 2.0.</p>
+<h2 id="generating-the-client">Generating the Client</h2>
+<pre><code class="language-bash">corvusjson openapi-client petstore-2.0.json \
+    --rootNamespace Petstore.V2.Client \
+    --outputPath ./Generated
+</code></pre>
+<p>The <code>swagger: &quot;2.0&quot;</code> field is auto-detected; <code>--specVersion 2.0</code> forces it explicitly. This produces the same artifact shape as the 3.x generators:</p>
+<ul>
+<li><code>Generated/ApiPetsClient.cs</code> / <code>IApiPetsClient.cs</code> — the client and its interface</li>
+<li><code>Generated/*Request.cs</code>, <code>*Response.cs</code> — request/response structs per operation</li>
+<li><code>Generated/Models/</code> — strongly-typed JSON Schema models, including the synthesized <code>UpdatePetWithFormFormBody</code></li>
+<li><code>Generated/corvusjson-openapi.lock</code> — lock file for incremental regeneration</li>
+</ul>
+<h2 id="using-the-client">Using the Client</h2>
+<h3 id="the-server-uri-comes-from-host-basepath-schemes">The server URI comes from host + basePath + schemes</h3>
+<pre><code class="language-csharp">HttpClient httpClient = new() { BaseAddress = new Uri(&quot;https://petstore.example.com/v1&quot;) };
+await using HttpClientTransport transport = new(httpClient, disposeClient: true);
+ApiPetsClient client = new(transport);
+</code></pre>
+<p>The generated request structs also expose <code>CreateServerUri()</code>, which assembles <code>https://petstore.example.com/v1</code> from the spec's <code>schemes</code>, <code>host</code>, and <code>basePath</code>.</p>
+<h3 id="array-query-parameters-with-collectionformat">Array query parameters with collectionFormat</h3>
+<p><code>tags</code> declares <code>collectionFormat: csv</code>, so the generated code joins the values with commas into a single query key — <code>?limit=10&amp;tags=dog,friendly</code>:</p>
+<pre><code class="language-csharp">await using ListPetsResponse listResponse = await client.ListPetsAsync(
+    limit: 10,
+    tags: new GetPetsTags.Source(static (ref GetPetsTags.Builder b) =&gt;
+    {
+        b.AddItem(&quot;dog&quot;u8);
+        b.AddItem(&quot;friendly&quot;u8);
+    }));
+</code></pre>
+<p>(<code>ssv</code>, <code>pipes</code>, and <code>tsv</code> join with space, <code>|</code>, and tab respectively; <code>multi</code> repeats the key: <code>?tags=dog&amp;tags=friendly</code>.)</p>
+<h3 id="body-parameters">Body parameters</h3>
+<p>The 2.0 <code>in: body</code> parameter behaves exactly like a 3.x <code>requestBody</code> — a typed model with a builder:</p>
+<pre><code class="language-csharp">await using CreatePetResponse createResponse = await client.CreatePetAsync(
+    body: NewPet.Build(name: &quot;Fido&quot;u8, tag: &quot;dog&quot;u8));
+</code></pre>
+<h3 id="formdata-parameters-the-synthesized-form-body">formData parameters — the synthesized form body</h3>
+<p>The <code>updatePetWithForm</code> operation declares its inputs as <code>in: formData</code> parameters. The generator aggregates them into a single <code>UpdatePetWithFormFormBody</code> model type, so form fields get the same typed-builder experience as JSON bodies:</p>
+<pre><code class="language-csharp">await using UpdatePetWithFormResponse updateResponse = await client.UpdatePetWithFormAsync(
+    petId: &quot;pet-123&quot;u8,
+    body: UpdatePetWithFormFormBody.Build(name: &quot;Fido II&quot;u8, status: &quot;sold&quot;u8));
+</code></pre>
+<p>On the wire the body is form-encoded per the operation's <code>consumes</code>:</p>
+<pre><code>POST /v1/pets/pet-123 HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+name=Fido+II&amp;status=sold
+</code></pre>
+<p>The <code>status</code> field's <code>enum</code> constraint is enforced by validation before the request is sent.</p>
+<h3 id="response-handling">Response handling</h3>
+<p>Responses use the same <code>MatchResult</code> pattern as every other generated client — exhaustive handling of the status codes declared in the spec:</p>
+<pre><code class="language-csharp">listResponse.MatchResult(
+    matchOk: pets =&gt;
+    {
+        foreach (Pet pet in pets.EnumerateArray())
+        {
+            Console.WriteLine($&quot;[{pet.Id}] {pet.Name}&quot;);
+        }
+
+        return 0;
+    },
+    matchDefault: error =&gt;
+    {
+        Console.WriteLine($&quot;Error {error.Code}: {error.Message}&quot;);
+        return 0;
+    });
+
+// Typed response header access — 2.0 response headers come from the
+// Response Object's `headers` map
+JsonString nextPage = listResponse.XNextHeader;
+</code></pre>
+<h3 id="request-validation">Request validation</h3>
+<p>2.0 parameter constraints (<code>maximum</code>, <code>enum</code>, <code>pattern</code>, ...) sit directly on the Parameter Object and flow into the generated schema types unchanged:</p>
+<pre><code class="language-csharp">try
+{
+    // Throws: limit &gt; 100 violates the parameter's &quot;maximum: 100&quot; constraint
+    await using ListPetsResponse _ = await client.ListPetsAsync(
+        limit: 200,
+        validationMode: ValidationMode.Detailed);
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($&quot;Validation failed: {ex.Message}&quot;);
+}
+</code></pre>
+<h2 id="running">Running</h2>
+<pre><code class="language-bash">dotnet build
+dotnet run
+</code></pre>
+<p>The runnable recipe uses an in-memory <code>IApiTransport</code> so it produces deterministic console output without needing the fictional <code>petstore.example.com</code> host to exist. In production code, replace the demo transport with <code>HttpClientTransport</code> configured with your API server's base address.</p>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Let the generator auto-detect the version</strong> — <code>swagger: &quot;2.0&quot;</code> dispatches to the 2.0 generator; <code>--specVersion</code> is available when you need to force it.</li>
+<li><strong>Use <code>u8</code> literals for scalar parameters and form fields</strong> — the implicit conversions handle encoding and avoid UTF-16→UTF-8 transcoding.</li>
+<li><strong>Treat the synthesized <code>&lt;Operation&gt;FormBody</code> like any other model</strong> — build it with <code>Build(...)</code>, validate it, and reuse it across calls.</li>
+<li><strong>Always <code>await using</code> responses</strong> — they hold pooled memory that must be returned.</li>
+<li><strong>Prefer <code>MatchResult</code> for response handling</strong> — it ensures exhaustive coverage of all status codes defined in the spec.</li>
+</ol>
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-931/docs/open-api.html">OpenAPI client and server generation</a> — including the OpenAPI 2.0 notes section</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-931/examples/open-api-client.html">029-OpenApiClient</a> — the OpenAPI 3.2 version of this recipe</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-931/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-931/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-931/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-931/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-931/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-931/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
