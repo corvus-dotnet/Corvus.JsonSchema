@@ -196,7 +196,10 @@ if (enableSystemApprovalWorkflow)
     });
 }
 WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport);
-var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
+
+// The deployment's run-derivation key (ADR 0065 §9): idempotent starts and the schedules surface derive run ids
+// under it — the same instance DemoData seeds schedules with, so seeded and API-created schedules share one id space.
+var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer, runDerivation: DemoData.RunDerivation);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the

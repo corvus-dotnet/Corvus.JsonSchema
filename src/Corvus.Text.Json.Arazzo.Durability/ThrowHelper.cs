@@ -241,6 +241,22 @@ internal static class ThrowHelper
     public static ArgumentException GetStateStoreMustImplementWaitIndexForWorkerException()
         => new(SR.StateStoreMustImplementWaitIndexForWorker, "store");
 
+    // ── Run-id derivation (ADR 0065 §9) ─────────────────────────────────────────────────────────────────────────────
+    public static ArgumentException GetRunDerivationKeyTooShortException(int minimumKeyBytes, string paramName)
+        => new(SR.Format(SR.RunDerivationKeyTooShort, minimumKeyBytes), paramName);
+
+    public static InvalidOperationException GetIdempotentStartRequiresDerivationException()
+        => new(SR.IdempotentStartRequiresDerivation);
+
+    public static WorkflowRunCollisionException GetIdempotentRunCollisionException(string runId)
+        => new(SR.Format(SR.IdempotentRunCollision, runId));
+
+    public static ArgumentException GetNamedRunIdOutsideGrammarException(string runId, string paramName)
+        => new(SR.Format(SR.NamedRunIdOutsideGrammar, runId), paramName);
+
+    public static NotSupportedException GetStartNamedNotSupportedException()
+        => new(SR.StartNamedNotSupported);
+
     // ── Management / wrapped-store capability ───────────────────────────────────────────────────────────────────────
     public static NotSupportedException GetLoadRunStateNotSupportedException()
         => new(SR.LoadRunStateNotSupported);

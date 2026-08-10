@@ -21,6 +21,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 [TestClass]
 public sealed class ScheduleHostedWorkflowTests
 {
+    // The deployment's run-derivation key (ADR 0065 §9): idempotent starts refuse without one.
+    private static readonly WorkflowRunDerivation TestDerivation = new(new byte[WorkflowRunDerivation.MinimumKeyBytes]);
+
     private static readonly IReadOnlyDictionary<string, IApiTransport> NoTransports =
         ImmutableDictionary<string, IApiTransport>.Empty;
 
@@ -28,7 +31,7 @@ public sealed class ScheduleHostedWorkflowTests
     public async Task A_fresh_schedule_fires_nothing_and_suspends_until_the_next_occurrence()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
         var scheduler = new ScheduleHostedWorkflow(Start(management), time);
 
@@ -49,7 +52,7 @@ public sealed class ScheduleHostedWorkflowTests
     public async Task A_resumed_schedule_catches_up_every_missed_occurrence_then_suspends()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
         var scheduler = new ScheduleHostedWorkflow(Start(management), time);
 
@@ -73,7 +76,7 @@ public sealed class ScheduleHostedWorkflowTests
     public async Task Re_running_the_same_due_window_does_not_start_duplicate_target_runs()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
         var scheduler = new ScheduleHostedWorkflow(Start(management), time);
 
@@ -96,7 +99,7 @@ public sealed class ScheduleHostedWorkflowTests
         // same machinery that resumes any due suspended run drives the schedule's occurrences.
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
         var store = new InMemoryWorkflowStateStore(time);
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var scheduler = new ScheduleHostedWorkflow(Start(management), time);
 
         WorkflowResumer resume = async (r, ct) =>
@@ -138,7 +141,7 @@ public sealed class ScheduleHostedWorkflowTests
         // the runner's own dispatch + resume machinery, so no per-schedule dispatch path is needed.
         var time = new TestTimeProvider(new DateTimeOffset(2026, 6, 15, 8, 0, 0, TimeSpan.Zero));
         var store = new InMemoryWorkflowStateStore(time);
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var scheduler = new ScheduleHostedWorkflow(Start(management), time);
 
         WorkflowResumer resume = async (r, ct) =>
@@ -148,8 +151,8 @@ public sealed class ScheduleHostedWorkflowTests
         };
 
         using ParsedJsonDocument<JsonElement> inputs = Inputs("s1", "0 9 * * *", "adopt-v1");
-        WorkflowRunId scheduleRun = await management.StartIdempotentAsync(
-            ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "s1", "development", cancellationToken: default);
+        WorkflowRunId scheduleRun = (await management.StartIdempotentAsync(
+            ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "s1", "development", cancellationToken: default)).RunId;
 
         var dispatcher = new WorkflowDispatcher(store, "runner-1", time, runnerEnvironment: "development");
         int dispatched = await dispatcher.DispatchClaimableAsync([ScheduleHostedWorkflow.ScheduleWorkflowId], resume, default);
@@ -161,8 +164,8 @@ public sealed class ScheduleHostedWorkflowTests
     }
 
     private static WorkflowStartHandler Start(SecuredWorkflowManagement management)
-        => (request, cancellationToken) => management.StartIdempotentAsync(
-            request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+        => async (request, cancellationToken) => (await management.StartIdempotentAsync(
+            request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken)).RunId;
 
     private static async ValueTask<int> CountPending(SecuredWorkflowManagement management)
     {

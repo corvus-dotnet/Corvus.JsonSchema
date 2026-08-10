@@ -22,6 +22,13 @@ namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 /// </summary>
 public static class DemoData
 {
+    /// <summary>
+    /// The demo deployment's run-derivation key (ADR 0065 §9): the host's management and the seeded schedules derive
+    /// run ids under the same instance. A real deployment configures a secret shared across its control-plane
+    /// instances; the demo's fixed literal keeps its seeded schedules addressable across restarts.
+    /// </summary>
+    public static WorkflowRunDerivation RunDerivation { get; } = new("demo-run-derivation-key-32-bytes!"u8.ToArray());
+
     private static readonly CatalogOwner OnboardingOwner = new("Onboarding Team", "onboarding@example.com", "Identity", "https://runbooks.example.com/onboard");
     private static readonly CatalogOwner ReconcileOwner = new("Reconciliation Team", "reconcile@example.com", "Platform", "https://runbooks.example.com/nightly-reconcile");
 
@@ -218,9 +225,10 @@ public static class DemoData
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(
                 $$$"""{"scheduleId":"{{{scheduleId}}}","cron":"* * * * *","timeZone":"UTC","targetWorkflowId":"nightly-reconcile-v2","targetInputs":{"date":"{{{date}}}"}}"""));
 
-            // The run id is derived from the scheduleId exactly as the /schedules API derives it (#896), so the seeded
-            // schedule is addressable — get / delete / run-now on 'nightly-reconcile-cron' — like any API-created one.
-            string runId = SecuredWorkflowManagement.IdempotentRunId(ScheduleHostedWorkflow.ScheduleWorkflowId, scheduleId).Value;
+            // The run id is derived from the scheduleId exactly as the /schedules API derives it (#896) — under the
+            // demo's run-derivation key — so the seeded schedule is addressable (get / delete / run-now on
+            // 'nightly-reconcile-cron') like any API-created one.
+            string runId = RunDerivation.ScheduleAddress(scheduleId).Value;
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
             await run.EnqueueAsync(default).ConfigureAwait(false);
             log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' -> nightly-reconcile-v2, cron '* * * * *' (every minute, a deliberately fast demo cadence so it visibly fires; the target workflow is the nightly job) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");

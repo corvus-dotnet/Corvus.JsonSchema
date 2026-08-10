@@ -14,18 +14,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 [TestClass]
 public sealed class MessageWorkflowTriggerTests
 {
+    // The deployment's run-derivation key (ADR 0065 §9): idempotent starts refuse without one.
+    private static readonly WorkflowRunDerivation TestDerivation = new(new byte[WorkflowRunDerivation.MinimumKeyBytes]);
+
     [TestMethod]
     public async Task Each_message_starts_a_pending_run_and_redelivery_is_idempotent()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var transport = new InMemoryMessageTransport();
 
         var startedIds = new List<WorkflowRunId>();
         WorkflowStartHandler start = async (request, cancellationToken) =>
         {
-            WorkflowRunId id = await management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+            WorkflowRunId id = (await management.StartIdempotentAsync(
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken)).RunId;
             startedIds.Add(id);
             return id;
         };

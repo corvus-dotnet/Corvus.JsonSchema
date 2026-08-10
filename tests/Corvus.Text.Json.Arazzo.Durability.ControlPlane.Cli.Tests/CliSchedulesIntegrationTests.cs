@@ -67,9 +67,9 @@ public sealed partial class CliIntegrationTests
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(
             $$"""{"scheduleId":"{{scheduleId}}","cron":"{{cron}}","timeZone":"UTC","targetWorkflowId":"{{targetWorkflowId}}"}"""));
 
-        // The run id is derived from the scheduleId exactly as the /schedules API derives it, so the seeded schedule is
-        // addressable by get / delete on its scheduleId.
-        string runId = SecuredWorkflowManagement.IdempotentRunId(ScheduleHostedWorkflow.ScheduleWorkflowId, scheduleId).Value;
+        // The run id is derived from the scheduleId exactly as the /schedules API derives it (the host's shared
+        // derivation key), so the seeded schedule is addressable by get / delete on its scheduleId.
+        string runId = TestDerivation.ScheduleAddress(scheduleId).Value;
         using WorkflowRun run = WorkflowRun.CreateNew(store, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", clock);
         await run.EnqueueAsync(default);
     }

@@ -28,6 +28,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     private readonly TimeProvider timeProvider;
     private readonly string owner;
     private readonly TimeSpan leaseTtl;
+    private readonly WorkflowRunDerivation? runDerivation;
+    private readonly Environments.IEnvironmentStore? environments;
+    private readonly byte[] ownerGroupTagKey;
 
     /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowManagement"/> class.</summary>
     /// <param name="store">The state store. Visibility queries (<see cref="ListAsync"/>/<see cref="PurgeAsync"/>) require it to also implement <see cref="IWorkflowWaitIndex"/>.</param>
@@ -35,12 +38,23 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     /// <param name="resumer">The adapter that re-enters a run's generated executor; required for <see cref="ResumeAsync"/>.</param>
     /// <param name="timeProvider">The time source for index timestamps and lease TTLs; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="leaseTtl">How long a lease is held during a control operation; defaults to one minute.</param>
+    /// <param name="runDerivation">The deployment's run-id derivation (ADR 0065 §9); required for
+    /// <see cref="StartIdempotentAsync"/>, which refuses without it. The same instance serves every surface that
+    /// derives these ids (exposed through <see cref="RunDerivation"/>), so no two components can hold divergent keys.</param>
+    /// <param name="environments">The environment registry the idempotent derivation resolves an environment's owner
+    /// group from; <see langword="null"/> (a deployment without tenancy governance) derives with no owner group,
+    /// consistently.</param>
+    /// <param name="internalTagPrefix">The deployment's reserved internal tag prefix the owner group is stamped
+    /// under; defaults to the <c>sys:</c> prefix.</param>
     public SecuredWorkflowManagement(
         IWorkflowStateStore store,
         string owner,
         WorkflowResumer? resumer = null,
         TimeProvider? timeProvider = null,
-        TimeSpan? leaseTtl = null)
+        TimeSpan? leaseTtl = null,
+        WorkflowRunDerivation? runDerivation = null,
+        Environments.IEnvironmentStore? environments = null,
+        string? internalTagPrefix = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
@@ -50,7 +64,15 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         this.owner = owner;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);
+        this.runDerivation = runDerivation;
+        this.environments = environments;
+        this.ownerGroupTagKey = internalTagPrefix is null
+            ? Environments.OwnerGroupTag.DefaultKeyUtf8.ToArray()
+            : Environments.OwnerGroupTag.KeyFor(internalTagPrefix);
     }
+
+    /// <inheritdoc/>
+    public WorkflowRunDerivation? RunDerivation => this.runDerivation;
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
@@ -65,63 +87,76 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    public async ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
-        var id = new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
+        if (this.runDerivation is not { } derivation)
+        {
+            throw ThrowHelper.GetIdempotentStartRequiresDerivationException();
+        }
+
+        string? ownerGroup = await this.ResolveOwnerGroupAsync(environment, cancellationToken).ConfigureAwait(false);
+        WorkflowRunId id = derivation.IdempotentStart(ownerGroup, environment, workflowId, idempotencyKey);
+        return await this.StartNamedAsync(id, workflowId, inputs, environment, correlationId, tags, securityTags, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (!WorkflowRunId.IsWellFormed(runId.Value))
+        {
+            throw ThrowHelper.GetNamedRunIdOutsideGrammarException(runId.Value, nameof(runId));
+        }
+
         try
         {
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
+            return new IdempotentStartResult(runId, Created: true);
         }
         catch (WorkflowConflictException)
         {
-            // A run already exists for this (workflowId, idempotencyKey) — re-delivery / duplicate fire; no-op.
-        }
+            // A run already exists under this id. Only a run that IS this logical start (same workflow, same
+            // environment) reads as the idempotent convergence; anything else occupying the id — the pre-created-id
+            // attack the keyed derivation exists to prevent, a leaked key, or an in-process caller minting a
+            // colliding name — is refused rather than reported as this run (ADR 0065 §9).
+            WorkflowCheckpoint? existing = await this.store.LoadAsync(runId, cancellationToken).ConfigureAwait(false);
+            if (existing is { } checkpoint)
+            {
+                WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(checkpoint.Utf8);
+                if (indexEntry.WorkflowId == workflowId && indexEntry.Environment == environment)
+                {
+                    return new IdempotentStartResult(runId, Created: false);
+                }
+            }
 
-        return id;
+            throw ThrowHelper.GetIdempotentRunCollisionException(runId.Value);
+        }
     }
 
-    /// <summary>
-    /// Resolves the deterministic run id that <see cref="StartIdempotentAsync"/> would create for a
-    /// <paramref name="workflowId"/> and <paramref name="idempotencyKey"/>, so a caller that keys an idempotent start
-    /// (for example a schedule keyed by its <c>scheduleId</c>, #896) can address the created run later without a lookup.
-    /// </summary>
-    /// <param name="workflowId">The workflow id the run was started for.</param>
-    /// <param name="idempotencyKey">The idempotency key the run was started with.</param>
-    /// <returns>The deterministic run id.</returns>
-    public static WorkflowRunId IdempotentRunId(string workflowId, string idempotencyKey)
+    // The owner group of the run's pinned environment (the sys:tenant management tag, ADR 0065), resolved through
+    // the wired environment registry with system reach — the caller's reach gates the start itself at the surface,
+    // not the derivation's inputs. No registry wired (a deployment without tenancy governance) resolves to no
+    // group, consistently, so every start in such a deployment derives the same way.
+    private async ValueTask<string?> ResolveOwnerGroupAsync(string environment, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(workflowId);
-        ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
-        return new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
-    }
-
-    private static string DeterministicRunId(string workflowId, string idempotencyKey)
-    {
-        // Upper bound (GetMaxByteCount is a multiply, not a scan) to size the scratch — the exact filled length comes from
-        // the GetBytes returns below, and the hash is taken over buffer[..written].
-        int maxCount = System.Text.Encoding.UTF8.GetMaxByteCount(workflowId.Length) + 1 + System.Text.Encoding.UTF8.GetMaxByteCount(idempotencyKey.Length);
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(maxCount);
-        try
+        if (this.environments is not { } registry)
         {
-            int written = System.Text.Encoding.UTF8.GetBytes(workflowId, buffer);
-            buffer[written++] = 0;
-            written += System.Text.Encoding.UTF8.GetBytes(idempotencyKey, buffer.AsSpan(written));
-            Span<byte> hash = stackalloc byte[32];
-            System.Security.Cryptography.SHA256.HashData(buffer.AsSpan(0, written), hash);
+            return null;
+        }
 
-            // The id must be inside the run-id grammar (ADR 0065 §9: exactly 32 lowercase hex — the same grammar
-            // every ingress validates), so the derivation emits the hash's first 16 bytes.
-            return Convert.ToHexStringLower(hash[..16]);
-        }
-        finally
+        using ParsedJsonDocument<Environments.Environment>? doc = await registry.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        if (doc is not { } environmentDoc)
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            return null;
         }
+
+        return Environments.OwnerGroupTag.Read(environmentDoc.RootElement, this.ownerGroupTagKey);
     }
 
     // Re-presents an opaque page token (the store's pooled UTF-8) as the JSON string value the query seam carries, for

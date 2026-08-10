@@ -170,7 +170,7 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
             return new ValueTask<WorkflowRunId>(new WorkflowRunId("run-" + this.Starts.Count));
         }
 
-        public ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
         public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken) => throw new NotSupportedException();
 

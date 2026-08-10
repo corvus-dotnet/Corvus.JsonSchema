@@ -333,19 +333,39 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
-    public void The_idempotent_run_id_is_inside_the_run_id_grammar()
+    public void The_derived_run_ids_are_inside_the_run_id_grammar_deterministic_and_keyed()
     {
         // ADR 0065 §9: a run id is exactly 32 lowercase hex characters, and every ingress validates that grammar —
-        // an idempotent id outside it names a run no ingress will ever accept back.
-        string id = SecuredWorkflowManagement.IdempotentRunId("wf", "order-42").Value;
+        // a derived id outside it names a run no ingress will ever accept back.
+        byte[] key = new byte[WorkflowRunDerivation.MinimumKeyBytes];
+        key[0] = 1;
+        var derivation = new WorkflowRunDerivation(key);
+        string id = derivation.IdempotentStart("acme", "development", "wf", "order-42").Value;
+        string schedule = derivation.ScheduleAddress("order-42").Value;
 
         System.Text.RegularExpressions.Regex.IsMatch(id, "^[0-9a-f]{32}$").ShouldBeTrue();
+        System.Text.RegularExpressions.Regex.IsMatch(schedule, "^[0-9a-f]{32}$").ShouldBeTrue();
 
-        // Still a deterministic derivation: the same key re-derives the same id (the schedule path's offline
-        // addressing, #896) and a different key derives a different one.
-        SecuredWorkflowManagement.IdempotentRunId("wf", "order-42").Value.ShouldBe(id);
-        SecuredWorkflowManagement.IdempotentRunId("wf", "order-43").Value.ShouldNotBe(id);
-        SecuredWorkflowManagement.IdempotentRunId("wf2", "order-42").Value.ShouldNotBe(id);
+        // Deterministic: the same tuple re-derives the same id (the schedule path's offline addressing, #896)...
+        derivation.IdempotentStart("acme", "development", "wf", "order-42").Value.ShouldBe(id);
+        derivation.ScheduleAddress("order-42").Value.ShouldBe(schedule);
+
+        // ...every tuple element is significant...
+        derivation.IdempotentStart("acme", "development", "wf", "order-43").Value.ShouldNotBe(id);
+        derivation.IdempotentStart("acme", "development", "wf2", "order-42").Value.ShouldNotBe(id);
+        derivation.IdempotentStart("acme", "production", "wf", "order-42").Value.ShouldNotBe(id);
+        derivation.IdempotentStart("globex", "development", "wf", "order-42").Value.ShouldNotBe(id);
+
+        // ...the domain labels keep the id spaces apart...
+        schedule.ShouldNotBe(id);
+
+        // ...and the key is load-bearing: a different deployment key derives a different id space.
+        byte[] otherKey = new byte[WorkflowRunDerivation.MinimumKeyBytes];
+        otherKey[0] = 2;
+        new WorkflowRunDerivation(otherKey).IdempotentStart("acme", "development", "wf", "order-42").Value.ShouldNotBe(id);
+
+        // A key below full HMAC strength is refused outright.
+        Should.Throw<ArgumentException>(() => new WorkflowRunDerivation(new byte[WorkflowRunDerivation.MinimumKeyBytes - 1]));
     }
 
     private static async ValueTask<WorkflowRunResultKind> CompleteAndReport(WorkflowRun run, CancellationToken ct)

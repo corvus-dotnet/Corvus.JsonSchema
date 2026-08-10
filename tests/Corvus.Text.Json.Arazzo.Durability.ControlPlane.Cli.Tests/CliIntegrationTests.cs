@@ -28,6 +28,10 @@ public sealed partial class CliIntegrationTests
     private const string Done2 = "d0000000000000000000000000000002";
     private const string Faulted1 = "fa170000000000000000000000000001";
     private const string OldDone = "01dd0000000000000000000000000001";
+    // The deployment's run-derivation key (ADR 0065 §9), shared by the host and the seed helpers so a seeded
+    // schedule is addressable exactly as the /schedules API derives it.
+    private static readonly WorkflowRunDerivation TestDerivation = new(new byte[WorkflowRunDerivation.MinimumKeyBytes]);
+
     private static readonly DateTimeOffset T0 = new(2026, 6, 10, 12, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
@@ -224,7 +228,7 @@ public sealed partial class CliIntegrationTests
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
+        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();

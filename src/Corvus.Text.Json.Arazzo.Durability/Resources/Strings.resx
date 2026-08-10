@@ -520,4 +520,20 @@
   <data name="DraftRunnerLoopAlreadyRunning" xml:space="preserve">
     <value>The draft runner's background loop is already running.</value>
   </data>
+  <!-- Run-id derivation (ADR 0065 §9) -->
+  <data name="RunDerivationKeyTooShort" xml:space="preserve">
+    <value>The run-derivation key must be at least {0} bytes of high-entropy key material (ADR 0065 §9).</value>
+  </data>
+  <data name="IdempotentStartRequiresDerivation" xml:space="preserve">
+    <value>Idempotent starts derive their run id under the deployment's run-derivation key (ADR 0065 §9); construct SecuredWorkflowManagement with a WorkflowRunDerivation.</value>
+  </data>
+  <data name="IdempotentRunCollision" xml:space="preserve">
+    <value>Run id '{0}', derived for this idempotent start, is occupied by a run that is not this start; refusing to report the occupant as this run (ADR 0065 §9).</value>
+  </data>
+  <data name="NamedRunIdOutsideGrammar" xml:space="preserve">
+    <value>Run id '{0}' is outside the run-id grammar: exactly 32 lowercase hexadecimal characters (ADR 0065 §9).</value>
+  </data>
+  <data name="StartNamedNotSupported" xml:space="preserve">
+    <value>This management implementation does not support named starts.</value>
+  </data>
 </root>

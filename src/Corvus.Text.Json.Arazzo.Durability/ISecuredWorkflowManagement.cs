@@ -29,11 +29,18 @@ public interface ISecuredWorkflowManagement
     /// <returns>The id of the newly created pending run.</returns>
     ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken);
 
+    /// <summary>Gets the deployment's run-id derivation (ADR 0065 §9), when configured. It is exposed here so every
+    /// surface that re-derives a deterministic run id (for example the schedules surface addressing its scheduler
+    /// run) uses the exact instance the idempotent start mints with — two components holding different keys would
+    /// derive divergent ids for the same logical start, and say so nowhere.</summary>
+    WorkflowRunDerivation? RunDerivation => null;
+
     /// <summary>
-    /// Starts a run idempotently: the run id is derived deterministically from
-    /// (<paramref name="workflowId"/>, <paramref name="idempotencyKey"/>), so re-invoking with the same key
-    /// (for example on broker message redelivery, or a duplicate schedule fire) is a no-op that returns the
-    /// existing run rather than creating a duplicate.
+    /// Starts a run idempotently: the run id is a keyed MAC over
+    /// (ownerGroup, <paramref name="environment"/>, <paramref name="workflowId"/>, <paramref name="idempotencyKey"/>)
+    /// under the deployment's run-derivation key (ADR 0065 §9), so re-invoking with the same key (broker message
+    /// redelivery, a duplicate schedule fire) converges on the existing run, the same business key names different
+    /// runs in different environments, and the id cannot be computed offline without the key.
     /// </summary>
     /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
     /// <param name="inputs">The workflow inputs (used only when the run is first created).</param>
@@ -43,8 +50,29 @@ public interface ISecuredWorkflowManagement
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
-    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+    /// <returns>The run id and whether this call created the run (<c>Created: false</c> is the idempotent
+    /// convergence on the pre-existing run). A run occupying the derived id that is <em>not</em> this logical start
+    /// is refused with a collision error rather than reported as this run.</returns>
+    ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Starts a run under a caller-derived id (ADR 0065 §9's initiator-names-the-run shape): the id must be inside
+    /// the run-id grammar and should come from <see cref="RunDerivation"/>, so it is deterministic for the caller
+    /// and impossible to pre-compute without the deployment key. Convergence and collision behave exactly as
+    /// <see cref="StartIdempotentAsync"/>: an existing run that is this logical start (same workflow, same
+    /// environment) is the idempotent success, and any other occupant is refused.
+    /// </summary>
+    /// <param name="runId">The derived run id to create the run under.</param>
+    /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
+    /// <param name="inputs">The workflow inputs (used only when the run is first created).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>.</param>
+    /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
+    /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2); distinct from <paramref name="tags"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The run id and whether this call created the run.</returns>
+    ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+        => throw ThrowHelper.GetStartNamedNotSupportedException();
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
     /// caller's read reach (§14.2).</summary>
@@ -143,6 +171,12 @@ public interface ISecuredWorkflowManagement
     /// <returns><see langword="true"/> if a run was deleted; <see langword="false"/> if no run with that id existed, it was outside the caller's write reach, or it was held by another owner.</returns>
     ValueTask<bool> DeleteAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
 }
+
+/// <summary>The outcome of an idempotent or named start: the run's id, and whether this call created it
+/// (<c>Created: false</c> is the idempotent convergence on the run a previous call created).</summary>
+/// <param name="RunId">The run's id.</param>
+/// <param name="Created">Whether this call created the run.</param>
+public readonly record struct IdempotentStartResult(WorkflowRunId RunId, bool Created);
 
 /// <summary>A run's management-relevant detail, read from its authoritative checkpoint.</summary>
 /// <param name="Id">The run id.</param>

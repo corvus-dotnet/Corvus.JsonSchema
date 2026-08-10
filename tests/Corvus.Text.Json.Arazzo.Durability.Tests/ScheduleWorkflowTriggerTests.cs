@@ -11,18 +11,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 [TestClass]
 public sealed class ScheduleWorkflowTriggerTests
 {
+    // The deployment's run-derivation key (ADR 0065 §9): idempotent starts refuse without one.
+    private static readonly WorkflowRunDerivation TestDerivation = new(new byte[WorkflowRunDerivation.MinimumKeyBytes]);
+
     private static readonly DateTimeOffset Start = new(2026, 6, 12, 0, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
     public async Task A_due_tick_fires_every_elapsed_slot_and_re_ticking_is_idempotent()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
         var time = new TestTimeProvider(Start);
 
-        WorkflowStartHandler start = (request, cancellationToken) =>
-            management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+        WorkflowStartHandler start = async (request, cancellationToken) =>
+            (await management.StartIdempotentAsync(
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken)).RunId;
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), time);
@@ -50,11 +53,11 @@ public sealed class ScheduleWorkflowTriggerTests
     public async Task A_retried_fire_for_the_same_slot_resolves_to_the_same_run()
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, owner: "ops");
+        var management = new SecuredWorkflowManagement(store, owner: "ops", runDerivation: TestDerivation);
 
-        WorkflowStartHandler start = (request, cancellationToken) =>
-            management.StartIdempotentAsync(
-                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken);
+        WorkflowStartHandler start = async (request, cancellationToken) =>
+            (await management.StartIdempotentAsync(
+                request.WorkflowId, request.Inputs, request.IdempotencyKey, "development", request.CorrelationId, request.Tags, cancellationToken: cancellationToken)).RunId;
 
         var binding = new ScheduleTriggerBinding("nightly-reconcile-v1");
         await using var trigger = new ScheduleWorkflowTrigger(start, binding, new IntervalSchedule(TimeSpan.FromHours(1)), new TestTimeProvider(Start));

@@ -654,7 +654,17 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         WorkflowRunId runId;
         if (parameters.IdempotencyKey.IsNotUndefined() && (string)parameters.IdempotencyKey is { Length: > 0 } idempotencyKey)
         {
-            runId = await this.management.StartIdempotentAsync(workflowId, inputs, idempotencyKey, environment, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+            try
+            {
+                runId = (await this.management.StartIdempotentAsync(workflowId, inputs, idempotencyKey, environment, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false)).RunId;
+            }
+            catch (WorkflowRunCollisionException)
+            {
+                // The derived id is occupied by a run that is not this start (ADR 0065 §9). Answering success with
+                // that run's id is exactly the substitution the keyed derivation exists to prevent, so refuse.
+                return StartCatalogWorkflowRunResult.Conflict(
+                    Problem("idempotency-collision", "Idempotency key collision", 409, "The run id derived for this idempotency key is occupied by a run that is not this start. Retry with a different key."), workspace);
+            }
         }
         else
         {
