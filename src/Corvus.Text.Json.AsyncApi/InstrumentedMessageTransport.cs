@@ -26,14 +26,21 @@ namespace Corvus.Text.Json.AsyncApi;
 /// All instrumentation is zero-cost when no listener is attached.
 /// </para>
 /// <para>
+/// Create instances with <see cref="Create"/>, which returns a wrapper that implements
+/// <see cref="IMessageDeliveryContextTransport"/> and/or <see cref="IHealthCheckableTransport"/>
+/// exactly when the wrapped transport does, so capability probes against the wrapper answer
+/// for the wrapped transport. The constructor always produces a plain
+/// <see cref="IMessageTransport"/> wrapper that surfaces neither capability.
+/// </para>
+/// <para>
 /// Example usage:
 /// <code>
 /// IMessageTransport raw = await NatsMessageTransport.CreateAsync(options);
-/// IMessageTransport transport = new InstrumentedMessageTransport(raw, "nats");
+/// IMessageTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
 /// </code>
 /// </para>
 /// </remarks>
-public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransport
+public class InstrumentedMessageTransport : IMessageTransport
 {
     private readonly IMessageTransport inner;
     private readonly string messagingSystem;
@@ -50,6 +57,27 @@ public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransp
         this.inner = inner;
         this.messagingSystem = messagingSystem;
     }
+
+    /// <summary>
+    /// Creates an instrumented wrapper that preserves the wrapped transport's capabilities:
+    /// the returned instance implements <see cref="IMessageDeliveryContextTransport"/> and/or
+    /// <see cref="IHealthCheckableTransport"/> exactly when <paramref name="inner"/> does, so
+    /// a capability probe such as <c>transport is IMessageDeliveryContextTransport</c> answers
+    /// for the wrapped transport instead of failing at subscribe time.
+    /// </summary>
+    /// <param name="inner">The transport to decorate with instrumentation.</param>
+    /// <param name="messagingSystem">The messaging system identifier (e.g., <c>"nats"</c>,
+    /// <c>"amqp"</c>, <c>"mqtt"</c>, <c>"websocket"</c>, <c>"kafka"</c>).
+    /// Used as the <c>messaging.system</c> tag on all spans and metrics.</param>
+    /// <returns>The capability-matched instrumented transport.</returns>
+    public static InstrumentedMessageTransport Create(IMessageTransport inner, string messagingSystem)
+        => inner switch
+        {
+            IMessageDeliveryContextTransport and IHealthCheckableTransport => new WithDeliveryContextAndHealthCheck(inner, messagingSystem),
+            IMessageDeliveryContextTransport => new WithDeliveryContext(inner, messagingSystem),
+            IHealthCheckableTransport => new WithHealthCheck(inner, messagingSystem),
+            _ => new InstrumentedMessageTransport(inner, messagingSystem),
+        };
 
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(
@@ -128,20 +156,16 @@ public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransp
             cancellationToken);
     }
 
-    /// <inheritdoc/>
-    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+    private ValueTask SubscribeWithDeliveryContextCoreAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        if (this.inner is not IMessageDeliveryContextTransport contextTransport)
-        {
-            throw new NotSupportedException("The wrapped transport does not expose message delivery context.");
-        }
-
+        // Only the context-capable nested wrappers call this, and Create constructs them only
+        // when the wrapped transport implements the capability, so the cast cannot fail.
         string destination = Encoding.UTF8.GetString(channelUtf8.Span);
-        return contextTransport.SubscribeWithDeliveryContextAsync(
+        return ((IMessageDeliveryContextTransport)this.inner).SubscribeWithDeliveryContextAsync(
             channelUtf8,
             CreateInstrumentedContextHandler(handler, destination),
             cancellationToken);
@@ -558,6 +582,76 @@ public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransp
             activity.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity.SetTag("error.type", ex.GetType().FullName);
         }
+    }
+
+    /// <summary>
+    /// Instrumented wrapper for transports that expose message delivery context.
+    /// </summary>
+    private sealed class WithDeliveryContext : InstrumentedMessageTransport, IMessageDeliveryContextTransport
+    {
+        public WithDeliveryContext(IMessageTransport inner, string messagingSystem)
+            : base(inner, messagingSystem)
+        {
+        }
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+    }
+
+    /// <summary>
+    /// Instrumented wrapper for transports that expose broker health checks.
+    /// </summary>
+    private sealed class WithHealthCheck : InstrumentedMessageTransport, IHealthCheckableTransport
+    {
+        public WithHealthCheck(IMessageTransport inner, string messagingSystem)
+            : base(inner, messagingSystem)
+        {
+        }
+
+        /// <inheritdoc/>
+        public bool IsConnected => ((IHealthCheckableTransport)this.inner).IsConnected;
+
+        /// <inheritdoc/>
+        public string MessagingSystem => ((IHealthCheckableTransport)this.inner).MessagingSystem;
+
+        /// <inheritdoc/>
+        public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+            => ((IHealthCheckableTransport)this.inner).PingAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Instrumented wrapper for transports that expose both message delivery context and
+    /// broker health checks.
+    /// </summary>
+    private sealed class WithDeliveryContextAndHealthCheck : InstrumentedMessageTransport, IMessageDeliveryContextTransport, IHealthCheckableTransport
+    {
+        public WithDeliveryContextAndHealthCheck(IMessageTransport inner, string messagingSystem)
+            : base(inner, messagingSystem)
+        {
+        }
+
+        /// <inheritdoc/>
+        public bool IsConnected => ((IHealthCheckableTransport)this.inner).IsConnected;
+
+        /// <inheritdoc/>
+        public string MessagingSystem => ((IHealthCheckableTransport)this.inner).MessagingSystem;
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+            => ((IHealthCheckableTransport)this.inner).PingAsync(cancellationToken);
     }
 }
 

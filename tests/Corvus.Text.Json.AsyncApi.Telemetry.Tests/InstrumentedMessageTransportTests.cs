@@ -156,10 +156,12 @@ public class InstrumentedMessageTransportTests
         using ActivityListener listener = CreateActivityListener(activities);
 
         await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = new(inner, "context-test");
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "context-test");
+        Assert.IsTrue(transport is IMessageDeliveryContextTransport, "Create must preserve the wrapped transport's delivery-context capability.");
+        IMessageDeliveryContextTransport contextTransport = (IMessageDeliveryContextTransport)transport;
         bool handlerCalled = false;
 
-        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+        await contextTransport.SubscribeWithDeliveryContextAsync<JsonElement>(
             TestChannel,
             (payload, deliveryContext, ct) =>
             {
@@ -172,6 +174,57 @@ public class InstrumentedMessageTransportTests
 
         Assert.IsTrue(handlerCalled);
         Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void Create_PlainTransport_DoesNotClaimCapabilities()
+    {
+        DisposableTrackingTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "plain");
+
+        Assert.IsFalse(
+            transport is IMessageDeliveryContextTransport,
+            "A wrapper around a transport without delivery context must not claim the capability.");
+        Assert.IsFalse(
+            transport is IHealthCheckableTransport,
+            "A wrapper around a transport without health checks must not claim the capability.");
+    }
+
+    [TestMethod]
+    public async Task Create_ContextAndHealthCapableTransport_PreservesBothCapabilities()
+    {
+        // The in-memory transport implements both optional capabilities, so the wrapper must too.
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+
+        Assert.IsTrue(transport is IMessageDeliveryContextTransport);
+        Assert.IsTrue(transport is IHealthCheckableTransport);
+    }
+
+    [TestMethod]
+    public async Task Create_HealthCheckableTransport_ForwardsHealthCheck()
+    {
+        HealthProbeTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "probed");
+
+        Assert.IsTrue(transport is IHealthCheckableTransport, "Create must preserve the wrapped transport's health-check capability.");
+        IHealthCheckableTransport health = (IHealthCheckableTransport)transport;
+
+        Assert.IsTrue(health.IsConnected);
+        Assert.AreEqual("probe", health.MessagingSystem);
+        Assert.IsTrue(await health.PingAsync());
+        Assert.AreEqual(1, inner.PingCount, "PingAsync must forward to the wrapped transport.");
+    }
+
+    [TestMethod]
+    public async Task Constructor_AlwaysProducesPlainWrapper()
+    {
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "inmemory");
+
+        Assert.IsFalse(
+            transport is IMessageDeliveryContextTransport,
+            "The constructor documents plain-wrapper semantics; capability preservation goes through Create.");
     }
 
     [TestMethod]
@@ -368,6 +421,74 @@ public class InstrumentedMessageTransportTests
         {
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class HealthProbeTransport : IMessageTransport, IHealthCheckableTransport
+    {
+        public int PingCount { get; private set; }
+
+        public bool IsConnected => true;
+
+        public string MessagingSystem => "probe";
+
+        public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+        {
+            this.PingCount++;
+            return ValueTask.FromResult(true);
+        }
+
+        public ValueTask PublishAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            in TPayload payload,
+            in JsonElement headers,
+            CancellationToken cancellationToken)
+            where TPayload : struct, IJsonElement<TPayload>
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> requestChannelUtf8,
+            ReadOnlyMemory<byte> replyChannelUtf8,
+            TRequest request,
+            ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+        {
+            return ValueTask.FromResult<(TReply, JsonElement)>(default);
+        }
+
+        public ValueTask SubscribeAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken)
+            where TPayload : struct, IJsonElement<TPayload>
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask UnsubscribeAsync(
+            ReadOnlyMemory<byte> channelUtf8,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class DisposableTrackingTransport : IMessageTransport
