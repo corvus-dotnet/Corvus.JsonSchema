@@ -53,7 +53,7 @@ public sealed class NatsJetStreamWorkspaceWorkflowStoreConformanceTests : Worksp
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_workspace_workflows"],
+            ["arazzo_workspace_workflows", "arazzo_workspace_workflow_labels"],
             () => NatsJetStreamWorkspaceWorkflowStore.PrepareAsync(connection));
         return await NatsJetStreamWorkspaceWorkflowStore.ConnectAsync(connection, timeProvider);
     }

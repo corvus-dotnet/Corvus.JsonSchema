@@ -41,6 +41,18 @@ internal static class NatsSecurityLabels
     /// <summary>The label bucket for the catalog store's row ids (the <c>{base}{version:D10}</c> sort key).</summary>
     internal const string CatalogLabelBucket = "arazzo_catalog_labels";
 
+    /// <summary>The label bucket for the environment store's row ids (the store's KV keys).</summary>
+    internal const string EnvironmentLabelBucket = "arazzo_environment_labels";
+
+    /// <summary>The label bucket for the source store's row ids (the store's KV keys).</summary>
+    internal const string SourceLabelBucket = "arazzo_source_labels";
+
+    /// <summary>The label bucket for the source-credential store's row ids (the store's KV keys).</summary>
+    internal const string SourceCredentialLabelBucket = "arazzo_source_credential_labels";
+
+    /// <summary>The label bucket for the workspace-workflow store's row ids (the store's KV keys).</summary>
+    internal const string WorkspaceWorkflowLabelBucket = "arazzo_workspace_workflow_labels";
+
     /// <summary>The entry key for a (key, value) label on a row.</summary>
     /// <param name="key">The tag key.</param>
     /// <param name="value">The tag value.</param>

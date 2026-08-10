@@ -53,7 +53,7 @@ public sealed class NatsJetStreamEnvironmentStoreConformanceTests : EnvironmentS
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_environments"],
+            ["arazzo_environments", "arazzo_environment_labels"],
             () => NatsJetStreamEnvironmentStore.PrepareAsync(connection));
         return await NatsJetStreamEnvironmentStore.ConnectAsync(connection, timeProvider);
     }

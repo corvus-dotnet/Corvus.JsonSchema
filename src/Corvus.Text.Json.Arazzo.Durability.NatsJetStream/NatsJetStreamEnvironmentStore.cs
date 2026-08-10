@@ -27,15 +27,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// component yields only the restricted set of characters a NATS KV key permits, and the <c>.</c> separators let the
 /// candidates for a name be enumerated by key prefix, mirroring how the catalog and security-policy stores prefix-scan
 /// the bucket.</para>
-/// <para>Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — applied in
-/// memory over the small candidate set for a name, since a deployment keeps those reach-disjoint. The KV store has no
-/// server-side ordering or filtering, so the filter and the list ordering are done in process — the only correct option
-/// for a key/value backend.</para>
+/// <para>Point management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory
+/// over the small candidate set for a name, since a deployment keeps those reach-disjoint. List/count narrow through
+/// the store's §14.4 label bucket first — the reach resolves to candidate keys by subject-filtered key listings — so
+/// only candidate documents are ever read, and the exact reach then decides each one; a re-tagging update re-points the
+/// label entries around the document write in the §14.4 ordering.</para>
 /// </remarks>
 public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDisposable
 {
     private const string Bucket = "arazzo_environments";
     private const string KeyPrefix = "env.";
+
+    private static readonly byte[] EmptyLabelValue = [];
 
     // The deployment's single tenancy-ledger key (ADR 0065). Deliberately outside KeyPrefix: every environment scan
     // filters on that prefix, so the ledger shares the bucket without ever appearing as a candidate environment.
@@ -43,12 +46,16 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
+    private readonly INatsKVStore labels;
+    private readonly NatsSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private NatsJetStreamEnvironmentStore(NatsConnection? ownedConnection, INatsKVStore store, TimeProvider timeProvider)
+    private NatsJetStreamEnvironmentStore(NatsConnection? ownedConnection, INatsKVStore store, INatsKVStore labels, TimeProvider timeProvider)
     {
         this.ownedConnection = ownedConnection;
         this.store = store;
+        this.labels = labels;
+        this.labelIndex = new NatsSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -62,6 +69,7 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         await using var connection = new NatsConnection(NatsOpts.Default with { Url = url });
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(Bucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.EnvironmentLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Provisions the environments KV bucket over a caller-supplied connection.</summary>
@@ -73,6 +81,7 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(Bucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.EnvironmentLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation, binding to its already-provisioned KV bucket.</summary>
@@ -88,7 +97,8 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore store = await kv.GetStoreAsync(Bucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamEnvironmentStore(connection, store, timeProvider ?? TimeProvider.System);
+            INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.EnvironmentLabelBucket, cancellationToken).ConfigureAwait(false);
+            return new NatsJetStreamEnvironmentStore(connection, store, labels, timeProvider ?? TimeProvider.System);
         }
         catch
         {
@@ -107,7 +117,8 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore store = await kv.GetStoreAsync(Bucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamEnvironmentStore(ownedConnection: null, store, timeProvider ?? TimeProvider.System);
+        INatsKVStore labels = await kv.GetStoreAsync(NatsSecurityLabels.EnvironmentLabelBucket, cancellationToken).ConfigureAwait(false);
+        return new NatsJetStreamEnvironmentStore(ownedConnection: null, store, labels, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>
@@ -117,6 +128,15 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         WorkflowEtag etag = NewEtag();
         byte[] json = EnvironmentSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), etag);
         string key = Key(draft.NameValue, SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue));
+
+        // §14.4 label entries: ADDED before the environment becomes visible, so an interrupted add can only leave
+        // an entry pointing at a row that never landed — which the exact reach evaluation discards — never a
+        // visible row with no entry, which would hide it from a narrowed list.
+        foreach (string entryKey in NatsSecurityLabels.EntryKeysFor(draft.ManagementTagsValue, key))
+        {
+            await this.labels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         try
         {
             // Create is optimistic-create (fails if the key already holds a live value), giving the exact-duplicate
@@ -153,19 +173,47 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
             hasCursor = EnvironmentContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
         }
 
-        // KV listing is unordered and there is no server-side range query, so the stable total order — the contractual
-        // name plus the discriminator as a tie-breaker — is materialised in process from the keys alone (a cheap
-        // keys-only scan). Each key is env.{Enc(name)}.{Enc(discriminator)}, so decoding its two Base64Url parts
-        // recovers the ordering tuple without reading a single document.
-        var ordered = new List<(string Name, string Discriminator, string Key)>();
-        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        // §14.4: narrow to the candidate keys the label bucket admits before reading anything. A null answer means
+        // the index could not narrow and the keys-only scan runs as it always did; an empty one means no environment
+        // qualifies, so the page is empty without a single doc read. The exact reach below still decides every
+        // candidate (the plan is a sound over-approximation), so an imprecise plan costs throughput and can never
+        // widen reach.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
         {
-            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string Name, string Discriminator) parts))
-            {
-                continue;
-            }
+            return EnvironmentPage.Create(PooledDocumentList<Environment>.Empty);
+        }
 
-            ordered.Add((parts.Name, parts.Discriminator, key));
+        // KV listing is unordered and there is no server-side range query, so the stable total order — the contractual
+        // name plus the discriminator as a tie-breaker — is materialised in process from the keys alone (with
+        // candidates in hand, from those keys; otherwise a cheap keys-only scan). Each key is
+        // env.{Enc(name)}.{Enc(discriminator)}, so decoding its two Base64Url parts recovers the ordering tuple
+        // without reading a single document; a stale label entry resolving to a deleted key falls into the
+        // absent-entry skip below.
+        var ordered = new List<(string Name, string Discriminator, string Key)>();
+        if (candidates is null)
+        {
+            await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string Name, string Discriminator) parts))
+                {
+                    continue;
+                }
+
+                ordered.Add((parts.Name, parts.Discriminator, key));
+            }
+        }
+        else
+        {
+            foreach (string key in candidates)
+            {
+                if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string Name, string Discriminator) parts))
+                {
+                    continue;
+                }
+
+                ordered.Add((parts.Name, parts.Discriminator, key));
+            }
         }
 
         ordered.Sort(static (a, b) =>
@@ -249,7 +297,46 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         }
 
         byte[] json = EnvironmentSerialization.SerializeUpdated(existing, name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), NewEtag());
+
+        // The row is addressed by its frozen create-time key (ADR 0067). A draft that supplies management tags
+        // re-tags the row's reach scope (a store-level replace; an omitted set is carried forward), so the §14.4
+        // label entries are re-pointed by the diff around the document write, in the §14.4 ordering — entries for
+        // the NEW tags are added before the doc carries them and the removed ones are dropped only after it stops,
+        // so an interruption can only leave a stale entry (discarded by the exact evaluation), never a hidden row.
+        HashSet<string>? previousKeys = null;
+        HashSet<string>? desiredKeys = null;
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            SecurityTagSet previousTags;
+            using (ParsedJsonDocument<Environment> current = PersistedJson.ToPooledDocument<Environment>(existing))
+            {
+                previousTags = SecurityTagSet.CopyFrom(current.RootElement.ManagementTags);
+            }
+
+            previousKeys = NatsSecurityLabels.EntryKeysFor(previousTags, key!);
+            desiredKeys = NatsSecurityLabels.EntryKeysFor(draft.ManagementTagsValue, key!);
+            foreach (string entryKey in desiredKeys)
+            {
+                if (!previousKeys.Contains(entryKey))
+                {
+                    await this.labels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         await this.store.PutAsync(key!, json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        if (previousKeys is not null && desiredKeys is not null)
+        {
+            foreach (string entryKey in previousKeys)
+            {
+                if (!desiredKeys.Contains(entryKey))
+                {
+                    await this.PurgeLabelAsync(entryKey, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         return PersistedJson.ToPooledDocument<Environment>(json);
     }
 
@@ -269,7 +356,21 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
             EnvironmentSerialization.EnsureEtag(name, expectedEtag, EnvironmentSerialization.EtagOf(existing));
         }
 
+        // The label entries derive from the CURRENT doc tags (a re-tag re-pointed them in step), read before the row
+        // goes, and dropped only after it — the §14.4 ordering: an interrupted delete leaves a stale entry, harmless
+        // when nothing loads behind it, whereas dropping entries first would strand a still-visible row.
+        HashSet<string> entryKeys;
+        using (ParsedJsonDocument<Environment> current = PersistedJson.ToPooledDocument<Environment>(existing))
+        {
+            entryKeys = NatsSecurityLabels.EntryKeysFor(SecurityTagSet.CopyFrom(current.RootElement.ManagementTags), key!);
+        }
+
         await this.store.DeleteAsync(key!, cancellationToken: cancellationToken).ConfigureAwait(false);
+        foreach (string entryKey in entryKeys)
+        {
+            await this.PurgeLabelAsync(entryKey, cancellationToken).ConfigureAwait(false);
+        }
+
         return true;
     }
 
@@ -427,6 +528,29 @@ public sealed class NatsJetStreamEnvironmentStore : IEnvironmentStore, IAsyncDis
         catch (NatsKVKeyDeletedException)
         {
             return null;
+        }
+    }
+
+    // Resolves the reach to the candidate KV keys the label bucket admits (§14.4). Null means "the index could not
+    // narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what the
+    // principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    private async ValueTask PurgeLabelAsync(string entryKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.labels.PurgeAsync(entryKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+        }
+        catch (NatsKVKeyDeletedException)
+        {
         }
     }
 }

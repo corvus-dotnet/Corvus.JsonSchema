@@ -53,7 +53,7 @@ public sealed class NatsJetStreamSourceStoreConformanceTests : SourceStoreConfor
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_sources"],
+            ["arazzo_sources", "arazzo_source_labels"],
             () => NatsJetStreamSourceStore.PrepareAsync(connection));
         return await NatsJetStreamSourceStore.ConnectAsync(connection, timeProvider);
     }

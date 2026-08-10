@@ -52,7 +52,7 @@ public sealed class NatsJetStreamSourceCredentialStoreConformanceTests : SourceC
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_source_credentials"],
+            ["arazzo_source_credentials", "arazzo_source_credential_labels"],
             () => NatsJetStreamSourceCredentialStore.PrepareAsync(connection));
         return await NatsJetStreamSourceCredentialStore.ConnectAsync(connection, timeProvider);
     }
