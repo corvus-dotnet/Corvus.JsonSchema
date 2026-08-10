@@ -109,24 +109,38 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         try
         {
-            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
-            {
-                await contextHandler(parsedPayload, new MessageDeliveryContext
-                {
-                    ChannelUtf8 = channelUtf8,
-                    Headers = parsedHeaders,
-                }, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                    parsedPayload, parsedHeaders, cancellationToken).ConfigureAwait(false);
-            }
+            await InvokeSubscriberAsync(handler, parsedPayload, channelUtf8, parsedHeaders, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             headersDoc?.Dispose();
         }
+    }
+
+    // The single context-vs-legacy dispatch: every delivery path routes through here so the
+    // shape of the MessageDeliveryContext a subscriber sees cannot vary by delivery path.
+    private static ValueTask InvokeSubscriberAsync<TPayload>(
+        Delegate handler,
+        TPayload payload,
+        ReadOnlyMemory<byte> channelUtf8,
+        JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
+        {
+            return contextHandler(
+                payload,
+                new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                },
+                cancellationToken);
+        }
+
+        return ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+            payload, headers, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -360,19 +374,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         try
         {
-            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
-            {
-                await contextHandler(payload, new MessageDeliveryContext
-                {
-                    ChannelUtf8 = Encoding.UTF8.GetBytes(channel),
-                    Headers = headers,
-                }, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                    payload, headers, cancellationToken).ConfigureAwait(false);
-            }
+            await InvokeSubscriberAsync(handler, payload, Encoding.UTF8.GetBytes(channel), headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -470,19 +472,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         try
         {
-            if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
-            {
-                await contextHandler(payload, new MessageDeliveryContext
-                {
-                    ChannelUtf8 = Encoding.UTF8.GetBytes(channel),
-                    Headers = headers,
-                }, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                    payload, headers, cancellationToken).ConfigureAwait(false);
-            }
+            await InvokeSubscriberAsync(handler, payload, Encoding.UTF8.GetBytes(channel), headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
