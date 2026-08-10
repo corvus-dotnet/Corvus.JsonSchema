@@ -1344,6 +1344,73 @@ public class WebSocketTransportTests
         await subscriber.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task ContextSubscribeDisplacesResponder()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/responder-then-context"u8.ToArray();
+        int contextCount = 0;
+
+        await s_subscriber.SubscribeReplyAsync<JsonElement, JsonElement>(
+            channel,
+            (request, headers, ct) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        await Task.Delay(200);
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"to-context"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, contextCount, "The delivery-context subscription should displace the responder.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task SameKindResubscribeDoesNotDoubleRegisterAtRelay()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/same-kind-resubscribe"u8.ToArray();
+        int count = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(200);
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref count);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        Assert.AreEqual(
+            1,
+            WebSocketFixture.SubscribeEnvelopeCount("ws/test/same-kind-resubscribe"),
+            "Resubscribing the same kind must not re-register the connection at the relay.");
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"once"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, count, "The replacement handler should receive the message exactly once.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
