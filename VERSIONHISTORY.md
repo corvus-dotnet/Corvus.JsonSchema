@@ -1,8 +1,8 @@
 # Version History
 
-## V5.4.0
+## V5.3.3
 
-V5.4.0 adds an opt-in delivery-context surface to the AsyncAPI transports and generators, so a consumer can receive transport delivery metadata alongside its payload without an allocating adapter on the delivery path. This capability is a community contribution from Levy Barbosa, hardened in review before merging.
+V5.3.3 adds an opt-in delivery-context surface to the AsyncAPI transports and generators, so a consumer can receive transport delivery metadata alongside its payload without an allocating adapter on the delivery path. The addition is purely additive: no shipped interface changes, and regenerated legacy output is unchanged. This capability is a community contribution from Levy Barbosa, hardened in review before merging.
 
 ### New features
 
