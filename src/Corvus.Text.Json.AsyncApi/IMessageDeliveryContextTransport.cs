@@ -17,6 +17,11 @@ namespace Corvus.Text.Json.AsyncApi;
 public interface IMessageDeliveryContextTransport : IMessageTransport
 {
     /// <summary>Subscribes while exposing transport delivery metadata.</summary>
+    /// <remarks>
+    /// The <see cref="MessageDeliveryContext"/> passed to <paramref name="handler"/> is valid
+    /// only for the duration of that invocation; transports may recycle the buffers it
+    /// references once the handler returns.
+    /// </remarks>
     ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,

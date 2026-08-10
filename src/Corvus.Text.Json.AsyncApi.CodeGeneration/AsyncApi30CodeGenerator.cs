@@ -2283,7 +2283,7 @@ public sealed class AsyncApi30CodeGenerator
                     w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
                 }
 
-                w.WriteLine($"/// <param name=\"context\">The transport delivery context.</param>");
+                w.WriteLine($"/// <param name=\"context\">The transport delivery context. Valid only for the duration of this invocation; copy anything you need to keep before returning.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
                 w.WriteLine(msg.HeadersTypeName is not null
                     ? $"{returnType} {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, MessageDeliveryContext context, CancellationToken cancellationToken = default);"
@@ -2313,7 +2313,7 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// <param name=\"message\">The received message.</param>");
             if (withDeliveryContext)
             {
-                w.WriteLine($"/// <param name=\"context\">The transport delivery context.</param>");
+                w.WriteLine($"/// <param name=\"context\">The transport delivery context. Valid only for the duration of this invocation; copy anything you need to keep before returning.</param>");
             }
 
             w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
