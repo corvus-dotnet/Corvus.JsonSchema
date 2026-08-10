@@ -162,6 +162,11 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   listing resolved through the shared point-lookup resolver. Every backend's run and catalog stores now narrow,
   and so does the observed-identity typeahead (§16.5.4) on every backend — the SQL family, Cosmos and Mongo
   push its reach into the query; Azure Storage, Redis and NATS narrow it through the same label indexes.
+  The management stores (environments, sources, source credentials, workspace workflows) follow the same split
+  (ADR 0067): the SQL family, Cosmos and Mongo push their §14.2 reach down over queryable tag mirrors, and Redis
+  narrows its four management stores through per-store label sets maintained inside each store's atomic
+  add/update/delete scripts — a re-tagging update re-points the entries in the same script as the document
+  write. The management stores on NATS and Azure Storage are the remaining conversions.
   InMemory streams and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +

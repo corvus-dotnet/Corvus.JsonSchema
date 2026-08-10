@@ -41,6 +41,18 @@ internal static class RedisSecurityLabels
     /// <summary>The label-set key prefix for the observed-identity store's row ids (the <c>{value}\0{kind}</c> sort key).</summary>
     internal const string ObservedIdentityLabelPrefix = "arazzo:obid:label:";
 
+    /// <summary>The label-set key prefix for the environment store's identity tuples (the all-index members).</summary>
+    internal const string EnvironmentLabelPrefix = "arazzo:env:label:";
+
+    /// <summary>The label-set key prefix for the source store's identity tuples (the all-index members).</summary>
+    internal const string SourceLabelPrefix = "arazzo:source:label:";
+
+    /// <summary>The label-set key prefix for the source-credential store's identity tuples (the all-index members).</summary>
+    internal const string SourceCredentialLabelPrefix = "arazzo:scred:label:";
+
+    /// <summary>The label-set key prefix for the workspace-workflow store's working-copy ids.</summary>
+    internal const string WorkspaceWorkflowLabelPrefix = "arazzo:wc:label:";
+
     // Interprets the compiled plan program over a stack of Lua tables, entirely server-side. ARGV is the
     // postfix token stream: 'S' <set key> pushes a label set's members; 'U' <n> / 'I' <n> pop n sets and push
     // their union / intersection. Read-only — no temp keys to clean up, safe on a replica — and the whole
@@ -93,7 +105,7 @@ internal static class RedisSecurityLabels
     /// null: no row qualifies, and the caller should answer without reading anything.
     /// </summary>
     /// <param name="database">The Redis database.</param>
-    /// <param name="labelPrefix">The store's label-set key prefix (<see cref="RunLabelPrefix"/> or <see cref="CatalogLabelPrefix"/>).</param>
+    /// <param name="labelPrefix">The store's label-set key prefix (one of the <c>*LabelPrefix</c> constants).</param>
     /// <param name="security">The reach filter, or <see langword="null"/> for an unrestricted query.</param>
     /// <returns>The candidate ids (a superset of the rows the rule admits), the empty set, or <see langword="null"/> for no narrowing.</returns>
     internal static async ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(IDatabase database, string labelPrefix, SecurityFilter? security)

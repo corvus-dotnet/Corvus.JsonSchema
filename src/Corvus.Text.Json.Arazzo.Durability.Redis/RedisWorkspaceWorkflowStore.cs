@@ -17,10 +17,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// optimistic concurrency is a read-compare-write.
 /// </summary>
 /// <remarks>
-/// <para>Redis has no server-side filtering, so management reads/writes are reach-filtered by the caller's
-/// <see cref="AccessContext"/> (§14.2) — applied in memory over the single value for an id (a working copy outside reach
-/// is reported as absent, non-disclosing), and per member in keyset order for the list, enumerated through a global
-/// index set the way the other Redis stores maintain theirs.</para>
+/// <para>Point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory over the
+/// single value for an id (a working copy outside reach is reported as absent, non-disclosing). List/count narrow
+/// through the store's §14.4 security-label sets first — resolved server-side in one read-only Lua evaluation — so only
+/// candidate rows are ever read, and the exact reach then decides each one; the tags are immutable on save, so the
+/// entries never need an update-side re-point.</para>
 /// <para>Targets a single Redis instance (or a primary): an add touches the per-copy key and one index set, which is not
 /// Redis-Cluster slot-safe. The document is carried bytes-to-bytes (#803): values bind from the raw document bytes and
 /// round-trip via <see cref="ParsedJsonDocument{T}"/> and the shared pooled serialization, never a per-op detached
@@ -37,20 +38,24 @@ public sealed class RedisWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
     // the documents until the page needs them.
     private const string AllIndexKey = Prefix + "all";
 
-    // Write the working copy's document and add its id to the index set, atomically. KEYS: bind key, all index.
-    // ARGV: document bytes, id (the all-index member). The id is minted fresh per add, so it never collides.
+    // Write the working copy's document, add its id to the index set and its §14.4 label-set entries, atomically.
+    // KEYS: bind key, all index. ARGV: document bytes, id (the all-index member and the label-set member), then the
+    // label-set keys. The id is minted fresh per add, so it never collides.
     private const string AddScript =
         """
         redis.call('SET', KEYS[1], ARGV[1])
         redis.call('SADD', KEYS[2], ARGV[2])
+        for i = 3, #ARGV do redis.call('SADD', ARGV[i], ARGV[2]) end
         return 1
         """;
 
-    // Remove the working copy and prune its id from the index set, atomically. KEYS: bind key, all index. ARGV: id.
+    // Remove the working copy and prune its id from the index set and its §14.4 label-set entries, atomically.
+    // KEYS: bind key, all index. ARGV: id, then the label-set keys.
     private const string DeleteScript =
         """
         redis.call('DEL', KEYS[1])
         redis.call('SREM', KEYS[2], ARGV[1])
+        for i = 2, #ARGV do redis.call('SREM', ARGV[i], ARGV[1]) end
         return 1
         """;
 
@@ -119,10 +124,12 @@ public sealed class RedisWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
             BindKey(id),
             AllIndexKey,
         ];
+        HashSet<string> labelSetKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.WorkspaceWorkflowLabelPrefix, draft.ManagementTagsValue);
         RedisValue[] argv =
         [
             json,
             id,
+            .. labelSetKeys.Select(static k => (RedisValue)k),
         ];
 
         await this.database.ScriptEvaluateAsync(AddScript, keys, argv).ConfigureAwait(false);
@@ -153,11 +160,25 @@ public sealed class RedisWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
             hasCursor = WorkspaceWorkflowContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
         }
 
-        // Redis has no server-side ordering for a SET, so the keyset scan runs over the all-index members in memory: the
-        // members are the small ids (no documents), so sort them into the stable total order (id — globally unique, so
-        // the id is the whole order and the tie-breaker is empty), seek past the cursor, then fetch each candidate's
-        // document lazily — only up to what the page needs, never the whole table.
-        RedisValue[] rawMembers = await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false);
+        // §14.4: narrow to the candidate ids the label sets admit before reading anything. A null answer means the
+        // index could not narrow and the all-index sweep runs as it always did; an empty one means no working copy
+        // qualifies, so the page is empty without a single doc read. With candidates in hand the all index is not even
+        // consulted — a candidate id IS the row id — and a stale entry resolving to a deleted row falls into the
+        // existing null-value skip. The exact reach below still decides every candidate (the plan is a sound
+        // over-approximation), so an imprecise plan costs throughput and can never widen reach.
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.WorkspaceWorkflowLabelPrefix, context.Reach(AccessVerb.Read)).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return WorkspaceWorkflowPage.Create(PooledDocumentList<WorkspaceWorkflow>.Empty);
+        }
+
+        // Redis has no server-side ordering for a SET, so the keyset scan runs over the candidate ids in memory (no
+        // documents): sort them into the stable total order (id — globally unique, so the id is the whole order and the
+        // tie-breaker is empty), seek past the cursor, then fetch each candidate's document lazily — only up to what
+        // the page needs, never the whole table.
+        RedisValue[] rawMembers = candidates is null
+            ? await this.database.SetMembersAsync(AllIndexKey).ConfigureAwait(false)
+            : [.. candidates.Select(static s => (RedisValue)s)];
         var ids = new string[rawMembers.Length];
         for (int i = 0; i < rawMembers.Length; i++)
         {
@@ -277,9 +298,19 @@ public sealed class RedisWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IAsyn
             BindKey(id),
             AllIndexKey,
         ];
+
+        // The label entries derive from the doc tags (immutable on save), so the teardown removes exactly the entries
+        // the row occupies.
+        HashSet<string> labelSetKeys;
+        using (ParsedJsonDocument<WorkspaceWorkflow> current = PersistedJson.ToPooledDocument<WorkspaceWorkflow>(existing))
+        {
+            labelSetKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.WorkspaceWorkflowLabelPrefix, SecurityTagSet.CopyFrom(current.RootElement.ManagementTags));
+        }
+
         RedisValue[] argv =
         [
             id,
+            .. labelSetKeys.Select(static k => (RedisValue)k),
         ];
 
         await this.database.ScriptEvaluateAsync(DeleteScript, keys, argv).ConfigureAwait(false);
