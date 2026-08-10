@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 internal static class WebSocketFixture
 {
     private static WebApplication? s_app;
-    private static readonly ConcurrentDictionary<string, ConcurrentBag<WS>> Subscriptions = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<WS, byte>> Subscriptions = new(StringComparer.Ordinal);
     private static readonly ConcurrentBag<WS> Connections = [];
 
     /// <summary>
@@ -144,22 +144,26 @@ internal static class WebSocketFixture
             string? type = typeProp.GetString();
             if (type == "subscribe")
             {
-                ConcurrentBag<WS> bag = Subscriptions.GetOrAdd(channel, _ => []);
-                bag.Add(sender);
+                ConcurrentDictionary<WS, byte> subs = Subscriptions.GetOrAdd(channel, _ => new());
+                subs.TryAdd(sender, 0);
                 return;
             }
 
             if (type == "unsubscribe")
             {
-                // Can't remove from ConcurrentBag easily; in practice this is fine for tests
+                if (Subscriptions.TryGetValue(channel, out ConcurrentDictionary<WS, byte>? subs))
+                {
+                    subs.TryRemove(sender, out _);
+                }
+
                 return;
             }
         }
 
         // It's a data envelope — relay to all subscribers of this channel
-        if (Subscriptions.TryGetValue(channel, out ConcurrentBag<WS>? subscribers))
+        if (Subscriptions.TryGetValue(channel, out ConcurrentDictionary<WS, byte>? subscribers))
         {
-            foreach (WS sub in subscribers)
+            foreach (WS sub in subscribers.Keys)
             {
                 if (sub != sender && sub.State == WebSocketState.Open)
                 {

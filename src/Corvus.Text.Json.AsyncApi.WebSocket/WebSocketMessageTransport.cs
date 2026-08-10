@@ -102,8 +102,17 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        // A channel has one subscription: displace any legacy handler. When one existed the
+        // relay already routes this channel here, so re-sending subscribe would double-register.
+        bool displaced = this.handlers.TryRemove(channel, out _);
         this.contextHandlers[channel] = (payload, headers, ct) => this.DispatchToContextHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
         this.options.Heartbeat?.Start(channel, "websocket");
+        if (displaced)
+        {
+            return ValueTask.CompletedTask;
+        }
+
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
         return SendAndReturnAsync(rented, length, cancellationToken);
     }
@@ -139,9 +148,18 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        // A channel has one subscription: displace any delivery-context handler. When one
+        // existed the relay already routes this channel here, so re-sending subscribe would
+        // double-register.
+        bool displaced = this.contextHandlers.TryRemove(channel, out _);
         this.handlers[channel] = (payload, headers, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
 
         this.options.Heartbeat?.Start(channel, "websocket");
+        if (displaced)
+        {
+            return ValueTask.CompletedTask;
+        }
 
         // Send a subscribe envelope to the server
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
@@ -173,6 +191,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         this.handlers.TryRemove(channel, out _);
+        this.contextHandlers.TryRemove(channel, out _);
         this.replyHandlers.TryRemove(channel, out _);
 
         this.options.Heartbeat?.Stop(channel, "websocket");
@@ -211,6 +230,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
 
         this.disposed = true;
         this.handlers.Clear();
+        this.contextHandlers.Clear();
         this.replyHandlers.Clear();
         this.pendingReplies.Clear();
 

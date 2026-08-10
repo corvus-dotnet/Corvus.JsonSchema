@@ -1116,6 +1116,157 @@ public class WebSocketTransportTests
         rawWs.Dispose();
     }
 
+    [TestMethod]
+    public async Task UnsubscribeStopsDeliveryForContextSubscription()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-unsubscribe"u8.ToArray();
+        int receiveCount = 0;
+
+        MessageContext messageContext = default;
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref receiveCount);
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"before"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount);
+
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount, "Context-subscription messages should not be delivered after unsubscribe.");
+    }
+
+    [TestMethod]
+    public async Task LegacySubscribeAfterContextUnsubscribeReceivesMessages()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-then-legacy"u8.ToArray();
+        int contextCount = 0;
+        int legacyCount = 0;
+
+        MessageContext messageContext = default;
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref legacyCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"to-legacy"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(0, contextCount, "The unsubscribed context handler should not receive messages.");
+        Assert.AreEqual(1, legacyCount, "The new legacy subscription should receive messages.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ContextSubscribeDisplacesLegacySubscription()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/legacy-then-context"u8.ToArray();
+        int contextCount = 0;
+        int legacyCount = 0;
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref legacyCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MessageContext messageContext = default;
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"displaced"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, contextCount, "The context subscription should displace the legacy one.");
+        Assert.AreEqual(0, legacyCount, "The displaced legacy handler should not receive messages.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LegacySubscribeDisplacesContextSubscription()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-then-legacy-displaces"u8.ToArray();
+        int contextCount = 0;
+        int legacyCount = 0;
+
+        MessageContext messageContext = default;
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref legacyCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"displaced"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, legacyCount, "The legacy subscription should displace the context one.");
+        Assert.AreEqual(0, contextCount, "The displaced context handler should not receive messages.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
