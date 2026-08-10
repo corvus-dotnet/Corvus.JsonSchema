@@ -113,6 +113,20 @@ public static class AsyncApiTelemetry
             "Dead-letter operations that failed (message dropped)");
 
     /// <summary>
+    /// Gets the counter for subscription teardowns that reported a failure.
+    /// </summary>
+    /// <remarks>
+    /// Teardown deliberately continues past a failure so that stopping one subscription can
+    /// never abort a dispose that is walking every subscription. The failure is recorded here
+    /// instead of being thrown, so a broker that refuses a cancel or close stays visible.
+    /// </remarks>
+    public static Counter<long> SubscriptionTeardownFailures { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.subscription_teardown_failures",
+            "{subscription}",
+            "Subscription teardowns that reported a failure");
+
+    /// <summary>
     /// Gets the counter for messages that failed schema validation.
     /// </summary>
     public static Counter<long> ValidationFailures { get; } =
@@ -233,6 +247,28 @@ public static class AsyncApiTelemetry
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", destination },
                 { "corvus.asyncapi.original_channel", originalChannel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that tearing a subscription down reported a failure that was deliberately
+    /// not propagated, so that stopping one subscription cannot abort the disposal of others.
+    /// </summary>
+    /// <param name="channel">The channel whose subscription was being torn down.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The failure that teardown continued past.</param>
+    public static void RecordSubscriptionTeardownFailure(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        SubscriptionTeardownFailures.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
                 { "error.type", exception.GetType().FullName },
             });
     }

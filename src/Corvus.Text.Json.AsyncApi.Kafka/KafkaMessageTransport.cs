@@ -48,8 +48,6 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
-    // Serializes subscribe/unsubscribe so displacement can never orphan a running consumer.
-    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private bool disposed;
 
@@ -173,27 +171,34 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+        Task consumeTask = Task.Run(
+            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token),
+            CancellationToken.None);
+        SubscriptionState state = new(consumer, cts, consumeTask);
+
+        // TryAdd is the authoritative claim on the channel's single subscription slot; the
+        // check above only makes the common rejection cheap. Losing the race means another
+        // subscribe won, so tear this one down rather than leaving it consuming unregistered.
+        if (!this.subscriptions.TryAdd(channel, state))
         {
-            // A channel has one subscription: storing this one displaces whatever was there
-            // and tears the displaced consumer down so it cannot keep consuming.
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
-            {
-                await TearDownSubscriptionAsync(displaced).ConfigureAwait(false);
-            }
-
-            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
-            Task consumeTask = Task.Run(
-                () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token),
-                CancellationToken.None);
-            this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            ThrowAlreadySubscribed(channel);
         }
-        finally
+    }
+
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
         {
-            this.subscriptionSemaphore.Release();
+            ThrowAlreadySubscribed(channel);
         }
     }
 
@@ -208,28 +213,20 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+
+        Task consumeTask = Task.Run(
+            () => this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token),
+            CancellationToken.None);
+
+        SubscriptionState state = new(consumer, cts, consumeTask);
+        if (!this.subscriptions.TryAdd(channel, state))
         {
-            // A channel has one subscription: a responder displaces a data subscription too.
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
-            {
-                await TearDownSubscriptionAsync(displaced).ConfigureAwait(false);
-            }
-
-            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
-
-            Task consumeTask = Task.Run(
-                () => this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token),
-                CancellationToken.None);
-
-            this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
-        }
-        finally
-        {
-            this.subscriptionSemaphore.Release();
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            ThrowAlreadySubscribed(channel);
         }
     }
 
@@ -238,21 +235,15 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
+        if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
-            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
-            {
-                await TearDownSubscriptionAsync(state).ConfigureAwait(false);
-            }
-        }
-        finally
-        {
-            this.subscriptionSemaphore.Release();
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
         }
     }
 
-    private static async ValueTask TearDownSubscriptionAsync(SubscriptionState state)
+    private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
     {
         await state.CancellationSource.CancelAsync().ConfigureAwait(false);
 
@@ -262,10 +253,26 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         }
         catch (OperationCanceledException)
         {
-            // Expected on cancellation
+            // Expected on cancellation.
+        }
+        catch (Exception ex)
+        {
+            // The loop already reported this through the error policy. Teardown's job is to
+            // stop the subscription, so a stale fault is recorded rather than rethrown: it
+            // must not prevent the rest of this teardown, nor abort a dispose that is
+            // walking every subscription.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
         }
 
-        state.Consumer.Close();
+        try
+        {
+            state.Consumer.Close();
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
+        }
+
         state.Consumer.Dispose();
         state.CancellationSource.Dispose();
     }
@@ -296,10 +303,14 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
         this.disposed = true;
 
-        // Stop all subscriptions
-        foreach ((string channel, SubscriptionState state) in this.subscriptions)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its TryAdd (and cleans itself up) or is torn down by this loop.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            await TearDownSubscriptionAsync(state).ConfigureAwait(false);
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
         }
 
         this.subscriptions.Clear();
@@ -939,7 +950,14 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             CancellationToken.None);
 
         SubscriptionState state = new(consumer, cts, consumeTask);
-        this.subscriptions[replyChannel] = state;
+
+        // Concurrent requests race to establish the shared reply-channel consumer. Unlike an
+        // application subscribe this is not a caller error: whoever loses discards its consumer
+        // and uses the winner's, rather than overwriting it and leaking a consumer nothing can stop.
+        if (!this.subscriptions.TryAdd(replyChannel, state))
+        {
+            _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
+        }
     }
 
     private async Task ReplyConsumeLoop(IConsumer<Null, byte[]> consumer, CancellationToken cancellationToken)
