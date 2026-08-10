@@ -114,7 +114,8 @@ public static class ControlPlaneEndpointExtensions
         string? ownerGroupClaimType = "tenant",
         Capacity.ControlPlaneCapacityOptions? capacityOptions = null,
         ReadOnlyMemory<byte> checkpointSecret = default,
-        WorkflowCheckpointCoordinator? checkpoints = null)
+        WorkflowCheckpointCoordinator? checkpoints = null,
+        Schedules.IScheduleRegistry? scheduleRegistry = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -333,7 +334,7 @@ public static class ControlPlaneEndpointExtensions
         // broker lists an empty registry and refuses the auth operations.
         var providersHandler = new ArazzoControlPlaneProvidersHandler(providerBroker, access, httpContextAccessor, accessRequestSubjectClaimType);
 
-        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, auditLogger: auditLogger);
+        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditLogger: auditLogger);
 
         endpoints.MapApiEndpoints(
             securityHandler,

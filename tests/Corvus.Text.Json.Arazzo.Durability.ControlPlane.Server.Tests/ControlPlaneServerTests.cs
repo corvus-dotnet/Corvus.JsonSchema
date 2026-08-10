@@ -804,7 +804,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -835,6 +835,57 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task A_registration_rolled_back_by_an_occupied_address_does_not_shadow_the_id()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, runnerId: "r2", environment: "production", servesSchedules: true), default);
+
+        // Plant a NON-schedule run at the derived scheduler-run address for 'nightly': the create's registration
+        // succeeds, but the named start refuses the unrelated occupant, and the handler must roll the registration
+        // back before answering 409.
+        WorkflowRunId derived = TestDerivation.ScheduleAddress("nightly");
+        using ParsedJsonDocument<JsonElement> occupantInputs = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+        using (WorkflowRun occupant = WorkflowRun.CreateNew(runStore, derived.Value, "flow-v1", occupantInputs.RootElement, "development", clock))
+        {
+            await occupant.EnqueueAsync(default);
+        }
+
+        const string createDev = """{"scheduleId":"nightly","environment":"development","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        HttpResponseMessage refused = await client.PostAsync("/schedules", new StringContent(createDev, Encoding.UTF8, "application/json"));
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await refused.Content.ReadAsStringAsync()).ShouldContain("schedule-collision");
+
+        // Remove the occupant. The id must now be creatable, including from ANOTHER environment: a stale
+        // registration row left behind by the refused create would shadow the id and refuse this with a conflict.
+        await runStore.DeleteAsync(derived, default);
+
+        const string createProd = """{"scheduleId":"nightly","environment":"production","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        (await client.PostAsync("/schedules", new StringContent(createProd, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await client.GetAsync("/schedules/nightly")))
+        {
+            doc.RootElement.GetProperty("environment").GetString().ShouldBe("production");
+        }
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
     public async Task Schedules_can_be_created_listed_read_run_now_and_deleted()
     {
         var clock = new MutableClock(T0);
@@ -849,7 +900,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -919,7 +970,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 
@@ -954,7 +1005,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 

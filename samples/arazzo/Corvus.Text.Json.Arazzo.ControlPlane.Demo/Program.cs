@@ -942,7 +942,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // serverless runner dispatches functions at its own surface and is the process that mints their tokens. Absent
     // rather than open is the ADR 0016 posture — a surface mapped without a secret would admit any caller this host
     // authenticates to every run in the deployment, and everyone at all in Open.
-    checkpoints: checkpointCoordinator);
+    checkpoints: checkpointCoordinator,
+    scheduleRegistry: DemoData.ScheduleRegistry);
 
 // The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
 // credential to execute. It shares this host's stores because the demo is one process; the point of the split is that

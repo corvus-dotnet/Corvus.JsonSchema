@@ -7,6 +7,7 @@ using Corvus.Text.Json;
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Schedules;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
@@ -28,6 +29,14 @@ public static class DemoData
     /// instances; the demo's fixed literal keeps its seeded schedules addressable across restarts.
     /// </summary>
     public static WorkflowRunDerivation RunDerivation { get; } = new("demo-run-derivation-key-32-bytes!"u8.ToArray());
+
+    /// <summary>
+    /// The demo deployment's schedule registry: the host's schedules surface and the seeded schedule register and
+    /// resolve through the same instance. In-memory, so it re-seeds on each start; the seeding registers before it
+    /// creates the run, so a restart against a durable run store re-registers the existing schedule and it stays
+    /// addressable.
+    /// </summary>
+    public static InMemoryScheduleRegistry ScheduleRegistry { get; } = new();
 
     private static readonly CatalogOwner OnboardingOwner = new("Onboarding Team", "onboarding@example.com", "Identity", "https://runbooks.example.com/onboard");
     private static readonly CatalogOwner ReconcileOwner = new("Reconciliation Team", "reconcile@example.com", "Platform", "https://runbooks.example.com/nightly-reconcile");
@@ -228,7 +237,9 @@ public static class DemoData
             // The run id is derived from the scheduleId exactly as the /schedules API derives it (#896) — under the
             // demo's run-derivation key — so the seeded schedule is addressable (get / delete / run-now on
             // 'nightly-reconcile-cron') like any API-created one.
-            string runId = RunDerivation.ScheduleAddress(scheduleId).Value;
+            WorkflowRunId derivedRunId = RunDerivation.ScheduleAddress(scheduleId);
+            await ScheduleRegistry.RegisterAsync(scheduleId, new ScheduleRegistration("development", derivedRunId), default).ConfigureAwait(false);
+            string runId = derivedRunId.Value;
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
             await run.EnqueueAsync(default).ConfigureAwait(false);
             log?.Invoke("Seeded durable schedule 'nightly-reconcile-cron' -> nightly-reconcile-v2, cron '* * * * *' (every minute, a deliberately fast demo cadence so it visibly fires; the target workflow is the nightly job) as a Pending $schedule run; the app runner fires it through the governed run endpoint.");

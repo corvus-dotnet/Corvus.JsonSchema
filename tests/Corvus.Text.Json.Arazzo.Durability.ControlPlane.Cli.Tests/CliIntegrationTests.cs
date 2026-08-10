@@ -229,17 +229,18 @@ public sealed partial class CliIntegrationTests
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
         var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var scheduleRegistry = new Schedules.InMemoryScheduleRegistry();
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         app.Urls.Add("http://127.0.0.1:0");
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open, scheduleRegistry: scheduleRegistry);
         await app.StartAsync();
 
         string url = app.Urls.First();
-        return new Host(app, store, clock, url);
+        return new Host(app, store, clock, url, scheduleRegistry);
 
         static async ValueTask<WorkflowRunResultKind> CompleteResumer(WorkflowRun run, CancellationToken ct)
         {
@@ -248,7 +249,7 @@ public sealed partial class CliIntegrationTests
         }
     }
 
-    private sealed record Host(WebApplication App, InMemoryWorkflowStateStore Store, TimeProvider Clock, string Url) : IAsyncDisposable
+    private sealed record Host(WebApplication App, InMemoryWorkflowStateStore Store, TimeProvider Clock, string Url, Schedules.InMemoryScheduleRegistry? ScheduleRegistry = null) : IAsyncDisposable
     {
         public async ValueTask DisposeAsync() => await this.App.DisposeAsync();
     }

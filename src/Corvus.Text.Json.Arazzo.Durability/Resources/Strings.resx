@@ -536,6 +536,9 @@
   <data name="StartNamedNotSupported" xml:space="preserve">
     <value>This management implementation does not support named starts.</value>
   </data>
+  <data name="ScheduleRegistrationConflict" xml:space="preserve">
+    <value>Schedule id '{0}' is already registered to a different schedule; schedule ids are globally unique across the deployment.</value>
+  </data>
   <data name="EnvironmentNameOutsideGrammar" xml:space="preserve">
     <value>Environment name '{0}' is outside the environment-name grammar: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen. The name is half of every run's composite (environment, runId) store key (ADR 0065 §9).</value>
   </data>

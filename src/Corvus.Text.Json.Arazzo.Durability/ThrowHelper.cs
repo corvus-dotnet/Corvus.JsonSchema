@@ -260,6 +260,9 @@ internal static class ThrowHelper
     public static ArgumentException GetEnvironmentNameOutsideGrammarException(string name, string paramName)
         => new(SR.Format(SR.EnvironmentNameOutsideGrammar, name), paramName);
 
+    public static Schedules.ScheduleRegistrationConflictException GetScheduleRegistrationConflictException(string scheduleId)
+        => new(SR.Format(SR.ScheduleRegistrationConflict, scheduleId));
+
     // ── Management / wrapped-store capability ───────────────────────────────────────────────────────────────────────
     public static NotSupportedException GetLoadRunStateNotSupportedException()
         => new(SR.LoadRunStateNotSupported);

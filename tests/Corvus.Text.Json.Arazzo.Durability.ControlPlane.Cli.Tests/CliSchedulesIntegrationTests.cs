@@ -21,7 +21,7 @@ public sealed partial class CliIntegrationTests
     public async Task Schedules_are_listed_read_and_deleted_over_http()
     {
         await using Host host = await StartAsync();
-        await SeedScheduleAsync(host.Store, host.Clock, "nightly", "0 9 * * *", "flow-v1");
+        await SeedScheduleAsync(host, "nightly", "0 9 * * *", "flow-v1");
 
         // list (json) shows the seeded schedule and its versioned target.
         (int listExit, string listOut, _) = await RunAsync(host, "schedules", "list", "--output", "json");
@@ -62,15 +62,17 @@ public sealed partial class CliIntegrationTests
         runErr.ShouldNotBeNullOrEmpty();
     }
 
-    private static async Task SeedScheduleAsync(InMemoryWorkflowStateStore store, TimeProvider clock, string scheduleId, string cron, string targetWorkflowId)
+    private static async Task SeedScheduleAsync(Host host, string scheduleId, string cron, string targetWorkflowId)
     {
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(
             $$"""{"scheduleId":"{{scheduleId}}","cron":"{{cron}}","timeZone":"UTC","targetWorkflowId":"{{targetWorkflowId}}"}"""));
 
         // The run id is derived from the scheduleId exactly as the /schedules API derives it (the host's shared
-        // derivation key), so the seeded schedule is addressable by get / delete on its scheduleId.
-        string runId = TestDerivation.ScheduleAddress(scheduleId).Value;
-        using WorkflowRun run = WorkflowRun.CreateNew(store, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", clock);
+        // derivation key), and the schedule is registered in the host's registry exactly as the API registers it, so
+        // the seeded schedule is addressable by get / delete on its scheduleId.
+        WorkflowRunId runId = TestDerivation.ScheduleAddress(scheduleId);
+        await host.ScheduleRegistry!.RegisterAsync(scheduleId, new Schedules.ScheduleRegistration("development", runId), default);
+        using WorkflowRun run = WorkflowRun.CreateNew(host.Store, runId.Value, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", host.Clock);
         await run.EnqueueAsync(default);
     }
 }

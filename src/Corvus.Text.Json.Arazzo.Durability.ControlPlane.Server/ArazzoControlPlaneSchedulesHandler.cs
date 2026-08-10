@@ -39,6 +39,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     private readonly IRunnerRegistry runners;
     private readonly IAvailabilityStore? availabilityStore;
     private readonly IEnvironmentStore? environmentStore;
+    private readonly Schedules.IScheduleRegistry? scheduleRegistry;
     private readonly ControlPlaneAccess access;
     private readonly TimeProvider timeProvider;
     private readonly ILogger? auditLogger;
@@ -50,6 +51,9 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
     /// <param name="availabilityStore">The availability registry used to validate the target is available in the environment (§7.8); <see langword="null"/> skips it.</param>
     /// <param name="environmentStore">The environment registry (reserved for future environment validation); currently unused.</param>
+    /// <param name="scheduleRegistry">The deployment-global schedule registry — the uniqueness gate on create and the
+    /// scheduleId resolver for get/delete/run-now (the routes carry no environment); <see langword="null"/> means the
+    /// schedules surface is not configured and refuses.</param>
     /// <param name="timeProvider">The clock used to compute each schedule's next occurrence; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="auditLogger">The governance-audit sink for schedule mutations.</param>
     internal ArazzoControlPlaneSchedulesHandler(
@@ -59,6 +63,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         ControlPlaneAccess access,
         IAvailabilityStore? availabilityStore = null,
         IEnvironmentStore? environmentStore = null,
+        Schedules.IScheduleRegistry? scheduleRegistry = null,
         TimeProvider? timeProvider = null,
         ILogger? auditLogger = null)
     {
@@ -72,6 +77,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         this.access = access;
         this.availabilityStore = availabilityStore;
         this.environmentStore = environmentStore;
+        this.scheduleRegistry = scheduleRegistry;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.auditLogger = auditLogger;
     }
@@ -211,16 +217,28 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         using ParsedJsonDocument<WorkflowScheduleInput> scheduleInput = body.TargetInputs.IsNotUndefined()
             ? WorkflowScheduleInput.Create(scheduleId: scheduleId, cron: cron, targetWorkflowId: targetWorkflowId, timeZone: timeZone, includeSeconds: includeSeconds, targetInputs: (JsonElement)body.TargetInputs)
             : WorkflowScheduleInput.Create(scheduleId: scheduleId, cron: cron, targetWorkflowId: targetWorkflowId, timeZone: timeZone, includeSeconds: includeSeconds);
-        if (this.management.RunDerivation is not { } derivation)
+        if (this.management.RunDerivation is not { } derivation || this.scheduleRegistry is not { } registry)
         {
             return CreateScheduleResult.BadRequest(SchedulesNotConfigured(), workspace);
         }
 
-        // The scheduler run lives at the schedule's derived address (ADR 0065 §9): deterministic for this surface to
-        // re-derive, impossible to pre-compute without the deployment key. A schedule id whose run is NOT this
-        // schedule — one created in another environment, or an unrelated occupant — collides rather than being
-        // silently adopted, which is what makes the contract's global uniqueness an enforced property.
+        // The scheduler run lives at the schedule's derived address (ADR 0065 §9): deterministic, impossible to
+        // pre-compute without the deployment key. The REGISTRY's atomic insert is what enforces the contract's global
+        // uniqueness — under the composite (environment, runId) run key two environments can hold the same run id, so a
+        // run-key collision cannot observe a schedule created in another environment. Registration precedes the run:
+        // a crash between the two self-heals, because re-creating the same schedule finds its own identical
+        // registration (idempotent) and the named start converges on its own logical run.
         WorkflowRunId runId = derivation.ScheduleAddress(scheduleId);
+        try
+        {
+            await registry.RegisterAsync(scheduleId, new Schedules.ScheduleRegistration(environment, runId), cancellationToken).ConfigureAwait(false);
+        }
+        catch (Schedules.ScheduleRegistrationConflictException)
+        {
+            return CreateScheduleResult.Conflict(
+                Problem("schedule-collision", "Schedule id already in use", 409, $"Schedule id '{scheduleId}' already names a schedule that is not this one (for example a schedule in another environment); schedule ids are globally unique across the deployment."), workspace);
+        }
+
         try
         {
             await this.management.StartNamedAsync(
@@ -228,8 +246,11 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         }
         catch (WorkflowRunCollisionException)
         {
+            // The derived address is occupied by a run that is NOT this schedule (an unrelated occupant), so the
+            // registration just made is bogus — roll it back before refusing, or the dead row would shadow the id.
+            await registry.UnregisterAsync(scheduleId, cancellationToken).ConfigureAwait(false);
             return CreateScheduleResult.Conflict(
-                Problem("schedule-collision", "Schedule id already in use", 409, $"Schedule id '{scheduleId}' already addresses a run that is not this schedule (for example a schedule in another environment); schedule ids are globally unique across the deployment."), workspace);
+                Problem("schedule-collision", "Schedule id already in use", 409, $"Schedule id '{scheduleId}' already addresses a run that is not this schedule; schedule ids are globally unique across the deployment."), workspace);
         }
 
         GovernanceAudit.Mutation(this.auditLogger, "schedule.create", this.AuditActor(), TargetKind, scheduleId, "created");
@@ -257,13 +278,17 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     {
         AccessContext ctx = this.access.Current();
         string scheduleId = (string)parameters.ScheduleId;
-        if (this.management.RunDerivation is not { } derivation)
+        if (this.scheduleRegistry is not { } registry)
         {
             return GetScheduleResult.NotFound(SchedulesNotConfigured(404), workspace);
         }
 
-        WorkflowRunId runId = derivation.ScheduleAddress(scheduleId);
-        WorkflowCheckpointState? state = await this.management.LoadStateAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
+        if (await registry.ResolveAsync(scheduleId, cancellationToken).ConfigureAwait(false) is not { } registration)
+        {
+            return GetScheduleResult.NotFound(NotFoundProblem(scheduleId), workspace);
+        }
+
+        WorkflowCheckpointState? state = await this.management.LoadStateAsync(registration.RunId, ctx, cancellationToken).ConfigureAwait(false);
         if (state is null || !IsLiveSchedule(state))
         {
             state?.Dispose();
@@ -287,15 +312,20 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     {
         AccessContext ctx = this.access.Current();
         string scheduleId = (string)parameters.ScheduleId;
-        if (this.management.RunDerivation is not { } derivation)
+        if (this.scheduleRegistry is not { } registry)
         {
             return DeleteScheduleResult.NotFound(SchedulesNotConfigured(404), workspace);
         }
 
-        WorkflowRunId runId = derivation.ScheduleAddress(scheduleId);
+        if (await registry.ResolveAsync(scheduleId, cancellationToken).ConfigureAwait(false) is not { } registration)
+        {
+            return DeleteScheduleResult.NotFound(NotFoundProblem(scheduleId), workspace);
+        }
+
+        WorkflowRunId runId = registration.RunId;
 
         // Confirm the run is actually a schedule (and in reach) before cancelling — a caller must not cancel an
-        // arbitrary run by presenting an id that happens to hash into it.
+        // arbitrary run through a registry row that does not point at a schedule.
         using (WorkflowCheckpointState? state = await this.management.LoadStateAsync(runId, ctx, cancellationToken).ConfigureAwait(false))
         {
             if (state is null || !IsLiveSchedule(state))
@@ -319,12 +349,17 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     {
         AccessContext ctx = this.access.Current();
         string scheduleId = (string)parameters.ScheduleId;
-        if (this.management.RunDerivation is not { } derivation)
+        if (this.scheduleRegistry is not { } registry)
         {
             return RunScheduleNowResult.NotFound(SchedulesNotConfigured(404), workspace);
         }
 
-        WorkflowRunId scheduleRunId = derivation.ScheduleAddress(scheduleId);
+        if (await registry.ResolveAsync(scheduleId, cancellationToken).ConfigureAwait(false) is not { } registration)
+        {
+            return RunScheduleNowResult.NotFound(NotFoundProblem(scheduleId), workspace);
+        }
+
+        WorkflowRunId scheduleRunId = registration.RunId;
 
         // The scheduler run's state is held alive across the whole start: the target inputs are passed as a JSON value
         // straight from it to the start path (which copies them at persist), so no owned copy is realised here.
