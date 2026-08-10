@@ -18,9 +18,17 @@ public interface IMessageDeliveryContextTransport : IMessageTransport
 {
     /// <summary>Subscribes while exposing transport delivery metadata.</summary>
     /// <remarks>
+    /// <para>
     /// The <see cref="MessageDeliveryContext"/> passed to <paramref name="handler"/> is valid
     /// only for the duration of that invocation; transports may recycle the buffers it
     /// references once the handler returns.
+    /// </para>
+    /// <para>
+    /// The <paramref name="channelUtf8"/> memory must remain valid and unmodified for the
+    /// lifetime of the subscription: broker transports retain it and hand it to every delivery
+    /// as <see cref="MessageDeliveryContext.ChannelUtf8"/>. Do not subscribe with a pooled or
+    /// reused buffer.
+    /// </para>
     /// </remarks>
     ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,

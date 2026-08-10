@@ -203,6 +203,34 @@ Message arrives on transport
   → On error: IMessageErrorPolicy decides Skip/DeadLetter/Abort
 ```
 
+## Message Delivery Context
+
+Consumers can opt into transport delivery metadata. For every receive operation that is not a request/reply responder, the generator emits a second handler/consumer pair alongside the legacy one, named by appending `WithDeliveryContext` to the operation name: `I{Operation}WithDeliveryContextHandler` and `{Operation}WithDeliveryContextConsumer`. The handler receives a `MessageDeliveryContext` carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists (for example RabbitMQ's `BasicDeliverEventArgs`):
+
+```csharp
+public sealed class LightMeasuredHandler : IReceiveLightMeasurementWithDeliveryContextHandler
+{
+    public ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload,
+        MessageDeliveryContext context,
+        CancellationToken cancellationToken = default)
+    {
+        // context.ChannelUtf8, context.Headers, context.NativeMessage
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+A message that declares a typed headers schema keeps its typed headers parameter: the handler signature becomes `(payload, headers, context, cancellationToken)`.
+
+The rules that come with the capability:
+
+- **The context is valid only for the duration of the handler invocation.** Transports recycle the buffers it references once the handler returns (RabbitMQ, for example, reuses the network-frame buffer backing `BasicDeliverEventArgs.Body`). Copy anything you need to keep before returning.
+- **The delivery-context consumer requires an `IMessageDeliveryContextTransport`.** All seven transports implement it. When wrapping with instrumentation, use `InstrumentedMessageTransport.Create` so the wrapper preserves the capability.
+- **A channel has one subscription.** Subscribing a channel with either the legacy or the delivery-context API displaces the previous subscription (last-write-wins), and the displaced consumer is torn down.
+- **Direct transport API users own the channel buffer.** `SubscribeWithDeliveryContextAsync` retains the `channelUtf8` memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)
+- **Bindings travel.** An operation declaring channel or operation bindings subscribes through a `MessageContext` overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.
+
 ## Validation
 
 Every generated producer and consumer accepts a `ValidationMode` parameter that controls whether messages are validated against their JSON Schema, and the degree of diagnostic information provided on failure.
@@ -1206,7 +1234,7 @@ Current transports primarily use their strongly-typed transport options for deli
 
 ### OpenTelemetry Distributed Tracing
 
-Wrap any transport with `InstrumentedMessageTransport` to gain automatic OpenTelemetry instrumentation:
+Wrap any transport with `InstrumentedMessageTransport.Create` to gain automatic OpenTelemetry instrumentation:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
@@ -1215,8 +1243,10 @@ using Corvus.Text.Json.AsyncApi.Nats;
 NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
     new NatsTransportOptions { Url = "nats://localhost:4222" });
 
-InstrumentedMessageTransport transport = new(raw, "nats");
+IMessageTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
 ```
+
+`Create` returns a wrapper that preserves the wrapped transport's optional capabilities. It implements `IMessageDeliveryContextTransport` and `IHealthCheckableTransport` exactly when the wrapped transport does, so a capability probe such as `transport is IHealthCheckableTransport` answers for the wrapped transport, health checks keep working, and delivery-context consumers accept the wrapper. The `new InstrumentedMessageTransport(raw, "nats")` constructor form always produces a plain `IMessageTransport` wrapper that surfaces neither capability; prefer `Create`.
 
 This provides:
 - **Distributed trace spans** (Activities) for publish, subscribe, request, and dead-letter operations
@@ -1406,7 +1436,7 @@ Don't mock `IMessageTransport` — use `InMemoryMessageTransport`. It provides m
 
 ### Wrap Transports with Instrumentation
 
-Always use `InstrumentedMessageTransport` in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter.
+Always wrap the transport with `InstrumentedMessageTransport.Create` in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter, and `Create` preserves the wrapped transport's delivery-context and health-check capabilities.
 
 ### Combine Polly with Error Policies
 

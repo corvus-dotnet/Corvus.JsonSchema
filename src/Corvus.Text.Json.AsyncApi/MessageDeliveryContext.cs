@@ -18,7 +18,13 @@ namespace Corvus.Text.Json.AsyncApi;
 /// </remarks>
 public readonly struct MessageDeliveryContext
 {
-    /// <summary>Gets the subscribed channel as UTF-8 bytes.</summary>
+    /// <summary>
+    /// Gets the subscribed channel as UTF-8 bytes.
+    /// </summary>
+    /// <remarks>
+    /// On broker transports this views the memory the subscriber passed to the subscribe call,
+    /// which is why that buffer must remain valid and unmodified for the subscription's lifetime.
+    /// </remarks>
     public ReadOnlyMemory<byte> ChannelUtf8 { get; init; }
 
     /// <summary>Gets the message headers.</summary>
