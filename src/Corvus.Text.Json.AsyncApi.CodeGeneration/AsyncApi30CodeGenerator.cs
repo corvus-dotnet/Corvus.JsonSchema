@@ -2761,6 +2761,7 @@ public sealed class AsyncApi30CodeGenerator
             {
                 w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
             }
+
             w.WriteLine("try");
             w.OpenBrace();
             w.WriteLine(withDeliveryContext

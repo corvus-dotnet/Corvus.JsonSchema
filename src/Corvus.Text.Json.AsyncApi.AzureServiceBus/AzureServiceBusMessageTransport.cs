@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using Azure.Messaging.ServiceBus;
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Internal;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.AsyncApi.AzureServiceBus;
