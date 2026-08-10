@@ -177,6 +177,36 @@ public class InstrumentedMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeReplyAsync_ForwardsThroughWrapperAndInstruments()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+
+        await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            (request, headers, ct) =>
+            {
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return ValueTask.FromResult(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await inner.RequestAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            "rpc/double/replies"u8.ToArray(),
+            request,
+            "corr-rr"u8.ToArray(),
+            workspace);
+
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void Create_PlainTransport_DoesNotClaimCapabilities()
     {
         DisposableTrackingTransport inner = new();

@@ -190,6 +190,38 @@ public class InstrumentedMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        return this.inner.SubscribeReplyAsync(
+            channelUtf8,
+            CreateInstrumentedReplyHandler(handler, destination),
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        return this.inner.SubscribeReplyAsync(
+            channelUtf8,
+            CreateInstrumentedReplyHandler(handler, destination),
+            in context,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask UnsubscribeAsync(
         ReadOnlyMemory<byte> channelUtf8,
         CancellationToken cancellationToken)
@@ -443,6 +475,35 @@ public class InstrumentedMessageTransport : IMessageTransport
             });
     }
 
+    // The activity creation/tagging and the consumed-counter contents live in these two helpers
+    // so the three instrumented handler shapes below cannot drift in the telemetry they emit.
+    private Activity? StartProcessActivity(in JsonElement headers, string destination)
+    {
+        ActivityContext parentContext = default;
+        bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
+
+        Activity? activity = hasParent
+            ? AsyncApiTelemetry.ActivitySource.StartActivity(
+                $"process {destination}", ActivityKind.Consumer, parentContext)
+            : AsyncApiTelemetry.ActivitySource.StartActivity(
+                $"process {destination}", ActivityKind.Consumer);
+
+        SetCommonTags(activity, "process", destination);
+        return activity;
+    }
+
+    private void RecordProcessed(string destination)
+    {
+        AsyncApiTelemetry.MessagesConsumed.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", this.messagingSystem },
+                { "messaging.operation.name", "process" },
+                { "messaging.destination.name", destination },
+            });
+    }
+
     private Func<TPayload, JsonElement, CancellationToken, ValueTask> CreateInstrumentedHandler<TPayload>(
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         string destination)
@@ -450,33 +511,12 @@ public class InstrumentedMessageTransport : IMessageTransport
     {
         return async (payload, headers, ct) =>
         {
-            ActivityContext parentContext = default;
-            bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
-
-            using Activity? activity = hasParent
-                ? AsyncApiTelemetry.ActivitySource.StartActivity(
-                    $"process {destination}",
-                    ActivityKind.Consumer,
-                    parentContext)
-                : AsyncApiTelemetry.ActivitySource.StartActivity(
-                    $"process {destination}",
-                    ActivityKind.Consumer);
-
-            SetCommonTags(activity, "process", destination);
-
+            using Activity? activity = StartProcessActivity(in headers, destination);
             long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
                 await handler(payload, headers, ct).ConfigureAwait(false);
-
-                AsyncApiTelemetry.MessagesConsumed.Add(
-                    1,
-                    new TagList
-                    {
-                        { "messaging.system", this.messagingSystem },
-                        { "messaging.operation.name", "process" },
-                        { "messaging.destination.name", destination },
-                    });
+                RecordProcessed(destination);
             }
             catch (Exception ex)
             {
@@ -498,29 +538,40 @@ public class InstrumentedMessageTransport : IMessageTransport
         return async (payload, context, ct) =>
         {
             JsonElement headers = context.Headers;
-            ActivityContext parentContext = default;
-            bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
-
-            using Activity? activity = hasParent
-                ? AsyncApiTelemetry.ActivitySource.StartActivity(
-                    $"process {destination}", ActivityKind.Consumer, parentContext)
-                : AsyncApiTelemetry.ActivitySource.StartActivity(
-                    $"process {destination}", ActivityKind.Consumer);
-
-            SetCommonTags(activity, "process", destination);
+            using Activity? activity = StartProcessActivity(in headers, destination);
             long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
                 await handler(payload, context, ct).ConfigureAwait(false);
+                RecordProcessed(destination);
+            }
+            catch (Exception ex)
+            {
+                RecordError(activity, ex);
+                throw;
+            }
+            finally
+            {
+                RecordDuration(AsyncApiTelemetry.ProcessDuration, startTimestamp, "process", destination);
+            }
+        };
+    }
 
-                AsyncApiTelemetry.MessagesConsumed.Add(
-                    1,
-                    new TagList
-                    {
-                        { "messaging.system", this.messagingSystem },
-                        { "messaging.operation.name", "process" },
-                        { "messaging.destination.name", destination },
-                    });
+    private Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> CreateInstrumentedReplyHandler<TRequest, TReply>(
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        string destination)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        return async (request, headers, ct) =>
+        {
+            using Activity? activity = StartProcessActivity(in headers, destination);
+            long startTimestamp = Stopwatch.GetTimestamp();
+            try
+            {
+                TReply reply = await handler(request, headers, ct).ConfigureAwait(false);
+                RecordProcessed(destination);
+                return reply;
             }
             catch (Exception ex)
             {
