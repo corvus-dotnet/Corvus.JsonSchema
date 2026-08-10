@@ -25,9 +25,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// optimistic concurrency is a read-compare-write. Works against Azure Storage and the Azurite emulator.
 /// </summary>
 /// <remarks>
-/// Reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — a working copy outside reach is
-/// reported as absent (non-disclosing). Get/Update/Delete read the blob and reach-check the document's own tags; the
-/// list reach-checks the Table's tags column first, then fetches the admitted page's blobs. Table queries are unordered,
+/// Point reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — a working copy outside
+/// reach is reported as absent (non-disclosing); Get/Update/Delete read the blob and reach-check the document's own
+/// tags. List/count narrow through the store's §14.4 label table first — the reach resolves to candidate index rows by
+/// indexed partition lookups — so only candidate index rows are ever addressed, the exact reach then decides each one
+/// from its tags column, and only the admitted page's blobs are fetched; the tags are immutable on save, so the label
+/// entries never need an update-side re-point. Table queries are unordered,
 /// so <see cref="ListAsync"/> sorts its id snapshot client-side (the id is globally unique, so it is the whole total
 /// order and needs no tie-breaker) to match every other backend. The document is carried Corvus.Text.Json end to end
 /// (no System.Text.Json): the working-copy bytes are stored and read verbatim (#803) via <see cref="ParsedJsonDocument{T}"/>
@@ -36,6 +39,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
 {
     private const string WorkspaceWorkflowsTable = "arazzoWorkspaceWorkflows";
+    private const string LabelsTable = "arazzoWorkspaceWorkflowLabels";
     private const string WorkspaceWorkflowsContainer = "arazzo-workspace-workflows";
     private const BlobClientOptions.ServiceVersion BlobApiVersion = BlobClientOptions.ServiceVersion.V2024_11_04;
     private const string IdColumn = "Id";
@@ -48,12 +52,16 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
 
     private readonly BlobContainerClient documents;
     private readonly TableClient index;
+    private readonly TableClient labels;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageWorkspaceWorkflowStore(BlobContainerClient documents, TableClient index, TimeProvider timeProvider)
+    private AzureStorageWorkspaceWorkflowStore(BlobContainerClient documents, TableClient index, TableClient labels, TimeProvider timeProvider)
     {
         this.documents = documents;
         this.index = index;
+        this.labels = labels;
+        this.labelIndex = new AzureStorageSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -84,6 +92,7 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
         ArgumentNullException.ThrowIfNull(tableService);
         await blobService.GetBlobContainerClient(WorkspaceWorkflowsContainer).CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(WorkspaceWorkflowsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned container and table.</summary>
@@ -118,6 +127,7 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
             new AzureStorageWorkspaceWorkflowStore(
                 blobService.GetBlobContainerClient(WorkspaceWorkflowsContainer),
                 tableService.GetTableClient(WorkspaceWorkflowsTable),
+                tableService.GetTableClient(LabelsTable),
                 timeProvider ?? TimeProvider.System));
     }
 
@@ -135,6 +145,15 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
         // The document is the source of truth (blob); the Table entity is its queryable index. Write the blob first so a
         // present index row always resolves to a document.
         await this.BlobFor(id).UploadAsync(BinaryData.FromBytes(json), overwrite: true, cancellationToken).ConfigureAwait(false);
+
+        // §14.4 label entries: ADDED before the index row becomes visible, so an interrupted add can only leave an
+        // entry pointing at a row that never landed — which the exact reach evaluation discards — never a visible
+        // row with no entry, which would hide it from a narrowed list.
+        foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(draft.ManagementTagsValue))
+        {
+            await this.labels.UpsertEntityAsync(new TableEntity(token, PartitionKey(id)), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+
         ParsedJsonDocument<WorkspaceWorkflow> result = PersistedJson.ToPooledDocument<WorkspaceWorkflow>(json);
         try
         {
@@ -174,13 +193,39 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
         // The contractual order is id ascending (globally unique, so the id is the whole total order and the tie-breaker
         // is empty). The index rows (id + reach tags) are read WITHOUT the documents, sorted in memory into the total
         // order, reach-filtered, and only the page's admitted documents are then fetched from their blobs.
-        var rows = new List<(string Id, string Tags)>();
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
-            select: [IdColumn, TagsColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        // §14.4: narrow to the candidate index rows the label table admits before reading anything. A null answer
+        // means the index could not narrow and the index sweep runs as it always did; an empty one means no working
+        // copy qualifies, so the page is empty without a single row addressed. The exact reach below still decides
+        // every candidate (the plan is a sound over-approximation), so an imprecise plan costs throughput and can
+        // never widen reach.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
         {
-            if (entity.GetString(IdColumn) is { } id)
+            return WorkspaceWorkflowPage.Create(PooledDocumentList<WorkspaceWorkflow>.Empty);
+        }
+
+        var rows = new List<(string Id, string Tags)>();
+        if (candidates is null)
+        {
+            await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
+                select: [IdColumn, TagsColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
             {
-                rows.Add((id, entity.GetString(TagsColumn) ?? string.Empty));
+                if (entity.GetString(IdColumn) is { } id)
+                {
+                    rows.Add((id, entity.GetString(TagsColumn) ?? string.Empty));
+                }
+            }
+        }
+        else
+        {
+            // A candidate id is the index row's PartitionKey, so each resolves by an addressed point read; a stale
+            // label entry resolving to a deleted row falls into the absent skip.
+            foreach (string partition in candidates)
+            {
+                if (await this.TryGetIndexRowAsync(partition, cancellationToken).ConfigureAwait(false) is { } row)
+                {
+                    rows.Add(row);
+                }
             }
         }
 
@@ -279,9 +324,23 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
             WorkspaceWorkflowSerialization.EnsureEtag(id, expectedEtag, WorkspaceWorkflowSerialization.EtagOf(existing));
         }
 
-        // Delete the index row first (so a list stops reporting it), then the document blob.
+        // The label entries derive from the doc tags (immutable on save), read before the row goes, and dropped only
+        // after it — the §14.4 ordering: an interrupted delete leaves a stale entry, harmless when nothing loads
+        // behind it, whereas dropping entries first would strand a still-visible row.
+        HashSet<string> tokens;
+        using (ParsedJsonDocument<WorkspaceWorkflow> current = PersistedJson.ToPooledDocument<WorkspaceWorkflow>(existing))
+        {
+            tokens = AzureStorageSecurityLabelIndex.TokensFor(SecurityTagSet.CopyFrom(current.RootElement.ManagementTags));
+        }
+
+        // Delete the index row first (so a list stops reporting it), then the document blob, then the label entries.
         await this.index.DeleteEntityAsync(PartitionKey(id), SingleRow, ETag.All, cancellationToken).ConfigureAwait(false);
         await this.BlobFor(id).DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        foreach (string token in tokens)
+        {
+            await this.labels.DeleteEntityAsync(token, PartitionKey(id), ETag.All, cancellationToken).ConfigureAwait(false);
+        }
+
         return true;
     }
 
@@ -302,6 +361,30 @@ public sealed class AzureStorageWorkspaceWorkflowStore : IWorkspaceWorkflowStore
     // URL-safe base64 of the UTF-8 bytes (forbidden / and + remapped to _ and -), reused as the blob name; the base64
     // alphabet plus those two replacements is valid in both a Table key and a blob name. A leading '~' guarantees a
     // non-empty key.
+    // Resolves the reach to the candidate index partitions the label table admits (§14.4). Null means "the index
+    // could not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what
+    // the principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // The index row for a candidate partition, or null when it is gone (a stale label entry, or a concurrent delete).
+    private async ValueTask<(string Id, string Tags)?> TryGetIndexRowAsync(string partition, CancellationToken cancellationToken)
+    {
+        try
+        {
+            TableEntity entity = (await this.index.GetEntityAsync<TableEntity>(
+                partition, SingleRow, [IdColumn, TagsColumn], cancellationToken).ConfigureAwait(false)).Value;
+            return entity.GetString(IdColumn) is { } id ? (id, entity.GetString(TagsColumn) ?? string.Empty) : null;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return null;
+        }
+    }
+
     private static string Enc(string value)
         => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
 

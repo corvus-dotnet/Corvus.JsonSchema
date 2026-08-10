@@ -23,9 +23,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// Works against Azure Storage and the Azurite emulator.
 /// </summary>
 /// <remarks>
-/// Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) and the usage path by
-/// label-superset — applied in memory over the small candidate set for a (sourceName, environment), since a deployment
-/// keeps those reach-disjoint. Table queries are unordered, so <see cref="ListAsync"/> sorts its snapshot client-side by
+/// Point management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) and the usage
+/// path by label-superset — applied in memory over the small candidate set for a (sourceName, environment), since a
+/// deployment keeps those reach-disjoint. List/count narrow through the store's §14.4 label table first — the reach
+/// resolves to candidate entity keys by indexed partition lookups — so only candidate rows are ever addressed, and the
+/// exact reach then decides each one; a re-tagging update re-points the label entries around the entity write in the
+/// §14.4 ordering. Table queries are unordered, so <see cref="ListAsync"/> sorts its snapshot client-side by
 /// (sourceName, environment) to match every other backend's ordering. Tag round-tripping is Corvus.Text.Json end to
 /// end (no System.Text.Json): the binding bytes are stored and read verbatim and the discriminator that keys the entity
 /// is the canonical tag string from <see cref="SourceCredentialKey"/>.
@@ -33,17 +36,22 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
 {
     private const string CredentialsTable = "arazzoSourceCredentials";
+    private const string LabelsTable = "arazzoSourceCredentialLabels";
     private const string DocColumn = "Doc";
     private const string SourceNameColumn = "SourceName";
     private const string EnvironmentColumn = "Environment";
     private const string DiscriminatorColumn = "Tags";
 
     private readonly TableClient credentials;
+    private readonly TableClient labels;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageSourceCredentialStore(TableClient credentials, TimeProvider timeProvider)
+    private AzureStorageSourceCredentialStore(TableClient credentials, TableClient labels, TimeProvider timeProvider)
     {
         this.credentials = credentials;
+        this.labels = labels;
+        this.labelIndex = new AzureStorageSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -65,6 +73,7 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(CredentialsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned table.</summary>
@@ -88,7 +97,10 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         ArgumentNullException.ThrowIfNull(tableService);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<AzureStorageSourceCredentialStore>(
-            new AzureStorageSourceCredentialStore(tableService.GetTableClient(CredentialsTable), timeProvider ?? TimeProvider.System));
+            new AzureStorageSourceCredentialStore(
+                tableService.GetTableClient(CredentialsTable),
+                tableService.GetTableClient(LabelsTable),
+                timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>
@@ -107,6 +119,16 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
             [DiscriminatorColumn] = discriminator,
             [DocColumn] = json,
         };
+
+        // §14.4 label entries: ADDED before the binding becomes visible, so an interrupted add can only leave an
+        // entry pointing at a row that never landed — which the exact reach evaluation discards — never a visible
+        // row with no entry, which would hide it from a narrowed list.
+        string labelRowId = LabelRowId(draft.SourceNameValue, draft.EnvironmentValue, discriminator);
+        foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(draft.ManagementTagsValue))
+        {
+            await this.labels.UpsertEntityAsync(new TableEntity(token, labelRowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+
         try
         {
             await this.credentials.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -147,18 +169,42 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
         // URL-safe base64 and therefore NOT ordinal-order-preserving, so the keyset cannot be pushed as a server-side
         // range filter. Instead the entity keys (decoded into the plain SourceName/Environment/Tags columns) are pulled,
         // sorted in memory into the total order, paged, and only the page's Documents are fetched.
-        var keys = new List<EntityKey>();
-        await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(
-            select: [SourceNameColumn, EnvironmentColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        // §14.4: narrow to the candidate entity keys the label table admits before reading anything. A null answer
+        // means the index could not narrow and the keys-only sweep runs as it always did; an empty one means no
+        // binding qualifies, so the page is empty without a single row addressed. The exact reach below still
+        // decides every candidate (the plan is a sound over-approximation), so an imprecise plan costs throughput
+        // and can never widen reach.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
         {
-            if (entity.GetString(SourceNameColumn) is not { } source ||
-                entity.GetString(EnvironmentColumn) is not { } environment ||
-                entity.GetString(DiscriminatorColumn) is not { } discriminator)
-            {
-                continue;
-            }
+            return SourceCredentialPage.Create(PooledDocumentList<SourceCredentialBinding>.Empty);
+        }
 
-            keys.Add(new EntityKey(source, environment, discriminator));
+        var keys = new List<EntityKey>();
+        if (candidates is null)
+        {
+            await foreach (TableEntity entity in this.credentials.QueryAsync<TableEntity>(
+                select: [SourceNameColumn, EnvironmentColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (entity.GetString(SourceNameColumn) is not { } source ||
+                    entity.GetString(EnvironmentColumn) is not { } environment ||
+                    entity.GetString(DiscriminatorColumn) is not { } discriminator)
+                {
+                    continue;
+                }
+
+                keys.Add(new EntityKey(source, environment, discriminator));
+            }
+        }
+        else
+        {
+            foreach (string rowId in candidates)
+            {
+                if (TryParseLabelRowId(rowId, out (string SourceName, string Environment, string Discriminator) parts))
+                {
+                    keys.Add(new EntityKey(parts.SourceName, parts.Environment, parts.Discriminator));
+                }
+            }
         }
 
         keys.Sort(static (a, b) =>
@@ -186,10 +232,9 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
                     continue;
                 }
 
-                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one.
-                TableEntity entity = (await this.credentials.GetEntityAsync<TableEntity>(
-                    PartitionKey(key.SourceName), RowKey(key.Environment, key.Discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
-                if (entity.GetBinary(DocColumn) is not { } json)
+                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one;
+                // a stale label entry resolving to a deleted entity falls into the same absent skip.
+                if (await this.TryGetDocAsync(key.SourceName, key.Environment, key.Discriminator, cancellationToken).ConfigureAwait(false) is not { } json)
                 {
                     continue;
                 }
@@ -256,7 +301,48 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
             [DiscriminatorColumn] = discriminator!,
             [DocColumn] = json,
         };
+
+        // The row is addressed by its frozen create-time keys (ADR 0067; the usage tags stay immutable too). A draft
+        // that supplies management tags re-tags the row's reach scope (a store-level replace; an omitted set is
+        // carried forward), so the §14.4 label entries are re-pointed by the diff around the entity write, in the
+        // §14.4 ordering — entries for the NEW tags are added before the entity carries them and the removed ones
+        // are dropped only after it stops, so an interruption can only leave a stale entry (discarded by the exact
+        // evaluation), never a hidden row.
+        HashSet<string>? previousTokens = null;
+        HashSet<string>? desiredTokens = null;
+        string labelRowId = LabelRowId(sourceName, environment, discriminator!);
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            SecurityTagSet previousTags;
+            using (ParsedJsonDocument<SourceCredentialBinding> current = PersistedJson.ToPooledDocument<SourceCredentialBinding>(existing))
+            {
+                previousTags = SecurityTagSet.CopyFrom(current.RootElement.ManagementTags);
+            }
+
+            previousTokens = AzureStorageSecurityLabelIndex.TokensFor(previousTags);
+            desiredTokens = AzureStorageSecurityLabelIndex.TokensFor(draft.ManagementTagsValue);
+            foreach (string token in desiredTokens)
+            {
+                if (!previousTokens.Contains(token))
+                {
+                    await this.labels.UpsertEntityAsync(new TableEntity(token, labelRowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         await this.credentials.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+
+        if (previousTokens is not null && desiredTokens is not null)
+        {
+            foreach (string token in previousTokens)
+            {
+                if (!desiredTokens.Contains(token))
+                {
+                    await this.labels.DeleteEntityAsync(token, labelRowId, ETag.All, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
     }
 
@@ -277,7 +363,22 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
             SourceCredentialSerialization.EnsureEtag($"{sourceName}@{environment}", expectedEtag, SourceCredentialSerialization.EtagOf(existing));
         }
 
+        // The label entries derive from the CURRENT doc tags (a re-tag re-pointed them in step), read before the row
+        // goes, and dropped only after it — the §14.4 ordering: an interrupted delete leaves a stale entry, harmless
+        // when nothing loads behind it, whereas dropping entries first would strand a still-visible row.
+        HashSet<string> tokens;
+        using (ParsedJsonDocument<SourceCredentialBinding> current = PersistedJson.ToPooledDocument<SourceCredentialBinding>(existing))
+        {
+            tokens = AzureStorageSecurityLabelIndex.TokensFor(SecurityTagSet.CopyFrom(current.RootElement.ManagementTags));
+        }
+
+        string labelRowId = LabelRowId(sourceName, environment, discriminator!);
         await this.credentials.DeleteEntityAsync(PartitionKey(sourceName), RowKey(environment, discriminator!), ETag.All, cancellationToken).ConfigureAwait(false);
+        foreach (string token in tokens)
+        {
+            await this.labels.DeleteEntityAsync(token, labelRowId, ETag.All, cancellationToken).ConfigureAwait(false);
+        }
+
         return true;
     }
 
@@ -358,6 +459,59 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
     // empty string (an empty tag discriminator), which Table storage forbids as a key.
     private static string Enc(string value)
         => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
+
+    // The label entry's row id: the identity's three encoded tokens concatenated — Enc prefixes every token with
+    // '~' and Base64Url never emits one, so the concatenation is self-delimiting and RowKey-safe.
+    private static string LabelRowId(string sourceName, string environment, string discriminator)
+        => Enc(sourceName) + Enc(environment) + Enc(discriminator);
+
+    private static bool TryParseLabelRowId(string rowId, out (string SourceName, string Environment, string Discriminator) parts)
+    {
+        parts = default;
+        int second = rowId.IndexOf('~', 1);
+        int third = second < 0 ? -1 : rowId.IndexOf('~', second + 1);
+        if (rowId.Length == 0 || rowId[0] != '~' || second < 0 || third < 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            parts = (
+                Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(1, second - 1))),
+                Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(second + 1, third - second - 1))),
+                Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(third + 1))));
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    // Resolves the reach to the candidate label row ids the label table admits (§14.4). Null means "the index could
+    // not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what the
+    // principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // The entity's document bytes, or null when the entity is gone (a stale label entry, or a concurrent delete).
+    private async ValueTask<byte[]?> TryGetDocAsync(string sourceName, string environment, string discriminator, CancellationToken cancellationToken)
+    {
+        try
+        {
+            TableEntity entity = (await this.credentials.GetEntityAsync<TableEntity>(
+                PartitionKey(sourceName), RowKey(environment, discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
+            return entity.GetBinary(DocColumn);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return null;
+        }
+    }
 
     // Finds the single binding for (sourceName, environment) the caller's reach for the verb admits, returning its
     // bytes and its tag discriminator (the row-key segment). A binding outside reach is invisible (non-disclosing).

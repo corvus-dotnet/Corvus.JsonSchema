@@ -47,10 +47,13 @@ public sealed class AzureStorageSourceCredentialStoreConformanceTests : SourceCr
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageSourceCredentialStore.PrepareAsync(tableService);
 
-        TableClient client = tableService.GetTableClient(CredentialsTable);
-        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+        foreach (string table in new[] { CredentialsTable, "arazzoSourceCredentialLabels" })
         {
-            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            TableClient client = tableService.GetTableClient(table);
+            await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+            {
+                await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            }
         }
 
         return await AzureStorageSourceCredentialStore.ConnectAsync(tableService, timeProvider);

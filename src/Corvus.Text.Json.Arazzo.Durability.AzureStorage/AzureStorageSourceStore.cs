@@ -21,8 +21,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// entity ETag), so optimistic concurrency is a read-compare-write. Works against Azure Storage and the Azurite emulator.
 /// </summary>
 /// <remarks>
-/// Management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) — applied in memory
-/// over the small candidate set for a name, since a deployment keeps those reach-disjoint. Table queries are unordered,
+/// Point management reads/writes are reach-filtered by the caller's <see cref="AccessContext"/> (§14.2) in memory over
+/// the small candidate set for a name, since a deployment keeps those reach-disjoint. List/count narrow through the
+/// store's §14.4 label table first — the reach resolves to candidate entity keys by indexed partition lookups — so only
+/// candidate rows are ever addressed, and the exact reach then decides each one; a re-tagging update re-points the
+/// label entries around the entity write in the §14.4 ordering. Table queries are unordered,
 /// so <see cref="ListAsync"/> sorts its snapshot client-side by (name, discriminator) to match every other backend's
 /// ordering. Tag round-tripping is Corvus.Text.Json end to end (no System.Text.Json): the source bytes are stored
 /// and read verbatim and the discriminator that keys the entity is the canonical tag string from
@@ -31,16 +34,21 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageSourceStore : ISourceStore
 {
     private const string SourcesTable = "arazzoSources";
+    private const string LabelsTable = "arazzoSourceLabels";
     private const string DocColumn = "Doc";
     private const string NameColumn = "Name";
     private const string DiscriminatorColumn = "Tags";
 
     private readonly TableClient sources;
+    private readonly TableClient labels;
+    private readonly AzureStorageSecurityLabelIndex labelIndex;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageSourceStore(TableClient sources, TimeProvider timeProvider)
+    private AzureStorageSourceStore(TableClient sources, TableClient labels, TimeProvider timeProvider)
     {
         this.sources = sources;
+        this.labels = labels;
+        this.labelIndex = new AzureStorageSecurityLabelIndex(labels);
         this.timeProvider = timeProvider;
     }
 
@@ -62,6 +70,7 @@ public sealed class AzureStorageSourceStore : ISourceStore
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(SourcesTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(LabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned table.</summary>
@@ -85,7 +94,10 @@ public sealed class AzureStorageSourceStore : ISourceStore
         ArgumentNullException.ThrowIfNull(tableService);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<AzureStorageSourceStore>(
-            new AzureStorageSourceStore(tableService.GetTableClient(SourcesTable), timeProvider ?? TimeProvider.System));
+            new AzureStorageSourceStore(
+                tableService.GetTableClient(SourcesTable),
+                tableService.GetTableClient(LabelsTable),
+                timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>
@@ -101,6 +113,16 @@ public sealed class AzureStorageSourceStore : ISourceStore
             [DiscriminatorColumn] = discriminator,
             [DocColumn] = json,
         };
+
+        // §14.4 label entries: ADDED before the source becomes visible, so an interrupted add can only leave an
+        // entry pointing at a row that never landed — which the exact reach evaluation discards — never a visible
+        // row with no entry, which would hide it from a narrowed list.
+        string labelRowId = LabelRowId(draft.NameValue, discriminator);
+        foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(draft.ManagementTagsValue))
+        {
+            await this.labels.UpsertEntityAsync(new TableEntity(token, labelRowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+
         try
         {
             await this.sources.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
@@ -140,17 +162,41 @@ public sealed class AzureStorageSourceStore : ISourceStore
         // NOT ordinal-order-preserving, so the keyset cannot be pushed as a server-side range filter. Instead the entity
         // keys (decoded into the plain Name/Tags columns) are pulled, sorted in memory into the total order, paged, and
         // only the page's Documents are fetched.
-        var keys = new List<EntityKey>();
-        await foreach (TableEntity entity in this.sources.QueryAsync<TableEntity>(
-            select: [NameColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        // §14.4: narrow to the candidate entity keys the label table admits before reading anything. A null answer
+        // means the index could not narrow and the keys-only sweep runs as it always did; an empty one means no
+        // source qualifies, so the page is empty without a single row addressed. The exact reach below still
+        // decides every candidate (the plan is a sound over-approximation), so an imprecise plan costs throughput
+        // and can never widen reach.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
         {
-            if (entity.GetString(NameColumn) is not { } name ||
-                entity.GetString(DiscriminatorColumn) is not { } discriminator)
-            {
-                continue;
-            }
+            return SourcePage.Create(PooledDocumentList<RegisteredSource>.Empty);
+        }
 
-            keys.Add(new EntityKey(name, discriminator));
+        var keys = new List<EntityKey>();
+        if (candidates is null)
+        {
+            await foreach (TableEntity entity in this.sources.QueryAsync<TableEntity>(
+                select: [NameColumn, DiscriminatorColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (entity.GetString(NameColumn) is not { } name ||
+                    entity.GetString(DiscriminatorColumn) is not { } discriminator)
+                {
+                    continue;
+                }
+
+                keys.Add(new EntityKey(name, discriminator));
+            }
+        }
+        else
+        {
+            foreach (string rowId in candidates)
+            {
+                if (TryParseLabelRowId(rowId, out (string Name, string Discriminator) parts))
+                {
+                    keys.Add(new EntityKey(parts.Name, parts.Discriminator));
+                }
+            }
         }
 
         keys.Sort(static (a, b) =>
@@ -172,10 +218,9 @@ public sealed class AzureStorageSourceStore : ISourceStore
                     continue;
                 }
 
-                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one.
-                TableEntity entity = (await this.sources.GetEntityAsync<TableEntity>(
-                    PartitionKey(key.Name), RowKey(key.Discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
-                if (entity.GetBinary(DocColumn) is not { } json)
+                // Fetch the Document only now, for entities past the cursor, and only until the page fills plus one;
+                // a stale label entry resolving to a deleted entity falls into the same absent skip.
+                if (await this.TryGetDocAsync(key.Name, key.Discriminator, cancellationToken).ConfigureAwait(false) is not { } json)
                 {
                     continue;
                 }
@@ -241,7 +286,47 @@ public sealed class AzureStorageSourceStore : ISourceStore
             [DiscriminatorColumn] = discriminator!,
             [DocColumn] = json,
         };
+
+        // The row is addressed by its frozen create-time keys (ADR 0067). A draft that supplies management tags
+        // re-tags the row's reach scope (a store-level replace; an omitted set is carried forward), so the §14.4
+        // label entries are re-pointed by the diff around the entity write, in the §14.4 ordering — entries for the
+        // NEW tags are added before the entity carries them and the removed ones are dropped only after it stops,
+        // so an interruption can only leave a stale entry (discarded by the exact evaluation), never a hidden row.
+        HashSet<string>? previousTokens = null;
+        HashSet<string>? desiredTokens = null;
+        string labelRowId = LabelRowId(name, discriminator!);
+        if (!draft.ManagementTagsValue.IsEmpty)
+        {
+            SecurityTagSet previousTags;
+            using (ParsedJsonDocument<RegisteredSource> current = PersistedJson.ToPooledDocument<RegisteredSource>(existing))
+            {
+                previousTags = SecurityTagSet.CopyFrom(current.RootElement.ManagementTags);
+            }
+
+            previousTokens = AzureStorageSecurityLabelIndex.TokensFor(previousTags);
+            desiredTokens = AzureStorageSecurityLabelIndex.TokensFor(draft.ManagementTagsValue);
+            foreach (string token in desiredTokens)
+            {
+                if (!previousTokens.Contains(token))
+                {
+                    await this.labels.UpsertEntityAsync(new TableEntity(token, labelRowId), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         await this.sources.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+
+        if (previousTokens is not null && desiredTokens is not null)
+        {
+            foreach (string token in previousTokens)
+            {
+                if (!desiredTokens.Contains(token))
+                {
+                    await this.labels.DeleteEntityAsync(token, labelRowId, ETag.All, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);
     }
 
@@ -261,7 +346,22 @@ public sealed class AzureStorageSourceStore : ISourceStore
             SourceSerialization.EnsureEtag(name, expectedEtag, SourceSerialization.EtagOf(existing));
         }
 
+        // The label entries derive from the CURRENT doc tags (a re-tag re-pointed them in step), read before the row
+        // goes, and dropped only after it — the §14.4 ordering: an interrupted delete leaves a stale entry, harmless
+        // when nothing loads behind it, whereas dropping entries first would strand a still-visible row.
+        HashSet<string> tokens;
+        using (ParsedJsonDocument<RegisteredSource> current = PersistedJson.ToPooledDocument<RegisteredSource>(existing))
+        {
+            tokens = AzureStorageSecurityLabelIndex.TokensFor(SecurityTagSet.CopyFrom(current.RootElement.ManagementTags));
+        }
+
+        string labelRowId = LabelRowId(name, discriminator!);
         await this.sources.DeleteEntityAsync(PartitionKey(name), RowKey(discriminator!), ETag.All, cancellationToken).ConfigureAwait(false);
+        foreach (string token in tokens)
+        {
+            await this.labels.DeleteEntityAsync(token, labelRowId, ETag.All, cancellationToken).ConfigureAwait(false);
+        }
+
         return true;
     }
 
@@ -286,6 +386,57 @@ public sealed class AzureStorageSourceStore : ISourceStore
     // empty string (an empty tag discriminator), which Table storage forbids as a key.
     private static string Enc(string value)
         => "~" + Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
+
+    // The label entry's row id: the entity's encoded (PartitionKey, RowKey) pair concatenated — Enc prefixes every
+    // token with '~' and Base64Url never emits one, so the concatenation is self-delimiting and RowKey-safe.
+    private static string LabelRowId(string name, string discriminator)
+        => PartitionKey(name) + RowKey(discriminator);
+
+    private static bool TryParseLabelRowId(string rowId, out (string Name, string Discriminator) parts)
+    {
+        parts = default;
+        int second = rowId.IndexOf('~', 1);
+        if (rowId.Length == 0 || rowId[0] != '~' || second < 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            parts = (
+                Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(1, second - 1))),
+                Encoding.UTF8.GetString(Base64Url.DecodeFromChars(rowId.AsSpan(second + 1))));
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    // Resolves the reach to the candidate label row ids the label table admits (§14.4). Null means "the index could
+    // not narrow this rule", which is a legitimate answer — the exact evaluation downstream still decides what the
+    // principal sees, so an un-narrowable rule costs throughput and never widens reach.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(
+                security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
+
+    // The entity's document bytes, or null when the entity is gone (a stale label entry, or a concurrent delete).
+    private async ValueTask<byte[]?> TryGetDocAsync(string name, string discriminator, CancellationToken cancellationToken)
+    {
+        try
+        {
+            TableEntity entity = (await this.sources.GetEntityAsync<TableEntity>(
+                PartitionKey(name), RowKey(discriminator), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
+            return entity.GetBinary(DocColumn);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return null;
+        }
+    }
 
     // Finds the single source named `name` the caller's reach for the verb admits, returning its bytes and its tag
     // discriminator (the row-key seed). A source outside reach is invisible (non-disclosing).

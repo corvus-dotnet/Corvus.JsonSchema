@@ -55,11 +55,14 @@ public sealed class AzureStorageWorkspaceWorkflowStoreConformanceTests : Workspa
         var tableService = new TableServiceClient(connectionString);
         await AzureStorageWorkspaceWorkflowStore.PrepareAsync(blobService, tableService);
 
-        // Drain the index table and the document container so each test starts empty.
-        TableClient table = tableService.GetTableClient(WorkspaceWorkflowsTable);
-        await foreach (TableEntity entity in table.QueryAsync<TableEntity>())
+        // Drain the index and label tables and the document container so each test starts empty.
+        foreach (string tableName in new[] { WorkspaceWorkflowsTable, "arazzoWorkspaceWorkflowLabels" })
         {
-            await table.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            TableClient table = tableService.GetTableClient(tableName);
+            await foreach (TableEntity entity in table.QueryAsync<TableEntity>())
+            {
+                await table.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            }
         }
 
         BlobContainerClient blobs = blobService.GetBlobContainerClient(WorkspaceWorkflowsContainer);

@@ -48,10 +48,13 @@ public sealed class AzureStorageSourceStoreConformanceTests : SourceStoreConform
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageSourceStore.PrepareAsync(tableService);
 
-        TableClient client = tableService.GetTableClient(SourcesTable);
-        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+        foreach (string table in new[] { SourcesTable, "arazzoSourceLabels" })
         {
-            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            TableClient client = tableService.GetTableClient(table);
+            await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+            {
+                await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            }
         }
 
         return await AzureStorageSourceStore.ConnectAsync(tableService, timeProvider);

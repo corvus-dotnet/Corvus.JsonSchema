@@ -166,9 +166,11 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   (ADR 0067): the SQL family, Cosmos and Mongo push their §14.2 reach down over queryable tag mirrors, Redis
   narrows its four management stores through per-store label sets maintained inside each store's atomic
   add/update/delete scripts — a re-tagging update re-points the entries in the same script as the document
-  write — and NATS narrows its four through per-store label buckets provisioned by each store's PrepareAsync,
-  the entries put before a row becomes visible and purged after it goes, in the §14.4 write ordering. The
-  management stores on Azure Storage are the remaining conversion.
+  write — NATS narrows its four through per-store label buckets provisioned by each store's PrepareAsync,
+  the entries put before a row becomes visible and purged after it goes, in the §14.4 write ordering, and
+  Azure Storage narrows its four through per-store companion label tables in the same shape as
+  `arazzolabels`, the candidates resolving to addressed (PartitionKey, RowKey) point reads. Every backend's
+  management stores now narrow, which completes the reach-enforcement rollout ADR 0067 records.
   InMemory streams and filters because it *is* the memory.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +

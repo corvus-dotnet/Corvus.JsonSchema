@@ -52,7 +52,7 @@ public sealed class AzureStorageEnvironmentStoreConformanceTests : EnvironmentSt
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageEnvironmentStore.PrepareAsync(tableService);
 
-        foreach (string table in new[] { EnvironmentsTable, TenancyTable })
+        foreach (string table in new[] { EnvironmentsTable, TenancyTable, "arazzoEnvironmentLabels" })
         {
             TableClient client = tableService.GetTableClient(table);
             await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
