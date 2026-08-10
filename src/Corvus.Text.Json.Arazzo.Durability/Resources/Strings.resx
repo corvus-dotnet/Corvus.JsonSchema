@@ -241,6 +241,9 @@
   <data name="VersionNotInCatalog" xml:space="preserve">
     <value>Version {0} of '{1}' is not in the catalog.</value>
   </data>
+  <data name="StoredContentHashDiverges" xml:space="preserve">
+    <value>Version {0} of '{1}' reports content hash '{2}' but its stored documents hash to '{3}'; refusing to load a version whose identity diverges from its content.</value>
+  </data>
   <data name="VersionNotRunnable" xml:space="preserve">
     <value>Version {0} of '{1}' is not runnable (no executor in the package).</value>
   </data>

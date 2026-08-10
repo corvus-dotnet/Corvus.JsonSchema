@@ -186,7 +186,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Resource exhaustion via YAML alias expansion | **Holds**. Both limits enforced at the single point every expansion passes through, with an unset value resolving to the documented default | The size bound is on expanded bytes, which is what the growth consumes; a document under the bound still costs what it declares | H6 |
 | Deserialization gadget chains | **Holds**. Tags collapse to a closed enum, no type-directed deserialization, output is always a JSON DOM | None. There is no gadget surface | |
 | Deep-nesting stack exhaustion | **Holds**. Canonical depth bound 64, non-overflow recursion, YAML depth 64 | None found | |
-| Identity and hash confusion between documents | **Partial**. Correct ordinal sort, duplicate-key rejection, surrogate handling, but hash and compiled bytes differ | Two documents share one version identity while being different compiler inputs | H13 |
+| Identity and hash confusion between documents | **Holds**. Correct ordinal sort, duplicate-key rejection, surrogate handling, and the stored/compiled bytes ARE the canonical form the hash covers (canonicalize-at-ingest) | Two submissions sharing a canonical form converge to one stored byte stream, so an identity cannot cover two compiler inputs | H13 |
 | Malformed package container | **Partial**. Size caps and charset checks, length guard defeated by overflow | Documented clean-failure contract is false, and the exception escapes the validate catch filter | H33 |
 | Unconstrained identifiers reaching downstream sinks | **Absent**. Zero pattern validators, and neither the metaschema pass nor the semantic analyzer runs on `POST /catalog` — both are reached only from the designer's validate and publish gate | An uploaded package is compiled and run without its document ever being schema-checked. Codegen escaping is therefore the only barrier, not a second one | H3, H16, H11 |
 
@@ -270,7 +270,7 @@ checkable rather than a by-product of what a review happened to look at.
 
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
-| Artifact substitution or tampering | **Holds**. Digest binding on load, optional detached signature against a trust store, full [native artifact attestation](UBIQUITOUSLANGUAGE.md#native-artifact-attestation) | The chain signs whatever the generator emitted, and the IL read path does not recompute the content hash | H13 |
+| Artifact substitution or tampering | **Holds**. Digest binding on load, optional detached signature against a trust store, full [native artifact attestation](UBIQUITOUSLANGUAGE.md#native-artifact-attestation), and the IL read path recomputes the content hash from the served documents and refuses a diverging stored column | The chain still signs whatever the generator emitted | H13 |
 | Build-time code execution | **Absent**. Container is root, unconfined, network-live, with a read-write host mount | `runtimeIdentifier` is interpolated raw into MSBuild XML with no pattern in the contract | H16 |
 | Dependency confusion at restore | **Absent**. No package source mapping, no lock file, private feed mixed with the public one | A poisoned first-party id yields a control-plane-signed binary | H16 |
 | Cross-tenant resource collision at deploy | **Absent**. Sanitised names are non-injective and update proceeds with no ownership check | One tenant's deploy replaces another's function code | H31 |
@@ -511,7 +511,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 | **Closed** |
 | H7 | High | DIV | Interim checkpoint protector diverges from the design it stands in for, run-id-only AAD, no key id, opt-in and silent | TB-4 | Open |
 | H12 | High | DIV | Reach pushdown is self-attested by a default interface implementation, and four of nine backends filter in process | TB-4 | **Closed** |
-| H13 | High | DIV | Content hash is over canonical bytes while raw bytes are stored and compiled | TB-1, TB-8 | Open |
+| H13 | High | DIV | Content hash is over canonical bytes while raw bytes are stored and compiled | TB-1, TB-8 | **Closed** |
 | H14 | High | GAP | No step budget, run deadline or production recursion cap, so the platform can be aimed at a third party | TB-7 | Open |
 | H15 | High | GAP | No egress control on three backends, and the default isolation model has no boundary at all | TB-6, TB-7 | Open |
 | H16 | High | GAP | Build container is root, unconfined and network-live, with an unpinned restore | TB-8 | Open |

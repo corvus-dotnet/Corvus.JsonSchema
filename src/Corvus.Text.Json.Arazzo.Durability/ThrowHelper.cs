@@ -291,6 +291,9 @@ internal static class ThrowHelper
     public static InvalidOperationException GetVersionNotInCatalogException(int versionNumber, string baseWorkflowId)
         => new(SR.Format(SR.VersionNotInCatalog, versionNumber, baseWorkflowId));
 
+    public static InvalidOperationException GetStoredContentHashDivergesException(string baseWorkflowId, int versionNumber, string storedHash, string recomputedHash)
+        => new(SR.Format(SR.StoredContentHashDiverges, versionNumber, baseWorkflowId, storedHash, recomputedHash));
+
     public static InvalidOperationException GetVersionNotRunnableException(int versionNumber, string baseWorkflowId)
         => new(SR.Format(SR.VersionNotRunnable, versionNumber, baseWorkflowId));
 

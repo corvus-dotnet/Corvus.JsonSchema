@@ -75,9 +75,19 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
             return cached.Workflow;
         }
 
-        // The version document is owned here only to read its hash (an owned copy, safe after dispose).
-        string hash = await this.artifacts.GetContentHashAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
+        // RECOMPUTE the content hash from the version's actual workflow + sources rather than trusting the stored
+        // column (H13): the hash is what binds the executor manifest to the version's content, so a column that
+        // matched a forged manifest would load an executor not derived from the stored documents. The AOT build path
+        // already recomputes (CatalogPackage.HashCanonical over the package); this seam is per-document, so the
+        // recompute assembles the same logical content document-wise. The stored column is still fetched and must
+        // agree — a divergence is a tampered or corrupted version and refuses the load.
+        string storedHash = await this.artifacts.GetContentHashAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false)
             ?? throw ThrowHelper.GetVersionNotInCatalogException(versionNumber, baseWorkflowId);
+        string hash = await this.RecomputeContentHashAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (!string.Equals(storedHash, hash, StringComparison.Ordinal))
+        {
+            throw ThrowHelper.GetStoredContentHashDivergesException(baseWorkflowId, versionNumber, storedHash, hash);
+        }
 
         ReadOnlyMemory<byte> assembly = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorDocumentName, cancellationToken).ConfigureAwait(false)
             ?? throw ThrowHelper.GetVersionNotRunnableException(versionNumber, baseWorkflowId);
@@ -89,5 +99,32 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         ReadOnlyMemory<byte> signature = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
 
         return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature).Workflow;
+    }
+
+    // Recomputes the version's content hash (ADR 0031: SHA-256 of the RFC 8785 canonical { workflow, sources })
+    // from the documents this seam actually serves: the workflow document names its sources, and each non-arazzo
+    // source description resolves to a source document of the same name — the same logical content
+    // CatalogPackage.HashCanonical reads from a whole package.
+    private async ValueTask<string> RecomputeContentHashAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte> workflow = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, CatalogPackage.WorkflowDocumentName, cancellationToken).ConfigureAwait(false)
+            ?? throw ThrowHelper.GetVersionNotInCatalogException(versionNumber, baseWorkflowId);
+
+        IReadOnlyList<CatalogSourceRef> sourceRefs;
+        using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(workflow))
+        {
+            sourceRefs = CatalogPackage.ReadSourceRefs(doc.RootElement);
+        }
+
+        var sources = new List<KeyValuePair<string, ReadOnlyMemory<byte>>>(sourceRefs.Count);
+        foreach (CatalogSourceRef sourceRef in sourceRefs)
+        {
+            if (await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, sourceRef.Name, cancellationToken).ConfigureAwait(false) is { } source)
+            {
+                sources.Add(new(sourceRef.Name, source));
+            }
+        }
+
+        return WorkflowPackage.ComputeContentHash(workflow, sources);
     }
 }

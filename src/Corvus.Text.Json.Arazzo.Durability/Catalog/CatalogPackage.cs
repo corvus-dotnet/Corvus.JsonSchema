@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.Canonicalization;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -121,20 +122,28 @@ public static partial class CatalogPackage
         // element) and the packed workflow bytes (its raw UTF-8, via JsonMarshal) — parsed once, with no separate
         // intermediate array and no re-parse for the hash.
         using ParsedJsonDocument<JsonElement> rewritten = RewriteWorkflowToDocument(contents.Workflow, workflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources);
-        ReadOnlyMemory<byte> rewrittenWorkflow = JsonMarshal.GetRawUtf8Value(rewritten.RootElement).Memory;
+
+        // The hash is over the RFC 8785 canonical form (ADR 0031), so the STORED and COMPILED bytes must be that
+        // same canonical form — hash and compile the same bytes (H13/ADR 0067's frozen-identity discipline applied
+        // to content): the workflow and every source are canonicalized here, once, and those bytes feed the schema
+        // provider, the executor compile and the packed archive alike. Two submissions sharing a canonical form now
+        // converge to one stored byte stream, so an identity can never cover two different compiler inputs.
+        ReadOnlyMemory<byte> rewrittenWorkflow = JsonCanonicalizer.Canonicalize(rewritten.RootElement);
+        IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> canonicalSources = CanonicalizeSources(contents.Sources);
 
         // OpenPooled returns the sources already sorted by name, so the hash skips its defensive re-sort and the workflow
-        // is the element we already parsed (no re-parse).
+        // is the element we already parsed (no re-parse). Canonicalization is idempotent, so this hash equals a
+        // recompute over the canonical bytes packed below.
         string hash = WorkflowPackage.ComputeContentHashPreSorted(rewritten.RootElement, contents.Sources);
 
         // The optional providers consume sources as byte[]; materialise once (only when one is configured — the common
-        // path has neither, so the pooled sources are never copied).
+        // path has neither, so the canonical sources are never copied).
         IReadOnlyList<KeyValuePair<string, byte[]>>? providerSources =
-            metadataProvider is not null || executorProvider is not null ? MaterializeSources(contents.Sources) : null;
+            metadataProvider is not null || executorProvider is not null ? MaterializeSources(canonicalSources) : null;
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources!) ?? default;
         string? executorBuildError = null;
         WorkflowExecutorArtifact? executor = executorProvider is null ? null : executorProvider.BuildExecutor(rewrittenWorkflow, providerSources!, hash, out executorBuildError);
-        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence);
+        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, canonicalSources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence);
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue, executorBuildError);
     }
@@ -346,6 +355,10 @@ public static partial class CatalogPackage
         return (title, description);
     }
 
+    // The workflow's source references, exposed for the loader path's content-hash recompute (H13): the hash's
+    // sources are the package entries the non-arazzo source descriptions name.
+    internal static IReadOnlyList<CatalogSourceRef> ReadSourceRefs(in JsonElement workflow) => ReadSources(workflow);
+
     private static IReadOnlyList<CatalogSourceRef> ReadSources(JsonElement workflow)
     {
         if (workflow.ValueKind != JsonValueKind.Object
@@ -380,11 +393,15 @@ public static partial class CatalogPackage
 
         using PooledPackageContents contents = WorkflowPackage.OpenPooled(packageZip);
         using ParsedJsonDocument<JsonElement> rewritten = RewriteWorkflowToDocument(contents.Workflow, workflowId, out string title, out string? description, out IReadOnlyList<CatalogSourceRef> sources);
-        ReadOnlyMemory<byte> rewrittenWorkflow = JsonMarshal.GetRawUtf8Value(rewritten.RootElement).Memory;
+
+        // Hash and compile the same bytes (H13): the canonical form the hash covers is what is compiled and packed —
+        // see Project for the full rationale.
+        ReadOnlyMemory<byte> rewrittenWorkflow = JsonCanonicalizer.Canonicalize(rewritten.RootElement);
+        IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> canonicalSources = CanonicalizeSources(contents.Sources);
         string hash = WorkflowPackage.ComputeContentHashPreSorted(rewritten.RootElement, contents.Sources);
 
         // The executor path always materialises the sources (the providers take byte[]); the same owned copies feed both.
-        IReadOnlyList<KeyValuePair<string, byte[]>> providerSources = MaterializeSources(contents.Sources);
+        IReadOnlyList<KeyValuePair<string, byte[]>> providerSources = MaterializeSources(canonicalSources);
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources) ?? default;
         WorkflowExecutorArtifact? executor = executorProvider.BuildExecutor(rewrittenWorkflow, providerSources, hash, out string? executorBuildError);
 
@@ -397,9 +414,29 @@ public static partial class CatalogPackage
             signature = signed.ToUtf8();
         }
 
-        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence, signature);
+        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, canonicalSources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence, signature);
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue, executorBuildError);
+    }
+
+    // Canonicalizes each source document (RFC 8785) into owned bytes, preserving the caller's (sorted) order, so the
+    // packed and compiled sources are the exact bytes the content hash covers (H13). Each parse is pooled and
+    // short-lived; the canonical arrays are owned by the projection.
+    private static IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> CanonicalizeSources(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources)
+    {
+        if (sources.Count == 0)
+        {
+            return sources;
+        }
+
+        var canonical = new KeyValuePair<string, ReadOnlyMemory<byte>>[sources.Count];
+        for (int i = 0; i < sources.Count; i++)
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(sources[i].Value);
+            canonical[i] = new(sources[i].Key, JsonCanonicalizer.Canonicalize(doc.RootElement));
+        }
+
+        return canonical;
     }
 
     // Copies pooled source views to owned arrays for the optional metadata/executor providers (which take byte[]); only
