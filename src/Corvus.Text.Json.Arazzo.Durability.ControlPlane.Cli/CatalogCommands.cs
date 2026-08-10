@@ -369,7 +369,7 @@ internal sealed class CatalogVerifyCommand : Command<CatalogVerifySettings>
         }
 
         CatalogPackageValidation validation = CatalogPackage.Validate(File.ReadAllBytes(settings.Package));
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
         console.MarkupLine($"[dim]base workflow id:[/] {Markup.Escape(validation.BaseWorkflowId ?? "—")}");
         console.MarkupLine($"[dim]canonical sha-256:[/] {Markup.Escape(validation.Hash)}");
         console.MarkupLine($"[dim]sources:[/] {validation.Sources.Count}");
@@ -715,7 +715,7 @@ internal sealed class CatalogSearchCommand : AsyncCommand<CatalogSearchSettings>
 
     internal static int RenderVersions(Models.CatalogPage page)
     {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
         var table = new Table().Border(TableBorder.Rounded);
         table.AddColumn("Workflow");
         table.AddColumn("Ver");

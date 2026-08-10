@@ -60,7 +60,7 @@ public readonly partial struct ClaimedRun
             RequiredBitForEnvironment | RequiredBitForLease | RequiredBitForRunId | RequiredBitForWorkflowId;
         private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LeaseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lease/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WorkflowIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/workflowId"u8, buffer, out written);
 
         private static void MatchEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -111,14 +111,14 @@ public readonly partial struct ClaimedRun
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.RunIdUtf8,
                     evaluationPath: RunIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)

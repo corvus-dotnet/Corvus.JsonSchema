@@ -24,13 +24,13 @@ public readonly struct CancelRunRequest : IApiRequest<CancelRunRequest>
     /// <summary>
     /// Gets the runId parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CancelRunRequest"/> struct.
     /// </summary>
     /// <param name="runId">The runId parameter.</param>
-    public CancelRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runId)
+    public CancelRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId runId)
     {
         this.RunId = runId;
     }

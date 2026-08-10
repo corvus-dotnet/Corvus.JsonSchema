@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run id. Bounded because it arrives from outside the control plane&#39;s boundary and reaches a store key.
+/// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

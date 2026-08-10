@@ -110,10 +110,10 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetRunResponse> GetRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetRunResponse> GetRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         GetRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -129,10 +129,10 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<DeleteRunResponse> DeleteRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<DeleteRunResponse> DeleteRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         DeleteRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -148,10 +148,10 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         GetRunStepsRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -168,12 +168,12 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, body, 30).RootElement : default;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         ResumeRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -211,7 +211,7 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -219,7 +219,7 @@ public sealed class ApiRunsClient : IApiRunsClient
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.CreateBuilder(workspace, in body, 30).RootElement : default;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         ResumeRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -257,11 +257,11 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.CreateBuilder(workspace, body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         CancelRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);
@@ -291,14 +291,14 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.CreateBuilder(workspace, in body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         CancelRunRequest request = new(RunIdValue);
 
         request.Validate(validationMode);

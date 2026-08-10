@@ -24,7 +24,7 @@ public readonly struct ResumeRunParams
     /// <summary>
     /// Gets the 'runId' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunId { get; init; }
 
     /// <summary>
     /// Gets the request body.

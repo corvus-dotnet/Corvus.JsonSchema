@@ -16,6 +16,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests;
 [TestClass]
 public sealed class RunnerApiWorkerTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string Run2 = "fedcba9876543210fedcba9876543210";
+    private const string Run3 = "00112233445566778899aabbccddeeff";
     private const string Version = Fixture.Version;
     private const string Channel = "orders.approved";
 
@@ -23,7 +26,7 @@ public sealed class RunnerApiWorkerTests
     public async Task A_run_whose_timer_is_due_is_resumed()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Timer(Fixture.T0 + TimeSpan.FromMinutes(5)));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0 + TimeSpan.FromMinutes(5)));
         var worker = new RunnerApiWorker(fixture.Client);
 
         // Not yet due. The server answers against its own clock, so this is the clock that matters.
@@ -39,13 +42,13 @@ public sealed class RunnerApiWorkerTests
         // There is no cutoff parameter to pass, which is the point: a runner with a fast clock, or one asking for
         // future work, gets the same answer as one with a correct clock.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Timer(Fixture.T0 + TimeSpan.FromHours(1)));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0 + TimeSpan.FromHours(1)));
         var worker = new RunnerApiWorker(fixture.Client);
 
         (await worker.ResumeDueTimersAsync([Version], Advance, default)).ShouldBe(0);
 
         // Still suspended and still waiting, rather than advanced early.
-        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId("run-1"), default);
+        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId(Run1), default);
         WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Suspended);
     }
 
@@ -54,7 +57,7 @@ public sealed class RunnerApiWorkerTests
     {
         // The store-backed worker had no such filter and would hand a runner a due run it could only fault.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Timer(Fixture.T0), workflowId: "something-else-v1");
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0), workflowId: "something-else-v1");
         var worker = new RunnerApiWorker(fixture.Client);
 
         fixture.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -66,8 +69,8 @@ public sealed class RunnerApiWorkerTests
     public async Task A_message_resumes_every_run_awaiting_it()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Message(Channel, null));
-        await fixture.SeedWaitingAsync("run-2", WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run2, WorkflowWait.Message(Channel, null));
         var worker = new RunnerApiWorker(fixture.Client);
         using ParsedJsonDocument<JsonElement> payload = NewPayload();
 
@@ -83,7 +86,7 @@ public sealed class RunnerApiWorkerTests
         // across every backend. A message carrying no correlation reaches a run waiting for a particular one, and a
         // run waiting for none is reached by any message. Only two present-and-different correlations fail to match.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Message(Channel, "order-42"));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, "order-42"));
         var worker = new RunnerApiWorker(fixture.Client);
         using ParsedJsonDocument<JsonElement> payload = NewPayload();
 
@@ -93,7 +96,7 @@ public sealed class RunnerApiWorkerTests
 
         // A run awaiting no particular correlation is reached by a correlated message. run-1 is not, because two
         // present correlations that differ is the one combination that does not match.
-        await fixture.SeedWaitingAsync("run-2", WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run2, WorkflowWait.Message(Channel, null));
         (await worker.DeliverMessageAsync(Channel, "anything", payload.RootElement, [Version], Advance, default)).ShouldBe(1);
     }
 
@@ -101,7 +104,7 @@ public sealed class RunnerApiWorkerTests
     public async Task The_delivered_message_reaches_the_run()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
         var worker = new RunnerApiWorker(fixture.Client);
         using ParsedJsonDocument<JsonElement> payload = NewPayload();
 
@@ -120,7 +123,7 @@ public sealed class RunnerApiWorkerTests
     public async Task A_sweep_leases_what_it_claims_and_gives_it_back()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
         var worker = new RunnerApiWorker(fixture.Client);
         using ParsedJsonDocument<JsonElement> payload = NewPayload();
 
@@ -140,9 +143,9 @@ public sealed class RunnerApiWorkerTests
     public async Task A_sweep_claims_no_more_than_it_is_allowed()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedWaitingAsync("run-1", WorkflowWait.Message(Channel, null));
-        await fixture.SeedWaitingAsync("run-2", WorkflowWait.Message(Channel, null));
-        await fixture.SeedWaitingAsync("run-3", WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run2, WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run3, WorkflowWait.Message(Channel, null));
         var worker = new RunnerApiWorker(fixture.Client) { MaximumRunsPerSweep = 2 };
         using ParsedJsonDocument<JsonElement> payload = NewPayload();
 
@@ -158,7 +161,7 @@ public sealed class RunnerApiWorkerTests
         // The wait index says a message matched, but the run may have been advanced since. Re-entering it would take
         // it back to a step it has already left, so a run that is not Suspended is refused under the lease.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Completed);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Completed);
         var worker = new RunnerApiWorker(fixture.Client);
 
         (await worker.DeliverMessageAsync(Channel, null, default, [Version], (_, _) => throw new InvalidOperationException("a completed run must never be resumed"), default)).ShouldBe(0);

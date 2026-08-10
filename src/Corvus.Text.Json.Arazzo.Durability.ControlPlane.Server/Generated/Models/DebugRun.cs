@@ -186,12 +186,15 @@ public readonly partial struct DebugRun
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
+    /// <para>
+    /// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DebugRunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DebugRunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId value))
             {
                 return value;
             }

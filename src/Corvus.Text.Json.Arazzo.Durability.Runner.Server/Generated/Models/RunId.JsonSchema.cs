@@ -14,6 +14,7 @@ using global::System.Diagnostics.CodeAnalysis;
 using global::System.Buffers;
 using global::System.Buffers.Text;
 using global::System.Runtime.CompilerServices;
+using global::System.Text.RegularExpressions;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
@@ -23,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run id. Bounded because it arrives from outside the control plane&#39;s boundary and reaches a store key.
+/// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -32,6 +33,11 @@ public readonly partial struct RunId
 {
     public static partial class JsonSchema
     {
+        /// <summary>
+        /// A regular expression for the <c>pattern</c> keyword.
+        /// </summary>
+        public static readonly Regex Pattern = CreatePattern();
+
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
@@ -74,20 +80,28 @@ public readonly partial struct RunId
                 }
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "maxLength"u8);
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "minLength"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "pattern"u8);
             }
             else
             {
                 using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
                 int stringLength = JsonElementHelpers.CountRunes(unescapedUtf8JsonString.Span);
-                JsonSchemaEvaluation.MatchLengthLessThanOrEquals(256,stringLength, "maxLength"u8, ref context);
+                JsonSchemaEvaluation.MatchLengthLessThanOrEquals(32,stringLength, "maxLength"u8, ref context);
 
                 if (!context.HasCollector && !context.IsMatch)
                 {
                     return;
                 }
 
-                JsonSchemaEvaluation.MatchLengthGreaterThanOrEquals(1,stringLength, "minLength"u8, ref context);
+                JsonSchemaEvaluation.MatchLengthGreaterThanOrEquals(32,stringLength, "minLength"u8, ref context);
+
+                if (!context.HasCollector && !context.IsMatch)
+                {
+                    return;
+                }
+
+                JsonSchemaEvaluation.MatchRegularExpression(unescapedUtf8JsonString.Span, Pattern,"^[0-9a-f]{32}$", "pattern"u8, ref context);
             }
         }
 
@@ -114,6 +128,13 @@ public readonly partial struct RunId
                 context.Dispose();
             }
         }
+
+#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
+        [GeneratedRegex("^[0-9a-f]{32}$")]
+        private static partial Regex CreatePattern();
+#else
+        private static Regex CreatePattern() => new("^[0-9a-f]{32}$", RegexOptions.Compiled);
+#endif
 
         /// <summary>
         /// Push the current context as a child context for schema evaluation.

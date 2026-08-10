@@ -226,7 +226,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetRunResponse> GetRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetRunResponse> GetRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Delete a run
@@ -236,7 +236,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<DeleteRunResponse> DeleteRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DeleteRunResponse> DeleteRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a run's recorded step outputs
@@ -246,7 +246,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Resume a faulted run
@@ -257,7 +257,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ResumeRunResponse> ResumeRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Resume a faulted run
@@ -268,7 +268,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<ResumeRunResponse> ResumeRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResumeRequest.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -283,7 +283,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Cancel a run
@@ -294,7 +294,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<CancelRunResponse> CancelRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif

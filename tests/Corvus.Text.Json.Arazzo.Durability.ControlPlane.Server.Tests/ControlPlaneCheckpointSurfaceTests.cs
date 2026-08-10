@@ -29,8 +29,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ControlPlaneCheckpointSurfaceTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string Run2 = "fedcba9876543210fedcba9876543210";
     private const string SeqHeader = "X-Arazzo-Checkpoint-Seq";
-    private static readonly WorkflowRunId Run = new("run-1");
+    private static readonly WorkflowRunId Run = new(Run1);
     private static readonly byte[] Secret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
@@ -58,7 +60,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
     public async Task A_token_minted_for_another_run_does_not_authorise_this_one()
     {
         await using Host host = await Host.StartAsync(Secret);
-        string other = CheckpointToken.Issue(Secret, "run-2", DateTimeOffset.UtcNow.AddMinutes(10));
+        string other = CheckpointToken.Issue(Secret, Run2, DateTimeOffset.UtcNow.AddMinutes(10));
 
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(), sequence: 1, token: other);
 

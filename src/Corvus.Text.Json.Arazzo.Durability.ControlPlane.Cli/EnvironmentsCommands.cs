@@ -124,7 +124,7 @@ internal sealed class EnvironmentListCommand : AsyncCommand<EnvironmentListSetti
                 return Output.Print($"{{\"environments\":[{string.Join(",", jsonItems)}]}}");
             }
 
-            IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+            IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
             console.Write(table);
             return 0;
         }

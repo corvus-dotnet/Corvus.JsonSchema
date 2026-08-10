@@ -50,7 +50,7 @@ public static class WorkflowCheckpointEndpoints
         {
             if (RunId(context) is not { } id)
             {
-                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The required parameter 'runId' is missing.").ConfigureAwait(false);
+                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The 'runId' parameter must be exactly 32 lowercase hexadecimal characters (ADR 0065 \u00a79).").ConfigureAwait(false);
                 return;
             }
 
@@ -81,7 +81,7 @@ public static class WorkflowCheckpointEndpoints
         {
             if (RunId(context) is not { } id)
             {
-                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The required parameter 'runId' is missing.").ConfigureAwait(false);
+                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The 'runId' parameter must be exactly 32 lowercase hexadecimal characters (ADR 0065 \u00a79).").ConfigureAwait(false);
                 return;
             }
 
@@ -185,9 +185,11 @@ public static class WorkflowCheckpointEndpoints
         return null;
     }
 
+    // The grammar gate (ADR 0065 §9): a non-conforming id is refused here, before the token is honoured and before
+    // any store touch, exactly as the contract-generated surfaces refuse it through the RunId schema's pattern.
     private static WorkflowRunId? RunId(HttpContext context)
     {
-        if (context.Request.RouteValues.TryGetValue("runId", out object? raw) && raw is string value && value.Length > 0)
+        if (context.Request.RouteValues.TryGetValue("runId", out object? raw) && raw is string value && WorkflowRunId.IsWellFormed(value))
         {
             return new WorkflowRunId(value);
         }

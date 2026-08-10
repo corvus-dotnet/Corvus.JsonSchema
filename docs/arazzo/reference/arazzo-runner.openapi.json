@@ -729,9 +729,10 @@
     "schemas": {
       "RunId": {
         "type": "string",
-        "description": "A run id. Bounded because it arrives from outside the control plane's boundary and reaches a store key.",
-        "minLength": 1,
-        "maxLength": 256
+        "description": "A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 §9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend's key constraint by construction, and bounds the covert-channel width to the id's own entropy.",
+        "pattern": "^[0-9a-f]{32}$",
+        "minLength": 32,
+        "maxLength": 32
       },
       "LeaseToken": {
         "type": "string",
@@ -783,8 +784,7 @@
         ],
         "properties": {
           "runId": {
-            "type": "string",
-            "description": "The claimed run's id."
+            "$ref": "#/components/schemas/RunId"
           },
           "workflowId": {
             "type": "string",

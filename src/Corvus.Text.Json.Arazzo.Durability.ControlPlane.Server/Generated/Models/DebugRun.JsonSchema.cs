@@ -59,7 +59,7 @@ public readonly partial struct DebugRun
         private const uint RequiredBitMask0 =
             RequiredBitForDebugRunId | RequiredBitForEnvironment | RequiredBitForStatus | RequiredBitForWorkflowId;
         private static readonly JsonSchemaPathProvider CursorSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/cursor"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider DebugRunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/debugRunId"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider DebugRunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/debugRunId/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DocumentEtagSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/documentEtag"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StartedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/startedAt"u8, buffer, out written);
@@ -88,14 +88,14 @@ public readonly partial struct DebugRun
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.DebugRunIdUtf8,
                     evaluationPath: DebugRunIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)

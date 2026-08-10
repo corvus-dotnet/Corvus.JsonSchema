@@ -29,7 +29,7 @@ public readonly struct InjectDebugRunMessageParams
     /// <summary>
     /// Gets the 'debugRunId' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunId { get; init; }
 
     /// <summary>
     /// Gets the request body.

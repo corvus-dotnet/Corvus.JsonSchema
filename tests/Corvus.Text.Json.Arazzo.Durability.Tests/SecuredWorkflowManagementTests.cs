@@ -332,6 +332,22 @@ public sealed class SecuredWorkflowManagementTests
         telemetry.ActivitiesNamed("workflow.delete").ShouldHaveSingleItem();
     }
 
+    [TestMethod]
+    public void The_idempotent_run_id_is_inside_the_run_id_grammar()
+    {
+        // ADR 0065 §9: a run id is exactly 32 lowercase hex characters, and every ingress validates that grammar —
+        // an idempotent id outside it names a run no ingress will ever accept back.
+        string id = SecuredWorkflowManagement.IdempotentRunId("wf", "order-42").Value;
+
+        System.Text.RegularExpressions.Regex.IsMatch(id, "^[0-9a-f]{32}$").ShouldBeTrue();
+
+        // Still a deterministic derivation: the same key re-derives the same id (the schedule path's offline
+        // addressing, #896) and a different key derives a different one.
+        SecuredWorkflowManagement.IdempotentRunId("wf", "order-42").Value.ShouldBe(id);
+        SecuredWorkflowManagement.IdempotentRunId("wf", "order-43").Value.ShouldNotBe(id);
+        SecuredWorkflowManagement.IdempotentRunId("wf2", "order-42").Value.ShouldNotBe(id);
+    }
+
     private static async ValueTask<WorkflowRunResultKind> CompleteAndReport(WorkflowRun run, CancellationToken ct)
     {
         await run.CompleteAsync(default, ct);

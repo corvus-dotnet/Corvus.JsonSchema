@@ -1887,10 +1887,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
-                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(RunIdRaw, workspace);
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -1966,10 +1966,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
-                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(RunIdRaw, workspace);
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -2045,10 +2045,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
-                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(RunIdRaw, workspace);
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -2125,10 +2125,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
-                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(RunIdRaw, workspace);
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -2233,10 +2233,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CancelRequest>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
-                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(RunIdRaw, workspace);
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -9908,10 +9908,10 @@ public static class ApiEndpointRegistration
                 {
                     IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
                 {
-                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(DebugRunIdRaw, workspace);
                 }
 
                 if (IdValue.IsUndefined())
@@ -10009,10 +10009,10 @@ public static class ApiEndpointRegistration
                 {
                     IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
                 {
-                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(DebugRunIdRaw, workspace);
                 }
 
                 if (IdValue.IsUndefined())
@@ -10111,10 +10111,10 @@ public static class ApiEndpointRegistration
                 {
                     IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
                 {
-                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(DebugRunIdRaw, workspace);
                 }
 
                 if (IdValue.IsUndefined())
@@ -10240,10 +10240,10 @@ public static class ApiEndpointRegistration
                 {
                     IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
                 {
-                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(DebugRunIdRaw, workspace);
                 }
 
                 if (IdValue.IsUndefined())
@@ -10342,10 +10342,10 @@ public static class ApiEndpointRegistration
                 {
                     IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId DebugRunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
                 {
-                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId>(DebugRunIdRaw, workspace);
                 }
 
                 if (IdValue.IsUndefined())

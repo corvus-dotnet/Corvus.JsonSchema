@@ -208,7 +208,7 @@ internal sealed class CredentialListCommand : AsyncCommand<CredentialListSetting
                 return Output.Print($"{{\"credentials\":[{string.Join(",", jsonItems)}]}}");
             }
 
-            IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+            IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
             console.Write(table);
             if (expiring > 0 || expired > 0)
             {

@@ -39,8 +39,25 @@ internal static class OperatorCommandHelpers
             return Output.Print($"{{\"{envelopeName}\":[{string.Join(",", jsonItems!)}]}}");
         }
 
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = CreateConsole();
         console.Write(table);
         return 0;
+    }
+
+    /// <summary>Creates the console the table renderers write to, bound explicitly to the current
+    /// <see cref="Console.Out"/> so output stays correct under redirection and capture.</summary>
+    /// <remarks>Redirected output has no real terminal, and Spectre falls back to 80 columns there, which squeezes
+    /// identity columns until they wrap or truncate — a run id is 32 characters (ADR 0065 §9) and an operator must be
+    /// able to copy it whole from a piped listing. With no terminal to fit, the table sizes to its content.</remarks>
+    /// <returns>The console to render to.</returns>
+    public static IAnsiConsole CreateConsole()
+    {
+        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        if (Console.IsOutputRedirected)
+        {
+            console.Profile.Width = 10_000;
+        }
+
+        return console;
     }
 }

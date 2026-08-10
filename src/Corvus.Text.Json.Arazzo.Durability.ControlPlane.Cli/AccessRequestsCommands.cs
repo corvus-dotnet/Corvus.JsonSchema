@@ -280,7 +280,7 @@ internal static class AccessRequestCommandHelpers
 
     public static int RenderTable(Models.AccessRequestList list, string? workflow)
     {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
 
         var table = new Table().Border(TableBorder.Rounded);
         table.Title = new TableTitle(Markup.Escape(workflow is { } w ? $"access requests for {w}" : "my access requests"));

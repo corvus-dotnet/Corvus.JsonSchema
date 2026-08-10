@@ -260,7 +260,7 @@ internal static class SchedulesCommandHelpers
             return Output.Print($"{{\"schedules\":[{string.Join(",", jsonItems!)}]}}");
         }
 
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
         console.Write(table);
         return 0;
     }

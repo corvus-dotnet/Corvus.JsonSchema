@@ -46,7 +46,7 @@ public readonly partial struct WorkflowRunSteps
 
         private const uint RequiredBitMask0 =
             RequiredBitForRunId | RequiredBitForSteps;
-        private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StepsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/steps"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TruncatedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/truncated"u8, buffer, out written);
 
@@ -54,14 +54,14 @@ public readonly partial struct WorkflowRunSteps
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.RunIdUtf8,
                     evaluationPath: RunIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)

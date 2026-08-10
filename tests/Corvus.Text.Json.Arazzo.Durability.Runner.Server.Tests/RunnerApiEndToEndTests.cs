@@ -33,6 +33,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests;
 public sealed class RunnerApiEndToEndTests
 {
     private const string Runner = "runner-a";
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string AbsentRun = "badcafebadcafebadcafebadcafe0000";
     private const string Peer = "runner-b";
     private const string Production = "production";
     private const string Version = "adopt-v3";
@@ -45,13 +47,13 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_claim_answers_the_run_its_workflow_environment_and_lease()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
 
         using HttpResponseMessage response = await host.ClaimAsync(Runner);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         using Stj.JsonDocument body = Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        body.RootElement.GetProperty("runId").GetString().ShouldBe("run-1");
+        body.RootElement.GetProperty("runId").GetString().ShouldBe(Run1);
         body.RootElement.GetProperty("workflowId").GetString().ShouldBe(Version);
         body.RootElement.GetProperty("environment").GetString().ShouldBe(Production);
 
@@ -75,17 +77,17 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_checkpoint_round_trips_under_the_granted_lease()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, Run1, lease);
         loaded.StatusCode.ShouldBe(HttpStatusCode.OK);
         loaded.Content.Headers.ContentType!.MediaType.ShouldBe("application/octet-stream");
         SequenceOf(loaded).ShouldBe(1);
         (await loaded.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(0);
 
         // The store has persisted sequence 1, so the next save must propose exactly 2.
-        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, "run-1", lease, Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2), 2);
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2), 2);
         saved.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         SequenceOf(saved).ShouldBe(2);
     }
@@ -94,14 +96,14 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_superseded_save_is_refused_and_names_the_sequence_it_would_accept()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
-        byte[] checkpoint = Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2);
-        (await host.SaveCheckpointAsync(Runner, "run-1", lease, checkpoint, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
+        (await host.SaveCheckpointAsync(Runner, Run1, lease, checkpoint, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         // A byte-identical resend of a sequence already persisted. Reporting it as durable would be indistinguishable
         // from a write that landed, which is the one failure this operation exists to make impossible.
-        using HttpResponseMessage resent = await host.SaveCheckpointAsync(Runner, "run-1", lease, checkpoint, 2);
+        using HttpResponseMessage resent = await host.SaveCheckpointAsync(Runner, Run1, lease, checkpoint, 2);
 
         resent.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         resent.Content.Headers.ContentType!.MediaType.ShouldBe("application/problem+json");
@@ -114,13 +116,13 @@ public sealed class RunnerApiEndToEndTests
     public async Task An_operation_on_a_run_the_principal_does_not_hold_is_refused_as_a_lost_lease()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
         // A peer presenting the token, and anyone naming a run that does not exist, get the same answer: the surface
         // cannot be used to learn which runs another tenant holds.
-        using HttpResponseMessage peersRun = await host.LoadCheckpointAsync(Peer, "run-1", lease);
-        using HttpResponseMessage noSuchRun = await host.LoadCheckpointAsync(Peer, "never", lease);
+        using HttpResponseMessage peersRun = await host.LoadCheckpointAsync(Peer, Run1, lease);
+        using HttpResponseMessage noSuchRun = await host.LoadCheckpointAsync(Peer, AbsentRun, lease);
 
         peersRun.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         noSuchRun.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -132,14 +134,14 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_renewal_extends_the_lease_and_keeps_its_epoch()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
 
         using HttpResponseMessage claim = await host.ClaimAsync(Runner);
         using Stj.JsonDocument claimed = Stj.JsonDocument.Parse(await claim.Content.ReadAsStringAsync());
         Stj.JsonElement granted = claimed.RootElement.GetProperty("lease");
         string lease = granted.GetProperty("token").GetString()!;
 
-        using HttpResponseMessage renewal = await host.RenewLeaseAsync(Runner, "run-1", lease, 300);
+        using HttpResponseMessage renewal = await host.RenewLeaseAsync(Runner, Run1, lease, 300);
 
         renewal.StatusCode.ShouldBe(HttpStatusCode.OK);
         using Stj.JsonDocument renewed = Stj.JsonDocument.Parse(await renewal.Content.ReadAsStringAsync());
@@ -152,12 +154,12 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_renewal_of_a_lease_that_is_not_current_is_refused()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
         host.Clock.Advance(TimeSpan.FromMinutes(2));
 
-        using HttpResponseMessage renewal = await host.RenewLeaseAsync(Runner, "run-1", lease, 300);
+        using HttpResponseMessage renewal = await host.RenewLeaseAsync(Runner, Run1, lease, 300);
 
         renewal.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -166,10 +168,10 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_release_hands_the_run_back_for_the_next_claim()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        using HttpResponseMessage released = await host.ReleaseLeaseAsync(Runner, "run-1", lease);
+        using HttpResponseMessage released = await host.ReleaseLeaseAsync(Runner, Run1, lease);
         released.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         // Another runner takes it immediately rather than waiting out the lease.
@@ -181,29 +183,29 @@ public sealed class RunnerApiEndToEndTests
     public async Task A_release_by_a_principal_that_does_not_hold_the_lease_changes_nothing()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
         // The same answer, because the postcondition holds for the peer either way — and the holder keeps its run.
-        using HttpResponseMessage released = await host.ReleaseLeaseAsync(Peer, "run-1", lease);
+        using HttpResponseMessage released = await host.ReleaseLeaseAsync(Peer, Run1, lease);
         released.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-        (await host.LoadCheckpointAsync(Runner, "run-1", lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.LoadCheckpointAsync(Runner, Run1, lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [TestMethod]
     public async Task A_body_that_is_not_a_checkpoint_is_refused_before_the_store_is_touched()
     {
         await using Host host = await Host.StartAsync();
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, "run-1", lease, [1, 2, 3], 2);
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, [1, 2, 3], 2);
 
         saved.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         // The stored row is untouched: still the seeded checkpoint at sequence 1.
-        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, Run1, lease);
         SequenceOf(loaded).ShouldBe(1);
     }
 
@@ -212,15 +214,15 @@ public sealed class RunnerApiEndToEndTests
     {
         // The cap bounds what one request can make the server rent, so a body over it is refused rather than buffered.
         await using Host host = await Host.StartAsync(new RunnerApiOptions { MaximumCheckpointBytes = 64 });
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, "run-1", lease, new byte[4096], 2);
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, new byte[4096], 2);
 
         saved.StatusCode.ShouldBe(HttpStatusCode.RequestEntityTooLarge);
 
         // Nothing was written: the stored row is still the seeded checkpoint at sequence 1.
-        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, Run1, lease);
         SequenceOf(loaded).ShouldBe(1);
     }
 

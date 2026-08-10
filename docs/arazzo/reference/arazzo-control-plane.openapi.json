@@ -2677,7 +2677,7 @@
         "security": [{"bearer": ["workspace:read"]}],
         "parameters": [
           {"$ref": "#/components/parameters/WorkingCopyIdPath"},
-          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RunId"}}
         ],
         "responses": {
           "200": {"description": "The debug run.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
@@ -2691,7 +2691,7 @@
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
         "parameters": [
           {"$ref": "#/components/parameters/WorkingCopyIdPath"},
-          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RunId"}}
         ],
         "responses": {
           "204": {"description": "The debug run was deleted (or did not exist)."},
@@ -2707,7 +2707,7 @@
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
         "parameters": [
           {"$ref": "#/components/parameters/WorkingCopyIdPath"},
-          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RunId"}}
         ],
         "requestBody": {
           "required": false,
@@ -2728,7 +2728,7 @@
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
         "parameters": [
           {"$ref": "#/components/parameters/WorkingCopyIdPath"},
-          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RunId"}}
         ],
         "responses": {
           "200": {"description": "The debug run, cancelled.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
@@ -2744,7 +2744,7 @@
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
         "parameters": [
           {"$ref": "#/components/parameters/WorkingCopyIdPath"},
-          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RunId"}}
         ],
         "requestBody": {
           "required": true,
@@ -5239,7 +5239,7 @@
         "in": "path",
         "required": true,
         "description": "The run id.",
-        "schema": { "type": "string" }
+        "schema": { "$ref": "#/components/schemas/RunId" }
       },
       "ScheduleIdPath": {
         "name": "scheduleId",
@@ -5922,11 +5922,18 @@
         },
         "required": ["stepId", "attempt", "error", "at"]
       },
+      "RunId": {
+        "type": "string",
+        "description": "A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 §9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend's key constraint by construction, and bounds the covert-channel width to the id's own entropy. Debug runs are runs, so a debug-run id carries the same grammar.",
+        "pattern": "^[0-9a-f]{32}$",
+        "minLength": 32,
+        "maxLength": 32
+      },
       "WorkflowRunSummary": {
         "type": "object",
         "description": "A run as projected into the visibility index (one entry in a page).",
         "properties": {
-          "id": { "type": "string" },
+          "id": { "$ref": "#/components/schemas/RunId" },
           "workflowId": { "type": "string" },
           "environment": { "type": "string", "description": "The deployment environment the run is pinned to (design §5.5): its credential set, and the runners it can be dispatched to." },
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
@@ -5960,7 +5967,7 @@
         "type": "object",
         "description": "A run's recorded step journal, projected from its authoritative checkpoint: each step the run executed, in execution order, with its outcome, attempt, time window, and recorded outputs (ADR 0050). A run whose checkpoint predates the journal reports only the steps that recorded outputs, with no status or timing (nothing is invented).",
         "properties": {
-          "runId": { "type": "string" },
+          "runId": { "$ref": "#/components/schemas/RunId" },
           "steps": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/WorkflowRunStepRecord" },
@@ -5988,7 +5995,7 @@
         "type": "object",
         "description": "A run's management detail, read from its authoritative checkpoint.",
         "properties": {
-          "id": { "type": "string" },
+          "id": { "$ref": "#/components/schemas/RunId" },
           "workflowId": { "type": "string" },
           "environment": { "type": "string", "description": "The deployment environment the run is pinned to (design §5.5): its credential set, and the runners it can be dispatched to." },
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
@@ -6126,7 +6133,7 @@
         "type": "object",
         "description": "Acknowledges a triggered run that will execute asynchronously and durably on a hosting runner.",
         "properties": {
-          "runId": { "type": "string", "description": "The id of the created run; poll the runs endpoints to observe its progress." },
+          "runId": { "$ref": "#/components/schemas/RunId" },
           "workflowId": { "type": "string", "description": "The versioned workflow id the run executes." },
           "status": { "type": "string", "description": "The run's initial status (always 'Pending')." }
         },
@@ -7699,7 +7706,7 @@
       "description": "A debug run: a durable, forward-only run of a working-copy draft in a development-class environment (workflow-designer design \u00a718). The trace grows as the run advances and uses the same shape simulation emits \u2014 capture-to-scenario replays it offline with full time travel.",
       "required": ["debugRunId", "workflowId", "environment", "status"],
       "properties": {
-        "debugRunId": { "type": "string" },
+        "debugRunId": { "$ref": "#/components/schemas/RunId" },
         "workflowId": { "type": "string" },
         "environment": { "type": "string" },
         "status": { "type": "string", "enum": ["running", "paused", "suspended", "completed", "faulted", "cancelled"], "description": "paused = at a pause point (the dock's controls apply); suspended = a real wait (message/time); the rest are terminal except running." },

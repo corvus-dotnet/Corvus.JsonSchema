@@ -273,14 +273,14 @@ public readonly partial struct WorkflowRunAccepted
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The id of the created run; poll the runs endpoints to observe its progress.
+        /// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable RunId
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Mutable RunId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Mutable value))
                 {
                     return value;
                 }
@@ -380,7 +380,7 @@ public readonly partial struct WorkflowRunAccepted
         /// Set the <c>runId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRunId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetRunId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source value)
         {
             CheckValidInstance();
 
@@ -799,7 +799,7 @@ public readonly partial struct WorkflowRunAccepted
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
 
@@ -816,7 +816,7 @@ public readonly partial struct WorkflowRunAccepted
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunAccepted.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1094,7 +1094,7 @@ public readonly partial struct WorkflowRunAccepted
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId)
         {
@@ -1107,7 +1107,7 @@ public readonly partial struct WorkflowRunAccepted
         /// Creates an instance of a <see cref="WorkflowRunAccepted"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId)
         {
@@ -1213,7 +1213,7 @@ public readonly partial struct WorkflowRunAccepted
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1257,7 +1257,7 @@ public readonly partial struct WorkflowRunAccepted
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId)
     {
         return new Source(runId, status, workflowId);
     }
@@ -1360,7 +1360,7 @@ public readonly partial struct WorkflowRunAccepted
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1472,7 +1472,7 @@ public readonly partial struct WorkflowRunAccepted
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<WorkflowRunAccepted> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static ParsedJsonDocument<WorkflowRunAccepted> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try

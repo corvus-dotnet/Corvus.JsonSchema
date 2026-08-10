@@ -30,28 +30,39 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ControlPlaneRowSecurityTests
 {
+    private const string RunAcme = "acce0000000000000000000000000001";
+    private const string RunGlobex = "0b1e0000000000000000000000000001";
+    private const string RunUntagged = "0000000000000000000000000000000f";
+    private const string DoneAcme = "acce0000000000000000000000000002";
+    private const string DoneGlobex = "0b1e0000000000000000000000000002";
+    private const string RunKyc = "0c0c0000000000000000000000000001";
+    private const string RunOk = "0c0c0000000000000000000000000002";
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string AuditFull = "a0d17f00000000000000000000000001";
+    private const string AuditRedacted = "a0d17f00000000000000000000000002";
+    private const string AuditRefused = "a0d17f00000000000000000000000003";
     private static readonly DateTimeOffset T0 = new(2026, 6, 10, 12, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
     public async Task Listing_runs_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
-        await SeedRunAsync(host.Store, "run-acme", host.Clock, new SecurityTag("tenant", "acme"));
-        await SeedRunAsync(host.Store, "run-globex", host.Clock, new SecurityTag("tenant", "globex"));
-        await SeedRunAsync(host.Store, "run-untagged", host.Clock);
+        await SeedRunAsync(host.Store, RunAcme, host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunAsync(host.Store, RunGlobex, host.Clock, new SecurityTag("tenant", "globex"));
+        await SeedRunAsync(host.Store, RunUntagged, host.Clock);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs", tenant: "acme"));
 
         doc.RootElement.GetProperty("runs").EnumerateArray().Select(r => r.GetProperty("id").GetString())
-            .ShouldBe(["run-acme"]);
+            .ShouldBe([RunAcme]);
     }
 
     [TestMethod]
     public async Task An_operator_with_no_tenant_claim_sees_every_run()
     {
         await using Scoped host = await StartAsync();
-        await SeedRunAsync(host.Store, "run-acme", host.Clock, new SecurityTag("tenant", "acme"));
-        await SeedRunAsync(host.Store, "run-globex", host.Clock, new SecurityTag("tenant", "globex"));
+        await SeedRunAsync(host.Store, RunAcme, host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunAsync(host.Store, RunGlobex, host.Clock, new SecurityTag("tenant", "globex"));
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs", tenant: null));
 
@@ -62,27 +73,27 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task A_run_in_another_tenant_is_reported_as_not_found()
     {
         await using Scoped host = await StartAsync();
-        await SeedRunAsync(host.Store, "run-globex", host.Clock, new SecurityTag("tenant", "globex"));
+        await SeedRunAsync(host.Store, RunGlobex, host.Clock, new SecurityTag("tenant", "globex"));
 
         // acme may not see globex's run: it is a 404 (non-disclosing), not a 403.
-        (await host.GetAsync("/runs/run-globex", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetAsync($"/runs/{RunGlobex}", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // …but the operator (and the owning tenant) can.
-        (await host.GetAsync("/runs/run-globex", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.GetAsync("/runs/run-globex", tenant: "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.GetAsync($"/runs/{RunGlobex}", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.GetAsync($"/runs/{RunGlobex}", tenant: "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [TestMethod]
     public async Task Cancelling_another_tenants_run_is_not_found_and_does_not_mutate_it()
     {
         await using Scoped host = await StartAsync();
-        await FaultRunAsync(host.Store, "run-globex", host.Clock, new SecurityTag("tenant", "globex"));
+        await FaultRunAsync(host.Store, RunGlobex, host.Clock, new SecurityTag("tenant", "globex"));
 
-        HttpResponseMessage cancelled = await host.PostAsync("/runs/run-globex/cancel", """{"reason":"nope"}""", tenant: "acme");
+        HttpResponseMessage cancelled = await host.PostAsync($"/runs/{RunGlobex}/cancel", """{"reason":"nope"}""", tenant: "acme");
 
         // The gate is applied before mutating, so the run is untouched.
         cancelled.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-globex", tenant: null));
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{RunGlobex}", tenant: null));
         doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
     }
 
@@ -90,8 +101,8 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task Purge_reaps_only_the_principals_tenant_runs()
     {
         await using Scoped host = await StartAsync();
-        await CompleteRunAsync(host.Store, "done-acme", host.Clock, new SecurityTag("tenant", "acme"));
-        await CompleteRunAsync(host.Store, "done-globex", host.Clock, new SecurityTag("tenant", "globex"));
+        await CompleteRunAsync(host.Store, DoneAcme, host.Clock, new SecurityTag("tenant", "acme"));
+        await CompleteRunAsync(host.Store, DoneGlobex, host.Clock, new SecurityTag("tenant", "globex"));
 
         string olderThan = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
         var request = new HttpRequestMessage(new HttpMethod("PURGE"), $"/runs?olderThan={olderThan}");
@@ -104,8 +115,8 @@ public sealed class ControlPlaneRowSecurityTests
         }
 
         // acme's run is gone; globex's survives the tenant-scoped purge.
-        (await host.GetAsync("/runs/done-acme", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await host.GetAsync("/runs/done-globex", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.GetAsync($"/runs/{DoneAcme}", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetAsync($"/runs/{DoneGlobex}", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [TestMethod]
@@ -114,16 +125,16 @@ public sealed class ControlPlaneRowSecurityTests
         // A principal that may read everything but write nothing: a run is gettable (200), but cancelling/deleting
         // it is forbidden (403) — the existence was already disclosed by the read, so it is not masked as 404.
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
-        await FaultRunAsync(host.Store, "run-1", host.Clock, new SecurityTag("tenant", "acme"));
+        await FaultRunAsync(host.Store, Run1, host.Clock, new SecurityTag("tenant", "acme"));
 
-        (await host.GetAsync("/runs/run-1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/runs/run-1/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.GetAsync($"/runs/{Run1}", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.PostAsync($"/runs/{Run1}/cancel", """{"reason":"x"}""", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/runs/run-1");
+        using var delete = new HttpRequestMessage(HttpMethod.Delete, $"/runs/{Run1}");
         (await host.SendAsync(delete, tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // The run is untouched by the denied writes — still readable and still Faulted.
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-1", tenant: "acme"));
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{Run1}", tenant: "acme"));
         doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
 
         // Catalog writes are gated the same way: the version is readable (200) but not updatable (403).
@@ -278,9 +289,9 @@ public sealed class ControlPlaneRowSecurityTests
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
-        await SeedRunWithOutputsAsync(host.Store, "run-kyc", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, RunKyc, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-kyc/steps", tenant: "acme"));
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{RunKyc}/steps", tenant: "acme"));
         Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
         step.GetProperty("stepId").GetString().ShouldBe("verify");
         step.GetProperty("redacted").GetBoolean().ShouldBeTrue();
@@ -295,9 +306,9 @@ public sealed class ControlPlaneRowSecurityTests
         await using Scoped host = await StartAsync();
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
-        await SeedRunWithOutputsAsync(host.Store, "run-kyc", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, RunKyc, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-kyc/steps", tenant: null));
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{RunKyc}/steps", tenant: null));
         Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
         step.GetProperty("outputs").GetProperty("ssn").GetString().ShouldBe("123-45-6789");
         step.TryGetProperty("redacted", out _).ShouldBeFalse("a full read carries no redaction marker");
@@ -311,9 +322,9 @@ public sealed class ControlPlaneRowSecurityTests
         // reach, gates the payload.
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
-        await SeedRunWithOutputsAsync(host.Store, "run-ok", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, RunOk, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-ok/steps", tenant: "acme"));
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{RunOk}/steps", tenant: "acme"));
         Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
         step.GetProperty("outputs").GetProperty("name").GetString().ShouldBe("Ada");
         step.TryGetProperty("redacted", out _).ShouldBeFalse();
@@ -328,11 +339,11 @@ public sealed class ControlPlaneRowSecurityTests
         await using Scoped host = await StartAsync();
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
-        await SeedRunWithOutputsAsync(host.Store, "audit-full", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, AuditFull, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        (await host.GetAsync("/runs/audit-full/steps", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.GetAsync($"/runs/{AuditFull}/steps", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        Activity span = audit.ForRun("audit-full");
+        Activity span = audit.ForRun(AuditFull);
         span.GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("full");
         span.GetTagItem(ArazzoTelemetry.WorkflowIdTag).ShouldBe("flow-v1");
         ((string?)span.GetTagItem(ArazzoTelemetry.ActorTag)).ShouldNotBeNullOrEmpty();
@@ -347,11 +358,11 @@ public sealed class ControlPlaneRowSecurityTests
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
-        await SeedRunWithOutputsAsync(host.Store, "audit-redacted", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, AuditRedacted, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        (await host.GetAsync("/runs/audit-redacted/steps", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.GetAsync($"/runs/{AuditRedacted}/steps", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        audit.ForRun("audit-redacted").GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("redacted");
+        audit.ForRun(AuditRedacted).GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("redacted");
     }
 
     [TestMethod]
@@ -361,11 +372,11 @@ public sealed class ControlPlaneRowSecurityTests
         // returned. The attempt is still audited at tier "refused", with no workflow id (the run was never resolved).
         using JournalReadSpans audit = JournalReadSpans.Capture();
         await using Scoped host = await StartAsync();
-        await SeedRunWithOutputsAsync(host.Store, "audit-refused", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+        await SeedRunWithOutputsAsync(host.Store, AuditRefused, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
-        (await host.GetAsync("/runs/audit-refused/steps", tenant: "other")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetAsync($"/runs/{AuditRefused}/steps", tenant: "other")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
-        Activity span = audit.ForRun("audit-refused");
+        Activity span = audit.ForRun(AuditRefused);
         span.GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("refused");
         span.GetTagItem(ArazzoTelemetry.WorkflowIdTag).ShouldBeNull("a run that was never resolved carries no workflow id");
     }

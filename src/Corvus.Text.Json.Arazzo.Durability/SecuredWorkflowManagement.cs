@@ -113,7 +113,10 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             written += System.Text.Encoding.UTF8.GetBytes(idempotencyKey, buffer.AsSpan(written));
             Span<byte> hash = stackalloc byte[32];
             System.Security.Cryptography.SHA256.HashData(buffer.AsSpan(0, written), hash);
-            return Convert.ToHexStringLower(hash);
+
+            // The id must be inside the run-id grammar (ADR 0065 §9: exactly 32 lowercase hex — the same grammar
+            // every ingress validates), so the derivation emits the hash's first 16 bytes.
+            return Convert.ToHexStringLower(hash[..16]);
         }
         finally
         {

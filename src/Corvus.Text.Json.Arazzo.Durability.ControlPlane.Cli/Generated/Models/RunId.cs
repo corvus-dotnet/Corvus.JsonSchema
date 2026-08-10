@@ -17,19 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct Schema1
+public readonly partial struct RunId
 #if NET8_0_OR_GREATER
-    : IJsonElement<Schema1>,
+    : IJsonElement<RunId>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<Schema1>,
+    : IJsonElement<RunId>,
       IFormattable
 #endif
 {
@@ -39,10 +44,10 @@ public readonly partial struct Schema1
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="Schema1"/> struct.
+    /// Initializes a new instance of the <see cref="RunId"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal Schema1(IJsonDocument parent, int idx)
+    internal RunId(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -52,7 +57,7 @@ public readonly partial struct Schema1
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static Schema1 DefaultInstance { get; }
+    public static RunId DefaultInstance { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
@@ -73,7 +78,7 @@ public readonly partial struct Schema1
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator string(Schema1 value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
+    public static explicit operator string(RunId value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -83,7 +88,7 @@ public readonly partial struct Schema1
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in Schema1 left, in Schema1 right)
+    public static bool operator ==(in RunId left, in RunId right)
     {
         return left.Equals(right);
     }
@@ -96,7 +101,7 @@ public readonly partial struct Schema1
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in Schema1 left, in Schema1 right)
+    public static bool operator !=(in RunId left, in RunId right)
     {
         return !left.Equals(right);
     }
@@ -109,7 +114,7 @@ public readonly partial struct Schema1
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in Schema1 left, in JsonElement right)
+    public static bool operator ==(in RunId left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -122,7 +127,7 @@ public readonly partial struct Schema1
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in Schema1 left, in JsonElement right)
+    public static bool operator !=(in RunId left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -133,7 +138,7 @@ public readonly partial struct Schema1
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(Schema1 instance)
+    public static implicit operator JsonElement(RunId instance)
     {
         return JsonElement.From(instance);
     }
@@ -144,9 +149,9 @@ public readonly partial struct Schema1
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Schema1(JsonElement instance)
+    public static implicit operator RunId(JsonElement instance)
     {
-        return Schema1.From(instance);
+        return RunId.From(instance);
     }
 
     /// <summary>
@@ -155,7 +160,7 @@ public readonly partial struct Schema1
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema1 From<T>(in T instance)
+    public static RunId From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -180,10 +185,10 @@ public readonly partial struct Schema1
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema1 ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static RunId ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<Schema1>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<RunId>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -206,10 +211,10 @@ public readonly partial struct Schema1
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema1 ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static RunId ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<Schema1>(json, options);
+        return JsonElementHelpers.ParseValue<RunId>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -232,10 +237,10 @@ public readonly partial struct Schema1
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema1 ParseValue(string json, JsonDocumentOptions options = default)
+    public static RunId ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<Schema1>(json, options);
+        return JsonElementHelpers.ParseValue<RunId>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -275,10 +280,10 @@ public readonly partial struct Schema1
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static Schema1 ParseValue(ref Utf8JsonReader reader)
+    public static RunId ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<Schema1>(ref reader);
+        return JsonElementHelpers.ParseValue<RunId>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -320,16 +325,16 @@ public readonly partial struct Schema1
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out Schema1? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out RunId? result)
     {
-        return JsonElementHelpers.TryParseValue<Schema1>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<RunId>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new Schema1(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new RunId(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -470,11 +475,11 @@ public readonly partial struct Schema1
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static Schema1 IJsonElement<Schema1>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static RunId IJsonElement<RunId>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"Schema1: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"RunId: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -489,11 +494,11 @@ public readonly partial struct Schema1
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="RunId"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="RunId"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -502,10 +507,10 @@ public readonly partial struct Schema1
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public Schema1 Clone()
+    public RunId Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<Schema1>(_idx);
+        return _parent.CloneElement<RunId>(_idx);
     }
 
     /// <summary>
@@ -513,7 +518,7 @@ public readonly partial struct Schema1
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="Schema1"/> that lives for the lifetime of its
+    /// An immutable <see cref="RunId"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -527,12 +532,12 @@ public readonly partial struct Schema1
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public Schema1 Freeze()
+    public RunId Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<Schema1>(_idx);
+            return mutable.FreezeElement<RunId>(_idx);
         }
 
         return this;

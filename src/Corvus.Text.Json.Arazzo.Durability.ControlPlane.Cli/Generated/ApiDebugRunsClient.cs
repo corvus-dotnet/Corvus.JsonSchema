@@ -101,11 +101,11 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="id">The id parameter.</param>
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetDebugRunResponse> GetDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetDebugRunResponse> GetDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         GetDebugRunRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -119,11 +119,11 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="id">The id parameter.</param>
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<DeleteDebugRunResponse> DeleteDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<DeleteDebugRunResponse> DeleteDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         DeleteDebugRunRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -138,13 +138,13 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.CreateBuilder(workspace, body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         ResumeDebugRunRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -180,7 +180,7 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -189,7 +189,7 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.CreateBuilder(workspace, in body, 30).RootElement : default;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         ResumeDebugRunRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -224,11 +224,11 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="id">The id parameter.</param>
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CancelDebugRunResponse> CancelDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CancelDebugRunResponse> CancelDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         CancelDebugRunRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -243,12 +243,12 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.CreateBuilder(workspace, body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         InjectDebugRunMessageRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);
@@ -276,7 +276,7 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
     /// <param name="debugRunId">The debugRunId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<InjectDebugRunMessageResponse> InjectDebugRunMessageAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -284,7 +284,7 @@ public sealed class ApiDebugRunsClient : IApiDebugRunsClient
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunMessageInjection.CreateBuilder(workspace, in body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, debugRunId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, debugRunId, 30).RootElement;
         InjectDebugRunMessageRequest request = new(IdValue, DebugRunIdValue);
 
         request.Validate(validationMode);

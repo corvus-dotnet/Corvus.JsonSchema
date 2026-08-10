@@ -16,14 +16,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests;
 [TestClass]
 public sealed class RunnerApiDispatcherTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string Run2 = "fedcba9876543210fedcba9876543210";
+    private const string Run3 = "00112233445566778899aabbccddeeff";
     private const string Version = Fixture.Version;
 
     [TestMethod]
     public async Task Every_claimable_run_is_dispatched_and_the_executor_sees_the_real_checkpoint()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
-        await fixture.SeedAsync("run-2", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run2, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         List<WorkflowRunId> seen = [];
@@ -37,7 +40,7 @@ public sealed class RunnerApiDispatcherTests
         }, default);
 
         dispatched.ShouldBe(2);
-        seen.ShouldBe([new WorkflowRunId("run-1"), new WorkflowRunId("run-2")], ignoreOrder: true);
+        seen.ShouldBe([new WorkflowRunId(Run1), new WorkflowRunId(Run2)], ignoreOrder: true);
     }
 
     [TestMethod]
@@ -55,7 +58,7 @@ public sealed class RunnerApiDispatcherTests
     public async Task A_runner_that_hosts_none_of_the_claimable_versions_is_offered_nothing()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["some-other-workflow-v1"], (_, _) => throw new InvalidOperationException("this runner cannot execute that version"), default);
@@ -70,9 +73,9 @@ public sealed class RunnerApiDispatcherTests
     public async Task A_pass_stops_at_the_maximum_rather_than_draining_the_queue()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
-        await fixture.SeedAsync("run-2", WorkflowRunStatus.Pending);
-        await fixture.SeedAsync("run-3", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run2, WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run3, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client) { MaximumRunsPerPass = 2 };
 
         int dispatched = await dispatcher.DispatchClaimableAsync([Version], (run, ct) => SuspendAsync(fixture, run, ct), default);
@@ -90,7 +93,7 @@ public sealed class RunnerApiDispatcherTests
         // claimable again at once. Claiming one run at a time, the pass would otherwise take the same run over and
         // over up to its bound, doing no work and starving every other run in the queue.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         int advances = 0;
@@ -111,7 +114,7 @@ public sealed class RunnerApiDispatcherTests
     public async Task Every_dispatched_run_is_released_so_a_peer_can_take_it_next()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         await dispatcher.DispatchClaimableAsync([Version], (_, _) => ValueTask.FromResult(WorkflowRunResultKind.Suspended), default);
@@ -126,7 +129,7 @@ public sealed class RunnerApiDispatcherTests
         // The reason release belongs in a finally. A runner that crashed mid-advance and held its lease would strand
         // the run for the whole lease duration, and this is the failure most likely to happen in production.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         // It propagates, exactly as the store-backed dispatcher does: an executor fault is the runner's to handle.
@@ -142,7 +145,7 @@ public sealed class RunnerApiDispatcherTests
         // A lease lost to a lapse is not an error the runner can act on: the run belongs to whoever holds it now, and
         // this runner's writes were refused rather than applied. It moves on to the next claim.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
 
         int dispatched = await dispatcher.DispatchClaimableAsync([Version], async (run, ct) =>
@@ -151,7 +154,7 @@ public sealed class RunnerApiDispatcherTests
             fixture.Clock.Advance(TimeSpan.FromMinutes(2));
             (await fixture.PeerClient.TryClaimAsync([Version])).ShouldNotBeNull();
 
-            byte[] advanced = Fixture.Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2);
+            byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
             await fixture.Client.Checkpoints.SaveAsync(run.Id, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, ct);
             return WorkflowRunResultKind.Suspended;
         }, default);
@@ -159,7 +162,7 @@ public sealed class RunnerApiDispatcherTests
         dispatched.ShouldBe(0);
 
         // The peer's claim stands: releasing in the finally must not have taken the run off it.
-        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId("run-1"), default);
+        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId(Run1), default);
         WorkflowCheckpointSerializer.TryReadSequence(stored!.Value.Utf8, out long sequence).ShouldBeTrue();
         sequence.ShouldBe(1);
     }
@@ -168,8 +171,8 @@ public sealed class RunnerApiDispatcherTests
     public async Task A_cancelled_pass_stops_claiming()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
-        await fixture.SeedAsync("run-2", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run2, WorkflowRunStatus.Pending);
         var dispatcher = new RunnerApiDispatcher(fixture.Client);
         using var cancellation = new CancellationTokenSource();
 

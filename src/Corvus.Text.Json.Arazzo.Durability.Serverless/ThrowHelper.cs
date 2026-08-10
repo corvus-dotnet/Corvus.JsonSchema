@@ -24,6 +24,13 @@ internal static class ThrowHelper
     public static void ThrowMissingRunId(string paramName)
         => throw new ArgumentException(SR.MissingRunId, paramName);
 
+    /// <summary>Throws when the invocation's <c>runId</c> is outside the run-id grammar (ADR 0065 §9).</summary>
+    /// <param name="paramName">The offending parameter's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMalformedRunId(string paramName)
+        => throw new ArgumentException(SR.MalformedRunId, paramName);
+
     /// <summary>Creates the exception for an invocation missing a valid absolute <c>checkpointUrl</c>, for the caller to throw.</summary>
     /// <param name="paramName">The offending parameter's name.</param>
     /// <returns>The exception to throw.</returns>

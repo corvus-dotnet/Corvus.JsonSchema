@@ -456,7 +456,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
     // correct under redirection / capture). Run ids etc. are escaped against Spectre markup.
     private static int RenderTable(Models.WorkflowRunPage page)
     {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
 
         var table = new Table().Border(TableBorder.Rounded);
         table.AddColumn("Id");

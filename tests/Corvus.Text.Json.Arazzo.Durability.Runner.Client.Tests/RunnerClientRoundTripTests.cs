@@ -17,6 +17,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests;
 [TestClass]
 public sealed class RunnerClientRoundTripTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
+    private const string AbsentRun = "badcafebadcafebadcafebadcafe0000";
     private const string Production = Fixture.Production;
     private const string Version = Fixture.Version;
 
@@ -26,12 +28,12 @@ public sealed class RunnerClientRoundTripTests
     public async Task A_runner_claims_a_run_and_reads_its_checkpoint_through_the_client()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
 
         RunnerClaim? claimed = await fixture.Client.TryClaimAsync([Version]);
 
         claimed.ShouldNotBeNull();
-        claimed!.Value.RunId.ShouldBe(new WorkflowRunId("run-1"));
+        claimed!.Value.RunId.ShouldBe(new WorkflowRunId(Run1));
         claimed.Value.WorkflowId.ShouldBe(Version);
         claimed.Value.Environment.ShouldBe(Production);
         claimed.Value.LeaseEpoch.ShouldBeGreaterThan(0);
@@ -55,10 +57,10 @@ public sealed class RunnerClientRoundTripTests
     public async Task A_checkpoint_saved_through_the_client_is_durable_in_the_store()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        byte[] advanced = Fixture.Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2);
+        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
         await fixture.Client.Checkpoints.SaveAsync(claimed.RunId, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, default);
 
         // Read back from the STORE, not the API: the point is that the write reached the real thing.
@@ -75,10 +77,10 @@ public sealed class RunnerClientRoundTripTests
         // The one failure the save operation exists to make impossible. A client that swallowed this would leave the
         // runner believing a checkpoint is durable when the store never took it.
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        byte[] advanced = Fixture.Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2);
+        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
         WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(advanced);
         await fixture.Client.Checkpoints.SaveAsync(claimed.RunId, advanced, index, WorkflowEtag.None, default);
 
@@ -93,7 +95,7 @@ public sealed class RunnerClientRoundTripTests
     public async Task A_lease_renews_and_keeps_its_epoch()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(30));
@@ -109,7 +111,7 @@ public sealed class RunnerClientRoundTripTests
     public async Task A_lapsed_lease_is_raised_as_lost_rather_than_silently_renewed()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         fixture.Clock.Advance(TimeSpan.FromMinutes(2));
@@ -124,7 +126,7 @@ public sealed class RunnerClientRoundTripTests
     public async Task A_released_run_is_claimable_by_a_peer_at_once()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         await fixture.Client.ReleaseAsync(claimed.RunId);
@@ -138,18 +140,18 @@ public sealed class RunnerClientRoundTripTests
         // So a runner can release in a finally without first working out whether it still holds the lease.
         await using Fixture fixture = await Fixture.StartAsync();
 
-        await Should.NotThrowAsync(async () => await fixture.Client.ReleaseAsync(new WorkflowRunId("never")));
+        await Should.NotThrowAsync(async () => await fixture.Client.ReleaseAsync(new WorkflowRunId(AbsentRun)));
     }
 
     [TestMethod]
     public async Task Operating_on_a_run_this_client_never_claimed_is_refused_without_a_round_trip()
     {
         await using Fixture fixture = await Fixture.StartAsync();
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         await fixture.Client.TryClaimAsync([Version]);
 
         // The peer holds no lease for this run, so it has nothing to present and never asks.
         await Should.ThrowAsync<RunnerLeaseLostException>(
-            async () => await fixture.PeerClient.Checkpoints.LoadAsync(new WorkflowRunId("run-1"), default));
+            async () => await fixture.PeerClient.Checkpoints.LoadAsync(new WorkflowRunId(Run1), default));
     }
 }

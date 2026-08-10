@@ -100,18 +100,18 @@ public sealed class ControlPlaneAuthorizationTests
         await using Secured host = await StartSecuredAsync();
 
         // runs:read lets a caller read a run's METADATA (the detail handler runs; the run is simply absent → 404)...
-        (await host.GetAsync("/runs/any-run", ControlPlaneScopes.RunsRead)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetAsync("/runs/badcafebadcafebadcafebadcafe0000", ControlPlaneScopes.RunsRead)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // ...but NOT its step journal: outputs are a distinct disclosure tier (§14.1), so the journal demands
         // runs:outputs:read IN ADDITION to runs:read. A runs:read-only caller is rejected before the handler (403, not the
         // non-disclosing 404) — the payload gate is a capability refusal, not a reach one.
-        (await host.GetAsync("/runs/any-run/steps", ControlPlaneScopes.RunsRead)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.GetAsync("/runs/badcafebadcafebadcafebadcafe0000/steps", ControlPlaneScopes.RunsRead)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // With both scopes the journal passes the capability gate (the run is absent → 404, non-disclosing).
-        (await host.GetAsync("/runs/any-run/steps", $"{ControlPlaneScopes.RunsRead} {ControlPlaneScopes.RunsOutputsRead}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetAsync("/runs/badcafebadcafebadcafebadcafe0000/steps", $"{ControlPlaneScopes.RunsRead} {ControlPlaneScopes.RunsOutputsRead}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // runs:outputs:read WITHOUT runs:read is also refused — both are required (AND), the tier layers over the base.
-        (await host.GetAsync("/runs/any-run/steps", ControlPlaneScopes.RunsOutputsRead)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.GetAsync("/runs/badcafebadcafebadcafebadcafe0000/steps", ControlPlaneScopes.RunsOutputsRead)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     private static async Task<Secured> StartSecuredAsync()

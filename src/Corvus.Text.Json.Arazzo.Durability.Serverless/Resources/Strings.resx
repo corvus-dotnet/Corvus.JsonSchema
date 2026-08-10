@@ -63,6 +63,9 @@
   <data name="MissingRunId" xml:space="preserve">
     <value>The invocation is missing the required 'runId'.</value>
   </data>
+  <data name="MalformedRunId" xml:space="preserve">
+    <value>The invocation's 'runId' must be exactly 32 lowercase hex characters (ADR 0065 §9).</value>
+  </data>
   <data name="MissingCheckpointUrl" xml:space="preserve">
     <value>The invocation is missing a valid absolute 'checkpointUrl'.</value>
   </data>

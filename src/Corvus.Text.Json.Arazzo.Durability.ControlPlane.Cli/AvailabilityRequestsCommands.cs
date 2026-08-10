@@ -226,7 +226,7 @@ internal static class AvailabilityRequestCommandHelpers
 
     public static int RenderTable(Models.AvailabilityRequestList list, string? environment, bool inbox)
     {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
 
         string title = environment is { } e ? $"availability requests for {e}" : inbox ? "availability approver inbox" : "my availability requests";
         var table = new Table().Border(TableBorder.Rounded);

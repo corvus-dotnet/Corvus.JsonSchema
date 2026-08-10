@@ -171,31 +171,31 @@ public static class DemoData
         TimeProvider time = timeProvider ?? TimeProvider.System;
 
         // A standard applicant clears the KYC score threshold → the run completes all four steps.
-        await RunLiveAsync(runStore, resumer, time, "run-onb-live01", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0001", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
 
         // The same sanctioned applicant on v1 scores below the threshold and — because v1 does not handle the
         // failure — faults live at verifyIdentity. Nothing is hand-seeded: the success criterion is evaluated
         // against the real backend response. This intentionally-unhandled fault demonstrates how a failing step
         // surfaces in the control plane (the dev-test debugging experience), not a recommended design.
-        await RunLiveAsync(runStore, resumer, time, "run-onb-live02", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0002", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
 
         // The resilient v2 of the workflow HANDLES the same KYC failure: verifyIdentity's onFailure routes to the
         // applicant-notification step (skipping provisioning), so the run completes via the remediation branch
         // instead of faulting. Same applicant as live02, different (fixed) workflow version — the production design.
-        await RunLiveAsync(runStore, resumer, time, "run-onb-live03", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0003", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
 
         // An asynchronous onboarding: the run suspends durably awaiting an out-of-band KYC verdict on the
         // kyc.verdict channel, then a delivered verdict message resumes it to completion — live suspend + resume.
-        await RunLiveSuspendAwaitingKycAsync(runStore, resumer, time, "run-onb-live04", "live04", log).ConfigureAwait(false);
+        await RunLiveSuspendAwaitingKycAsync(runStore, resumer, time, "0b0000000000000000000000000e0004", "live04", log).ConfigureAwait(false);
 
         // A resilient onboarding: the identity provider returns a transient incomplete result on the first check,
         // so the step retries with a backoff — the run suspends on a durable TIMER between attempts and resumes
         // when the backoff elapses, succeeding on the retry. Live timer suspend + resume.
-        await RunLiveTimerResumeAsync(runStore, resumer, time, "run-onb-live05", "live05", log).ConfigureAwait(false);
+        await RunLiveTimerResumeAsync(runStore, resumer, time, "0b0000000000000000000000000e0005", "live05", log).ConfigureAwait(false);
 
         // A real nightly reconciliation executed against the live ledger service — loads the account book, matches
         // entries, flags the seeded discrepancies, posts corrections, and publishes the report, completing end to end.
-        await RunLiveReconcileAsync(runStore, resumer, time, "run-rec-live01", "reclive01", log).ConfigureAwait(false);
+        await RunLiveReconcileAsync(runStore, resumer, time, "0ec00000000000000000000000000001", "reclive01", log).ConfigureAwait(false);
 
         // #896: a durable schedule — the canonical §6.4 nightly-reconcile cron — seeded as a Pending $schedule run.
         // Unlike the runs above (executed here in-process), this is left Pending so the app runner (which serves

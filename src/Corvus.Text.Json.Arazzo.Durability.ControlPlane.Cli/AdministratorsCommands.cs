@@ -150,7 +150,7 @@ internal static class AdministratorCommandHelpers
 
     public static int RenderTable(Models.AdministratorList list, string baseWorkflowId)
     {
-        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new AnsiConsoleOutput(Console.Out) });
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
 
         var table = new Table().Border(TableBorder.Rounded);
         table.Title = new TableTitle(Markup.Escape($"administrators of {baseWorkflowId}"));

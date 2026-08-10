@@ -29,14 +29,14 @@ public readonly struct ResumeDebugRunRequest : IApiRequest<ResumeDebugRunRequest
     /// <summary>
     /// Gets the debugRunId parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DebugRunId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId DebugRunId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResumeDebugRunRequest"/> struct.
     /// </summary>
     /// <param name="id">The id parameter.</param>
     /// <param name="debugRunId">The debugRunId parameter.</param>
-    public ResumeDebugRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString debugRunId)
+    public ResumeDebugRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId debugRunId)
     {
         this.Id = id;
         this.DebugRunId = debugRunId;

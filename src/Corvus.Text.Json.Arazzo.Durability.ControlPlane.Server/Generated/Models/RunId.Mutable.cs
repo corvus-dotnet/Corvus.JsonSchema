@@ -21,8 +21,13 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct Schema1
+public readonly partial struct RunId
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -130,7 +135,7 @@ public readonly partial struct Schema1
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(Schema1 instance)
+        public static explicit operator Mutable(RunId instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -145,9 +150,9 @@ public readonly partial struct Schema1
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="Schema1"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="RunId"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Schema1(Mutable instance)
+        public static implicit operator RunId(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -180,7 +185,7 @@ public readonly partial struct Schema1
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new Schema1(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new RunId(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -330,7 +335,7 @@ public readonly partial struct Schema1
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"Schema1.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"RunId.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -345,11 +350,11 @@ public readonly partial struct Schema1
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="RunId"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="RunId"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -358,10 +363,10 @@ public readonly partial struct Schema1
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly Schema1 Clone()
+        public readonly RunId Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<Schema1>(_idx);
+            return _parent.CloneElement<RunId>(_idx);
         }
 
         /// <summary>
@@ -369,7 +374,7 @@ public readonly partial struct Schema1
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="Schema1"/> that lives for the lifetime of its
+        /// An immutable <see cref="RunId"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -380,10 +385,10 @@ public readonly partial struct Schema1
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly Schema1 Freeze()
+        public readonly RunId Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<Schema1>(_idx);
+            return _parent.FreezeElement<RunId>(_idx);
         }
     }
 
@@ -433,7 +438,7 @@ public readonly partial struct Schema1
             _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
         }
 
-        public static implicit operator Source(Schema1 instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(RunId instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -609,7 +614,7 @@ public readonly partial struct Schema1
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<Schema1, Mutable>(this);
+        return workspace.CreateBuilder<RunId, Mutable>(this);
     }
 
     /// <summary>
@@ -618,7 +623,7 @@ public readonly partial struct Schema1
     /// <param name="value">The value with which to initialize the document.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<Schema1> Create(
+    public static ParsedJsonDocument<RunId> Create(
         scoped in Source value, int initialCapacity = 1)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -628,7 +633,7 @@ public readonly partial struct Schema1
             value.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<Schema1>();
+            return documentBuilder.ToParsedJsonDocument<RunId>();
         }
         finally
         {

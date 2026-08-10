@@ -23,45 +23,50 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests;
 [DoNotParallelize]
 public sealed partial class CliIntegrationTests
 {
+    private const string R1 = "0123456789abcdef0123456789abcdef";
+    private const string Done1 = "d0000000000000000000000000000001";
+    private const string Done2 = "d0000000000000000000000000000002";
+    private const string Faulted1 = "fa170000000000000000000000000001";
+    private const string OldDone = "01dd0000000000000000000000000001";
     private static readonly DateTimeOffset T0 = new(2026, 6, 10, 12, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
     public async Task List_filters_by_status_over_http()
     {
         await using Host host = await StartAsync();
-        await CompleteRunAsync(host.Store, "done-1", host.Clock);
-        await CompleteRunAsync(host.Store, "done-2", host.Clock);
-        await FaultRunAsync(host.Store, "faulted-1", host.Clock);
+        await CompleteRunAsync(host.Store, Done1, host.Clock);
+        await CompleteRunAsync(host.Store, Done2, host.Clock);
+        await FaultRunAsync(host.Store, Faulted1, host.Clock);
 
         (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed");
 
         exit.ShouldBe(0);
         stdout.ShouldContain("Status");   // table header (table is the default output)
-        stdout.ShouldContain("done-1");
-        stdout.ShouldContain("done-2");
-        stdout.ShouldNotContain("faulted-1");
+        stdout.ShouldContain(Done1);
+        stdout.ShouldContain(Done2);
+        stdout.ShouldNotContain(Faulted1);
     }
 
     [TestMethod]
     public async Task List_emits_json_with_output_json()
     {
         await using Host host = await StartAsync();
-        await CompleteRunAsync(host.Store, "done-1", host.Clock);
+        await CompleteRunAsync(host.Store, Done1, host.Clock);
 
         (int exit, string stdout, _) = await RunAsync(host, "list", "--status", "Completed", "--output", "json");
 
         exit.ShouldBe(0);
         stdout.ShouldContain("\"runs\"");
-        stdout.ShouldContain("\"id\":\"done-1\"");
+        stdout.ShouldContain($"\"id\":\"{Done1}\"");
     }
 
     [TestMethod]
     public async Task Get_returns_run_detail_over_http()
     {
         await using Host host = await StartAsync();
-        await FaultRunAsync(host.Store, "r1", host.Clock);
+        await FaultRunAsync(host.Store, R1, host.Clock);
 
-        (int exit, string stdout, _) = await RunAsync(host, "get", "r1");
+        (int exit, string stdout, _) = await RunAsync(host, "get", R1);
 
         exit.ShouldBe(0);
         stdout.ShouldContain("\"status\":\"Faulted\"");
@@ -73,7 +78,7 @@ public sealed partial class CliIntegrationTests
     {
         await using Host host = await StartAsync();
 
-        (int exit, _, string stderr) = await RunAsync(host, "get", "nope");
+        (int exit, _, string stderr) = await RunAsync(host, "get", "badcafebadcafebadcafebadcafe0000");
 
         exit.ShouldNotBe(0);
         stderr.ShouldContain("\"status\":404");
@@ -83,9 +88,9 @@ public sealed partial class CliIntegrationTests
     public async Task Resume_rewind_resets_the_cursor_over_http()
     {
         await using Host host = await StartAsync();
-        await FaultRunAtAsync(host.Store, "r1", cursor: 3, faultStep: "step3", host.Clock);
+        await FaultRunAtAsync(host.Store, R1, cursor: 3, faultStep: "step3", host.Clock);
 
-        (int exit, string stdout, _) = await RunAsync(host, "resume", "r1", "--mode", "Rewind", "--target-cursor", "1");
+        (int exit, string stdout, _) = await RunAsync(host, "resume", R1, "--mode", "Rewind", "--target-cursor", "1");
 
         exit.ShouldBe(0);
         stdout.ShouldContain("\"status\":\"Completed\"");
@@ -96,13 +101,13 @@ public sealed partial class CliIntegrationTests
     public async Task Resume_state_patch_over_http()
     {
         await using Host host = await StartAsync();
-        await FaultRunAsync(host.Store, "r1", host.Clock);
+        await FaultRunAsync(host.Store, R1, host.Clock);
 
         string patchFile = Path.Combine(Path.GetTempPath(), $"arazzo-runs-patch-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(patchFile, """[{"op":"add","path":"/inputs","value":{"x":1}}]""");
         try
         {
-            (int exit, string stdout, _) = await RunAsync(host, "resume", "r1", "--mode", "StatePatch", "--patch-file", patchFile);
+            (int exit, string stdout, _) = await RunAsync(host, "resume", R1, "--mode", "StatePatch", "--patch-file", patchFile);
 
             exit.ShouldBe(0);
             stdout.ShouldContain("\"status\":\"Completed\"");
@@ -117,14 +122,14 @@ public sealed partial class CliIntegrationTests
     public async Task Resume_state_patch_rejects_a_non_conformant_patch()
     {
         await using Host host = await StartAsync();
-        await FaultRunAsync(host.Store, "r1", host.Clock);
+        await FaultRunAsync(host.Store, R1, host.Clock);
 
         // An array of objects (so it passes the loose body schema) but not a valid RFC 6902 op.
         string patchFile = Path.Combine(Path.GetTempPath(), $"arazzo-runs-badpatch-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(patchFile, """[{"foo":"bar"}]""");
         try
         {
-            (int exit, _, string stderr) = await RunAsync(host, "resume", "r1", "--mode", "StatePatch", "--patch-file", patchFile);
+            (int exit, _, string stderr) = await RunAsync(host, "resume", R1, "--mode", "StatePatch", "--patch-file", patchFile);
 
             exit.ShouldNotBe(0);
             stderr.ShouldContain("not a conformant");
@@ -139,9 +144,9 @@ public sealed partial class CliIntegrationTests
     public async Task Cancel_marks_a_run_cancelled_over_http()
     {
         await using Host host = await StartAsync();
-        await FaultRunAsync(host.Store, "r1", host.Clock);
+        await FaultRunAsync(host.Store, R1, host.Clock);
 
-        (int exit, string stdout, _) = await RunAsync(host, "cancel", "r1", "--reason", "operator abandoned");
+        (int exit, string stdout, _) = await RunAsync(host, "cancel", R1, "--reason", "operator abandoned");
 
         exit.ShouldBe(0);
         stdout.ShouldContain("\"status\":\"Cancelled\"");
@@ -151,14 +156,14 @@ public sealed partial class CliIntegrationTests
     public async Task Delete_removes_a_run_over_http()
     {
         await using Host host = await StartAsync();
-        await CompleteRunAsync(host.Store, "r1", host.Clock);
+        await CompleteRunAsync(host.Store, R1, host.Clock);
 
-        (int exit, string stdout, _) = await RunAsync(host, "delete", "r1");
+        (int exit, string stdout, _) = await RunAsync(host, "delete", R1);
 
         exit.ShouldBe(0);
-        stdout.ShouldContain("Deleted run 'r1'.");
+        stdout.ShouldContain($"Deleted run '{R1}'.");
 
-        (int getExit, _, _) = await RunAsync(host, "get", "r1");
+        (int getExit, _, _) = await RunAsync(host, "get", R1);
         getExit.ShouldNotBe(0);
     }
 
@@ -166,7 +171,7 @@ public sealed partial class CliIntegrationTests
     public async Task Purge_reaps_old_terminal_runs_over_http()
     {
         await using Host host = await StartAsync();
-        await CompleteRunAsync(host.Store, "old-done", host.Clock);
+        await CompleteRunAsync(host.Store, OldDone, host.Clock);
 
         string olderThan = (T0 + TimeSpan.FromHours(1)).ToString("O");
         (int exit, string stdout, _) = await RunAsync(host, "purge", "--older-than", olderThan);

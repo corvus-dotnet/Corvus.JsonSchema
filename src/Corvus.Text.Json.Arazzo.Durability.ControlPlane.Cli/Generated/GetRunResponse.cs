@@ -244,7 +244,7 @@ public struct GetRunResponse : IApiResponse<GetRunResponse>
         {
             ResumeRunRequest request = new()
             {
-                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.OkBody.Id),
+                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.From(this.response.OkBody.Id),
             };
 
             return this.response.transport!.SendAsync<ResumeRunRequest, ResumeRunResponse>(in request, cancellationToken);
@@ -257,7 +257,7 @@ public struct GetRunResponse : IApiResponse<GetRunResponse>
         {
             CancelRunRequest request = new()
             {
-                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.OkBody.Id),
+                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.From(this.response.OkBody.Id),
             };
 
             return this.response.transport!.SendAsync<CancelRunRequest, CancelRunResponse>(in request, cancellationToken);
@@ -270,7 +270,7 @@ public struct GetRunResponse : IApiResponse<GetRunResponse>
         {
             DeleteRunRequest request = new()
             {
-                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.From(this.response.OkBody.Id),
+                RunId = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.From(this.response.OkBody.Id),
             };
 
             return this.response.transport!.SendAsync<DeleteRunRequest, DeleteRunResponse>(in request, cancellationToken);

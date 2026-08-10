@@ -21,6 +21,8 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
 {
     private IAsyncDisposable? owner;
     private IDisposable? parsedDocument;
+    private IResponseHeaders? responseHeaders;
+    private JsonWorkspace workspace;
 
     /// <inheritdoc/>
     public int StatusCode { get; private set; }
@@ -44,9 +46,48 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ConflictBody { get; private set; }
 
     /// <summary>
+    /// Gets the 429 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem TooManyRequestsBody { get; private set; }
+
+    /// <summary>
     /// Gets the 422 response body.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationResult UnprocessableEntityBody { get; private set; }
+
+    /// <summary>
+    /// Gets the value of the <c>Retry-After</c> response header,
+    /// or <see langword="null"/> if the header was not present.
+    /// </summary>
+    private Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds retryAfterHeaderValue;
+    private bool retryAfterHeaderParsed;
+
+    /// <summary>
+    /// Gets the parsed value of the <c>Retry-After</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds RetryAfterHeader
+    {
+        get
+        {
+            if (this.retryAfterHeaderParsed)
+            {
+                return this.retryAfterHeaderValue;
+            }
+
+            this.retryAfterHeaderParsed = true;
+
+            if (this.responseHeaders is not null
+                && this.responseHeaders.TryGetValue("Retry-After", out string? rawValue)
+                && rawValue is not null)
+            {
+                this.retryAfterHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds>(rawValue, this.workspace);
+            }
+
+            return this.retryAfterHeaderValue;
+        }
+    }
 
     /// <inheritdoc/>
     public static async ValueTask<StartCatalogWorkflowRunResponse> CreateAsync(
@@ -61,6 +102,9 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
         StartCatalogWorkflowRunResponse response = default;
         response.StatusCode = statusCode;
         response.owner = owner;
+
+        response.responseHeaders = responseHeaders;
+        response.workspace = JsonWorkspace.CreateUnrented();
 
         if (statusCode == 202)
         {
@@ -83,6 +127,14 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
             var conflictDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = conflictDoc;
             response.ConflictBody = conflictDoc.RootElement;
+            return response;
+        }
+
+        if (statusCode == 429)
+        {
+            var tooManyRequestsDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = tooManyRequestsDoc;
+            response.TooManyRequestsBody = tooManyRequestsDoc.RootElement;
             return response;
         }
 
@@ -149,6 +201,23 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
     }
 
     /// <summary>
+    /// Tries to get the 429 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 429.</returns>
+    public bool TryGetTooManyRequests(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem result)
+    {
+        if (this.StatusCode == 429)
+        {
+            result = this.TooManyRequestsBody;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
     /// Tries to get the 422 typed response body.
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
@@ -173,6 +242,7 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
     /// <param name="matchAccepted">Handler for the 202 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchTooManyRequests">Handler for the 429 response.</param>
     /// <param name="matchUnprocessableEntity">Handler for the 422 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
@@ -180,6 +250,7 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunAccepted, TResult> matchAccepted,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem, TResult> matchTooManyRequests,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationResult, TResult> matchUnprocessableEntity,
         ResponseMatcher<int, TResult> matchDefault)
     {
@@ -196,6 +267,11 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
         if (this.StatusCode == 409)
         {
             return matchConflict(this.ConflictBody);
+        }
+
+        if (this.StatusCode == 429)
+        {
+            return matchTooManyRequests(this.TooManyRequestsBody);
         }
 
         if (this.StatusCode == 422)
@@ -216,6 +292,7 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
     /// <param name="matchAccepted">Handler for the 202 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchTooManyRequests">Handler for the 429 response.</param>
     /// <param name="matchUnprocessableEntity">Handler for the 422 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
@@ -224,6 +301,7 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunAccepted, TContext, TResult> matchAccepted,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem, TContext, TResult> matchTooManyRequests,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationResult, TContext, TResult> matchUnprocessableEntity,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
@@ -241,6 +319,11 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
         if (this.StatusCode == 409)
         {
             return matchConflict(this.ConflictBody, context);
+        }
+
+        if (this.StatusCode == 429)
+        {
+            return matchTooManyRequests(this.TooManyRequestsBody, context);
         }
 
         if (this.StatusCode == 422)
@@ -284,6 +367,14 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
                     ThrowHelper.ThrowResponseBodyValidationFailed(409, SchemaValidationDetail.FormatResults(collector));
                 }
             }
+            else if (this.StatusCode == 429)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.TooManyRequestsBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(429, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
             else if (this.StatusCode == 422)
             {
                 using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -316,6 +407,13 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
                     ThrowHelper.ThrowResponseBodyValidationFailed(409);
                 }
             }
+            else if (this.StatusCode == 429)
+            {
+                if (!this.TooManyRequestsBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(429);
+                }
+            }
             else if (this.StatusCode == 422)
             {
                 if (!this.UnprocessableEntityBody.EvaluateSchema())
@@ -329,6 +427,7 @@ public struct StartCatalogWorkflowRunResponse : IApiResponse<StartCatalogWorkflo
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        this.workspace.Dispose();
         this.parsedDocument?.Dispose();
         if (this.owner is not null)
         {

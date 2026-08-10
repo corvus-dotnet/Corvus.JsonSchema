@@ -24,13 +24,13 @@ public readonly struct ResumeRunRequest : IApiRequest<ResumeRunRequest>
     /// <summary>
     /// Gets the runId parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResumeRunRequest"/> struct.
     /// </summary>
     /// <param name="runId">The runId parameter.</param>
-    public ResumeRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runId)
+    public ResumeRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId runId)
     {
         this.RunId = runId;
     }

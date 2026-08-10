@@ -123,11 +123,29 @@ public sealed class ServerlessInvocationHandler
             return ParseInvocation(innerBytes);
         }
 
-        string? runId = root.TryGetProperty("runId"u8, out JsonElement runIdElement) ? runIdElement.GetString() : null;
-        if (string.IsNullOrEmpty(runId))
+        if (!root.TryGetProperty("runId"u8, out JsonElement runIdElement) || runIdElement.ValueKind != JsonValueKind.String)
         {
             ThrowHelper.ThrowMissingRunId(nameof(invocationJson));
         }
+
+        // The invocation arrives from the dispatch fabric, outside the function's trust boundary, so the run-id
+        // grammar is validated at the parse (ADR 0065 §9: at every ingress, before any store touch) — and on the
+        // UTF-8 value, so an oversized or malformed id is refused without materializing it as a string.
+        using (UnescapedUtf8JsonString runIdUtf8 = runIdElement.GetUtf8String())
+        {
+            if (runIdUtf8.Span.IsEmpty)
+            {
+                ThrowHelper.ThrowMissingRunId(nameof(invocationJson));
+            }
+
+            if (!WorkflowRunId.IsWellFormedUtf8(runIdUtf8.Span))
+            {
+                ThrowHelper.ThrowMalformedRunId(nameof(invocationJson));
+            }
+        }
+
+        // Exactly 32 ASCII characters, validated above: the one bounded allocation the string-keyed run seam needs.
+        string runId = runIdElement.GetString()!;
 
         string? checkpointUrl = root.TryGetProperty("checkpointUrl"u8, out JsonElement urlElement) ? urlElement.GetString() : null;
         if (string.IsNullOrEmpty(checkpointUrl) || !Uri.TryCreate(checkpointUrl, UriKind.Absolute, out Uri? parsed))

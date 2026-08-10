@@ -23,6 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ControlPlaneServerTests
 {
+    private const string R1 = "0123456789abcdef0123456789abcdef";
+    private const string Done1 = "d0000000000000000000000000000001";
+    private const string OldDone = "01dd0000000000000000000000000001";
+    private const string AbsentRun = "badcafebadcafebadcafebadcafe0000";
+    private const string Faulted1 = "fa170000000000000000000000000001";
+    private const string Early = "ea010000000000000000000000000001";
+    private const string Late = "1a7e0000000000000000000000000001";
+    private const string RSteps = "057e0000000000000000000000000001";
+    private const string RJournal = "030a0000000000000000000000000001";
+    private const string RunA = "0a0a0000000000000000000000000001";
+    private const string RunB = "0b0b0000000000000000000000000001";
+    private const string RunC = "0c0c0000000000000000000000000001";
     private static readonly DateTimeOffset T0 = new(2026, 6, 10, 12, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
@@ -31,9 +43,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.GetAsync("/runs/r1");
+            HttpResponseMessage response = await host.Client.GetAsync($"/runs/{R1}");
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -56,17 +68,17 @@ public sealed class ControlPlaneServerTests
             using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
                 """{ "stepA": { "a": 1 }, "stepB": { "b": "two" } }"""u8.ToArray()))
             {
-                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r-steps", "wf", default, "development", host.Clock);
+                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, RSteps, "wf", default, "development", host.Clock);
                 run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
                 run.SetStepOutputs("stepB", doc.RootElement.GetProperty("stepB"u8));
                 await run.CheckpointAsync(cursor: 2, default);
             }
 
-            HttpResponseMessage response = await host.Client.GetAsync("/runs/r-steps/steps");
+            HttpResponseMessage response = await host.Client.GetAsync($"/runs/{RSteps}/steps");
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc2 = await ReadJsonAsync(response);
-            doc2.RootElement.GetProperty("runId").GetString().ShouldBe("r-steps");
+            doc2.RootElement.GetProperty("runId").GetString().ShouldBe(RSteps);
             Stj.JsonElement steps = doc2.RootElement.GetProperty("steps");
             steps.GetArrayLength().ShouldBe(2);
             steps[0].GetProperty("stepId").GetString().ShouldBe("stepA");
@@ -87,14 +99,14 @@ public sealed class ControlPlaneServerTests
             DateTimeOffset t = new(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
             using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "stepA": { "a": 1 } }"""u8.ToArray()))
             {
-                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r-journal", "wf", default, "development", host.Clock);
+                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, RJournal, "wf", default, "development", host.Clock);
                 run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
                 run.RecordStep("stepA", WorkflowStepStatus.Succeeded, 1, t, t.AddMilliseconds(5));
                 run.RecordStep("stepB", WorkflowStepStatus.Faulted, 2, t.AddSeconds(1), t.AddSeconds(2));
                 await run.CheckpointAsync(cursor: 2, default);
             }
 
-            HttpResponseMessage response = await host.Client.GetAsync("/runs/r-journal/steps");
+            HttpResponseMessage response = await host.Client.GetAsync($"/runs/{RJournal}/steps");
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc2 = await ReadJsonAsync(response);
@@ -120,7 +132,7 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            HttpResponseMessage response = await host.Client.GetAsync("/runs/nope/steps");
+            HttpResponseMessage response = await host.Client.GetAsync($"/runs/{AbsentRun}/steps");
 
             response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -134,7 +146,7 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            HttpResponseMessage response = await host.Client.GetAsync("/runs/nope");
+            HttpResponseMessage response = await host.Client.GetAsync($"/runs/{AbsentRun}");
 
             response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -149,8 +161,8 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "faulted-1", host.Clock);
-            await CompleteRunAsync(host.Store, "done-1", host.Clock);
+            await FaultRunAsync(host.Store, Faulted1, host.Clock);
+            await CompleteRunAsync(host.Store, Done1, host.Clock);
 
             HttpResponseMessage response = await host.Client.GetAsync("/runs?status=Faulted");
 
@@ -158,7 +170,7 @@ public sealed class ControlPlaneServerTests
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
             Stj.JsonElement runs = doc.RootElement.GetProperty("runs");
             runs.GetArrayLength().ShouldBe(1);
-            runs[0].GetProperty("id").GetString().ShouldBe("faulted-1");
+            runs[0].GetProperty("id").GetString().ShouldBe(Faulted1);
             runs[0].GetProperty("status").GetString().ShouldBe("Faulted");
         }
     }
@@ -170,23 +182,23 @@ public sealed class ControlPlaneServerTests
         await using (host.App)
         {
             var clock = (MutableClock)host.Clock;
-            await CompleteRunAsync(host.Store, "early", clock);   // created at T0
+            await CompleteRunAsync(host.Store, Early, clock);   // created at T0
             clock.Advance(TimeSpan.FromHours(2));
-            await CompleteRunAsync(host.Store, "late", clock);    // created at T0 + 2h
+            await CompleteRunAsync(host.Store, Late, clock);    // created at T0 + 2h
 
             // createdAfter (inclusive) at T0 + 1h keeps only 'late'.
             string after = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
             using Stj.JsonDocument afterDoc = await ReadJsonAsync(await host.Client.GetAsync($"/runs?createdAfter={after}"));
             Stj.JsonElement afterRuns = afterDoc.RootElement.GetProperty("runs");
             afterRuns.GetArrayLength().ShouldBe(1);
-            afterRuns[0].GetProperty("id").GetString().ShouldBe("late");
+            afterRuns[0].GetProperty("id").GetString().ShouldBe(Late);
 
             // createdBefore (exclusive) at T0 + 1h keeps only 'early'.
             string before = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
             using Stj.JsonDocument beforeDoc = await ReadJsonAsync(await host.Client.GetAsync($"/runs?createdBefore={before}"));
             Stj.JsonElement beforeRuns = beforeDoc.RootElement.GetProperty("runs");
             beforeRuns.GetArrayLength().ShouldBe(1);
-            beforeRuns[0].GetProperty("id").GetString().ShouldBe("early");
+            beforeRuns[0].GetProperty("id").GetString().ShouldBe(Early);
         }
     }
 
@@ -196,16 +208,16 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await TaggedRunAsync(host.Store, "r-a", host.Clock, "trace-aaa", ["tenant-1", "priority"]);
-            await TaggedRunAsync(host.Store, "r-b", host.Clock, "trace-bbb", ["tenant-1"]);
-            await TaggedRunAsync(host.Store, "r-c", host.Clock, "trace-ccc", []);
+            await TaggedRunAsync(host.Store, RunA, host.Clock, "trace-aaa", ["tenant-1", "priority"]);
+            await TaggedRunAsync(host.Store, RunB, host.Clock, "trace-bbb", ["tenant-1"]);
+            await TaggedRunAsync(host.Store, RunC, host.Clock, "trace-ccc", []);
 
             // Tags are AND-matched.
             using (Stj.JsonDocument both = await ReadJsonAsync(await host.Client.GetAsync("/runs?tag=tenant-1&tag=priority")))
             {
                 Stj.JsonElement runs = both.RootElement.GetProperty("runs");
                 runs.GetArrayLength().ShouldBe(1);
-                runs[0].GetProperty("id").GetString().ShouldBe("r-a");
+                runs[0].GetProperty("id").GetString().ShouldBe(RunA);
                 // The summary surfaces tags + correlationId so an operator can pivot to telemetry.
                 runs[0].GetProperty("correlationId").GetString().ShouldBe("trace-aaa");
                 runs[0].GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ShouldBe(["tenant-1", "priority"], ignoreOrder: true);
@@ -222,7 +234,7 @@ public sealed class ControlPlaneServerTests
             {
                 Stj.JsonElement runs = corr.RootElement.GetProperty("runs");
                 runs.GetArrayLength().ShouldBe(1);
-                runs[0].GetProperty("id").GetString().ShouldBe("r-b");
+                runs[0].GetProperty("id").GetString().ShouldBe(RunB);
             }
         }
     }
@@ -235,7 +247,7 @@ public sealed class ControlPlaneServerTests
         {
             for (int i = 1; i <= 5; i++)
             {
-                await CompleteRunAsync(host.Store, $"run-{i:00}", host.Clock);
+                await CompleteRunAsync(host.Store, $"00000000000000000000000000000ab{i:0}", host.Clock);
             }
 
             var collected = new List<string>();
@@ -264,7 +276,7 @@ public sealed class ControlPlaneServerTests
             }
             while (token is not null);
 
-            collected.ShouldBe(["run-01", "run-02", "run-03", "run-04", "run-05"]);
+            collected.ShouldBe(["00000000000000000000000000000ab1", "00000000000000000000000000000ab2", "00000000000000000000000000000ab3", "00000000000000000000000000000ab4", "00000000000000000000000000000ab5"]);
         }
     }
 
@@ -274,9 +286,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"RetryFaultedStep"}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/resume", Json("""{"mode":"RetryFaultedStep"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -290,9 +302,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await CompleteRunAsync(host.Store, "done-1", host.Clock);
+            await CompleteRunAsync(host.Store, Done1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/done-1/resume", Json("""{"mode":"RetryFaultedStep"}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{Done1}/resume", Json("""{"mode":"RetryFaultedStep"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -306,9 +318,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAtAsync(host.Store, "r1", cursor: 3, faultStep: "step3", host.Clock);
+            await FaultRunAtAsync(host.Store, R1, cursor: 3, faultStep: "step3", host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"Rewind","targetCursor":1}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/resume", Json("""{"mode":"Rewind","targetCursor":1}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -323,9 +335,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAtAsync(host.Store, "r1", cursor: 2, faultStep: "step2", host.Clock);
+            await FaultRunAtAsync(host.Store, R1, cursor: 2, faultStep: "step2", host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/resume", Json("""{"mode":"Skip"}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/resume", Json("""{"mode":"Skip"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -346,14 +358,14 @@ public sealed class ControlPlaneServerTests
         await using (host.App)
         {
             using (ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{ "x": 1 }"""u8.ToArray()))
-            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r1", "wf", inputs.RootElement, "development", host.Clock))
+            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, R1, "wf", inputs.RootElement, "development", host.Clock))
             {
                 await run.CheckpointAsync(cursor: 1, default);
                 await run.FaultAsync("step1", attempt: 1, "bad input", default);
             }
 
             HttpResponseMessage response = await host.Client.PostAsync(
-                "/runs/r1/resume",
+                $"/runs/{R1}/resume",
                 Json("""{"mode":"StatePatch","patch":[{"op":"replace","path":"/inputs/x","value":2}]}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -367,12 +379,12 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.DeleteAsync("/runs/r1");
+            HttpResponseMessage response = await host.Client.DeleteAsync($"/runs/{R1}");
 
             response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-            (await host.Client.GetAsync("/runs/r1")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await host.Client.GetAsync($"/runs/{R1}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
     }
 
@@ -382,7 +394,7 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            HttpResponseMessage response = await host.Client.DeleteAsync("/runs/nope");
+            HttpResponseMessage response = await host.Client.DeleteAsync($"/runs/{AbsentRun}");
 
             response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -396,9 +408,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/cancel", Json("""{"reason":"operator abandoned"}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/cancel", Json("""{"reason":"operator abandoned"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
@@ -415,12 +427,12 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            (await host.Client.PostAsync("/runs/r1/cancel", Json("""{"reason":"operator abandoned"}"""))).StatusCode.ShouldBe(HttpStatusCode.OK);
-            (await host.Client.DeleteAsync("/runs/r1")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+            (await host.Client.PostAsync($"/runs/{R1}/cancel", Json("""{"reason":"operator abandoned"}"""))).StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await host.Client.DeleteAsync($"/runs/{R1}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-            audit.Outcomes("r1").ShouldBe(["cancelled", "deleted"]);
+            audit.Outcomes(R1).ShouldBe(["cancelled", "deleted"]);
         }
     }
 
@@ -430,9 +442,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await CompleteRunAsync(host.Store, "done-1", host.Clock);
+            await CompleteRunAsync(host.Store, Done1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/done-1/cancel", Json("""{"reason":"too late"}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{Done1}/cancel", Json("""{"reason":"too late"}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         }
@@ -446,9 +458,9 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await FaultRunAsync(host.Store, "r1", host.Clock);
+            await FaultRunAsync(host.Store, R1, host.Clock);
 
-            HttpResponseMessage response = await host.Client.PostAsync("/runs/r1/cancel", Json("""{"reason":""}"""));
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/cancel", Json("""{"reason":""}"""));
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         }
@@ -460,7 +472,7 @@ public sealed class ControlPlaneServerTests
         Host host = await StartAsync();
         await using (host.App)
         {
-            await CompleteRunAsync(host.Store, "old-done", host.Clock);
+            await CompleteRunAsync(host.Store, OldDone, host.Clock);
 
             string olderThan = Uri.EscapeDataString((T0 + TimeSpan.FromHours(1)).ToString("O"));
             var request = new HttpRequestMessage(new HttpMethod("PURGE"), $"/runs?olderThan={olderThan}");
@@ -469,7 +481,7 @@ public sealed class ControlPlaneServerTests
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
             doc.RootElement.GetProperty("purgedCount").GetInt32().ShouldBe(1);
-            (await host.Client.GetAsync("/runs/old-done")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await host.Client.GetAsync($"/runs/{OldDone}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
     }
 

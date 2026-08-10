@@ -31,6 +31,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Tests;
 public sealed class RunnerApiQuotaEndToEndTests
 {
     private const string Runner = "runner-a";
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
     private const string Production = "production";
     private const string Version = "adopt-v3";
     private const string LeaseHeader = "X-Arazzo-Lease";
@@ -93,13 +94,13 @@ public sealed class RunnerApiQuotaEndToEndTests
             o.TenantCheckpoints = RunnerQuotaLimit.None;
         });
 
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        (await host.LoadCheckpointAsync(Runner, "run-1", lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.LoadCheckpointAsync(Runner, Run1, lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Refused even though the lease is perfectly good, which is what shows the meter is reached first.
-        using HttpResponseMessage refused = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage refused = await host.LoadCheckpointAsync(Runner, Run1, lease);
         refused.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
 
         using Stj.JsonDocument body = Stj.JsonDocument.Parse(await refused.Content.ReadAsStringAsync());
@@ -117,20 +118,20 @@ public sealed class RunnerApiQuotaEndToEndTests
             o.TenantCheckpointBytes = RunnerQuotaLimit.None;
         });
 
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        byte[] checkpoint = Checkpoint("run-1", WorkflowRunStatus.Running, sequence: 2);
+        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
         checkpoint.Length.ShouldBeGreaterThan(64, "the test needs a body larger than the whole volume allowance");
 
-        using HttpResponseMessage refused = await host.SaveCheckpointAsync(Runner, "run-1", lease, checkpoint, 2);
+        using HttpResponseMessage refused = await host.SaveCheckpointAsync(Runner, Run1, lease, checkpoint, 2);
         refused.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
 
         using Stj.JsonDocument body = Stj.JsonDocument.Parse(await refused.Content.ReadAsStringAsync());
         body.RootElement.GetProperty("quota").GetString().ShouldBe("checkpoint-bytes/runner");
 
         // Nothing was written: the run is still at the sequence the seed left it on.
-        (await host.StoredSequenceAsync("run-1")).ShouldBe(1);
+        (await host.StoredSequenceAsync(Run1)).ShouldBe(1);
     }
 
     [TestMethod]
@@ -145,10 +146,10 @@ public sealed class RunnerApiQuotaEndToEndTests
             o.RunnerCatalog = new RunnerQuotaLimit(0.001, 0.001);
         });
 
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        (await host.ReleaseLeaseAsync(Runner, "run-1", lease)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.ReleaseLeaseAsync(Runner, Run1, lease)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
 
     [TestMethod]
@@ -162,13 +163,13 @@ public sealed class RunnerApiQuotaEndToEndTests
             o.TenantClaims = RunnerQuotaLimit.None;
         });
 
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
         (await host.ClaimAsync(Runner)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
 
-        (await host.LoadCheckpointAsync(Runner, "run-1", lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.RenewLeaseAsync(Runner, "run-1", lease, 60)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.LoadCheckpointAsync(Runner, Run1, lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.RenewLeaseAsync(Runner, Run1, lease, 60)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [TestMethod]
@@ -177,7 +178,7 @@ public sealed class RunnerApiQuotaEndToEndTests
         // Opting out is something a deployment states rather than something it gets by omission, so the opt-out itself
         // is worth a test.
         await using Host host = await Host.StartAsync(configure: null, guard: NoRunnerQuotaGuard.Instance);
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
 
         for (int i = 0; i < 200; ++i)
         {
@@ -198,16 +199,16 @@ public sealed class RunnerApiQuotaEndToEndTests
             o.RunnerCheckpoints = RunnerQuotaLimit.None;
         });
 
-        await host.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
         // The seeded checkpoint is far larger than the 8-byte allowance, so this read overshoots it.
-        using HttpResponseMessage first = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage first = await host.LoadCheckpointAsync(Runner, Run1, lease);
         first.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await first.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(8, "the read has to exceed the allowance for the deficit to be the thing under test");
 
         // The debt is carried, so the next read is refused by the volume quota rather than the request quota.
-        using HttpResponseMessage second = await host.LoadCheckpointAsync(Runner, "run-1", lease);
+        using HttpResponseMessage second = await host.LoadCheckpointAsync(Runner, Run1, lease);
         second.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
 
         using Stj.JsonDocument body = Stj.JsonDocument.Parse(await second.Content.ReadAsStringAsync());

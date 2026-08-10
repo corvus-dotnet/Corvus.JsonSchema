@@ -26,7 +26,7 @@ public sealed class ControlPlaneRunStarterTests
     [TestMethod]
     public async Task StartAsync_posts_to_the_governed_run_endpoint_with_the_idempotency_key_and_bearer_token()
     {
-        var handler = new CapturingHandler(HttpStatusCode.Accepted, """{"runId":"run-xyz","status":"Pending","workflowId":"flow-v1"}""");
+        var handler = new CapturingHandler(HttpStatusCode.Accepted, """{"runId":"0123456789abcdef0123456789abcdef","status":"Pending","workflowId":"flow-v1"}""");
         using var http = new HttpClient(handler);
         var starter = new ControlPlaneRunStarter(http, new StubAuthentication("tok-1"), "http://cp.example/", "development");
 
@@ -34,7 +34,7 @@ public sealed class ControlPlaneRunStarterTests
         WorkflowRunId id = await starter.StartAsync(new WorkflowStartRequest("flow-v1", inputs.RootElement, "sched-a:2026-07-20T09:00:00.0000000Z"), default);
 
         // The run id is read from the 202 WorkflowRunAccepted body.
-        id.Value.ShouldBe("run-xyz");
+        id.Value.ShouldBe("0123456789abcdef0123456789abcdef");
 
         // The target versioned id resolves to the catalog run endpoint, pinned to the runner's environment.
         handler.Method.ShouldBe(HttpMethod.Post);

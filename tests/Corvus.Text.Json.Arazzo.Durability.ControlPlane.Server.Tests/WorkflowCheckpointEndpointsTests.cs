@@ -31,7 +31,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 public sealed class WorkflowCheckpointEndpointsTests
 {
     private const string SeqHeader = "X-Arazzo-Checkpoint-Seq";
-    private static readonly WorkflowRunId Run = new("run-1");
+    private static readonly WorkflowRunId Run = new("0123456789abcdef0123456789abcdef");
     private static readonly byte[] CheckpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
@@ -39,9 +39,27 @@ public sealed class WorkflowCheckpointEndpointsTests
     {
         await using Host host = await Host.StartAsync();
 
-        HttpResponseMessage response = await host.GetCheckpointAsync("missing");
+        HttpResponseMessage response = await host.GetCheckpointAsync("badcafebadcafebadcafebadcafe0000");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    [DataRow("run-1", DisplayName = "non-hex (the pre-grammar fixture idiom)")]
+    [DataRow("0123456789abcdef0123456789abcdef0", DisplayName = "33 hex characters")]
+    [DataRow("0123456789abcdef0123456789abcde", DisplayName = "31 hex characters")]
+    [DataRow("0123456789ABCDEF0123456789ABCDEF", DisplayName = "uppercase hex")]
+    public async Task A_run_id_outside_the_grammar_is_refused_before_the_token_or_the_store(string runId)
+    {
+        await using Host host = await Host.StartAsync();
+
+        // The helpers mint a VALID run-scoped token for the id, so the grammar's 400 must come first (ADR 0065 §9:
+        // validated at every ingress before any store touch) — before the token is honoured and before a POST can
+        // create a row under a key outside the grammar.
+        (await host.GetCheckpointAsync(runId)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.PostCheckpointAsync(runId, RealCheckpoint(WorkflowRunStatus.Running), sequence: 1)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        (await host.Store.LoadAsync(new WorkflowRunId(runId), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -129,11 +147,11 @@ public sealed class WorkflowCheckpointEndpointsTests
         await using Host host = await Host.StartAsync(ControlPlaneSecurityMode.ScopesOnly);
 
         // No principal: the endpoint's RequireAuthorization rejects the request.
-        (await host.GetCheckpointAsync("missing")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await host.GetCheckpointAsync("badcafebadcafebadcafebadcafe0000")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         (await host.PostCheckpointAsync(Run.Value, RealCheckpoint(WorkflowRunStatus.Running), 1)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         // An authenticated principal is admitted (the unknown run then 404s).
-        (await host.GetCheckpointAsync("missing", scope: "runs:read")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetCheckpointAsync("badcafebadcafebadcafebadcafe0000", scope: "runs:read")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [TestMethod]

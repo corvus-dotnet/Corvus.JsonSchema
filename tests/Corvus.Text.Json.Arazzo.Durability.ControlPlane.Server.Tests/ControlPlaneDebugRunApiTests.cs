@@ -264,7 +264,7 @@ public sealed class ControlPlaneDebugRunApiTests
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         // An unknown run id under a real working copy is 404.
-        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/dbg-nope", "{}", "workspace:read"))
+        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/badcafebadcafebadcafebadcafe0000", "{}", "workspace:read"))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -508,7 +508,7 @@ public sealed class ControlPlaneDebugRunApiTests
         (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development"}""", StartScopes))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/dbg-x", "{}", "workspace:read"))
+        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/badcafebadcafebadcafebadcafe0000", "{}", "workspace:read"))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 

@@ -272,12 +272,15 @@ public readonly partial struct WorkflowRunSteps
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
+        /// <para>
+        /// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
+        /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable RunId
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Mutable RunId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Mutable value))
                 {
                     return value;
                 }
@@ -374,7 +377,7 @@ public readonly partial struct WorkflowRunSteps
         /// Set the <c>runId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRunId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetRunId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source value)
         {
             CheckValidInstance();
 
@@ -841,7 +844,7 @@ public readonly partial struct WorkflowRunSteps
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source _createArg3;
 
@@ -858,7 +861,7 @@ public readonly partial struct WorkflowRunSteps
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1011,7 +1014,7 @@ public readonly partial struct WorkflowRunSteps
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source _createArg3;
 
@@ -1026,7 +1029,7 @@ public readonly partial struct WorkflowRunSteps
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1184,7 +1187,7 @@ public readonly partial struct WorkflowRunSteps
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
         {
@@ -1197,7 +1200,7 @@ public readonly partial struct WorkflowRunSteps
         /// Creates an instance of a <see cref="WorkflowRunSteps"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
         {
@@ -1210,7 +1213,7 @@ public readonly partial struct WorkflowRunSteps
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
         #if NET9_0_OR_GREATER
@@ -1227,7 +1230,7 @@ public readonly partial struct WorkflowRunSteps
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
         #if NET9_0_OR_GREATER
@@ -1336,7 +1339,7 @@ public readonly partial struct WorkflowRunSteps
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1352,7 +1355,7 @@ public readonly partial struct WorkflowRunSteps
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1399,7 +1402,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="steps">The value of the <c>"steps"</c> property.</param>
     /// <param name="truncated">The value of the <c>"truncated"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
     {
         return new Source(runId, steps, truncated);
     }
@@ -1413,7 +1416,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="steps">The value of the <c>"steps"</c> property.</param>
     /// <param name="truncated">The value of the <c>"truncated"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1519,7 +1522,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="truncated">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1543,7 +1546,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="truncated">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1658,7 +1661,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="truncated">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<WorkflowRunSteps> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<WorkflowRunSteps> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1688,7 +1691,7 @@ public readonly partial struct WorkflowRunSteps
     /// <param name="truncated">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<WorkflowRunSteps> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<WorkflowRunSteps> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source truncated = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

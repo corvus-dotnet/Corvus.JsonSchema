@@ -31,6 +31,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ServerlessInvocationHandlerTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
     private static readonly WorkflowTransports EmptyTransports =
         new(ImmutableDictionary<string, IApiTransport>.Empty, WorkflowTransports.NoMessageTransports);
 
@@ -40,20 +41,20 @@ public sealed class ServerlessInvocationHandlerTests
     public async Task Advances_a_run_and_checkpoints_it_back_through_the_live_runner_surface()
     {
         await using Runner runner = await Runner.StartAsync();
-        await SeedPendingRun(runner.Store, "run-1", "wf");
+        await SeedPendingRun(runner.Store, Run1, "wf");
 
         var handler = new ServerlessInvocationHandler(
             new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")),
             NoTransports,
             runner.CheckpointHandler);
 
-        byte[] outcome = await handler.HandleAsync(Invocation("run-1", runner.CheckpointBaseUrl), default);
+        byte[] outcome = await handler.HandleAsync(Invocation(Run1, runner.CheckpointBaseUrl), default);
 
         // The function reported the run completed...
         Encoding.UTF8.GetString(outcome).ShouldBe("""{"outcome":"Completed"}""");
 
         // ...and its terminal checkpoint landed in the store through the live checkpoint endpoints.
-        WorkflowCheckpoint stored = (await runner.Store.LoadAsync("run-1", default))!.Value;
+        WorkflowCheckpoint stored = (await runner.Store.LoadAsync(Run1, default))!.Value;
         WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
@@ -61,17 +62,33 @@ public sealed class ServerlessInvocationHandlerTests
     public async Task A_not_dispatchable_run_is_a_benign_empty_outcome()
     {
         await using Runner runner = await Runner.StartAsync();
-        await SeedSuspendedRun(runner.Store, "run-1", "wf");
+        await SeedSuspendedRun(runner.Store, Run1, "wf");
 
         var workflow = new CompletingHostedWorkflow("wf");
         var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(workflow), NoTransports, runner.CheckpointHandler);
 
-        byte[] outcome = await handler.HandleAsync(Invocation("run-1", runner.CheckpointBaseUrl), default);
+        byte[] outcome = await handler.HandleAsync(Invocation(Run1, runner.CheckpointBaseUrl), default);
 
         // A run merely waiting (no resume request) is not advanced: an empty outcome (the backend reads it as a benign
         // Suspended), and the workflow never ran.
         Encoding.UTF8.GetString(outcome).ShouldBe("{}");
         workflow.Ran.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Rejects_an_invocation_whose_run_id_is_outside_the_grammar()
+    {
+        await using Runner runner = await Runner.StartAsync();
+        await SeedPendingRun(runner.Store, "run-1", "wf");
+
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+
+        // The invocation body arrives from outside the function's trust boundary (the dispatch fabric), so the
+        // run-id grammar is validated at the parse (ADR 0065 §9: at every ingress, before any store touch) — the
+        // handler must refuse rather than advance the seeded run.
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(
+            async () => await handler.HandleAsync(Invocation("run-1", runner.CheckpointBaseUrl), default));
+        refusal.Message.ShouldContain("32 lowercase hex");
     }
 
     [TestMethod]
@@ -90,7 +107,7 @@ public sealed class ServerlessInvocationHandlerTests
         await using Runner runner = await Runner.StartAsync();
         var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
 
-        byte[] body = Encoding.UTF8.GetBytes("""{"runId":"run-1"}""");
+        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}"}""");
         await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
     }
 

@@ -21,6 +21,8 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
 {
     private IAsyncDisposable? owner;
     private IDisposable? parsedDocument;
+    private IResponseHeaders? responseHeaders;
+    private JsonWorkspace workspace;
 
     /// <inheritdoc/>
     public int StatusCode { get; private set; }
@@ -53,6 +55,45 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ConflictBody { get; private set; }
 
+    /// <summary>
+    /// Gets the 429 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem TooManyRequestsBody { get; private set; }
+
+    /// <summary>
+    /// Gets the value of the <c>Retry-After</c> response header,
+    /// or <see langword="null"/> if the header was not present.
+    /// </summary>
+    private Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds retryAfterHeaderValue;
+    private bool retryAfterHeaderParsed;
+
+    /// <summary>
+    /// Gets the parsed value of the <c>Retry-After</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds RetryAfterHeader
+    {
+        get
+        {
+            if (this.retryAfterHeaderParsed)
+            {
+                return this.retryAfterHeaderValue;
+            }
+
+            this.retryAfterHeaderParsed = true;
+
+            if (this.responseHeaders is not null
+                && this.responseHeaders.TryGetValue("Retry-After", out string? rawValue)
+                && rawValue is not null)
+            {
+                this.retryAfterHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RetryAfterSeconds>(rawValue, this.workspace);
+            }
+
+            return this.retryAfterHeaderValue;
+        }
+    }
+
     /// <inheritdoc/>
     public static async ValueTask<AuthorizeRunnerResponse> CreateAsync(
         int statusCode,
@@ -66,6 +107,9 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         AuthorizeRunnerResponse response = default;
         response.StatusCode = statusCode;
         response.owner = owner;
+
+        response.responseHeaders = responseHeaders;
+        response.workspace = JsonWorkspace.CreateUnrented();
 
         if (statusCode == 200)
         {
@@ -104,6 +148,14 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
             var conflictDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = conflictDoc;
             response.ConflictBody = conflictDoc.RootElement;
+            return response;
+        }
+
+        if (statusCode == 429)
+        {
+            var tooManyRequestsDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = tooManyRequestsDoc;
+            response.TooManyRequestsBody = tooManyRequestsDoc.RootElement;
             return response;
         }
 
@@ -196,6 +248,23 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     }
 
     /// <summary>
+    /// Tries to get the 429 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 429.</returns>
+    public bool TryGetTooManyRequests(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem result)
+    {
+        if (this.StatusCode == 429)
+        {
+            result = this.TooManyRequestsBody;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
     /// Matches the response against each status code and content type,
     /// and calls the corresponding handler.
     /// </summary>
@@ -205,6 +274,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchTooManyRequests">Handler for the 429 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
@@ -213,6 +283,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem, TResult> matchTooManyRequests,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -240,6 +311,11 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
             return matchConflict(this.ConflictBody);
         }
 
+        if (this.StatusCode == 429)
+        {
+            return matchTooManyRequests(this.TooManyRequestsBody);
+        }
+
         return matchDefault(this.StatusCode);
     }
 
@@ -255,6 +331,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchNotFound">Handler for the 404 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchTooManyRequests">Handler for the 429 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
@@ -264,6 +341,7 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchNotFound,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.QuotaProblem, TContext, TResult> matchTooManyRequests,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
@@ -290,6 +368,11 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
         if (this.StatusCode == 409)
         {
             return matchConflict(this.ConflictBody, context);
+        }
+
+        if (this.StatusCode == 429)
+        {
+            return matchTooManyRequests(this.TooManyRequestsBody, context);
         }
 
         return matchDefault(this.StatusCode, context);
@@ -344,6 +427,14 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
                     ThrowHelper.ThrowResponseBodyValidationFailed(409, SchemaValidationDetail.FormatResults(collector));
                 }
             }
+            else if (this.StatusCode == 429)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.TooManyRequestsBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(429, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
         }
         else
         {
@@ -382,12 +473,20 @@ public struct AuthorizeRunnerResponse : IApiResponse<AuthorizeRunnerResponse>
                     ThrowHelper.ThrowResponseBodyValidationFailed(409);
                 }
             }
+            else if (this.StatusCode == 429)
+            {
+                if (!this.TooManyRequestsBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(429);
+                }
+            }
         }
     }
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        this.workspace.Dispose();
         this.parsedDocument?.Dispose();
         if (this.owner is not null)
         {

@@ -21,6 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Tests;
 [TestClass]
 public sealed class RunnerQuotaHoldTests
 {
+    private const string Run1 = "0123456789abcdef0123456789abcdef";
     private static RunnerQuotaHoldOptions FastHold(int attempts = 4, int maxHoldMs = 500) => new()
     {
         MaximumAttempts = attempts,
@@ -43,7 +44,7 @@ public sealed class RunnerQuotaHoldTests
             },
             hold: FastHold());
 
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         // The claim itself spends nothing on the checkpoint counter, so the first load takes the single burst token and
@@ -76,7 +77,7 @@ public sealed class RunnerQuotaHoldTests
             },
             hold: FastHold());
 
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
@@ -108,7 +109,7 @@ public sealed class RunnerQuotaHoldTests
             },
             hold: FastHold(attempts: 1));
 
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         // The first load takes the only token. The second is refused, held once, refused again, and fails.
@@ -153,7 +154,7 @@ public sealed class RunnerQuotaHoldTests
             },
             hold: hold);
 
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
 
         RunnerClaim first = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
@@ -199,7 +200,7 @@ public sealed class RunnerQuotaHoldTests
             },
             hold: FastHold(attempts: 1));
 
-        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
