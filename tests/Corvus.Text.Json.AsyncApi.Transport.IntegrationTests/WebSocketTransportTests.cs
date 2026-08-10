@@ -1267,6 +1267,97 @@ public class WebSocketTransportTests
         await s_subscriber.UnsubscribeAsync(channel);
     }
 
+    [TestMethod]
+    public async Task ContextHandlerDeadLetterActionSendsToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/context-deadletter"u8.ToArray();
+        ReadOnlyMemory<byte> dlqChannel = "ws/test/context-deadletter/dlq"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        JsonValueKind dlqKind = JsonValueKind.Undefined;
+
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            dlqChannel,
+            (payload, headers, ct) =>
+            {
+                dlqKind = payload.ValueKind;
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MessageContext messageContext = default;
+        await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) => throw new InvalidOperationException("Intentional failure"),
+            in messageContext);
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"item":"DL-CTX-001"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message from a context handler was not received on the DLQ channel.");
+        Assert.AreNotEqual(JsonValueKind.Undefined, dlqKind);
+
+        await subscriber.DisposeAsync();
+        await dlqSubscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ContextHandlerAbortActionStopsSubscription()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/context-abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        MessageContext messageContext = default;
+        await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            },
+            in messageContext);
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once for a context handler.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Context handler should not be called after abort.");
+
+        await subscriber.DisposeAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

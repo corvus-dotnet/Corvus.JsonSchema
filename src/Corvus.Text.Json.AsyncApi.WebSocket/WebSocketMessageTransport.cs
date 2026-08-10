@@ -493,11 +493,35 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            return;
         }
         catch (Exception ex)
         {
             MessageErrorContext errorContext = new(channelUtf8, MessageErrorKind.Handler, payload, headers);
-            await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
+            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
+            if (action == MessageErrorAction.DeadLetter)
+            {
+                try
+                {
+                    string dlChannel = channel + this.options.DeadLetterSuffix;
+                    (byte[] rented, int length) = BuildDeadLetterEnvelopeRented(dlChannel, channel, in payload, in headers, ex);
+                    await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
+                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "websocket");
+                }
+                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                {
+                    AsyncApiTelemetry.RecordDeadLetterFailure(channel + this.options.DeadLetterSuffix, channel, "websocket", dlEx);
+                }
+            }
+            else if (action == MessageErrorAction.Abort)
+            {
+                AsyncApiTelemetry.RecordAbort(channel, "websocket", MessageErrorKind.Handler);
+                await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
+            }
         }
     }
 
