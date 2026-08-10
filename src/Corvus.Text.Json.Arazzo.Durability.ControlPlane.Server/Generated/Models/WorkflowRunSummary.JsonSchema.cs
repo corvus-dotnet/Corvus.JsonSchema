@@ -70,7 +70,7 @@ public readonly partial struct WorkflowRunSummary
         private static readonly JsonSchemaPathProvider CorrelationIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/correlationId"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider CreatedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/createdAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DueAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/dueAt"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ErrorTypeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/errorType"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider IdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/id/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status/$ref"u8, buffer, out written);
@@ -164,14 +164,14 @@ public readonly partial struct WorkflowRunSummary
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EnvironmentUtf8,
                     evaluationPath: EnvironmentSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 

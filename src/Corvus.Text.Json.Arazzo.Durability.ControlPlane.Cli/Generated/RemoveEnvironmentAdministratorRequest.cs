@@ -24,7 +24,7 @@ public readonly struct RemoveEnvironmentAdministratorRequest : IApiRequest<Remov
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Gets the digest parameter.
@@ -36,7 +36,7 @@ public readonly struct RemoveEnvironmentAdministratorRequest : IApiRequest<Remov
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="digest">The digest parameter.</param>
-    public RemoveEnvironmentAdministratorRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString digest)
+    public RemoveEnvironmentAdministratorRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString digest)
     {
         this.Name = name;
         this.Digest = digest;

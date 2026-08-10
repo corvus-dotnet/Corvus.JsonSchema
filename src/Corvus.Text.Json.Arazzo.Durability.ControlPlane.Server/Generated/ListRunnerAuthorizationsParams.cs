@@ -29,7 +29,7 @@ public readonly struct ListRunnerAuthorizationsParams
     /// <summary>
     /// Gets the 'environment' query parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'limit' query parameter.

@@ -24,7 +24,7 @@ public readonly struct WithdrawRunnerPreAuthorizationRequest : IApiRequest<Withd
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Gets the runnerId parameter.
@@ -36,7 +36,7 @@ public readonly struct WithdrawRunnerPreAuthorizationRequest : IApiRequest<Withd
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="runnerId">The runnerId parameter.</param>
-    public WithdrawRunnerPreAuthorizationRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runnerId)
+    public WithdrawRunnerPreAuthorizationRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runnerId)
     {
         this.Name = name;
         this.RunnerId = runnerId;

@@ -4299,11 +4299,11 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdempotencyKeyValue = default;
                 if (context.Request.Headers.TryGetValue("Idempotency-Key", out var IdempotencyKeyHeaderVal) && IdempotencyKeyHeaderVal.Count > 0)
@@ -4989,10 +4989,10 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (BaseWorkflowIdValue.IsUndefined())
@@ -5112,10 +5112,10 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (BaseWorkflowIdValue.IsUndefined())
@@ -5225,10 +5225,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
@@ -5334,10 +5334,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -5810,10 +5810,10 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RuntimeIdentifierValue = default;
                 if (context.Request.RouteValues.TryGetValue("runtimeIdentifier", out object? RuntimeIdentifierRouteVal) && RuntimeIdentifierRouteVal is string RuntimeIdentifierRaw)
@@ -6217,10 +6217,10 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RuntimeIdentifierValue = default;
                 if (context.Request.RouteValues.TryGetValue("runtimeIdentifier", out object? RuntimeIdentifierRouteVal) && RuntimeIdentifierRouteVal is string RuntimeIdentifierRaw)
@@ -6523,10 +6523,10 @@ public static class ApiEndpointRegistration
                 {
                     SourceNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(SourceNameRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (SourceNameValue.IsUndefined())
@@ -6625,10 +6625,10 @@ public static class ApiEndpointRegistration
                 {
                     SourceNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(SourceNameRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (SourceNameValue.IsUndefined())
@@ -6749,10 +6749,10 @@ public static class ApiEndpointRegistration
                 {
                     SourceNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(SourceNameRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
                 {
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (SourceNameValue.IsUndefined())
@@ -11265,10 +11265,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11345,10 +11345,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11447,10 +11447,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11526,10 +11526,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11606,10 +11606,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11709,10 +11709,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -11811,10 +11811,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DigestValue = default;
                 if (context.Request.RouteValues.TryGetValue("digest", out object? DigestRouteVal) && DigestRouteVal is string DigestRaw)
@@ -11965,10 +11965,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetEnvironmentsByNameRunnersStatus StatusValue = default;
                 if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
@@ -12090,10 +12090,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -12196,10 +12196,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetEnvironmentsByNameRunnersCountStatus StatusValue = default;
                 if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
@@ -12291,10 +12291,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationGrant>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runnerId", out object? RunnerIdRouteVal) && RunnerIdRouteVal is string RunnerIdRaw)
@@ -12425,10 +12425,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runnerId", out object? RunnerIdRouteVal) && RunnerIdRouteVal is string RunnerIdRaw)
@@ -12554,10 +12554,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runnerId", out object? RunnerIdRouteVal) && RunnerIdRouteVal is string RunnerIdRaw)
@@ -12656,10 +12656,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runnerId", out object? RunnerIdRouteVal) && RunnerIdRouteVal is string RunnerIdRaw)
@@ -12791,11 +12791,11 @@ public static class ApiEndpointRegistration
                     string StatusRaw = StatusQueryVal[0]!;
                     StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetRunnerAuthorizationsStatus>(StatusRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
@@ -12908,11 +12908,11 @@ public static class ApiEndpointRegistration
                     string StatusRaw = StatusQueryVal[0]!;
                     StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetRunnerAuthorizationsCountStatus>(StatusRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
 
                 if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
@@ -12989,10 +12989,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetEnvironmentsByNameKeysState StateValue = default;
                 if (context.Request.Query.TryGetValue("state", out var StateQueryVal) && StateQueryVal.Count > 0)
@@ -13114,10 +13114,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
 
                 if (NameValue.IsUndefined())
@@ -13217,10 +13217,10 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRetirementNote>? bodyDoc = null;
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
                 if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
                 {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(NameRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema KeyIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("keyId", out object? KeyIdRouteVal) && KeyIdRouteVal is string KeyIdRaw)
@@ -13346,11 +13346,11 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
@@ -15743,11 +15743,11 @@ public static class ApiEndpointRegistration
                     string StatusRaw = StatusQueryVal[0]!;
                     StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsStatus>(StatusRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsScope ScopeValue = default;
                 if (context.Request.Query.TryGetValue("scope", out var ScopeQueryVal) && ScopeQueryVal.Count > 0)
@@ -15954,11 +15954,11 @@ public static class ApiEndpointRegistration
                     string StatusRaw = StatusQueryVal[0]!;
                     StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountStatus>(StatusRaw, workspace);
                 }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName EnvironmentValue = default;
                 if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
                 {
                     string EnvironmentRaw = EnvironmentQueryVal[0]!;
-                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
                 }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountScope ScopeValue = default;
                 if (context.Request.Query.TryGetValue("scope", out var ScopeQueryVal) && ScopeQueryVal.Count > 0)

@@ -209,7 +209,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// <param name="sourceName">The sourceName parameter.</param>
     /// <param name="environment">The environment parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetCredentialResponse> GetCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetCredentialResponse> GetCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update a source credential binding
@@ -221,7 +221,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// <param name="environment">The environment parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateCredentialResponse> UpdateCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UpdateCredentialResponse> UpdateCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update a source credential binding
@@ -233,7 +233,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// <param name="environment">The environment parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateCredentialResponse> UpdateCredentialAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<UpdateCredentialResponse> UpdateCredentialAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialBindingUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -245,7 +245,7 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// <param name="sourceName">The sourceName parameter.</param>
     /// <param name="environment">The environment parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<DeleteCredentialResponse> DeleteCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DeleteCredentialResponse> DeleteCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Count source credential bindings

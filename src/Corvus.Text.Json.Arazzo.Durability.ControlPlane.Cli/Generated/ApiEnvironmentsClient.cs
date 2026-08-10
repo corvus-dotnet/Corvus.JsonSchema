@@ -126,10 +126,10 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetEnvironmentResponse> GetEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetEnvironmentResponse> GetEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         GetEnvironmentRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -146,11 +146,11 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.CreateBuilder(workspace, body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         UpdateEnvironmentRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -180,14 +180,14 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.CreateBuilder(workspace, in body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         UpdateEnvironmentRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -216,10 +216,10 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<DeleteEnvironmentResponse> DeleteEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<DeleteEnvironmentResponse> DeleteEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         DeleteEnvironmentRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -235,10 +235,10 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListEnvironmentAdministratorsResponse> ListEnvironmentAdministratorsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListEnvironmentAdministratorsResponse> ListEnvironmentAdministratorsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         ListEnvironmentAdministratorsRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -255,11 +255,11 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.CreateBuilder(workspace, body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         TransferEnvironmentAdministrationRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -289,14 +289,14 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.CreateBuilder(workspace, in body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         TransferEnvironmentAdministrationRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -326,11 +326,11 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.CreateBuilder(workspace, body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         AddEnvironmentAdministratorRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -360,14 +360,14 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.CreateBuilder(workspace, in body, 30).RootElement;
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         AddEnvironmentAdministratorRequest request = new(NameValue);
 
         request.Validate(validationMode);
@@ -397,10 +397,10 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     /// <param name="name">The name parameter.</param>
     /// <param name="digest">The digest parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<RemoveEnvironmentAdministratorResponse> RemoveEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<RemoveEnvironmentAdministratorResponse> RemoveEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DigestValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, digest, 30).RootElement;
         RemoveEnvironmentAdministratorRequest request = new(NameValue, DigestValue);
 

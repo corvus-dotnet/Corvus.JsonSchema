@@ -24,7 +24,7 @@ public readonly struct CountEnvironmentRunnerAuthorizationsRequest : IApiRequest
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Gets the status parameter.
@@ -35,7 +35,7 @@ public readonly struct CountEnvironmentRunnerAuthorizationsRequest : IApiRequest
     /// Initializes a new instance of the <see cref="CountEnvironmentRunnerAuthorizationsRequest"/> struct.
     /// </summary>
     /// <param name="name">The name parameter.</param>
-    public CountEnvironmentRunnerAuthorizationsRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name)
+    public CountEnvironmentRunnerAuthorizationsRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name)
     {
         this.Name = name;
     }

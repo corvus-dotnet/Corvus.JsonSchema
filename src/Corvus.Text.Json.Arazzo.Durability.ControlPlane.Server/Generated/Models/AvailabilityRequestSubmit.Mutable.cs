@@ -297,14 +297,14 @@ public readonly partial struct AvailabilityRequestSubmit
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The target environment to make the version available in.
+        /// A deployment environment&#39;s name, its stable identity (e.g. production, staging, dev-mwa-1): 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run&#39;s composite (environment, runId) store key (ADR 0065 &#167;9), including in backends that encode that key as a delimited string, so the grammar excludes every delimiter and forbidden character those encodings involve. Credentials, availability, dispatch scoping, and runs all key on it (design &#167;5.5/&#167;7.7).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Environment
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Mutable Environment
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Mutable value))
                 {
                     return value;
                 }
@@ -432,7 +432,7 @@ public readonly partial struct AvailabilityRequestSubmit
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source value)
         {
             CheckValidInstance();
 
@@ -866,7 +866,7 @@ public readonly partial struct AvailabilityRequestSubmit
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
 
@@ -883,7 +883,7 @@ public readonly partial struct AvailabilityRequestSubmit
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1163,7 +1163,7 @@ public readonly partial struct AvailabilityRequestSubmit
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
         {
@@ -1178,7 +1178,7 @@ public readonly partial struct AvailabilityRequestSubmit
         /// </summary>
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
         {
@@ -1285,7 +1285,7 @@ public readonly partial struct AvailabilityRequestSubmit
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1330,7 +1330,7 @@ public readonly partial struct AvailabilityRequestSubmit
     /// <param name="versionNumber">The value of the <c>"versionNumber"</c> property.</param>
     /// <param name="reason">The value of the <c>"reason"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
     {
         return new Source(baseWorkflowId, environment, versionNumber, reason);
     }
@@ -1434,7 +1434,7 @@ public readonly partial struct AvailabilityRequestSubmit
     /// <param name="reason">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1547,7 +1547,7 @@ public readonly partial struct AvailabilityRequestSubmit
     /// <param name="reason">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AvailabilityRequestSubmit> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<AvailabilityRequestSubmit> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit.TheVersionNumberToMakeAvailable.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try

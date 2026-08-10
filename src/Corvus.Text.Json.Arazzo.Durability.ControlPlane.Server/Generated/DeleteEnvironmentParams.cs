@@ -24,5 +24,5 @@ public readonly struct DeleteEnvironmentParams
     /// <summary>
     /// Gets the 'name' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName Name { get; init; }
 }

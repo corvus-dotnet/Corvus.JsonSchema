@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease.
+/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease. The environment is echoed so the runner can select the right credentials and bindings for the run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -67,14 +67,14 @@ public readonly partial struct ClaimedRun
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The environment the run is pinned to. Echoed so the runner can select the right credentials and bindings, never taken from the request.
+    /// A deployment environment&#39;s name: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run&#39;s composite (environment, runId) store key (ADR 0065 &#167;9).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.JsonString Environment
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName Environment
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName value))
             {
                 return value;
             }

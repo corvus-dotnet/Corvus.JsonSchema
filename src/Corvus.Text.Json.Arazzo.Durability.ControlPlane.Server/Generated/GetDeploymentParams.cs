@@ -34,7 +34,7 @@ public readonly struct GetDeploymentParams
     /// <summary>
     /// Gets the 'environment' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'runtimeIdentifier' path parameter.

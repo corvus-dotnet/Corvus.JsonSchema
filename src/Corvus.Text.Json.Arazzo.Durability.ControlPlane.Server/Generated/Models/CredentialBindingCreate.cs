@@ -227,14 +227,14 @@ public readonly partial struct CredentialBindingCreate
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The deployment environment.
+    /// A deployment environment&#39;s name, its stable identity (e.g. production, staging, dev-mwa-1): 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run&#39;s composite (environment, runId) store key (ADR 0065 &#167;9), including in backends that encode that key as a delimited string, so the grammar excludes every delimiter and forbidden character those encodings involve. Credentials, availability, dispatch scoping, and runs all key on it (design &#167;5.5/&#167;7.7).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName Environment
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName value))
             {
                 return value;
             }

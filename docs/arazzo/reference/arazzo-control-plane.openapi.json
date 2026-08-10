@@ -897,7 +897,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
-          { "name": "environment", "in": "query", "required": true, "description": "The deployment environment to pin the run to (design §5.5). The version must be available in this environment (§7.8) and the environment must be within the caller's reach; the run uses this environment's credential set and is dispatched only to runners serving it.", "schema": { "type": "string" } },
+          { "name": "environment", "in": "query", "required": true, "description": "The deployment environment to pin the run to (design §5.5). The version must be available in this environment (§7.8) and the environment must be within the caller's reach; the run uses this environment's credential set and is dispatched only to runners serving it.", "schema": { "$ref": "#/components/schemas/EnvironmentName" } },
           { "$ref": "#/components/parameters/IdempotencyKeyHeader" }
         ],
         "requestBody": {
@@ -3841,7 +3841,7 @@
         "summary": "List schedules",
         "description": "Returns a page of durable schedules (#896) the caller's reach admits (§14.2). A schedule is a durable run of the built-in scheduler workflow that fires a target version on a cron cadence; this projects each such run (its cadence, target, next occurrence, and last fire) without exposing it as a raw run. Optionally filtered to one `environment`. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
         "parameters": [
-          { "name": "environment", "in": "query", "required": false, "description": "Restrict to schedules pinned to this deployment environment.", "schema": { "type": "string" } },
+          { "name": "environment", "in": "query", "required": false, "description": "Restrict to schedules pinned to this deployment environment.", "schema": { "$ref": "#/components/schemas/EnvironmentName" } },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
@@ -4845,7 +4845,7 @@
         "description": "Lists availability requests visible to the caller, oldest first. With environment, returns that environment's request queue — the caller must be an administrator of it (403 otherwise). Without environment, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the environments the caller administers. Optionally filtered by status.",
         "parameters": [
           { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn"] }, "description": "Only requests in this state." },
-          { "name": "environment", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target environment whose request queue to list (requires administrator of it); absent lists per scope." },
+          { "name": "environment", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/EnvironmentName" }, "description": "The target environment whose request queue to list (requires administrator of it); absent lists per scope." },
           { "name": "scope", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mine", "queue"] }, "description": "When environment is absent, which requests to list: 'mine' (default) the caller's own; 'queue' the approver inbox across every environment the caller administers. Ignored when environment is present." },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
@@ -4892,9 +4892,7 @@
             "name": "environment",
             "in": "query",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "$ref": "#/components/schemas/EnvironmentName" },
             "description": "The target environment whose request queue to count (requires administrator of it); absent counts per scope."
           },
           {
@@ -5015,7 +5013,7 @@
         "description": "Lists runner authorizations across the environments the caller administers — the approver inbox for authorizing runners (design §5.5/§15.4), ordered by (environment, runnerId). With environment, returns that environment's authorizations and the caller must administer it (403 otherwise). Without environment, returns the inbox spanning every environment the caller administers; defaults to Pending so an administrator sees the runners awaiting authorization. Optionally filtered by status.",
         "parameters": [
           { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"] }, "description": "Only authorizations in this state (the inbox defaults to Pending when omitted)." },
-          { "name": "environment", "in": "query", "required": false, "schema": { "type": "string" }, "description": "A single environment whose authorizations to list (requires administrator of it); absent lists the inbox across every administered environment." },
+          { "name": "environment", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/EnvironmentName" }, "description": "A single environment whose authorizations to list (requires administrator of it); absent lists the inbox across every administered environment." },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
@@ -5058,9 +5056,7 @@
             "name": "environment",
             "in": "query",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "$ref": "#/components/schemas/EnvironmentName" },
             "description": "A single environment whose authorizations to count (requires administrator of it); absent counts the inbox across every administered environment."
           }
         ],
@@ -5260,7 +5256,7 @@
         "in": "path",
         "required": true,
         "description": "The deployment environment the binding applies to.",
-        "schema": { "type": "string" }
+        "schema": { "$ref": "#/components/schemas/EnvironmentName" }
       },
       "RuntimeIdentifierPath": {
         "name": "runtimeIdentifier",
@@ -5388,7 +5384,7 @@
         "in": "path",
         "required": true,
         "description": "The environment's name (its stable identity).",
-        "schema": { "type": "string" }
+        "schema": { "$ref": "#/components/schemas/EnvironmentName" }
       },
       "RunnerIdPath": {
         "name": "runnerId",
@@ -5811,10 +5807,7 @@
         "type": "object",
         "description": "An environment a grantee administers (a link target for the environments panel), enriched with a summary of the environment so the row reads without a detail fetch.",
         "properties": {
-          "environment": {
-            "type": "string",
-            "description": "The environment name."
-          },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "displayName": {
             "type": "string",
             "description": "The environment's human-facing display name, when set."
@@ -5870,10 +5863,7 @@
             "type": "string",
             "description": "The registered source name."
           },
-          "environment": {
-            "type": "string",
-            "description": "The environment the binding is scoped to."
-          }
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" }
         },
         "required": [
           "sourceName",
@@ -5929,13 +5919,20 @@
         "minLength": 32,
         "maxLength": 32
       },
+      "EnvironmentName": {
+        "type": "string",
+        "description": "A deployment environment's name, its stable identity (e.g. production, staging, dev-mwa-1): 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run's composite (environment, runId) store key (ADR 0065 §9), including in backends that encode that key as a delimited string, so the grammar excludes every delimiter and forbidden character those encodings involve. Credentials, availability, dispatch scoping, and runs all key on it (design §5.5/§7.7).",
+        "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
+        "minLength": 1,
+        "maxLength": 63
+      },
       "WorkflowRunSummary": {
         "type": "object",
         "description": "A run as projected into the visibility index (one entry in a page).",
         "properties": {
           "id": { "$ref": "#/components/schemas/RunId" },
           "workflowId": { "type": "string" },
-          "environment": { "type": "string", "description": "The deployment environment the run is pinned to (design §5.5): its credential set, and the runners it can be dispatched to." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
@@ -5997,7 +5994,7 @@
         "properties": {
           "id": { "$ref": "#/components/schemas/RunId" },
           "workflowId": { "type": "string" },
-          "environment": { "type": "string", "description": "The deployment environment the run is pinned to (design §5.5): its credential set, and the runners it can be dispatched to." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
           "cursor": { "type": "integer", "description": "The state-machine index of the next step to run." },
           "createdAt": { "type": "string", "format": "date-time" },
@@ -6144,7 +6141,7 @@
         "description": "A request to create a durable schedule (#896): the target version, the environment to fire it in, and the cron cadence.",
         "properties": {
           "scheduleId": { "type": "string", "description": "The schedule's stable, globally-unique identity. Re-creating the same id is idempotent." },
-          "environment": { "type": "string", "description": "The deployment environment the schedule and its fired runs are pinned to; a runner serving it must advertise scheduling." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "targetBaseWorkflowId": { "type": "string", "description": "The base workflow id of the version to fire." },
           "targetVersionNumber": { "type": "integer", "format": "int32", "description": "The version number of the workflow to fire." },
           "cron": { "type": "string", "description": "The cron expression driving occurrences (5-field, or 6-field when includeSeconds is true)." },
@@ -6159,7 +6156,7 @@
         "description": "A durable schedule (#896): the projection of a scheduler run showing its cadence, target, and firing state.",
         "properties": {
           "scheduleId": { "type": "string", "description": "The schedule's stable, globally-unique identity." },
-          "environment": { "type": "string", "description": "The deployment environment the schedule is pinned to." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "targetBaseWorkflowId": { "type": "string", "description": "The base workflow id of the version fired." },
           "targetVersionNumber": { "type": "integer", "format": "int32", "description": "The version number fired." },
           "targetWorkflowId": { "type": "string", "description": "The versioned workflow id fired ('{base}-v{n}')." },
@@ -6367,7 +6364,7 @@
         "description": "A workflow runner process registered with the control plane.",
         "properties": {
           "runnerId": { "type": "string", "description": "The stable identifier of the runner process." },
-          "environment": { "type": "string", "description": "The single deployment environment this runner serves (design §5.5); the runner is dispatchable only for runs targeting it and inherits its reach." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "reachTags": {
             "type": "array",
             "description": "The runner's row-security reach (§14.2), stamped from the serving environment's managementTags at registration; a tenant sees only runners serving its environments. Absent on a runner serving an unscoped environment.",
@@ -6414,7 +6411,7 @@
         "type": "object",
         "description": "A runner's authorization to serve a deployment environment (design §5.5): keyed by (environment, runnerId), governed by the environment's administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.",
         "properties": {
-          "environment": { "type": "string", "description": "The environment the runner serves." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "runnerId": { "type": "string", "description": "The runner the authorization applies to." },
           "status": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"], "description": "The authorization's lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch)." },
           "reason": { "type": "string", "description": "An optional note recorded with the most recent decision." },
@@ -7678,7 +7675,7 @@
       "required": ["workflowId", "environment"],
       "properties": {
         "workflowId": { "type": "string", "description": "The workflow within the document to run." },
-        "environment": { "type": "string", "description": "The target environment; it must set allowsDraftRuns and the caller must be entitled to run there." },
+        "environment": { "$ref": "#/components/schemas/EnvironmentName" },
         "inputs": { "type": "object", "description": "The workflow's inputs, validated against its own inputs schema.", "additionalProperties": true },
         "pause": { "$ref": "#/components/schemas/DebugRunPause" }
       }
@@ -7708,7 +7705,7 @@
       "properties": {
         "debugRunId": { "$ref": "#/components/schemas/RunId" },
         "workflowId": { "type": "string" },
-        "environment": { "type": "string" },
+        "environment": { "$ref": "#/components/schemas/EnvironmentName" },
         "status": { "type": "string", "enum": ["running", "paused", "suspended", "completed", "faulted", "cancelled"], "description": "paused = at a pause point (the dock's controls apply); suspended = a real wait (message/time); the rest are terminal except running." },
         "cursor": { "type": "integer", "format": "int32", "description": "The number of steps executed so far \u2014 the position the dock scrubs to." },
         "trace": { "$ref": "#/components/schemas/SimulationTrace" },
@@ -8212,9 +8209,7 @@
                   "sourceName": {
                     "type": "string"
                   },
-                  "environment": {
-                    "type": "string"
-                  }
+                  "environment": { "$ref": "#/components/schemas/EnvironmentName" }
                 },
                 "required": [
                   "sourceName",
@@ -8350,10 +8345,7 @@
             "type": "string",
             "description": "The Arazzo source description name."
           },
-          "environment": {
-            "type": "string",
-            "description": "The deployment environment."
-          },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
           "secretRefs": {
             "type": "array",
@@ -8431,7 +8423,7 @@
         "properties": {
           "id": { "type": "string" },
           "sourceName": { "type": "string" },
-          "environment": { "type": "string" },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
           "secretRefs": {
             "type": "array",
@@ -8585,7 +8577,7 @@
         "type": "object",
         "description": "A deployment environment to create (design §7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
         "properties": {
-          "name": { "type": "string", "description": "The environment's stable name and identity (e.g. production, staging, DEV-MWA-1); credentials and runs key on it." },
+          "name": { "$ref": "#/components/schemas/EnvironmentName" },
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
           "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted." },
@@ -8617,7 +8609,7 @@
         "type": "object",
         "description": "A persisted deployment environment (design §7.7): a first-class, governed, reach-scoped resource.",
         "properties": {
-          "name": { "type": "string" },
+          "name": { "$ref": "#/components/schemas/EnvironmentName" },
           "displayName": { "type": "string" },
           "description": { "type": "string" },
           "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6). Absent means false — unevidenced versions may be promoted." },
@@ -8805,7 +8797,7 @@
         "properties": {
           "baseWorkflowId": { "type": "string", "description": "The base workflow id the version belongs to." },
           "versionNumber": { "type": "integer", "format": "int32", "description": "The 1-based version number made available." },
-          "environment": { "type": "string", "description": "The deployment environment the version is available in." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "createdBy": { "type": "string", "description": "The actor that made the version available." },
           "createdAt": { "type": "string", "format": "date-time", "description": "When the version was made available." },
           "etag": { "type": "string", "description": "The optimistic-concurrency token." }
@@ -8833,7 +8825,7 @@
         "type": "object",
         "description": "A request to build (or rebuild) a workflow version's native serverless binary for one runtime target in one environment (ADR 0055). Idempotent per target: re-requesting the same (environment, runtimeIdentifier) resets its build to queued.",
         "properties": {
-          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the native binary targets, e.g. 'linux-x64'." },
           "buildLabel": { "type": "string", "description": "An optional human-friendly label for the build." }
         },
@@ -8846,7 +8838,7 @@
           "id": { "type": "string", "description": "The build job's stable id, derived from its target tuple." },
           "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version is being built." },
           "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The 1-based version number being built." },
-          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "runtimeIdentifier": { "type": "string", "description": "The runtime identifier (RID) the native binary targets." },
           "status": { "$ref": "#/components/schemas/NativeBuildStatus" },
           "buildLabel": { "type": "string", "description": "The optional human-friendly build label." },
@@ -8883,7 +8875,7 @@
           "id": { "type": "string", "description": "The deployment's stable id, derived from its target tuple." },
           "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version is being deployed." },
           "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The 1-based version number being deployed." },
-          "environment": { "type": "string", "description": "The deployment environment the binary targets." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "runtimeIdentifier": { "type": "string", "description": "The runtime identifier (RID) the native binary targets." },
           "status": { "$ref": "#/components/schemas/DeploymentStatus" },
           "createdAt": { "type": "string", "format": "date-time", "description": "When the deployment was enqueued." },
@@ -9058,7 +9050,7 @@
         "properties": {
           "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version to make available." },
           "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The version number to make available." },
-          "environment": { "type": "string", "description": "The target environment to make the version available in." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "reason": { "type": "string", "description": "An optional justification." }
         },
         "required": ["baseWorkflowId", "versionNumber", "environment"]
@@ -9070,7 +9062,7 @@
           "id": { "type": "string", "description": "The request's stable id." },
           "baseWorkflowId": { "type": "string", "description": "The base workflow id." },
           "versionNumber": { "type": "integer", "format": "int32", "description": "The version number requested." },
-          "environment": { "type": "string", "description": "The target environment." },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "requesterLabel": { "type": "string", "description": "An optional human-friendly requester label." },
           "reason": { "type": "string", "description": "The optional justification supplied with the request." },
           "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn"], "description": "The lifecycle state. 'Approved' means the version was made available in the environment; 'Withdrawn' means the requester withdrew the pending request." },

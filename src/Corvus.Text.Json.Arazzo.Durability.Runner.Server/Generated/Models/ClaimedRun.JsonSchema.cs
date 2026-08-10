@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease.
+/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease. The environment is echoed so the runner can select the right credentials and bindings for the run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -58,7 +58,7 @@ public readonly partial struct ClaimedRun
 
         private const uint RequiredBitMask0 =
             RequiredBitForEnvironment | RequiredBitForLease | RequiredBitForRunId | RequiredBitForWorkflowId;
-        private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider EnvironmentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/environment/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider LeaseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lease/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider RunIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/runId/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WorkflowIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/workflowId"u8, buffer, out written);
@@ -67,14 +67,14 @@ public readonly partial struct ClaimedRun
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EnvironmentUtf8,
                     evaluationPath: EnvironmentSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)

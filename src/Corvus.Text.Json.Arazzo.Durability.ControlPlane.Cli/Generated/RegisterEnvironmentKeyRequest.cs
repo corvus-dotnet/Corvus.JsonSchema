@@ -24,13 +24,13 @@ public readonly struct RegisterEnvironmentKeyRequest : IApiRequest<RegisterEnvir
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RegisterEnvironmentKeyRequest"/> struct.
     /// </summary>
     /// <param name="name">The name parameter.</param>
-    public RegisterEnvironmentKeyRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name)
+    public RegisterEnvironmentKeyRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name)
     {
         this.Name = name;
     }

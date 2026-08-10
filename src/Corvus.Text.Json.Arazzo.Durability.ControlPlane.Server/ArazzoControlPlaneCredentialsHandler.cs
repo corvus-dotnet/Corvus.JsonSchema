@@ -601,7 +601,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             createdAt: binding.CreatedAtValue,
             createdBy: Models.JsonString.From(binding.CreatedBy),
             credentialStatus: ToStatusToken(ctx.Status),
-            environment: Models.JsonString.From(binding.Environment),
+            environment: Models.EnvironmentName.From(binding.Environment),
             etag: Models.JsonString.From(binding.Etag),
             id: Models.JsonString.From(binding.Id),
             secretRefs: Models.CredentialBindingSummary.SecretReferenceArray.Build(in ctx, BuildSecretRefs),

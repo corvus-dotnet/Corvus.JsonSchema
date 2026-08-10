@@ -434,7 +434,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
 
         b.Create(
             scheduleId: Models.JsonString.From(spec.ScheduleId),
-            environment: view.State.Environment is { } env ? (Models.JsonString.Source)env : default,
+            environment: view.State.Environment is { } env ? (Models.EnvironmentName.Source)env : default,
             targetBaseWorkflowId: targetBase,
             targetVersionNumber: targetVersion,
             targetWorkflowId: targetWorkflowId,
@@ -457,7 +457,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
 
         return Models.Schedule.Create(
             scheduleId: Models.JsonString.From(spec.ScheduleId),
-            environment: view.State.Environment is { } env ? (Models.JsonString.Source)env : default,
+            environment: view.State.Environment is { } env ? (Models.EnvironmentName.Source)env : default,
             targetBaseWorkflowId: targetBase,
             targetVersionNumber: targetVersion,
             targetWorkflowId: targetWorkflowId,

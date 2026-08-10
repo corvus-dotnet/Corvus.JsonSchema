@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The environment the run is pinned to. Echoed so the runner can select the right credentials and bindings, never taken from the request.
+/// The token to present on every subsequent operation for this run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

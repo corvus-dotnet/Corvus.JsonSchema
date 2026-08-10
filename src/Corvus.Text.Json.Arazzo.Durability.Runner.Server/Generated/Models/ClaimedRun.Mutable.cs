@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease.
+/// The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease. The environment is echoed so the runner can select the right credentials and bindings for the run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -174,14 +174,14 @@ public readonly partial struct ClaimedRun
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The environment the run is pinned to. Echoed so the runner can select the right credentials and bindings, never taken from the request.
+        /// A deployment environment&#39;s name: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run&#39;s composite (environment, runId) store key (ADR 0065 &#167;9).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Mutable Environment
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Mutable Environment
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Mutable value))
                 {
                     return value;
                 }
@@ -295,7 +295,7 @@ public readonly partial struct ClaimedRun
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source value)
+        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source value)
         {
             CheckValidInstance();
 
@@ -603,7 +603,7 @@ public readonly partial struct ClaimedRun
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg4;
@@ -621,7 +621,7 @@ public readonly partial struct ClaimedRun
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.ClaimedRun.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -775,7 +775,7 @@ public readonly partial struct ClaimedRun
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg4;
@@ -791,7 +791,7 @@ public readonly partial struct ClaimedRun
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.ClaimedRun.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4)
         {
             _context = context;
             _createArg1 = arg1;
@@ -950,7 +950,7 @@ public readonly partial struct ClaimedRun
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
@@ -965,7 +965,7 @@ public readonly partial struct ClaimedRun
         /// Creates an instance of a <see cref="ClaimedRun"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
@@ -979,7 +979,7 @@ public readonly partial struct ClaimedRun
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
@@ -998,7 +998,7 @@ public readonly partial struct ClaimedRun
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
@@ -1040,7 +1040,7 @@ public readonly partial struct ClaimedRun
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1057,7 +1057,7 @@ public readonly partial struct ClaimedRun
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1105,7 +1105,7 @@ public readonly partial struct ClaimedRun
     /// <param name="runId">The value of the <c>"runId"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
     {
         return new Source(environment, lease, runId, workflowId);
     }
@@ -1120,7 +1120,7 @@ public readonly partial struct ClaimedRun
     /// <param name="runId">The value of the <c>"runId"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1227,7 +1227,7 @@ public readonly partial struct ClaimedRun
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1252,7 +1252,7 @@ public readonly partial struct ClaimedRun
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1368,7 +1368,7 @@ public readonly partial struct ClaimedRun
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<ClaimedRun> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static ParsedJsonDocument<ClaimedRun> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1399,7 +1399,7 @@ public readonly partial struct ClaimedRun
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<ClaimedRun> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
+    public static ParsedJsonDocument<ClaimedRun> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseGrant.Source<TContext> lease, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId.Source runId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source workflowId, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

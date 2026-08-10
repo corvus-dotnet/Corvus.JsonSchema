@@ -29,14 +29,14 @@ public readonly struct GetCredentialRequest : IApiRequest<GetCredentialRequest>
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetCredentialRequest"/> struct.
     /// </summary>
     /// <param name="sourceName">The sourceName parameter.</param>
     /// <param name="environment">The environment parameter.</param>
-    public GetCredentialRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString environment)
+    public GetCredentialRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName environment)
     {
         this.SourceName = sourceName;
         this.Environment = environment;

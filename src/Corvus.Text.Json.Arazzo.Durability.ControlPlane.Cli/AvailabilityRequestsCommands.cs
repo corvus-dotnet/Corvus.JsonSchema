@@ -104,7 +104,7 @@ internal sealed class AvailabilityRequestListCommand : AsyncCommand<Availability
                 string? next = null;
                 await using ListAvailabilityRequestsResponse response = await client.ListAvailabilityRequestsAsync(
                     status: settings.Status is { } s ? (Models.GetAvailabilityRequestsStatus.Source)s : default,
-                    environment: settings.Environment is { } e ? (Models.JsonString.Source)e : default,
+                    environment: settings.Environment is { } e ? (Models.EnvironmentName.Source)e : default,
                     scope: settings.Inbox && settings.Environment is null ? (Models.GetAvailabilityRequestsScope.Source)"queue" : default,
                     pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
                     cancellationToken: cancellationToken);

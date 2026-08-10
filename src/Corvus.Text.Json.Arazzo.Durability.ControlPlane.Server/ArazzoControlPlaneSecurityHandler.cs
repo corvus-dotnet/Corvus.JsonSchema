@@ -1086,7 +1086,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         foreach (SourceCredentialBinding binding in ctx.Credentials)
         {
             array.AddItem(Models.AccessGrantsCredentialUsage.Build(
-                environment: Models.JsonString.From(binding.Environment),
+                environment: Models.EnvironmentName.From(binding.Environment),
                 sourceName: Models.JsonString.From(binding.SourceName)));
         }
     }

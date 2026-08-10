@@ -248,7 +248,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetEnvironmentResponse> GetEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetEnvironmentResponse> GetEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update a deployment environment
@@ -259,7 +259,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update a deployment environment
@@ -270,7 +270,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<UpdateEnvironmentResponse> UpdateEnvironmentAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -284,7 +284,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<DeleteEnvironmentResponse> DeleteEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DeleteEnvironmentResponse> DeleteEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List an environment's administrators
@@ -294,7 +294,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListEnvironmentAdministratorsResponse> ListEnvironmentAdministratorsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListEnvironmentAdministratorsResponse> ListEnvironmentAdministratorsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Transfer environment administration (replace the administrator set)
@@ -305,7 +305,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Transfer environment administration (replace the administrator set)
@@ -316,7 +316,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<TransferEnvironmentAdministrationResponse> TransferEnvironmentAdministrationAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -331,7 +331,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Add an environment administrator
@@ -342,7 +342,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<AddEnvironmentAdministratorResponse> AddEnvironmentAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -357,7 +357,7 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="digest">The digest parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<RemoveEnvironmentAdministratorResponse> RemoveEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<RemoveEnvironmentAdministratorResponse> RemoveEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Count deployment environments

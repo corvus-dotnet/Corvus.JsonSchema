@@ -68,7 +68,8 @@ public readonly partial struct Environment
     /// createdBy/createdAt/etag. Pass <see langword="default"/> (an undefined element) for any field the body omits; for
     /// an update, pass <see langword="default"/> for the immutable <paramref name="name"/> and tags — the store carries
     /// those forward from the stored environment.</summary>
-    /// <param name="name">The environment name value (or undefined for an update).</param>
+    /// <param name="name">The environment name value (or undefined for an update). A present name must be inside
+    /// the <see cref="EnvironmentName"/> grammar — it is half of every run's composite store key.</param>
     /// <param name="displayName">The display-name value (or undefined).</param>
     /// <param name="description">The description value (or undefined).</param>
     /// <param name="managementTags">The resolved management tags (empty for an update).</param>
@@ -92,6 +93,20 @@ public readonly partial struct Environment
         in JsonElement requiredIsolation = default,
         in JsonElement runtimeIdentifier = default)
     {
+        if (name.ValueKind is not JsonValueKind.Undefined)
+        {
+            if (name.ValueKind is not JsonValueKind.String)
+            {
+                throw ThrowHelper.GetEnvironmentNameOutsideGrammarException(name.GetRawText(), nameof(name));
+            }
+
+            using UnescapedUtf8JsonString nameUtf8 = name.GetUtf8String();
+            if (!EnvironmentName.IsWellFormedUtf8(nameUtf8.Span))
+            {
+                throw ThrowHelper.GetEnvironmentNameOutsideGrammarException(name.GetString()!, nameof(name));
+            }
+        }
+
         DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
@@ -134,6 +149,11 @@ public readonly partial struct Environment
     public static ParsedJsonDocument<Environment> DraftPlatform(string name, string? displayName, string? description, SecurityTagSet managementTags)
     {
         ArgumentNullException.ThrowIfNull(name);
+        if (!EnvironmentName.IsWellFormed(name))
+        {
+            throw ThrowHelper.GetEnvironmentNameOutsideGrammarException(name, nameof(name));
+        }
+
         return PersistedJson.ToPooledDocument<Environment, (string Name, string? Display, string? Desc, SecurityTagSet Tags)>(
             (name, displayName, description, managementTags),
             static (Utf8JsonWriter writer, in (string Name, string? Display, string? Desc, SecurityTagSet Tags) s) =>
@@ -373,6 +393,11 @@ public readonly partial struct Environment
     public static ParsedJsonDocument<Environment> Draft(string name, string? displayName, string? description, SecurityTagSet managementTags)
     {
         ArgumentNullException.ThrowIfNull(name);
+        if (!EnvironmentName.IsWellFormed(name))
+        {
+            throw ThrowHelper.GetEnvironmentNameOutsideGrammarException(name, nameof(name));
+        }
+
         return PersistedJson.ToPooledDocument<Environment, (string Name, string? Display, string? Desc, SecurityTagSet Tags)>(
             (name, displayName, description, managementTags),
             static (Utf8JsonWriter writer, in (string Name, string? Display, string? Desc, SecurityTagSet Tags) s) =>

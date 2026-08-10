@@ -29,7 +29,7 @@ public readonly struct CountRunnerAuthorizationsRequest : IApiRequest<CountRunne
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runnerAuthorizations/count"u8;

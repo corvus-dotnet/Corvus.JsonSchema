@@ -427,7 +427,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 tags = Models.WorkflowRunDetail.JsonStringArray.ParseValue(d.Tags.RawJson);
             }
 
-            Models.JsonString.Source environment = default;
+            Models.EnvironmentName.Source environment = default;
             if (d.Environment is { } env)
             {
                 environment = env;
@@ -510,7 +510,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
         }
 
-        Models.JsonString.Source environment = default;
+        Models.EnvironmentName.Source environment = default;
         if (e.Environment is { } env)
         {
             environment = env;

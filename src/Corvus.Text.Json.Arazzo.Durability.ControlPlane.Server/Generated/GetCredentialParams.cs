@@ -29,5 +29,5 @@ public readonly struct GetCredentialParams
     /// <summary>
     /// Gets the 'environment' path parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName Environment { get; init; }
 }

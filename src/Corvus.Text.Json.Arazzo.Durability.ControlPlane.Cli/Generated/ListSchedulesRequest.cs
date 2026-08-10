@@ -24,7 +24,7 @@ public readonly struct ListSchedulesRequest : IApiRequest<ListSchedulesRequest>
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the limit parameter.

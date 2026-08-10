@@ -734,6 +734,13 @@
         "minLength": 32,
         "maxLength": 32
       },
+      "EnvironmentName": {
+        "type": "string",
+        "description": "A deployment environment's name: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run's composite (environment, runId) store key (ADR 0065 §9).",
+        "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
+        "minLength": 1,
+        "maxLength": 63
+      },
       "LeaseToken": {
         "type": "string",
         "description": "The token from a lease grant, opaque to the runner that presents it.",
@@ -775,7 +782,7 @@
       },
       "ClaimedRun": {
         "type": "object",
-        "description": "The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease.",
+        "description": "The claimed run and the lease taken over it. It deliberately carries no checkpoint and no key material: the runner loads the checkpoint under the lease it has just been granted, and a key handed back here would open every checkpoint of the lease. The environment is echoed so the runner can select the right credentials and bindings for the run.",
         "required": [
           "runId",
           "workflowId",
@@ -790,10 +797,7 @@
             "type": "string",
             "description": "The versioned workflow id the run executes, from the runner's own hostedVersions."
           },
-          "environment": {
-            "type": "string",
-            "description": "The environment the run is pinned to. Echoed so the runner can select the right credentials and bindings, never taken from the request."
-          },
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
           "lease": {
             "$ref": "#/components/schemas/LeaseGrant"
           }

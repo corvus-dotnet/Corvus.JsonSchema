@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-08-10T06:20:35.3059447\u002B00:00",
+  "generatedAt": "2026-08-10T09:47:57.7527926\u002B00:00",
   "generatedFiles": [
     "ClaimRunRequest.cs",
     "ClaimRunResponse.cs",
@@ -84,6 +84,9 @@
     "Models/ClaimedRuns.ClaimedRunArray.cs",
     "Models/ClaimedRuns.ClaimedRunArray.Mutable.cs",
     "Models/ClaimedRuns.ClaimedRunArray.JsonSchema.cs",
+    "Models/EnvironmentName.cs",
+    "Models/EnvironmentName.Mutable.cs",
+    "Models/EnvironmentName.JsonSchema.cs",
     "Models/HostedVersion.cs",
     "Models/HostedVersion.Mutable.cs",
     "Models/HostedVersion.JsonSchema.cs",
@@ -170,9 +173,9 @@
     "Models/PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bb327b40e06be1504278e8b16c1fbb7ca37424230",
+  "generatorVersion": "1.0.0\u002B6e86c02bf0ee6e222363def15782a964322e3378",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.Runner.Client",
-  "specFileHash": "47e366827477f57c059a79f41caec064bf0efb0eb1ac9d5383a8ce70fa19e715",
+  "specFileHash": "1f036c84e533590161ad5fcd97f361fc8e235788c3b361962f526ebe646b074c",
   "specVersion": "3.2"
 }

@@ -24,7 +24,7 @@ public readonly struct RetireEnvironmentKeyRequest : IApiRequest<RetireEnvironme
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Gets the keyId parameter.
@@ -36,7 +36,7 @@ public readonly struct RetireEnvironmentKeyRequest : IApiRequest<RetireEnvironme
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="keyId">The keyId parameter.</param>
-    public RetireEnvironmentKeyRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema keyId)
+    public RetireEnvironmentKeyRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Schema keyId)
     {
         this.Name = name;
         this.KeyId = keyId;

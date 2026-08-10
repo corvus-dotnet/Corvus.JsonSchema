@@ -34,7 +34,7 @@ public readonly struct GetDeploymentRequest : IApiRequest<GetDeploymentRequest>
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the runtimeIdentifier parameter.
@@ -48,7 +48,7 @@ public readonly struct GetDeploymentRequest : IApiRequest<GetDeploymentRequest>
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="environment">The environment parameter.</param>
     /// <param name="runtimeIdentifier">The runtimeIdentifier parameter.</param>
-    public GetDeploymentRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runtimeIdentifier)
+    public GetDeploymentRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runtimeIdentifier)
     {
         this.BaseWorkflowId = baseWorkflowId;
         this.VersionNumber = versionNumber;

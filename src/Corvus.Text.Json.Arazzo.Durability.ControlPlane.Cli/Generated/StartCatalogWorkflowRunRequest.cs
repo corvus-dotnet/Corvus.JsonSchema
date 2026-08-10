@@ -34,7 +34,7 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the Idempotency-Key parameter.
@@ -47,7 +47,7 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="environment">The environment parameter.</param>
-    public StartCatalogWorkflowRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString environment)
+    public StartCatalogWorkflowRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName environment)
     {
         this.BaseWorkflowId = baseWorkflowId;
         this.VersionNumber = versionNumber;

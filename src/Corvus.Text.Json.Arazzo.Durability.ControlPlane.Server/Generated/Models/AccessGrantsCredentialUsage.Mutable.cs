@@ -273,14 +273,14 @@ public readonly partial struct AccessGrantsCredentialUsage
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The environment the binding is scoped to.
+        /// A deployment environment&#39;s name, its stable identity (e.g. production, staging, dev-mwa-1): 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run&#39;s composite (environment, runId) store key (ADR 0065 &#167;9), including in backends that encode that key as a delimited string, so the grammar excludes every delimiter and forbidden character those encodings involve. Credentials, availability, dispatch scoping, and runs all key on it (design &#167;5.5/&#167;7.7).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Environment
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Mutable Environment
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Mutable value))
                 {
                     return value;
                 }
@@ -356,7 +356,7 @@ public readonly partial struct AccessGrantsCredentialUsage
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct AccessGrantsCredentialUsage
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
 
         /// <summary>
@@ -760,7 +760,7 @@ public readonly partial struct AccessGrantsCredentialUsage
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessGrantsCredentialUsage.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1037,7 +1037,7 @@ public readonly partial struct AccessGrantsCredentialUsage
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
         {
             environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
@@ -1047,7 +1047,7 @@ public readonly partial struct AccessGrantsCredentialUsage
         /// <summary>
         /// Creates an instance of a <see cref="AccessGrantsCredentialUsage"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
         {
             Create(ref _builder, environment, sourceName);
         }
@@ -1150,7 +1150,7 @@ public readonly partial struct AccessGrantsCredentialUsage
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1193,7 +1193,7 @@ public readonly partial struct AccessGrantsCredentialUsage
     /// <param name="environment">The value of the <c>"environment"</c> property.</param>
     /// <param name="sourceName">The value of the <c>"sourceName"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName)
     {
         return new Source(environment, sourceName);
     }
@@ -1295,7 +1295,7 @@ public readonly partial struct AccessGrantsCredentialUsage
     /// <param name="sourceName">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1406,7 +1406,7 @@ public readonly partial struct AccessGrantsCredentialUsage
     /// <param name="sourceName">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AccessGrantsCredentialUsage> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
+    public static ParsedJsonDocument<AccessGrantsCredentialUsage> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try

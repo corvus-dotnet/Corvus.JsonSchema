@@ -257,6 +257,9 @@ internal static class ThrowHelper
     public static NotSupportedException GetStartNamedNotSupportedException()
         => new(SR.StartNamedNotSupported);
 
+    public static ArgumentException GetEnvironmentNameOutsideGrammarException(string name, string paramName)
+        => new(SR.Format(SR.EnvironmentNameOutsideGrammar, name), paramName);
+
     // ── Management / wrapped-store capability ───────────────────────────────────────────────────────────────────────
     public static NotSupportedException GetLoadRunStateNotSupportedException()
         => new(SR.LoadRunStateNotSupported);

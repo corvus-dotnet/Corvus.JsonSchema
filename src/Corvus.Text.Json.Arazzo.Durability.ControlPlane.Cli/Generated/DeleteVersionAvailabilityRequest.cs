@@ -34,7 +34,7 @@ public readonly struct DeleteVersionAvailabilityRequest : IApiRequest<DeleteVers
     /// <summary>
     /// Gets the environment parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DeleteVersionAvailabilityRequest"/> struct.
@@ -42,7 +42,7 @@ public readonly struct DeleteVersionAvailabilityRequest : IApiRequest<DeleteVers
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="environment">The environment parameter.</param>
-    public DeleteVersionAvailabilityRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString environment)
+    public DeleteVersionAvailabilityRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName environment)
     {
         this.BaseWorkflowId = baseWorkflowId;
         this.VersionNumber = versionNumber;

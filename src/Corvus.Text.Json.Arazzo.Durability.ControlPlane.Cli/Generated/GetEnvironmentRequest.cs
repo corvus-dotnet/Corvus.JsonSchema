@@ -24,13 +24,13 @@ public readonly struct GetEnvironmentRequest : IApiRequest<GetEnvironmentRequest
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetEnvironmentRequest"/> struct.
     /// </summary>
     /// <param name="name">The name parameter.</param>
-    public GetEnvironmentRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name)
+    public GetEnvironmentRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name)
     {
         this.Name = name;
     }

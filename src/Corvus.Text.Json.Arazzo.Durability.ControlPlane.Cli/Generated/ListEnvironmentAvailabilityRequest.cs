@@ -24,7 +24,7 @@ public readonly struct ListEnvironmentAvailabilityRequest : IApiRequest<ListEnvi
     /// <summary>
     /// Gets the name parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Name { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName Name { get; init; }
 
     /// <summary>
     /// Gets the limit parameter.
@@ -40,7 +40,7 @@ public readonly struct ListEnvironmentAvailabilityRequest : IApiRequest<ListEnvi
     /// Initializes a new instance of the <see cref="ListEnvironmentAvailabilityRequest"/> struct.
     /// </summary>
     /// <param name="name">The name parameter.</param>
-    public ListEnvironmentAvailabilityRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name)
+    public ListEnvironmentAvailabilityRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName name)
     {
         this.Name = name;
     }

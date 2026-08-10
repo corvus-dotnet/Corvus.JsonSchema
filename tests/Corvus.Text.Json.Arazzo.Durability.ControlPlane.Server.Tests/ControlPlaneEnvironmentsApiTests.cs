@@ -76,6 +76,48 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    [DataRow("Production", DisplayName = "uppercase")]
+    [DataRow("we:ird", DisplayName = "colon, the Redis key delimiter")]
+    [DataRow("prod env", DisplayName = "space")]
+    [DataRow("prod/1", DisplayName = "slash, forbidden in Azure Table keys")]
+    [DataRow("prod.env", DisplayName = "dot, the NATS subject token separator")]
+    [DataRow("-prod", DisplayName = "leading hyphen")]
+    [DataRow("prod-", DisplayName = "trailing hyphen")]
+    public async Task An_environment_name_outside_the_grammar_is_refused(string name)
+    {
+        // The name becomes half the composite (environment, runId) store key (H18 piece 3), including in the
+        // delimited-key backends, so the contract's EnvironmentName grammar refuses it before any store touch.
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", $$"""{"name":"{{name}}"}""", Write);
+
+        created.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task A_maximal_conforming_environment_name_is_accepted()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        string name = new('a', 63);
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", $$"""{"name":"{{name}}"}""", Write);
+
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [TestMethod]
+    public async Task An_environment_route_refuses_a_name_outside_the_grammar()
+    {
+        // The route parameter carries the same EnvironmentName schema, so a non-conforming name is a 400 at
+        // contract validation, not a 404 existence probe.
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        (await host.SendAsync(HttpMethod.Get, "/environments/Production", Read)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
     public async Task The_allows_draft_runs_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

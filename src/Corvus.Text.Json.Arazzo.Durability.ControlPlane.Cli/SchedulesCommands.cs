@@ -99,7 +99,7 @@ internal sealed class SchedulesListCommand : AsyncCommand<SchedulesListSettings>
             {
                 string? next = null;
                 await using ListSchedulesResponse response = await client.ListSchedulesAsync(
-                    environment: settings.Environment is { } env ? (Models.JsonString.Source)env : default,
+                    environment: settings.Environment is { } env ? (Models.EnvironmentName.Source)env : default,
                     pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
                     cancellationToken: cancellationToken);
                 int rc = response.MatchResult(
