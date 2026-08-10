@@ -759,6 +759,15 @@ public sealed class AsyncApi30CodeGenerator
             files.Add(EmitProducer(op));
         }
 
+        // An operation legitimately named *WithDeliveryContext collides with another operation's
+        // delivery-context variant names; a collision skips the variant with a diagnostic instead
+        // of silently clobbering generated files.
+        HashSet<string> receiveOpPascalNames = new(StringComparer.Ordinal);
+        foreach (OperationInfo op in receiveOps)
+        {
+            receiveOpPascalNames.Add(ToPascalCase(op.Name));
+        }
+
         // Emit consumer handler interfaces and consumer classes for receive operations
         foreach (OperationInfo op in receiveOps)
         {
@@ -770,8 +779,19 @@ public sealed class AsyncApi30CodeGenerator
             // wider transport interface for no benefit.
             if (!IsResponderOperation(op))
             {
-                files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
-                files.Add(EmitConsumer(op, withDeliveryContext: true));
+                string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
+                if (receiveOpPascalNames.Contains(variantBaseName))
+                {
+                    this.diagnostics.Add(new(
+                        AsyncApiGenerationDiagnosticSeverity.Warning,
+                        $"#/operations/{op.Name}",
+                        $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
+                }
+                else
+                {
+                    files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
+                    files.Add(EmitConsumer(op, withDeliveryContext: true));
+                }
             }
 
             // Multi-message operations need a discriminated received message type
@@ -2502,12 +2522,13 @@ public sealed class AsyncApi30CodeGenerator
         startParamList.Add("CancellationToken cancellationToken = default");
         string startParams = string.Join(", ", startParamList);
 
-        // A channel or operation binding travels to the legacy subscribe overloads as a MessageContext,
-        // so a consumer is subscribed with the protocol-specific metadata its specification declared.
-        // Built once here (only when the emitted subscribe call actually takes it) rather than at each
-        // subscribe site: the body below serves both the async and the synchronous StartAsync.
+        // A channel or operation binding travels to the subscribe overloads as a MessageContext,
+        // so a consumer is subscribed with the protocol-specific metadata its specification declared
+        // (the delivery-context subscribe has a binding overload with the same drop-by-default
+        // semantics as the legacy one). Built once here rather than at each subscribe site: the
+        // body below serves both the async and the synchronous StartAsync.
         bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
-        bool needsMessageContext = hasBindingContext && !withDeliveryContext;
+        bool needsMessageContext = hasBindingContext;
 
         // Local function emitting the subscribe body. For the dynamic case the channel bytes have
         // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
@@ -2544,13 +2565,13 @@ public sealed class AsyncApi30CodeGenerator
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
                 w.WriteLine(withDeliveryContext
-                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};"
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};"
                     : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
             else
             {
                 w.WriteLine(withDeliveryContext
-                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};"
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};"
                     : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
         }

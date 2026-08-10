@@ -171,6 +171,23 @@ public class InstrumentedMessageTransport : IMessageTransport
             cancellationToken);
     }
 
+    private ValueTask SubscribeWithDeliveryContextCoreAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        // The binding overload forwards to the wrapped transport's own overload so a transport
+        // that honors bindings still receives them through the instrumentation.
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        return ((IMessageDeliveryContextTransport)this.inner).SubscribeWithDeliveryContextAsync(
+            channelUtf8,
+            CreateInstrumentedContextHandler(handler, destination),
+            in context,
+            cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask SubscribeAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
@@ -652,6 +669,15 @@ public class InstrumentedMessageTransport : IMessageTransport
             CancellationToken cancellationToken = default)
             where TPayload : struct, IJsonElement<TPayload>
             => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+            in MessageContext context,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
     }
 
     /// <summary>
@@ -699,6 +725,15 @@ public class InstrumentedMessageTransport : IMessageTransport
             CancellationToken cancellationToken = default)
             where TPayload : struct, IJsonElement<TPayload>
             => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+            in MessageContext context,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
 
         /// <inheritdoc/>
         public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)

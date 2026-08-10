@@ -247,6 +247,60 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ConsumerWithOperationBindings_ContextVariantPassesBindingContext()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "nats-operation-bindings.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("NatsBindings", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("SubscribeOrdersWithDeliveryContextConsumer"));
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "MessageContext context = new()",
+            "The delivery-context consumer must build the spec-declared bindings.");
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "OperationBindingsJson = OperationBindingsBytes",
+            "The declared operation bindings must travel in the MessageContext.");
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "this.HandleMessageAsync, context, cancellationToken",
+            "The delivery-context subscribe call must pass the binding context.");
+    }
+
+    [TestMethod]
+    public void Generate_OperationNamedWithDeliveryContext_SkipsCollidingVariantWithDiagnostic()
+    {
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes("""
+            {
+                "asyncapi": "3.0.0",
+                "info": { "title": "Collide", "version": "1.0.0" },
+                "channels": {
+                    "events": { "address": "events", "messages": { "evt": { "payload": { "type": "object" } } } }
+                },
+                "operations": {
+                    "receiveMeasurement": { "action": "receive", "channel": { "$ref": "#/channels/events" }, "messages": [ { "$ref": "#/channels/events/messages/evt" } ] },
+                    "receiveMeasurementWithDeliveryContext": { "action": "receive", "channel": { "$ref": "#/channels/events" }, "messages": [ { "$ref": "#/channels/events/messages/evt" } ] }
+                }
+            }
+            """);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Collide", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        Assert.AreEqual(
+            files.Count,
+            files.Select(f => f.FileName).Distinct(StringComparer.Ordinal).Count(),
+            "Generated file names must be unique; a colliding delivery-context variant must not clobber another operation's files.");
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("WithDeliveryContext")),
+            "Skipping the colliding delivery-context variant must produce a diagnostic.");
+    }
+
+    [TestMethod]
     public void Generate_ResponderOperation_DoesNotEmitDeliveryContextVariants()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
