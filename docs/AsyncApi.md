@@ -1246,7 +1246,20 @@ NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
 IMessageTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
 ```
 
-`Create` returns a wrapper that preserves the wrapped transport's optional capabilities. It implements `IMessageDeliveryContextTransport` and `IHealthCheckableTransport` exactly when the wrapped transport does, so a capability probe such as `transport is IHealthCheckableTransport` answers for the wrapped transport, health checks keep working, and delivery-context consumers accept the wrapper. The `new InstrumentedMessageTransport(raw, "nats")` constructor form always produces a plain `IMessageTransport` wrapper that surfaces neither capability; prefer `Create`.
+`Create` returns a wrapper that preserves the wrapped transport's optional capabilities. It implements `IMessageDeliveryContextTransport` and `IHealthCheckableTransport` exactly when the wrapped transport does, so a capability probe such as `transport is IHealthCheckableTransport` answers for the wrapped transport and health checks keep working. The `new InstrumentedMessageTransport(raw, "nats")` constructor form always produces a plain `IMessageTransport` wrapper that surfaces neither capability; prefer `Create`.
+
+When the transport is delivery-context capable and you want to hand the wrapper straight to a generated `*WithDeliveryContextConsumer`, take the result as `IMessageDeliveryContextTransport`. The overload selected for a capability-typed argument returns that type, so no cast is needed:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Nats;
+
+NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
+    new NatsTransportOptions { Url = "nats://localhost:4222" });
+
+IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
+ReceiveLightMeasurementWithDeliveryContextConsumer consumer = new(transport, handler);
+```
 
 This provides:
 - **Distributed trace spans** (Activities) for publish, subscribe, request, and dead-letter operations

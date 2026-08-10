@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.AsyncApi;
 /// All instrumentation is zero-cost when no listener is attached.
 /// </para>
 /// <para>
-/// Create instances with <see cref="Create"/>, which returns a wrapper that implements
+/// Create instances with <see cref="Create(IMessageTransport, string)"/>, which returns a wrapper that implements
 /// <see cref="IMessageDeliveryContextTransport"/> and/or <see cref="IHealthCheckableTransport"/>
 /// exactly when the wrapped transport does, so capability probes against the wrapper answer
 /// for the wrapped transport. The constructor always produces a plain
@@ -78,6 +78,27 @@ public class InstrumentedMessageTransport : IMessageTransport
             IHealthCheckableTransport => new WithHealthCheck(inner, messagingSystem),
             _ => new InstrumentedMessageTransport(inner, messagingSystem),
         };
+
+    /// <summary>
+    /// Creates an instrumented wrapper for a transport that exposes delivery context, typed so
+    /// the result can be handed straight to a generated <c>*WithDeliveryContextConsumer</c>.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Create(IMessageTransport, string)"/> returns the base type, which does not itself implement
+    /// <see cref="IMessageDeliveryContextTransport"/> — the capability lives on the wrapper it
+    /// selects — so its result needs a cast before a delivery-context consumer will accept it.
+    /// Taking the capability as the parameter type lets the compiler prove the wrapper carries
+    /// it, so this overload returns it directly.
+    /// </remarks>
+    /// <param name="inner">The delivery-context-capable transport to decorate.</param>
+    /// <param name="messagingSystem">The messaging system identifier (e.g., <c>"nats"</c>,
+    /// <c>"amqp"</c>, <c>"mqtt"</c>, <c>"websocket"</c>, <c>"kafka"</c>).
+    /// Used as the <c>messaging.system</c> tag on all spans and metrics.</param>
+    /// <returns>The instrumented transport, still exposing delivery context.</returns>
+    public static IMessageDeliveryContextTransport Create(IMessageDeliveryContextTransport inner, string messagingSystem)
+        => inner is IHealthCheckableTransport
+            ? new WithDeliveryContextAndHealthCheck(inner, messagingSystem)
+            : new WithDeliveryContext(inner, messagingSystem);
 
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(

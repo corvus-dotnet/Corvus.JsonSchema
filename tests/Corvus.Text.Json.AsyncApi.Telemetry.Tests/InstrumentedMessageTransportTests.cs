@@ -156,9 +156,10 @@ public class InstrumentedMessageTransportTests
         using ActivityListener listener = CreateActivityListener(activities);
 
         await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "context-test");
-        Assert.IsTrue(transport is IMessageDeliveryContextTransport, "Create must preserve the wrapped transport's delivery-context capability.");
-        IMessageDeliveryContextTransport contextTransport = (IMessageDeliveryContextTransport)transport;
+
+        // The capability-typed overload returns IMessageDeliveryContextTransport directly, so
+        // this compiles without a cast — which is what a generated consumer's constructor needs.
+        IMessageDeliveryContextTransport contextTransport = InstrumentedMessageTransport.Create(inner, "context-test");
         bool handlerCalled = false;
 
         await contextTransport.SubscribeWithDeliveryContextAsync<JsonElement>(
@@ -183,7 +184,7 @@ public class InstrumentedMessageTransportTests
         using ActivityListener listener = CreateActivityListener(activities);
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
 
         await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
             "rpc/double"u8.ToArray(),
@@ -225,7 +226,7 @@ public class InstrumentedMessageTransportTests
     {
         // The in-memory transport implements both optional capabilities, so the wrapper must too.
         await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
 
         Assert.IsTrue(transport is IMessageDeliveryContextTransport);
         Assert.IsTrue(transport is IHealthCheckableTransport);
