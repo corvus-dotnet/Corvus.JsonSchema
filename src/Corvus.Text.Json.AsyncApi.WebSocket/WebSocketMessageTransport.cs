@@ -42,13 +42,6 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     private readonly ConcurrentDictionary<string, Subscription> subscriptions = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
-
-    // Mirrors the relay's registration state for this connection: a channel is present exactly
-    // when a subscribe control envelope was successfully sent and no unsubscribe envelope has
-    // been successfully sent since. Guarded by controlSemaphore, which serializes all
-    // subscribe/unsubscribe mutations so displacement is atomic.
-    private readonly HashSet<string> relaySubscribed = new(StringComparer.Ordinal);
-    private readonly SemaphoreSlim controlSemaphore = new(1, 1);
     private CancellationTokenSource? receiveCts;
     private Task? receiveTask;
     private bool disposed;
@@ -176,73 +169,53 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     }
 
     /// <inheritdoc/>
-    public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
+    public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        await this.controlSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            this.subscriptions.TryRemove(channel, out _);
-            this.options.Heartbeat?.Stop(channel, "websocket");
 
-            // The relay entry is removed only after the unsubscribe envelope is confirmed sent.
-            // If the send faults, the relay still routes the channel here; the local subscription
-            // is already gone (deliveries are dropped) and a later subscribe will correctly skip
-            // re-sending a subscribe envelope.
-            if (this.relaySubscribed.Contains(channel))
-            {
-                (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "unsubscribe"u8);
-                await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
-                this.relaySubscribed.Remove(channel);
-            }
-        }
-        finally
+        // Local effect first, before any await: an unsubscribe always stops delivery to the
+        // caller's handler, whatever the token state or the fate of the control envelope.
+        if (!this.subscriptions.TryRemove(channel, out _))
         {
-            this.controlSemaphore.Release();
+            return ValueTask.CompletedTask;
         }
+
+        this.options.Heartbeat?.Stop(channel, "websocket");
+
+        (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "unsubscribe"u8);
+        return this.SendAndReturnAsync(rented, length, cancellationToken);
     }
 
-    private async ValueTask SubscribeCoreAsync(string channel, Subscription subscription, CancellationToken cancellationToken)
+    private ValueTask SubscribeCoreAsync(string channel, Subscription subscription, CancellationToken cancellationToken)
     {
-        await this.controlSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        // A channel carries exactly one subscription. Claiming the slot with TryAdd is atomic,
+        // so no lock is needed, and a second subscribe is refused rather than displacing the
+        // first: displacing would mean tearing the previous subscription down on the subscribe
+        // path, which a handler calling back in (the generated Abort path does) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, subscription))
+        {
+            throw new InvalidOperationException(
+                $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
+
+        this.options.Heartbeat?.Start(channel, "websocket");
+        return this.SendSubscribeAsync(channel, cancellationToken);
+    }
+
+    private async ValueTask SendSubscribeAsync(string channel, CancellationToken cancellationToken)
+    {
         try
         {
-            // A channel has one subscription: installing this one displaces whatever was there
-            // (legacy, delivery-context, or responder), atomically with the relay bookkeeping
-            // because all control operations serialize on the semaphore.
-            this.subscriptions.TryGetValue(channel, out Subscription? displaced);
-            this.subscriptions[channel] = subscription;
-            this.options.Heartbeat?.Start(channel, "websocket");
-
-            if (!this.relaySubscribed.Contains(channel))
-            {
-                try
-                {
-                    (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
-                    await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
-                }
-                catch
-                {
-                    // The relay never saw the subscribe: roll the local state back so the
-                    // dictionaries keep mirroring the relay's registration.
-                    if (displaced is null)
-                    {
-                        this.subscriptions.TryRemove(channel, out _);
-                    }
-                    else
-                    {
-                        this.subscriptions[channel] = displaced;
-                    }
-
-                    throw;
-                }
-
-                this.relaySubscribed.Add(channel);
-            }
+            (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
+            await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
         }
-        finally
+        catch
         {
-            this.controlSemaphore.Release();
+            // The relay never registered the channel, so release the slot and the heartbeat
+            // rather than leaving a subscription that can never receive anything.
+            this.subscriptions.TryRemove(channel, out _);
+            this.options.Heartbeat?.Stop(channel, "websocket");
+            throw;
         }
     }
 
@@ -274,17 +247,11 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
 
         this.disposed = true;
-        await this.controlSemaphore.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            this.subscriptions.Clear();
-            this.relaySubscribed.Clear();
-        }
-        finally
-        {
-            this.controlSemaphore.Release();
-        }
 
+        // Clearing is atomic and takes no lock, so disposal is never blocked behind a
+        // subscribe or unsubscribe that is stuck on an unbounded socket send; cancelling
+        // the receive loop and closing the socket below is what unblocks such a send.
+        this.subscriptions.Clear();
         this.pendingReplies.Clear();
 
         if (this.receiveCts is not null)
