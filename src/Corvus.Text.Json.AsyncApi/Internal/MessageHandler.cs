@@ -41,18 +41,26 @@ public readonly struct MessageHandler<TPayload>
     /// </summary>
     /// <param name="handler">The legacy callback.</param>
     /// <returns>The wrapping handler.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/>.</exception>
     public static MessageHandler<TPayload> WithoutDeliveryContext(
         Func<TPayload, Corvus.Text.Json.JsonElement, CancellationToken, ValueTask> handler)
-        => new(handler, null);
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        return new(handler, null);
+    }
 
     /// <summary>
     /// Creates a handler wrapping a delivery-context-aware callback.
     /// </summary>
     /// <param name="handler">The delivery-context-aware callback.</param>
     /// <returns>The wrapping handler.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/>.</exception>
     public static MessageHandler<TPayload> WithDeliveryContext(
         Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler)
-        => new(null, handler);
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        return new(null, handler);
+    }
 
     /// <summary>
     /// Invokes the stored callback for one delivered message.
@@ -64,6 +72,9 @@ public readonly struct MessageHandler<TPayload>
     /// <see langword="null"/> when the callback does not consume delivery context.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the callback has run.</returns>
+    /// <exception cref="InvalidOperationException">This instance is <see langword="default"/> and
+    /// holds no callback. Create instances with <see cref="WithoutDeliveryContext"/> or
+    /// <see cref="WithDeliveryContext"/>.</exception>
     public ValueTask Invoke(
         TPayload payload,
         ReadOnlyMemory<byte> channelUtf8,
@@ -73,7 +84,13 @@ public readonly struct MessageHandler<TPayload>
     {
         if (this.contextHandler is null)
         {
-            return this.legacyHandler!(payload, headers, cancellationToken);
+            if (this.legacyHandler is null)
+            {
+                throw new InvalidOperationException(
+                    "This MessageHandler holds no callback because it was default-constructed. Create instances with WithoutDeliveryContext or WithDeliveryContext.");
+            }
+
+            return this.legacyHandler(payload, headers, cancellationToken);
         }
 
         return this.contextHandler(payload, new MessageDeliveryContext
