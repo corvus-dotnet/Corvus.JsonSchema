@@ -499,6 +499,29 @@ using Streetlights.Client.Models;  // payload model types
   → Your Handler: receives strongly-typed, validated payload
   → On error: IMessageErrorPolicy decides Skip/DeadLetter/Abort
 </code></pre>
+<h2 id="message-delivery-context">Message Delivery Context</h2>
+<p>Consumers can opt into transport delivery metadata. For every receive operation that is not a request/reply responder, the generator emits a second handler/consumer pair alongside the legacy one, named by appending <code>WithDeliveryContext</code> to the operation name: <code>I{Operation}WithDeliveryContextHandler</code> and <code>{Operation}WithDeliveryContextConsumer</code>. The handler receives a <code>MessageDeliveryContext</code> carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists (for example RabbitMQ's <code>BasicDeliverEventArgs</code>):</p>
+<pre><code class="language-csharp">public sealed class LightMeasuredHandler : IReceiveLightMeasurementWithDeliveryContextHandler
+{
+    public ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload,
+        MessageDeliveryContext context,
+        CancellationToken cancellationToken = default)
+    {
+        // context.ChannelUtf8, context.Headers, context.NativeMessage
+        return ValueTask.CompletedTask;
+    }
+}
+</code></pre>
+<p>A message that declares a typed headers schema keeps its typed headers parameter: the handler signature becomes <code>(payload, headers, context, cancellationToken)</code>.</p>
+<p>The rules that come with the capability:</p>
+<ul>
+<li><strong>The context is valid only for the duration of the handler invocation.</strong> Transports recycle the buffers it references once the handler returns (RabbitMQ, for example, reuses the network-frame buffer backing <code>BasicDeliverEventArgs.Body</code>). Copy anything you need to keep before returning.</li>
+<li><strong>The delivery-context consumer requires an <code>IMessageDeliveryContextTransport</code>.</strong> All seven transports implement it. When wrapping with instrumentation, use <code>InstrumentedMessageTransport.Create</code> so the wrapper preserves the capability.</li>
+<li><strong>A channel has one subscription.</strong> Subscribing a channel with either the legacy or the delivery-context API displaces the previous subscription (last-write-wins), and the displaced consumer is torn down.</li>
+<li><strong>Direct transport API users own the channel buffer.</strong> <code>SubscribeWithDeliveryContextAsync</code> retains the <code>channelUtf8</code> memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)</li>
+<li><strong>Bindings travel.</strong> An operation declaring channel or operation bindings subscribes through a <code>MessageContext</code> overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.</li>
+</ul>
 <h2 id="validation">Validation</h2>
 <p>Every generated producer and consumer accepts a <code>ValidationMode</code> parameter that controls whether messages are validated against their JSON Schema, and the degree of diagnostic information provided on failure.</p>
 <h3 id="validation-modes">Validation Modes</h3>
@@ -1490,15 +1513,16 @@ MessageContext context = new()
 <p>Current transports primarily use their strongly-typed transport options for delivery semantics. <code>MessageContext</code> is the extension point for transports that need to inspect binding JSON directly; if you rely on a specific binding, verify that the selected transport implements it rather than assuming every binding affects runtime behavior automatically.</p>
 <h2 id="telemetry-and-observability">Telemetry and Observability</h2>
 <h3 id="opentelemetry-distributed-tracing">OpenTelemetry Distributed Tracing</h3>
-<p>Wrap any transport with <code>InstrumentedMessageTransport</code> to gain automatic OpenTelemetry instrumentation:</p>
+<p>Wrap any transport with <code>InstrumentedMessageTransport.Create</code> to gain automatic OpenTelemetry instrumentation:</p>
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Nats;
 
 NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
     new NatsTransportOptions { Url = &quot;nats://localhost:4222&quot; });
 
-InstrumentedMessageTransport transport = new(raw, &quot;nats&quot;);
+IMessageTransport transport = InstrumentedMessageTransport.Create(raw, &quot;nats&quot;);
 </code></pre>
+<p><code>Create</code> returns a wrapper that preserves the wrapped transport's optional capabilities. It implements <code>IMessageDeliveryContextTransport</code> and <code>IHealthCheckableTransport</code> exactly when the wrapped transport does, so a capability probe such as <code>transport is IHealthCheckableTransport</code> answers for the wrapped transport, health checks keep working, and delivery-context consumers accept the wrapper. The <code>new InstrumentedMessageTransport(raw, &quot;nats&quot;)</code> constructor form always produces a plain <code>IMessageTransport</code> wrapper that surfaces neither capability; prefer <code>Create</code>.</p>
 <p>This provides:</p>
 <ul>
 <li><strong>Distributed trace spans</strong> (Activities) for publish, subscribe, request, and dead-letter operations</li>
@@ -1742,7 +1766,7 @@ corvusjson asyncapi-generate streetlights.json --rootNamespace Streetlights --ou
 <h3 id="use-the-in-memory-transport-for-tests">Use the In-Memory Transport for Tests</h3>
 <p>Don't mock <code>IMessageTransport</code> — use <code>InMemoryMessageTransport</code>. It provides message capture, delivery simulation, and dead-letter inspection without any broker infrastructure.</p>
 <h3 id="wrap-transports-with-instrumentation">Wrap Transports with Instrumentation</h3>
-<p>Always use <code>InstrumentedMessageTransport</code> in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter.</p>
+<p>Always wrap the transport with <code>InstrumentedMessageTransport.Create</code> in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter, and <code>Create</code> preserves the wrapped transport's delivery-context and health-check capabilities.</p>
 <h3 id="combine-polly-with-error-policies">Combine Polly with Error Policies</h3>
 <p>The resilience middleware (Polly) handles transient failures (retries, circuit-breaker). The error policy handles permanent failures (dead-letter, abort). They compose naturally:</p>
 <pre><code>Message arrives

@@ -143,6 +143,21 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask"><code>ValueTask</code></a></p>
 <p>A task that completes when the callback has run.</p>
+<h3 id="exceptions">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception"><code>InvalidOperationException</code></a></td>
+<td>This instance is <code>default</code> and holds no callback. Create instances with <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.withoutdeliverycontext.html"><code>WithoutDeliveryContext</code></a> or <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.withdeliverycontext.html"><code>WithDeliveryContext</code></a>.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

@@ -6591,14 +6591,14 @@
     "Title": "IMessageDeliveryContextTransport",
     "Description": "Optional message-transport capability that exposes delivery metadata.",
     "Keywords": "IMessageDeliveryContextTransport interface Corvus.Text.Json.AsyncApi",
-    "Body": "Optional message-transport capability that exposes delivery metadata.\nThis is separate from [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) so existing transport implementations remain source-compatible and the legacy subscription API is not changed or adapted through an allocating closure.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata."
+    "Body": "Optional message-transport capability that exposes delivery metadata.\nThis is separate from [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) so existing transport implementations remain source-compatible and the legacy subscription API is not changed or adapted through an allocating closure.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.subscribewithdeliverycontextasync.html",
     "Title": "IMessageDeliveryContextTransport.SubscribeWithDeliveryContextAsync",
     "Description": "Subscribes while exposing transport delivery metadata.",
     "Keywords": "IMessageDeliveryContextTransport SubscribeWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi",
-    "Body": "Subscribes while exposing transport delivery metadata."
+    "Body": "Subscribes while exposing transport delivery metadata. Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html",
@@ -6731,6 +6731,13 @@
     "Title": "InstrumentedMessageTransport.SubscribeAsync",
     "Description": "",
     "Keywords": "InstrumentedMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.subscribereplyasync.html",
+    "Title": "InstrumentedMessageTransport.SubscribeReplyAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport SubscribeReplyAsync method Corvus.Text.Json.AsyncApi",
     "Body": " "
   },
   {

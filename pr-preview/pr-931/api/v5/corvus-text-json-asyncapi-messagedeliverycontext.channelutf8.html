@@ -105,6 +105,8 @@
 </code></pre>
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;byte&gt;</code></a></p>
+<h3 id="remarks">Remarks</h3>
+<p>On broker transports this views the memory the subscriber passed to the subscribe call, which is why that buffer must remain valid and unmodified for the subscription's lifetime.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
