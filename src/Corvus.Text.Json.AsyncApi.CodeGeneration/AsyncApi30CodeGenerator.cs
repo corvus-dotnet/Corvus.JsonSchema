@@ -764,8 +764,15 @@ public sealed class AsyncApi30CodeGenerator
         {
             files.Add(EmitConsumerHandler(op, withDeliveryContext: false));
             files.Add(EmitConsumer(op, withDeliveryContext: false));
-            files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
-            files.Add(EmitConsumer(op, withDeliveryContext: true));
+
+            // A responder's context never reaches its handler (SubscribeReplyAsync has no
+            // delivery-context form), so the variants would be inert duplicates demanding a
+            // wider transport interface for no benefit.
+            if (!IsResponderOperation(op))
+            {
+                files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
+                files.Add(EmitConsumer(op, withDeliveryContext: true));
+            }
 
             // Multi-message operations need a discriminated received message type
             if (op.Messages.Count > 1)
@@ -2269,11 +2276,18 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The deserialized message payload.</param>");
 
-            if (withDeliveryContext && !IsResponderOperation(op))
+            if (withDeliveryContext)
             {
+                if (msg.HeadersTypeName is not null)
+                {
+                    w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
+                }
+
                 w.WriteLine($"/// <param name=\"context\">The transport delivery context.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"{returnType} {methodName}({payloadType} payload, MessageDeliveryContext context, CancellationToken cancellationToken = default);");
+                w.WriteLine(msg.HeadersTypeName is not null
+                    ? $"{returnType} {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, MessageDeliveryContext context, CancellationToken cancellationToken = default);"
+                    : $"{returnType} {methodName}({payloadType} payload, MessageDeliveryContext context, CancellationToken cancellationToken = default);");
             }
             else if (msg.HeadersTypeName is not null)
             {
@@ -2297,8 +2311,13 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// exhaustively handle each message type.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"message\">The received message.</param>");
+            if (withDeliveryContext)
+            {
+                w.WriteLine($"/// <param name=\"context\">The transport delivery context.</param>");
+            }
+
             w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            if (withDeliveryContext && !IsResponderOperation(op))
+            if (withDeliveryContext)
             {
                 w.WriteLine($"ValueTask HandleAsync({messageTypeName} message, MessageDeliveryContext context, CancellationToken cancellationToken = default);");
             }
@@ -2488,7 +2507,7 @@ public sealed class AsyncApi30CodeGenerator
         // Built once here (only when the emitted subscribe call actually takes it) rather than at each
         // subscribe site: the body below serves both the async and the synchronous StartAsync.
         bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
-        bool needsMessageContext = hasBindingContext && (!withDeliveryContext || IsResponderOperation(op));
+        bool needsMessageContext = hasBindingContext && !withDeliveryContext;
 
         // Local function emitting the subscribe body. For the dynamic case the channel bytes have
         // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
@@ -2524,7 +2543,7 @@ public sealed class AsyncApi30CodeGenerator
             else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine(withDeliveryContext && !IsResponderOperation(op)
+                w.WriteLine(withDeliveryContext
                     ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};"
                     : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
             }
@@ -2704,7 +2723,12 @@ public sealed class AsyncApi30CodeGenerator
             w.CloseBrace();
             w.WriteLine();
 
-            if (withDeliveryContext)
+            if (withDeliveryContext && msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} h = {msg.HeadersTypeName}.From(headers);");
+                w.WriteLine($"await this.handler.{handlerMethod}(payload, h, deliveryContext, cancellationToken).ConfigureAwait(false);");
+            }
+            else if (withDeliveryContext)
             {
                 w.WriteLine($"await this.handler.{handlerMethod}(payload, deliveryContext, cancellationToken).ConfigureAwait(false);");
             }

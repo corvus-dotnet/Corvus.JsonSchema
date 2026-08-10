@@ -247,6 +247,72 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ResponderOperation_DoesNotEmitDeliveryContextVariants()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var generator = new AsyncApi30CodeGenerator("Worker", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        Assert.IsFalse(
+            files.Any(f => f.FileName.Contains("WithDeliveryContext")),
+            "A responder operation never surfaces a MessageDeliveryContext, so no WithDeliveryContext variants should be emitted for it.");
+    }
+
+    [TestMethod]
+    public void Generate_HeadersTypedMessage_DeliveryContextHandlerKeepsTypedHeaders()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/UserSignedUpPayload"] = "Traits.UserSignedUpPayload",
+            ["#/components/schemas/CommonHeaders"] = "Traits.CommonHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Traits", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(traitsRoot);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        StringAssert.Contains(
+            contextHandler.Content,
+            "Traits.CommonHeaders headers, MessageDeliveryContext context",
+            "The delivery-context handler variant must keep the typed headers parameter alongside the context.");
+
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("WithDeliveryContextConsumer"));
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "h, deliveryContext, cancellationToken",
+            "The delivery-context consumer must pass the materialized typed headers to the handler.");
+    }
+
+    [TestMethod]
+    public void Generate_MultiMessage_DeliveryContextHandlerDocumentsContextParameter()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "multi-message.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/temperaturePayload"] = "IoT.TemperaturePayload",
+            ["#/components/schemas/humidityPayload"] = "IoT.HumidityPayload",
+            ["#/components/schemas/calibratePayload"] = "IoT.CalibratePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("IoT", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        int messageDoc = contextHandler.Content.IndexOf("<param name=\"message\">", StringComparison.Ordinal);
+        int contextDoc = contextHandler.Content.IndexOf("<param name=\"context\">", StringComparison.Ordinal);
+        int tokenDoc = contextHandler.Content.IndexOf("<param name=\"cancellationToken\">", StringComparison.Ordinal);
+        Assert.IsTrue(messageDoc >= 0, "The message parameter must be documented.");
+        Assert.IsTrue(contextDoc > messageDoc, "The context parameter must be documented after message.");
+        Assert.IsTrue(tokenDoc > contextDoc, "The cancellationToken doc must follow context, matching signature order.");
+    }
+
+    [TestMethod]
     public void Generate_TraitsProvideHeadersToMessage()
     {
         // The traits-example.json has a message trait that supplies headers
