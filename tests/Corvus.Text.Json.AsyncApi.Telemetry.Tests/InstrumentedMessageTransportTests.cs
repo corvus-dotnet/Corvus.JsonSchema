@@ -158,7 +158,6 @@ public class InstrumentedMessageTransportTests
         await using InMemoryMessageTransport inner = new();
         InstrumentedMessageTransport transport = new(inner, "context-test");
         bool handlerCalled = false;
-        MessageContext messageContext = default;
 
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             TestChannel,
@@ -167,7 +166,6 @@ public class InstrumentedMessageTransportTests
                 handlerCalled = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span) == "test/channel";
                 return ValueTask.CompletedTask;
             },
-            in messageContext,
             default);
 
         await inner.DeliverAsync<JsonElement>("test/channel", TestPayloadJson);

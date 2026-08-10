@@ -132,7 +132,6 @@ public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransp
     public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
-        in MessageContext context,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
@@ -142,11 +141,9 @@ public sealed class InstrumentedMessageTransport : IMessageDeliveryContextTransp
         }
 
         string destination = Encoding.UTF8.GetString(channelUtf8.Span);
-        MessageContext contextCopy = context;
         return contextTransport.SubscribeWithDeliveryContextAsync(
             channelUtf8,
             CreateInstrumentedContextHandler(handler, destination),
-            in contextCopy,
             cancellationToken);
     }
 

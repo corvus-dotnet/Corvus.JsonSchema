@@ -160,7 +160,6 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
-        in MessageContext context,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {

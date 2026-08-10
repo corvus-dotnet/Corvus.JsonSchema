@@ -53,7 +53,6 @@ public class AmqpTransportTests
         string? receivedChannel = null;
         JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
-        MessageContext messageContext = default;
         await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -62,8 +61,7 @@ public class AmqpTransportTests
                 receivedHeadersKind = deliveryContext.Headers.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(300);
         using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("{\"data\":42}"u8.ToArray());

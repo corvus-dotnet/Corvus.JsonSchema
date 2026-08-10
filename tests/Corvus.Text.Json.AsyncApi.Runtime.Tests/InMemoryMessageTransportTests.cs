@@ -77,7 +77,6 @@ public class InMemoryMessageTransportTests
         JsonValueKind? receivedHeadersKind = null;
         string? receivedChannel = null;
 
-        MessageContext messageContext = default;
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -85,8 +84,7 @@ public class InMemoryMessageTransportTests
                 receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
                 receivedHeadersKind = deliveryContext.Headers.ValueKind;
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await transport.DeliverAsync<JsonElement>(
             "test/context",
@@ -389,15 +387,13 @@ public class InMemoryMessageTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        MessageContext messageContext = default;
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             "test/displace"u8.ToArray(),
             (payload, deliveryContext, ct) =>
             {
                 contextCount++;
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         JsonElement payload = JsonElement.ParseValue("""{"v":1}"""u8);
         await transport.PublishAsync("test/displace"u8.ToArray(), in payload);
@@ -413,15 +409,13 @@ public class InMemoryMessageTransportTests
         int legacyCount = 0;
         int contextCount = 0;
 
-        MessageContext messageContext = default;
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             "test/displace-back"u8.ToArray(),
             (payload, deliveryContext, ct) =>
             {
                 contextCount++;
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await transport.SubscribeAsync<JsonElement>(
             "test/displace-back"u8.ToArray(),
@@ -445,7 +439,6 @@ public class InMemoryMessageTransportTests
         int contextCount = 0;
         string? channelSeen = null;
 
-        MessageContext messageContext = default;
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             "test/raw-context"u8.ToArray(),
             (payload, deliveryContext, ct) =>
@@ -453,8 +446,7 @@ public class InMemoryMessageTransportTests
                 contextCount++;
                 channelSeen = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         DefaultMessageErrorPolicy policy = new(
             MessageErrorAction.Skip,
@@ -477,15 +469,13 @@ public class InMemoryMessageTransportTests
         await using Testing.InMemoryMessageTransport transport = new();
         int contextCount = 0;
 
-        MessageContext messageContext = default;
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             "test/raw-context-error"u8.ToArray(),
             (payload, deliveryContext, ct) =>
             {
                 contextCount++;
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         DefaultMessageErrorPolicy policy = new(
             MessageErrorAction.Skip,

@@ -53,7 +53,6 @@ public class WebSocketTransportTests
         string? receivedChannel = null;
         JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
-        MessageContext messageContext = default;
         await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -62,8 +61,7 @@ public class WebSocketTransportTests
                 receivedHeadersKind = deliveryContext.Headers.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
         using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
@@ -1122,15 +1120,13 @@ public class WebSocketTransportTests
         ReadOnlyMemory<byte> channel = "ws/test/context-unsubscribe"u8.ToArray();
         int receiveCount = 0;
 
-        MessageContext messageContext = default;
         await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
             {
                 Interlocked.Increment(ref receiveCount);
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
 
@@ -1155,15 +1151,13 @@ public class WebSocketTransportTests
         int contextCount = 0;
         int legacyCount = 0;
 
-        MessageContext messageContext = default;
         await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
             {
                 Interlocked.Increment(ref contextCount);
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
         await s_subscriber.UnsubscribeAsync(channel);
@@ -1206,15 +1200,13 @@ public class WebSocketTransportTests
 
         await Task.Delay(200);
 
-        MessageContext messageContext = default;
         await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
             {
                 Interlocked.Increment(ref contextCount);
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
 
@@ -1235,15 +1227,13 @@ public class WebSocketTransportTests
         int contextCount = 0;
         int legacyCount = 0;
 
-        MessageContext messageContext = default;
         await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
             {
                 Interlocked.Increment(ref contextCount);
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
 
@@ -1299,11 +1289,9 @@ public class WebSocketTransportTests
 
         await Task.Delay(200);
 
-        MessageContext messageContext = default;
         await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
-            (payload, deliveryContext, ct) => throw new InvalidOperationException("Intentional failure"),
-            in messageContext);
+            (payload, deliveryContext, ct) => throw new InvalidOperationException("Intentional failure"));
 
         await Task.Delay(200);
 
@@ -1331,15 +1319,13 @@ public class WebSocketTransportTests
         ReadOnlyMemory<byte> channel = "ws/test/context-abort"u8.ToArray();
         int handlerCallCount = 0;
 
-        MessageContext messageContext = default;
         await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
             {
                 Interlocked.Increment(ref handlerCallCount);
                 throw new InvalidOperationException("Trigger abort");
-            },
-            in messageContext);
+            });
 
         await Task.Delay(200);
 

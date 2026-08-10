@@ -63,7 +63,6 @@ public class KafkaTransportTests
         string? receivedChannel = null;
         object? nativeMessage = null;
 
-        MessageContext messageContext = default;
         await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -72,8 +71,7 @@ public class KafkaTransportTests
                 nativeMessage = deliveryContext.NativeMessage;
                 received.Release();
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(5000);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());

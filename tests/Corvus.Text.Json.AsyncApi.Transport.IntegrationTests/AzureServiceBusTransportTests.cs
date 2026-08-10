@@ -48,7 +48,6 @@ public class AzureServiceBusTransportTests
         string? receivedChannel = null;
         JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
-        MessageContext messageContext = default;
         await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -57,8 +56,7 @@ public class AzureServiceBusTransportTests
                 receivedHeadersKind = deliveryContext.Headers.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(500);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"sensor\":\"context\"}"u8.ToArray());

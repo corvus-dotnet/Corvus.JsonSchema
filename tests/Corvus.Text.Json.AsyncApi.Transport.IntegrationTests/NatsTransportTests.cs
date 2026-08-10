@@ -48,7 +48,6 @@ public class NatsTransportTests
         string? receivedChannel = null;
         object? nativeMessage = null;
 
-        MessageContext messageContext = default;
         await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
             channel,
             (payload, deliveryContext, ct) =>
@@ -57,8 +56,7 @@ public class NatsTransportTests
                 nativeMessage = deliveryContext.NativeMessage;
                 received.Release();
                 return ValueTask.CompletedTask;
-            },
-            in messageContext);
+            });
 
         await Task.Delay(500);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
