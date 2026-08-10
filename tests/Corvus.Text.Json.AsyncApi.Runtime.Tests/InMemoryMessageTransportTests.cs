@@ -373,11 +373,10 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
-    public async Task ContextSubscriptionDisplacesLegacySubscription()
+    public async Task ContextSubscribeOnSubscribedChannelThrows()
     {
         await using Testing.InMemoryMessageTransport transport = new();
         int legacyCount = 0;
-        int contextCount = 0;
 
         await transport.SubscribeAsync<JsonElement>(
             "test/displace"u8.ToArray(),
@@ -387,26 +386,21 @@ public class InMemoryMessageTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
-            "test/displace"u8.ToArray(),
-            (payload, deliveryContext, ct) =>
-            {
-                contextCount++;
-                return ValueTask.CompletedTask;
-            });
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+                "test/displace"u8.ToArray(),
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
 
         JsonElement payload = JsonElement.ParseValue("""{"v":1}"""u8);
         await transport.PublishAsync("test/displace"u8.ToArray(), in payload);
 
-        Assert.AreEqual(1, contextCount, "The context subscription should displace the legacy one.");
-        Assert.AreEqual(0, legacyCount, "The displaced legacy handler should not receive messages.");
+        Assert.AreEqual(1, legacyCount, "The original subscription must survive a refused subscribe.");
     }
 
     [TestMethod]
-    public async Task LegacySubscriptionDisplacesContextSubscription()
+    public async Task LegacySubscribeOnContextSubscribedChannelThrows()
     {
         await using Testing.InMemoryMessageTransport transport = new();
-        int legacyCount = 0;
         int contextCount = 0;
 
         await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
@@ -417,19 +411,58 @@ public class InMemoryMessageTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await transport.SubscribeAsync<JsonElement>(
-            "test/displace-back"u8.ToArray(),
-            (payload, headers, ct) =>
-            {
-                legacyCount++;
-                return ValueTask.CompletedTask;
-            });
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeAsync<JsonElement>(
+                "test/displace-back"u8.ToArray(),
+                (payload, headers, ct) => ValueTask.CompletedTask));
 
         JsonElement payload = JsonElement.ParseValue("""{"v":2}"""u8);
         await transport.PublishAsync("test/displace-back"u8.ToArray(), in payload);
 
-        Assert.AreEqual(1, legacyCount, "The legacy subscription should displace the context one.");
-        Assert.AreEqual(0, contextCount, "The displaced context handler should not receive messages.");
+        Assert.AreEqual(1, contextCount, "The original subscription must survive a refused subscribe.");
+    }
+
+    [TestMethod]
+    public async Task DataSubscribeOnResponderChannelThrows()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            "rpc/occupied"u8.ToArray(),
+            (request, headers, ct) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        // A responder occupies the same single slot as a data subscription, matching every
+        // real transport; the test transport must not let the two coexist.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+                "rpc/occupied"u8.ToArray(),
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+    }
+
+    [TestMethod]
+    public async Task ResubscribeAfterUnsubscribeSucceeds()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            "test/cycle"u8.ToArray(),
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await transport.UnsubscribeAsync("test/cycle"u8.ToArray());
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/cycle"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":3}"""u8);
+        await transport.PublishAsync("test/cycle"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, contextCount, "The slot is free after unsubscribe, so a different kind can take it.");
     }
 
     [TestMethod]

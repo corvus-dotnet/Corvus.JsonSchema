@@ -30,9 +30,11 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
     private readonly object syncRoot = new();
     private readonly List<PublishedMessage> publishedMessages = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
+
+    // One slot per channel, holding whichever kind of subscription owns it (legacy data,
+    // delivery-context data, or responder). Separate registries per kind are what let a channel
+    // hold two subscriptions whose relative precedence then differed from the real transports.
     private readonly Dictionary<string, Delegate> subscriptions = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Delegate> contextSubscriptions = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Delegate> replySubscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, TaskCompletionSource<(byte[] Payload, byte[] Headers)>> pendingRequests = new(StringComparer.Ordinal);
 
     /// <inheritdoc/>
@@ -74,10 +76,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         Delegate? handler = null;
         lock (this.syncRoot)
         {
-            if (!this.subscriptions.TryGetValue(channel, out handler))
-            {
-                this.contextSubscriptions.TryGetValue(channel, out handler);
-            }
+            this.subscriptions.TryGetValue(channel, out handler);
         }
 
         if (handler is not null)
@@ -139,8 +138,34 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
                 cancellationToken);
         }
 
+        if (IsResponder(handler))
+        {
+            throw new InvalidOperationException(
+                "The channel's subscription is a responder; deliver to it with RequestAsync rather than a plain publish.");
+        }
+
         return ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
             payload, headers, cancellationToken);
+    }
+
+    // A responder returns the reply payload, so its delegate's return type is the generic
+    // ValueTask<TReply>; a data handler returns the non-generic ValueTask. Both are four-arity
+    // Funcs, so the return type is what separates them.
+    private static bool IsResponder(Delegate handler)
+        => handler.GetType().GetMethod("Invoke")!.ReturnType.IsGenericType;
+
+    private void ClaimChannel(string channel, Delegate handler)
+    {
+        // A channel carries exactly one subscription of any kind, matching every real
+        // transport: a second subscribe is refused rather than replacing what is there.
+        lock (this.syncRoot)
+        {
+            if (!this.subscriptions.TryAdd(channel, handler))
+            {
+                throw new InvalidOperationException(
+                    $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -172,7 +197,10 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         Delegate? responder;
         lock (this.syncRoot)
         {
-            this.replySubscriptions.TryGetValue(requestChannel, out responder);
+            // A responder occupies the same single slot as a data subscription.
+            responder = this.subscriptions.TryGetValue(requestChannel, out Delegate? candidate) && IsResponder(candidate)
+                ? candidate
+                : null;
         }
 
         if (responder is not null)
@@ -201,10 +229,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         ArgumentNullException.ThrowIfNull(handler);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        lock (this.syncRoot)
-        {
-            this.replySubscriptions[channel] = handler;
-        }
+        this.ClaimChannel(channel, handler);
 
         return ValueTask.CompletedTask;
     }
@@ -255,12 +280,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        lock (this.syncRoot)
-        {
-            // A channel has one subscription: displace any delivery-context handler.
-            this.subscriptions[channel] = handler;
-            this.contextSubscriptions.Remove(channel);
-        }
+        this.ClaimChannel(channel, handler);
 
         return ValueTask.CompletedTask;
     }
@@ -273,12 +293,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         where TPayload : struct, IJsonElement<TPayload>
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        lock (this.syncRoot)
-        {
-            // A channel has one subscription: displace any legacy handler.
-            this.contextSubscriptions[channel] = handler;
-            this.subscriptions.Remove(channel);
-        }
+        this.ClaimChannel(channel, handler);
 
         return ValueTask.CompletedTask;
     }
@@ -291,8 +306,6 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
-            this.contextSubscriptions.Remove(channel);
-            this.replySubscriptions.Remove(channel);
         }
 
         return ValueTask.CompletedTask;
@@ -354,8 +367,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         lock (this.syncRoot)
         {
-            if (!this.subscriptions.TryGetValue(channel, out handler!) &&
-                !this.contextSubscriptions.TryGetValue(channel, out handler!))
+            if (!this.subscriptions.TryGetValue(channel, out handler!))
             {
                 throw new InvalidOperationException($"No subscription for channel '{channel}'.");
             }
@@ -429,8 +441,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         lock (this.syncRoot)
         {
-            if (!this.subscriptions.TryGetValue(channel, out handler!) &&
-                !this.contextSubscriptions.TryGetValue(channel, out handler!))
+            if (!this.subscriptions.TryGetValue(channel, out handler!))
             {
                 throw new InvalidOperationException($"No subscription for channel '{channel}'.");
             }

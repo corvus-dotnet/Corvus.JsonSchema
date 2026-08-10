@@ -395,15 +395,42 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TPayload : struct, IJsonElement<TPayload>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.ClaimChannel(channel, (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct));
+        await this.SendSubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void ClaimChannel(string channel, Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch)
+    {
+        // A channel carries exactly one subscription, claimed atomically with TryAdd. A second
+        // subscribe is refused rather than replacing the first, so a caller cannot silently
+        // take over a channel another consumer is serving.
+        if (!this.handlers.TryAdd(channel, dispatch))
+        {
+            throw new InvalidOperationException(
+                $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
 
         this.options.Heartbeat?.Start(channel, "mqtt");
+    }
 
+    private async ValueTask SendSubscribeAsync(string channel, CancellationToken cancellationToken)
+    {
         MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
             .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
             .Build();
 
-        await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The broker never registered the topic filter, so release the slot and the
+            // heartbeat rather than leaving a subscription that can never receive anything.
+            this.handlers.TryRemove(channel, out _);
+            this.options.Heartbeat?.Stop(channel, "mqtt");
+            throw;
+        }
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -415,15 +442,8 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TReply : struct, IJsonElement<TReply>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
-
-        this.options.Heartbeat?.Start(channel, "mqtt");
-
-        MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
-            .Build();
-
-        await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        this.ClaimChannel(channel, (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct));
+        await this.SendSubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(
