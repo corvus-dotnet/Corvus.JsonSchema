@@ -99,6 +99,25 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#create-imessagetransport-string">Create(IMessageTransport, string)</a></td>
+<td>Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements...</td>
+</tr>
+<tr>
+<td><a href="#create-imessagedeliverycontexttransport-string">Create(IMessageDeliveryContextTransport, string)</a></td>
+<td>Creates an instrumented wrapper for a transport that exposes delivery context, typed so the result can be handed straight to a generated <code>*WithDeliveryContextConsumer</code>.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="create-imessagetransport-string">Create(IMessageTransport, string)</h2>
 <p>Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a> and/or <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html"><code>IHealthCheckableTransport</code></a> exactly when <code>inner</code> does, so a capability probe such as <code>transport is IMessageDeliveryContextTransport</code> answers for the wrapped transport instead of failing at subscribe time.</p>
 <pre><code class="language-csharp">public static InstrumentedMessageTransport Create(IMessageTransport inner, string messagingSystem)
@@ -143,6 +162,54 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="create-imessagedeliverycontexttransport-string">Create(IMessageDeliveryContextTransport, string)</h2>
+<p>Creates an instrumented wrapper for a transport that exposes delivery context, typed so the result can be handed straight to a generated <code>*WithDeliveryContextConsumer</code>.</p>
+<pre><code class="language-csharp">public static IMessageDeliveryContextTransport Create(IMessageDeliveryContextTransport inner, string messagingSystem)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>inner</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a></td>
+<td>The delivery-context-capable transport to decorate.</td>
+</tr>
+<tr>
+<td><code>messagingSystem</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The messaging system identifier (e.g., <code>&quot;nats&quot;</code>, <code>&quot;amqp&quot;</code>, <code>&quot;mqtt&quot;</code>, <code>&quot;websocket&quot;</code>, <code>&quot;kafka&quot;</code>). Used as the <code>messaging.system</code> tag on all spans and metrics.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a></p>
+<p>The instrumented transport, still exposing delivery context.</p>
+<h3 id="remarks">Remarks</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html"><code>Create</code></a> returns the base type, which does not itself implement <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a> — the capability lives on the wrapper it selects — so its result needs a cast before a delivery-context consumer will accept it. Taking the capability as the parameter type lets the compiler prove the wrapper carries it, so this overload returns it directly.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+</tbody>
+</table>
+<hr />
         </div>
         <div class="api-feedback">
             <div class="api-feedback__inner">

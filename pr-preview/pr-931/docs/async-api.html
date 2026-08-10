@@ -518,7 +518,8 @@ using Streetlights.Client.Models;  // payload model types
 <ul>
 <li><strong>The context is valid only for the duration of the handler invocation.</strong> Transports recycle the buffers it references once the handler returns (RabbitMQ, for example, reuses the network-frame buffer backing <code>BasicDeliverEventArgs.Body</code>). Copy anything you need to keep before returning.</li>
 <li><strong>The delivery-context consumer requires an <code>IMessageDeliveryContextTransport</code>.</strong> All seven transports implement it. When wrapping with instrumentation, use <code>InstrumentedMessageTransport.Create</code> so the wrapper preserves the capability.</li>
-<li><strong>A channel has one subscription.</strong> Subscribing a channel with either the legacy or the delivery-context API displaces the previous subscription (last-write-wins), and the displaced consumer is torn down.</li>
+<li><strong>A channel has one subscription.</strong> Every transport allows exactly one subscription per channel, of any kind: legacy data, delivery-context data, or responder. Subscribing a channel that already has one throws <code>InvalidOperationException</code>; unsubscribe first, which frees the slot for a subscription of any kind. Nothing is displaced silently, and nothing is torn down on the subscribe path, which is what lets a handler call <code>UnsubscribeAsync</code> (the Abort error-policy path does) without deadlocking the transport.</li>
+<li><strong>The two generated consumers for one operation are mutually exclusive.</strong> <code>{Operation}Consumer</code> and <code>{Operation}WithDeliveryContextConsumer</code> subscribe the same channel address, so start one or the other, not both. Starting the second throws rather than quietly taking the channel over.</li>
 <li><strong>Direct transport API users own the channel buffer.</strong> <code>SubscribeWithDeliveryContextAsync</code> retains the <code>channelUtf8</code> memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)</li>
 <li><strong>Bindings travel.</strong> An operation declaring channel or operation bindings subscribes through a <code>MessageContext</code> overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.</li>
 </ul>
@@ -1522,7 +1523,17 @@ NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
 
 IMessageTransport transport = InstrumentedMessageTransport.Create(raw, &quot;nats&quot;);
 </code></pre>
-<p><code>Create</code> returns a wrapper that preserves the wrapped transport's optional capabilities. It implements <code>IMessageDeliveryContextTransport</code> and <code>IHealthCheckableTransport</code> exactly when the wrapped transport does, so a capability probe such as <code>transport is IHealthCheckableTransport</code> answers for the wrapped transport, health checks keep working, and delivery-context consumers accept the wrapper. The <code>new InstrumentedMessageTransport(raw, &quot;nats&quot;)</code> constructor form always produces a plain <code>IMessageTransport</code> wrapper that surfaces neither capability; prefer <code>Create</code>.</p>
+<p><code>Create</code> returns a wrapper that preserves the wrapped transport's optional capabilities. It implements <code>IMessageDeliveryContextTransport</code> and <code>IHealthCheckableTransport</code> exactly when the wrapped transport does, so a capability probe such as <code>transport is IHealthCheckableTransport</code> answers for the wrapped transport and health checks keep working. The <code>new InstrumentedMessageTransport(raw, &quot;nats&quot;)</code> constructor form always produces a plain <code>IMessageTransport</code> wrapper that surfaces neither capability; prefer <code>Create</code>.</p>
+<p>When the transport is delivery-context capable and you want to hand the wrapper straight to a generated <code>*WithDeliveryContextConsumer</code>, take the result as <code>IMessageDeliveryContextTransport</code>. The overload selected for a capability-typed argument returns that type, so no cast is needed:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Nats;
+
+NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
+    new NatsTransportOptions { Url = &quot;nats://localhost:4222&quot; });
+
+IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(raw, &quot;nats&quot;);
+ReceiveLightMeasurementWithDeliveryContextConsumer consumer = new(transport, handler);
+</code></pre>
 <p>This provides:</p>
 <ul>
 <li><strong>Distributed trace spans</strong> (Activities) for publish, subscribe, request, and dead-letter operations</li>
