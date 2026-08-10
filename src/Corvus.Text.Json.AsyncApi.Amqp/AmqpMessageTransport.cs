@@ -46,6 +46,9 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
+
+    // Serializes subscription store/remove so displacement can never orphan a running consumer.
+    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
     private bool disposed;
 
@@ -214,14 +217,48 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            this.options.Heartbeat?.Stop(channel, "amqp");
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-            await state.Channel.BasicCancelAsync(state.ConsumerTag, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await state.Channel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-            await state.Channel.DisposeAsync().ConfigureAwait(false);
-            state.CancellationSource.Dispose();
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+            {
+                this.options.Heartbeat?.Stop(channel, "amqp");
+                await TearDownSubscriptionAsync(state, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
+        }
+    }
+
+    private static async ValueTask TearDownSubscriptionAsync(SubscriptionState state, CancellationToken cancellationToken)
+    {
+        await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+        await state.Channel.BasicCancelAsync(state.ConsumerTag, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await state.Channel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        await state.Channel.DisposeAsync().ConfigureAwait(false);
+        state.CancellationSource.Dispose();
+    }
+
+    private async ValueTask StoreSubscriptionAsync(string channel, SubscriptionState state, CancellationToken cancellationToken)
+    {
+        // A channel has one subscription: storing this one displaces whatever was there and
+        // tears the displaced consumer down so it cannot keep consuming. Serialized on the
+        // semaphore so racing subscribes cannot orphan a consumer.
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
+            {
+                await TearDownSubscriptionAsync(displaced, cancellationToken).ConfigureAwait(false);
+            }
+
+            this.subscriptions[channel] = state;
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
         }
     }
 
@@ -656,8 +693,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        SubscriptionState state = new(consumerChannel, cts, actualTag);
-        this.subscriptions[channel] = state;
+        await this.StoreSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
@@ -703,8 +739,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             consumer: consumer,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        SubscriptionState state = new(replyConsumerChannel, cts, actualTag);
-        this.subscriptions[replyChannel] = state;
+        await this.StoreSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -959,8 +994,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        SubscriptionState state = new(consumerChannel, cts, actualTag);
-        this.subscriptions[channel] = state;
+        await this.StoreSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(

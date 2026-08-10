@@ -47,6 +47,9 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
+
+    // Serializes subscribe/unsubscribe so displacement can never orphan a running consumer.
+    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private bool disposed;
 
@@ -149,20 +152,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        ObjectDisposedException.ThrowIf(this.disposed, this);
-
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
-
-        Task consumeTask = Task.Run(
-            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cts.Token),
-            CancellationToken.None);
-
-        SubscriptionState state = new(consumer, cts, consumeTask);
-        this.subscriptions[channel] = state;
-
-        return ValueTask.CompletedTask;
+        return this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -172,19 +162,43 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        return this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
+    }
+
+    private async ValueTask SubscribeCoreAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageHandler<TPayload> handler,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
-        Task consumeTask = Task.Run(
-            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, MessageHandler<TPayload>.WithDeliveryContext(handler), cts.Token),
-            CancellationToken.None);
-        this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
-        return ValueTask.CompletedTask;
+
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // A channel has one subscription: storing this one displaces whatever was there
+            // and tears the displaced consumer down so it cannot keep consuming.
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
+            {
+                await TearDownSubscriptionAsync(displaced).ConfigureAwait(false);
+            }
+
+            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+            Task consumeTask = Task.Run(
+                () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token),
+                CancellationToken.None);
+            this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
+        }
     }
 
     /// <inheritdoc/>
-    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+    public async ValueTask SubscribeReplyAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
         CancellationToken cancellationToken = default)
@@ -194,17 +208,29 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
 
-        Task consumeTask = Task.Run(
-            () => this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token),
-            CancellationToken.None);
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // A channel has one subscription: a responder displaces a data subscription too.
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? displaced))
+            {
+                await TearDownSubscriptionAsync(displaced).ConfigureAwait(false);
+            }
 
-        SubscriptionState state = new(consumer, cts, consumeTask);
-        this.subscriptions[channel] = state;
+            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
 
-        return ValueTask.CompletedTask;
+            Task consumeTask = Task.Run(
+                () => this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token),
+                CancellationToken.None);
+
+            this.subscriptions[channel] = new SubscriptionState(consumer, cts, consumeTask);
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
+        }
     }
 
     /// <inheritdoc/>
@@ -212,23 +238,36 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-
-            try
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
             {
-                await state.ConsumeTask.ConfigureAwait(false);
+                await TearDownSubscriptionAsync(state).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
-            {
-                // Expected on cancellation
-            }
-
-            state.Consumer.Close();
-            state.Consumer.Dispose();
-            state.CancellationSource.Dispose();
         }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
+        }
+    }
+
+    private static async ValueTask TearDownSubscriptionAsync(SubscriptionState state)
+    {
+        await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+
+        try
+        {
+            await state.ConsumeTask.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on cancellation
+        }
+
+        state.Consumer.Close();
+        state.Consumer.Dispose();
+        state.CancellationSource.Dispose();
     }
 
     /// <inheritdoc/>
@@ -260,20 +299,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Stop all subscriptions
         foreach ((string channel, SubscriptionState state) in this.subscriptions)
         {
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-
-            try
-            {
-                await state.ConsumeTask.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected
-            }
-
-            state.Consumer.Close();
-            state.Consumer.Dispose();
-            state.CancellationSource.Dispose();
+            await TearDownSubscriptionAsync(state).ConfigureAwait(false);
         }
 
         this.subscriptions.Clear();

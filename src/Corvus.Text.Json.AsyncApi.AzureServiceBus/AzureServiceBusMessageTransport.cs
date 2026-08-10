@@ -28,6 +28,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     // processor field could not: a transport may hold several subscriptions, and it was never assigned (created
     // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
     private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
+
+    // Serializes subscription store/remove so displacement can never orphan a running processor.
+    private readonly SemaphoreSlim subscriptionSemaphore = new(1, 1);
     private bool disposed;
 
     private AzureServiceBusMessageTransport(
@@ -355,7 +358,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = (tcs, processor);
+        await this.StoreSubscriptionAsync(channel, (tcs, processor), cancellationToken).ConfigureAwait(false);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -513,7 +516,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             : this.client.CreateProcessor(this.options.QueueName!);
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = (tcs, processor);
+        await this.StoreSubscriptionAsync(channel, (tcs, processor), cancellationToken).ConfigureAwait(false);
 
         processor.ProcessMessageAsync += async args =>
         {
@@ -646,12 +649,51 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            subscription.Completion.TrySetResult();
-            await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
-            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
-            this.options.Heartbeat?.Stop(channel, "azureservicebus");
+            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+            {
+                await TearDownSubscriptionAsync(subscription, cancellationToken).ConfigureAwait(false);
+                this.options.Heartbeat?.Stop(channel, "azureservicebus");
+            }
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
+        }
+    }
+
+    private static async ValueTask TearDownSubscriptionAsync(
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription,
+        CancellationToken cancellationToken)
+    {
+        subscription.Completion.TrySetResult();
+        await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
+        await subscription.Processor.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private async ValueTask StoreSubscriptionAsync(
+        string channel,
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription,
+        CancellationToken cancellationToken)
+    {
+        // A channel has one subscription: storing this one displaces whatever was there and
+        // tears the displaced processor down so it cannot keep consuming. Serialized on the
+        // semaphore so racing subscribes cannot orphan a processor.
+        await this.subscriptionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) displaced))
+            {
+                await TearDownSubscriptionAsync(displaced, cancellationToken).ConfigureAwait(false);
+            }
+
+            this.subscriptions[channel] = subscription;
+        }
+        finally
+        {
+            this.subscriptionSemaphore.Release();
         }
     }
 
