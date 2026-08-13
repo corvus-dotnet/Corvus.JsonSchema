@@ -47,6 +47,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
+    // Flows from each received-message wrapper into the handlers it invokes, so teardown can
+    // recognize a handler stopping its own subscription and defer the channel close that would
+    // otherwise join the dispatcher worker executing the caller.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
+
     private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
     private bool disposed;
 
@@ -229,9 +234,26 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     {
         await state.CancellationSource.CancelAsync().ConfigureAwait(false);
 
-        // Deliberately not the caller's token: on the handler-initiated Abort path that token
-        // is the subscription's own, which the line above has just cancelled, so passing it
-        // would abandon the broker-side cancel and leak the channel.
+        // A handler runs on the client library's consumer-dispatcher worker, and closing the
+        // channel waits for that worker to finish — so a handler stopping its own subscription
+        // would self-join. The self case defers the broker stop to the thread pool: it
+        // completes as soon as the handler returns and frees the worker, and every fault
+        // inside CloseChannelAsync is recorded, so the unawaited task can never surface an
+        // unobserved exception.
+        if (ReferenceEquals(ExecutingSubscription.Value, state.Marker))
+        {
+            _ = Task.Run(() => CloseChannelAsync(channel, state));
+            return;
+        }
+
+        await CloseChannelAsync(channel, state).ConfigureAwait(false);
+    }
+
+    private static async Task CloseChannelAsync(string channel, SubscriptionState state)
+    {
+        // Deliberately no caller token anywhere in here: on the handler-initiated path the
+        // handler's token is the subscription's own, cancelled before this runs, so passing
+        // it would abandon the broker-side cancel and leak the channel.
         try
         {
             await state.Channel.BasicCancelAsync(state.ConsumerTag).ConfigureAwait(false);
@@ -244,7 +266,15 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
         }
 
-        await state.Channel.DisposeAsync().ConfigureAwait(false);
+        try
+        {
+            await state.Channel.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+
         state.CancellationSource.Dispose();
     }
 
@@ -534,8 +564,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
         string? actualTag = null;
+        object marker = new();
         consumer.ReceivedAsync += async (_, args) =>
         {
+            ExecutingSubscription.Value = marker;
             if (cts.Token.IsCancellationRequested)
             {
                 return;
@@ -705,7 +737,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
@@ -751,7 +783,9 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             consumer: consumer,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        await this.ClaimSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag)).ConfigureAwait(false);
+        // The reply listener runs no user code, so no handler can self-unsubscribe from it;
+        // its marker exists only to satisfy the state shape and is never set.
+        await this.ClaimSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag, new object())).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -789,8 +823,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
         string? actualTag = null;
+        object marker = new();
         consumer.ReceivedAsync += async (_, args) =>
         {
+            ExecutingSubscription.Value = marker;
             if (cts.Token.IsCancellationRequested)
             {
                 return;
@@ -1007,7 +1043,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Start(channel, "amqp");
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(
@@ -1128,5 +1164,6 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     private sealed record SubscriptionState(
         IChannel Channel,
         CancellationTokenSource CancellationSource,
-        string ConsumerTag);
+        string ConsumerTag,
+        object Marker);
 }

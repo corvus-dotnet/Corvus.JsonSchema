@@ -1260,6 +1260,37 @@ public class AmqpTransportTests
         await transport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "amqp.test.unsubscribe-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. Teardown must not join the dispatcher
+        // worker that is executing this handler, or the await below never completes.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than self-joining the consumer dispatcher.");
+
+        // The slot must be free again afterwards (the deferred close races nothing here:
+        // the registry entry was removed synchronously inside UnsubscribeAsync).
+        await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
