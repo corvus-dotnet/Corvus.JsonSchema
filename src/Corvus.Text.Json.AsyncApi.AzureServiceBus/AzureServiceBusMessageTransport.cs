@@ -27,7 +27,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     // Each subscription keeps its own processor so Unsubscribe/Dispose can actually stop it. A single shared
     // processor field could not: a transport may hold several subscriptions, and it was never assigned (created
     // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
-    private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker)> subscriptions = new(StringComparer.Ordinal);
+
+    // Flows from each ProcessMessageAsync callback into the handlers it invokes, so teardown
+    // can recognize a handler stopping its own subscription and defer the processor stop that
+    // would otherwise drain the very callback executing the caller.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
     private bool disposed;
 
@@ -358,8 +363,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        object marker = new();
         processor.ProcessMessageAsync += async args =>
         {
+            ExecutingSubscription.Value = marker;
             this.options.Heartbeat?.Tick(channel, "azureservicebus");
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
@@ -474,7 +481,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         // Claimed only once the processor is wired and running, so a concurrent subscribe can
         // never observe — or tear down — a processor this call has not finished starting.
-        await this.ClaimSubscriptionAsync(channel, (tcs, processor)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, (tcs, processor, marker)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -520,8 +527,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        object marker = new();
         processor.ProcessMessageAsync += async args =>
         {
+            ExecutingSubscription.Value = marker;
             this.options.Heartbeat?.Tick(channel, "azureservicebus");
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
@@ -647,7 +656,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         // Claimed only once the processor is wired and running, so a concurrent subscribe can
         // never observe — or tear down — a processor this call has not finished starting.
-        await this.ClaimSubscriptionAsync(channel, (tcs, processor)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, (tcs, processor, marker)).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -657,7 +666,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         // Remove first so delivery stops regardless of what teardown does, and tear down
         // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
-        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
         {
             await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
             this.options.Heartbeat?.Stop(channel, "azureservicebus");
@@ -666,16 +675,31 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
     private static async ValueTask TearDownSubscriptionAsync(
         string channel,
-        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription)
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription)
     {
         subscription.Completion.TrySetResult();
 
-        // Deliberately not the caller's token: StopProcessingAsync drains in-flight handlers,
-        // and on the handler-initiated Abort path the caller's token is the one the handler
-        // was given, so passing it would abandon the drain half-done.
+        // StopProcessingAsync drains in-flight handlers, so a handler stopping its own
+        // subscription would wait for itself. The self case defers the stop to the thread
+        // pool: it completes as soon as the handler returns, and every fault inside
+        // StopProcessorAsync is recorded, so the unawaited task can never surface an
+        // unobserved exception.
+        if (ReferenceEquals(ExecutingSubscription.Value, subscription.Marker))
+        {
+            _ = Task.Run(() => StopProcessorAsync(channel, subscription.Processor));
+            return;
+        }
+
+        await StopProcessorAsync(channel, subscription.Processor).ConfigureAwait(false);
+    }
+
+    private static async Task StopProcessorAsync(string channel, ServiceBusProcessor processor)
+    {
+        // Deliberately no caller token: on the handler-initiated path the caller's token is
+        // the one the handler was given, so passing it would abandon the drain half-done.
         try
         {
-            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
+            await processor.StopProcessingAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -683,7 +707,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
         }
 
-        await subscription.Processor.DisposeAsync().ConfigureAwait(false);
+        try
+        {
+            await processor.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
     }
 
     private static void ThrowAlreadySubscribed(string channel)
@@ -700,7 +731,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
     private async ValueTask ClaimSubscriptionAsync(
         string channel,
-        (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription)
+        (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription)
     {
         // TryAdd is the authoritative claim on the channel's single subscription slot, so no
         // lock is needed. A second subscribe is refused rather than displacing the first:
@@ -744,7 +775,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         // shared teardown records rather than throws, so one stuck processor cannot abort it.
         foreach (string channel in this.subscriptions.Keys)
         {
-            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+            if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
             {
                 await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
             }
