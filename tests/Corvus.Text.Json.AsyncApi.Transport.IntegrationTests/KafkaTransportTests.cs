@@ -1155,6 +1155,115 @@ public class KafkaTransportTests
         Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than self-joining the consume task.");
     }
 
+    [TestMethod]
+    public async Task RequestAfterCancelledRequestStillWorks()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-req-revive-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        string requestTopic = $"kafka-req-revive-{topicSuffix}";
+        string replyTopic = $"kafka-reply-revive-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+
+        // A cancelled request must not kill the shared reply-channel consumer: it serves every
+        // request that ever uses this reply channel, not just the first caller's.
+        using (CancellationTokenSource cts = new(TimeSpan.FromSeconds(2)))
+        {
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await transport.RequestAsync<JsonElement, JsonElement>(
+                    requestChannel,
+                    replyChannel,
+                    requestDoc.RootElement,
+                    "revive-corr-1"u8.ToArray(),
+                    workspace,
+                    cancellationToken: cts.Token));
+        }
+
+        KafkaMessageTransport responder = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-req-revive-responder-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+        await responder.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        await Task.Delay(3000);
+
+        using CancellationTokenSource cts2 = new(TimeSpan.FromSeconds(45));
+        (JsonElement reply, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            "revive-corr-2"u8.ToArray(),
+            workspace,
+            cancellationToken: cts2.Token);
+
+        Assert.IsTrue(reply.GetProperty("ok"u8).GetBoolean(), "The follow-up request must receive its reply.");
+
+        await responder.DisposeAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task SubscribeOnReplyChannelAfterRequestSucceeds()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-reply-slot-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        string requestTopic = $"kafka-req-slot-{topicSuffix}";
+        string replyTopic = $"kafka-reply-slot-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"x"}"""u8.ToArray());
+
+        // Establish the internal reply consumer with a request that times out quickly.
+        using (CancellationTokenSource cts = new(TimeSpan.FromSeconds(2)))
+        {
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await transport.RequestAsync<JsonElement, JsonElement>(
+                    requestChannel,
+                    replyChannel,
+                    requestDoc.RootElement,
+                    "slot-corr-1"u8.ToArray(),
+                    workspace,
+                    cancellationToken: cts.Token));
+        }
+
+        // The internal reply consumer is transport machinery, not an application subscription,
+        // so it must not occupy the application-visible slot for the reply channel.
+        await transport.SubscribeAsync<JsonElement>(replyChannel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await transport.UnsubscribeAsync(replyChannel);
+
+        await transport.DisposeAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

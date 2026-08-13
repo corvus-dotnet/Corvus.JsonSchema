@@ -52,6 +52,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     // otherwise join the dispatcher worker executing the caller.
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
+    // Internal reply-channel consumers for RequestAsync live apart from the application-visible
+    // registry: they are transport-scoped machinery, so they must neither block an application
+    // subscribe on the reply channel nor die with the first requester's token.
+    private readonly ConcurrentDictionary<string, SubscriptionState> replyConsumers = new(StringComparer.Ordinal);
+
     private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
     private volatile bool disposed;
 
@@ -369,6 +374,16 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             }
         }
 
+        // The internal reply-channel consumers live apart from the application registry but
+        // share the transport's lifetime, so disposal walks them the same way.
+        foreach (string channel in this.replyConsumers.Keys)
+        {
+            if (this.replyConsumers.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+        }
+
         await this.publishChannel.CloseAsync().ConfigureAwait(false);
         await this.publishChannel.DisposeAsync().ConfigureAwait(false);
         await this.connection.CloseAsync().ConfigureAwait(false);
@@ -439,7 +454,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         try
         {
             // Ensure reply subscription is active
-            if (!this.subscriptions.ContainsKey(replyChannel))
+            if (!this.replyConsumers.ContainsKey(replyChannel))
             {
                 await this.SubscribeForRepliesAsync(replyChannel, cancellationToken).ConfigureAwait(false);
             }
@@ -755,7 +770,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately NOT linked to any requester's token: the consumer serves every request
+        // that ever uses this reply channel, so its lifetime is the transport's. Linking it to
+        // the first requester meant that token's cancellation made every later reply ack throw.
+        CancellationTokenSource cts = new();
         IChannel replyConsumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
         string queueName = $"{this.options.ConsumerTagPrefix}.reply.{replyChannel}";
@@ -797,8 +815,22 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         // The reply listener runs no user code, so no handler can self-unsubscribe from it;
-        // its marker exists only to satisfy the state shape and is never set.
-        await this.ClaimSubscriptionAsync(replyChannel, new SubscriptionState(replyConsumerChannel, cts, actualTag, new object())).ConfigureAwait(false);
+        // its marker exists only to satisfy the state shape and is never set. Concurrent
+        // requests race to establish this consumer, and losing that race is not a caller
+        // error: the loser discards its consumer and uses the winner's.
+        SubscriptionState state = new(replyConsumerChannel, cts, actualTag, new object());
+        if (!this.replyConsumers.TryAdd(replyChannel, state))
+        {
+            _ = CloseChannelAsync(replyChannel, state);
+            return;
+        }
+
+        // Internal path, so no throw: a request racing disposal fails on the disposed
+        // connection anyway, but the reply consumer must still not outlive the transport.
+        if (this.disposed && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
+        {
+            _ = CloseChannelAsync(replyChannel, state);
+        }
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(

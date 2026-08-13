@@ -52,6 +52,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     // handler stopping its own subscription and skip the join that would otherwise self-deadlock.
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
+    // Internal reply-channel consumers for RequestAsync live apart from the application-visible
+    // registry: they are transport-scoped machinery, so they must neither block an application
+    // subscribe on the reply channel nor die with the first requester's token.
+    private readonly ConcurrentDictionary<string, SubscriptionState> replyConsumers = new(StringComparer.Ordinal);
+
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private volatile bool disposed;
 
@@ -398,6 +403,16 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             }
         }
 
+        // The internal reply-channel consumers live apart from the application registry but
+        // share the transport's lifetime, so disposal walks them the same way.
+        foreach (string channel in this.replyConsumers.Keys)
+        {
+            if (this.replyConsumers.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+        }
+
         this.subscriptions.Clear();
         this.producer.Flush(TimeSpan.FromSeconds(5));
         this.producer.Dispose();
@@ -489,9 +504,9 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         try
         {
             // Ensure we're subscribed to the reply channel
-            if (!this.subscriptions.ContainsKey(replyChannel))
+            if (!this.replyConsumers.ContainsKey(replyChannel))
             {
-                this.SubscribeForReplies(replyChannel, cancellationToken);
+                this.SubscribeForReplies(replyChannel);
             }
 
             // Send the request with correlation ID header — zero allocation when
@@ -1025,9 +1040,13 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         return consumer;
     }
 
-    private void SubscribeForReplies(string replyChannel, CancellationToken cancellationToken)
+    private void SubscribeForReplies(string replyChannel)
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately NOT linked to any requester's token: the consumer serves every request
+        // that ever uses this reply channel, so its lifetime is the transport's. Linking it to
+        // the first requester meant one cancelled request killed request-reply on the channel
+        // forever, with later requests skipping resubscription and hanging.
+        CancellationTokenSource cts = new();
         IConsumer<Null, byte[]> consumer = CreateConsumer(replyChannel);
 
         object marker = new();
@@ -1052,7 +1071,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Concurrent requests race to establish the shared reply-channel consumer. Unlike an
         // application subscribe this is not a caller error: whoever loses discards its consumer
         // and uses the winner's, rather than overwriting it and leaking a consumer nothing can stop.
-        if (!this.subscriptions.TryAdd(replyChannel, state))
+        if (!this.replyConsumers.TryAdd(replyChannel, state))
         {
             _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
             return;
@@ -1060,7 +1079,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
         // Internal path, so no throw: a request racing disposal fails on the disposed
         // producer anyway, but the reply consumer must still not outlive the transport.
-        if (this.disposed && this.subscriptions.TryRemove(KeyValuePair.Create(replyChannel, state)))
+        if (this.disposed && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
         {
             _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
         }
