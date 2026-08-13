@@ -48,6 +48,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
+    // Flows from each consume loop into the handlers it invokes, so teardown can recognize a
+    // handler stopping its own subscription and skip the join that would otherwise self-deadlock.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
+
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private bool disposed;
 
@@ -175,10 +179,23 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+        object marker = new();
         Task consumeTask = Task.Run(
-            () => this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token),
+            async () =>
+            {
+                ExecutingSubscription.Value = marker;
+                try
+                {
+                    await this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CloseAndDisposeConsumer(channel, consumer);
+                    cts.Dispose();
+                }
+            },
             CancellationToken.None);
-        SubscriptionState state = new(consumer, cts, consumeTask);
+        SubscriptionState state = new(consumer, cts, consumeTask, marker);
 
         // TryAdd is the authoritative claim on the channel's single subscription slot; the
         // check above only makes the common rejection cheap. Losing the race means another
@@ -218,11 +235,24 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
 
+        object marker = new();
         Task consumeTask = Task.Run(
-            () => this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token),
+            async () =>
+            {
+                ExecutingSubscription.Value = marker;
+                try
+                {
+                    await this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CloseAndDisposeConsumer(channel, consumer);
+                    cts.Dispose();
+                }
+            },
             CancellationToken.None);
 
-        SubscriptionState state = new(consumer, cts, consumeTask);
+        SubscriptionState state = new(consumer, cts, consumeTask, marker);
         if (!this.subscriptions.TryAdd(channel, state))
         {
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
@@ -245,7 +275,25 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
     private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
     {
-        await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+        try
+        {
+            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The consume task owns the source and disposes it as it unwinds, so a disposed
+            // source means the loop has already exited; there is nothing left to cancel and
+            // the join below completes immediately.
+        }
+
+        // A handler that stops its own subscription is running INSIDE the consume task this
+        // method would otherwise await; joining would deadlock. The self case cancels and
+        // returns — the task's own finally closes the consumer and disposes the source as it
+        // unwinds once the handler returns.
+        if (ReferenceEquals(ExecutingSubscription.Value, state.Marker))
+        {
+            return;
+        }
 
         try
         {
@@ -263,18 +311,29 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             // walking every subscription.
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
         }
+    }
 
+    // Both steps are individually guarded so a broker-side close failure cannot prevent the
+    // local handle being released, and nothing escapes into the consume task's finally.
+    private static void CloseAndDisposeConsumer(string channel, IConsumer<Null, byte[]> consumer)
+    {
         try
         {
-            state.Consumer.Close();
+            consumer.Close();
         }
         catch (Exception ex)
         {
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
         }
 
-        state.Consumer.Dispose();
-        state.CancellationSource.Dispose();
+        try
+        {
+            consumer.Dispose();
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
+        }
     }
 
     /// <inheritdoc/>
@@ -945,11 +1004,24 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         IConsumer<Null, byte[]> consumer = CreateConsumer(replyChannel);
 
+        object marker = new();
         Task consumeTask = Task.Run(
-            () => ReplyConsumeLoop(consumer, cts.Token),
+            async () =>
+            {
+                ExecutingSubscription.Value = marker;
+                try
+                {
+                    await this.ReplyConsumeLoop(consumer, cts.Token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CloseAndDisposeConsumer(replyChannel, consumer);
+                    cts.Dispose();
+                }
+            },
             CancellationToken.None);
 
-        SubscriptionState state = new(consumer, cts, consumeTask);
+        SubscriptionState state = new(consumer, cts, consumeTask, marker);
 
         // Concurrent requests race to establish the shared reply-channel consumer. Unlike an
         // application subscribe this is not a caller error: whoever loses discards its consumer
@@ -1033,5 +1105,6 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private sealed record SubscriptionState(
         IConsumer<Null, byte[]> Consumer,
         CancellationTokenSource CancellationSource,
-        Task ConsumeTask);
+        Task ConsumeTask,
+        object Marker);
 }
