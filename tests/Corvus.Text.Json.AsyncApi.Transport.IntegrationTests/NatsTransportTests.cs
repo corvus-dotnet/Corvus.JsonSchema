@@ -567,6 +567,36 @@ public class NatsTransportTests
         Assert.AreEqual(0, receiveCount);
     }
 
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "test.unsubscribe-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. Teardown must not join the consume task
+        // that is executing this handler, or the await below never completes.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(20));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than self-joining the consume task.");
+
+        // The slot must be free again afterwards.
+        await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
     /// <summary>
     /// Error policy that tracks which error kinds were reported.
     /// </summary>

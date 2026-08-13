@@ -54,6 +54,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
 
+    // Flows from each consume loop into the handlers it invokes, so teardown can recognize a
+    // handler stopping its own subscription and skip the join that would otherwise self-deadlock.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
+
     private bool disposed;
 
     private NatsMessageTransport(NatsTransportOptions options, NatsConnection connection, INatsJSContext? jsContext, string? derivedStreamName)
@@ -348,7 +352,25 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
     private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
     {
-        await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+        try
+        {
+            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The consume loop owns the source and disposes it as it unwinds, so a disposed
+            // source means the loop has already exited; there is nothing left to cancel and
+            // the join below completes immediately.
+        }
+
+        // A handler that stops its own subscription is running INSIDE the consume task this
+        // method would otherwise await; joining would deadlock. The self case cancels and
+        // returns — the loop unwinds once the handler returns, and its finally releases the
+        // resources it owns (the NATS subscription and the cancellation source).
+        if (ReferenceEquals(ExecutingSubscription.Value, state.Marker))
+        {
+            return;
+        }
 
         try
         {
@@ -364,8 +386,6 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             // walking every subscription, nor fail an unsubscribe whose entry is already gone.
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "nats", ex);
         }
-
-        state.CancellationSource.Dispose();
     }
 
     private static void ThrowAlreadySubscribed(string channel)
@@ -593,9 +613,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         INatsJSConsumer consumer = await this.jsContext!.CreateOrUpdateConsumerAsync(streamName, consumerConfig, cts.Token).ConfigureAwait(false);
 
+        object marker = new();
         Task consumeTask = Task.Run(
             async () =>
             {
+                ExecutingSubscription.Value = marker;
                 try
                 {
                     await foreach (NatsJSMsg<byte[]> msg in consumer.ConsumeAsync<byte[]>(cancellationToken: cts.Token).ConfigureAwait(false))
@@ -761,11 +783,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 finally
                 {
                     this.options.Heartbeat?.Stop(channel, "nats-jetstream");
+                    cts.Dispose();
                 }
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
@@ -794,9 +817,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             subject: channel,
             cancellationToken: cts.Token).ConfigureAwait(false);
 
+        object marker = new();
         Task consumeTask = Task.Run(
             async () =>
             {
+                ExecutingSubscription.Value = marker;
                 try
                 {
                     await using (sub)
@@ -949,11 +974,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 finally
                 {
                     this.options.Heartbeat?.Stop(channel, "nats");
+                    cts.Dispose();
                 }
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
@@ -981,9 +1007,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             subject: channel,
             cancellationToken: cts.Token).ConfigureAwait(false);
 
+        object marker = new();
         Task consumeTask = Task.Run(
             async () =>
             {
+                ExecutingSubscription.Value = marker;
                 try
                 {
                     await using (sub)
@@ -1151,11 +1179,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 finally
                 {
                     this.options.Heartbeat?.Stop(channel, "nats");
+                    cts.Dispose();
                 }
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask)).ConfigureAwait(false);
+        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
     }
 
     private static ParsedJsonDocument<JsonElement>? DecodeHeadersDocument(NatsHeaders? headers)
@@ -1219,7 +1248,8 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
     private sealed record SubscriptionState(
         CancellationTokenSource CancellationSource,
-        Task ConsumeTask);
+        Task ConsumeTask,
+        object Marker);
 
     /// <summary>
     /// Writes an <see cref="IJsonElement{T}"/> directly into the NATS protocol buffer
