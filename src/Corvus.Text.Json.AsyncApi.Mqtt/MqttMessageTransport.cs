@@ -395,8 +395,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TPayload : struct, IJsonElement<TPayload>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.ClaimChannel(channel, (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct));
-        await this.SendSubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+        Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch =
+            (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.ClaimChannel(channel, dispatch);
+        await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
     }
 
     private void ClaimChannel(string channel, Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch)
@@ -413,7 +415,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         this.options.Heartbeat?.Start(channel, "mqtt");
     }
 
-    private async ValueTask SendSubscribeAsync(string channel, CancellationToken cancellationToken)
+    private async ValueTask SendSubscribeAsync(
+        string channel,
+        Func<MqttApplicationMessage, CancellationToken, ValueTask> claimed,
+        CancellationToken cancellationToken)
     {
         MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
             .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
@@ -426,9 +431,14 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         catch
         {
             // The broker never registered the topic filter, so release the slot and the
-            // heartbeat rather than leaving a subscription that can never receive anything.
-            this.handlers.TryRemove(channel, out _);
-            this.options.Heartbeat?.Stop(channel, "mqtt");
+            // heartbeat — but only OUR claim: an unsubscribe-then-resubscribe may have
+            // replaced this slot while the send was in flight, and a key-only remove would
+            // evict the new subscriber and stop its heartbeat.
+            if (this.handlers.TryRemove(KeyValuePair.Create(channel, claimed)))
+            {
+                this.options.Heartbeat?.Stop(channel, "mqtt");
+            }
+
             throw;
         }
     }
@@ -442,8 +452,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TReply : struct, IJsonElement<TReply>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.ClaimChannel(channel, (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct));
-        await this.SendSubscribeAsync(channel, cancellationToken).ConfigureAwait(false);
+        Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch =
+            (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.ClaimChannel(channel, dispatch);
+        await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(

@@ -199,10 +199,10 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
 
         this.options.Heartbeat?.Start(channel, "websocket");
-        return this.SendSubscribeAsync(channel, cancellationToken);
+        return this.SendSubscribeAsync(channel, subscription, cancellationToken);
     }
 
-    private async ValueTask SendSubscribeAsync(string channel, CancellationToken cancellationToken)
+    private async ValueTask SendSubscribeAsync(string channel, Subscription claimed, CancellationToken cancellationToken)
     {
         try
         {
@@ -211,10 +211,15 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
         catch
         {
-            // The relay never registered the channel, so release the slot and the heartbeat
-            // rather than leaving a subscription that can never receive anything.
-            this.subscriptions.TryRemove(channel, out _);
-            this.options.Heartbeat?.Stop(channel, "websocket");
+            // The relay never registered the channel, so release the slot and the heartbeat —
+            // but only OUR claim: an unsubscribe-then-resubscribe may have replaced this slot
+            // while the send was queued, and a key-only remove would evict the new subscriber
+            // and stop its heartbeat.
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, claimed)))
+            {
+                this.options.Heartbeat?.Stop(channel, "websocket");
+            }
+
             throw;
         }
     }
