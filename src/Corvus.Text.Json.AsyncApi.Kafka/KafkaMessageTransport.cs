@@ -53,7 +53,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
-    private bool disposed;
+    private volatile bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="KafkaMessageTransport"/> class.
@@ -205,6 +205,19 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             ThrowAlreadySubscribed(channel);
         }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // consumer past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(KafkaMessageTransport));
+        }
     }
 
     private static void ThrowAlreadySubscribed(string channel)
@@ -257,6 +270,19 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         {
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // consumer past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(KafkaMessageTransport));
         }
     }
 
@@ -1027,6 +1053,14 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // application subscribe this is not a caller error: whoever loses discards its consumer
         // and uses the winner's, rather than overwriting it and leaking a consumer nothing can stop.
         if (!this.subscriptions.TryAdd(replyChannel, state))
+        {
+            _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
+            return;
+        }
+
+        // Internal path, so no throw: a request racing disposal fails on the disposed
+        // producer anyway, but the reply consumer must still not outlive the transport.
+        if (this.disposed && this.subscriptions.TryRemove(KeyValuePair.Create(replyChannel, state)))
         {
             _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
         }

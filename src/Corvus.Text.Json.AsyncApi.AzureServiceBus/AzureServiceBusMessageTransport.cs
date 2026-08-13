@@ -34,7 +34,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     // would otherwise drain the very callback executing the caller.
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
-    private bool disposed;
+    private volatile bool disposed;
 
     private AzureServiceBusMessageTransport(
         AzureServiceBusTransportOptions options,
@@ -741,6 +741,19 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         {
             await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
             ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // processor past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+            {
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
         }
     }
 

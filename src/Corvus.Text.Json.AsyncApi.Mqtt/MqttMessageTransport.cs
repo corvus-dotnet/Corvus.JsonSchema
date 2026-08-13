@@ -49,7 +49,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<MqttApplicationMessage>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
-    private bool disposed;
+    private volatile bool disposed;
 
     private MqttMessageTransport(MqttTransportOptions options, IMqttClient client)
     {
@@ -410,6 +410,14 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         {
             throw new InvalidOperationException(
                 $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
+
+        // Dispose may have cleared the registry before this claim landed; releasing our own
+        // claim here means a subscribe racing disposal never leaves a live entry behind.
+        if (this.disposed)
+        {
+            this.handlers.TryRemove(KeyValuePair.Create(channel, dispatch));
+            throw new ObjectDisposedException(nameof(MqttMessageTransport));
         }
 
         this.options.Heartbeat?.Start(channel, "mqtt");

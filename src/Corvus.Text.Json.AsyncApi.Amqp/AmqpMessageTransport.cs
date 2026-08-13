@@ -53,7 +53,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
-    private bool disposed;
+    private volatile bool disposed;
 
     private AmqpMessageTransport(AmqpTransportOptions options, IConnection connection, IChannel publishChannel)
     {
@@ -300,6 +300,19 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // consumer past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
         }
     }
 

@@ -58,7 +58,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     // handler stopping its own subscription and skip the join that would otherwise self-deadlock.
     private static readonly AsyncLocal<object?> ExecutingSubscription = new();
 
-    private bool disposed;
+    private volatile bool disposed;
 
     private NatsMessageTransport(NatsTransportOptions options, NatsConnection connection, INatsJSContext? jsContext, string? derivedStreamName)
     {
@@ -410,6 +410,19 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // consumer past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(NatsMessageTransport));
         }
     }
 

@@ -44,7 +44,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
     private CancellationTokenSource? receiveCts;
     private Task? receiveTask;
-    private bool disposed;
+    private volatile bool disposed;
 
     private WebSocketMessageTransport(WebSocketTransportOptions options, ClientWebSocket webSocket)
     {
@@ -196,6 +196,14 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         {
             throw new InvalidOperationException(
                 $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
+
+        // Dispose may have cleared the registry before this claim landed; releasing our own
+        // claim here means a subscribe racing disposal never leaves a live entry behind.
+        if (this.disposed)
+        {
+            this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription));
+            throw new ObjectDisposedException(nameof(WebSocketMessageTransport));
         }
 
         this.options.Heartbeat?.Start(channel, "websocket");
