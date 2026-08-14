@@ -18,7 +18,9 @@ ReceiveLightMeasurementConsumer consumer = new(
     handler,
     validationMode: ValidationMode.Basic);
 
-await consumer.StartAsync();
+// The channel address declares a {streetlightId} parameter, so the consumer takes it on
+// StartAsync and subscribes to the address those parameters compose.
+await consumer.StartAsync(streetlightId: "lamp-42");
 
 // ── Set up the producer side ─────────────────────────────────────────────────
 TurnOnProducer producer = new(transport, ValidationMode.Basic);
@@ -37,7 +39,7 @@ Console.WriteLine($"Published to channel, consumer received: {handler.ReceivedCo
 // broker would do — deliver raw bytes to the subscribed consumer.
 ReadOnlyMemory<byte> sensorReading = """{"lumens":1024,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray();
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.lamp-42.lighting.measured",
     sensorReading);
 
 Console.WriteLine($"Delivered sensor reading, consumer received: {handler.ReceivedCount}");
@@ -47,7 +49,7 @@ Console.WriteLine($"Last measurement: {handler.LastLumens} lumens");
 // Bad data from the broker is caught before reaching your handler.
 ReadOnlyMemory<byte> badData = """{"lumens":-5}"""u8.ToArray();
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.lamp-42.lighting.measured",
     badData);
 
 Console.WriteLine($"After bad data: handler still has {handler.ReceivedCount} (invalid message skipped)");
