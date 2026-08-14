@@ -244,11 +244,30 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "kafka", marker);
+
+        // The loop can die on a broker fault while this method is still recording the claim,
+        // in which case its self-release ran before there was anything to release. Undo the
+        // claim and the heartbeat and fail the subscribe, rather than returning a channel
+        // claimed by a dead loop with a heartbeat that reports it running.
+        if (consumeTask.IsCompleted)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            this.options.Heartbeat?.Stop(channel, "kafka", marker);
+            ThrowSubscriptionLoopTerminated(channel);
+        }
     }
 
     private static void ThrowAlreadySubscribed(string channel)
         => throw new InvalidOperationException(
             $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+
+    private static void ThrowSubscriptionLoopTerminated(string channel)
+        => throw new InvalidOperationException(
+            $"The processing loop for channel '{channel}' terminated while the subscription was being established; the fault was recorded on the corvus.asyncapi.subscription_faults counter.");
 
     private void ThrowIfSubscribed(string channel)
     {
@@ -330,6 +349,21 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "kafka", marker);
+
+        // The loop can die on a broker fault while this method is still recording the claim,
+        // in which case its self-release ran before there was anything to release. Undo the
+        // claim and the heartbeat and fail the subscribe, rather than returning a channel
+        // claimed by a dead loop with a heartbeat that reports it running.
+        if (consumeTask.IsCompleted)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            this.options.Heartbeat?.Stop(channel, "kafka", marker);
+            ThrowSubscriptionLoopTerminated(channel);
+        }
     }
 
     /// <inheritdoc/>
@@ -1130,7 +1164,18 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         consumerConfig.EnableAutoCommit = false;
 
         IConsumer<Null, byte[]> consumer = new ConsumerBuilder<Null, byte[]>(consumerConfig).Build();
-        consumer.Subscribe(topic);
+        try
+        {
+            consumer.Subscribe(topic);
+        }
+        catch
+        {
+            // The built handle owns native resources; a failed topic subscription must not
+            // leak it to the finalizer.
+            consumer.Dispose();
+            throw;
+        }
+
         return consumer;
     }
 
@@ -1197,6 +1242,13 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Internal path, so no throw: a request racing disposal fails on the disposed
         // producer anyway, but the reply consumer must still not outlive the transport.
         if (this.disposed && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
+        {
+            _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
+        }
+
+        // A reply loop that died before this claim landed released nothing; drop the dead
+        // entry so the next request rebuilds the consumer instead of hanging against it.
+        if (consumeTask.IsCompleted && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
         {
             _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
         }

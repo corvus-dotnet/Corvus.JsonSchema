@@ -130,6 +130,17 @@ public static class ThrowHelper
     }
 
     /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the consumer was
+    /// stopped while its subscription was still being established, and has been released.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowConsumerStoppedDuringStart()
+    {
+        throw new InvalidOperationException(SR.ConsumerStoppedDuringStart);
+    }
+
+    /// <summary>
     /// Throws a <see cref="NotSupportedException"/> indicating that the
     /// channel has bindings in an unrecognized format.
     /// </summary>

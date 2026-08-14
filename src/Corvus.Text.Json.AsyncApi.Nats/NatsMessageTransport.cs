@@ -426,6 +426,27 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
     }
 
+    // The loop can die on a broker fault while the subscribe path is still recording the
+    // claim, in which case its self-release ran before there was anything to release. Undo
+    // the claim and the heartbeat and fail the subscribe, rather than returning a channel
+    // claimed by a dead loop with a heartbeat that reports it running.
+    private async ValueTask ThrowIfLoopTerminatedAsync(string channel, SubscriptionState state, string messagingSystem)
+    {
+        if (!state.ConsumeTask.IsCompleted)
+        {
+            return;
+        }
+
+        if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+        }
+
+        this.options.Heartbeat?.Stop(channel, messagingSystem, state.Marker);
+        throw new InvalidOperationException(
+            $"The processing loop for channel '{channel}' terminated while the subscription was being established; the fault was recorded on the corvus.asyncapi.subscription_faults counter.");
+    }
+
     // The loop's exit ends the subscription it belongs to: release the channel slot (a
     // faulted loop must not leave a zombie entry refusing resubscription) and stop the
     // heartbeat. Both are owner-guarded, so if a later subscription already owns the channel
@@ -837,11 +858,13 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+        SubscriptionState state = new(cts, consumeTask, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats-jetstream", marker);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats-jetstream").ConfigureAwait(false);
     }
 
     private async ValueTask<INatsJSConsumer> CreateOrUpdateJetStreamConsumerAsync(string streamName, string channel, CancellationToken cancellationToken)
@@ -1072,11 +1095,13 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+        SubscriptionState state = new(cts, consumeTask, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats", marker);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats").ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
@@ -1296,11 +1321,13 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             },
             CancellationToken.None);
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+        SubscriptionState state = new(cts, consumeTask, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats", marker);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats").ConfigureAwait(false);
     }
 
     private static ParsedJsonDocument<JsonElement>? DecodeHeadersDocument(NatsHeaders? headers)

@@ -22,6 +22,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     private readonly IMessageAuthenticationProvider? authProvider;
     private const string ChannelAddress = "smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] ChannelAddressUtf8 = "smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
+    private int started;
     private const string DeadLetterChannel = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] DeadLetterChannelUtf8 = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
 
@@ -46,18 +47,56 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// Starts consuming messages from the channel.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask StartAsync(CancellationToken cancellationToken = default)
+    public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        return this.transport.SubscribeAsync<AsyncApiBenchmark.Generated.Models.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken);
+        if (System.Threading.Interlocked.CompareExchange(ref this.started, 1, 0) == 1)
+        {
+            ThrowHelper.ThrowConsumerAlreadyStarted();
+        }
+
+        try
+        {
+            await this.transport.SubscribeAsync<AsyncApiBenchmark.Generated.Models.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            System.Threading.Volatile.Write(ref this.started, 0);
+            throw;
+        }
+
+        if (System.Threading.Volatile.Read(ref this.started) == 0)
+        {
+            await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);
+            ThrowHelper.ThrowConsumerStoppedDuringStart();
+        }
     }
 
     /// <summary>
     /// Stops consuming messages from the channel.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    public async ValueTask StopAsync(CancellationToken cancellationToken = default)
     {
-        return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);
+        if (!await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false))
+        {
+            ThrowHelper.ThrowConsumerNotStarted();
+        }
+    }
+
+    /// <summary>
+    /// Stops the subscription if this consumer owns one, quietly doing nothing otherwise.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if this call performed the stop.</returns>
+    private async ValueTask<bool> TryStopCoreAsync(CancellationToken cancellationToken)
+    {
+        if (System.Threading.Interlocked.Exchange(ref this.started, 0) == 0)
+        {
+            return false;
+        }
+
+        await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     private async ValueTask HandleMessageAsync(AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
@@ -81,7 +120,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                 case MessageErrorAction.Skip:
                     return;
                 case MessageErrorAction.Abort:
-                    await this.StopAsync(cancellationToken).ConfigureAwait(false);
+                    await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 case MessageErrorAction.DeadLetter:
                     await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, ChannelAddressUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
@@ -93,9 +132,9 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return StopAsync();
+        await this.TryStopCoreAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)

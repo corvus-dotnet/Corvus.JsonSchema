@@ -1149,4 +1149,31 @@ public class MqttTransportTests
             return ValueTask.FromResult(action);
         }
     }
+
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "mqtt/test/unsub-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. MQTTnet awaits this handler inside its
+        // packet pipeline, so the unsubscribe must not wait on a broker acknowledgement that
+        // the blocked pipeline would never process.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(1000);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than deadlocking the MQTT packet pipeline.");
+    }
 }

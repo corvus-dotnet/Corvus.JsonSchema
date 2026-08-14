@@ -281,6 +281,30 @@ public class GeneratedEndToEndTests
     }
 
     [TestMethod]
+    public async Task Consumer_RefusedRestart_PreservesDeadLetterAddress()
+    {
+        await using InMemoryMessageTransport transport = new();
+        ThrowingLightMeasurementHandler handler = new();
+        DefaultMessageErrorPolicy deadLetterPolicy = new(
+            MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter);
+        await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, deadLetterPolicy);
+        await consumer.StartAsync("1");
+
+        // The refused restart must fail before touching the running subscription's retained
+        // dead-letter address, or every later dead-letter silently misroutes.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("2").AsTask());
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        InMemoryMessageTransport.DeadLetteredMessage deadLettered = transport.DeadLetteredMessages.Single();
+        StringAssert.Contains(deadLettered.DeadLetterChannel, ".action.1.lighting.measured");
+
+        await consumer.StopAsync();
+    }
+
+    [TestMethod]
     public async Task Consumer_StopThenDispose_DoesNotUnsubscribeNextOwner()
     {
         await using InMemoryMessageTransport transport = new();
@@ -302,6 +326,14 @@ public class GeneratedEndToEndTests
             """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
 
         Assert.AreEqual(1, secondHandler.ReceivedPayloads.Count);
+    }
+
+    private sealed class ThrowingLightMeasurementHandler : IReceiveLightMeasurementHandler
+    {
+        public ValueTask HandleLightMeasuredAsync(
+            LightMeasuredPayload payload,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Handler failure to drive the dead-letter path.");
     }
 
     private sealed class MockLightMeasurementHandler : IReceiveLightMeasurementHandler

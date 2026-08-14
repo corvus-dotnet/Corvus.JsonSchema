@@ -390,8 +390,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
             {
-                this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
+                // Teardown drains in-flight handlers first, so a first-ever tick from a
+                // subscription this walk stole from a racing subscribe cannot create a fresh
+                // Running entry after the stop has already been applied.
                 await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+                this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
             }
         }
 

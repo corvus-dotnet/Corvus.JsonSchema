@@ -110,13 +110,22 @@ public sealed class ProcessingLoopHeartbeat
     /// </remarks>
     public void Stop(string channel, string messagingSystem, object owner)
     {
+        bool stopped = false;
         while (this.loops.TryGetValue(channel, out LoopState state)
             && ReferenceEquals(state.Owner, owner))
         {
             if (this.loops.TryUpdate(channel, state with { Running = false }, state))
             {
+                stopped = true;
                 break;
             }
+        }
+
+        // A stop that did not land (a losing racer, an unwinding predecessor) emits no
+        // event, so the started/stopped event pairing tracks real state transitions.
+        if (!stopped)
+        {
+            return;
         }
 
         AsyncApiTelemetry.Heartbeats.Add(
@@ -152,13 +161,20 @@ public sealed class ProcessingLoopHeartbeat
     public void Tick(string channel, string messagingSystem, object owner)
     {
         long now = Stopwatch.GetTimestamp();
-        this.loops.AddOrUpdate(
+        LoopState result = this.loops.AddOrUpdate(
             channel,
             static (_, args) => new LoopState(args.MessagingSystem, args.Now, Running: true, args.Owner),
             static (_, existing, args) => ReferenceEquals(existing.Owner, args.Owner)
                 ? existing with { LastTickTimestamp = args.Now }
                 : existing,
             (MessagingSystem: messagingSystem, Now: now, Owner: owner));
+
+        // A tick that was ignored (another subscription owns the entry) emits no event, so
+        // the tick rate reflects only the live subscription's loop.
+        if (result.LastTickTimestamp != now)
+        {
+            return;
+        }
 
         AsyncApiTelemetry.Heartbeats.Add(
             1,

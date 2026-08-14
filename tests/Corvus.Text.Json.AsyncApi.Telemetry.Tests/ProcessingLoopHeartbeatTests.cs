@@ -277,6 +277,38 @@ public class ProcessingLoopHeartbeatTests
     }
 
     [TestMethod]
+    public void Stop_ByNonOwner_EmitsNoEvent()
+    {
+        List<(string Name, long Value, KeyValuePair<string, object?>[] Tags)> measurements = [];
+        using MeterListener meterListener = CreateMeterListener(measurements);
+
+        ProcessingLoopHeartbeat heartbeat = new();
+        heartbeat.Start("test/channel", "kafka", new object());
+        int baseline = measurements.Count;
+
+        // A stop that does not land must not emit a "stopped" event for a channel whose
+        // owning subscription is still running.
+        heartbeat.Stop("test/channel", "kafka", new object());
+
+        Assert.AreEqual(baseline, measurements.Count);
+    }
+
+    [TestMethod]
+    public void Tick_ByNonOwner_EmitsNoEvent()
+    {
+        List<(string Name, long Value, KeyValuePair<string, object?>[] Tags)> measurements = [];
+        using MeterListener meterListener = CreateMeterListener(measurements);
+
+        ProcessingLoopHeartbeat heartbeat = new();
+        heartbeat.Start("test/channel", "kafka", new object());
+        int baseline = measurements.Count;
+
+        heartbeat.Tick("test/channel", "kafka", new object());
+
+        Assert.AreEqual(baseline, measurements.Count);
+    }
+
+    [TestMethod]
     public void MultipleChannels_IndependentlyTracked()
     {
         ProcessingLoopHeartbeat heartbeat = new()

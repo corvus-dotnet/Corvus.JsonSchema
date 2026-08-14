@@ -606,7 +606,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-                ParsedJsonDocument<TPayload> payloadDoc;
+        ParsedJsonDocument<TPayload> payloadDoc;
         try
         {
             ArraySegment<byte> payloadSegment = message.PayloadSegment;
@@ -758,7 +758,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-                ParsedJsonDocument<TRequest> requestDoc;
+        ParsedJsonDocument<TRequest> requestDoc;
         try
         {
             ArraySegment<byte> payloadSegment = message.PayloadSegment;

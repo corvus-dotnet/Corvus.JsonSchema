@@ -834,8 +834,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         {
             if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
             {
-                this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+                // Teardown drains in-flight handlers first, so a first-ever tick from a
+                // subscription this walk stole from a racing subscribe cannot create a fresh
+                // Running entry after the stop has already been applied.
                 await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+                this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
             }
         }
 

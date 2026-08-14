@@ -2413,11 +2413,13 @@ public sealed class AsyncApi30CodeGenerator
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
             w.WriteLine($"private static readonly byte[] ChannelAddressUtf8 = \"{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
-
-            // A static-address consumer has no retained channel to stand in for "started", and
-            // stop/dispose must not unsubscribe a channel this instance never claimed.
-            w.WriteLine("private bool started;");
         }
+
+        // The single atomic lifecycle gate: 1 while this consumer owns a live subscription.
+        // Claimed by StartAsync with a compare-exchange, released by exactly one stopper
+        // (StopAsync, DisposeAsync, or the generated Abort arm), so a stop can never race a
+        // start or another stop into unsubscribing a channel this instance does not own.
+        w.WriteLine("private int started;");
 
         if (!hasParameterizedAddress)
         {
@@ -2629,32 +2631,52 @@ public sealed class AsyncApi30CodeGenerator
             // parameters a template is composed from) and what happens next does not.
             EmitStartAsyncCore(w, op, EmitStartBody);
         }
-        else if (op.SecuritySchemes.Count > 0)
-        {
-            w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
-            w.OpenBrace();
-
-            w.WriteLine("if (this.authProvider is not null)");
-            w.OpenBrace();
-            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
-            {
-                w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
-            }
-
-            w.CloseBrace();
-            w.WriteLine();
-            EmitStartBody(async: true);
-            w.WriteLine("this.started = true;");
-            w.CloseBrace();
-        }
         else
         {
-            // Async so the started flag is recorded only once the subscribe has succeeded: a
-            // refused start owns nothing, and stop/dispose must be able to tell.
+            // The gate is claimed before subscribing, because messages can be dispatched before
+            // the transport finishes recording the claim and the generated Abort arm must see a
+            // started consumer even for those earliest deliveries. A refused or failed subscribe
+            // rolls the gate back; a stop that raced the start is finished after the subscribe.
             w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
             w.OpenBrace();
+            w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.started, 1, 0) == 1)");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("try");
+            w.OpenBrace();
+
+            if (op.SecuritySchemes.Count > 0)
+            {
+                w.WriteLine("if (this.authProvider is not null)");
+                w.OpenBrace();
+                foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+                {
+                    w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+                }
+
+                w.CloseBrace();
+                w.WriteLine();
+            }
+
             EmitStartBody(async: true);
-            w.WriteLine("this.started = true;");
+            w.CloseBrace();
+            w.WriteLine("catch");
+            w.OpenBrace();
+            w.WriteLine("System.Threading.Volatile.Write(ref this.started, 0);");
+            w.WriteLine("throw;");
+            w.CloseBrace();
+            w.WriteLine();
+
+            // An Abort (or a concurrent StopAsync) may have released the gate while its
+            // unsubscribe found no claim to remove; the claim exists now, so finish that stop
+            // rather than returning a consumer that reports stopped while its subscription runs.
+            w.WriteLine("if (System.Threading.Volatile.Read(ref this.started) == 0)");
+            w.OpenBrace();
+            w.WriteLine("await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+            w.CloseBrace();
             w.CloseBrace();
         }
 
@@ -2664,37 +2686,43 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// Stops consuming messages from the channel.");
         w.WriteLine($"/// </summary>");
         w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-        w.WriteLine($"public ValueTask StopAsync(CancellationToken cancellationToken = default)");
+        w.WriteLine($"public async ValueTask StopAsync(CancellationToken cancellationToken = default)");
         w.OpenBrace();
+        w.WriteLine("if (!await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false))");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Stops the subscription if this consumer owns one, quietly doing nothing otherwise.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+        w.WriteLine("/// <returns><see langword=\"true\"/> if this call performed the stop.</returns>");
+        w.WriteLine("private async ValueTask<bool> TryStopCoreAsync(CancellationToken cancellationToken)");
+        w.OpenBrace();
+
+        // The exchange makes stopping idempotent and race-free: exactly one caller wins the
+        // gate and performs the unsubscribe, whether it is StopAsync, DisposeAsync, or the
+        // generated Abort arm — so a lost race is a quiet no-op, never a second unsubscribe
+        // that could tear down whoever claims the channel next.
+        w.WriteLine("if (System.Threading.Interlocked.Exchange(ref this.started, 0) == 0)");
+        w.OpenBrace();
+        w.WriteLine("return false;");
+        w.CloseBrace();
+        w.WriteLine();
 
         if (hasRuntimeAddress)
         {
-            w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = this.subscribedChannelUtf8;");
-            w.WriteLine("if (channelUtf8.IsEmpty)");
-            w.OpenBrace();
-            w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
-            w.CloseBrace();
-            w.WriteLine();
-
-            // Cleared before the unsubscribe: once stopped, this consumer owns nothing, and a
-            // later stop or dispose must not unsubscribe whoever claims the channel next.
-            w.WriteLine("this.subscribedChannelUtf8 = default;");
-            w.WriteLine("return this.transport.UnsubscribeAsync(channelUtf8, cancellationToken);");
+            w.WriteLine("await this.transport.UnsubscribeAsync(this.subscribedChannelUtf8, cancellationToken).ConfigureAwait(false);");
         }
         else
         {
-            w.WriteLine("if (!this.started)");
-            w.OpenBrace();
-            w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
-            w.CloseBrace();
-            w.WriteLine();
-
-            // Cleared before the unsubscribe: once stopped, this consumer owns nothing, and a
-            // later stop or dispose must not unsubscribe whoever claims the channel next.
-            w.WriteLine("this.started = false;");
-            w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);");
+            w.WriteLine("await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);");
         }
 
+        w.WriteLine("return true;");
         w.CloseBrace();
 
         // HandleMessageAsync — with error policy
@@ -2801,13 +2829,10 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
 
-            // Stop only if this consumer still owns its subscription: an abort racing an
-            // external stop (or a second aborting message) must not throw out of the handler.
-            w.WriteLine($"if ({(hasRuntimeAddress ? "!this.subscribedChannelUtf8.IsEmpty" : "this.started")})");
-            w.OpenBrace();
-            w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
-            w.CloseBrace();
-            w.WriteLine();
+            // The gate makes this atomic: an abort racing an external stop (or a second
+            // aborting message) loses the exchange and no-ops, never throwing out of the
+            // handler and never unsubscribing twice.
+            w.WriteLine("await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
@@ -2858,13 +2883,10 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
 
-            // Stop only if this consumer still owns its subscription: an abort racing an
-            // external stop (or a second aborting message) must not throw out of the handler.
-            w.WriteLine($"if ({(hasRuntimeAddress ? "!this.subscribedChannelUtf8.IsEmpty" : "this.started")})");
-            w.OpenBrace();
-            w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
-            w.CloseBrace();
-            w.WriteLine();
+            // The gate makes this atomic: an abort racing an external stop (or a second
+            // aborting message) loses the exchange and no-ops, never throwing out of the
+            // handler and never unsubscribing twice.
+            w.WriteLine("await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
@@ -2884,15 +2906,13 @@ public sealed class AsyncApi30CodeGenerator
         // IAsyncDisposable
         w.WriteLine();
         w.WriteLine($"/// <inheritdoc/>");
-        w.WriteLine($"public ValueTask DisposeAsync()");
+        w.WriteLine($"public async ValueTask DisposeAsync()");
         w.OpenBrace();
 
         // Dispose is stop-if-started: an await-using around a consumer that never started, was
-        // refused its channel, or was already stopped must complete quietly — and must never
-        // unsubscribe a channel this instance does not own.
-        w.WriteLine(hasRuntimeAddress
-            ? "return this.subscribedChannelUtf8.IsEmpty ? ValueTask.CompletedTask : this.StopAsync();"
-            : "return this.started ? this.StopAsync() : ValueTask.CompletedTask;");
+        // refused its channel, or was already stopped completes quietly — and the gate means it
+        // can never unsubscribe a channel this instance does not own.
+        w.WriteLine("await this.TryStopCoreAsync(CancellationToken.None).ConfigureAwait(false);");
         w.CloseBrace();
 
         // Validation helpers
@@ -3492,16 +3512,18 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
 
         // A started consumer already has a live subscription this instance must be able to
-        // stop; silently overwriting the record would orphan it.
-        w.WriteLine("if (!this.subscribedChannelUtf8.IsEmpty)");
+        // stop; silently overwriting the record would orphan it. The gate is claimed before
+        // subscribing, because messages can be dispatched before the transport finishes
+        // recording the claim and the generated Abort arm must see a started consumer even
+        // for those earliest deliveries.
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.started, 1, 0) == 1)");
         w.OpenBrace();
         w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
         w.CloseBrace();
         w.WriteLine();
 
-        // Recorded before the subscribe because the handler reads it as soon as messages flow,
-        // and rolled back if the subscribe is refused or fails: a consumer that never owned the
-        // channel must not unsubscribe whoever does when it is stopped or disposed.
+        // Recorded before the subscribe because the handler reads it as soon as messages flow;
+        // rolled back with the gate if the subscribe is refused or fails.
         w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
         w.WriteLine("try");
         w.OpenBrace();
@@ -3523,8 +3545,19 @@ public sealed class AsyncApi30CodeGenerator
         w.CloseBrace();
         w.WriteLine("catch");
         w.OpenBrace();
+        w.WriteLine("System.Threading.Volatile.Write(ref this.started, 0);");
         w.WriteLine("this.subscribedChannelUtf8 = default;");
         w.WriteLine("throw;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // An Abort (or a concurrent StopAsync) may have released the gate while its
+        // unsubscribe found no claim to remove; the claim exists now, so finish that stop
+        // rather than returning a consumer that reports stopped while its subscription runs.
+        w.WriteLine("if (System.Threading.Volatile.Read(ref this.started) == 0)");
+        w.OpenBrace();
+        w.WriteLine("await this.transport.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
         w.CloseBrace();
         w.CloseBrace();
     }
@@ -3573,6 +3606,15 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"public ValueTask StartAsync({spanParams})");
         w.OpenBrace();
 
+        // Checked here as well as in the Core so a refused restart fails before this overload
+        // overwrites the running subscription's retained dead-letter address below — the Core's
+        // gate is authoritative, but it throws only after these fields are written.
+        w.WriteLine("if (System.Threading.Volatile.Read(ref this.started) == 1)");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+        w.CloseBrace();
+        w.WriteLine();
+
         // Size the address from the literal segments plus the transcoded parameters, then fill it once.
         List<string> segments = SplitChannelTemplate(op.ChannelAddress, op.Parameters);
         string literalBytes = string.Join(" + ", segments.Where(seg => !seg.StartsWith('{')).Select(seg => Utf8ByteCount(seg).ToString(System.Globalization.CultureInfo.InvariantCulture)).DefaultIfEmpty("0"));
@@ -3596,8 +3638,9 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine();
 
         // The dead-letter address is the same bytes behind a fixed prefix, so it is built from them rather
-        // than from a second pass over the template. The channel record itself belongs to the Core, which
-        // rolls it back if the subscribe fails; a stale dead-letter address is inert without it.
+        // than from a second pass over the template. The guard above keeps a refused restart from reaching
+        // this overwrite; on a failed subscribe the stale value is inert (the gate is rolled back, so no
+        // handler runs to read it) and the next successful start overwrites it.
         w.WriteLine("byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelLength];");
         w.WriteLine("DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
         w.WriteLine("channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");
