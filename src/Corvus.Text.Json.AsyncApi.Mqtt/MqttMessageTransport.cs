@@ -238,7 +238,17 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         }
 
         this.disposed = true;
-        this.handlers.Clear();
+
+        // Stop each live subscription's heartbeat as its entry is removed, so a disposed
+        // transport leaves no channel reporting Running, matching the other transports.
+        foreach (string channel in this.handlers.Keys)
+        {
+            if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
+            {
+                this.options.Heartbeat?.Stop(channel, "mqtt", removed);
+            }
+        }
+
         this.pendingReplies.Clear();
 
         if (this.client.IsConnected)

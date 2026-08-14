@@ -426,13 +426,15 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
     }
 
-    // The loop can die on a broker fault while the subscribe path is still recording the
-    // claim, in which case its self-release ran before there was anything to release. Undo
-    // the claim and the heartbeat and fail the subscribe, rather than returning a channel
-    // claimed by a dead loop with a heartbeat that reports it running.
-    private async ValueTask ThrowIfLoopTerminatedAsync(string channel, SubscriptionState state, string messagingSystem)
+    // The loop can die while the subscribe path is still recording the claim (a broker
+    // fault, or the error policy aborting on an early message), in which case its
+    // self-release ran before there was anything to release. Undo the claim and the
+    // heartbeat and fail the subscribe, rather than returning a channel claimed by a dead
+    // loop with a heartbeat that reports it running. The caller passes its loop-exited flag
+    // because Task.IsCompleted only turns true after the loop's slow cleanup finishes.
+    private async ValueTask ThrowIfLoopTerminatedAsync(string channel, SubscriptionState state, bool loopExited, string messagingSystem)
     {
-        if (!state.ConsumeTask.IsCompleted)
+        if (!loopExited && !state.ConsumeTask.IsCompleted)
         {
             return;
         }
@@ -444,7 +446,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         this.options.Heartbeat?.Stop(channel, messagingSystem, state.Marker);
         throw new InvalidOperationException(
-            $"The processing loop for channel '{channel}' terminated while the subscription was being established; the fault was recorded on the corvus.asyncapi.subscription_faults counter.");
+            $"The processing loop for channel '{channel}' terminated while the subscription was being established. The cause was reported through the error policy or recorded on the corvus.asyncapi.subscription_faults counter.");
     }
 
     // The loop's exit ends the subscription it belongs to: release the channel slot (a
@@ -678,6 +680,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -852,6 +855,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 }
                 finally
                 {
+                    // Flagged before the release, so the subscribe path either observes the death
+                    // after its claim, or the release runs after the claim landed and removes it.
+                    Volatile.Write(ref loopExited, true);
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats-jetstream");
                     cts.Dispose();
                 }
@@ -864,7 +870,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats-jetstream", marker);
-        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats-jetstream").ConfigureAwait(false);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, Volatile.Read(ref loopExited), "nats-jetstream").ConfigureAwait(false);
     }
 
     private async ValueTask<INatsJSConsumer> CreateOrUpdateJetStreamConsumerAsync(string streamName, string channel, CancellationToken cancellationToken)
@@ -928,6 +934,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -1089,6 +1096,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 }
                 finally
                 {
+                    // Flagged before the release, so the subscribe path either observes the death
+                    // after its claim, or the release runs after the claim landed and removes it.
+                    Volatile.Write(ref loopExited, true);
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }
@@ -1101,7 +1111,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats", marker);
-        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats").ConfigureAwait(false);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, Volatile.Read(ref loopExited), "nats").ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
@@ -1139,6 +1149,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -1315,6 +1326,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 }
                 finally
                 {
+                    // Flagged before the release, so the subscribe path either observes the death
+                    // after its claim, or the release runs after the claim landed and removes it.
+                    Volatile.Write(ref loopExited, true);
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }
@@ -1327,7 +1341,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "nats", marker);
-        await this.ThrowIfLoopTerminatedAsync(channel, state, "nats").ConfigureAwait(false);
+        await this.ThrowIfLoopTerminatedAsync(channel, state, Volatile.Read(ref loopExited), "nats").ConfigureAwait(false);
     }
 
     private static ParsedJsonDocument<JsonElement>? DecodeHeadersDocument(NatsHeaders? headers)

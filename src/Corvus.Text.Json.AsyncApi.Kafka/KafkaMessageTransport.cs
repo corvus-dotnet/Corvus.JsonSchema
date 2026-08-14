@@ -195,6 +195,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -211,6 +212,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 }
                 finally
                 {
+                    // Flagged before the release: the subscribe path checks this flag after its
+                    // claim, so either it observes the death, or the release below runs after
+                    // the claim landed and removes it. Task.IsCompleted alone cannot serve —
+                    // it only turns true after the slow broker close further down.
+                    Volatile.Write(ref loopExited, true);
                     this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
@@ -245,11 +251,12 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "kafka", marker);
 
-        // The loop can die on a broker fault while this method is still recording the claim,
-        // in which case its self-release ran before there was anything to release. Undo the
+        // The loop can die while this method is still recording the claim (a broker fault, or
+        // the error policy aborting on an early message), in which case its self-release ran
+        // before there was anything to release. Undo the
         // claim and the heartbeat and fail the subscribe, rather than returning a channel
         // claimed by a dead loop with a heartbeat that reports it running.
-        if (consumeTask.IsCompleted)
+        if (Volatile.Read(ref loopExited) || consumeTask.IsCompleted)
         {
             if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
             {
@@ -267,7 +274,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
     private static void ThrowSubscriptionLoopTerminated(string channel)
         => throw new InvalidOperationException(
-            $"The processing loop for channel '{channel}' terminated while the subscription was being established; the fault was recorded on the corvus.asyncapi.subscription_faults counter.");
+            $"The processing loop for channel '{channel}' terminated while the subscription was being established. The cause was reported through the error policy or recorded on the corvus.asyncapi.subscription_faults counter.");
 
     private void ThrowIfSubscribed(string channel)
     {
@@ -303,6 +310,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -319,6 +327,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 }
                 finally
                 {
+                    // Flagged before the release: the subscribe path checks this flag after its
+                    // claim, so either it observes the death, or the release below runs after
+                    // the claim landed and removes it. Task.IsCompleted alone cannot serve —
+                    // it only turns true after the slow broker close further down.
+                    Volatile.Write(ref loopExited, true);
                     this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
@@ -350,11 +363,12 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "kafka", marker);
 
-        // The loop can die on a broker fault while this method is still recording the claim,
-        // in which case its self-release ran before there was anything to release. Undo the
+        // The loop can die while this method is still recording the claim (a broker fault, or
+        // the error policy aborting on an early message), in which case its self-release ran
+        // before there was anything to release. Undo the
         // claim and the heartbeat and fail the subscribe, rather than returning a channel
         // claimed by a dead loop with a heartbeat that reports it running.
-        if (consumeTask.IsCompleted)
+        if (Volatile.Read(ref loopExited) || consumeTask.IsCompleted)
         {
             if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
             {
@@ -1198,6 +1212,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         }
 
         object marker = new();
+        bool loopExited = false;
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -1214,6 +1229,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 }
                 finally
                 {
+                    // Flagged before the release, so the claim check below either observes the
+                    // death or the release runs after the claim landed and removes it.
+                    Volatile.Write(ref loopExited, true);
+
                     // Release the reply-channel slot if this loop still holds it, so a faulted
                     // reply loop heals on the next request instead of hanging every future one.
                     if (this.replyConsumers.TryGetValue(replyChannel, out SubscriptionState? current)
@@ -1248,7 +1267,8 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
         // A reply loop that died before this claim landed released nothing; drop the dead
         // entry so the next request rebuilds the consumer instead of hanging against it.
-        if (consumeTask.IsCompleted && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
+        if ((Volatile.Read(ref loopExited) || consumeTask.IsCompleted)
+            && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
         {
             _ = TearDownSubscriptionAsync(replyChannel, state).AsTask();
         }

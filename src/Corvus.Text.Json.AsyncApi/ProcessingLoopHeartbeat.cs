@@ -112,7 +112,8 @@ public sealed class ProcessingLoopHeartbeat
     {
         bool stopped = false;
         while (this.loops.TryGetValue(channel, out LoopState state)
-            && ReferenceEquals(state.Owner, owner))
+            && ReferenceEquals(state.Owner, owner)
+            && state.Running)
         {
             if (this.loops.TryUpdate(channel, state with { Running = false }, state))
             {

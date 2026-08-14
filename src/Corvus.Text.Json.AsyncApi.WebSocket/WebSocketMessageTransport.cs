@@ -261,10 +261,19 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
 
         this.disposed = true;
 
-        // Clearing is atomic and takes no lock, so disposal is never blocked behind a
+        // Removal is atomic and takes no lock, so disposal is never blocked behind a
         // subscribe or unsubscribe that is stuck on an unbounded socket send; cancelling
-        // the receive loop and closing the socket below is what unblocks such a send.
-        this.subscriptions.Clear();
+        // the receive loop and closing the socket below is what unblocks such a send. Each
+        // live subscription's heartbeat is stopped as its entry goes, so a disposed
+        // transport leaves no channel reporting Running, matching the other transports.
+        foreach (string channel in this.subscriptions.Keys)
+        {
+            if (this.subscriptions.TryRemove(channel, out Subscription? removed))
+            {
+                this.options.Heartbeat?.Stop(channel, "websocket", removed);
+            }
+        }
+
         this.pendingReplies.Clear();
 
         if (this.receiveCts is not null)

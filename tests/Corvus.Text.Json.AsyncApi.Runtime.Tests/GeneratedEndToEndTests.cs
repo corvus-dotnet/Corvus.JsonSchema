@@ -328,6 +328,147 @@ public class GeneratedEndToEndTests
         Assert.AreEqual(1, secondHandler.ReceivedPayloads.Count);
     }
 
+    [TestMethod]
+    public async Task Consumer_StopDuringStart_ReleasesTheSubscriptionTheStartLands()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.SubscribeGate = gate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // The first start claims the gate and parks inside the transport subscribe.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+
+        // The stop takes the first start's claim; its unsubscribe finds nothing to remove.
+        await consumer.StopAsync();
+
+        // A legitimate restart on another channel claims and lands.
+        transport.SubscribeGate = null;
+        await consumer.StartAsync("2");
+
+        // The first start's subscribe now lands. It must recognize that ITS claim is gone —
+        // not be fooled by the successor's — release the channel-1 subscription it just
+        // created, and report the stop, rather than returning success for an orphan.
+        gate.SetResult();
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+        StringAssert.Contains(ex.Message, "stopped");
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel), "The superseded start must release the subscription it landed.");
+
+        // The restart's subscription is untouched and still stoppable.
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed("smartylighting.streetlights.1.0.action.2.lighting.measured"));
+    }
+
+    [TestMethod]
+    public async Task Consumer_FailedStartAfterRestart_DoesNotReleaseTheNewClaim()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.SubscribeGate = gate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // First start parks inside the transport subscribe; a stop takes its claim.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+        await consumer.StopAsync();
+
+        // A restart on the SAME channel claims and lands.
+        transport.SubscribeGate = null;
+        await consumer.StartAsync("1");
+
+        // The first start's subscribe resumes and is refused (the restart holds the channel).
+        // Its failure path must not release the restart's claim.
+        gate.SetResult();
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+
+        // The consumer still owns its subscription: stop succeeds and removes it.
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+    }
+
+    private sealed class PausableTransport : IMessageTransport
+    {
+        private readonly object syncRoot = new();
+        private readonly Dictionary<string, Delegate> subscriptions = [];
+
+        // Read once at the top of each subscribe, so a parked subscribe keeps its own gate
+        // while the test re-arms or clears the property for later calls.
+        public TaskCompletionSource? SubscribeGate { get; set; }
+
+        public bool IsSubscribed(string channel)
+        {
+            lock (this.syncRoot)
+            {
+                return this.subscriptions.ContainsKey(channel);
+            }
+        }
+
+        public ValueTask PublishAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            in TPayload payload,
+            in JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+            => ValueTask.CompletedTask;
+
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> requestChannelUtf8,
+            ReadOnlyMemory<byte> replyChannelUtf8,
+            TRequest request,
+            ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, Corvus.Text.Json.Internal.IJsonElement<TRequest>
+            where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>
+            => throw new NotSupportedException();
+
+        public async ValueTask SubscribeAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+        {
+            string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+            if (this.SubscribeGate is { } gate)
+            {
+                await gate.Task.ConfigureAwait(false);
+            }
+
+            lock (this.syncRoot)
+            {
+                if (!this.subscriptions.TryAdd(channel, handler))
+                {
+                    throw new InvalidOperationException(
+                        $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+                }
+            }
+        }
+
+        public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
+        {
+            string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+            lock (this.syncRoot)
+            {
+                this.subscriptions.Remove(channel);
+            }
+
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
     private sealed class ThrowingLightMeasurementHandler : IReceiveLightMeasurementHandler
     {
         public ValueTask HandleLightMeasuredAsync(

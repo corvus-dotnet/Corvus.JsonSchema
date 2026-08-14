@@ -692,8 +692,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
         if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
         {
-            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+            // Teardown drains in-flight handlers first, so their final ticks precede the stop
+            // and the started/stopped/tick event ordering stays truthful.
             await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
         }
     }
 

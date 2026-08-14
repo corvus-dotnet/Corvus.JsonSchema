@@ -2348,8 +2348,11 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
         StringAssert.Contains(consumer.Content, "channel.AsSpan()");
-        // The Core is the async (auth) variant that performs authentication
-        StringAssert.Contains(consumer.Content, "private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8");
+        // The Core claims the lifecycle gate and delegates to the claimed start, which
+        // performs authentication before subscribing
+        StringAssert.Contains(consumer.Content, "private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8");
+        StringAssert.Contains(consumer.Content, "private async ValueTask StartClaimedAsync(ActiveSubscription token");
+        StringAssert.Contains(consumer.Content, "AuthenticateAsync");
     }
 
     [TestMethod]
