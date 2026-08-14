@@ -226,6 +226,84 @@ public class GeneratedEndToEndTests
                 """{"lumens":100,"sentAt":"2024-01-01T00:00:00Z"}"""u8.ToArray()).AsTask());
     }
 
+    [TestMethod]
+    public async Task Consumer_RefusedStart_DisposeDoesNotUnsubscribeWinner()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler winnerHandler = new();
+        await using ReceiveLightMeasurementConsumer winner = new(transport, winnerHandler, ValidationMode.None);
+        await winner.StartAsync("1");
+
+        // The second consumer is refused the channel; disposing it must not tear down the
+        // winner's live subscription.
+        MockLightMeasurementHandler loserHandler = new();
+        ReceiveLightMeasurementConsumer loser = new(transport, loserHandler, ValidationMode.None);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => loser.StartAsync("1").AsTask());
+        await loser.DisposeAsync();
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, winnerHandler.ReceivedPayloads.Count);
+    }
+
+    [TestMethod]
+    public async Task Consumer_DisposeWithoutStart_CompletesQuietly()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler handler = new();
+
+        await using (ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None))
+        {
+            // Never started: leaving the await-using must not throw.
+        }
+    }
+
+    [TestMethod]
+    public async Task Consumer_SecondStart_ThrowsConsumerAlreadyStarted()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler handler = new();
+        await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+        await consumer.StartAsync("1");
+
+        // A second start would silently orphan the first subscription if the consumer just
+        // overwrote its record; it must refuse instead.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("2").AsTask());
+
+        // The original subscription is untouched.
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, handler.ReceivedPayloads.Count);
+    }
+
+    [TestMethod]
+    public async Task Consumer_StopThenDispose_DoesNotUnsubscribeNextOwner()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler firstHandler = new();
+        ReceiveLightMeasurementConsumer first = new(transport, firstHandler, ValidationMode.None);
+        await first.StartAsync("1");
+        await first.StopAsync();
+
+        MockLightMeasurementHandler secondHandler = new();
+        await using ReceiveLightMeasurementConsumer second = new(transport, secondHandler, ValidationMode.None);
+        await second.StartAsync("1");
+
+        // The stopped consumer owns nothing; disposing it must not unsubscribe the channel's
+        // new owner.
+        await first.DisposeAsync();
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, secondHandler.ReceivedPayloads.Count);
+    }
+
     private sealed class MockLightMeasurementHandler : IReceiveLightMeasurementHandler
     {
         public List<LightMeasuredPayload> ReceivedPayloads { get; } = [];

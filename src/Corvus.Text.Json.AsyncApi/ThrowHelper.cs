@@ -119,6 +119,17 @@ public static class ThrowHelper
     }
 
     /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the
+    /// consumer has already been started.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowConsumerAlreadyStarted()
+    {
+        throw new InvalidOperationException(SR.ConsumerAlreadyStarted);
+    }
+
+    /// <summary>
     /// Throws a <see cref="NotSupportedException"/> indicating that the
     /// channel has bindings in an unrecognized format.
     /// </summary>

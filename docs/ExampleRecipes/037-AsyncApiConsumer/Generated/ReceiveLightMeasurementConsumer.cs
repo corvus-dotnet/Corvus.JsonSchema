@@ -70,7 +70,6 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         ".lighting.measured"u8.CopyTo(channelUtf8.AsSpan(written));
         written += 18;
 
-        this.subscribedChannelUtf8 = channelUtf8;
         byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelLength];
         DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());
         channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));
@@ -87,14 +86,26 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <returns>A task that completes when the subscription is established.</returns>
     private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)
     {
-        this.subscribedChannelUtf8 = channelUtf8;
-
-        if (this.authProvider is not null)
+        if (!this.subscribedChannelUtf8.IsEmpty)
         {
-            await this.authProvider.AuthenticateAsync(SaslScramAuthContext, cancellationToken).ConfigureAwait(false);
+            ThrowHelper.ThrowConsumerAlreadyStarted();
         }
 
-        await this.transport.SubscribeAsync<Streetlights.Client.Models.LightMeasuredPayload>(this.subscribedChannelUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+        this.subscribedChannelUtf8 = channelUtf8;
+        try
+        {
+            if (this.authProvider is not null)
+            {
+                await this.authProvider.AuthenticateAsync(SaslScramAuthContext, cancellationToken).ConfigureAwait(false);
+            }
+
+            await this.transport.SubscribeAsync<Streetlights.Client.Models.LightMeasuredPayload>(channelUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            this.subscribedChannelUtf8 = default;
+            throw;
+        }
     }
 
     /// <summary>
@@ -103,12 +114,14 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     public ValueTask StopAsync(CancellationToken cancellationToken = default)
     {
-        if (this.subscribedChannelUtf8.IsEmpty)
+        ReadOnlyMemory<byte> channelUtf8 = this.subscribedChannelUtf8;
+        if (channelUtf8.IsEmpty)
         {
             ThrowHelper.ThrowConsumerNotStarted();
         }
 
-        return this.transport.UnsubscribeAsync(this.subscribedChannelUtf8, cancellationToken);
+        this.subscribedChannelUtf8 = default;
+        return this.transport.UnsubscribeAsync(channelUtf8, cancellationToken);
     }
 
     private async ValueTask HandleMessageAsync(Streetlights.Client.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
@@ -132,7 +145,11 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                 case MessageErrorAction.Skip:
                     return;
                 case MessageErrorAction.Abort:
-                    await this.StopAsync(cancellationToken).ConfigureAwait(false);
+                    if (!this.subscribedChannelUtf8.IsEmpty)
+                    {
+                        await this.StopAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
                     return;
                 case MessageErrorAction.DeadLetter:
                     await this.transport.DeadLetterAsync(this.subscribedDeadLetterChannelUtf8!, this.subscribedChannelUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
@@ -146,7 +163,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
-        return StopAsync();
+        return this.subscribedChannelUtf8.IsEmpty ? ValueTask.CompletedTask : this.StopAsync();
     }
 
     private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)

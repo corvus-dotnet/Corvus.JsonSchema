@@ -80,6 +80,9 @@
   <data name="ConsumerNotStarted" xml:space="preserve">
     <value>The consumer has not been started. Call StartAsync before StopAsync.</value>
   </data>
+  <data name="ConsumerAlreadyStarted" xml:space="preserve">
+    <value>The consumer has already been started. Call StopAsync before starting it again.</value>
+  </data>
   <data name="UnsupportedBindingsFormat" xml:space="preserve">
     <value>Channel '{0}' has bindings in an unrecognized format that could not be resolved as either a $ref or a bindings object.</value>
   </data>

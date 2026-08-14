@@ -2413,6 +2413,10 @@ public sealed class AsyncApi30CodeGenerator
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
             w.WriteLine($"private static readonly byte[] ChannelAddressUtf8 = \"{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
+
+            // A static-address consumer has no retained channel to stand in for "started", and
+            // stop/dispose must not unsubscribe a channel this instance never claimed.
+            w.WriteLine("private bool started;");
         }
 
         if (!hasParameterizedAddress)
@@ -2530,11 +2534,12 @@ public sealed class AsyncApi30CodeGenerator
         bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
         bool needsMessageContext = hasBindingContext;
 
-        // Local function emitting the subscribe body. For the dynamic case the channel bytes have
-        // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
+        // Local function emitting the subscribe body. For the runtime-address case the channel
+        // bytes are the Core's parameter: the field is recorded (and rolled back on failure) by
+        // the Core itself, so the subscribe must not read state that may be rolled back.
         void EmitStartBody(bool async)
         {
-            string subscribeAddr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            string subscribeAddr = hasRuntimeAddress ? "channelUtf8" : "ChannelAddressUtf8";
             string keyword = async ? "await " : "return ";
             string suffix = async ? ".ConfigureAwait(false)" : string.Empty;
             string contextArg = hasBindingContext ? ", context" : string.Empty;
@@ -2639,13 +2644,17 @@ public sealed class AsyncApi30CodeGenerator
             w.CloseBrace();
             w.WriteLine();
             EmitStartBody(async: true);
+            w.WriteLine("this.started = true;");
             w.CloseBrace();
         }
         else
         {
-            w.WriteLine($"public ValueTask StartAsync(CancellationToken cancellationToken = default)");
+            // Async so the started flag is recorded only once the subscribe has succeeded: a
+            // refused start owns nothing, and stop/dispose must be able to tell.
+            w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
             w.OpenBrace();
-            EmitStartBody(async: false);
+            EmitStartBody(async: true);
+            w.WriteLine("this.started = true;");
             w.CloseBrace();
         }
 
@@ -2660,15 +2669,29 @@ public sealed class AsyncApi30CodeGenerator
 
         if (hasRuntimeAddress)
         {
-            w.WriteLine("if (this.subscribedChannelUtf8.IsEmpty)");
+            w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = this.subscribedChannelUtf8;");
+            w.WriteLine("if (channelUtf8.IsEmpty)");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannelUtf8, cancellationToken);");
+
+            // Cleared before the unsubscribe: once stopped, this consumer owns nothing, and a
+            // later stop or dispose must not unsubscribe whoever claims the channel next.
+            w.WriteLine("this.subscribedChannelUtf8 = default;");
+            w.WriteLine("return this.transport.UnsubscribeAsync(channelUtf8, cancellationToken);");
         }
         else
         {
+            w.WriteLine("if (!this.started)");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
+            w.CloseBrace();
+            w.WriteLine();
+
+            // Cleared before the unsubscribe: once stopped, this consumer owns nothing, and a
+            // later stop or dispose must not unsubscribe whoever claims the channel next.
+            w.WriteLine("this.started = false;");
             w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);");
         }
 
@@ -2777,7 +2800,14 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
+
+            // Stop only if this consumer still owns its subscription: an abort racing an
+            // external stop (or a second aborting message) must not throw out of the handler.
+            w.WriteLine($"if ({(hasRuntimeAddress ? "!this.subscribedChannelUtf8.IsEmpty" : "this.started")})");
+            w.OpenBrace();
             w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
+            w.CloseBrace();
+            w.WriteLine();
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
@@ -2827,7 +2857,14 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
+
+            // Stop only if this consumer still owns its subscription: an abort racing an
+            // external stop (or a second aborting message) must not throw out of the handler.
+            w.WriteLine($"if ({(hasRuntimeAddress ? "!this.subscribedChannelUtf8.IsEmpty" : "this.started")})");
+            w.OpenBrace();
             w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
+            w.CloseBrace();
+            w.WriteLine();
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
@@ -2849,7 +2886,13 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// <inheritdoc/>");
         w.WriteLine($"public ValueTask DisposeAsync()");
         w.OpenBrace();
-        w.WriteLine("return StopAsync();");
+
+        // Dispose is stop-if-started: an await-using around a consumer that never started, was
+        // refused its channel, or was already stopped must complete quietly — and must never
+        // unsubscribe a channel this instance does not own.
+        w.WriteLine(hasRuntimeAddress
+            ? "return this.subscribedChannelUtf8.IsEmpty ? ValueTask.CompletedTask : this.StopAsync();"
+            : "return this.started ? this.StopAsync() : ValueTask.CompletedTask;");
         w.CloseBrace();
 
         // Validation helpers
@@ -3445,12 +3488,26 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
         w.WriteLine("/// <returns>A task that completes when the subscription is established.</returns>");
 
+        w.WriteLine("private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
+        w.OpenBrace();
+
+        // A started consumer already has a live subscription this instance must be able to
+        // stop; silently overwriting the record would orphan it.
+        w.WriteLine("if (!this.subscribedChannelUtf8.IsEmpty)");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // Recorded before the subscribe because the handler reads it as soon as messages flow,
+        // and rolled back if the subscribe is refused or fails: a consumer that never owned the
+        // channel must not unsubscribe whoever does when it is stopped or disposed.
+        w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
+        w.WriteLine("try");
+        w.OpenBrace();
+
         if (op.SecuritySchemes.Count > 0)
         {
-            w.WriteLine("private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-            w.OpenBrace();
-            w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-            w.WriteLine();
             w.WriteLine("if (this.authProvider is not null)");
             w.OpenBrace();
             foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
@@ -3460,17 +3517,16 @@ public sealed class AsyncApi30CodeGenerator
 
             w.CloseBrace();
             w.WriteLine();
-            emitStartBody(true);
-            w.CloseBrace();
         }
-        else
-        {
-            w.WriteLine("private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-            w.OpenBrace();
-            w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-            emitStartBody(false);
-            w.CloseBrace();
-        }
+
+        emitStartBody(true);
+        w.CloseBrace();
+        w.WriteLine("catch");
+        w.OpenBrace();
+        w.WriteLine("this.subscribedChannelUtf8 = default;");
+        w.WriteLine("throw;");
+        w.CloseBrace();
+        w.CloseBrace();
     }
 
     /// <summary>
@@ -3538,10 +3594,10 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         w.WriteLine();
-        w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
 
         // The dead-letter address is the same bytes behind a fixed prefix, so it is built from them rather
-        // than from a second pass over the template.
+        // than from a second pass over the template. The channel record itself belongs to the Core, which
+        // rolls it back if the subscribe fails; a stale dead-letter address is inert without it.
         w.WriteLine("byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelLength];");
         w.WriteLine("DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
         w.WriteLine("channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");

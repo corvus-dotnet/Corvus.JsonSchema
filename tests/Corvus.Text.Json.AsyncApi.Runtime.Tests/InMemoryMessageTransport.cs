@@ -109,7 +109,13 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
         lock (this.syncRoot)
         {
-            this.subscriptions[channel] = handler;
+            // A channel carries exactly one subscription, and a second subscribe is refused
+            // rather than displacing the first — the same rule every broker transport applies.
+            if (!this.subscriptions.TryAdd(channel, handler))
+            {
+                throw new InvalidOperationException(
+                    $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+            }
         }
 
         return ValueTask.CompletedTask;
