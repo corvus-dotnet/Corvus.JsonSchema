@@ -1264,6 +1264,118 @@ public class KafkaTransportTests
         await transport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task ResubscribeDuringHandlerUnsubscribeKeepsHeartbeatAlive()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        ProcessingLoopHeartbeat heartbeat = new();
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-hb-owner-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+            Heartbeat = heartbeat,
+        });
+
+        string topic = $"kafka-hb-owner-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(topic);
+        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+
+        using SemaphoreSlim unsubscribed = new(0, 1);
+        using SemaphoreSlim releaseHandler = new(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await transport.UnsubscribeAsync(channel, CancellationToken.None);
+                unsubscribed.Release();
+
+                // Hold the old consume loop open until the test has resubscribed, so the old
+                // loop's unwind — and its heartbeat stop — provably lands after the new
+                // subscription's start.
+                await releaseHandler.WaitAsync(CancellationToken.None);
+            });
+
+        await Task.Delay(5000);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"go":true}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        Assert.IsTrue(await unsubscribed.WaitAsync(TimeSpan.FromSeconds(45)), "The handler-initiated unsubscribe did not complete.");
+
+        await transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        Assert.IsTrue(heartbeat.IsAlive(topic), "The resubscribed channel must report alive immediately after subscribing.");
+
+        releaseHandler.Release();
+
+        // Give the old loop ample time to unwind; its stale stop must not mark the new
+        // subscription's live heartbeat as stopped.
+        await Task.Delay(10000);
+        Assert.IsTrue(
+            heartbeat.IsAlive(topic),
+            "A resubscribed channel's heartbeat must survive the previous loop's unwind.");
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ResubscribeSucceedsAfterLoopFault()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-loop-fault-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+            ErrorPolicy = new ThrowingErrorPolicy(),
+        });
+
+        string topic = $"kafka-loop-fault-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(topic);
+        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("handler failure"));
+
+        await Task.Delay(5000);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"poison":true}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // The handler throws, the policy itself throws, and the loop dies. A dead loop must
+        // release its channel: the resubscribe below succeeds once the fault has unwound,
+        // rather than being refused forever by a zombie registry entry.
+        bool resubscribed = false;
+        for (int attempt = 0; attempt < 20; attempt++)
+        {
+            try
+            {
+                await transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+                resubscribed = true;
+                break;
+            }
+            catch (InvalidOperationException)
+            {
+                await Task.Delay(1000);
+            }
+        }
+
+        Assert.IsTrue(resubscribed, "A faulted consume loop must release its channel for resubscription.");
+
+        await transport.DisposeAsync();
+    }
+
+    private sealed class ThrowingErrorPolicy : IMessageErrorPolicy
+    {
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+            => throw new InvalidOperationException("policy failure");
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

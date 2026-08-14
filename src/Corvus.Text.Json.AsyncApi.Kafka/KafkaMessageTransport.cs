@@ -183,7 +183,17 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ThrowIfSubscribed(channel);
 
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+        IConsumer<Null, byte[]> consumer;
+        try
+        {
+            consumer = CreateConsumer(channel);
+        }
+        catch
+        {
+            cts.Dispose();
+            throw;
+        }
+
         object marker = new();
         Task consumeTask = Task.Run(
             async () =>
@@ -191,10 +201,17 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 ExecutingSubscription.Value = marker;
                 try
                 {
-                    await this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, cts.Token).ConfigureAwait(false);
+                    await this.ConsumeLoop<TPayload>(channel, channelUtf8, consumer, handler, marker, cts.Token).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task on the happy path, so a fault that escapes the
+                    // loop is recorded here; the release below frees the channel to resubscribe.
+                    AsyncApiTelemetry.RecordSubscriptionFault(channel, "kafka", ex);
                 }
                 finally
                 {
+                    this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
                 }
@@ -223,6 +240,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
             throw new ObjectDisposedException(nameof(KafkaMessageTransport));
         }
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "kafka", marker);
     }
 
     private static void ThrowAlreadySubscribed(string channel)
@@ -251,7 +272,16 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ThrowIfSubscribed(channel);
 
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IConsumer<Null, byte[]> consumer = CreateConsumer(channel);
+        IConsumer<Null, byte[]> consumer;
+        try
+        {
+            consumer = CreateConsumer(channel);
+        }
+        catch
+        {
+            cts.Dispose();
+            throw;
+        }
 
         object marker = new();
         Task consumeTask = Task.Run(
@@ -260,10 +290,17 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 ExecutingSubscription.Value = marker;
                 try
                 {
-                    await this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, cts.Token).ConfigureAwait(false);
+                    await this.ReplyResponderLoop<TRequest, TReply>(channel, channelUtf8, consumer, handler, marker, cts.Token).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task on the happy path, so a fault that escapes the
+                    // loop is recorded here; the release below frees the channel to resubscribe.
+                    AsyncApiTelemetry.RecordSubscriptionFault(channel, "kafka", ex);
                 }
                 finally
                 {
+                    this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
                 }
@@ -289,6 +326,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
             throw new ObjectDisposedException(nameof(KafkaMessageTransport));
         }
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "kafka", marker);
     }
 
     /// <inheritdoc/>
@@ -341,6 +382,37 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             // must not prevent the rest of this teardown, nor abort a dispose that is
             // walking every subscription.
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "kafka", ex);
+        }
+    }
+
+    // The loop's exit ends the subscription it belongs to: release the channel slot (a
+    // faulted loop must not leave a zombie entry refusing resubscription) and stop the
+    // heartbeat. Both are owner-guarded, so if a later subscription already owns the channel
+    // (this loop lost the claim race, or a resubscribe landed while it was unwinding) its
+    // live state is untouched.
+    private void ReleaseSubscriptionOnLoopExit(string channel, object marker)
+    {
+        if (this.subscriptions.TryGetValue(channel, out SubscriptionState? current)
+            && ReferenceEquals(current.Marker, marker))
+        {
+            this.subscriptions.TryRemove(KeyValuePair.Create(channel, current));
+        }
+
+        this.options.Heartbeat?.Stop(channel, "kafka", marker);
+    }
+
+    // For commits on error-handling paths: the policy has already run for this message, so a
+    // commit failure is recorded rather than routed back through it. The offset stays
+    // uncommitted and the message redelivers under at-least-once semantics.
+    private static void TryCommit(IConsumer<Null, byte[]> consumer, ConsumeResult<Null, byte[]> result, string channel)
+    {
+        try
+        {
+            consumer.Commit(result);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "kafka", ex);
         }
     }
 
@@ -608,19 +680,18 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ReadOnlyMemory<byte> channelUtf8,
         IConsumer<Null, byte[]> consumer,
         MessageHandler<TPayload> handler,
+        object marker,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
         // Pre-compute dead-letter channel string once (for Kafka SDK which takes string)
         string dlChannel = channel + this.options.DeadLetterSuffix;
 
-        this.options.Heartbeat?.Start(channel, "kafka");
-
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                this.options.Heartbeat?.Tick(channel, "kafka");
+                this.options.Heartbeat?.Tick(channel, "kafka", marker);
 
                 ConsumeResult<Null, byte[]>? result;
                 try
@@ -671,7 +742,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                         }
                     }
 
-                    consumer.Commit(result);
+                    TryCommit(consumer, result, channel);
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -713,7 +784,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             }
                         }
 
-                        consumer.Commit(result);
+                        TryCommit(consumer, result, channel);
                         if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -764,7 +835,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                                 }
                             }
 
-                            consumer.Commit(result);
+                            TryCommit(consumer, result, channel);
                             if (action == MessageErrorAction.Abort)
                             {
                                 AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Handler);
@@ -781,16 +852,28 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     }
                 }
 
-                consumer.Commit(result);
+                try
+                {
+                    consumer.Commit(result);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // An uncommitted offset redelivers, so the failure itself is survivable —
+                    // but it is a broker fault the policy must see, not a silent loop death.
+                    AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "kafka", ex);
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Transport);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Transport);
+                        break;
+                    }
+                }
             }
         }
         catch (OperationCanceledException)
         {
             // Normal shutdown
-        }
-        finally
-        {
-            this.options.Heartbeat?.Stop(channel, "kafka");
         }
     }
 
@@ -799,6 +882,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         ReadOnlyMemory<byte> channelUtf8,
         IConsumer<Null, byte[]> consumer,
         Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        object marker,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -806,13 +890,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // Pre-compute dead-letter channel string once (for Kafka SDK which takes string)
         string dlChannel = channel + this.options.DeadLetterSuffix;
 
-        this.options.Heartbeat?.Start(channel, "kafka");
-
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                this.options.Heartbeat?.Tick(channel, "kafka");
+                this.options.Heartbeat?.Tick(channel, "kafka", marker);
 
                 ConsumeResult<Null, byte[]>? result;
                 try
@@ -863,7 +945,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                         }
                     }
 
-                    consumer.Commit(result);
+                    TryCommit(consumer, result, channel);
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -905,7 +987,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             }
                         }
 
-                        consumer.Commit(result);
+                        TryCommit(consumer, result, channel);
                         if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -982,7 +1064,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                                 }
                             }
 
-                            consumer.Commit(result);
+                            TryCommit(consumer, result, channel);
                             if (action == MessageErrorAction.Abort)
                             {
                                 AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Handler);
@@ -999,16 +1081,28 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     }
                 }
 
-                consumer.Commit(result);
+                try
+                {
+                    consumer.Commit(result);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // An uncommitted offset redelivers, so the failure itself is survivable —
+                    // but it is a broker fault the policy must see, not a silent loop death.
+                    AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "kafka", ex);
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Transport);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Transport);
+                        break;
+                    }
+                }
             }
         }
         catch (OperationCanceledException)
         {
             // Normal shutdown
-        }
-        finally
-        {
-            this.options.Heartbeat?.Stop(channel, "kafka");
         }
     }
 
@@ -1047,7 +1141,16 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         // the first requester meant one cancelled request killed request-reply on the channel
         // forever, with later requests skipping resubscription and hanging.
         CancellationTokenSource cts = new();
-        IConsumer<Null, byte[]> consumer = CreateConsumer(replyChannel);
+        IConsumer<Null, byte[]> consumer;
+        try
+        {
+            consumer = CreateConsumer(replyChannel);
+        }
+        catch
+        {
+            cts.Dispose();
+            throw;
+        }
 
         object marker = new();
         Task consumeTask = Task.Run(
@@ -1058,8 +1161,22 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 {
                     await this.ReplyConsumeLoop(consumer, cts.Token).ConfigureAwait(false);
                 }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task, so a fault that escapes the loop is recorded
+                    // here; the release below lets the next request rebuild the consumer.
+                    AsyncApiTelemetry.RecordSubscriptionFault(replyChannel, "kafka", ex);
+                }
                 finally
                 {
+                    // Release the reply-channel slot if this loop still holds it, so a faulted
+                    // reply loop heals on the next request instead of hanging every future one.
+                    if (this.replyConsumers.TryGetValue(replyChannel, out SubscriptionState? current)
+                        && ReferenceEquals(current.Marker, marker))
+                    {
+                        this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, current));
+                    }
+
                     CloseAndDisposeConsumer(replyChannel, consumer);
                     cts.Dispose();
                 }
@@ -1127,7 +1244,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     }
                 }
 
-                consumer.Commit(result);
+                TryCommit(consumer, result, "(reply-loop)");
             }
         }
         catch (OperationCanceledException)

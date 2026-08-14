@@ -127,6 +127,32 @@ public static class AsyncApiTelemetry
             "Subscription teardowns that reported a failure");
 
     /// <summary>
+    /// Gets the counter for subscription processing loops that terminated on an unexpected fault.
+    /// </summary>
+    /// <remarks>
+    /// A faulted loop releases its channel so the application can resubscribe; this counter is
+    /// how the fault itself stays visible, since no caller is awaiting the loop's task.
+    /// </remarks>
+    public static Counter<long> SubscriptionFaults { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.subscription_faults",
+            "{subscription}",
+            "Subscription processing loops that terminated on an unexpected fault");
+
+    /// <summary>
+    /// Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed.
+    /// </summary>
+    /// <remarks>
+    /// The message stays unacknowledged and redelivers under at-least-once semantics, so the
+    /// failure is recorded and the loop keeps running rather than faulting.
+    /// </remarks>
+    public static Counter<long> AcknowledgeFailures { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.acknowledge_failures",
+            "{message}",
+            "Broker acknowledgement operations (commit, ack, nak) that failed");
+
+    /// <summary>
     /// Gets the counter for messages that failed schema validation.
     /// </summary>
     public static Counter<long> ValidationFailures { get; } =
@@ -264,6 +290,48 @@ public static class AsyncApiTelemetry
         Exception exception)
     {
         SubscriptionTeardownFailures.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that a subscription's processing loop terminated on an unexpected fault.
+    /// </summary>
+    /// <param name="channel">The channel the loop was consuming from.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The fault that ended the loop.</param>
+    public static void RecordSubscriptionFault(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        SubscriptionFaults.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that a broker acknowledgement operation (commit, ack, nak) failed.
+    /// </summary>
+    /// <param name="channel">The channel whose message was being acknowledged.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The failure the loop continued past.</param>
+    public static void RecordAcknowledgeFailure(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        AcknowledgeFailures.Add(
             1,
             new TagList
             {

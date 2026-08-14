@@ -175,12 +175,12 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
 
         // Local effect first, before any await: an unsubscribe always stops delivery to the
         // caller's handler, whatever the token state or the fate of the control envelope.
-        if (!this.subscriptions.TryRemove(channel, out _))
+        if (!this.subscriptions.TryRemove(channel, out Subscription? removed))
         {
             return ValueTask.CompletedTask;
         }
 
-        this.options.Heartbeat?.Stop(channel, "websocket");
+        this.options.Heartbeat?.Stop(channel, "websocket", removed);
 
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "unsubscribe"u8);
         return this.SendAndReturnAsync(rented, length, cancellationToken);
@@ -206,7 +206,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             throw new ObjectDisposedException(nameof(WebSocketMessageTransport));
         }
 
-        this.options.Heartbeat?.Start(channel, "websocket");
+        this.options.Heartbeat?.Start(channel, "websocket", subscription);
         return this.SendSubscribeAsync(channel, subscription, cancellationToken);
     }
 
@@ -225,7 +225,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             // and stop its heartbeat.
             if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, claimed)))
             {
-                this.options.Heartbeat?.Stop(channel, "websocket");
+                this.options.Heartbeat?.Stop(channel, "websocket", claimed);
             }
 
             throw;
@@ -382,7 +382,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             if (payload.ValueKind != JsonValueKind.Undefined &&
                 this.subscriptions.TryGetValue(channel, out Subscription? subscription))
             {
-                this.options.Heartbeat?.Tick(channel, "websocket");
+                this.options.Heartbeat?.Tick(channel, "websocket", subscription);
                 if (subscription.ReplyHandler is not null)
                 {
                     string? replyChannel = null;

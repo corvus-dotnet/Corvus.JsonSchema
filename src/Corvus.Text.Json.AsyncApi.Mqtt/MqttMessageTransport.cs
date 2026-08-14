@@ -185,9 +185,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        this.handlers.TryRemove(channel, out _);
-
-        this.options.Heartbeat?.Stop(channel, "mqtt");
+        if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
+        {
+            this.options.Heartbeat?.Stop(channel, "mqtt", removed);
+        }
 
         MqttClientUnsubscribeOptions unsubOptions = new MqttFactory().CreateUnsubscribeOptionsBuilder()
             .WithTopicFilter(channel)
@@ -420,7 +421,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             throw new ObjectDisposedException(nameof(MqttMessageTransport));
         }
 
-        this.options.Heartbeat?.Start(channel, "mqtt");
+        this.options.Heartbeat?.Start(channel, "mqtt", dispatch);
     }
 
     private async ValueTask SendSubscribeAsync(
@@ -444,7 +445,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             // evict the new subscriber and stop its heartbeat.
             if (this.handlers.TryRemove(KeyValuePair.Create(channel, claimed)))
             {
-                this.options.Heartbeat?.Stop(channel, "mqtt");
+                this.options.Heartbeat?.Stop(channel, "mqtt", claimed);
             }
 
             throw;
@@ -587,6 +588,9 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
         if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? handler))
         {
+            // Ticked here, where the registry lookup proves the dispatch delegate is the
+            // channel's current owner, rather than inside the dispatch methods that lack it.
+            this.options.Heartbeat?.Tick(topic, "mqtt", handler);
             return handler(args.ApplicationMessage, CancellationToken.None).AsTask();
         }
 
@@ -602,9 +606,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        this.options.Heartbeat?.Tick(channel, "mqtt");
-
-        ParsedJsonDocument<TPayload> payloadDoc;
+                ParsedJsonDocument<TPayload> payloadDoc;
         try
         {
             ArraySegment<byte> payloadSegment = message.PayloadSegment;
@@ -756,9 +758,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        this.options.Heartbeat?.Tick(channel, "mqtt");
-
-        ParsedJsonDocument<TRequest> requestDoc;
+                ParsedJsonDocument<TRequest> requestDoc;
         try
         {
             ArraySegment<byte> payloadSegment = message.PayloadSegment;

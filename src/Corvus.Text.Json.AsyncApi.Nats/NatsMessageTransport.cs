@@ -426,6 +426,48 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
     }
 
+    // The loop's exit ends the subscription it belongs to: release the channel slot (a
+    // faulted loop must not leave a zombie entry refusing resubscription) and stop the
+    // heartbeat. Both are owner-guarded, so if a later subscription already owns the channel
+    // (this loop lost the claim race, or a resubscribe landed while it was unwinding) its
+    // live state is untouched.
+    private void ReleaseSubscriptionOnLoopExit(string channel, object marker, string messagingSystem)
+    {
+        if (this.subscriptions.TryGetValue(channel, out SubscriptionState? current)
+            && ReferenceEquals(current.Marker, marker))
+        {
+            this.subscriptions.TryRemove(KeyValuePair.Create(channel, current));
+        }
+
+        this.options.Heartbeat?.Stop(channel, messagingSystem, marker);
+    }
+
+    // The unacknowledged message redelivers after AckWait, so an acknowledge failure is
+    // recorded and the loop keeps consuming rather than faulting on a broker hiccup.
+    private static async ValueTask AckSafeAsync(NatsJSMsg<byte[]> msg, string channel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await msg.AckAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "nats-jetstream", ex);
+        }
+    }
+
+    private static async ValueTask NakSafeAsync(NatsJSMsg<byte[]> msg, string channel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await msg.NakAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "nats-jetstream", ex);
+        }
+    }
+
     /// <inheritdoc/>
     public ValueTask DeadLetterAsync(
         ReadOnlyMemory<byte> deadLetterChannelUtf8,
@@ -598,33 +640,21 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "nats-jetstream");
-
-        // Ensure stream exists
-        await this.EnsureStreamExistsAsync(streamName, channel, cts.Token).ConfigureAwait(false);
-
-        // Create or get consumer
-        string consumerName = this.options.ConsumerName ?? $"{streamName}_{channel}_consumer";
-        ConsumerConfig consumerConfig = new(consumerName)
+        INatsJSConsumer consumer;
+        try
         {
-            DurableName = consumerName,
-            FilterSubject = channel,
-            AckPolicy = NATS.Client.JetStream.Models.ConsumerConfigAckPolicy.Explicit,
-            AckWait = this.options.AckWait,
-            MaxDeliver = this.options.MaxDeliver,
-            DeliverPolicy = this.options.DeliverPolicy switch
-            {
-                DeliverPolicy.All => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
-                DeliverPolicy.New => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.New,
-                DeliverPolicy.ByStartSequence => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartSequence,
-                DeliverPolicy.ByStartTime => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartTime,
-                DeliverPolicy.Last => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.Last,
-                DeliverPolicy.LastPerSubject => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.LastPerSubject,
-                _ => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
-            },
-        };
+            // Ensure stream exists
+            await this.EnsureStreamExistsAsync(streamName, channel, cts.Token).ConfigureAwait(false);
 
-        INatsJSConsumer consumer = await this.jsContext!.CreateOrUpdateConsumerAsync(streamName, consumerConfig, cts.Token).ConfigureAwait(false);
+            consumer = await this.CreateOrUpdateJetStreamConsumerAsync(streamName, channel, cts.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the linked source (and with it the registration on the caller's token).
+            cts.Dispose();
+            throw;
+        }
 
         object marker = new();
         Task consumeTask = Task.Run(
@@ -635,11 +665,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     await foreach (NatsJSMsg<byte[]> msg in consumer.ConsumeAsync<byte[]>(cancellationToken: cts.Token).ConfigureAwait(false))
                     {
-                        this.options.Heartbeat?.Tick(channel, "nats-jetstream");
+                        this.options.Heartbeat?.Tick(channel, "nats-jetstream", marker);
 
                         if (msg.Data is null)
                         {
-                            await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                            await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                             continue;
                         }
 
@@ -656,7 +686,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                             if (action == MessageErrorAction.Abort)
                             {
                                 AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 break;
                             }
 
@@ -666,18 +696,18 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 {
                                     await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
                                     AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
-                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
                                 catch (Exception dlEx) when (dlEx is not OperationCanceledException)
                                 {
                                     AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
-                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
                             }
                             else
                             {
                                 AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                             }
 
                             continue;
@@ -700,7 +730,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 if (action == MessageErrorAction.Abort)
                                 {
                                     AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     break;
                                 }
 
@@ -710,18 +740,18 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
                                         AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
-                                        await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                        await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
                                     catch (Exception dlEx) when (dlEx is not OperationCanceledException)
                                     {
                                         AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
-                                        await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                        await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
                                 }
                                 else
                                 {
                                     AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
 
                                 continue;
@@ -747,12 +777,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                         await handler.Invoke(payload, channelUtf8, headers, nativeMessage, cts.Token).ConfigureAwait(false);
                                     }
 
-                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
                             }
                             catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                             {
-                                await msg.NakAsync(cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                                await NakSafeAsync(msg, channel, CancellationToken.None).ConfigureAwait(false);
                                 break;
                             }
                             catch (Exception ex)
@@ -762,7 +792,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 if (action == MessageErrorAction.Abort)
                                 {
                                     AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Handler);
-                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     break;
                                 }
 
@@ -772,18 +802,18 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
                                         AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
-                                        await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                        await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
                                     catch (Exception dlEx) when (dlEx is not OperationCanceledException)
                                     {
                                         AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
-                                        await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                        await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
                                 }
                                 else
                                 {
                                     AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Handler);
-                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
                             }
                         }
@@ -793,15 +823,50 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     // Normal shutdown via UnsubscribeAsync or parent cancellation
                 }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task on the happy path, so a fault that escapes the
+                    // loop is recorded here; the release below frees the channel to resubscribe.
+                    AsyncApiTelemetry.RecordSubscriptionFault(channel, "nats-jetstream", ex);
+                }
                 finally
                 {
-                    this.options.Heartbeat?.Stop(channel, "nats-jetstream");
+                    this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats-jetstream");
                     cts.Dispose();
                 }
             },
             CancellationToken.None);
 
         await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "nats-jetstream", marker);
+    }
+
+    private async ValueTask<INatsJSConsumer> CreateOrUpdateJetStreamConsumerAsync(string streamName, string channel, CancellationToken cancellationToken)
+    {
+        string consumerName = this.options.ConsumerName ?? $"{streamName}_{channel}_consumer";
+        ConsumerConfig consumerConfig = new(consumerName)
+        {
+            DurableName = consumerName,
+            FilterSubject = channel,
+            AckPolicy = NATS.Client.JetStream.Models.ConsumerConfigAckPolicy.Explicit,
+            AckWait = this.options.AckWait,
+            MaxDeliver = this.options.MaxDeliver,
+            DeliverPolicy = this.options.DeliverPolicy switch
+            {
+                DeliverPolicy.All => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
+                DeliverPolicy.New => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.New,
+                DeliverPolicy.ByStartSequence => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartSequence,
+                DeliverPolicy.ByStartTime => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartTime,
+                DeliverPolicy.Last => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.Last,
+                DeliverPolicy.LastPerSubject => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.LastPerSubject,
+                _ => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
+            },
+        };
+
+        return await this.jsContext!.CreateOrUpdateConsumerAsync(streamName, consumerConfig, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
@@ -819,16 +884,25 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "nats");
-
         // Register the subscription with the server before starting the background
         // consumption loop. Using SubscribeCoreAsync (rather than SubscribeAsync
         // inside Task.Run) guarantees the SUB command is sent before this method
         // returns, eliminating the race where a published message arrives at the
         // server before the subscription is active.
-        INatsSub<byte[]> sub = await this.connection.SubscribeCoreAsync<byte[]>(
-            subject: channel,
-            cancellationToken: cts.Token).ConfigureAwait(false);
+        INatsSub<byte[]> sub;
+        try
+        {
+            sub = await this.connection.SubscribeCoreAsync<byte[]>(
+                subject: channel,
+                cancellationToken: cts.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the linked source (and with it the registration on the caller's token).
+            cts.Dispose();
+            throw;
+        }
 
         object marker = new();
         Task consumeTask = Task.Run(
@@ -841,7 +915,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                     {
                         await foreach (NatsMsg<byte[]> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
                         {
-                            this.options.Heartbeat?.Tick(channel, "nats");
+                            this.options.Heartbeat?.Tick(channel, "nats", marker);
 
                             if (msg.Data is null)
                             {
@@ -984,15 +1058,25 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     // Normal shutdown via UnsubscribeAsync or parent cancellation
                 }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task on the happy path, so a fault that escapes the
+                    // loop is recorded here; the release below frees the channel to resubscribe.
+                    AsyncApiTelemetry.RecordSubscriptionFault(channel, "nats", ex);
+                }
                 finally
                 {
-                    this.options.Heartbeat?.Stop(channel, "nats");
+                    this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }
             },
             CancellationToken.None);
 
         await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "nats", marker);
     }
 
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
@@ -1011,14 +1095,23 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "nats");
-
         // Register the subscription with the server before starting the background
         // consumption loop so the SUB command is sent before this method returns,
         // matching SubscribeToCoreNatsAsync.
-        INatsSub<byte[]> sub = await this.connection.SubscribeCoreAsync<byte[]>(
-            subject: channel,
-            cancellationToken: cts.Token).ConfigureAwait(false);
+        INatsSub<byte[]> sub;
+        try
+        {
+            sub = await this.connection.SubscribeCoreAsync<byte[]>(
+                subject: channel,
+                cancellationToken: cts.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the linked source (and with it the registration on the caller's token).
+            cts.Dispose();
+            throw;
+        }
 
         object marker = new();
         Task consumeTask = Task.Run(
@@ -1031,7 +1124,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                     {
                         await foreach (NatsMsg<byte[]> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
                         {
-                            this.options.Heartbeat?.Tick(channel, "nats");
+                            this.options.Heartbeat?.Tick(channel, "nats", marker);
 
                             if (msg.Data is null)
                             {
@@ -1189,15 +1282,25 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     // Normal shutdown via UnsubscribeAsync or parent cancellation
                 }
+                catch (Exception ex)
+                {
+                    // Nothing awaits this task on the happy path, so a fault that escapes the
+                    // loop is recorded here; the release below frees the channel to resubscribe.
+                    AsyncApiTelemetry.RecordSubscriptionFault(channel, "nats", ex);
+                }
                 finally
                 {
-                    this.options.Heartbeat?.Stop(channel, "nats");
+                    this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }
             },
             CancellationToken.None);
 
         await this.ClaimSubscriptionAsync(channel, new SubscriptionState(cts, consumeTask, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "nats", marker);
     }
 
     private static ParsedJsonDocument<JsonElement>? DecodeHeadersDocument(NatsHeaders? headers)

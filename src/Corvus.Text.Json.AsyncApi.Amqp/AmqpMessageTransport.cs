@@ -230,7 +230,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
         if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
-            this.options.Heartbeat?.Stop(channel, "amqp");
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
         }
     }
@@ -295,6 +295,20 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         }
     }
 
+    // A subscribe that fails before its claim owns only what it created itself; the channel
+    // is released quietly (recording, never throwing) so the original failure propagates.
+    private static async ValueTask DisposeChannelOnSetupFailureAsync(string channel, IChannel consumerChannel)
+    {
+        try
+        {
+            await consumerChannel.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+    }
+
     private async ValueTask ClaimSubscriptionAsync(string channel, SubscriptionState state)
     {
         // TryAdd is the authoritative claim on the channel's single subscription slot, so no
@@ -304,6 +318,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         if (!this.subscriptions.TryAdd(channel, state))
         {
             await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+
+            // The heartbeat has not been started for this subscription, but its consumer may
+            // already have ticked an entry into existence; the owner-guarded stop clears that
+            // without touching whatever the winning subscription has recorded.
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
             ThrowAlreadySubscribed(channel);
         }
 
@@ -317,6 +336,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             }
 
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
             throw new ObjectDisposedException(nameof(AmqpMessageTransport));
         }
     }
@@ -370,6 +390,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
             {
+                this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
                 await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
             }
         }
@@ -568,26 +589,45 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         ThrowIfSubscribed(channel);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
-        IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+        IChannel consumerChannel;
+        try
+        {
+            consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the linked source (and with it the registration on the caller's token).
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.{channel}";
-
-        await consumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: this.options.QueueDurable,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await consumerChannel.QueueBindAsync(
+            await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            await consumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: channel,
+                durable: this.options.QueueDurable,
+                exclusive: false,
+                autoDelete: false,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await consumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: channel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
@@ -601,7 +641,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 return;
             }
 
-            this.options.Heartbeat?.Tick(channel, "amqp");
+            this.options.Heartbeat?.Tick(channel, "amqp", marker);
 
             ParsedJsonDocument<TPayload> payloadDoc;
             try
@@ -756,16 +796,27 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.{channel}";
-        actualTag = await consumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        this.options.Heartbeat?.Start(channel, "amqp");
+        try
+        {
+            actualTag = await consumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
         await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "amqp", marker);
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
@@ -774,24 +825,41 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         // that ever uses this reply channel, so its lifetime is the transport's. Linking it to
         // the first requester meant that token's cancellation made every later reply ack throw.
         CancellationTokenSource cts = new();
-        IChannel replyConsumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        IChannel replyConsumerChannel;
+        try
+        {
+            replyConsumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.reply.{replyChannel}";
-
-        await replyConsumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: false,
-            exclusive: true,
-            autoDelete: true,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await replyConsumerChannel.QueueBindAsync(
+            await replyConsumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: replyChannel,
+                durable: false,
+                exclusive: true,
+                autoDelete: true,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await replyConsumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: replyChannel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(replyChannel, replyConsumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(replyConsumerChannel);
@@ -807,12 +875,22 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.reply.{replyChannel}";
-        string actualTag = await replyConsumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        string actualTag;
+        try
+        {
+            actualTag = await replyConsumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(replyChannel, replyConsumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
         // The reply listener runs no user code, so no handler can self-unsubscribe from it;
         // its marker exists only to satisfy the state shape and is never set. Concurrent
@@ -844,26 +922,45 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         ThrowIfSubscribed(channel);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
-        IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+        IChannel consumerChannel;
+        try
+        {
+            consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the linked source (and with it the registration on the caller's token).
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.{channel}";
-
-        await consumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: this.options.QueueDurable,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await consumerChannel.QueueBindAsync(
+            await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            await consumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: channel,
+                durable: this.options.QueueDurable,
+                exclusive: false,
+                autoDelete: false,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await consumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: channel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
@@ -877,7 +974,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 return;
             }
 
-            this.options.Heartbeat?.Tick(channel, "amqp");
+            this.options.Heartbeat?.Tick(channel, "amqp", marker);
 
             ParsedJsonDocument<TRequest> requestDoc;
             try
@@ -1079,16 +1176,27 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.{channel}";
-        actualTag = await consumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        this.options.Heartbeat?.Start(channel, "amqp");
+        try
+        {
+            actualTag = await consumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
         await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "amqp", marker);
     }
 
     private async ValueTask DeadLetterCoreAsync(

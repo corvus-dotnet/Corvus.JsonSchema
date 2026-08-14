@@ -355,8 +355,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "azureservicebus");
-
         ServiceBusProcessor processor = this.options.UseTopic
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
@@ -367,7 +365,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         processor.ProcessMessageAsync += async args =>
         {
             ExecutingSubscription.Value = marker;
-            this.options.Heartbeat?.Tick(channel, "azureservicebus");
+            this.options.Heartbeat?.Tick(channel, "azureservicebus", marker);
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
 
@@ -477,11 +475,25 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             return Task.CompletedTask;
         };
 
-        await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: no registry entry exists for anything else to tear
+            // down, so this subscribe releases the processor it created.
+            await DisposeProcessorOnSetupFailureAsync(channel, processor).ConfigureAwait(false);
+            throw;
+        }
 
         // Claimed only once the processor is wired and running, so a concurrent subscribe can
         // never observe — or tear down — a processor this call has not finished starting.
         await this.ClaimSubscriptionAsync(channel, (tcs, processor, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "azureservicebus", marker);
     }
 
     /// <summary>
@@ -519,8 +531,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "azureservicebus");
-
         ServiceBusProcessor processor = this.options.UseTopic
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
@@ -531,7 +541,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         processor.ProcessMessageAsync += async args =>
         {
             ExecutingSubscription.Value = marker;
-            this.options.Heartbeat?.Tick(channel, "azureservicebus");
+            this.options.Heartbeat?.Tick(channel, "azureservicebus", marker);
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
 
@@ -652,11 +662,25 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             return Task.CompletedTask;
         };
 
-        await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: no registry entry exists for anything else to tear
+            // down, so this subscribe releases the processor it created.
+            await DisposeProcessorOnSetupFailureAsync(channel, processor).ConfigureAwait(false);
+            throw;
+        }
 
         // Claimed only once the processor is wired and running, so a concurrent subscribe can
         // never observe — or tear down — a processor this call has not finished starting.
         await this.ClaimSubscriptionAsync(channel, (tcs, processor, marker)).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "azureservicebus", marker);
     }
 
     /// <inheritdoc/>
@@ -668,8 +692,8 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
         if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
         {
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
             await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
-            this.options.Heartbeat?.Stop(channel, "azureservicebus");
         }
     }
 
@@ -717,6 +741,20 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         }
     }
 
+    // A subscribe that fails before its claim owns only the processor it created; it is
+    // released quietly (recording, never throwing) so the original failure propagates.
+    private static async ValueTask DisposeProcessorOnSetupFailureAsync(string channel, ServiceBusProcessor processor)
+    {
+        try
+        {
+            await processor.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
+    }
+
     private static void ThrowAlreadySubscribed(string channel)
         => throw new InvalidOperationException(
             $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
@@ -740,6 +778,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         if (!this.subscriptions.TryAdd(channel, subscription))
         {
             await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+
+            // The heartbeat has not been started for this subscription, but its processor may
+            // already have ticked an entry into existence; the owner-guarded stop clears that
+            // without touching whatever the winning subscription has recorded.
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
             ThrowAlreadySubscribed(channel);
         }
 
@@ -753,6 +796,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
             }
 
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
             throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
         }
     }
@@ -790,6 +834,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         {
             if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor, object Marker) subscription))
             {
+                this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
                 await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
             }
         }
