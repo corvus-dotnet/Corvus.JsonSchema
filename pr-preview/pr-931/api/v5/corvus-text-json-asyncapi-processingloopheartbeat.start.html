@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="start-string-string">Start(string, string)</h2>
+<h2 id="start-string-string-object">Start(string, string, object)</h2>
 <p>Records that the processing loop for the specified channel has started.</p>
-<pre><code class="language-csharp">public void Start(string channel, string messagingSystem)
+<pre><code class="language-csharp">public void Start(string channel, string messagingSystem, object owner)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -123,8 +123,15 @@
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td>The transport type (e.g., <code>&quot;nats&quot;</code>, <code>&quot;kafka&quot;</code>).</td>
 </tr>
+<tr>
+<td><code>owner</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td>The identity of the subscription this loop belongs to.</td>
+</tr>
 </tbody>
 </table>
+<h3 id="remarks">Remarks</h3>
+<p>Overwrites unconditionally: a transport only starts the heartbeat after its subscription claim succeeds, and a channel has a single claimed owner at a time, so an overwrite is always a legitimate ownership transfer to a new subscription.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
