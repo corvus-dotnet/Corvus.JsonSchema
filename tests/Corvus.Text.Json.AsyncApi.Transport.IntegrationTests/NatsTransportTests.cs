@@ -1460,4 +1460,32 @@ public class NatsTransportTests
         await transport.DisposeAsync();
         await transport.DisposeAsync(); // Should be safe — no exception
     }
+
+    [TestMethod]
+    public async Task SecondSubscribeOnOccupiedChannelIsRefused()
+    {
+        ReadOnlyMemory<byte> channel = "test.occupied.slot"u8.ToArray();
+        using SemaphoreSlim received = new(0, 1);
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        // The channel's single slot is claimed by the data subscription; a second subscription
+        // of any kind is refused rather than displacing it.
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeReplyAsync<JsonElement, JsonElement>(channel, (request, headers, ct) => ValueTask.FromResult(request)));
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"ok":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)), "The original subscription must survive refused subscribes.");
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
 }

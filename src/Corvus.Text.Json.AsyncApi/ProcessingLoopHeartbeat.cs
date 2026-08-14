@@ -22,10 +22,9 @@ namespace Corvus.Text.Json.AsyncApi;
 /// loop has ticked within the staleness threshold.</description></item>
 /// <item><description><see cref="GetSubscriptionStatuses"/> — all tracked subscriptions
 /// with their liveness state.</description></item>
-/// <item><description>A <c>corvus.asyncapi.processing_loop_alive</c> counter emitted on
-/// each tick, useful for rate-based alerting (rate drops to zero = loop died).</description></item>
-/// <item><description>A <c>corvus.asyncapi.processing_loop_started</c> /
-/// <c>corvus.asyncapi.processing_loop_stopped</c> counter pair for lifecycle tracking.</description></item>
+/// <item><description>A <c>corvus.asyncapi.heartbeats</c> counter emitted on every start,
+/// stop and tick, distinguished by the <c>corvus.asyncapi.loop_event</c> tag — the tick
+/// rate dropping to zero for a channel means its loop died.</description></item>
 /// </list>
 /// <para>
 /// Staleness detection: if a loop has not ticked for longer than

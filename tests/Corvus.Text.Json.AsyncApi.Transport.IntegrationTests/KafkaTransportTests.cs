@@ -1367,6 +1367,92 @@ public class KafkaTransportTests
         await transport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task SecondSubscribeOnOccupiedChannelIsRefused()
+    {
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-occupied"));
+        using SemaphoreSlim received = new(0, 1);
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        // The channel's single slot is claimed by the data subscription; a second subscription
+        // of any kind is refused rather than displacing it.
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeReplyAsync<JsonElement, JsonElement>(channel, (request, headers, ct) => ValueTask.FromResult(request)));
+
+        await Task.Delay(5000);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"ok":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)), "The original subscription must survive refused subscribes.");
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task DisposeWhileTrafficFlowsCompletes()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-dispose-traffic-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        string topic = $"kafka-dispose-traffic-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(topic);
+        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+
+        using SemaphoreSlim received = new(0, 1);
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                received.Release();
+                await Task.Delay(50, CancellationToken.None);
+            });
+
+        await Task.Delay(5000);
+
+        // Keep messages flowing from the shared transport while the dedicated one disposes.
+        using CancellationTokenSource pumpCts = new();
+        Task pump = Task.Run(async () =>
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"n":1}"""u8.ToArray());
+            while (!pumpCts.IsCancellationRequested)
+            {
+                await s_transport.PublishAsync(channel, doc.RootElement, cancellationToken: pumpCts.Token);
+                await Task.Delay(25, pumpCts.Token);
+            }
+        });
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)), "Traffic must be flowing before the dispose.");
+
+        // Dispose must drain the in-flight handler and complete while deliveries keep arriving.
+        Task dispose = transport.DisposeAsync().AsTask();
+        Task completed = await Task.WhenAny(dispose, Task.Delay(TimeSpan.FromSeconds(45)));
+        Assert.AreSame(dispose, completed, "DisposeAsync must complete while traffic is flowing.");
+        await dispose;
+
+        await pumpCts.CancelAsync();
+        try
+        {
+            await pump;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
     private sealed class ThrowingErrorPolicy : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
