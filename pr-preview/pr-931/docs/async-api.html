@@ -386,11 +386,13 @@ await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
 ReceiveLightMeasurementConsumer consumer = new(transport, handler);
 
-await consumer.StartAsync();
+// The channel address declares a {streetlightId} parameter, so the consumer takes it on
+// StartAsync and subscribes to the address those parameters compose.
+await consumer.StartAsync(streetlightId: &quot;1&quot;);
 
 // Simulate an incoming message (in production, the broker delivers these)
 await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(
-    &quot;smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured&quot;,
+    &quot;smartylighting.streetlights.1.0.action.1.lighting.measured&quot;,
     &quot;&quot;&quot;{&quot;lumens&quot;:250,&quot;sentAt&quot;:&quot;2024-01-15T10:30:00Z&quot;}&quot;&quot;&quot;u8.ToArray());
 
 await consumer.StopAsync();
@@ -1054,7 +1056,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(
     tokenFactory: ct =&gt; new ValueTask&lt;string&gt;(&quot;refreshed-token-value&quot;));
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: &quot;1&quot;);
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -1084,7 +1086,7 @@ IMessageAuthenticationProvider namedAuth = new ApiKeyAuthenticationProvider(
     location: &quot;header&quot;);
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: namedAuth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: &quot;1&quot;);
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -1560,7 +1562,7 @@ foreach (var status in heartbeat.GetSubscriptionStatuses())
     Console.WriteLine($&quot;{status.Channel}: {(status.IsAlive ? &quot;alive&quot; : &quot;STALE&quot;)}&quot;);
 }
 </code></pre>
-<p>If a loop has not ticked for longer than the staleness threshold (default: 30 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.</p>
+<p>If a loop has not ticked for longer than the staleness threshold (default: 60 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.</p>
 <h3 id="health-checks">Health Checks</h3>
 <p>The <code>Corvus.Text.Json.AsyncApi.HealthChecks</code> package integrates with ASP.NET Core health checks:</p>
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json.AsyncApi.HealthChecks
