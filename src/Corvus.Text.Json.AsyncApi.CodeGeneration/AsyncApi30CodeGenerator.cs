@@ -2419,23 +2419,47 @@ public sealed class AsyncApi30CodeGenerator
         // subscription. Each StartAsync claims it with a fresh token via compare-exchange and
         // every release compare-exchanges against that same token, so a stale start or stop
         // can never release (or unsubscribe) a claim a successor now owns — a bare flag would
-        // be ABA-vulnerable across stop-then-restart interleavings. For a runtime address the
-        // token carries the claimed channel, so the stopper unsubscribes exactly the channel
-        // of the claim it took, never a field a concurrent start may have rewritten.
-        if (hasRuntimeAddress)
+        // be ABA-vulnerable across stop-then-restart interleavings. The token carries the
+        // claimed channel, so a stopper unsubscribes exactly the channel of the claim it
+        // took, and its State field is the stop/start handshake: exactly one party
+        // unsubscribes a subscription that is stopped while it is still starting.
+        w.WriteLine("private ActiveSubscription? subscription;");
+        w.WriteLine();
+        w.WriteLine("private sealed class ActiveSubscription");
+        w.OpenBrace();
+
+        if (hasParameterizedAddress)
         {
-            w.WriteLine("private ActiveSubscription? subscription;");
+            w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)");
+            w.OpenBrace();
+            w.WriteLine("this.ChannelUtf8 = channelUtf8;");
+            w.WriteLine("this.DeadLetterUtf8 = deadLetterUtf8;");
+            w.CloseBrace();
         }
         else
         {
-            w.WriteLine("private object? subscription;");
+            w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8)");
+            w.OpenBrace();
+            w.WriteLine("this.ChannelUtf8 = channelUtf8;");
+            w.CloseBrace();
         }
 
-        if (hasRuntimeAddress)
+        w.WriteLine();
+
+        // 0 = starting, 1 = established (a later stop performs the unsubscribe), 2 = stopped
+        // while starting (the start performs it). The 0→1 and 0→2 compare-exchanges are the
+        // handshake's single decision point.
+        w.WriteLine("public int State;");
+        w.WriteLine();
+        w.WriteLine("public ReadOnlyMemory<byte> ChannelUtf8 { get; }");
+
+        if (hasParameterizedAddress)
         {
             w.WriteLine();
-            w.WriteLine("private sealed record ActiveSubscription(ReadOnlyMemory<byte> ChannelUtf8);");
+            w.WriteLine("public byte[] DeadLetterUtf8 { get; }");
         }
+
+        w.CloseBrace();
 
         if (!hasParameterizedAddress)
         {
@@ -2657,7 +2681,7 @@ public sealed class AsyncApi30CodeGenerator
             // rolls the gate back; a stop that raced the start is finished after the subscribe.
             w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
             w.OpenBrace();
-            w.WriteLine("object token = new();");
+            w.WriteLine("ActiveSubscription token = new(ChannelAddressUtf8);");
             w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
@@ -2691,14 +2715,22 @@ public sealed class AsyncApi30CodeGenerator
             w.CloseBrace();
             w.WriteLine();
 
-            // An Abort (or a concurrent StopAsync) may have taken our token while its
-            // unsubscribe found no claim to remove; the claim exists now, so finish that stop
-            // rather than returning a consumer that reports stopped while its subscription
-            // runs. Token identity keeps a successor's claim from masking the theft, and the
-            // cleanup must not be abandoned to a caller's token firing.
-            w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+            // The handshake's decision point: winning 0→1 establishes the token, and any
+            // later stop performs the unsubscribe using it; losing means a stop intervened
+            // mid-start and deliberately declined to touch the transport, so this start
+            // releases the subscription it just landed. Exactly one party unsubscribes, so a
+            // stop that raced ahead can never tear down a successor's resubscription.
+            w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)");
             w.OpenBrace();
             w.WriteLine("await this.transport.UnsubscribeAsync(ChannelAddressUtf8, CancellationToken.None).ConfigureAwait(false);");
+            w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+            w.CloseBrace();
+            w.WriteLine();
+
+            // Established, but the gate may still have moved on (the intervening stop saw the
+            // established state and owns the unsubscribe): report the stop, touch nothing.
+            w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+            w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
             w.CloseBrace();
             w.CloseBrace();
@@ -2728,38 +2760,30 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
 
         // The exchange makes stopping idempotent and race-free: exactly one caller takes the
-        // token and performs the unsubscribe, whether it is StopAsync, DisposeAsync, or the
-        // generated Abort arm — so a lost race is a quiet no-op, never a second unsubscribe
-        // that could tear down whoever claims the channel next. The unsubscribe targets the
-        // channel bound to the token this call took, never a field a concurrent restart may
-        // have rewritten; and if it throws, the token is restored (only while the gate is
-        // still free) so the stop stays retryable.
-        if (hasRuntimeAddress)
-        {
-            w.WriteLine("ActiveSubscription? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);");
-        }
-        else
-        {
-            w.WriteLine("object? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);");
-        }
-
+        // token, whether it is StopAsync, DisposeAsync, or the generated Abort arm — so a
+        // lost race is a quiet no-op. The unsubscribe targets the channel bound to the token
+        // this call took, never a field a concurrent restart may have rewritten; and if it
+        // throws, the token is restored (only while the gate is still free) so the stop
+        // stays retryable.
+        w.WriteLine("ActiveSubscription? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);");
         w.WriteLine("if (current is null)");
         w.OpenBrace();
         w.WriteLine("return false;");
         w.CloseBrace();
         w.WriteLine();
+
+        // The handshake's decision point: if the owning start has not established yet, this
+        // stop must not touch the transport — the start's own 0→1 compare-exchange will lose
+        // and it releases whatever it lands. Unsubscribing here as well is what allowed a
+        // stop to tear down a successor's resubscription.
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref current.State, 2, 0) == 0)");
+        w.OpenBrace();
+        w.WriteLine("return true;");
+        w.CloseBrace();
+        w.WriteLine();
         w.WriteLine("try");
         w.OpenBrace();
-
-        if (hasRuntimeAddress)
-        {
-            w.WriteLine("await this.transport.UnsubscribeAsync(current.ChannelUtf8, cancellationToken).ConfigureAwait(false);");
-        }
-        else
-        {
-            w.WriteLine("await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);");
-        }
-
+        w.WriteLine("await this.transport.UnsubscribeAsync(current.ChannelUtf8, cancellationToken).ConfigureAwait(false);");
         w.CloseBrace();
         w.WriteLine("catch");
         w.OpenBrace();
@@ -3545,6 +3569,7 @@ public sealed class AsyncApi30CodeGenerator
     /// <param name="emitStartBody">Emits the subscribe call itself.</param>
     private void EmitStartAsyncCore(IndentedWriter w, OperationInfo op, Action<bool> emitStartBody, bool emitClaimingCore)
     {
+        bool hasParameterizedAddress = op.Parameters.Count > 0;
         if (emitClaimingCore)
         {
             w.WriteLine();
@@ -3581,8 +3606,28 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = token.ChannelUtf8;");
         w.WriteLine();
 
-        // Recorded before the subscribe because the handler reads it as soon as messages flow.
+        // Recorded before the subscribe because the handler reads them as soon as messages
+        // flow. A start superseded between its claim and these writes can overwrite the
+        // successor's values, so they are repaired from the current owner's token: the
+        // running subscription's handler-visible addresses stay its own.
         w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
+
+        if (hasParameterizedAddress)
+        {
+            w.WriteLine("this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;");
+        }
+
+        w.WriteLine("if (System.Threading.Volatile.Read(ref this.subscription) is { } current && !ReferenceEquals(current, token))");
+        w.OpenBrace();
+        w.WriteLine("this.subscribedChannelUtf8 = current.ChannelUtf8;");
+
+        if (hasParameterizedAddress)
+        {
+            w.WriteLine("this.subscribedDeadLetterChannelUtf8 = current.DeadLetterUtf8;");
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
         w.WriteLine("try");
         w.OpenBrace();
 
@@ -3611,14 +3656,23 @@ public sealed class AsyncApi30CodeGenerator
         w.CloseBrace();
         w.WriteLine();
 
-        // An Abort (or a concurrent StopAsync) may have taken our token while its unsubscribe
-        // found no claim to remove; the claim exists now, so finish that stop rather than
-        // returning a consumer that reports stopped while its subscription runs. Token
-        // identity keeps a successor's claim from masking the theft, and the cleanup must not
+        // The handshake's decision point: winning 0→1 establishes the token, and any later
+        // stop performs the unsubscribe using it; losing means a stop intervened mid-start
+        // and deliberately declined to touch the transport, so this start releases the
+        // subscription it just landed. Exactly one party unsubscribes, so a stop that raced
+        // ahead can never tear down a successor's resubscription, and the cleanup must not
         // be abandoned to a caller's token firing.
-        w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)");
         w.OpenBrace();
         w.WriteLine("await this.transport.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);");
+        w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // Established, but the gate may still have moved on (the intervening stop saw the
+        // established state and owns the unsubscribe): report the stop, touch nothing.
+        w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+        w.OpenBrace();
         w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
         w.CloseBrace();
         w.CloseBrace();
@@ -3699,15 +3753,16 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");
         w.WriteLine();
 
-        // The claim comes before any field write, so a start that is refused — sequentially or
-        // concurrently — can never corrupt the running subscription's dead-letter routing.
-        w.WriteLine("ActiveSubscription token = new(channelUtf8);");
+        // The token carries both retained addresses, so every consumer-level field write
+        // happens inside StartClaimedAsync behind the claim (with repair), and a start that
+        // is refused — sequentially or concurrently — can never corrupt the running
+        // subscription's routing.
+        w.WriteLine("ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
         w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
         w.OpenBrace();
         w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
         w.CloseBrace();
         w.WriteLine();
-        w.WriteLine("this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;");
         w.WriteLine($"return this.StartClaimedAsync(token, cancellationToken);");
         w.CloseBrace();
     }

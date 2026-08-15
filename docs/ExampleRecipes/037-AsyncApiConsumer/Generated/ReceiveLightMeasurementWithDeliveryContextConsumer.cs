@@ -25,7 +25,20 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
     private static readonly byte[] DeadLetterPrefixUtf8 = "dead-letter."u8.ToArray();
     private ActiveSubscription? subscription;
 
-    private sealed record ActiveSubscription(ReadOnlyMemory<byte> ChannelUtf8);
+    private sealed class ActiveSubscription
+    {
+        public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)
+        {
+            this.ChannelUtf8 = channelUtf8;
+            this.DeadLetterUtf8 = deadLetterUtf8;
+        }
+
+        public int State;
+
+        public ReadOnlyMemory<byte> ChannelUtf8 { get; }
+
+        public byte[] DeadLetterUtf8 { get; }
+    }
 
     private static readonly MessageAuthenticationContext SaslScramAuthContext = new(SecuritySchemeType.Plain, "saslScram");
 
@@ -77,13 +90,12 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
         DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());
         channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));
 
-        ActiveSubscription token = new(channelUtf8);
+        ActiveSubscription token = new(channelUtf8, deadLetterUtf8);
         if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)
         {
             ThrowHelper.ThrowConsumerAlreadyStarted();
         }
 
-        this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;
         return this.StartClaimedAsync(token, cancellationToken);
     }
 
@@ -98,6 +110,13 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
         ReadOnlyMemory<byte> channelUtf8 = token.ChannelUtf8;
 
         this.subscribedChannelUtf8 = channelUtf8;
+        this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;
+        if (System.Threading.Volatile.Read(ref this.subscription) is { } current && !ReferenceEquals(current, token))
+        {
+            this.subscribedChannelUtf8 = current.ChannelUtf8;
+            this.subscribedDeadLetterChannelUtf8 = current.DeadLetterUtf8;
+        }
+
         try
         {
             if (this.authProvider is not null)
@@ -113,9 +132,14 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
             throw;
         }
 
-        if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))
+        if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)
         {
             await this.transport.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
+            ThrowHelper.ThrowConsumerStoppedDuringStart();
+        }
+
+        if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))
+        {
             ThrowHelper.ThrowConsumerStoppedDuringStart();
         }
     }
@@ -143,6 +167,11 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
         if (current is null)
         {
             return false;
+        }
+
+        if (System.Threading.Interlocked.CompareExchange(ref current.State, 2, 0) == 0)
+        {
+            return true;
         }
 
         try

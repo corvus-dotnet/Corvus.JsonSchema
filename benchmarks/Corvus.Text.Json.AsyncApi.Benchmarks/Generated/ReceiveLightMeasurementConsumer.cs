@@ -22,7 +22,19 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     private readonly IMessageAuthenticationProvider? authProvider;
     private const string ChannelAddress = "smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] ChannelAddressUtf8 = "smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
-    private object? subscription;
+    private ActiveSubscription? subscription;
+
+    private sealed class ActiveSubscription
+    {
+        public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8)
+        {
+            this.ChannelUtf8 = channelUtf8;
+        }
+
+        public int State;
+
+        public ReadOnlyMemory<byte> ChannelUtf8 { get; }
+    }
     private const string DeadLetterChannel = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] DeadLetterChannelUtf8 = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
 
@@ -49,7 +61,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        object token = new();
+        ActiveSubscription token = new(ChannelAddressUtf8);
         if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)
         {
             ThrowHelper.ThrowConsumerAlreadyStarted();
@@ -65,9 +77,14 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
             throw;
         }
 
-        if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))
+        if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)
         {
             await this.transport.UnsubscribeAsync(ChannelAddressUtf8, CancellationToken.None).ConfigureAwait(false);
+            ThrowHelper.ThrowConsumerStoppedDuringStart();
+        }
+
+        if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))
+        {
             ThrowHelper.ThrowConsumerStoppedDuringStart();
         }
     }
@@ -91,15 +108,20 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <returns><see langword="true"/> if this call performed the stop.</returns>
     private async ValueTask<bool> TryStopCoreAsync(CancellationToken cancellationToken)
     {
-        object? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);
+        ActiveSubscription? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);
         if (current is null)
         {
             return false;
         }
 
+        if (System.Threading.Interlocked.CompareExchange(ref current.State, 2, 0) == 0)
+        {
+            return true;
+        }
+
         try
         {
-            await this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken).ConfigureAwait(false);
+            await this.transport.UnsubscribeAsync(current.ChannelUtf8, cancellationToken).ConfigureAwait(false);
         }
         catch
         {

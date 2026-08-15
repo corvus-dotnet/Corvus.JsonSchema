@@ -217,6 +217,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     // the claim landed and removes it. Task.IsCompleted alone cannot serve —
                     // it only turns true after the slow broker close further down.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
                     this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
@@ -332,6 +337,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     // the claim landed and removes it. Task.IsCompleted alone cannot serve —
                     // it only turns true after the slow broker close further down.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
                     this.ReleaseSubscriptionOnLoopExit(channel, marker);
                     CloseAndDisposeConsumer(channel, consumer);
                     cts.Dispose();
@@ -1232,6 +1242,11 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     // Flagged before the release, so the claim check below either observes the
                     // death or the release runs after the claim landed and removes it.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
 
                     // Release the reply-channel slot if this loop still holds it, so a faulted
                     // reply loop heals on the next request instead of hanging every future one.

@@ -198,15 +198,20 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
                 $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
         }
 
-        // Dispose may have cleared the registry before this claim landed; releasing our own
-        // claim here means a subscribe racing disposal never leaves a live entry behind.
+        this.options.Heartbeat?.Start(channel, "websocket", subscription);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim and the start has already stopped a heartbeat that did not exist yet, so
+        // without this undo a disposed transport would report the channel Running forever.
+        // The stop is unconditional — when the walk already removed the entry, the keyed
+        // remove fails but the just-resurrected heartbeat still needs stopping.
         if (this.disposed)
         {
             this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription));
+            this.options.Heartbeat?.Stop(channel, "websocket", subscription);
             throw new ObjectDisposedException(nameof(WebSocketMessageTransport));
         }
 
-        this.options.Heartbeat?.Start(channel, "websocket", subscription);
         return this.SendSubscribeAsync(channel, subscription, cancellationToken);
     }
 

@@ -858,6 +858,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                     // Flagged before the release, so the subscribe path either observes the death
                     // after its claim, or the release runs after the claim landed and removes it.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats-jetstream");
                     cts.Dispose();
                 }
@@ -1099,6 +1104,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                     // Flagged before the release, so the subscribe path either observes the death
                     // after its claim, or the release runs after the claim landed and removes it.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }
@@ -1329,6 +1339,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                     // Flagged before the release, so the subscribe path either observes the death
                     // after its claim, or the release runs after the claim landed and removes it.
                     Volatile.Write(ref loopExited, true);
+
+                    // Full fence: the flag store must be globally visible before the
+                    // lock-free registry read below can miss a claim, closing the
+                    // store-buffer window in the died-during-claim handshake.
+                    Interlocked.MemoryBarrier();
                     this.ReleaseSubscriptionOnLoopExit(channel, marker, "nats");
                     cts.Dispose();
                 }

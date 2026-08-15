@@ -674,12 +674,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 else if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                    if (actualTag is not null)
-                    {
-                        await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                    }
 
-                    await cts.CancelAsync().ConfigureAwait(false);
+                    // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                    // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                    // the self case and defers the broker close until this handler returns.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -721,12 +720,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                     else if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                        if (actualTag is not null)
-                        {
-                            await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                        }
 
-                        await cts.CancelAsync().ConfigureAwait(false);
+                        // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                        // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                        // the self case and defers the broker close until this handler returns.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     }
                     else
                     {
@@ -783,12 +781,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                         else if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
-                            if (actualTag is not null)
-                            {
-                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                            }
 
-                            await cts.CancelAsync().ConfigureAwait(false);
+                            // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                            // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                            // the self case and defers the broker close until this handler returns.
+                            await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         }
                         else
                         {
@@ -817,11 +814,27 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             throw;
         }
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
+        SubscriptionState state = new(consumerChannel, cts, actualTag, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "amqp", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever — and this subscribe would return success for a torn-down consumer.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
+        }
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
@@ -1007,12 +1020,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 else if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                    if (actualTag is not null)
-                    {
-                        await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                    }
 
-                    await cts.CancelAsync().ConfigureAwait(false);
+                    // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                    // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                    // the self case and defers the broker close until this handler returns.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -1054,12 +1066,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                     else if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                        if (actualTag is not null)
-                        {
-                            await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                        }
 
-                        await cts.CancelAsync().ConfigureAwait(false);
+                        // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                        // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                        // the self case and defers the broker close until this handler returns.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     }
                     else
                     {
@@ -1163,12 +1174,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                         else if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
-                            if (actualTag is not null)
-                            {
-                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                            }
 
-                            await cts.CancelAsync().ConfigureAwait(false);
+                            // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                            // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                            // the self case and defers the broker close until this handler returns.
+                            await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         }
                         else
                         {
@@ -1197,11 +1207,27 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             throw;
         }
 
-        await this.ClaimSubscriptionAsync(channel, new SubscriptionState(consumerChannel, cts, actualTag, marker)).ConfigureAwait(false);
+        SubscriptionState state = new(consumerChannel, cts, actualTag, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
         // Started only once the claim is final: a subscribe that fails at or before the claim
         // must leave no phantom Running entry behind.
         this.options.Heartbeat?.Start(channel, "amqp", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever — and this subscribe would return success for a torn-down consumer.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
+        }
     }
 
     private async ValueTask DeadLetterCoreAsync(

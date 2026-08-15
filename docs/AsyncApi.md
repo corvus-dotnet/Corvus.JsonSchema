@@ -105,11 +105,13 @@ await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
 ReceiveLightMeasurementConsumer consumer = new(transport, handler);
 
-await consumer.StartAsync();
+// The channel address declares a {streetlightId} parameter, so the consumer takes it on
+// StartAsync and subscribes to the address those parameters compose.
+await consumer.StartAsync(streetlightId: "1");
 
 // Simulate an incoming message (in production, the broker delivers these)
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.1.lighting.measured",
     """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
 
 await consumer.StopAsync();
@@ -730,7 +732,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(
     tokenFactory: ct => new ValueTask<string>("refreshed-token-value"));
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: "1");
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -764,7 +766,7 @@ IMessageAuthenticationProvider namedAuth = new ApiKeyAuthenticationProvider(
     location: "header");
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: namedAuth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: "1");
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -1292,7 +1294,7 @@ foreach (var status in heartbeat.GetSubscriptionStatuses())
 }
 ```
 
-If a loop has not ticked for longer than the staleness threshold (default: 30 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.
+If a loop has not ticked for longer than the staleness threshold (default: 60 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.
 
 ### Health Checks
 

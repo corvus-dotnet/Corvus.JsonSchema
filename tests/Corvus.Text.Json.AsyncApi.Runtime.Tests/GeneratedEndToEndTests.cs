@@ -361,6 +361,45 @@ public class GeneratedEndToEndTests
     }
 
     [TestMethod]
+    public async Task Consumer_StopAfterSubscribeLands_ExactlyOnePartyUnsubscribes()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource postGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.PostSubscribeGate = postGate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // The first start's subscription LANDS at the transport, then the start parks before
+        // its completion logic runs.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+
+        // The stop takes the claim mid-start: per the handshake it declines the transport
+        // removal (the superseded start owns that cleanup), so the channel is still held.
+        await consumer.StopAsync();
+
+        // A restart while the superseded start is still unwinding is therefore honestly
+        // refused — the alternative (the stop unsubscribing eagerly, the restart landing,
+        // and the superseded start then destroying the restart's live subscription) is the
+        // silent-message-loss defect this pins. The gate is disarmed first so the refusal
+        // (or, on defective code, the wrongly-successful restart) completes promptly.
+        transport.PostSubscribeGate = null;
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("1").AsTask());
+
+        // The superseded start resumes, releases the subscription it landed, and reports the stop.
+        postGate.SetResult();
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+        StringAssert.Contains(ex.Message, "stopped");
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+
+        // Now the restart succeeds, is genuinely live, and stops cleanly.
+        transport.PostSubscribeGate = null;
+        await consumer.StartAsync("1");
+        Assert.IsTrue(transport.IsSubscribed(LightMeasurementChannel));
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+    }
+
+    [TestMethod]
     public async Task Consumer_FailedStartAfterRestart_DoesNotReleaseTheNewClaim()
     {
         PausableTransport transport = new();
@@ -395,6 +434,10 @@ public class GeneratedEndToEndTests
         // Read once at the top of each subscribe, so a parked subscribe keeps its own gate
         // while the test re-arms or clears the property for later calls.
         public TaskCompletionSource? SubscribeGate { get; set; }
+
+        // Awaited AFTER the subscription has landed, so a test can hold a start between the
+        // transport recording the subscription and the start's own completion logic running.
+        public TaskCompletionSource? PostSubscribeGate { get; set; }
 
         public bool IsSubscribed(string channel)
         {
@@ -443,6 +486,11 @@ public class GeneratedEndToEndTests
                     throw new InvalidOperationException(
                         $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
                 }
+            }
+
+            if (this.PostSubscribeGate is { } postGate)
+            {
+                await postGate.Task.ConfigureAwait(false);
             }
         }
 

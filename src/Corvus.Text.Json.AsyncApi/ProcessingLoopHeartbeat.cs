@@ -171,8 +171,10 @@ public sealed class ProcessingLoopHeartbeat
             (MessagingSystem: messagingSystem, Now: now, Owner: owner));
 
         // A tick that was ignored (another subscription owns the entry) emits no event, so
-        // the tick rate reflects only the live subscription's loop.
-        if (result.LastTickTimestamp != now)
+        // the tick rate reflects only the live subscription's loop. Owner identity is the
+        // test — a timestamp comparison would false-positive when two ticks share a
+        // Stopwatch quantum.
+        if (!ReferenceEquals(result.Owner, owner))
         {
             return;
         }

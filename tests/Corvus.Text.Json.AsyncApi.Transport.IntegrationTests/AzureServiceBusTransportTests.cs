@@ -280,4 +280,63 @@ public class AzureServiceBusTransportTests
         await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
         await s_transport.UnsubscribeAsync(channel);
     }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        AbortOnHandlerErrorPolicy policy = new();
+        AzureServiceBusMessageTransport transport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-deadletter-source",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "test-deadletter-source"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc1.RootElement);
+
+        // Times out (failing the test) if the policy is never consulted for the poison message.
+        await policy.FirstInvocation.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        await Task.Delay(1000);
+
+        // An Abort verdict must actually stop the processor: further messages are not handled.
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(1500);
+
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "The handler must not run after an Abort verdict.");
+
+        // And the abort released the claim: the channel is free to resubscribe.
+        await transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await transport.DisposeAsync();
+    }
+
+    private sealed class AbortOnHandlerErrorPolicy : IMessageErrorPolicy
+    {
+        public TaskCompletionSource FirstInvocation { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.FirstInvocation.TrySetResult();
+            return ValueTask.FromResult(MessageErrorAction.Abort);
+        }
+    }
 }

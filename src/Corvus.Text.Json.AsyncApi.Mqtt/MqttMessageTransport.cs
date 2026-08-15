@@ -185,10 +185,16 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
+
+        // Local effect first, and an early out when there is nothing to remove: a double
+        // unsubscribe (or one against a disposed transport) must be a quiet no-op rather
+        // than a broker call that throws on a disposed client — matching every other transport.
+        if (!this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
         {
-            this.options.Heartbeat?.Stop(channel, "mqtt", removed);
+            return;
         }
+
+        this.options.Heartbeat?.Stop(channel, "mqtt", removed);
 
         MqttClientUnsubscribeOptions unsubOptions = new MqttFactory().CreateUnsubscribeOptionsBuilder()
             .WithTopicFilter(channel)
@@ -423,15 +429,20 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                 $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
         }
 
-        // Dispose may have cleared the registry before this claim landed; releasing our own
-        // claim here means a subscribe racing disposal never leaves a live entry behind.
+        this.options.Heartbeat?.Start(channel, "mqtt", dispatch);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim and the start has already stopped a heartbeat that did not exist yet, so
+        // without this undo a disposed transport would report the channel Running forever.
         if (this.disposed)
         {
+            // The stop is unconditional: when the walk already removed the entry, the keyed
+            // remove fails but the just-resurrected heartbeat still needs stopping, and the
+            // owner guard makes a stray stop harmless.
             this.handlers.TryRemove(KeyValuePair.Create(channel, dispatch));
+            this.options.Heartbeat?.Stop(channel, "mqtt", dispatch);
             throw new ObjectDisposedException(nameof(MqttMessageTransport));
         }
-
-        this.options.Heartbeat?.Start(channel, "mqtt", dispatch);
     }
 
     private async ValueTask SendSubscribeAsync(

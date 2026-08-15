@@ -2424,7 +2424,11 @@ public class AsyncApi30CodeGeneratorTests
 
         // The dead-letter address is built from the bytes just composed, not from a second pass or a concat.
         StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
-        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;");
+
+        // The retained addresses travel in the claim token and are written to the consumer's
+        // fields only behind the claim, inside StartClaimedAsync.
+        StringAssert.Contains(consumer.Content, "ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;");
 
         // What the old shape did, and must not come back.
         Assert.IsFalse(consumer.Content.Contains("ChannelAddressTemplate", StringComparison.Ordinal), "the template should be split at generation time, not carried as a string");
