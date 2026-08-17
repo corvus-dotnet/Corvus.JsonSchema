@@ -522,6 +522,7 @@ using Streetlights.Client.Models;  // payload model types
 <li><strong>The delivery-context consumer requires an <code>IMessageDeliveryContextTransport</code>.</strong> All seven transports implement it. When wrapping with instrumentation, use <code>InstrumentedMessageTransport.Create</code> so the wrapper preserves the capability.</li>
 <li><strong>A channel has one subscription.</strong> Every transport allows exactly one subscription per channel, of any kind: legacy data, delivery-context data, or responder. Subscribing a channel that already has one throws <code>InvalidOperationException</code>; unsubscribe first, which frees the slot for a subscription of any kind. Nothing is displaced silently, and an existing subscription is never touched by the subscribe path: a subscribe that loses a race for the slot tears down only the consumer it was building, though on some brokers that consumer may receive a message or two before the refusal lands. A handler may call <code>UnsubscribeAsync</code> for its own channel (the Abort error-policy path does): the subscription is released immediately, and the transport detects that the call came from inside the subscription's own handler and completes the broker-side teardown as the handler returns, rather than deadlocking by waiting for a handler that is waiting for it.</li>
 <li><strong>The two generated consumers for one operation are mutually exclusive.</strong> <code>{Operation}Consumer</code> and <code>{Operation}WithDeliveryContextConsumer</code> subscribe the same channel address, so start one or the other, not both. Starting the second throws rather than quietly taking the channel over.</li>
+<li><strong>Generated consumer lifecycle is strict.</strong> A second <code>StartAsync</code> on a started consumer throws; <code>StopAsync</code> on a consumer that is not started throws; <code>DisposeAsync</code> stops only a started consumer and completes quietly otherwise. A <code>StopAsync</code> (or the Abort error-policy path) that lands while the subscription is still being established is honored: the stop reports success, and the start releases the subscription it created and throws an <code>InvalidOperationException</code> saying the consumer was stopped during start. In that window a restart can be refused with &quot;already has a subscription&quot; because the superseded start has not yet released its claim at the transport — wait for the original start's exception to surface, then restart.</li>
 <li><strong>Direct transport API users own the channel buffer.</strong> <code>SubscribeWithDeliveryContextAsync</code> retains the <code>channelUtf8</code> memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)</li>
 <li><strong>Bindings travel.</strong> An operation declaring channel or operation bindings subscribes through a <code>MessageContext</code> overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.</li>
 </ul>
@@ -864,9 +865,10 @@ await producer.PublishTurnOnOffAsync(
 // Assert published messages
 Assert.AreEqual(1, transport.PublishedMessages.Count);
 
-// Deliver messages to consumers for testing
+// Deliver messages to consumers for testing — target the address the consumer's
+// parameters composed, not the literal template
 await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(
-    &quot;smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured&quot;,
+    &quot;smartylighting.streetlights.1.0.action.lamp-001.lighting.measured&quot;,
     &quot;&quot;&quot;{&quot;lumens&quot;:250,&quot;sentAt&quot;:&quot;2024-01-15T10:30:00Z&quot;}&quot;&quot;&quot;u8.ToArray());
 </code></pre>
 <h2 id="local-integration-test-troubleshooting">Local Integration Test Troubleshooting</h2>
@@ -1398,9 +1400,9 @@ private static void ValidateHeaders&lt;THeaders&gt;(THeaders headers, Validation
 <p>Azure Service Bus deserves one extra note because it has both broker system properties and user application properties. Corvus writes AsyncAPI message headers to <code>ApplicationProperties</code>; it does not use them for broker control fields such as <code>CorrelationId</code>, <code>ReplyTo</code>, or <code>SessionId</code>. Request/reply support uses those native Service Bus fields separately, while your AsyncAPI header schema remains in the application-property map and is passed to generated handlers as the same typed header struct used by other transports.</p>
 <h2 id="requestreply">Request/Reply</h2>
 <p>AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:</p>
-<pre><code class="language-csharp">// Generated request/reply method
-(QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: QueryPayload.Build(filter: &quot;status=active&quot;u8),
+<pre><code class="language-csharp">// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply
+QueryResponse reply = await queryProducer.SendAndReceiveQueryAsync(
+    payload: QueryPayload.Build(filter: &quot;status=active&quot;u8),
     cancellationToken: ct);
 
 // reply is already deserialized and validated
@@ -1459,7 +1461,7 @@ foreach (var item in reply.Results.EnumerateArray())
     where TReply : struct, IJsonElement&lt;TReply&gt;;
 </code></pre>
 <p>The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same <code>CorrelationId</code>/<code>ReplyTo</code> the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.</p>
-<p><strong>Reply ownership.</strong> <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable.</p>
+<p><strong>Reply ownership.</strong> At the transport level, <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable. (The generated <code>SendAndReceive*</code> requester currently manages an internal workspace rather than accepting the caller's; its reply-lifetime handling is being reworked and callers using the generated requester should treat the reply as valid only for immediate reads.)</p>
 <p><strong>Implementation status.</strong> Every transport implements <code>SubscribeReplyAsync</code>: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a <code>RequestAsync</code> call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, <code>RequestAsync</code> parks the request for the test helper <code>CompleteRequest</code>, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve <code>RequestAsync</code> live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.</p>
 <h2 id="bindings">Bindings</h2>
 <p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via <code>MessageContext</code>:</p>
@@ -1553,8 +1555,9 @@ NatsTransportOptions options = new()
     Heartbeat = heartbeat,
 };
 
-// After starting consumers, check liveness:
-bool alive = heartbeat.IsAlive(&quot;smartylighting.streetlights.1.0.action.*.lighting.measured&quot;);
+// After starting consumers, check liveness — IsAlive is an exact channel-key lookup
+// (no wildcard matching), so pass the composed address the consumer subscribed:
+bool alive = heartbeat.IsAlive(&quot;smartylighting.streetlights.1.0.action.1.lighting.measured&quot;);
 
 // Get all subscription statuses:
 foreach (var status in heartbeat.GetSubscriptionStatuses())
