@@ -396,7 +396,11 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
                 // against pendingReplies would let that subscription consume its own request as
                 // its reply. On any other channel the correlation match stands, so a peer that
                 // sets a reply channel on its reply (soliciting a follow-up) still completes the
-                // pending request.
+                // pending request. The subscription lookup is lock-free, so an unsubscribe that
+                // completes between a self-loopback request's send and its delivery can make this
+                // read miss and the request correlate as its own reply; that window needs the
+                // loopback shape plus a concurrent unsubscribe of the same channel, and is
+                // accepted in trade for deterministic peer interop.
                 if (envelopeCorrelationId is not null &&
                     (!envelope.TryGetProperty("replyChannel"u8, out JsonElement _) || !this.subscriptions.ContainsKey(channel)) &&
                     this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
@@ -683,6 +687,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         if (this.disposed)
         {
             this.pendingReplies.TryRemove(correlationId, out _);
+            ArrayPool<byte>.Shared.Return(envelopeRented);
             throw new ObjectDisposedException(nameof(WebSocketMessageTransport), "The transport was disposed before the reply arrived.");
         }
 

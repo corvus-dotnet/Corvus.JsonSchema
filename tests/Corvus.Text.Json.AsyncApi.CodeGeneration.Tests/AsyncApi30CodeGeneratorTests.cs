@@ -2061,6 +2061,29 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ServerSecurity_UnknownScheme_ReportsDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "missing-scheme-3.0.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/eventPayload"] = "Events.EventPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Events", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The server requirement references a scheme that components.securitySchemes does not
+        // define; the degradation must be recorded rather than silently mapping the scheme to
+        // UserPassword, exactly as the 2.6 path reports it.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("missingScheme")),
+            "A security requirement naming an undefined scheme should be reported as a diagnostic");
+    }
+
+    [TestMethod]
     public void Generate_ReplyAddressExpressionUnusable_FallsBackToReplyChannelAndCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "reply-address-literal-expression.json"));

@@ -121,10 +121,37 @@ public class AsyncApi26CodeGeneratorTests
         _ = generator.Generate(root);
 
         // The server requirement names a scheme that components.securitySchemes does not define;
-        // the degradation must be recorded rather than silently emitting a wrong scheme type.
+        // the degradation must be recorded rather than silently emitting a wrong scheme type -
+        // and recorded once, not once per operation that collects the server's security.
+        Assert.AreEqual(
+            1,
+            generator.Diagnostics.Count(d => d.Message.Contains("missingScheme")),
+            "A security requirement naming an undefined scheme should be reported exactly once");
+    }
+
+    [TestMethod]
+    public void Generate_ReplyAddressLiteralExpression_SurfacesEmissionDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "asyncapi26-reply-literal-expression.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/CalculateRequest"] = "Calculator.CalculateRequest",
+            ["#/components/schemas/CalculateResponse"] = "Calculator.CalculateResponse",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Calculator", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The x-corvus-reply address expression "$message.header.replyTo" (no '#') is demoted
+        // during emission; that demotion is recorded by the inner 3.0 emitter and must surface
+        // through the 2.6 generator's own Diagnostics, or --strict passes on a document the
+        // byte-identical 3.0 form fails.
         Assert.IsTrue(
-            generator.Diagnostics.Any(d => d.Message.Contains("missingScheme")),
-            "A security requirement naming an undefined scheme should be reported as a diagnostic");
+            generator.Diagnostics.Any(d => d.Message.Contains("$message.header.replyTo")),
+            "An emission-phase demotion should surface through the 2.6 generator's Diagnostics");
     }
 
     [TestMethod]

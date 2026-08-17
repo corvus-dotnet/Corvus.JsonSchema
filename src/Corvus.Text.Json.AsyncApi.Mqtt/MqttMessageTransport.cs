@@ -331,6 +331,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         if (this.disposed)
         {
             this.pendingReplies.TryRemove(correlationIdUtf8, out _);
+            ArrayPool<byte>.Shared.Return(rented);
             throw new ObjectDisposedException(nameof(MqttMessageTransport), "The transport was disposed before the reply arrived.");
         }
 
@@ -639,7 +640,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         // to the sender), not a reply; matching it against pendingReplies would let that
         // subscription consume its own request as its reply. On any other topic the correlation
         // match stands, because an MQTT 5 responder may legitimately set a response topic on its
-        // reply to solicit a follow-up.
+        // reply to solicit a follow-up. The handler lookup is lock-free, so an unsubscribe that
+        // completes between a self-loopback request's publish and its delivery can make this read
+        // miss and the request correlate as its own reply; that window needs the loopback shape
+        // plus a concurrent unsubscribe of the same topic, and is accepted in trade for correct
+        // MQTT 5 responder interop, which is deterministic rather than a race.
         if ((string.IsNullOrEmpty(args.ApplicationMessage.ResponseTopic) || !this.handlers.ContainsKey(topic)) &&
             corrData is { Length: > 0 } &&
             this.pendingReplies.TryRemove(new ReadOnlyMemory<byte>(corrData), out TaskCompletionSource<MqttApplicationMessage>? tcs))

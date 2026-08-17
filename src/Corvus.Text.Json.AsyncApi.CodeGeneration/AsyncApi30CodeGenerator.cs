@@ -3612,8 +3612,33 @@ public sealed class AsyncApi30CodeGenerator
             }
         }
 
+        AddDiagnosticIfMissing(
+            diagnostics,
+            $"#/components/securitySchemes/{schemeName}",
+            $"The security requirement names '{schemeName}', which components.securitySchemes does not define; its type was reported as 'unknown'.");
         return "unknown";
     }
+
+    /// <summary>Adds a degradation diagnostic to a caller-supplied collection unless an identical one is already present.</summary>
+    /// <param name="diagnostics">The collection, when the caller wants diagnostics.</param>
+    /// <param name="location">The specification location.</param>
+    /// <param name="message">The problem description.</param>
+    internal static void AddDiagnosticIfMissing(ICollection<AsyncApiGenerationDiagnostic>? diagnostics, string location, string message)
+    {
+        if (diagnostics is null)
+        {
+            return;
+        }
+
+        AsyncApiGenerationDiagnostic diagnostic = new(AsyncApiGenerationDiagnosticSeverity.Warning, location, message);
+        if (!diagnostics.Contains(diagnostic))
+        {
+            diagnostics.Add(diagnostic);
+        }
+    }
+
+    /// <summary>Clears the diagnostics list, for the 2.6 wrapper that drives emission directly.</summary>
+    internal void ClearDiagnostics() => this.diagnostics.Clear();
 
     /// <summary>
     /// Emits code to construct a parameterized channel address directly as UTF-8 bytes
@@ -3954,12 +3979,16 @@ public sealed class AsyncApi30CodeGenerator
             return null;
         }
 
+        string fallbackDescription = !string.IsNullOrEmpty(reply.ChannelAddress)
+            ? "the reply channel's declared address was used instead"
+            : "the request channel's address was used instead";
+
         AsyncApiRuntimeExpression parsed = AsyncApiRuntimeExpression.Parse(addrExpr);
         if (parsed.Kind == AsyncApiRuntimeExpressionKind.MessageHeader && msg.HeadersTypeName is null)
         {
             this.AddDiagnosticOnce(
                 $"#/operations/{op.Name}/reply/address",
-                $"The reply address expression '{addrExpr}' reads the message headers, but message '{msg.Name}' declares no headers schema; the declared reply address was used instead.");
+                $"The reply address expression '{addrExpr}' reads the message headers, but message '{msg.Name}' declares no headers schema; {fallbackDescription}.");
             return null;
         }
 
@@ -3969,7 +3998,7 @@ public sealed class AsyncApi30CodeGenerator
         {
             this.AddDiagnosticOnce(
                 $"#/operations/{op.Name}/reply/address",
-                $"The reply address expression '{addrExpr}' is not a supported runtime expression; the declared reply address was used instead.");
+                $"The reply address expression '{addrExpr}' is not a supported runtime expression; {fallbackDescription}.");
         }
 
         return accessor;

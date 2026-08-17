@@ -162,11 +162,19 @@ public sealed class AsyncApi26CodeGenerator
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
         this.diagnostics.Clear();
+        this.emitter.ClearDiagnostics();
 
         (List<AsyncApi30CodeGenerator.OperationInfo> sendOps, List<AsyncApi30CodeGenerator.OperationInfo> receiveOps) =
             this.CollectOperations(doc, filter, referenceResolver);
 
-        return this.emitter.GenerateOperations(sendOps, receiveOps, []);
+        IReadOnlyList<GeneratedFile> files = this.emitter.GenerateOperations(sendOps, receiveOps, []);
+
+        // Emission-phase degradations (demoted reply expressions, template demotions, name
+        // collisions) are recorded by the inner 3.0 emitter; surface them as this generator's
+        // own so 2.6 callers - and --strict - see everything the 3.0 path would report.
+        this.diagnostics.AddRange(this.emitter.Diagnostics);
+
+        return files;
     }
 
     /// <summary>
@@ -836,20 +844,20 @@ public sealed class AsyncApi26CodeGenerator
             JsonElement resolved = ResolveRef(scheme, doc, resolver);
             if (IsRef(resolved))
             {
-                diagnostics?.Add(new(
-                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                AsyncApi30CodeGenerator.AddDiagnosticIfMissing(
+                    diagnostics,
                     $"#/components/securitySchemes/{schemeName}",
-                    "The security scheme is a $ref that does not resolve; its type was reported as 'unknown'."));
+                    "The security scheme is a $ref that does not resolve; its type was reported as 'unknown'.");
                 return "unknown";
             }
 
             return GetString(resolved, "type"u8) ?? "unknown";
         }
 
-        diagnostics?.Add(new(
-            AsyncApiGenerationDiagnosticSeverity.Warning,
+        AsyncApi30CodeGenerator.AddDiagnosticIfMissing(
+            diagnostics,
             $"#/components/securitySchemes/{schemeName}",
-            $"The security requirement names '{schemeName}', which components.securitySchemes does not define; its type was reported as 'unknown'."));
+            $"The security requirement names '{schemeName}', which components.securitySchemes does not define; its type was reported as 'unknown'.");
         return "unknown";
     }
 

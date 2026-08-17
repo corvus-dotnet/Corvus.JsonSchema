@@ -496,6 +496,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         if (this.disposed)
         {
             this.pendingReplies.TryRemove(correlationId, out _);
+            ArrayPool<byte>.Shared.Return(requestRented);
             throw new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived.");
         }
 
