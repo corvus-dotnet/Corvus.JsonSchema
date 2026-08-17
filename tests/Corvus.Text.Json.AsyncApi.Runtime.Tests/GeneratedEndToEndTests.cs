@@ -33,6 +33,8 @@ public class GeneratedEndToEndTests
     private const string LightMeasurementChannel =
         "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
+    private const string DimChannel = "smartylighting.streetlights.1.0.action.dim";
+
     [TestMethod]
     public async Task Producer_PublishTurnOnOff_SerializesPayloadToChannel()
     {
@@ -617,6 +619,86 @@ public class GeneratedEndToEndTests
         public ValueTask HandleLightMeasuredAsync(LightMeasuredPayload payload, CancellationToken cancellationToken = default)
         {
             this.onHandle();
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    [TestMethod]
+    public async Task Requester_ReplyRemainsReadableAfterTheCall()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        DimLightResponsePayload reply = await pending;
+
+        Assert.AreEqual(1, transport.PublishedMessages.Count);
+        Assert.AreEqual(DimChannel, transport.PublishedMessages[0].Channel);
+
+        // The reply must stay readable after the call returns; its documents are owned by the
+        // workspace the caller supplied, not one the requester has already disposed.
+        Assert.IsTrue(reply.Status.ValueEquals("ok"u8));
+        Assert.AreEqual(40L, (long)reply.CurrentLevel);
+    }
+
+    [TestMethod]
+    public async Task Requester_AuthenticatesBeforeSending()
+    {
+        await using InMemoryMessageTransport transport = new();
+        RecordingAuthProvider authProvider = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic, authProvider);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        _ = await pending;
+
+        Assert.AreEqual(1, authProvider.Authentications.Count);
+        Assert.AreEqual("saslScram", authProvider.Authentications[0].SchemeName);
+    }
+
+    [TestMethod]
+    public async Task Requester_DisposingTheCallerWorkspace_InvalidatesTheReply()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        DimLightResponsePayload reply = await pending;
+
+        // The caller's workspace owns the reply documents: disposing it ends the reply's lifetime.
+        workspace.Dispose();
+        Assert.ThrowsExactly<ObjectDisposedException>(() => reply.Status.ValueEquals("ok"u8));
+    }
+
+    [TestMethod]
+    public async Task Requester_InvalidPayload_ThrowsWithoutSending()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":200,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            async () => await producer.SendAndReceiveDimLightAsync(payload, workspace));
+
+        Assert.AreEqual(0, transport.PublishedMessages.Count);
+    }
+
+    private sealed class RecordingAuthProvider : IMessageAuthenticationProvider
+    {
+        public List<MessageAuthenticationContext> Authentications { get; } = [];
+
+        public ValueTask AuthenticateAsync(MessageAuthenticationContext context, CancellationToken cancellationToken = default)
+        {
+            this.Authentications.Add(context);
             return ValueTask.CompletedTask;
         }
     }

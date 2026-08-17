@@ -44,27 +44,37 @@ public sealed class TurnOnProducer
     public ValueTask PublishTurnOnOffAsync(Streetlights.Client.Models.TurnOnOffPayload.Source payload, string streetlightId, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Streetlights.Client.Models.TurnOnOffPayload payloadValue = Streetlights.Client.Models.TurnOnOffPayload.CreateBuilder(workspace, payload, 30).RootElement;
-
-        if (this.validationMode != ValidationMode.None)
+        byte[]? channelRental = null;
+        try
         {
-            ValidatePayload(payloadValue, this.validationMode);
+            Streetlights.Client.Models.TurnOnOffPayload payloadValue = Streetlights.Client.Models.TurnOnOffPayload.CreateBuilder(workspace, payload, 30).RootElement;
+
+            if (this.validationMode != ValidationMode.None)
+            {
+                ValidatePayload(payloadValue, this.validationMode);
+            }
+
+            int channelByteCount = 47 + Encoding.UTF8.GetByteCount(streetlightId);
+            channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);
+            int channelPos = 0;
+            "smartylighting.streetlights.1.0.action."u8.CopyTo(channelRental.AsSpan(channelPos));
+            channelPos += 39;
+            channelPos += Encoding.UTF8.GetBytes(streetlightId, channelRental.AsSpan(channelPos));
+            ".turn.on"u8.CopyTo(channelRental.AsSpan(channelPos));
+            channelPos += 8;
+            ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelPos);
+            MessageContext context = new()
+            {
+                ContentType = "application/json",
+            };
+            return PublishAsyncCore(workspace, channelUtf8, channelRental, payloadValue, default, context, cancellationToken);
         }
-
-        int channelByteCount = 47 + Encoding.UTF8.GetByteCount(streetlightId);
-        byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);
-        int channelPos = 0;
-        "smartylighting.streetlights.1.0.action."u8.CopyTo(channelRental.AsSpan(channelPos));
-        channelPos += 39;
-        channelPos += Encoding.UTF8.GetBytes(streetlightId, channelRental.AsSpan(channelPos));
-        ".turn.on"u8.CopyTo(channelRental.AsSpan(channelPos));
-        channelPos += 8;
-        ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelPos);
-        MessageContext context = new()
+        catch
         {
-            ContentType = "application/json",
-        };
-        return PublishAsyncCore(workspace, channelUtf8, channelRental, payloadValue, default, context, cancellationToken);
+            if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }
+            workspace.Dispose();
+            throw;
+        }
     }
 
     private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, TPayload payload, Corvus.Text.Json.JsonElement headers, MessageContext context, CancellationToken cancellationToken)

@@ -225,6 +225,29 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
         tcs.SetResult((replyPayloadJson, replyHeadersJson ?? []));
     }
 
+    /// <summary>
+    /// Completes the single pending request/reply, failing if the number pending is not exactly one.
+    /// </summary>
+    /// <param name="replyPayloadJson">The reply payload JSON bytes.</param>
+    /// <param name="replyHeadersJson">The reply headers JSON bytes.</param>
+    public void CompleteSinglePendingRequest(byte[] replyPayloadJson, byte[] replyHeadersJson = default!)
+    {
+        string correlationId;
+
+        lock (this.syncRoot)
+        {
+            if (this.pendingRequests.Count != 1)
+            {
+                throw new InvalidOperationException(
+                    $"Expected exactly one pending request but found {this.pendingRequests.Count}.");
+            }
+
+            correlationId = this.pendingRequests.Keys.First();
+        }
+
+        this.CompleteRequest(correlationId, replyPayloadJson, replyHeadersJson);
+    }
+
     private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
         JsonWorkspace workspace,

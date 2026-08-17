@@ -2013,6 +2013,22 @@ public class AsyncApi30CodeGeneratorTests
             "SendAndReceive should be non-async (returns ValueTask without async keyword)");
         Assert.IsFalse(producerFile.Content.Contains("public async ValueTask<Calculator.CalculateResponse> SendAndReceive"),
             "SendAndReceive should NOT be async (ref struct Source params are illegal in async methods)");
+
+        // The caller supplies the workspace that owns the reply; the requester's internal workspace
+        // owns only the outgoing request and is disposed by the Core.
+        Assert.IsTrue(producerFile.Content.Contains("JsonWorkspace workspace,"),
+            "SendAndReceive should take the caller's reply workspace");
+        Assert.IsTrue(producerFile.Content.Contains("RequestAsyncCore<TPayload, TReply>(JsonWorkspace payloadWorkspace, JsonWorkspace replyWorkspace"),
+            "RequestAsyncCore should separate the request-owning and reply-owning workspaces");
+        Assert.IsTrue(producerFile.Content.Contains("payloadWorkspace.Dispose();"),
+            "The Core should dispose only the request-owning workspace");
+
+        // This spec derives the reply address from a runtime expression, so the encoded reply
+        // address is rented; the rental must travel into the Core and be returned there.
+        Assert.IsTrue(producerFile.Content.Contains("replyRental = ArrayPool<byte>.Shared.Rent("),
+            "A runtime-expression reply address should be encoded into a rented buffer");
+        Assert.IsTrue(producerFile.Content.Contains("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }"),
+            "The reply-address rental should be returned to the pool");
     }
 
     [TestMethod]

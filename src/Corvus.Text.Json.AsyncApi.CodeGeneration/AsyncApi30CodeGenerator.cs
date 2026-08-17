@@ -1728,7 +1728,20 @@ public sealed class AsyncApi30CodeGenerator
             // Core body and the channel is already supplied as channelUtf8/channelRental.
             void EmitPublishBody()
             {
+                // Anything created or rented before the PublishAsyncCore call is released in the
+                // emitted catch if a pre-Core step (payload building, validation, channel encoding)
+                // throws; from the Core call onwards the Core owns release, because an async method
+                // surfaces its failures through the returned task rather than synchronously.
+                bool rentsChannelInline = op.Parameters.Count > 0 || (op.IsDynamicAddress && !dynamicNoParams);
+
                 w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+                if (rentsChannelInline)
+                {
+                    w.WriteLine("byte[]? channelRental = null;");
+                }
+
+                w.WriteLine("try");
+                w.OpenBrace();
                 w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
 
                 if (msg.HeadersTypeName is not null)
@@ -1760,7 +1773,7 @@ public sealed class AsyncApi30CodeGenerator
                 {
                     // Dynamic: convert user-provided string to UTF-8 bytes (one allocation)
                     w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                    w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
                     w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
                     w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
                 }
@@ -1803,6 +1816,21 @@ public sealed class AsyncApi30CodeGenerator
                     : "null";
 
                 w.WriteLine($"return PublishAsyncCore(workspace, {channelArg}, {rentalArg}, payloadValue, {headersArg}, context, cancellationToken);");
+                w.CloseBrace();
+                w.WriteLine("catch");
+                w.OpenBrace();
+                if (dynamicNoParams)
+                {
+                    w.WriteLine("ArrayPool<byte>.Shared.Return(channelRental);");
+                }
+                else if (rentsChannelInline)
+                {
+                    w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
+                }
+
+                w.WriteLine("workspace.Dispose();");
+                w.WriteLine("throw;");
+                w.CloseBrace();
             }
 
             if (dynamicNoParams)
@@ -1957,17 +1985,61 @@ public sealed class AsyncApi30CodeGenerator
                 // all delegate to a shared private Core taking the channel as already-built UTF-8.
                 bool dynamicNoParams = op.IsDynamicAddress && op.Parameters.Count == 0;
 
-                // Local function emitting the shared body (workspace + payload + validation + reply
-                // address derivation + the RequestAsyncCore call). For the dynamic triple this is the
-                // Core body and the channel is already supplied as channelUtf8/channelRental.
+                // Local function emitting the shared body (payload workspace + payload + validation +
+                // reply address derivation + the RequestAsyncCore call). For the dynamic triple this is
+                // the Core body and the channel is already supplied as channelUtf8/channelRental. The
+                // caller-supplied workspace owns the reply documents; the internal payload workspace
+                // owns only the outgoing request and is disposed by the Core once the exchange
+                // completes. Anything created or rented before the Core call is released in the
+                // emitted catch if a pre-Core step throws; from the Core call onwards the Core owns
+                // release, because an async method surfaces its failures through the returned task
+                // rather than synchronously.
                 void EmitRequestBody()
                 {
-                    w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-                    w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
+                    bool rentsChannelInline = op.Parameters.Count > 0 || (op.IsDynamicAddress && !dynamicNoParams);
+
+                    // Resolve the reply-address strategy up front so the rental locals can be
+                    // declared ahead of the try block whose catch releases them.
+                    string? replyAccessor = null;
+                    if (reply.AddressLocationExpression is { } addrExpr)
+                    {
+                        // Dynamic reply address from runtime expression (e.g., $message.header#/replyTo)
+                        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
+                        replyAccessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
+                    }
+
+                    string replyAddr;
+                    if (replyAccessor is not null)
+                    {
+                        replyAddr = "replyChannelUtf8";
+                    }
+                    else if (!string.IsNullOrEmpty(reply.ChannelAddress))
+                    {
+                        replyAddr = "ReplyChannelAddressUtf8";
+                    }
+                    else
+                    {
+                        replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
+                    }
+
+                    w.WriteLine($"JsonWorkspace payloadWorkspace = JsonWorkspace.CreateUnrented();");
+                    if (rentsChannelInline)
+                    {
+                        w.WriteLine("byte[]? channelRental = null;");
+                    }
+
+                    if (replyAccessor is not null)
+                    {
+                        w.WriteLine("byte[]? replyRental = null;");
+                    }
+
+                    w.WriteLine("try");
+                    w.OpenBrace();
+                    w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(payloadWorkspace, payload, 30).RootElement;");
 
                     if (msg.HeadersTypeName is not null)
                     {
-                        w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
+                        w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(payloadWorkspace, headers, 10).RootElement;");
                     }
 
                     // Validation
@@ -1991,48 +2063,18 @@ public sealed class AsyncApi30CodeGenerator
                     else if (op.IsDynamicAddress && !dynamicNoParams)
                     {
                         w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                        w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
                         w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
                         w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
                     }
 
                     // Reply channel address (may be dynamic via runtime expression)
-                    string replyAddr;
-                    if (reply.AddressLocationExpression is { } addrExpr)
+                    if (replyAccessor is not null)
                     {
-                        // Dynamic reply address from runtime expression (e.g., $message.header#/replyTo)
-                        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
-                        string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
-                        if (accessor is not null)
-                        {
-                            w.WriteLine($"string replyAddressStr = {accessor};");
-                            w.WriteLine("byte[] replyRental = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(replyAddressStr));");
-                            w.WriteLine("int replyLen = Encoding.UTF8.GetBytes(replyAddressStr, replyRental);");
-                            w.WriteLine("ReadOnlyMemory<byte> replyChannelUtf8 = replyRental.AsMemory(0, replyLen);");
-                            replyAddr = "replyChannelUtf8";
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(reply.ChannelAddress))
-                            {
-                                replyAddr = "ReplyChannelAddressUtf8";
-                            }
-                            else
-                            {
-                                replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(reply.ChannelAddress))
-                        {
-                            replyAddr = "ReplyChannelAddressUtf8";
-                        }
-                        else
-                        {
-                            replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
-                        }
+                        w.WriteLine($"string replyAddressStr = {replyAccessor};");
+                        w.WriteLine("replyRental = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(replyAddressStr));");
+                        w.WriteLine("int replyLen = Encoding.UTF8.GetBytes(replyAddressStr, replyRental);");
+                        w.WriteLine("ReadOnlyMemory<byte> replyChannelUtf8 = replyRental.AsMemory(0, replyLen);");
                     }
 
                     string headersArg = msg.HeadersTypeName is not null
@@ -2045,8 +2087,29 @@ public sealed class AsyncApi30CodeGenerator
                     string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
                         ? "channelRental"
                         : "null";
+                    string replyRentalArg = replyAccessor is not null ? "replyRental" : "null";
 
-                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(workspace, {channelArg}, {rentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
+                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(payloadWorkspace, workspace, {channelArg}, {rentalArg}, {replyRentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
+                    w.CloseBrace();
+                    w.WriteLine("catch");
+                    w.OpenBrace();
+                    if (dynamicNoParams)
+                    {
+                        w.WriteLine("ArrayPool<byte>.Shared.Return(channelRental);");
+                    }
+                    else if (rentsChannelInline)
+                    {
+                        w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
+                    }
+
+                    if (replyAccessor is not null)
+                    {
+                        w.WriteLine("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }");
+                    }
+
+                    w.WriteLine("payloadWorkspace.Dispose();");
+                    w.WriteLine("throw;");
+                    w.CloseBrace();
                 }
 
                 w.WriteLine();
@@ -2061,6 +2124,11 @@ public sealed class AsyncApi30CodeGenerator
                         leadingArgs += ", headers";
                     }
 
+                    // The reply workspace travels with the message-content group through all three
+                    // overloads into the Core.
+                    leadingParams += ", JsonWorkspace workspace";
+                    leadingArgs += ", workspace";
+
                     void EmitLeadingDocs()
                     {
                         w.WriteLine($"/// <summary>");
@@ -2071,6 +2139,8 @@ public sealed class AsyncApi30CodeGenerator
                         {
                             w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                         }
+
+                        w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
                     }
 
                     // string overload — delegates to the ReadOnlySpan<char> overload.
@@ -2122,6 +2192,8 @@ public sealed class AsyncApi30CodeGenerator
                         w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                     }
 
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
+
                     w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
                     w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
                     w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
@@ -2143,6 +2215,8 @@ public sealed class AsyncApi30CodeGenerator
                         w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                     }
 
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
+
                     if (op.IsDynamicAddress)
                     {
                         w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
@@ -2162,6 +2236,10 @@ public sealed class AsyncApi30CodeGenerator
                     {
                         reqParams.Add($"{msg.HeadersTypeName}.Source headers");
                     }
+
+                    // The reply workspace sits with the message-content group, ahead of any
+                    // defaulted channel parameters.
+                    reqParams.Add("JsonWorkspace workspace");
 
                     if (op.IsDynamicAddress)
                     {
@@ -2224,7 +2302,7 @@ public sealed class AsyncApi30CodeGenerator
         if (op.Reply is not null)
         {
             w.WriteLine();
-            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, ReadOnlyMemory<byte> replyChannelUtf8, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace payloadWorkspace, JsonWorkspace replyWorkspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, byte[]? replyRental, ReadOnlyMemory<byte> replyChannelUtf8, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
             w.WriteLine("    where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>");
             w.OpenBrace();
@@ -2232,14 +2310,30 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, \"D\");");
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), workspace, headers, cancellationToken).ConfigureAwait(false);");
+
+            // The request path authenticates exactly as the publish path does.
+            if (op.SecuritySchemes.Count > 0)
+            {
+                w.WriteLine("if (this.authProvider is not null)");
+                w.OpenBrace();
+                foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+                {
+                    w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+                }
+
+                w.CloseBrace();
+                w.WriteLine();
+            }
+
+            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), replyWorkspace, headers, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return replyPayload;");
             w.CloseBrace();
             w.WriteLine("finally");
             w.OpenBrace();
             w.WriteLine("ArrayPool<byte>.Shared.Return(correlationIdUtf8);");
             w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
-            w.WriteLine("workspace.Dispose();");
+            w.WriteLine("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }");
+            w.WriteLine("payloadWorkspace.Dispose();");
             w.CloseBrace();
             w.CloseBrace();
         }
@@ -3545,8 +3639,9 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine(";");
 
-        // Rent buffer and copy segments
-        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+        // Rent buffer and copy segments. The caller pre-declares byte[]? channelRental ahead of
+        // its try block, so its catch can release the rental when a later pre-Core step throws.
+        w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
         w.WriteLine("int channelPos = 0;");
 
         foreach ((bool isParam, string value) in segments)

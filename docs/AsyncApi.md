@@ -1113,9 +1113,12 @@ Azure Service Bus deserves one extra note because it has both broker system prop
 AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:
 
 ```csharp
-// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply
+// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply.
+// The workspace you pass owns the reply: it stays valid until the workspace is disposed.
+using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
 QueryResponse reply = await queryProducer.SendAndReceiveQueryAsync(
     payload: QueryPayload.Build(filter: "status=active"u8),
+    workspace: workspace,
     cancellationToken: ct);
 
 // reply is already deserialized and validated
@@ -1125,7 +1128,7 @@ foreach (var item in reply.Results.EnumerateArray())
 }
 ```
 
-The generated code handles correlation ID generation (GUID formatted directly to a `byte[36]` — no string allocation), request/reply channel pairing, and timeout management.
+The generated code handles correlation ID generation (GUID formatted directly to a `byte[36]` — no string allocation) and request/reply channel pairing; cancellation flows through the supplied token.
 
 AsyncAPI 3.0 uses the standard operation `reply` object. AsyncAPI 2.6 has `correlationId` but no standard `reply` object, so Corvus supports an explicit `x-corvus-reply` extension on a 2.6 operation. The extension mirrors the 3.0 shape closely enough for the generated request/reply method to use the same runtime path:
 
@@ -1189,7 +1192,7 @@ ValueTask SubscribeReplyAsync<TRequest, TReply>(
 
 The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
 
-**Reply ownership.** At the transport level, `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (The generated `SendAndReceive*` requester currently manages an internal workspace rather than accepting the caller's; its reply-lifetime handling is being reworked and callers using the generated requester should treat the reply as valid only for immediate reads.)
+**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated `SendAndReceive*` requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)
 
 **Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
 
