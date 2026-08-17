@@ -2217,6 +2217,10 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(producer.Content, "SaslAuthContext");
         StringAssert.Contains(producer.Content, "MessageAuthenticationContext");
 
+        // The scheme declares scramSha256; the auth context must carry that exact variant, not a
+        // collapsed catch-all SASL value.
+        StringAssert.Contains(producer.Content, "SecuritySchemeType.ScramSha256");
+
         // Verify compilation succeeds
         string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
         DynamicCompiler.AssertCompiles(files, "Users.Security.Generated", stubs);

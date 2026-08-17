@@ -20,7 +20,7 @@ public sealed class TurnOnProducer
     private readonly IMessageAuthenticationProvider? authProvider;
     private const string ChannelAddressTemplate = "smartylighting.streetlights.1.0.action.{streetlightId}.turn.on";
 
-    private static readonly MessageAuthenticationContext SaslScramAuthContext = new(SecuritySchemeType.Plain, "saslScram");
+    private static readonly MessageAuthenticationContext SaslScramAuthContext = new(SecuritySchemeType.ScramSha256, "saslScram");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TurnOnProducer"/> class.

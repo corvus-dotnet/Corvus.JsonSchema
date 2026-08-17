@@ -231,6 +231,8 @@ public sealed class AsyncApi26CodeGenerator
                     ? channelBindings.ToString()
                     : null;
 
+            IReadOnlyList<string>? allowedServers = GetChannelAllowedServers(operation.Channel);
+
             var info = new AsyncApi30CodeGenerator.OperationInfo(
                 GetString(operation.Operation, "operationId"u8) ?? DeriveOperationName(operation.ChannelName, operation.OperationPropertyName),
                 operation.Action,
@@ -240,10 +242,10 @@ public sealed class AsyncApi26CodeGenerator
                 parameters,
                 reply,
                 operation.ChannelName,
-                GetChannelAllowedServers(operation.Channel),
+                allowedServers,
                 channelBindingsJson,
                 operationBindingsJson,
-                []);
+                CollectOperationSecuritySchemes(doc, allowedServers, referenceResolver, this.diagnostics));
 
             if (operation.Action == OperationAction.Send)
             {
@@ -764,6 +766,87 @@ public sealed class AsyncApi26CodeGenerator
         }
 
         return result.Count > 0 ? result : null;
+    }
+
+    private static IReadOnlyList<SecuritySchemeInfo> CollectOperationSecuritySchemes(
+        JsonElement doc,
+        IReadOnlyList<string>? allowedServers,
+        IAsyncApiReferenceResolver? resolver,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics)
+    {
+        // A 2.6 document declares security on its servers as requirement objects mapping a scheme
+        // name to its scopes. Collect the schemes for the servers this operation's channel allows,
+        // the same server filtering the 3.0 generator applies.
+        List<SecuritySchemeInfo> result = [];
+
+        if (!doc.TryGetProperty("servers"u8, out JsonElement servers) || servers.ValueKind != JsonValueKind.Object)
+        {
+            return result;
+        }
+
+        HashSet<string> seen = [];
+
+        foreach (var serverProp in servers.EnumerateObject())
+        {
+            if (allowedServers is { Count: > 0 } && !allowedServers.Contains(serverProp.Name))
+            {
+                continue;
+            }
+
+            JsonElement server = ResolveRef(serverProp.Value, doc, resolver);
+            if (!server.TryGetProperty("security"u8, out JsonElement security) || security.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (JsonElement requirement in security.EnumerateArray())
+            {
+                if (requirement.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                foreach (var schemeEntry in requirement.EnumerateObject())
+                {
+                    if (seen.Add(schemeEntry.Name))
+                    {
+                        result.Add(new SecuritySchemeInfo(
+                            schemeEntry.Name,
+                            ResolveSecuritySchemeType(doc, schemeEntry.Name, resolver, diagnostics)));
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static string ResolveSecuritySchemeType(
+        JsonElement doc,
+        string schemeName,
+        IAsyncApiReferenceResolver? resolver,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics)
+    {
+        if (doc.TryGetProperty("components"u8, out JsonElement components) &&
+            components.ValueKind == JsonValueKind.Object &&
+            components.TryGetProperty("securitySchemes"u8, out JsonElement schemes) &&
+            schemes.ValueKind == JsonValueKind.Object &&
+            schemes.TryGetProperty(schemeName, out JsonElement scheme))
+        {
+            JsonElement resolved = ResolveRef(scheme, doc, resolver);
+            if (IsRef(resolved))
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/components/securitySchemes/{schemeName}",
+                    "The security scheme is a $ref that does not resolve; its type was reported as 'unknown'."));
+                return "unknown";
+            }
+
+            return GetString(resolved, "type"u8) ?? "unknown";
+        }
+
+        return "unknown";
     }
 
     private static string DeriveOperationName(string channelName, string operationPropertyName)

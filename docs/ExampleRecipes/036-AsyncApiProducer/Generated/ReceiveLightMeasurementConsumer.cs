@@ -38,7 +38,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         public byte[] DeadLetterUtf8 { get; }
     }
 
-    private static readonly MessageAuthenticationContext SaslScramAuthContext = new(SecuritySchemeType.Plain, "saslScram");
+    private static readonly MessageAuthenticationContext SaslScramAuthContext = new(SecuritySchemeType.ScramSha256, "saslScram");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ReceiveLightMeasurementConsumer"/> class.

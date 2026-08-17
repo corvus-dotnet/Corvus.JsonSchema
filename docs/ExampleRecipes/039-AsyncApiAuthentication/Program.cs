@@ -262,7 +262,7 @@ catch (Exception ex)
     IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
         new KeyValuePair<SecuritySchemeType, IMessageAuthenticationProvider>[]
         {
-            new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider("user", "pass")),
+            new(SecuritySchemeType.ScramSha256, new UserPasswordAuthenticationProvider("user", "pass")),
             new(SecuritySchemeType.Http, new BearerTokenAuthenticationProvider("token-value")),
             new(SecuritySchemeType.HttpApiKey, new ApiKeyAuthenticationProvider("api-key-123")),
         });

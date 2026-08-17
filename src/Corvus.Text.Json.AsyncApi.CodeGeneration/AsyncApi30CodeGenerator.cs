@@ -3523,9 +3523,14 @@ public sealed class AsyncApi30CodeGenerator
             "symmetricEncryption" => "SymmetricEncryption",
             "asymmetricEncryption" => "AsymmetricEncryption",
             "http" => "Http",
+            "httpApiKey" => "HttpApiKey",
             "oauth2" => "OAuth2",
             "openIdConnect" => "OpenIdConnect",
-            "sasl" => "Plain", // Default SASL variant
+            "plain" => "Plain",
+            "scramSha256" => "ScramSha256",
+            "scramSha512" => "ScramSha512",
+            "gssapi" => "Gssapi",
+            "sasl" => "Plain", // A SASL scheme whose variant could not be determined
             _ => "UserPassword",
         };
     }
@@ -3583,10 +3588,29 @@ public sealed class AsyncApi30CodeGenerator
                             matchX509: static (in AsyncApiDocument.X509 _) => "X509",
                             matchSymmetricEncryption: static (in AsyncApiDocument.SymmetricEncryption _) => "symmetricEncryption",
                             matchAsymmetricEncryption: static (in AsyncApiDocument.AsymmetricEncryption _) => "asymmetricEncryption",
-                            matchHttpSecurityScheme: static (in AsyncApiDocument.HttpSecurityScheme _) => "http",
+                            matchHttpSecurityScheme: static (in AsyncApiDocument.HttpSecurityScheme http) =>
+                            {
+                                // httpApiKey is its own scheme type with its own enum member; only the
+                                // bearer and non-bearer shapes are plain "http".
+                                return http.Match<string>(
+                                    matchNonBearerHttpSecurityScheme: static (in AsyncApiDocument.NonBearerHttpSecurityScheme _) => "http",
+                                    matchBearerHttpSecurityScheme: static (in AsyncApiDocument.BearerHttpSecurityScheme _) => "http",
+                                    matchApiKeyHttpSecurityScheme: static (in AsyncApiDocument.ApiKeyHttpSecurityScheme _) => "httpApiKey",
+                                    defaultMatch: static (in AsyncApiDocument.HttpSecurityScheme _) => "http");
+                            },
                             matchOauth2Flows: static (in AsyncApiDocument.Oauth2Flows _) => "oauth2",
                             matchOpenIdConnect: static (in AsyncApiDocument.OpenIdConnect _) => "openIdConnect",
-                            matchSaslSecurityScheme: static (in AsyncApiDocument.SaslSecurityScheme _) => "sasl",
+                            matchSaslSecurityScheme: static (in AsyncApiDocument.SaslSecurityScheme sasl) =>
+                            {
+                                // The SASL family carries its variant in the type property; report the
+                                // variant exactly rather than collapsing the family to one mechanism.
+                                return sasl.Match<string>(
+                                    matchSaslPlainSecurityScheme: static (in AsyncApiDocument.SaslPlainSecurityScheme _) => "plain",
+                                    matchSaslScramSecurityScheme: static (in AsyncApiDocument.SaslScramSecurityScheme scram) =>
+                                        scram.Type.ValueEquals("scramSha512"u8) ? "scramSha512" : "scramSha256",
+                                    matchSaslGssapiSecurityScheme: static (in AsyncApiDocument.SaslGssapiSecurityScheme _) => "gssapi",
+                                    defaultMatch: static (in AsyncApiDocument.SaslSecurityScheme _) => "sasl");
+                            },
                             defaultMatch: static (in AsyncApiDocument.SecurityScheme _) => "unknown");
                     },
                     defaultMatch: static (in AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity _) => "unknown");

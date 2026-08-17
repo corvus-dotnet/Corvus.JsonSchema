@@ -85,6 +85,27 @@ public class AsyncApi26CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ServerSecurity_ProducerAuthenticates()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(streetlightsRoot);
+
+        GeneratedFile producer = files.Single(f => f.FileName == "TurnOnProducer.cs");
+
+        // The 2.6 document declares security on its server; it must reach the delegated emission
+        // as the auth context constant, the authentication call, and the exact SASL variant.
+        StringAssert.Contains(producer.Content, "SaslScramAuthContext");
+        StringAssert.Contains(producer.Content, "AuthenticateAsync");
+        StringAssert.Contains(producer.Content, "SecuritySchemeType.ScramSha256");
+    }
+
+    [TestMethod]
     public void Generate_RequestReplyExtension_ProducerContainsSendAndReceiveMethod()
     {
         var schemaTypeMap = CreateRequestReplySchemaTypeMap();
