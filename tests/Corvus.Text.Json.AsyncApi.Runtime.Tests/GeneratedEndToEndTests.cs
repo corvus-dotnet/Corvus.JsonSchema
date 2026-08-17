@@ -702,4 +702,38 @@ public class GeneratedEndToEndTests
             return ValueTask.CompletedTask;
         }
     }
+
+    [TestMethod]
+    public async Task DynamicConsumer_DeadLetters_ToTheSubscribedChannelsDeadLetterAddress()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockAlertHandler handler = new();
+        DefaultMessageErrorPolicy deadLetterPolicy = new(MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
+        await using ReceiveAlertConsumer consumer = new(transport, handler, ValidationMode.Basic, deadLetterPolicy);
+
+        await consumer.StartAsync("ops.alerts.eu");
+
+        await transport.DeliverAsync<AlertPayload>(
+            "ops.alerts.eu",
+            """{"severity":-1,"text":"boom"}"""u8.ToArray());
+
+        // A dynamic-address consumer only knows its channel at start time, so its dead-letter
+        // address must be composed from the channel it actually subscribed, not a
+        // generation-time constant.
+        Assert.AreEqual(0, handler.Received.Count);
+        Assert.AreEqual(1, transport.DeadLetteredMessages.Count);
+        Assert.AreEqual("dead-letter.ops.alerts.eu", transport.DeadLetteredMessages[0].DeadLetterChannel);
+        Assert.AreEqual("ops.alerts.eu", transport.DeadLetteredMessages[0].OriginalChannel);
+    }
+
+    private sealed class MockAlertHandler : IReceiveAlertHandler
+    {
+        public List<AlertPayload> Received { get; } = [];
+
+        public ValueTask HandleAlertAsync(AlertPayload payload, CancellationToken cancellationToken = default)
+        {
+            this.Received.Add(payload);
+            return ValueTask.CompletedTask;
+        }
+    }
 }

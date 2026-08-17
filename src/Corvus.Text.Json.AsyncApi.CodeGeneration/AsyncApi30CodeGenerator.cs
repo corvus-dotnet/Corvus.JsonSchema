@@ -2489,12 +2489,10 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("private readonly IMessageErrorPolicy errorPolicy;");
         w.WriteLine("private readonly IMessageAuthenticationProvider? authProvider;");
 
-        if (op.IsDynamicAddress)
+        if (hasRuntimeAddress)
         {
-            w.WriteLine("private string? subscribedChannel;");
-        }
-        else if (hasParameterizedAddress)
-        {
+            // The channel is only known when a start supplies or composes it, so the dead-letter
+            // address is built at start time behind this fixed prefix and carried by the claim token.
             w.WriteLine($"private static readonly byte[] DeadLetterPrefixUtf8 = \"dead-letter.\"u8.ToArray();");
         }
         else
@@ -2516,7 +2514,7 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("private sealed class ActiveSubscription");
         w.OpenBrace();
 
-        if (hasParameterizedAddress)
+        if (hasRuntimeAddress)
         {
             w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)");
             w.OpenBrace();
@@ -2541,7 +2539,7 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine();
         w.WriteLine("public ReadOnlyMemory<byte> ChannelUtf8 { get; }");
 
-        if (hasParameterizedAddress)
+        if (hasRuntimeAddress)
         {
             w.WriteLine();
             w.WriteLine("public byte[] DeadLetterUtf8 { get; }");
@@ -2549,7 +2547,7 @@ public sealed class AsyncApi30CodeGenerator
 
         w.CloseBrace();
 
-        if (!hasParameterizedAddress)
+        if (!hasRuntimeAddress)
         {
             w.WriteLine($"private const string DeadLetterChannel = \"dead-letter.{EscapeString(op.ChannelAddress)}\";");
             w.WriteLine($"private static readonly byte[] DeadLetterChannelUtf8 = \"dead-letter.{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
@@ -2724,10 +2722,9 @@ public sealed class AsyncApi30CodeGenerator
 
         if (dynamicNoParams)
         {
-            // string overload — delegates to the ReadOnlySpan<char> overload (and retains the channel string).
+            // string overload — delegates to the ReadOnlySpan<char> overload.
             w.WriteLine($"public ValueTask StartAsync(string channel, CancellationToken cancellationToken = default)");
             w.OpenBrace();
-            w.WriteLine("this.subscribedChannel = channel;");
             w.WriteLine("return this.StartAsync(channel.AsSpan(), cancellationToken);");
             w.CloseBrace();
 
@@ -2936,7 +2933,7 @@ public sealed class AsyncApi30CodeGenerator
 
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
@@ -3022,7 +3019,7 @@ public sealed class AsyncApi30CodeGenerator
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
@@ -3626,30 +3623,9 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     private void EmitParameterizedChannelConstruction(IndentedWriter w, OperationInfo op)
     {
-        // Split the template into literal segments and parameter placeholders
-        // e.g., "orders/{orderId}/{region}/status" → ["orders/", "{orderId}", "/", "{region}", "/status"]
-        string template = op.ChannelAddress;
-        List<(bool IsParam, string Value)> segments = [];
-        int pos = 0;
-        while (pos < template.Length)
-        {
-            int braceStart = template.IndexOf('{', pos);
-            if (braceStart < 0)
-            {
-                segments.Add((false, template[pos..]));
-                break;
-            }
-
-            if (braceStart > pos)
-            {
-                segments.Add((false, template[pos..braceStart]));
-            }
-
-            int braceEnd = template.IndexOf('}', braceStart);
-            string paramName = template[(braceStart + 1)..braceEnd];
-            segments.Add((true, paramName));
-            pos = braceEnd + 1;
-        }
+        // Split the template into literal segments and parameter slots,
+        // e.g., "orders/{orderId}/{region}/status" → "orders/", {orderId}, "/", {region}, "/status"
+        List<(bool IsParam, string Value)> segments = this.SplitChannelTemplate(op);
 
         // Calculate total byte count (literal lengths are known at compile time)
         int literalByteCount = segments.Where(s => !s.IsParam).Sum(s => System.Text.Encoding.UTF8.GetByteCount(s.Value));
@@ -3708,9 +3684,16 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
             w.OpenBrace();
 
+            // The dead-letter address is the subscribed bytes behind a fixed prefix, composed
+            // here so the token carries the address of the channel this start actually claims.
+            w.WriteLine("byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelUtf8.Length];");
+            w.WriteLine("DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
+            w.WriteLine("channelUtf8.Span.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");
+            w.WriteLine();
+
             // A started consumer already has a live subscription this instance must be able to
             // stop; the token-claimed gate refuses a second start instead of orphaning it.
-            w.WriteLine("ActiveSubscription token = new(channelUtf8);");
+            w.WriteLine("ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
             w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
@@ -3831,22 +3814,25 @@ public sealed class AsyncApi30CodeGenerator
         // Size the address from the literal segments plus the transcoded parameters, then fill it once.
         // Everything up to the gate claim below works in locals, so a start that loses the claim has
         // written nothing a running subscription reads.
-        List<string> segments = SplitChannelTemplate(op.ChannelAddress, op.Parameters);
-        string literalBytes = string.Join(" + ", segments.Where(seg => !seg.StartsWith('{')).Select(seg => Utf8ByteCount(seg).ToString(System.Globalization.CultureInfo.InvariantCulture)).DefaultIfEmpty("0"));
-        string paramBytes = string.Concat(names.Select(n => $" + Encoding.UTF8.GetByteCount({n})"));
+        List<(bool IsParam, string Value)> segments = this.SplitChannelTemplate(op);
+        string literalBytes = string.Join(" + ", segments.Where(seg => !seg.IsParam).Select(seg => Utf8ByteCount(seg.Value).ToString(System.Globalization.CultureInfo.InvariantCulture)).DefaultIfEmpty("0"));
+
+        // Sized from the slots the template actually contains: a declared parameter that never
+        // appears in the template must not inflate the address with bytes nothing writes.
+        string paramBytes = string.Concat(segments.Where(s => s.IsParam).Select(s => $" + Encoding.UTF8.GetByteCount({ToCamelCase(s.Value)})"));
         w.WriteLine($"int channelLength = {literalBytes}{paramBytes};");
         w.WriteLine("byte[] channelUtf8 = new byte[channelLength];");
         w.WriteLine("int written = 0;");
-        foreach (string segment in segments)
+        foreach ((bool isParam, string value) in segments)
         {
-            if (segment.StartsWith('{'))
+            if (isParam)
             {
-                w.WriteLine($"written += Encoding.UTF8.GetBytes({ToCamelCase(segment[1..^1])}, channelUtf8.AsSpan(written));");
+                w.WriteLine($"written += Encoding.UTF8.GetBytes({ToCamelCase(value)}, channelUtf8.AsSpan(written));");
             }
             else
             {
-                w.WriteLine($"\"{EscapeString(segment)}\"u8.CopyTo(channelUtf8.AsSpan(written));");
-                w.WriteLine($"written += {Utf8ByteCount(segment)};");
+                w.WriteLine($"\"{EscapeString(value)}\"u8.CopyTo(channelUtf8.AsSpan(written));");
+                w.WriteLine($"written += {Utf8ByteCount(value)};");
             }
         }
 
@@ -3873,42 +3859,72 @@ public sealed class AsyncApi30CodeGenerator
         w.CloseBrace();
     }
 
-    /// <summary>Splits a channel-address template into literal segments and <c>{parameter}</c> slots, in order.</summary>
-    /// <param name="template">The channel address template.</param>
-    /// <param name="parameters">The declared channel parameters.</param>
-    /// <returns>The segments; a slot retains its braces so the caller can tell the two apart.</returns>
-    private static List<string> SplitChannelTemplate(string template, IReadOnlyList<ChannelParameter> parameters)
+    /// <summary>Splits a channel-address template into literal segments and parameter slots, in order.</summary>
+    /// <param name="op">The operation whose channel address template is split.</param>
+    /// <returns>The segments; a slot carries the bare parameter name.</returns>
+    /// <remarks>
+    /// An unclosed brace, or a brace pair naming something the specification does not declare, is
+    /// literal text rather than a slot: emitting it as a slot would make the generated code
+    /// reference a parameter its method does not have. Each demotion is reported as a diagnostic.
+    /// </remarks>
+    private List<(bool IsParam, string Value)> SplitChannelTemplate(in OperationInfo op)
     {
-        List<string> segments = [];
+        string template = op.ChannelAddress;
+        List<(bool IsParam, string Value)> segments = [];
         int position = 0;
         while (position < template.Length)
         {
             int open = template.IndexOf('{', position);
             if (open < 0)
             {
-                segments.Add(template[position..]);
+                segments.Add((false, template[position..]));
                 break;
             }
 
             int close = template.IndexOf('}', open);
             if (close < 0)
             {
-                segments.Add(template[position..]);
+                this.AddTemplateDiagnostic(op, $"The channel address template '{template}' has an unclosed '{{'; the remainder was treated as literal text.");
+                segments.Add((false, template[position..]));
                 break;
             }
 
             string name = template[(open + 1)..close];
             if (open > position)
             {
-                segments.Add(template[position..open]);
+                segments.Add((false, template[position..open]));
             }
 
-            // A brace pair naming something the specification did not declare is literal text, not a slot.
-            segments.Add(parameters.Any(p => p.Name == name) ? template[open..(close + 1)] : template[open..(close + 1)].Replace("{", "{").Replace("}", "}"));
+            if (op.Parameters.Any(p => p.Name == name))
+            {
+                segments.Add((true, name));
+            }
+            else
+            {
+                this.AddTemplateDiagnostic(op, $"The channel address template '{template}' names '{{{name}}}', which is not a declared parameter; it was treated as literal text.");
+                segments.Add((false, template[open..(close + 1)]));
+            }
+
             position = close + 1;
         }
 
         return segments;
+    }
+
+    /// <summary>Reports a template problem once per location and message, however many emissions split the same template.</summary>
+    /// <param name="op">The operation whose channel the problem is on.</param>
+    /// <param name="message">The problem description.</param>
+    private void AddTemplateDiagnostic(in OperationInfo op, string message)
+    {
+        AsyncApiGenerationDiagnostic diagnostic = new(
+            AsyncApiGenerationDiagnosticSeverity.Warning,
+            $"#/channels/{op.ChannelName}",
+            message);
+
+        if (!this.diagnostics.Contains(diagnostic))
+        {
+            this.diagnostics.Add(diagnostic);
+        }
     }
 
     /// <summary>The UTF-8 byte count of a literal template segment, computed at generation time.</summary>

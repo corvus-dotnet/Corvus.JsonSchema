@@ -1,0 +1,61 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Audit API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "audit": {
+      "address": "audit/{stream",
+      "messages": {
+        "AuditEntry": {
+          "name": "AuditEntry",
+          "payload": {
+            "$ref": "#/components/schemas/auditEntryPayload"
+          }
+        }
+      },
+      "parameters": {
+        "stream": {
+          "description": "The audit stream."
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishAudit": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/audit"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/audit/messages/AuditEntry"
+        }
+      ]
+    },
+    "consumeAudit": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/audit"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/audit/messages/AuditEntry"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "auditEntryPayload": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

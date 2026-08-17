@@ -353,7 +353,7 @@ internal sealed class RetryThenDeadLetterPolicy : IMessageErrorPolicy
 
 ### Dead-Letter Channels
 
-Dead-lettered messages are published to a derived channel address (e.g., `dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured`). The generated consumer calls `IMessageTransport.DeadLetterAsync` when the error policy returns `MessageErrorAction.DeadLetter`, so validation failures and handler exceptions are handled consistently across transports.
+Dead-lettered messages are published to the subscribed channel's address behind a `dead-letter.` prefix (e.g., `dead-letter.smartylighting.streetlights.1.0.action.lamp-42.lighting.measured`). Whether the channel address is static, composed from parameters, or supplied by the caller at start, the dead-letter address is derived from the channel the consumer actually subscribed. The generated consumer calls `IMessageTransport.DeadLetterAsync` when the error policy returns `MessageErrorAction.DeadLetter`, so validation failures and handler exceptions are handled consistently across transports.
 
 The dead-letter message includes:
 - The original payload bytes

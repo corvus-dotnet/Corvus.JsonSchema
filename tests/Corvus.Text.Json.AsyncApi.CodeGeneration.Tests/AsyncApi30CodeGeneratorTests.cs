@@ -755,8 +755,11 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(consumer.Content, "channel.AsSpan()");
         // All overloads delegate to a shared private Core
         StringAssert.Contains(consumer.Content, "StartAsyncCore(");
-        // Should store the channel for stop
-        StringAssert.Contains(consumer.Content, "subscribedChannel");
+        // The dead-letter address is composed from the channel the start actually subscribes,
+        // carried by the claim token; there is no generation-time dead-letter constant.
+        StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8");
+        StringAssert.Contains(consumer.Content, "ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+        Assert.IsFalse(consumer.Content.Contains("private static readonly byte[] DeadLetterChannelUtf8"), "A dynamic consumer must not dead-letter to a generation-time constant");
     }
 
     [TestMethod]
@@ -2032,6 +2035,58 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_TemplateWithUndeclaredParameter_TreatsItAsLiteralAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "template-undeclared-param.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/orderPlacedPayload"] = "Orders.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Orders", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // {region} is not a declared parameter: it stays literal text in the composed address,
+        // the generated code must not reference a parameter that does not exist, and the
+        // demotion is reported rather than silent.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("region")),
+            "The undeclared placeholder should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Orders.UndeclaredParam.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_TemplateWithUnclosedBrace_TreatsRemainderAsLiteralAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "template-unclosed-brace.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/auditEntryPayload"] = "Audit.AuditEntryPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Audit", schemaTypeMap);
+
+        // An unclosed brace must not crash generation; the remainder is literal text and the
+        // problem is reported as a diagnostic.
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("unclosed")),
+            "The unclosed brace should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Audit.UnclosedBrace.Generated", stubs);
+    }
+
+    [TestMethod]
     public void Generate_RequestReply_ConsumerNotGenerated()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
@@ -2361,9 +2416,8 @@ public class AsyncApi30CodeGeneratorTests
         GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeEventsConsumer"));
         Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
 
-        // Dynamic address: StartAsync takes a channel parameter and stores it
+        // Dynamic address: StartAsync takes a channel parameter
         StringAssert.Contains(consumer.Content, "string channel");
-        StringAssert.Contains(consumer.Content, "this.subscribedChannel = channel;");
         // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads (auth path)
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
