@@ -655,7 +655,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -666,15 +669,16 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         INatsJSConsumer consumer;
         try
         {
-            // Ensure stream exists
-            await this.EnsureStreamExistsAsync(streamName, channel, cts.Token).ConfigureAwait(false);
+            // Setup still honors the caller's token: only the running subscription is decoupled
+            // from it.
+            await this.EnsureStreamExistsAsync(streamName, channel, cancellationToken).ConfigureAwait(false);
 
-            consumer = await this.CreateOrUpdateJetStreamConsumerAsync(streamName, channel, cts.Token).ConfigureAwait(false);
+            consumer = await this.CreateOrUpdateJetStreamConsumerAsync(streamName, channel, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
             // Failed before the claim: nothing is registered anywhere, so the only thing to
-            // release is the linked source (and with it the registration on the caller's token).
+            // release is the subscription's cancellation source.
             cts.Dispose();
             throw;
         }
@@ -910,7 +914,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -933,7 +940,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         catch
         {
             // Failed before the claim: nothing is registered anywhere, so the only thing to
-            // release is the linked source (and with it the registration on the caller's token).
+            // release is the subscription's cancellation source.
             cts.Dispose();
             throw;
         }
@@ -1132,7 +1139,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -1153,7 +1163,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         catch
         {
             // Failed before the claim: nothing is registered anywhere, so the only thing to
-            // release is the linked source (and with it the registration on the caller's token).
+            // release is the subscription's cancellation source.
             cts.Dispose();
             throw;
         }
@@ -1278,6 +1288,15 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                         // so a Corvus requester receives this without any explicit correlation id.
                                         if (msg.ReplyTo is not null)
                                         {
+                                            // Published with CancellationToken.None, not this
+                                            // subscription's token: a one-shot responder
+                                            // (ReceiveOneAndReplyAsync) signals its completion the
+                                            // instant the handler returns, so the caller can
+                                            // unsubscribe - which cancels the token - while this
+                                            // reply is still in flight. Cancelling here aborts the
+                                            // reply and the requester waits out its timeout for a
+                                            // reply that was computed but never sent. The connection
+                                            // is transport-scoped.
                                             await this.connection.PublishAsync(
                                                 subject: msg.ReplyTo,
                                                 data: reply,
@@ -1285,7 +1304,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                                 replyTo: null,
                                                 serializer: JsonElementSerializer<TReply>.Instance,
                                                 opts: default,
-                                                cancellationToken: cts.Token).ConfigureAwait(false);
+                                                cancellationToken: CancellationToken.None).ConfigureAwait(false);
                                         }
                                     }
                                 }

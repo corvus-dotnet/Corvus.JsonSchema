@@ -193,14 +193,18 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         }
 
         // If a responder is registered on the request channel, deliver the request to it in-process and
-        // route its reply back; otherwise park the request for the test helper CompleteRequest.
+        // route its reply back; otherwise park the request for the test helper CompleteRequest. A plain
+        // data subscription on the channel sees the request first, as on a real broker, where a request
+        // is an ordinary message on its channel.
         Delegate? responder;
+        Delegate? dataSubscriber;
         lock (this.syncRoot)
         {
             // A responder occupies the same single slot as a data subscription.
-            responder = this.subscriptions.TryGetValue(requestChannel, out Delegate? candidate) && IsResponder(candidate)
-                ? candidate
-                : null;
+            this.subscriptions.TryGetValue(requestChannel, out Delegate? candidate);
+            bool isResponder = candidate is not null && IsResponder(candidate);
+            responder = isResponder ? candidate : null;
+            dataSubscriber = isResponder ? null : candidate;
         }
 
         if (responder is not null)
@@ -215,7 +219,45 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
             this.pendingRequests[correlationId] = tcs;
         }
 
+        if (dataSubscriber is Func<TRequest, JsonElement, CancellationToken, ValueTask> typedSubscriber)
+        {
+            return DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(typedSubscriber, requestBytes, headerBytes, tcs, workspace, cancellationToken);
+        }
+
         return CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken);
+    }
+
+    // Delivers the request to the channel's plain data subscription before waiting for the reply the
+    // test completes (the request and header documents are GC-backed, matching RespondAsync's semantics).
+    private static async ValueTask<(TReply Payload, JsonElement Headers)> DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(
+        Func<TRequest, JsonElement, CancellationToken, ValueTask> subscriber,
+        byte[] requestBytes,
+        byte[] headerBytes,
+        TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
+        JsonWorkspace workspace,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        using ParsedJsonDocument<TRequest> requestDoc = ParsedJsonDocument<TRequest>.Parse(requestBytes);
+        JsonElement requestHeaders = default;
+        ParsedJsonDocument<JsonElement>? headersDoc = null;
+        if (headerBytes.Length > 0)
+        {
+            headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
+            requestHeaders = headersDoc.RootElement;
+        }
+
+        try
+        {
+            await subscriber(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            headersDoc?.Dispose();
+        }
+
+        return await CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

@@ -359,9 +359,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
 
-        // Handlers and the error policy run on this linked source, so unsubscribe and
-        // dispose can cancel in-flight work instead of waiting out slow handlers.
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Handlers and the error policy run on this source, so unsubscribe and dispose
+        // can cancel in-flight work instead of waiting out slow handlers.
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
         object marker = new();
         bool abortRequested = false;
@@ -583,9 +586,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
 
-        // Handlers and the error policy run on this linked source, so unsubscribe and
-        // dispose can cancel in-flight work instead of waiting out slow handlers.
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Handlers and the error policy run on this source, so unsubscribe and dispose
+        // can cancel in-flight work instead of waiting out slow handlers.
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
         object marker = new();
         bool abortRequested = false;
@@ -672,7 +678,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     string? replyTo = args.Message.ReplyTo;
                     if (!string.IsNullOrEmpty(replyTo))
                     {
-                        await this.SendReplyAsync(replyTo, reply, args.Message.SessionId, args.Message.CorrelationId, cts.Token).ConfigureAwait(false);
+                        // Sent with CancellationToken.None, not this subscription's token: a one-shot
+                        // responder (ReceiveOneAndReplyAsync) signals its completion the instant the
+                        // handler returns, so the caller can unsubscribe - which cancels the token -
+                        // while this reply is still in flight. Cancelling here aborts the reply and the
+                        // requester waits out its timeout for a reply that was computed but never sent.
+                        await this.SendReplyAsync(replyTo, reply, args.Message.SessionId, args.Message.CorrelationId, CancellationToken.None).ConfigureAwait(false);
                     }
 
                     await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);

@@ -279,7 +279,15 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             }
         }
 
-        this.pendingReplies.Clear();
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently discarded; clearing alone would strand the awaiters.
+        foreach (string correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<byte[]>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(WebSocketMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
 
         if (this.receiveCts is not null)
         {
@@ -382,7 +390,12 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             if (corrIdProp.ValueKind != JsonValueKind.Undefined)
             {
                 envelopeCorrelationId = corrIdProp.GetString();
+
+                // An envelope that names a reply channel is a request in flight, not a reply;
+                // matching it against pendingReplies would let a loopback subscription on the
+                // request channel consume its own request as its reply.
                 if (envelopeCorrelationId is not null &&
+                    !envelope.TryGetProperty("replyChannel"u8, out JsonElement _) &&
                     this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
                 {
                     tcs.SetResult(envelopeBytes);

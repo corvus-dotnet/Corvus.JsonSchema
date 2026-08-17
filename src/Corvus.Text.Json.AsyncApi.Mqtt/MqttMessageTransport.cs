@@ -273,7 +273,15 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             }
         }
 
-        this.pendingReplies.Clear();
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently discarded; clearing alone would strand the awaiters.
+        foreach (ReadOnlyMemory<byte> correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<MqttApplicationMessage>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(MqttMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
 
         if (this.client.IsConnected)
         {
@@ -618,7 +626,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
         byte[]? corrData = args.ApplicationMessage.CorrelationData;
 
-        if (corrData is { Length: > 0 } &&
+        // A message that advertises a response topic is a request in flight, not a reply; matching
+        // it against pendingReplies would let a loopback subscription on the request topic consume
+        // its own request as its reply.
+        if (string.IsNullOrEmpty(args.ApplicationMessage.ResponseTopic) &&
+            corrData is { Length: > 0 } &&
             this.pendingReplies.TryRemove(new ReadOnlyMemory<byte>(corrData), out TaskCompletionSource<MqttApplicationMessage>? tcs))
         {
             tcs.SetResult(args.ApplicationMessage);

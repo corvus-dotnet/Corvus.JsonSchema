@@ -146,6 +146,39 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task RequestAsync_DataSubscriberOnTheChannel_SeesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // On a real broker a request is an ordinary message on its channel, so a plain data
+        // subscription there sees it; the reply still comes from CompleteRequest.
+        List<int> seen = [];
+        await transport.SubscribeAsync<JsonElement>(
+            "rpc/data"u8.ToArray(),
+            (payload, _, _) =>
+            {
+                seen.Add(payload.GetProperty("n"u8).GetInt32());
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":7}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/data"u8.ToArray(),
+                "rpc/data/replies"u8.ToArray(),
+                request,
+                "corr-data"u8.ToArray(), workspace).AsTask();
+
+        transport.CompleteRequest("corr-data", Encoding.UTF8.GetBytes("""{"ok":true}"""));
+        (JsonElement reply, JsonElement _) = await requestTask;
+
+        Assert.AreEqual(1, seen.Count, "The data subscriber should have received the request");
+        Assert.AreEqual(7, seen[0]);
+        Assert.IsTrue(reply.GetProperty("ok"u8).GetBoolean());
+    }
+
+    [TestMethod]
     public async Task SubscribeReplyAsync_RespondsToRequestInProcess()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

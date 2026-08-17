@@ -182,7 +182,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ThrowIfSubscribed(channel);
 
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
         IConsumer<Null, byte[]> consumer;
         try
         {
@@ -302,7 +305,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ThrowIfSubscribed(channel);
 
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
         IConsumer<Null, byte[]> consumer;
         try
         {
@@ -544,6 +550,17 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         }
 
         this.subscriptions.Clear();
+
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently stranded past disposal.
+        foreach (ReadOnlyMemory<byte> correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<ConsumeResult<Null, byte[]>>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(KafkaMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
+
         this.producer.Flush(TimeSpan.FromSeconds(5));
         this.producer.Dispose();
     }
@@ -1098,7 +1115,13 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                                     replyMessage.Headers.Add(CorrelationIdKeyString, corrBytes);
                                 }
 
-                                await this.producer.ProduceAsync(replyChannel, replyMessage, cancellationToken).ConfigureAwait(false);
+                                // Produced with CancellationToken.None, not the loop's token: a one-shot
+                                // responder (ReceiveOneAndReplyAsync) signals its completion the instant
+                                // the handler returns, so the caller can unsubscribe - which cancels the
+                                // loop - while this reply is still in flight. Cancelling here aborts the
+                                // reply and the requester waits out its timeout for a reply that was
+                                // computed but never sent. The producer is transport-scoped.
+                                await this.producer.ProduceAsync(replyChannel, replyMessage, CancellationToken.None).ConfigureAwait(false);
                             }
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

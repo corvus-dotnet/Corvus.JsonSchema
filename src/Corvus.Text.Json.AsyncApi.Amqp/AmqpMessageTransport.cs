@@ -414,6 +414,16 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             }
         }
 
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently stranded past disposal.
+        foreach (string correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<BasicDeliverEventArgs>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
+
         await this.publishChannel.CloseAsync().ConfigureAwait(false);
         await this.publishChannel.DisposeAsync().ConfigureAwait(false);
         await this.connection.CloseAsync().ConfigureAwait(false);
@@ -596,7 +606,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         where TPayload : struct, IJsonElement<TPayload>
     {
         ThrowIfSubscribed(channel);
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
         IChannel consumerChannel;
         try
@@ -606,7 +620,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         catch
         {
             // Failed before the claim: nothing is registered anywhere, so the only thing to
-            // release is the linked source (and with it the registration on the caller's token).
+            // release is the subscription's cancellation source.
             cts.Dispose();
             throw;
         }
@@ -969,7 +983,11 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         where TReply : struct, IJsonElement<TReply>
     {
         ThrowIfSubscribed(channel);
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
         string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
         IChannel consumerChannel;
         try
@@ -979,7 +997,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         catch
         {
             // Failed before the claim: nothing is registered anywhere, so the only thing to
-            // release is the linked source (and with it the registration on the caller's token).
+            // release is the subscription's cancellation source.
             cts.Dispose();
             throw;
         }

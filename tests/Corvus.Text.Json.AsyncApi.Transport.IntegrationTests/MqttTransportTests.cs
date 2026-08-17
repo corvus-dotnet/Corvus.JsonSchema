@@ -934,6 +934,81 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestWithLoopbackSubscriptionDeliversRequestToTheDataHandler()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-loopback-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/loopback-req"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/loopback-reply"u8.ToArray();
+
+        // The same client is data-subscribed to the request topic, so the broker delivers the
+        // request straight back to it. The request must reach the data handler, not be matched
+        // against the requester's own pending reply.
+        TaskCompletionSource<string> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            (payload, headers, ct) =>
+            {
+                received.TrySetResult(payload.GetProperty("q"u8).GetString() ?? string.Empty);
+                return ValueTask.CompletedTask;
+            });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(5));
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask = transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            "loopback-corr-m01"u8.ToArray(),
+            workspace,
+            cancellationToken: requestCts.Token).AsTask();
+
+        string question = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.AreEqual("hello", question);
+
+        // With nothing responding, the request itself times out rather than completing with its
+        // own request payload as the reply.
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await requestTask);
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DisposeFailsAPendingRequestInsteadOfStrandingIt()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dispose-req-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"never"}"""u8.ToArray());
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask = transport.RequestAsync<JsonElement, JsonElement>(
+            "mqtt/test/dispose-req"u8.ToArray(),
+            "mqtt/test/dispose-reply"u8.ToArray(),
+            requestDoc.RootElement,
+            "dispose-corr-m01"u8.ToArray(),
+            workspace).AsTask();
+
+        // Let the request publish and park awaiting its reply, then dispose the transport.
+        await Task.Delay(1000);
+        await transport.DisposeAsync();
+
+        // The parked wait is failed rather than stranded.
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () => await requestTask.WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

@@ -115,6 +115,39 @@ public class KafkaTransportTests
     }
 
     [TestMethod]
+    public async Task CancellingTheSubscribeTokenDoesNotStopTheSubscription()
+    {
+        string topic = CreateTopicName("kafka-subtoken");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
+        using var received = new SemaphoreSlim(0, 1);
+
+        // The token used to establish the subscription is not the subscription's lifetime:
+        // only unsubscribe and dispose stop it.
+        using CancellationTokenSource subscribeCts = new();
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            },
+            subscribeCts.Token);
+
+        // Give consumer time for group coordinator handshake + partition assignment.
+        await Task.Delay(5000);
+
+        await subscribeCts.CancelAsync();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"event":"post-cancel","id":"k-tok"}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "The subscription should keep delivering after the subscribe call's token is cancelled");
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task HeadersRoundtripCorrectly()
     {
         ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-headers"));
