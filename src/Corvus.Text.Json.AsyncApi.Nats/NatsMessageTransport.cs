@@ -933,9 +933,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         INatsSub<byte[]> sub;
         try
         {
+            // The token here cancels only the establishing SUB command (the returned
+            // INatsSub owns the subscription's lifetime), so the caller's token governs it.
             sub = await this.connection.SubscribeCoreAsync<byte[]>(
                 subject: channel,
-                cancellationToken: cts.Token).ConfigureAwait(false);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -1156,9 +1158,11 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         INatsSub<byte[]> sub;
         try
         {
+            // The token here cancels only the establishing SUB command (the returned
+            // INatsSub owns the subscription's lifetime), so the caller's token governs it.
             sub = await this.connection.SubscribeCoreAsync<byte[]>(
                 subject: channel,
-                cancellationToken: cts.Token).ConfigureAwait(false);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch
         {

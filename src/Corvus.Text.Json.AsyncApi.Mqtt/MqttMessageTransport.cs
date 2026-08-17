@@ -326,6 +326,14 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         TaskCompletionSource<MqttApplicationMessage> replyTcs = new();
         this.pendingReplies[correlationIdUtf8] = replyTcs;
 
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationIdUtf8, out _);
+            throw new ObjectDisposedException(nameof(MqttMessageTransport), "The transport was disposed before the reply arrived.");
+        }
+
         try
         {
             // Ensure we're subscribed to the reply topic
@@ -626,10 +634,13 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
         byte[]? corrData = args.ApplicationMessage.CorrelationData;
 
-        // A message that advertises a response topic is a request in flight, not a reply; matching
-        // it against pendingReplies would let a loopback subscription on the request topic consume
-        // its own request as its reply.
-        if (string.IsNullOrEmpty(args.ApplicationMessage.ResponseTopic) &&
+        // A message that advertises a response topic while arriving on a topic this client
+        // data-subscribes is a request in flight (the loopback shape, which brokers deliver back
+        // to the sender), not a reply; matching it against pendingReplies would let that
+        // subscription consume its own request as its reply. On any other topic the correlation
+        // match stands, because an MQTT 5 responder may legitimately set a response topic on its
+        // reply to solicit a follow-up.
+        if ((string.IsNullOrEmpty(args.ApplicationMessage.ResponseTopic) || !this.handlers.ContainsKey(topic)) &&
             corrData is { Length: > 0 } &&
             this.pendingReplies.TryRemove(new ReadOnlyMemory<byte>(corrData), out TaskCompletionSource<MqttApplicationMessage>? tcs))
         {

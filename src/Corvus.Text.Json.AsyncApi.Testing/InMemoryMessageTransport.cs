@@ -219,18 +219,21 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
             this.pendingRequests[correlationId] = tcs;
         }
 
-        if (dataSubscriber is Func<TRequest, JsonElement, CancellationToken, ValueTask> typedSubscriber)
+        if (dataSubscriber is not null)
         {
-            return DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(typedSubscriber, requestBytes, headerBytes, tcs, workspace, cancellationToken);
+            return this.DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(dataSubscriber, requestChannelUtf8, correlationId, requestBytes, headerBytes, tcs, workspace, cancellationToken);
         }
 
-        return CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken);
+        return this.CompleteRequestAsync<TReply>(correlationId, tcs, workspace, cancellationToken);
     }
 
-    // Delivers the request to the channel's plain data subscription before waiting for the reply the
-    // test completes (the request and header documents are GC-backed, matching RespondAsync's semantics).
-    private static async ValueTask<(TReply Payload, JsonElement Headers)> DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(
-        Func<TRequest, JsonElement, CancellationToken, ValueTask> subscriber,
+    // Delivers the request to the channel's data subscription through the same dispatch a publish
+    // uses (so delivery-context subscriptions see the request exactly as any other message) before
+    // waiting for the reply the test completes.
+    private async ValueTask<(TReply Payload, JsonElement Headers)> DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(
+        Delegate subscriber,
+        ReadOnlyMemory<byte> requestChannelUtf8,
+        string correlationId,
         byte[] requestBytes,
         byte[] headerBytes,
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
@@ -239,25 +242,32 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        using ParsedJsonDocument<TRequest> requestDoc = ParsedJsonDocument<TRequest>.Parse(requestBytes);
-        JsonElement requestHeaders = default;
-        ParsedJsonDocument<JsonElement>? headersDoc = null;
-        if (headerBytes.Length > 0)
-        {
-            headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
-            requestHeaders = headersDoc.RootElement;
-        }
-
         try
         {
-            await subscriber(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
+            await this.DeliverToSubscriberAsync<TRequest>(subscriber, requestChannelUtf8, requestBytes, headerBytes, cancellationToken).ConfigureAwait(false);
         }
-        finally
+        catch
         {
-            headersDoc?.Dispose();
+            // The request faulted before its wait began; unpark it so a later CompleteRequest
+            // for this id fails loudly instead of completing an abandoned wait.
+            this.AbandonPendingRequest(correlationId, tcs);
+            throw;
         }
 
-        return await CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken).ConfigureAwait(false);
+        return await this.CompleteRequestAsync<TReply>(correlationId, tcs, workspace, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Removes a parked request whose waiter has given up, if it is still the parked one.
+    private void AbandonPendingRequest(string correlationId, TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs)
+    {
+        lock (this.syncRoot)
+        {
+            if (this.pendingRequests.TryGetValue(correlationId, out TaskCompletionSource<(byte[] Payload, byte[] Headers)>? current)
+                && ReferenceEquals(current, tcs))
+            {
+                this.pendingRequests.Remove(correlationId);
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -548,13 +558,26 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         }
     }
 
-    private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
+    private async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
+        string correlationId,
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
         JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
-        (byte[] replyBytes, byte[] headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        byte[] replyBytes;
+        byte[] headerBytes;
+        try
+        {
+            (replyBytes, headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The waiter gave up (cancellation, typically); unpark the request so a later
+            // CompleteRequest for this id fails loudly instead of completing an abandoned wait.
+            this.AbandonPendingRequest(correlationId, tcs);
+            throw;
+        }
 
         // The returned reply and headers reference their documents' memory, so the caller's workspace owns
         // those documents (disposed when the workspace is) rather than leaving them to the GC.

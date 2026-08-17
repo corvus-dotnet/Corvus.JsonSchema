@@ -1,0 +1,77 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Rpc API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "rpc": {
+      "address": "rpc.requests",
+      "messages": {
+        "RpcRequest": {
+          "name": "RpcRequest",
+          "payload": {
+            "$ref": "#/components/schemas/rpcRequestPayload"
+          }
+        }
+      }
+    },
+    "rpcReplies": {
+      "address": "rpc.replies",
+      "messages": {
+        "RpcResponse": {
+          "name": "RpcResponse",
+          "payload": {
+            "$ref": "#/components/schemas/rpcResponsePayload"
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "invokeRpc": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/rpc"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/rpc/messages/RpcRequest"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/rpcReplies"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/rpcReplies/messages/RpcResponse"
+          }
+        ],
+        "address": {
+          "location": "$message.header#/replyTo"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "rpcRequestPayload": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          }
+        }
+      },
+      "rpcResponsePayload": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

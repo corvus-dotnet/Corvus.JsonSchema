@@ -179,6 +179,93 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task RequestAsync_DeliveryContextSubscriberOnTheChannel_SeesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // A delivery-context subscription must see the request exactly as it sees a publish;
+        // the request is an ordinary message on its channel.
+        List<int> seen = [];
+        List<string> channels = [];
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "rpc/ctx"u8.ToArray(),
+            (payload, context, _) =>
+            {
+                seen.Add(payload.GetProperty("n"u8).GetInt32());
+                channels.Add(Encoding.UTF8.GetString(context.ChannelUtf8.Span));
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":9}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/ctx"u8.ToArray(),
+                "rpc/ctx/replies"u8.ToArray(),
+                request,
+                "corr-ctx"u8.ToArray(),
+                workspace).AsTask();
+
+        transport.CompleteRequest("corr-ctx", """{"ok":true}"""u8.ToArray());
+        _ = await requestTask;
+
+        Assert.AreEqual(1, seen.Count, "The delivery-context subscriber should have received the request");
+        Assert.AreEqual(9, seen[0]);
+        Assert.AreEqual("rpc/ctx", channels[0]);
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_AbandonedWait_RemovesThePendingEntry()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
+        using CancellationTokenSource cts = new();
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/abandoned"u8.ToArray(),
+                "rpc/abandoned/replies"u8.ToArray(),
+                request,
+                "corr-abandoned"u8.ToArray(),
+                workspace,
+                cancellationToken: cts.Token).AsTask();
+
+        await cts.CancelAsync();
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => requestTask);
+
+        // The abandoned wait no longer parks: completing it must fail loudly, not feed a
+        // reply to a requester that already gave up.
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => transport.CompleteRequest("corr-abandoned", "{}"u8.ToArray()));
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_SubscriberThrows_FaultsTheRequestAndUnparksIt()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        await transport.SubscribeAsync<JsonElement>(
+            "rpc/thrower"u8.ToArray(),
+            (_, _, _) => throw new InvalidDataException("Subscriber failure."));
+
+        JsonElement request = JsonElement.ParseValue("""{"n":2}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/thrower"u8.ToArray(),
+                "rpc/thrower/replies"u8.ToArray(),
+                request,
+                "corr-thrower"u8.ToArray(),
+                workspace).AsTask();
+
+        await Assert.ThrowsExactlyAsync<InvalidDataException>(() => requestTask);
+
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => transport.CompleteRequest("corr-thrower", "{}"u8.ToArray()));
+    }
+
+    [TestMethod]
     public async Task SubscribeReplyAsync_RespondsToRequestInProcess()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

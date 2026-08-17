@@ -640,6 +640,14 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         TaskCompletionSource<ConsumeResult<Null, byte[]>> replyTcs = new();
         this.pendingReplies[correlationIdUtf8] = replyTcs;
 
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationIdUtf8, out _);
+            throw new ObjectDisposedException(nameof(KafkaMessageTransport), "The transport was disposed before the reply arrived.");
+        }
+
         // Rent a buffer for the Header value. Kafka's Header(string, byte[]) needs
         // an exactly-sized array. The caller's byte[36] is already exact-sized, so
         // we can use the backing array directly via MemoryMarshal.

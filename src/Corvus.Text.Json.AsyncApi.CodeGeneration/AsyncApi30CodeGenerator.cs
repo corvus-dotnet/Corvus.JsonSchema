@@ -1650,10 +1650,13 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"private const string ChannelAddressTemplate = \"{EscapeString(op.ChannelAddress)}\";");
         }
 
-        // Hoist the reply channel address to a static field when it's a constant literal
+        // Hoist the reply channel address to a static field whenever some message's emission
+        // will reference it: always when there is no address expression, and as the fallback for
+        // any message whose expression is unusable (the demotion the accessor helper reports).
         if (op.Reply is { } replyForField
             && !string.IsNullOrEmpty(replyForField.ChannelAddress)
-            && replyForField.AddressLocationExpression is null)
+            && (replyForField.AddressLocationExpression is null
+                || op.Messages.Any(m => this.ComputeReplyAddressAccessor(op, replyForField, m) is null)))
         {
             w.WriteLine($"private static readonly byte[] ReplyChannelAddressUtf8 = \"{EscapeString(replyForField.ChannelAddress)}\"u8.ToArray();");
         }
@@ -1999,14 +2002,9 @@ public sealed class AsyncApi30CodeGenerator
                     bool rentsChannelInline = op.Parameters.Count > 0 || (op.IsDynamicAddress && !dynamicNoParams);
 
                     // Resolve the reply-address strategy up front so the rental locals can be
-                    // declared ahead of the try block whose catch releases them.
-                    string? replyAccessor = null;
-                    if (reply.AddressLocationExpression is { } addrExpr)
-                    {
-                        // Dynamic reply address from runtime expression (e.g., $message.header#/replyTo)
-                        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
-                        replyAccessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
-                    }
+                    // declared ahead of the try block whose catch releases them. An unusable
+                    // expression demotes to the declared fallback address with a diagnostic.
+                    string? replyAccessor = this.ComputeReplyAddressAccessor(op, reply, msg);
 
                     string replyAddr;
                     if (replyAccessor is not null)
@@ -3911,20 +3909,70 @@ public sealed class AsyncApi30CodeGenerator
         return segments;
     }
 
-    /// <summary>Reports a template problem once per location and message, however many emissions split the same template.</summary>
-    /// <param name="op">The operation whose channel the problem is on.</param>
+    /// <summary>Reports a degradation once per location and message, however many emissions hit the same one.</summary>
+    /// <param name="location">The specification location.</param>
     /// <param name="message">The problem description.</param>
-    private void AddTemplateDiagnostic(in OperationInfo op, string message)
+    private void AddDiagnosticOnce(string location, string message)
     {
         AsyncApiGenerationDiagnostic diagnostic = new(
             AsyncApiGenerationDiagnosticSeverity.Warning,
-            $"#/channels/{op.ChannelName}",
+            location,
             message);
 
         if (!this.diagnostics.Contains(diagnostic))
         {
             this.diagnostics.Add(diagnostic);
         }
+    }
+
+    /// <summary>Reports a template problem once per location and message, however many emissions split the same template.</summary>
+    /// <param name="op">The operation whose channel the problem is on.</param>
+    /// <param name="message">The problem description.</param>
+    private void AddTemplateDiagnostic(in OperationInfo op, string message)
+    {
+        this.AddDiagnosticOnce($"#/channels/{op.ChannelName}", message);
+    }
+
+    /// <summary>
+    /// Resolves the reply-address runtime expression for one message of a request/reply
+    /// operation, or null when the emission cannot use it.
+    /// </summary>
+    /// <param name="op">The operation.</param>
+    /// <param name="reply">The operation's reply.</param>
+    /// <param name="msg">The request message the expression evaluates against.</param>
+    /// <returns>The accessor expression, or null when the declared fallback address must be used.</returns>
+    /// <remarks>
+    /// An expression that is not a recognized runtime expression, or one that reads the message
+    /// headers when the message declares no headers schema, is demoted to the declared fallback
+    /// address with a diagnostic: emitting it as written would produce code that reads values
+    /// that do not exist and cannot compile.
+    /// </remarks>
+    private string? ComputeReplyAddressAccessor(in OperationInfo op, in ReplyInfo reply, MessageInfo msg)
+    {
+        if (reply.AddressLocationExpression is not { } addrExpr)
+        {
+            return null;
+        }
+
+        AsyncApiRuntimeExpression parsed = AsyncApiRuntimeExpression.Parse(addrExpr);
+        if (parsed.Kind == AsyncApiRuntimeExpressionKind.MessageHeader && msg.HeadersTypeName is null)
+        {
+            this.AddDiagnosticOnce(
+                $"#/operations/{op.Name}/reply/address",
+                $"The reply address expression '{addrExpr}' reads the message headers, but message '{msg.Name}' declares no headers schema; the declared reply address was used instead.");
+            return null;
+        }
+
+        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
+        string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
+        if (accessor is null)
+        {
+            this.AddDiagnosticOnce(
+                $"#/operations/{op.Name}/reply/address",
+                $"The reply address expression '{addrExpr}' is not a supported runtime expression; the declared reply address was used instead.");
+        }
+
+        return accessor;
     }
 
     /// <summary>The UTF-8 byte count of a literal template segment, computed at generation time.</summary>

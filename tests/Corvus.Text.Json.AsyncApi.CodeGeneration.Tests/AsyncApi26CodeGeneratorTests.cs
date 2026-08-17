@@ -106,6 +106,28 @@ public class AsyncApi26CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ServerSecurity_UnknownScheme_ReportsDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "asyncapi26-missing-scheme.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/eventPayload"] = "Events.EventPayload",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Events", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The server requirement names a scheme that components.securitySchemes does not define;
+        // the degradation must be recorded rather than silently emitting a wrong scheme type.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("missingScheme")),
+            "A security requirement naming an undefined scheme should be reported as a diagnostic");
+    }
+
+    [TestMethod]
     public void Generate_RequestReplyExtension_ProducerContainsSendAndReceiveMethod()
     {
         var schemaTypeMap = CreateRequestReplySchemaTypeMap();

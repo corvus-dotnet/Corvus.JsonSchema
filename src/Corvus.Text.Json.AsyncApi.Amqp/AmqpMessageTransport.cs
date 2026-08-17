@@ -491,6 +491,14 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         TaskCompletionSource<BasicDeliverEventArgs> replyTcs = new();
         this.pendingReplies[correlationId] = replyTcs;
 
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationId, out _);
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived.");
+        }
+
         try
         {
             // Ensure reply subscription is active

@@ -846,6 +846,10 @@ public sealed class AsyncApi26CodeGenerator
             return GetString(resolved, "type"u8) ?? "unknown";
         }
 
+        diagnostics?.Add(new(
+            AsyncApiGenerationDiagnosticSeverity.Warning,
+            $"#/components/securitySchemes/{schemeName}",
+            $"The security requirement names '{schemeName}', which components.securitySchemes does not define; its type was reported as 'unknown'."));
         return "unknown";
     }
 

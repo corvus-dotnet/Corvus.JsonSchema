@@ -2061,6 +2061,64 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ReplyAddressExpressionUnusable_FallsBackToReplyChannelAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "reply-address-literal-expression.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcReplies/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // "$message.header.replyTo" (no '#') is not a supported runtime expression: the emission
+        // must fall back to the reply channel's declared address, report the demotion, and the
+        // fallback field it references must actually exist.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("$message.header.replyTo")),
+            "The unusable reply address expression should be reported as a diagnostic");
+
+        GeneratedFile producer = files.First(f => f.FileName.Contains("Producer"));
+        StringAssert.Contains(producer.Content, "ReplyChannelAddressUtf8");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Rpc.LiteralReplyAddress.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_ReplyHeaderExpressionWithoutHeaders_FallsBackAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "reply-address-header-no-headers.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcReplies/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // The expression reads the message headers but the request message declares no headers
+        // schema, so there is nothing to read it from: the emission must fall back to the reply
+        // channel's declared address and report the demotion, not emit code that reads headers
+        // that do not exist.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("headers")),
+            "The headerless header expression should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Rpc.HeaderlessReplyAddress.Generated", stubs);
+    }
+
+    [TestMethod]
     public void Generate_TemplateWithUnclosedBrace_TreatsRemainderAsLiteralAndCompiles()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "template-unclosed-brace.json"));

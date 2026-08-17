@@ -391,11 +391,14 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             {
                 envelopeCorrelationId = corrIdProp.GetString();
 
-                // An envelope that names a reply channel is a request in flight, not a reply;
-                // matching it against pendingReplies would let a loopback subscription on the
-                // request channel consume its own request as its reply.
+                // An envelope that names a reply channel while arriving on a channel this client
+                // subscribes is a request in flight (the loopback shape), not a reply; matching it
+                // against pendingReplies would let that subscription consume its own request as
+                // its reply. On any other channel the correlation match stands, so a peer that
+                // sets a reply channel on its reply (soliciting a follow-up) still completes the
+                // pending request.
                 if (envelopeCorrelationId is not null &&
-                    !envelope.TryGetProperty("replyChannel"u8, out JsonElement _) &&
+                    (!envelope.TryGetProperty("replyChannel"u8, out JsonElement _) || !this.subscriptions.ContainsKey(channel)) &&
                     this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
                 {
                     tcs.SetResult(envelopeBytes);
@@ -674,6 +677,14 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         _ = replyChannel;
         TaskCompletionSource<byte[]> replyTcs = new();
         this.pendingReplies[correlationId] = replyTcs;
+
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationId, out _);
+            throw new ObjectDisposedException(nameof(WebSocketMessageTransport), "The transport was disposed before the reply arrived.");
+        }
 
         try
         {

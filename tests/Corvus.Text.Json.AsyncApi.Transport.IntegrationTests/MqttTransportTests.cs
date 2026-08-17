@@ -7,6 +7,7 @@ using Corvus.Text.Json.AsyncApi.Mqtt;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Formatter;
 using MQTTnet.Packets;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
@@ -1006,6 +1007,57 @@ public class MqttTransportTests
 
         // The parked wait is failed rather than stranded.
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () => await requestTask.WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    [TestMethod]
+    public async Task ReplyCarryingAResponseTopicStillCompletesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-mqtt5-req-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        // A raw MQTT 5 responder that sets a response topic on its reply (soliciting a
+        // follow-up), which the specification permits; the correlation match must still
+        // complete the request rather than treating the reply as a request in flight.
+        MqttFactory factory = new();
+        using IMqttClient responder = factory.CreateMqttClient();
+        await responder.ConnectAsync(new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithProtocolVersion(MqttProtocolVersion.V500)
+            .WithClientId("raw-mqtt5-responder-" + Guid.NewGuid().ToString("N")[..8])
+            .Build());
+
+        responder.ApplicationMessageReceivedAsync += async args =>
+        {
+            MqttApplicationMessage reply = new MqttApplicationMessageBuilder()
+                .WithTopic(args.ApplicationMessage.ResponseTopic)
+                .WithPayload("""{"a":"pong"}"""u8.ToArray())
+                .WithCorrelationData(args.ApplicationMessage.CorrelationData)
+                .WithResponseTopic("mqtt/test/mqtt5-follow-up")
+                .Build();
+            await responder.PublishAsync(reply);
+        };
+        await responder.SubscribeAsync("mqtt/test/mqtt5-req");
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"ping"}"""u8.ToArray());
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(15));
+        (JsonElement replyPayload, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            "mqtt/test/mqtt5-req"u8.ToArray(),
+            "mqtt/test/mqtt5-reply"u8.ToArray(),
+            requestDoc.RootElement,
+            "mqtt5-corr-01"u8.ToArray(),
+            workspace,
+            cancellationToken: requestCts.Token);
+
+        Assert.AreEqual("pong", replyPayload.GetProperty("a"u8).GetString());
+
+        await responder.DisconnectAsync();
+        await transport.DisposeAsync();
     }
 
     [TestMethod]
