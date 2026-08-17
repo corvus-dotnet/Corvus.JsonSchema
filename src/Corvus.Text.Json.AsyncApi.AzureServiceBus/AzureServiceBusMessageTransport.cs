@@ -364,6 +364,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         object marker = new();
+        bool abortRequested = false;
         processor.ProcessMessageAsync += async args =>
         {
             ExecutingSubscription.Value = marker;
@@ -386,6 +387,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Deserialization);
                     await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
 
                     // The abort releases the whole subscription (registry entry, heartbeat,
                     // processor), so the channel is free to resubscribe rather than left consuming
@@ -427,7 +433,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     {
                         await this.middleware(
                             (ct) => handler.Invoke(payload, channelUtf8, headersElement, args.Message, ct),
-                            cancellationToken).ConfigureAwait(false);
+                            cts.Token).ConfigureAwait(false);
                     }
                     else
                     {
@@ -449,6 +455,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Handler);
                         await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
 
                         // The abort releases the whole subscription (registry entry, heartbeat,
                         // processor), so the channel is free to resubscribe rather than left consuming
@@ -519,6 +530,17 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             }
 
             throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            ThrowAbortedDuringSubscribe(channel);
         }
     }
 
@@ -566,6 +588,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         object marker = new();
+        bool abortRequested = false;
         processor.ProcessMessageAsync += async args =>
         {
             ExecutingSubscription.Value = marker;
@@ -588,6 +611,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Deserialization);
                     await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
 
                     // The abort releases the whole subscription (registry entry, heartbeat,
                     // processor), so the channel is free to resubscribe rather than left consuming
@@ -631,7 +659,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                         TReply captured = default;
                         await this.middleware(
                             async (ct) => captured = await handler(request, headersElement, ct).ConfigureAwait(false),
-                            cancellationToken).ConfigureAwait(false);
+                            cts.Token).ConfigureAwait(false);
                         reply = captured;
                     }
                     else
@@ -662,6 +690,11 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Handler);
                         await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
 
                         // The abort releases the whole subscription (registry entry, heartbeat,
                         // processor), so the channel is free to resubscribe rather than left consuming
@@ -732,6 +765,17 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             }
 
             throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            ThrowAbortedDuringSubscribe(channel);
         }
     }
 
@@ -818,6 +862,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
         }
     }
+
+    private static void ThrowAbortedDuringSubscribe(string channel)
+        => throw new InvalidOperationException(
+            $"The error policy aborted the subscription for channel '{channel}' while it was being established.");
 
     private static void ThrowAlreadySubscribed(string channel)
         => throw new InvalidOperationException(

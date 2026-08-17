@@ -2398,15 +2398,9 @@ public sealed class AsyncApi30CodeGenerator
         if (op.IsDynamicAddress)
         {
             w.WriteLine("private string? subscribedChannel;");
-            w.WriteLine("private ReadOnlyMemory<byte> subscribedChannelUtf8;");
         }
         else if (hasParameterizedAddress)
         {
-            // The composed address is retained as UTF-8 only. Both runtime-address forms end at the same Core,
-            // so the field is the one the Core assigns; nothing needs the address back as a string, and
-            // materialising one would be the allocation the composition exists to avoid.
-            w.WriteLine("private ReadOnlyMemory<byte> subscribedChannelUtf8;");
-            w.WriteLine("private byte[]? subscribedDeadLetterChannelUtf8;");
             w.WriteLine($"private static readonly byte[] DeadLetterPrefixUtf8 = \"dead-letter.\"u8.ToArray();");
         }
         else
@@ -2603,23 +2597,34 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine();
             }
 
+            // Runtime-address data handlers receive the claim token through a subscribe-time
+            // closure, so every invocation reads ITS OWN subscription's channel and dead-letter
+            // address from an atomic reference — no shared mutable fields, so no torn reads, no
+            // repair races, and draining handlers keep correct values after a stop. Responders
+            // never read the address, and static consumers use compile-time constants.
+            string handlerArg = !IsResponderOperation(op) && hasRuntimeAddress
+                ? (withDeliveryContext
+                    ? "(payload, deliveryContext, innerCancellationToken) => this.HandleMessageAsync(token, payload, deliveryContext, innerCancellationToken)"
+                    : "(payload, headers, innerCancellationToken) => this.HandleMessageAsync(token, payload, headers, innerCancellationToken)")
+                : "this.HandleMessageAsync";
+
             if (IsResponderOperation(op))
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
             else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
                 w.WriteLine(withDeliveryContext
-                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};"
-                    : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
             else
             {
                 w.WriteLine(withDeliveryContext
-                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};"
-                    : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
         }
 
@@ -2835,18 +2840,19 @@ public sealed class AsyncApi30CodeGenerator
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
 
+            string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
+            string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
+            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+
             w.WriteLine(withDeliveryContext
-                ? $"private async ValueTask HandleMessageAsync({payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
-                : $"private async ValueTask HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+                ? $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
+                : $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
 
             if (withDeliveryContext)
             {
                 w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
             }
-
-            string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
 
             w.WriteLine("try");
             w.OpenBrace();
@@ -2920,12 +2926,13 @@ public sealed class AsyncApi30CodeGenerator
         else
         {
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
-            string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
+            string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
+            string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
+            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
 
             w.WriteLine(withDeliveryContext
-                ? "private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
-                : "private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+                ? $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
+                : $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
             if (withDeliveryContext)
             {
@@ -3606,28 +3613,8 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = token.ChannelUtf8;");
         w.WriteLine();
 
-        // Recorded before the subscribe because the handler reads them as soon as messages
-        // flow. A start superseded between its claim and these writes can overwrite the
-        // successor's values, so they are repaired from the current owner's token: the
-        // running subscription's handler-visible addresses stay its own.
-        w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-
-        if (hasParameterizedAddress)
-        {
-            w.WriteLine("this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;");
-        }
-
-        w.WriteLine("if (System.Threading.Volatile.Read(ref this.subscription) is { } current && !ReferenceEquals(current, token))");
-        w.OpenBrace();
-        w.WriteLine("this.subscribedChannelUtf8 = current.ChannelUtf8;");
-
-        if (hasParameterizedAddress)
-        {
-            w.WriteLine("this.subscribedDeadLetterChannelUtf8 = current.DeadLetterUtf8;");
-        }
-
-        w.CloseBrace();
-        w.WriteLine();
+        // No retained address fields: the handler receives the claim token through the
+        // subscribe-time closure, so it always reads its own subscription's addresses.
         w.WriteLine("try");
         w.OpenBrace();
 

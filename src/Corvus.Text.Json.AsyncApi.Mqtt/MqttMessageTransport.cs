@@ -200,7 +200,25 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             .WithTopicFilter(channel)
             .Build();
 
-        await this.client.UnsubscribeAsync(unsubOptions, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.client.UnsubscribeAsync(unsubOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The broker still holds the topic filter, so restore the local entry (and its
+            // heartbeat) to keep the stop retryable — the generated consumer restores its
+            // gate token on a throwing stop and retries, and without this restore the retry
+            // would hit the early-out above, report success, and leave the broker delivering
+            // to a topic with no handler. If a new subscription claimed the channel in the
+            // window, it owns the topic now and the old entry is deliberately dropped.
+            if (this.handlers.TryAdd(channel, removed))
+            {
+                this.options.Heartbeat?.Start(channel, "mqtt", removed);
+            }
+
+            throw;
+        }
     }
 
     /// <inheritdoc/>

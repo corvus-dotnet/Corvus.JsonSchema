@@ -2420,7 +2420,9 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(consumer.Content, "\"orders.\"u8.CopyTo(channelUtf8.AsSpan(written));");
         StringAssert.Contains(consumer.Content, "written += Encoding.UTF8.GetBytes(orderId, channelUtf8.AsSpan(written));");
         StringAssert.Contains(consumer.Content, "\".created\"u8.CopyTo(channelUtf8.AsSpan(written));");
-        StringAssert.Contains(consumer.Content, "this.subscribedChannelUtf8 = channelUtf8;");
+        // The addresses travel in the claim token and reach the handler through the
+        // subscribe-time closure - there are no retained address fields.
+        StringAssert.Contains(consumer.Content, "this.HandleMessageAsync(token, payload, headers, innerCancellationToken)");
 
         // The dead-letter address is built from the bytes just composed, not from a second pass or a concat.
         StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
@@ -2428,7 +2430,7 @@ public class AsyncApi30CodeGeneratorTests
         // The retained addresses travel in the claim token and are written to the consumer's
         // fields only behind the claim, inside StartClaimedAsync.
         StringAssert.Contains(consumer.Content, "ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
-        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;");
+        StringAssert.Contains(consumer.Content, "ActiveSubscription subscription, ");
 
         // What the old shape did, and must not come back.
         Assert.IsFalse(consumer.Content.Contains("ChannelAddressTemplate", StringComparison.Ordinal), "the template should be split at generation time, not carried as a string");

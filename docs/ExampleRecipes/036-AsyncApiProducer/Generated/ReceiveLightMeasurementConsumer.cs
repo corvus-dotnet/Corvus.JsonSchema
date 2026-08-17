@@ -20,8 +20,6 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     private readonly ValidationMode validationMode;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly IMessageAuthenticationProvider? authProvider;
-    private ReadOnlyMemory<byte> subscribedChannelUtf8;
-    private byte[]? subscribedDeadLetterChannelUtf8;
     private static readonly byte[] DeadLetterPrefixUtf8 = "dead-letter."u8.ToArray();
     private ActiveSubscription? subscription;
 
@@ -109,14 +107,6 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     {
         ReadOnlyMemory<byte> channelUtf8 = token.ChannelUtf8;
 
-        this.subscribedChannelUtf8 = channelUtf8;
-        this.subscribedDeadLetterChannelUtf8 = token.DeadLetterUtf8;
-        if (System.Threading.Volatile.Read(ref this.subscription) is { } current && !ReferenceEquals(current, token))
-        {
-            this.subscribedChannelUtf8 = current.ChannelUtf8;
-            this.subscribedDeadLetterChannelUtf8 = current.DeadLetterUtf8;
-        }
-
         try
         {
             if (this.authProvider is not null)
@@ -124,7 +114,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                 await this.authProvider.AuthenticateAsync(SaslScramAuthContext, cancellationToken).ConfigureAwait(false);
             }
 
-            await this.transport.SubscribeAsync<Streetlights.Client.Models.LightMeasuredPayload>(channelUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+            await this.transport.SubscribeAsync<Streetlights.Client.Models.LightMeasuredPayload>(channelUtf8, (payload, headers, innerCancellationToken) => this.HandleMessageAsync(token, payload, headers, innerCancellationToken), cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -187,7 +177,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         return true;
     }
 
-    private async ValueTask HandleMessageAsync(Streetlights.Client.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
+    private async ValueTask HandleMessageAsync(ActiveSubscription subscription, Streetlights.Client.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
     {
         try
         {
@@ -200,7 +190,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            MessageErrorContext errorContext = new(this.subscribedChannelUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
+            MessageErrorContext errorContext = new(subscription.ChannelUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
             MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
 
             switch (action)
@@ -211,7 +201,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                     await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 case MessageErrorAction.DeadLetter:
-                    await this.transport.DeadLetterAsync(this.subscribedDeadLetterChannelUtf8!, this.subscribedChannelUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
+                    await this.transport.DeadLetterAsync(subscription.DeadLetterUtf8, subscription.ChannelUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
                     return;
                 default:
                     return;

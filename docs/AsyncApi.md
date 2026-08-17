@@ -231,6 +231,7 @@ The rules that come with the capability:
 - **The delivery-context consumer requires an `IMessageDeliveryContextTransport`.** All seven transports implement it. When wrapping with instrumentation, use `InstrumentedMessageTransport.Create` so the wrapper preserves the capability.
 - **A channel has one subscription.** Every transport allows exactly one subscription per channel, of any kind: legacy data, delivery-context data, or responder. Subscribing a channel that already has one throws `InvalidOperationException`; unsubscribe first, which frees the slot for a subscription of any kind. Nothing is displaced silently, and an existing subscription is never touched by the subscribe path: a subscribe that loses a race for the slot tears down only the consumer it was building, though on some brokers that consumer may receive a message or two before the refusal lands. A handler may call `UnsubscribeAsync` for its own channel (the Abort error-policy path does): the subscription is released immediately, and the transport detects that the call came from inside the subscription's own handler and completes the broker-side teardown as the handler returns, rather than deadlocking by waiting for a handler that is waiting for it.
 - **The two generated consumers for one operation are mutually exclusive.** `{Operation}Consumer` and `{Operation}WithDeliveryContextConsumer` subscribe the same channel address, so start one or the other, not both. Starting the second throws rather than quietly taking the channel over.
+- **Generated consumer lifecycle is strict.** A second `StartAsync` on a started consumer throws; `StopAsync` on a consumer that is not started throws; `DisposeAsync` stops only a started consumer and completes quietly otherwise. A `StopAsync` (or the Abort error-policy path) that lands while the subscription is still being established is honored: the stop reports success, and the start releases the subscription it created and throws an `InvalidOperationException` saying the consumer was stopped during start. In that window a restart can be refused with "already has a subscription" because the superseded start has not yet released its claim at the transport — wait for the original start's exception to surface, then restart.
 - **Direct transport API users own the channel buffer.** `SubscribeWithDeliveryContextAsync` retains the `channelUtf8` memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)
 - **Bindings travel.** An operation declaring channel or operation bindings subscribes through a `MessageContext` overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.
 
@@ -548,9 +549,10 @@ await producer.PublishTurnOnOffAsync(
 // Assert published messages
 Assert.AreEqual(1, transport.PublishedMessages.Count);
 
-// Deliver messages to consumers for testing
+// Deliver messages to consumers for testing — target the address the consumer's
+// parameters composed, not the literal template
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.lamp-001.lighting.measured",
     """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
 ```
 
@@ -1111,9 +1113,9 @@ Azure Service Bus deserves one extra note because it has both broker system prop
 AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:
 
 ```csharp
-// Generated request/reply method
-(QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: QueryPayload.Build(filter: "status=active"u8),
+// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply
+QueryResponse reply = await queryProducer.SendAndReceiveQueryAsync(
+    payload: QueryPayload.Build(filter: "status=active"u8),
     cancellationToken: ct);
 
 // reply is already deserialized and validated
@@ -1187,7 +1189,7 @@ ValueTask SubscribeReplyAsync<TRequest, TReply>(
 
 The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
 
-**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable.
+**Reply ownership.** At the transport level, `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (The generated `SendAndReceive*` requester currently manages an internal workspace rather than accepting the caller's; its reply-lifetime handling is being reworked and callers using the generated requester should treat the reply as valid only for immediate reads.)
 
 **Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
 
@@ -1284,8 +1286,9 @@ NatsTransportOptions options = new()
     Heartbeat = heartbeat,
 };
 
-// After starting consumers, check liveness:
-bool alive = heartbeat.IsAlive("smartylighting.streetlights.1.0.action.*.lighting.measured");
+// After starting consumers, check liveness — IsAlive is an exact channel-key lookup
+// (no wildcard matching), so pass the composed address the consumer subscribed:
+bool alive = heartbeat.IsAlive("smartylighting.streetlights.1.0.action.1.lighting.measured");
 
 // Get all subscription statuses:
 foreach (var status in heartbeat.GetSubscriptionStatuses())
