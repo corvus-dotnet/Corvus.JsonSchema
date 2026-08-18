@@ -623,8 +623,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                 ? segment.Array
                 : correlationIdUtf8.ToArray();
             message.CorrelationData = corrBytes;
-            message.UserProperties ??= [];
-            message.UserProperties.Add(new MqttUserProperty(this.options.CorrelationIdPropertyKey, Encoding.UTF8.GetString(correlationIdUtf8.Span)));
+            if (this.options.CorrelationIdPropertyKey is string correlationKey)
+            {
+                message.UserProperties ??= [];
+                message.UserProperties.Add(new MqttUserProperty(correlationKey, Encoding.UTF8.GetString(correlationIdUtf8.Span)));
+            }
         }
 
         return message;
