@@ -5,6 +5,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Threading;
 
 namespace Corvus.Text.Json.AsyncApi;
 
@@ -86,7 +87,7 @@ public sealed class ProcessingLoopHeartbeat
     public void Start(string channel, string messagingSystem, object owner)
     {
         long now = Stopwatch.GetTimestamp();
-        this.loops[channel] = new LoopState(messagingSystem, now, Running: true, owner);
+        this.loops[channel] = new LoopState(messagingSystem, owner, now);
 
         AsyncApiTelemetry.Heartbeats.Add(
             1,
@@ -109,27 +110,18 @@ public sealed class ProcessingLoopHeartbeat
     /// <remarks>
     /// Only lands if the entry still belongs to <paramref name="owner"/>: a losing claim
     /// racer or a loop unwinding after a resubscribe must not mark the new owner's live
-    /// subscription as stopped. The compare-exchange retry keeps a concurrent tick from
-    /// swallowing the stop, while a concurrent <see cref="Start(string, string, object)"/>
-    /// by a new owner atomically wins.
+    /// subscription as stopped. The stop transitions the owning state exactly once via an
+    /// interlocked exchange, so a concurrent tick cannot swallow it, and a concurrent
+    /// <see cref="Start(string, string, object)"/> by a new owner replaces the entry, leaving
+    /// this stop to land harmlessly on the superseded state.
     /// </remarks>
     public void Stop(string channel, string messagingSystem, object owner)
     {
-        bool stopped = false;
-        while (this.loops.TryGetValue(channel, out LoopState state)
-            && ReferenceEquals(state.Owner, owner)
-            && state.Running)
-        {
-            if (this.loops.TryUpdate(channel, state with { Running = false }, state))
-            {
-                stopped = true;
-                break;
-            }
-        }
-
-        // A stop that did not land (a losing racer, an unwinding predecessor) emits no
-        // event, so the started/stopped event pairing tracks real state transitions.
-        if (!stopped)
+        // A stop that does not land (a losing racer, an unwinding predecessor, an entry already
+        // stopped) emits no event, so the started/stopped pairing tracks real transitions.
+        if (!this.loops.TryGetValue(channel, out LoopState? state)
+            || !ReferenceEquals(state.Owner, owner)
+            || !state.TryStop())
         {
             return;
         }
@@ -153,37 +145,38 @@ public sealed class ProcessingLoopHeartbeat
     /// reference with the instance passed to <see cref="Start"/>.</param>
     /// <remarks>
     /// <para>
-    /// Call this at the top of each loop iteration. It is zero-cost when no
-    /// <see cref="MeterListener"/> is attached — the only overhead is updating
-    /// the <see cref="Stopwatch"/> timestamp.
+    /// Call this at the top of each loop iteration. It is allocation-free on the steady
+    /// state — a dictionary read, a reference comparison, and a volatile timestamp store —
+    /// and the counter add is a no-op when no <see cref="MeterListener"/> is attached.
     /// </para>
     /// <para>
     /// Only refreshes an entry that still belongs to <paramref name="owner"/>: a draining
     /// handler from a torn-down subscription must not fake-freshen its replacement's
-    /// liveness. Loops start ticking before their claim is recorded, so the add path may
-    /// create the entry; a losing racer's entry converges to the winner because
-    /// <see cref="Start(string, string, object)"/> overwrites and mismatched ticks are ignored.
+    /// liveness (refreshing a state object that <see cref="Start(string, string, object)"/>
+    /// has already replaced is harmless — it is no longer the one liveness reads). Loops
+    /// start ticking before their claim is recorded, so the first tick may create the
+    /// entry; a losing racer's entry converges to the winner because Start overwrites and
+    /// mismatched ticks are ignored.
     /// </para>
     /// </remarks>
     public void Tick(string channel, string messagingSystem, object owner)
     {
         long now = Stopwatch.GetTimestamp();
-        LoopState result = this.loops.AddOrUpdate(
-            channel,
-            static (_, args) => new LoopState(args.MessagingSystem, args.Now, Running: true, args.Owner),
-            static (_, existing, args) => ReferenceEquals(existing.Owner, args.Owner)
-                ? existing with { LastTickTimestamp = args.Now }
-                : existing,
-            (MessagingSystem: messagingSystem, Now: now, Owner: owner));
+        if (!this.loops.TryGetValue(channel, out LoopState? state))
+        {
+            state = this.loops.GetOrAdd(channel, new LoopState(messagingSystem, owner, now));
+        }
 
         // A tick that was ignored (another subscription owns the entry) emits no event, so
-        // the tick rate reflects only the live subscription's loop. Owner identity is the
+        // the tick rate reflects only the owning subscription's loop. Owner identity is the
         // test — a timestamp comparison would false-positive when two ticks share a
         // Stopwatch quantum.
-        if (!ReferenceEquals(result.Owner, owner))
+        if (!ReferenceEquals(state.Owner, owner))
         {
             return;
         }
+
+        state.Tick(now);
 
         AsyncApiTelemetry.Heartbeats.Add(
             1,
@@ -204,7 +197,7 @@ public sealed class ProcessingLoopHeartbeat
     /// it has not ticked recently or is not tracked.</returns>
     public bool IsAlive(string channel)
     {
-        if (!this.loops.TryGetValue(channel, out LoopState state))
+        if (!this.loops.TryGetValue(channel, out LoopState? state))
         {
             return false;
         }
@@ -251,9 +244,36 @@ public sealed class ProcessingLoopHeartbeat
         this.loops.TryRemove(channel, out _);
     }
 
-    // Owner is compared by reference (record-struct equality uses the default object
-    // comparer), which makes TryUpdate a true compare-exchange on the owning subscription.
-    private record struct LoopState(string MessagingSystem, long LastTickTimestamp, bool Running, object Owner);
+    // Owner is compared by reference, which makes the owner gate a true identity check on
+    // the owning subscription. This is a class rather than a record struct so a tick can
+    // refresh the timestamp in place with a volatile store: a struct value forced
+    // ConcurrentDictionary to allocate a replacement node on every tick, once per delivered
+    // message on every transport with a heartbeat configured.
+    private sealed class LoopState
+    {
+        private long lastTickTimestamp;
+        private int running;
+
+        public LoopState(string messagingSystem, object owner, long timestamp)
+        {
+            this.MessagingSystem = messagingSystem;
+            this.Owner = owner;
+            this.lastTickTimestamp = timestamp;
+            this.running = 1;
+        }
+
+        public string MessagingSystem { get; }
+
+        public object Owner { get; }
+
+        public long LastTickTimestamp => Volatile.Read(ref this.lastTickTimestamp);
+
+        public bool Running => Volatile.Read(ref this.running) == 1;
+
+        public void Tick(long timestamp) => Volatile.Write(ref this.lastTickTimestamp, timestamp);
+
+        public bool TryStop() => Interlocked.Exchange(ref this.running, 0) == 1;
+    }
 }
 
 /// <summary>
