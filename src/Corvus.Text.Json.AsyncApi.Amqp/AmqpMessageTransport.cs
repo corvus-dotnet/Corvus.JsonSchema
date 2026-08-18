@@ -61,10 +61,18 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     // documents args.Body as valid only during the receive handler, so everything the
     // requester needs is materialized inside the handler before SetResult.
     private readonly ConcurrentDictionary<string, TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>> pendingReplies = new(StringComparer.Ordinal);
+
+    // CachedString carries the pre-encoded UTF-8 the client would otherwise re-encode on every
+    // publish; the exchange is fixed at construction and routing keys are cached per channel
+    // (copy-keyed and capped, since callers pass rented memory and dynamic channel sets must
+    // not grow the cache without bound).
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, CachedString> channelCachedStrings = new(ReadOnlyMemoryByteComparer.Instance);
+    private readonly CachedString exchangeCachedString;
     private volatile bool disposed;
 
     private AmqpMessageTransport(AmqpTransportOptions options, IConnection connection, IChannel publishChannel)
     {
+        this.exchangeCachedString = new CachedString(options.ExchangeName);
         this.options = options;
         this.connection = connection;
         this.publishChannel = publishChannel;
@@ -150,7 +158,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        CachedString routingKey = this.GetChannelCachedString(channelUtf8);
         (byte[] payloadRented, int payloadLen) = SerializeToRented(in payload);
 
         // Headers go into a Dictionary<string, object?> as byte[] — needs owned array.
@@ -159,7 +167,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             ? SerializeToOwnedBytes(in headers)
             : null;
 
-        return PublishCoreAsync(channel, payloadRented, payloadLen, headerBytes, correlationId: null, cancellationToken);
+        return this.PublishCoreAsync(routingKey, payloadRented, payloadLen, headerBytes, correlationId: null, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -434,7 +442,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     }
 
     private async ValueTask PublishCoreAsync(
-        string channel,
+        CachedString routingKey,
         byte[] payloadRented,
         int payloadLength,
         byte[]? headerBytes,
@@ -462,11 +470,8 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                 props.Headers[CorrelationIdKeyString] = Encoding.UTF8.GetBytes(correlationId);
             }
 
-            string exchange = this.options.ExchangeName;
-            string routingKey = channel;
-
             await this.publishChannel.BasicPublishAsync(
-                exchange: exchange,
+                exchange: this.exchangeCachedString,
                 routingKey: routingKey,
                 mandatory: false,
                 basicProperties: props,
@@ -477,6 +482,27 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             ArrayPool<byte>.Shared.Return(payloadRented);
         }
+    }
+
+    // The routing key's pre-encoded form is cached per channel: the client re-encodes a plain
+    // string routing key on every publish, and the caller's bytes are already exactly that
+    // encoding. The key copies the caller's memory (callers pass rentals); past the cap a very
+    // dynamic channel set falls back to per-call construction.
+    private CachedString GetChannelCachedString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelCachedStrings.TryGetValue(channelUtf8, out CachedString? cached))
+        {
+            return cached;
+        }
+
+        byte[] copy = channelUtf8.ToArray();
+        CachedString created = new(Encoding.UTF8.GetString(copy), copy);
+        if (this.channelCachedStrings.Count < 1024)
+        {
+            this.channelCachedStrings.TryAdd(copy, created);
+        }
+
+        return created;
     }
 
     private async ValueTask<(TReply Payload, JsonElement Headers)> RequestCoreAsync<TReply>(

@@ -81,11 +81,11 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        // Build and rent envelope bytes so they survive the async send
-        (byte[] rented, int length) = BuildPublishEnvelopeRented(channel, in payload, in headers, correlationId: null);
+        // Build and rent envelope bytes so they survive the async send. The caller's UTF-8
+        // channel goes straight into the envelope; no string is created on this path.
+        (byte[] rented, int length) = BuildPublishEnvelopeRented(channelUtf8.Span, in payload, in headers);
 
         return SendAndReturnAsync(rented, length, cancellationToken);
     }
@@ -798,6 +798,41 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         {
             this.sendSemaphore.Release();
         }
+    }
+
+    // The plain-publish shape of the builder below: it takes the caller's UTF-8 channel so
+    // the hot publish path never creates a channel string. The correlated shapes keep the
+    // string form their reply plumbing already carries.
+    private static (byte[] Rented, int Length) BuildPublishEnvelopeRented<TPayload>(
+        ReadOnlySpan<byte> channelUtf8,
+        in TPayload payload,
+        in JsonElement headers)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
+
+        writer.WriteStartObject();
+        writer.WriteString("channel"u8, channelUtf8);
+        writer.WriteString("type"u8, "publish"u8);
+        writer.WritePropertyName("payload"u8);
+        payload.WriteTo(writer);
+
+        if (headers.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("headers"u8);
+            headers.WriteTo(writer);
+        }
+
+        writer.WriteEndObject();
+        writer.Flush();
+
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        return (rented, length);
     }
 
     private static (byte[] Rented, int Length) BuildPublishEnvelopeRented<TPayload>(
