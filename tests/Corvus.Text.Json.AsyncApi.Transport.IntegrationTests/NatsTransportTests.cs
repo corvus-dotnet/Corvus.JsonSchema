@@ -197,6 +197,81 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task ForeignUnparseableHeaderValueDeliversWithAbsentHeaders()
+    {
+        // A foreign publisher can put anything in the Corvus-Headers slot. An unparseable
+        // value must degrade to absent headers, not dead-letter the message or leak the
+        // decode rental.
+        ReadOnlyMemory<byte> channel = "test.headers-foreign"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedHeadersKind = JsonValueKind.Null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedHeadersKind = headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        NATS.Client.Core.NatsConnection foreignConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await foreignConn.ConnectAsync();
+        NatsHeaders foreignHeaders = new()
+        {
+            ["Corvus-Headers"] = "this is not json",
+        };
+        await foreignConn.PublishAsync("test.headers-foreign", """{"data":1}"""u8.ToArray(), headers: foreignHeaders);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with an unparseable foreign header value was not delivered.");
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+
+        await s_transport.UnsubscribeAsync(channel);
+        await foreignConn.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task LegacyBase64HeaderValueStillDecodes()
+    {
+        // A 5.3.0 producer base64-wrapped the headers JSON. During a rolling upgrade this
+        // consumer must still read that form.
+        ReadOnlyMemory<byte> channel = "test.headers-legacy"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedTraceId = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedTraceId = headers.ValueKind == JsonValueKind.Object
+                    ? headers.GetProperty("x-trace-id"u8).GetString()
+                    : null;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        NATS.Client.Core.NatsConnection legacyConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await legacyConn.ConnectAsync();
+        NatsHeaders legacyHeaders = new()
+        {
+            ["Corvus-Headers"] = Convert.ToBase64String("""{"x-trace-id":"abc"}"""u8),
+        };
+        await legacyConn.PublishAsync("test.headers-legacy", """{"data":1}"""u8.ToArray(), headers: legacyHeaders);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with a legacy base64 header value was not delivered.");
+        Assert.AreEqual("abc", receivedTraceId);
+
+        await s_transport.UnsubscribeAsync(channel);
+        await legacyConn.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task MultipleMessagesDeliveredInOrder()
     {
         // Arrange

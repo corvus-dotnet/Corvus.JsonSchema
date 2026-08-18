@@ -163,6 +163,130 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task ForeignUnparseableHeaderValueDeliversWithAbsentHeaders()
+    {
+        // A foreign publisher can put anything in the corvus-headers user property. An
+        // unparseable value must degrade to absent headers, not fail the delivery or leak
+        // the decode rental.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-foreign"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedHeadersKind = JsonValueKind.Null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedHeadersKind = headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-hdr-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/headers-foreign")
+            .WithPayload("""{"data":1}"""u8.ToArray())
+            .WithUserProperty("corvus-headers", "this is not json")
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with an unparseable foreign header value was not delivered.");
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LegacyBase64HeaderValueStillDecodes()
+    {
+        // A 5.3.0 producer base64-wrapped the headers JSON in the user property. During a
+        // rolling upgrade this consumer must still read that form.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-legacy"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedTraceId = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedTraceId = headers.ValueKind == JsonValueKind.Object
+                    ? headers.GetProperty("x-trace-id"u8).GetString()
+                    : null;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-legacy-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/headers-legacy")
+            .WithPayload("""{"data":1}"""u8.ToArray())
+            .WithUserProperty("corvus-headers", Convert.ToBase64String("""{"x-trace-id":"abc"}"""u8))
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with a legacy base64 header value was not delivered.");
+        Assert.AreEqual("abc", receivedTraceId);
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LargeNonAsciiHeadersFitTheUserPropertyCap()
+    {
+        // 14,000 CJK characters are 42KB of raw UTF-8 (fits the 65,535-byte user-property
+        // cap) but 84KB when ASCII-escaped (does not). The header serializer must keep
+        // non-ASCII raw so this publish succeeds.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-large"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        int receivedLength = -1;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedLength = headers.GetProperty("big"u8).GetString()?.Length ?? -1;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        string bigValue = new string('\u65e5', 14000);
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("{\"big\":\"" + bigValue + "\"}");
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with large non-ASCII headers was not received.");
+        Assert.AreEqual(14000, receivedLength);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task MultipleMessagesDeliveredInOrder()
     {
         ReadOnlyMemory<byte> channel = "mqtt/test/ordering"u8.ToArray();

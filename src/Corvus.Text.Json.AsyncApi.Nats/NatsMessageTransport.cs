@@ -747,6 +747,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 ExecutingSubscription.Value = marker;
                 try
                 {
+                    // Unlike the core loops below there is no drain on early exit: the
+                    // consume enumerator's read-ahead buffer is SDK-internal, so payloads it
+                    // holds when the loop breaks are lost to the pool (bounded by the
+                    // consumer's prefetch window, reclaimed by GC).
                     await foreach (NatsJSMsg<NatsMemoryOwner<byte>> msg in consumer.ConsumeAsync<NatsMemoryOwner<byte>>(cancellationToken: cts.Token).ConfigureAwait(false))
                     {
                         this.options.Heartbeat?.Tick(channel, "nats-jetstream", marker);
@@ -1023,153 +1027,165 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     await using (sub)
                     {
-                        await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                        try
                         {
-                            this.options.Heartbeat?.Tick(channel, "nats", marker);
+                            await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                            {
+                                this.options.Heartbeat?.Tick(channel, "nats", marker);
 
-                            NatsMemoryOwner<byte> data = msg.Data;
-                            if (data.Length == 0)
-                            {
-                                continue;
-                            }
-
-                            // Parse
-                            ParsedJsonDocument<TPayload> payloadDoc;
-                            try
-                            {
-                                payloadDoc = ParsedJsonDocument<TPayload>.Parse(data.Memory, data);
-                            }
-                            catch (Exception ex) when (ex is not OperationCanceledException)
-                            {
-                                // Parse failed, so ownership stayed with this loop; the scope keeps
-                                // the pooled buffer alive through the dead-letter publish and returns
-                                // it on every exit.
-                                using (data)
+                                NatsMemoryOwner<byte> data = msg.Data;
+                                if (data.Length == 0)
                                 {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
-                                    {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                        break;
-                                    }
-
-                                    if (action == MessageErrorAction.DeadLetter)
-                                    {
-                                        try
-                                        {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
-                                        }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                        {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                    }
-
                                     continue;
                                 }
-                            }
 
-                            // Handle (through middleware if configured)
-                            using (payloadDoc)
-                            {
-                                TPayload payload = payloadDoc.RootElement;
-
-                                ParsedJsonDocument<JsonElement>? headersDoc;
+                                // Parse
+                                ParsedJsonDocument<TPayload> payloadDoc;
                                 try
                                 {
-                                    headersDoc = DecodeHeadersDocument(msg.Headers);
+                                    payloadDoc = ParsedJsonDocument<TPayload>.Parse(data.Memory, data);
                                 }
                                 catch (Exception ex) when (ex is not OperationCanceledException)
                                 {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
+                                    // Parse failed, so ownership stayed with this loop; the scope keeps
+                                    // the pooled buffer alive through the dead-letter publish and returns
+                                    // it on every exit.
+                                    using (data)
                                     {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                        break;
-                                    }
-
-                                    if (action == MessageErrorAction.DeadLetter)
-                                    {
-                                        try
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                            break;
                                         }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+
+                                        if (action == MessageErrorAction.DeadLetter)
                                         {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                    }
-
-                                    continue;
-                                }
-
-                                try
-                                {
-                                    using (headersDoc)
-                                    {
-                                        JsonElement headers = headersDoc?.RootElement ?? default;
-
-                                        // Box the native message struct only for delivery-context
-                                        // subscriptions (one box per delivered message, whether or not
-                                        // the handler reads it); legacy subscriptions pass null and
-                                        // never box.
-                                        object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
-                                        if (this.middleware is not null)
-                                        {
-                                            await this.middleware.InvokeAsync(
-                                                static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.nativeMessage, ct),
-                                                (handler, payload, channelUtf8, headers, nativeMessage),
-                                                cts.Token).ConfigureAwait(false);
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
                                         }
                                         else
                                         {
-                                            await handler.Invoke(payload, channelUtf8, headers, nativeMessage, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
                                         }
+
+                                        continue;
                                     }
                                 }
-                                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+
+                                // Handle (through middleware if configured)
+                                using (payloadDoc)
                                 {
-                                    break;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
+                                    TPayload payload = payloadDoc.RootElement;
+
+                                    ParsedJsonDocument<JsonElement>? headersDoc;
+                                    try
                                     {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Handler);
-                                        break;
+                                        headersDoc = DecodeHeadersDocument(msg.Headers);
+                                    }
+                                    catch (Exception ex) when (ex is not OperationCanceledException)
+                                    {
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
+                                        {
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                            break;
+                                        }
+
+                                        if (action == MessageErrorAction.DeadLetter)
+                                        {
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                        }
+
+                                        continue;
                                     }
 
-                                    if (action == MessageErrorAction.DeadLetter)
+                                    try
                                     {
-                                        try
+                                        using (headersDoc)
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
-                                        }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                        {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            JsonElement headers = headersDoc?.RootElement ?? default;
+
+                                            // Box the native message struct only for delivery-context
+                                            // subscriptions (one box per delivered message, whether or not
+                                            // the handler reads it); legacy subscriptions pass null and
+                                            // never box.
+                                            object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
+                                            if (this.middleware is not null)
+                                            {
+                                                await this.middleware.InvokeAsync(
+                                                    static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                                                    (handler, payload, channelUtf8, headers, nativeMessage),
+                                                    cts.Token).ConfigureAwait(false);
+                                            }
+                                            else
+                                            {
+                                                await handler.Invoke(payload, channelUtf8, headers, nativeMessage, cts.Token).ConfigureAwait(false);
+                                            }
                                         }
                                     }
-                                    else
+                                    catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                                     {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Handler);
+                                        break;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
+                                        {
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Handler);
+                                            break;
+                                        }
+
+                                        if (action == MessageErrorAction.DeadLetter)
+                                        {
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Handler);
+                                        }
                                     }
                                 }
+                            }
+                        }
+                        finally
+                        {
+                            // Messages the SDK buffered ahead of a loop that exits early carry
+                            // pooled payloads nobody will read; return them to the pool.
+                            while (sub.Msgs.TryRead(out NatsMsg<NatsMemoryOwner<byte>> pending))
+                            {
+                                pending.Data.Dispose();
                             }
                         }
                     }
@@ -1258,173 +1274,185 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     await using (sub)
                     {
-                        await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                        try
                         {
-                            this.options.Heartbeat?.Tick(channel, "nats", marker);
+                            await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                            {
+                                this.options.Heartbeat?.Tick(channel, "nats", marker);
 
-                            NatsMemoryOwner<byte> data = msg.Data;
-                            if (data.Length == 0)
-                            {
-                                continue;
-                            }
-
-                            // Parse the request
-                            ParsedJsonDocument<TRequest> requestDoc;
-                            try
-                            {
-                                requestDoc = ParsedJsonDocument<TRequest>.Parse(data.Memory, data);
-                            }
-                            catch (Exception ex) when (ex is not OperationCanceledException)
-                            {
-                                // Parse failed, so ownership stayed with this loop; the scope keeps
-                                // the pooled buffer alive through the dead-letter publish and returns
-                                // it on every exit.
-                                using (data)
+                                NatsMemoryOwner<byte> data = msg.Data;
+                                if (data.Length == 0)
                                 {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
-                                    {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                        break;
-                                    }
-
-                                    if (action == MessageErrorAction.DeadLetter)
-                                    {
-                                        try
-                                        {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
-                                        }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                        {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                    }
-
                                     continue;
                                 }
-                            }
 
-                            // Handle the request and publish the reply
-                            using (requestDoc)
-                            {
-                                TRequest request = requestDoc.RootElement;
-
-                                ParsedJsonDocument<JsonElement>? headersDoc;
+                                // Parse the request
+                                ParsedJsonDocument<TRequest> requestDoc;
                                 try
                                 {
-                                    headersDoc = DecodeHeadersDocument(msg.Headers);
+                                    requestDoc = ParsedJsonDocument<TRequest>.Parse(data.Memory, data);
                                 }
                                 catch (Exception ex) when (ex is not OperationCanceledException)
                                 {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
+                                    // Parse failed, so ownership stayed with this loop; the scope keeps
+                                    // the pooled buffer alive through the dead-letter publish and returns
+                                    // it on every exit.
+                                    using (data)
                                     {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                        break;
-                                    }
-
-                                    if (action == MessageErrorAction.DeadLetter)
-                                    {
-                                        try
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                            break;
                                         }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+
+                                        if (action == MessageErrorAction.DeadLetter)
                                         {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                    }
-
-                                    continue;
-                                }
-
-                                try
-                                {
-                                    using (headersDoc)
-                                    {
-                                        JsonElement headers = headersDoc?.RootElement ?? default;
-
-                                        TReply reply;
-                                        if (this.middleware is not null)
-                                        {
-                                            reply = await this.middleware.InvokeAsync(
-                                                static (s, ct) => s.handler(s.request, s.headers, ct),
-                                                (handler, request, headers),
-                                                cts.Token).ConfigureAwait(false);
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
                                         }
                                         else
                                         {
-                                            reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
                                         }
 
-                                        // Publish the reply to the request's reply-to subject. NATS correlates
-                                        // the reply with the original RequestAsync caller via its inbox subject,
-                                        // so a Corvus requester receives this without any explicit correlation id.
-                                        if (msg.ReplyTo is not null)
-                                        {
-                                            // Published with CancellationToken.None, not this
-                                            // subscription's token: a one-shot responder
-                                            // (ReceiveOneAndReplyAsync) signals its completion the
-                                            // instant the handler returns, so the caller can
-                                            // unsubscribe - which cancels the token - while this
-                                            // reply is still in flight. Cancelling here aborts the
-                                            // reply and the requester waits out its timeout for a
-                                            // reply that was computed but never sent. The connection
-                                            // is transport-scoped.
-                                            await this.connection.PublishAsync(
-                                                subject: msg.ReplyTo,
-                                                data: reply,
-                                                headers: null,
-                                                replyTo: null,
-                                                serializer: JsonElementSerializer<TReply>.Instance,
-                                                opts: default,
-                                                cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                                        }
+                                        continue;
                                     }
                                 }
-                                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+
+                                // Handle the request and publish the reply
+                                using (requestDoc)
                                 {
-                                    break;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
-                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                    if (action == MessageErrorAction.Abort)
+                                    TRequest request = requestDoc.RootElement;
+
+                                    ParsedJsonDocument<JsonElement>? headersDoc;
+                                    try
                                     {
-                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Handler);
+                                        headersDoc = DecodeHeadersDocument(msg.Headers);
+                                    }
+                                    catch (Exception ex) when (ex is not OperationCanceledException)
+                                    {
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
+                                        {
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                            break;
+                                        }
+
+                                        if (action == MessageErrorAction.DeadLetter)
+                                        {
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                        }
+
+                                        continue;
+                                    }
+
+                                    try
+                                    {
+                                        using (headersDoc)
+                                        {
+                                            JsonElement headers = headersDoc?.RootElement ?? default;
+
+                                            TReply reply;
+                                            if (this.middleware is not null)
+                                            {
+                                                reply = await this.middleware.InvokeAsync(
+                                                    static (s, ct) => s.handler(s.request, s.headers, ct),
+                                                    (handler, request, headers),
+                                                    cts.Token).ConfigureAwait(false);
+                                            }
+                                            else
+                                            {
+                                                reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                                            }
+
+                                            // Publish the reply to the request's reply-to subject. NATS correlates
+                                            // the reply with the original RequestAsync caller via its inbox subject,
+                                            // so a Corvus requester receives this without any explicit correlation id.
+                                            if (msg.ReplyTo is not null)
+                                            {
+                                                // Published with CancellationToken.None, not this
+                                                // subscription's token: a one-shot responder
+                                                // (ReceiveOneAndReplyAsync) signals its completion the
+                                                // instant the handler returns, so the caller can
+                                                // unsubscribe - which cancels the token - while this
+                                                // reply is still in flight. Cancelling here aborts the
+                                                // reply and the requester waits out its timeout for a
+                                                // reply that was computed but never sent. The connection
+                                                // is transport-scoped.
+                                                await this.connection.PublishAsync(
+                                                    subject: msg.ReplyTo,
+                                                    data: reply,
+                                                    headers: null,
+                                                    replyTo: null,
+                                                    serializer: JsonElementSerializer<TReply>.Instance,
+                                                    opts: default,
+                                                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                                            }
+                                        }
+                                    }
+                                    catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                                    {
                                         break;
                                     }
+                                    catch (Exception ex)
+                                    {
+                                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                        if (action == MessageErrorAction.Abort)
+                                        {
+                                            AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Handler);
+                                            break;
+                                        }
 
-                                    if (action == MessageErrorAction.DeadLetter)
-                                    {
-                                        try
+                                        if (action == MessageErrorAction.DeadLetter)
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
-                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            try
+                                            {
+                                                await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                            }
+                                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                            {
+                                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            }
                                         }
-                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                        else
                                         {
-                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                            AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Handler);
                                         }
-                                    }
-                                    else
-                                    {
-                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Handler);
                                     }
                                 }
+                            }
+                        }
+                        finally
+                        {
+                            // Messages the SDK buffered ahead of a loop that exits early carry
+                            // pooled payloads nobody will read; return them to the pool.
+                            while (sub.Msgs.TryRead(out NatsMsg<NatsMemoryOwner<byte>> pending))
+                            {
+                                pending.Data.Dispose();
                             }
                         }
                     }
@@ -1473,21 +1501,45 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         if (headers.TryGetValue(HeadersKey, out StringValues values) &&
             values.Count > 0 &&
-            values[0] is string headerJson)
+            values[0] is string headerValue)
         {
-            byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(headerJson.Length));
-            int bytesWritten = Encoding.UTF8.GetBytes(headerJson, rented);
-            try
+            return DecodeHeaderValue(headerValue);
+        }
+
+        return null;
+    }
+
+    // The value is the compact JSON text itself; a 5.3.0 producer sent base64-wrapped JSON
+    // instead, so an unparseable value gets one base64 decode attempt before being treated
+    // as absent, which keeps a mixed-version rolling upgrade from dropping headers on this
+    // side. The catches are the library's own JsonException (it does not derive from
+    // System.Text.Json's), and every non-transfer path returns the rental.
+    private static ParsedJsonDocument<JsonElement>? DecodeHeaderValue(string headerValue)
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(headerValue.Length));
+        int bytesWritten = Encoding.UTF8.GetBytes(headerValue, rented);
+        try
+        {
+            // Transfer ownership — document returns the array on Dispose()
+            return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
+        }
+        catch (JsonException)
+        {
+            // Not the current format. Base64 output never grows when decoded, so the same
+            // rental holds the legacy attempt.
+            if (Convert.TryFromBase64String(headerValue, rented, out int decoded))
             {
-                // Transfer ownership — document returns the array on Dispose()
-                return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
+                try
+                {
+                    return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, decoded), rented);
+                }
+                catch (JsonException)
+                {
+                }
             }
-            catch (System.Text.Json.JsonException)
-            {
-                // A foreign or corrupted value is treated as absent headers, exactly as an
-                // undecodable value always has been.
-                ArrayPool<byte>.Shared.Return(rented);
-            }
+
+            // A foreign or corrupted value is treated as absent headers.
+            ArrayPool<byte>.Shared.Return(rented);
         }
 
         return null;

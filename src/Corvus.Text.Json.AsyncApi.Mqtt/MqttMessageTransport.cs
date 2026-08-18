@@ -43,6 +43,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     [ThreadStatic]
     private static Utf8JsonWriter? t_writer;
 
+    // Separate writer for header values: it carries the relaxed encoder, while payloads
+    // keep the default encoder's output shape. Both share the one scratch buffer.
+    [ThreadStatic]
+    private static Utf8JsonWriter? t_headerWriter;
+
     private readonly MqttTransportOptions options;
     private readonly IMqttClient client;
     private readonly IMessageErrorPolicy errorPolicy;
@@ -1017,19 +1022,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         {
             if (prop.Name == this.options.HeadersPropertyKey)
             {
-                byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(prop.Value.Length));
-                int bytesWritten = Encoding.UTF8.GetBytes(prop.Value, rented);
-                try
-                {
-                    // Transfer ownership — document returns the array on Dispose()
-                    return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
-                }
-                catch (System.Text.Json.JsonException)
-                {
-                    // A foreign or corrupted value is treated as absent headers, exactly as an
-                    // undecodable value always has been.
-                    ArrayPool<byte>.Shared.Return(rented);
-                }
+                return DecodeHeaderValue(prop.Value);
             }
         }
 
@@ -1071,15 +1064,53 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         return (rented, length);
     }
 
-    // Headers travel as the compact JSON text itself. The default Utf8JsonWriter encoder
-    // escapes every non-ASCII character, so the value is ASCII by construction, which keeps
-    // it legal as a header value and survives the client's default ASCII header encoding.
+    // The value is the compact JSON text itself; a 5.3.0 producer sent base64-wrapped JSON
+    // instead, so an unparseable value gets one base64 decode attempt before being treated
+    // as absent, which keeps a mixed-version rolling upgrade from dropping headers on this
+    // side. The catches are the library's own JsonException (it does not derive from
+    // System.Text.Json's), and every non-transfer path returns the rental.
+    private static ParsedJsonDocument<JsonElement>? DecodeHeaderValue(string headerValue)
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(headerValue.Length));
+        int bytesWritten = Encoding.UTF8.GetBytes(headerValue, rented);
+        try
+        {
+            // Transfer ownership — document returns the array on Dispose()
+            return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
+        }
+        catch (JsonException)
+        {
+            // Not the current format. Base64 output never grows when decoded, so the same
+            // rental holds the legacy attempt.
+            if (Convert.TryFromBase64String(headerValue, rented, out int decoded))
+            {
+                try
+                {
+                    return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, decoded), rented);
+                }
+                catch (JsonException)
+                {
+                }
+            }
+
+            // A foreign or corrupted value is treated as absent headers.
+            ArrayPool<byte>.Shared.Return(rented);
+        }
+
+        return null;
+    }
+
+    // MQTT 5 user-property values are UTF-8 strings, so the header text keeps non-ASCII
+    // characters raw: escaped output costs up to six ASCII bytes per character and could
+    // push a large headers object over the property's 65,535-byte cap that the old base64
+    // form fit under, while raw UTF-8 is always smaller than that base64 form. The relaxed
+    // encoder still escapes quotes and control characters.
     private static string SerializeToHeaderString<T>(in T value)
         where T : struct, IJsonElement<T>
     {
         ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
         buffer.Clear();
-        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        Utf8JsonWriter writer = t_headerWriter ??= new(buffer, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
         writer.Reset(buffer);
         value.WriteTo(writer);
         writer.Flush();
