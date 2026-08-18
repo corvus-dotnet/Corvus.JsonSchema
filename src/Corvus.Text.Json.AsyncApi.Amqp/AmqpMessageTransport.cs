@@ -57,7 +57,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
     // subscribe on the reply channel nor die with the first requester's token.
     private readonly ConcurrentDictionary<string, SubscriptionState> replyConsumers = new(StringComparer.Ordinal);
 
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
+    // The parked value is an owned copy of the reply, never the delivery args: the client
+    // documents args.Body as valid only during the receive handler, so everything the
+    // requester needs is materialized inside the handler before SetResult.
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>> pendingReplies = new(StringComparer.Ordinal);
     private volatile bool disposed;
 
     private AmqpMessageTransport(AmqpTransportOptions options, IConnection connection, IChannel publishChannel)
@@ -418,7 +421,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         // wait is failed rather than silently stranded past disposal.
         foreach (string correlationId in this.pendingReplies.Keys)
         {
-            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<BasicDeliverEventArgs>? pendingReply))
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>? pendingReply))
             {
                 pendingReply.TrySetException(new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived."));
             }
@@ -488,7 +491,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
-        TaskCompletionSource<BasicDeliverEventArgs> replyTcs = new();
+        TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)> replyTcs = new();
         this.pendingReplies[correlationId] = replyTcs;
 
         // Dispose may have walked pendingReplies before this entry landed; whichever side
@@ -535,16 +538,18 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
             // cancellation rather than waiting forever (the caller's token still cancels earlier if it fires first).
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(this.options.RequestTimeout);
-            BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
+            (byte[] replyBody, byte[]? replyHeaderBytes) = await replyTcs.Task.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
 
             // Parse reply with error handling
             try
             {
-                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyBody);
                 workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
 
-                ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                ParsedJsonDocument<JsonElement>? headersDoc = replyHeaderBytes is not null
+                    ? ParsedJsonDocument<JsonElement>.Parse(replyHeaderBytes)
+                    : null;
                 if (headersDoc is not null)
                 {
                     workspace.TakeOwnership(headersDoc);
@@ -581,7 +586,7 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                         string dlChannel = replyChannel + this.options.DeadLetterRoutingKeySuffix;
                         try
                         {
-                            await DeadLetterRawAsync(dlChannel, correlationIdUtf8, reply.Body.ToArray(), parseEx, cancellationToken).ConfigureAwait(false);
+                            await DeadLetterRawAsync(dlChannel, correlationIdUtf8, replyBody, parseEx, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "amqp");
                         }
                         catch (Exception dlEx)
@@ -938,9 +943,18 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
         consumer.ReceivedAsync += async (_, args) =>
         {
             string? corrId = args.BasicProperties?.CorrelationId;
-            if (corrId is not null && this.pendingReplies.TryRemove(corrId, out TaskCompletionSource<BasicDeliverEventArgs>? tcs))
+            if (corrId is not null && this.pendingReplies.TryRemove(corrId, out TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>? tcs))
             {
-                tcs.SetResult(args);
+                // Copied here, before SetResult and before the ack below releases the delivery:
+                // the client documents args.Body as valid only during this handler, so the
+                // requester must never see the frame buffer itself. The headers value is already
+                // a materialized byte[] in the header table, not a frame view.
+                byte[] body = args.Body.ToArray();
+                byte[]? headersBytes =
+                    args.BasicProperties?.Headers?.TryGetValue(HeadersKeyString, out object? headerValue) == true && headerValue is byte[] materialized
+                        ? materialized
+                        : null;
+                tcs.SetResult((body, headersBytes));
             }
 
             await replyConsumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
