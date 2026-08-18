@@ -616,11 +616,11 @@ public class WebSocketTransportTests
         WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "ws/test/middleware"u8.ToArray();
@@ -656,7 +656,7 @@ public class WebSocketTransportTests
         {
             ServerUri = WebSocketFixture.ServerUri,
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -672,7 +672,7 @@ public class WebSocketTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "ws/test/mw-exhaust"u8.ToArray();

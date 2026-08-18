@@ -536,9 +536,9 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         {
             if (this.middleware is not null)
             {
-                // The middleware contract needs a bound Func, so this closure is paid only
-                // when middleware is configured; the plain path below allocates nothing.
-                await this.middleware(ct => invoke(state, ct), cancellationToken).ConfigureAwait(false);
+                // The middleware contract carries the state through generically, so this
+                // path allocates no closure either.
+                await this.middleware.InvokeAsync(invoke, state, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -598,11 +598,10 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             TReply reply;
             if (this.middleware is not null)
             {
-                TReply captured = default;
-                await this.middleware(
-                    async (ct) => captured = await handler(typedRequest, headers, ct).ConfigureAwait(false),
+                reply = await this.middleware.InvokeAsync(
+                    static (s, ct) => s.handler(s.typedRequest, s.headers, ct),
+                    (handler, typedRequest, headers),
                     cancellationToken).ConfigureAwait(false);
-                reply = captured;
             }
             else
             {

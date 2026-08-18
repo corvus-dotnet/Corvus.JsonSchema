@@ -821,7 +821,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                     {
                         if (this.middleware is not null)
                         {
-                            await this.middleware((ct) => handler.Invoke(payload, channelUtf8, headers, args, ct), cts.Token).ConfigureAwait(false);
+                            await this.middleware.InvokeAsync(
+                                static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.args, ct),
+                                (handler, payload, channelUtf8, headers, args),
+                                cts.Token).ConfigureAwait(false);
                         }
                         else
                         {
@@ -1208,12 +1211,10 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
                         TReply reply;
                         if (this.middleware is not null)
                         {
-                            // Capture the typed reply produced inside the middleware pipeline.
-                            TReply captured = default;
-                            await this.middleware(
-                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                            reply = await this.middleware.InvokeAsync(
+                                static (s, ct) => s.handler(s.request, s.headers, ct),
+                                (handler, request, headers),
                                 cts.Token).ConfigureAwait(false);
-                            reply = captured;
                         }
                         else
                         {

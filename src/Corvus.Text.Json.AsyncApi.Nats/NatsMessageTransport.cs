@@ -861,8 +861,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                     if (this.middleware is not null)
                                     {
-                                        await this.middleware(
-                                            (ct) => handler.Invoke(payload, channelUtf8, headers, nativeMessage, ct),
+                                        await this.middleware.InvokeAsync(
+                                            static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                                            (handler, payload, channelUtf8, headers, nativeMessage),
                                             cts.Token).ConfigureAwait(false);
                                     }
                                     else
@@ -1127,8 +1128,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                         object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                         if (this.middleware is not null)
                                         {
-                                            await this.middleware(
-                                                (ct) => handler.Invoke(payload, channelUtf8, headers, nativeMessage, ct),
+                                            await this.middleware.InvokeAsync(
+                                                static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                                                (handler, payload, channelUtf8, headers, nativeMessage),
                                                 cts.Token).ConfigureAwait(false);
                                         }
                                         else
@@ -1357,11 +1359,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                         TReply reply;
                                         if (this.middleware is not null)
                                         {
-                                            TReply captured = default;
-                                            await this.middleware(
-                                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                                            reply = await this.middleware.InvokeAsync(
+                                                static (s, ct) => s.handler(s.request, s.headers, ct),
+                                                (handler, request, headers),
                                                 cts.Token).ConfigureAwait(false);
-                                            reply = captured;
                                         }
                                         else
                                         {

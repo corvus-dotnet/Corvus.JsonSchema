@@ -523,11 +523,11 @@ public class KafkaTransportTests
             GroupId = "corvus-mw-group-" + topicSuffix,
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         using var received = new SemaphoreSlim(0, 1);
@@ -568,7 +568,7 @@ public class KafkaTransportTests
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ErrorPolicy = policy,
             ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -584,7 +584,7 @@ public class KafkaTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         await transport.SubscribeAsync<JsonElement>(

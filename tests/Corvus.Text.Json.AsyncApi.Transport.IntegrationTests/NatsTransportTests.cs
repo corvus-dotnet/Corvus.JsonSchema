@@ -902,11 +902,11 @@ public class NatsTransportTests
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
             Url = NatsFixture.ConnectionString,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "test.middleware"u8.ToArray();
@@ -945,7 +945,7 @@ public class NatsTransportTests
         {
             Url = NatsFixture.ConnectionString,
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -962,7 +962,7 @@ public class NatsTransportTests
 
                 // Final attempt — let exception propagate
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "test.middleware-exhaust"u8.ToArray();

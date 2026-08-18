@@ -657,11 +657,11 @@ public class MqttTransportTests
             Host = MqttFixture.Host,
             Port = MqttFixture.Port,
             ClientId = "corvus-mw-" + Guid.NewGuid().ToString("N")[..8],
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "mqtt/test/middleware"u8.ToArray();
@@ -699,7 +699,7 @@ public class MqttTransportTests
             Port = MqttFixture.Port,
             ClientId = "corvus-mw-exhaust-" + Guid.NewGuid().ToString("N")[..8],
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -715,7 +715,7 @@ public class MqttTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "mqtt/test/mw-exhaust"u8.ToArray();

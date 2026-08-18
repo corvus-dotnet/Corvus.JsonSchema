@@ -662,11 +662,11 @@ public class AmqpTransportTests
             ExchangeType = "topic",
             ExchangeDurable = false,
             ConsumerTagPrefix = "corvus-mw",
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "amqp.test.mw"u8.ToArray();
@@ -706,7 +706,7 @@ public class AmqpTransportTests
             ExchangeDurable = false,
             ConsumerTagPrefix = "corvus-mw-exhaust",
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -722,7 +722,7 @@ public class AmqpTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "amqp.test.mw.exhaust"u8.ToArray();

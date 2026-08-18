@@ -431,8 +431,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 {
                     if (this.middleware is not null)
                     {
-                        await this.middleware(
-                            (ct) => handler.Invoke(payload, channelUtf8, headersElement, args.Message, ct),
+                        await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headersElement, s.message, ct),
+                            (handler, payload, channelUtf8, headersElement, message: args.Message),
                             cts.Token).ConfigureAwait(false);
                     }
                     else
@@ -661,11 +662,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     TReply reply;
                     if (this.middleware is not null)
                     {
-                        TReply captured = default;
-                        await this.middleware(
-                            async (ct) => captured = await handler(request, headersElement, ct).ConfigureAwait(false),
+                        reply = await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler(s.request, s.headersElement, ct),
+                            (handler, request, headersElement),
                             cts.Token).ConfigureAwait(false);
-                        reply = captured;
                     }
                     else
                     {

@@ -914,7 +914,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                         {
                             if (this.middleware is not null)
                             {
-                                await this.middleware((ct) => handler.Invoke(payload, channelUtf8, headers, result, ct), cancellationToken).ConfigureAwait(false);
+                                await this.middleware.InvokeAsync(
+                                    static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.result, ct),
+                                    (handler, payload, channelUtf8, headers, result),
+                                    cancellationToken).ConfigureAwait(false);
                             }
                             else
                             {
@@ -1118,11 +1121,10 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             TReply reply;
                             if (this.middleware is not null)
                             {
-                                TReply captured = default;
-                                await this.middleware(
-                                    async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                                reply = await this.middleware.InvokeAsync(
+                                    static (s, ct) => s.handler(s.request, s.headers, ct),
+                                    (handler, request, headers),
                                     cancellationToken).ConfigureAwait(false);
-                                reply = captured;
                             }
                             else
                             {
