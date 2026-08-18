@@ -47,7 +47,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     private readonly IMqttClient client;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
-    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, Task>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<MqttApplicationMessage>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
     private volatile bool disposed;
 
@@ -189,7 +189,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         // Local effect first, and an early out when there is nothing to remove: a double
         // unsubscribe (or one against a disposed transport) must be a quiet no-op rather
         // than a broker call that throws on a disposed client — matching every other transport.
-        if (!this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
+        if (!this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, Task>? removed))
         {
             return;
         }
@@ -267,7 +267,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         // transport leaves no channel reporting Running, matching the other transports.
         foreach (string channel in this.handlers.Keys)
         {
-            if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? removed))
+            if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, Task>? removed))
             {
                 this.options.Heartbeat?.Stop(channel, "mqtt", removed);
             }
@@ -447,13 +447,13 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TPayload : struct, IJsonElement<TPayload>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch =
+        Func<MqttApplicationMessage, CancellationToken, Task> dispatch =
             (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
         this.ClaimChannel(channel, dispatch);
         await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
     }
 
-    private void ClaimChannel(string channel, Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch)
+    private void ClaimChannel(string channel, Func<MqttApplicationMessage, CancellationToken, Task> dispatch)
     {
         // A channel carries exactly one subscription, claimed atomically with TryAdd. A second
         // subscribe is refused rather than replacing the first, so a caller cannot silently
@@ -482,7 +482,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
     private async ValueTask SendSubscribeAsync(
         string channel,
-        Func<MqttApplicationMessage, CancellationToken, ValueTask> claimed,
+        Func<MqttApplicationMessage, CancellationToken, Task> claimed,
         CancellationToken cancellationToken)
     {
         MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
@@ -517,7 +517,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         where TReply : struct, IJsonElement<TReply>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        Func<MqttApplicationMessage, CancellationToken, ValueTask> dispatch =
+        Func<MqttApplicationMessage, CancellationToken, Task> dispatch =
             (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
         this.ClaimChannel(channel, dispatch);
         await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
@@ -653,18 +653,18 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             return Task.CompletedTask;
         }
 
-        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? handler))
+        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, Task>? handler))
         {
             // Ticked here, where the registry lookup proves the dispatch delegate is the
             // channel's current owner, rather than inside the dispatch methods that lack it.
             this.options.Heartbeat?.Tick(topic, "mqtt", handler);
-            return handler(args.ApplicationMessage, CancellationToken.None).AsTask();
+            return handler(args.ApplicationMessage, CancellationToken.None);
         }
 
         return Task.CompletedTask;
     }
 
-    private async ValueTask DispatchToHandlerAsync<TPayload>(
+    private async Task DispatchToHandlerAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
@@ -815,7 +815,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         }
     }
 
-    private async ValueTask DispatchToResponderAsync<TRequest, TReply>(
+    private async Task DispatchToResponderAsync<TRequest, TReply>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,

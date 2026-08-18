@@ -149,7 +149,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             ? SerializeToOwnedBytes(in headers)
             : null;
 
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, requestBytes, correlationIdUtf8, headerBytes, workspace, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, replyChannelUtf8, requestBytes, correlationIdUtf8, headerBytes, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -629,6 +629,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private async ValueTask<(TReply Payload, JsonElement Headers)> RequestCoreAsync<TReply>(
         string requestChannel,
         string replyChannel,
+        ReadOnlyMemory<byte> replyChannelUtf8,
         byte[] requestBytes,
         ReadOnlyMemory<byte> correlationIdUtf8,
         byte[]? headerBytes,
@@ -664,15 +665,20 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                 this.SubscribeForReplies(replyChannel);
             }
 
-            // Send the request with correlation ID header — zero allocation when
-            // the caller passes an exactly-sized byte[] (which generated code does).
+            // Send the request with correlation ID and reply-to headers — zero allocation
+            // when the caller passes exactly-sized arrays (which generated code does).
+            byte[] replyToHeaderBytes = System.Runtime.InteropServices.MemoryMarshal.TryGetArray(replyChannelUtf8, out ArraySegment<byte> replySegment)
+                && replySegment.Offset == 0 && replySegment.Count == replySegment.Array!.Length
+                ? replySegment.Array
+                : replyChannelUtf8.ToArray();
+
             Message<Null, byte[]> message = new()
             {
                 Value = requestBytes,
                 Headers =
                 [
                     new Header(CorrelationIdKeyString, corrIdHeaderBytes),
-                    new Header(ReplyToKeyString, Encoding.UTF8.GetBytes(replyChannel)),
+                    new Header(ReplyToKeyString, replyToHeaderBytes),
                 ],
             };
 
@@ -707,8 +713,8 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
             }
             catch (Exception parseEx)
             {
-                // Parse error - apply error policy
-                ReadOnlyMemory<byte> replyChannelUtf8 = Encoding.UTF8.GetBytes(replyChannel);
+                // Parse error - apply error policy (the reply channel bytes are the
+                // caller's original memory, no re-encode needed)
                 MessageErrorAction action = MessageErrorAction.Abort;
 
                 if (this.errorPolicy is not null)

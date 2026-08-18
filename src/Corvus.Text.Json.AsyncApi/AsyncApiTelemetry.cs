@@ -355,7 +355,7 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+                { "corvus.asyncapi.error_kind", ErrorKindName(errorKind) },
             });
     }
 
@@ -373,7 +373,7 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+                { "corvus.asyncapi.error_kind", ErrorKindName(errorKind) },
             });
     }
 
@@ -391,9 +391,25 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.retry_attempt", attemptNumber },
+                { "corvus.asyncapi.retry_attempt", BoxAttempt(attemptNumber) },
             });
     }
+
+    // Skip/abort/retry fire once per policy-decided bad message, which a hostile producer
+    // controls, so their tag values must not allocate per event: the enum names are constants
+    // and the first eight retry attempts use pre-boxed values.
+    private static readonly object[] BoxedAttempts = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    private static string ErrorKindName(MessageErrorKind errorKind) => errorKind switch
+    {
+        MessageErrorKind.Deserialization => nameof(MessageErrorKind.Deserialization),
+        MessageErrorKind.Handler => nameof(MessageErrorKind.Handler),
+        MessageErrorKind.Transport => nameof(MessageErrorKind.Transport),
+        _ => errorKind.ToString(),
+    };
+
+    private static object BoxAttempt(int attemptNumber)
+        => (uint)(attemptNumber - 1) < (uint)BoxedAttempts.Length ? BoxedAttempts[attemptNumber - 1] : attemptNumber;
 
     /// <summary>
     /// Records a correlation ID mismatch during request-reply.
