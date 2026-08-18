@@ -320,7 +320,8 @@ public class InstrumentedMessageTransport : IMessageTransport
 
         SetCommonTags(activity, "send", destination);
 
-        headers = TraceContextPropagator.Inject(in headers, activity);
+        using TraceContextPropagator.InjectedHeaders injectedHeaders = TraceContextPropagator.Inject(in headers, activity);
+        headers = injectedHeaders.Headers;
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -367,7 +368,8 @@ public class InstrumentedMessageTransport : IMessageTransport
 
         SetCommonTags(activity, "send", destination);
 
-        headers = TraceContextPropagator.Inject(in headers, activity);
+        using TraceContextPropagator.InjectedHeaders injectedHeaders = TraceContextPropagator.Inject(in headers, activity);
+        headers = injectedHeaders.Headers;
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -419,7 +421,8 @@ public class InstrumentedMessageTransport : IMessageTransport
         // string only when a span exists to carry it.
         activity?.SetTag("messaging.message.conversation_id", Encoding.UTF8.GetString(correlationIdUtf8.Span));
 
-        headers = TraceContextPropagator.Inject(in headers, activity);
+        using TraceContextPropagator.InjectedHeaders injectedHeaders = TraceContextPropagator.Inject(in headers, activity);
+        headers = injectedHeaders.Headers;
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -475,7 +478,8 @@ public class InstrumentedMessageTransport : IMessageTransport
         // string only when a span exists to carry it.
         activity?.SetTag("messaging.message.conversation_id", Encoding.UTF8.GetString(correlationIdUtf8.Span));
 
-        headers = TraceContextPropagator.Inject(in headers, activity);
+        using TraceContextPropagator.InjectedHeaders injectedHeaders = TraceContextPropagator.Inject(in headers, activity);
+        headers = injectedHeaders.Headers;
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
