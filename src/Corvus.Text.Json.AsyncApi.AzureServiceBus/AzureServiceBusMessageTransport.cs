@@ -1101,6 +1101,15 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             await created.DisposeAsync().ConfigureAwait(false);
         }
 
+        // A dispose that walked the cache before this insert landed would leave the new
+        // sender orphaned on a disposed client; the same post-insert re-check the other
+        // caches use hands it back and surfaces the disposal instead.
+        if (this.disposed && this.deadLetterSenders.TryRemove(KeyValuePair.Create(deadLetterChannel, winner)))
+        {
+            await winner.DisposeAsync().ConfigureAwait(false);
+            ObjectDisposedException.ThrowIf(true, this);
+        }
+
         return winner;
     }
 
