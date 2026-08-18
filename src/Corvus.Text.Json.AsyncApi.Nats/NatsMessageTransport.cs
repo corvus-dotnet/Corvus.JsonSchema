@@ -56,6 +56,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
+    private readonly NatsSubOpts requestReplyOpts;
 
     // Flows from each consume loop into the handlers it invokes, so teardown can recognize a
     // handler stopping its own subscription and skip the join that would otherwise self-deadlock.
@@ -72,6 +73,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
         this.deadLetterSuffixUtf8 = Encoding.UTF8.GetBytes(options.DeadLetterSuffix);
+        this.requestReplyOpts = new NatsSubOpts { Timeout = options.RequestTimeout };
     }
 
     /// <inheritdoc/>
@@ -599,18 +601,26 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(this.options.RequestTimeout);
-
-        NatsMsg<byte[]> reply = await this.connection.RequestAsync<TRequest, byte[]>(
-            subject,
-            request,
-            headers,
-            JsonElementSerializer<TRequest>.Instance,
-            NatsRawSerializer<byte[]>.Default,
-            default,
-            default,
-            timeoutCts.Token).ConfigureAwait(false);
+        // The reply subscription's own timeout bounds the wait without a linked CTS, its
+        // registration, and a timer per request; the SDK's no-reply outcome maps back to the
+        // OperationCanceledException this method has always thrown on timeout.
+        NatsMsg<byte[]> reply;
+        try
+        {
+            reply = await this.connection.RequestAsync<TRequest, byte[]>(
+                subject,
+                request,
+                headers,
+                JsonElementSerializer<TRequest>.Instance,
+                NatsRawSerializer<byte[]>.Default,
+                default,
+                this.requestReplyOpts,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is NatsNoReplyException or NatsTimeoutException)
+        {
+            throw new OperationCanceledException("The request timed out waiting for a reply.");
+        }
 
         TReply replyPayload;
         if (reply.Data is not null)

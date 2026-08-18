@@ -996,6 +996,43 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task RequestTimeoutWithSilentResponderThrowsOperationCanceledException()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // A responder is subscribed but never replies, so no-responders cannot fire and the
+        // failure must come from the transport's RequestTimeout machinery. This pins the
+        // OperationCanceledException surface across changes to that machinery.
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            RequestTimeout = TimeSpan.FromSeconds(2),
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "test.request-silent"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.reply-silent"u8.ToArray();
+        byte[] correlationId = "timeout-corr-002"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            async (payload, headers, ct) => await Task.CompletedTask);
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace));
+
+        await transport.UnsubscribeAsync(requestChannel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

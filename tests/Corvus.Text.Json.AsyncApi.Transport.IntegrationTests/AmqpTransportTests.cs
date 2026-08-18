@@ -778,6 +778,46 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task RequestTimeoutWithSilentResponderThrowsOperationCanceledException()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // A responder is subscribed but never replies, so the failure comes from the
+        // transport's RequestTimeout machinery rather than the caller's token. This pins
+        // the OperationCanceledException surface across changes to that machinery.
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.reqsilent",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-reqsilent",
+            RequestTimeout = TimeSpan.FromSeconds(2),
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "amqp.test.req-silent"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "amqp.test.reply-silent"u8.ToArray();
+        byte[] correlationId = "timeout-corr-a02"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            async (payload, headers, ct) => await Task.CompletedTask);
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace));
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

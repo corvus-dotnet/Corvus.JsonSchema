@@ -562,9 +562,18 @@ public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHe
 
             // Wait for the correlated reply, bounded by the request timeout so a lost reply surfaces as a fast
             // cancellation rather than waiting forever (the caller's token still cancels earlier if it fires first).
-            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(this.options.RequestTimeout);
-            (byte[] replyBody, byte[]? replyHeaderBytes) = await replyTcs.Task.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
+            // WaitAsync carries both bounds without a linked CTS, its registration, and a timer per request; the
+            // timeout maps back to the OperationCanceledException this method has always thrown.
+            byte[] replyBody;
+            byte[]? replyHeaderBytes;
+            try
+            {
+                (replyBody, replyHeaderBytes) = await replyTcs.Task.WaitAsync(this.options.RequestTimeout, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new OperationCanceledException("The request timed out waiting for a reply.");
+            }
 
             // Parse reply with error handling
             try
