@@ -68,8 +68,9 @@ public readonly struct MessageHandler<TPayload>
     /// <param name="payload">The deserialized message payload.</param>
     /// <param name="channelUtf8">The channel the message arrived on, as UTF-8 bytes.</param>
     /// <param name="headers">The message headers.</param>
-    /// <param name="nativeMessage">The transport's native message representation, or
-    /// <see langword="null"/> when the callback does not consume delivery context.</param>
+    /// <param name="nativeMessage">The transport's native message representation, when one
+    /// exists; ignored (and safely <see langword="null"/>) when the callback does not consume
+    /// delivery context.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the callback has run.</returns>
     /// <exception cref="InvalidOperationException">This instance is <see langword="default"/> and

@@ -179,6 +179,26 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task PublishAsync_LoopbackHandlerThrow_IsRecordedNotThrown()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        await transport.SubscribeAsync<JsonElement>(
+            "loopback/fail"u8.ToArray(),
+            (_, _, _) => throw new InvalidDataException("handler failure"));
+
+        JsonElement payload = JsonElement.ParseValue("""{"x":1}"""u8);
+
+        // A broker decouples the publisher from its subscribers: the publish succeeds and the
+        // handler failure is recorded for assertions rather than thrown at the publisher.
+        await transport.PublishAsync("loopback/fail"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, transport.PublishedMessages.Count);
+        Assert.AreEqual(1, transport.DeliveryFailures.Count);
+        Assert.AreEqual("loopback/fail", transport.DeliveryFailures[0].Channel);
+        Assert.IsInstanceOfType<InvalidDataException>(transport.DeliveryFailures[0].Exception);
+    }
+
+    [TestMethod]
     public async Task RequestAsync_DeliveryContextSubscriberOnTheChannel_SeesTheRequest()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

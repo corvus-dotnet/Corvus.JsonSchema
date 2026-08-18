@@ -73,7 +73,11 @@ public sealed class ProcessingLoopHeartbeat
     /// </summary>
     /// <param name="channel">The channel/topic/subject being subscribed to.</param>
     /// <param name="messagingSystem">The transport type (e.g., <c>"nats"</c>, <c>"kafka"</c>).</param>
-    /// <param name="owner">The identity of the subscription this loop belongs to.</param>
+    /// <param name="owner">The identity of the subscription this loop belongs to, compared by
+    /// reference: pass the same object instance to <see cref="Start"/>, <see cref="Tick"/>, and
+    /// <see cref="Stop"/> for one subscription (a dedicated marker object, as the transports use).
+    /// A boxed value type is a fresh box per call and every call is ignored as a stale owner; an
+    /// instance shared across subscriptions defeats the ownership check.</param>
     /// <remarks>
     /// Overwrites unconditionally: a transport only starts the heartbeat after its
     /// subscription claim succeeds, and a channel has a single claimed owner at a time, so
@@ -100,7 +104,8 @@ public sealed class ProcessingLoopHeartbeat
     /// </summary>
     /// <param name="channel">The channel/topic/subject being unsubscribed from.</param>
     /// <param name="messagingSystem">The transport type.</param>
-    /// <param name="owner">The identity of the subscription being stopped.</param>
+    /// <param name="owner">The identity of the subscription being stopped, compared by reference
+    /// with the instance passed to <see cref="Start"/>.</param>
     /// <remarks>
     /// Only lands if the entry still belongs to <paramref name="owner"/>: a losing claim
     /// racer or a loop unwinding after a resubscribe must not mark the new owner's live
@@ -144,7 +149,8 @@ public sealed class ProcessingLoopHeartbeat
     /// </summary>
     /// <param name="channel">The channel/topic/subject being processed.</param>
     /// <param name="messagingSystem">The transport type.</param>
-    /// <param name="owner">The identity of the subscription this tick belongs to.</param>
+    /// <param name="owner">The identity of the subscription this tick belongs to, compared by
+    /// reference with the instance passed to <see cref="Start"/>.</param>
     /// <remarks>
     /// <para>
     /// Call this at the top of each loop iteration. It is zero-cost when no

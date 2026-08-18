@@ -2932,6 +2932,7 @@ public sealed class AsyncApi30CodeGenerator
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string channelStringExpr = hasRuntimeAddress ? $"Encoding.UTF8.GetString({channelUtf8Expr}.Span)" : "ChannelAddress";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
@@ -2988,10 +2989,16 @@ public sealed class AsyncApi30CodeGenerator
             w.OpenBrace();
             w.WriteLine("case MessageErrorAction.Skip:");
             w.PushIndent();
+
+            // The policy runs here, above the transport, so the transport cannot record the
+            // decision; the generated consumer reports it under its own messaging.system so
+            // skip and abort remain visible on the same counters transport-level decisions use.
+            w.WriteLine($"AsyncApiTelemetry.RecordSkip({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
+            w.WriteLine($"AsyncApiTelemetry.RecordAbort({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
 
             // The gate makes this atomic: an abort racing an external stop (or a second
             // aborting message) loses the exchange and no-ops, never throwing out of the
@@ -3018,6 +3025,7 @@ public sealed class AsyncApi30CodeGenerator
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string channelStringExpr = hasRuntimeAddress ? $"Encoding.UTF8.GetString({channelUtf8Expr}.Span)" : "ChannelAddress";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
@@ -3043,10 +3051,16 @@ public sealed class AsyncApi30CodeGenerator
             w.OpenBrace();
             w.WriteLine("case MessageErrorAction.Skip:");
             w.PushIndent();
+
+            // The policy runs here, above the transport, so the transport cannot record the
+            // decision; the generated consumer reports it under its own messaging.system so
+            // skip and abort remain visible on the same counters transport-level decisions use.
+            w.WriteLine($"AsyncApiTelemetry.RecordSkip({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
+            w.WriteLine($"AsyncApiTelemetry.RecordAbort({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
 
             // The gate makes this atomic: an abort racing an external stop (or a second
             // aborting message) loses the exchange and no-ops, never throwing out of the

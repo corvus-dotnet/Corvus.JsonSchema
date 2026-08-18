@@ -191,7 +191,7 @@ Your Code → Producer.PublishAsync(payload, channelParams...)
   → Channel Address: construct from template + parameters (UTF-8)
   → Authentication: call IMessageAuthenticationProvider
   → IMessageTransport.PublishAsync: serialize and send
-  → Cleanup: return workspace + channel rental to pool
+  → Cleanup: dispose the workspace, return the channel rental to the pool
 ```
 
 ### Consumer Flow
@@ -1194,7 +1194,7 @@ The transport owns correlation: for each delivered request it reads the request'
 
 **Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated `SendAndReceive*` requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)
 
-**Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
+**Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call. With no responder registered, the request is delivered to any data subscription on the channel (plain or delivery-context, exactly as a publish would be) and parked for the test helper `CompleteRequest`. A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
 
 
 ## Bindings
@@ -1511,7 +1511,7 @@ Corvus without validation is **3.3× faster** than Wolverine. Even with basic sc
 | Corvus producer (basic validation) | 610 ns | 200 B | + compiled schema check |
 | Corvus producer (detailed validation) | 834 ns | 200 B | + full diagnostics collector |
 
-Corvus without validation is **1.9× faster** than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the pooled `JsonWorkspace` envelope — returned to pools after the call, producing zero GC pressure under steady-state load.
+Corvus without validation is **1.9× faster** than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the short-lived `JsonWorkspace` the producer builds the message in, disposed when the publish completes.
 
 ### Request/Reply
 
@@ -1521,7 +1521,7 @@ Corvus without validation is **1.9× faster** than Wolverine. With basic validat
 | Corvus req/reply (no validation) | 377 ns | 336 B | Generated producer: workspace + correlate + reply parse |
 | Corvus req/reply (basic validation) | 651 ns | 336 B | + schema validation both directions |
 
-Corvus without validation is **28% faster** and allocates **65% less** than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from `ArrayPool<byte>`, and the reply is parsed into pooled memory. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.
+Corvus without validation is **28% faster** and allocates **65% less** than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from `ArrayPool<byte>`, and the reply is parsed into documents owned by the caller-supplied workspace. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.
 
 ### Validation Cost Summary
 
@@ -1533,7 +1533,7 @@ Corvus without validation is **28% faster** and allocates **65% less** than the 
 
 All validation modes produce **zero additional allocation** — the schema evaluator operates entirely on the already-parsed document. This means you can enable validation in production without increasing GC pressure.
 
-> *BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput.*
+> *BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput. Measured against the V5.3.0 pipeline; the V5.4.0 lifecycle and request/reply hardening changed the measured paths (notably the requester now threads the caller-supplied workspace), so treat exact figures as indicative of that baseline.*
 
 ## Example Recipes
 

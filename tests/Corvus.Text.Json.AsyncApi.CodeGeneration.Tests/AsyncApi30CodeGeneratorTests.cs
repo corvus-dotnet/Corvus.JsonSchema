@@ -2061,6 +2061,31 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_Consumer_RecordsSkipAndAbortDecisions()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeOrdersConsumer") && !f.FileName.Contains("WithDeliveryContext"));
+        Assert.IsNotNull(consumer);
+
+        // The generated consumer applies the error policy above the transport, so its Skip and
+        // Abort decisions must reach the telemetry counters exactly as transport-level policy
+        // decisions do; dead-letters are already counted through the transport call.
+        StringAssert.Contains(consumer.Content, "AsyncApiTelemetry.RecordSkip(");
+        StringAssert.Contains(consumer.Content, "AsyncApiTelemetry.RecordAbort(");
+    }
+
+    [TestMethod]
     public void Generate_ServerSecurity_UnknownScheme_ReportsDiagnostic()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "missing-scheme-3.0.json"));

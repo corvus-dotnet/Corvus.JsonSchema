@@ -791,8 +791,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 {
                                     JsonElement headers = headersDoc?.RootElement ?? default;
 
-                                    // Box the native message struct only when a delivery-context
-                                    // handler will consume it; legacy subscriptions discard it.
+                                    // Box the native message struct only for delivery-context
+                                    // subscriptions (one box per delivered message, whether or not
+                                    // the handler reads it); legacy subscriptions pass null and
+                                    // never box.
                                     object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                     if (this.middleware is not null)
                                     {
@@ -1048,8 +1050,10 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         JsonElement headers = headersDoc?.RootElement ?? default;
 
-                                        // Box the native message struct only when a delivery-context
-                                        // handler will consume it; legacy subscriptions discard it.
+                                        // Box the native message struct only for delivery-context
+                                        // subscriptions (one box per delivered message, whether or not
+                                        // the handler reads it); legacy subscriptions pass null and
+                                        // never box.
                                         object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
                                         if (this.middleware is not null)
                                         {

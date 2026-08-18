@@ -27,7 +27,9 @@ public interface IMessageDeliveryContextTransport : IMessageTransport
     /// The <paramref name="channelUtf8"/> memory must remain valid and unmodified for the
     /// lifetime of the subscription: broker transports retain it and hand it to every delivery
     /// as <see cref="MessageDeliveryContext.ChannelUtf8"/>. Do not subscribe with a pooled or
-    /// reused buffer.
+    /// reused buffer. The in-memory testing transport hands each delivery an equal-content copy
+    /// rather than the retained buffer, so compare the context's channel by content, never by
+    /// memory identity.
     /// </para>
     /// </remarks>
     ValueTask SubscribeWithDeliveryContextAsync<TPayload>(

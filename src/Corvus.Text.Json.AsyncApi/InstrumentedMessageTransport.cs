@@ -48,6 +48,13 @@ public class InstrumentedMessageTransport : IMessageTransport
     /// <summary>
     /// Initializes a new instance of the <see cref="InstrumentedMessageTransport"/> class.
     /// </summary>
+    /// <remarks>
+    /// The constructor always produces a plain <see cref="IMessageTransport"/> wrapper that
+    /// surfaces none of the wrapped transport's optional capabilities. Prefer
+    /// <see cref="Create(IMessageTransport, string)"/>, whose wrapper implements exactly the
+    /// capability interfaces the wrapped transport implements; take the result as the capability
+    /// interface you need and cast for any additional one it carries.
+    /// </remarks>
     /// <param name="inner">The transport to decorate with instrumentation.</param>
     /// <param name="messagingSystem">The messaging system identifier (e.g., <c>"nats"</c>,
     /// <c>"amqp"</c>, <c>"mqtt"</c>, <c>"websocket"</c>, <c>"kafka"</c>).
@@ -322,7 +329,7 @@ public class InstrumentedMessageTransport : IMessageTransport
         }
         catch (Exception ex)
         {
-            RecordException(activity, ex, destination);
+            RecordException(activity, ex, destination, "send");
             throw;
         }
         finally
@@ -366,7 +373,7 @@ public class InstrumentedMessageTransport : IMessageTransport
         }
         catch (Exception ex)
         {
-            RecordException(activity, ex, destination);
+            RecordException(activity, ex, destination, "send");
             throw;
         }
         finally
@@ -418,7 +425,7 @@ public class InstrumentedMessageTransport : IMessageTransport
         }
         catch (Exception ex)
         {
-            RecordException(activity, ex, destination);
+            RecordException(activity, ex, destination, "request");
             throw;
         }
         finally
@@ -471,7 +478,7 @@ public class InstrumentedMessageTransport : IMessageTransport
         }
         catch (Exception ex)
         {
-            RecordException(activity, ex, destination);
+            RecordException(activity, ex, destination, "request");
             throw;
         }
         finally
@@ -499,9 +506,20 @@ public class InstrumentedMessageTransport : IMessageTransport
         activity?.SetTag("corvus.asyncapi.original_channel", originalChannel);
         activity?.SetTag("error.type", exception.GetType().FullName);
 
-        await this.inner.DeadLetterAsync(
-            deadLetterChannelUtf8, originalChannelUtf8, in payload, in headers, exception, cancellationToken)
-            .ConfigureAwait(false);
+        try
+        {
+            await this.inner.DeadLetterAsync(
+                deadLetterChannelUtf8, originalChannelUtf8, in payload, in headers, exception, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception deadLetterEx)
+        {
+            // A failed dead-letter means the message was dropped: the span must carry the
+            // failure and the alert counter must fire before the exception surfaces.
+            RecordError(activity, deadLetterEx);
+            AsyncApiTelemetry.RecordDeadLetterFailure(destination, originalChannel, this.messagingSystem, deadLetterEx);
+            throw;
+        }
 
         AsyncApiTelemetry.DeadLetters.Add(
             1,
@@ -651,7 +669,7 @@ public class InstrumentedMessageTransport : IMessageTransport
             });
     }
 
-    private void RecordException(Activity? activity, Exception ex, string destination)
+    private void RecordException(Activity? activity, Exception ex, string destination, string operationName)
     {
         RecordError(activity, ex);
         AsyncApiTelemetry.MessagesSent.Add(
@@ -659,6 +677,7 @@ public class InstrumentedMessageTransport : IMessageTransport
             new TagList
             {
                 { "messaging.system", this.messagingSystem },
+                { "messaging.operation.name", operationName },
                 { "messaging.destination.name", destination },
                 { "error.type", ex.GetType().FullName },
             });

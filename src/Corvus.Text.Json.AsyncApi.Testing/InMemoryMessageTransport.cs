@@ -29,6 +29,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
     private readonly object syncRoot = new();
     private readonly List<PublishedMessage> publishedMessages = [];
+    private readonly List<DeliveryFailure> deliveryFailures = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
 
     // One slot per channel, holding whichever kind of subscription owns it (legacy data,
@@ -52,6 +53,13 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
     /// Gets the list of dead-lettered messages.
     /// </summary>
     public IReadOnlyList<DeadLetteredMessage> DeadLetteredMessages => this.deadLetteredMessages;
+
+    /// <summary>
+    /// Gets the handler failures from loopback deliveries (a publish delivered to a subscription
+    /// on the same transport whose handler threw). As on a real broker, these never surface to
+    /// the publish call; assert on this list instead.
+    /// </summary>
+    public IReadOnlyList<DeliveryFailure> DeliveryFailures => this.deliveryFailures;
 
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(
@@ -81,10 +89,35 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         if (handler is not null)
         {
-            return DeliverToSubscriberAsync<TPayload>(handler, channelUtf8, payloadBytes, headerBytes, cancellationToken);
+            return this.DeliverLoopbackAsync<TPayload>(handler, channelUtf8, channel, payloadBytes, headerBytes, cancellationToken);
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    // A broker decouples the publisher from its subscribers: a handler failure never surfaces
+    // to the publish call. The loopback delivery matches that, recording the failure in
+    // DeliveryFailures for test assertions instead of throwing it at the publisher.
+    private async ValueTask DeliverLoopbackAsync<TPayload>(
+        Delegate handler,
+        ReadOnlyMemory<byte> channelUtf8,
+        string channel,
+        byte[] payloadBytes,
+        byte[] headerBytes,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        try
+        {
+            await this.DeliverToSubscriberAsync<TPayload>(handler, channelUtf8, payloadBytes, headerBytes, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            lock (this.syncRoot)
+            {
+                this.deliveryFailures.Add(new DeliveryFailure(channel, ex));
+            }
+        }
     }
 
     private async ValueTask DeliverToSubscriberAsync<TPayload>(
@@ -555,6 +588,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         {
             this.publishedMessages.Clear();
             this.deadLetteredMessages.Clear();
+            this.deliveryFailures.Clear();
         }
     }
 

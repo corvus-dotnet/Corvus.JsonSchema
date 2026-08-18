@@ -152,8 +152,10 @@ public sealed class ReceiveLightMeasurementWithDeliveryContextConsumer : IAsyncD
             switch (action)
             {
                 case MessageErrorAction.Skip:
+                    AsyncApiTelemetry.RecordSkip(ChannelAddress, "generated", MessageErrorKind.Handler);
                     return;
                 case MessageErrorAction.Abort:
+                    AsyncApiTelemetry.RecordAbort(ChannelAddress, "generated", MessageErrorKind.Handler);
                     await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 case MessageErrorAction.DeadLetter:
