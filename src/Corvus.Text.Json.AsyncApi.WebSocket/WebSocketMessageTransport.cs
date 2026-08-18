@@ -329,18 +329,24 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     {
         byte[] buffer = new byte[this.options.ReceiveBufferSize];
 
+        // Reused across messages: this loop is the envelope's sole consumer and every dispatch
+        // completes (handlers awaited inline) before the next receive overwrites the buffer.
+        // The one path that retains the bytes past the dispatch - a correlated reply parked in
+        // pendingReplies - copies before parking.
+        ArrayBufferWriter<byte> messageBuffer = new(this.options.ReceiveBufferSize);
+
         try
         {
             while (!cancellationToken.IsCancellationRequested &&
                    this.webSocket.State == WebSocketState.Open)
             {
-                using MemoryStream ms = new();
-                WebSocketReceiveResult result;
+                messageBuffer.Clear();
+                ValueWebSocketReceiveResult result;
 
                 do
                 {
                     result = await this.webSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer),
+                        buffer.AsMemory(),
                         cancellationToken).ConfigureAwait(false);
 
                     if (result.MessageType == WebSocketMessageType.Close)
@@ -348,12 +354,11 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
                         return;
                     }
 
-                    ms.Write(buffer, 0, result.Count);
+                    messageBuffer.Write(buffer.AsSpan(0, result.Count));
                 }
                 while (!result.EndOfMessage);
 
-                byte[] messageBytes = ms.ToArray();
-                await DispatchEnvelopeAsync(messageBytes, cancellationToken).ConfigureAwait(false);
+                await DispatchEnvelopeAsync(messageBuffer.WrittenMemory, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -366,9 +371,8 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
     }
 
-    private async Task DispatchEnvelopeAsync(byte[] envelopeBytes, CancellationToken cancellationToken)
+    private async Task DispatchEnvelopeAsync(ReadOnlyMemory<byte> envelopeBytes, CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> channelUtf8 = ReadOnlyMemory<byte>.Empty;
         string channel = string.Empty;
 
         try
@@ -383,7 +387,6 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             }
 
             channel = channelProp.GetString() ?? throw new InvalidOperationException("Received WebSocket envelope channel was null.");
-            channelUtf8 = Encoding.UTF8.GetBytes(channel);
 
             JsonString corrIdProp = envelope.CorrelationId;
             string? envelopeCorrelationId = null;
@@ -405,7 +408,9 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
                     (!envelope.TryGetProperty("replyChannel"u8, out JsonElement _) || !this.subscriptions.ContainsKey(channel)) &&
                     this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
                 {
-                    tcs.SetResult(envelopeBytes);
+                    // Copied before parking: the requester reads these bytes after this dispatch
+                    // returns, when the receive loop's buffer has moved on.
+                    tcs.SetResult(envelopeBytes.ToArray());
                     return;
                 }
             }
@@ -440,7 +445,7 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         }
         catch (Exception ex)
         {
-            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+            MessageErrorContext ctx = new(Encoding.UTF8.GetBytes(channel), MessageErrorKind.Deserialization);
             MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
             if (action == MessageErrorAction.DeadLetter)
             {
@@ -484,7 +489,8 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             channelUtf8,
             payload,
             headers,
-            (ct) => handler(typedPayload, headers, ct),
+            (Handler: handler, Payload: typedPayload, Headers: headers),
+            static (state, ct) => state.Handler(state.Payload, state.Headers, ct),
             cancellationToken);
     }
 
@@ -509,30 +515,34 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             channelUtf8,
             payload,
             headers,
-            (ct) => handler(typedPayload, context, ct),
+            (Handler: handler, Payload: typedPayload, Context: context),
+            static (state, ct) => state.Handler(state.Payload, state.Context, ct),
             cancellationToken);
     }
 
     // The single data-dispatch core: middleware invocation, the cancellation filter, and the
     // error-policy dead-letter/abort/skip block live here once, so the legacy and
     // delivery-context paths cannot drift.
-    private async ValueTask DispatchDataAsync(
+    private async ValueTask DispatchDataAsync<TState>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         JsonElement payload,
         JsonElement headers,
-        Func<CancellationToken, ValueTask> invoke,
+        TState state,
+        Func<TState, CancellationToken, ValueTask> invoke,
         CancellationToken cancellationToken)
     {
         try
         {
             if (this.middleware is not null)
             {
-                await this.middleware(invoke, cancellationToken).ConfigureAwait(false);
+                // The middleware contract needs a bound Func, so this closure is paid only
+                // when middleware is configured; the plain path below allocates nothing.
+                await this.middleware(ct => invoke(state, ct), cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await invoke(cancellationToken).ConfigureAwait(false);
+                await invoke(state, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -649,11 +659,11 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     private ValueTask DeadLetterRawAsync(
         string deadLetterChannel,
         string originalChannel,
-        byte[] rawPayload,
+        ReadOnlyMemory<byte> rawPayload,
         Exception exception,
         CancellationToken cancellationToken)
     {
-        (byte[] rented, int length) = BuildDeadLetterRawEnvelopeRented(deadLetterChannel, originalChannel, rawPayload, exception);
+        (byte[] rented, int length) = BuildDeadLetterRawEnvelopeRented(deadLetterChannel, originalChannel, rawPayload.Span, exception);
         return SendAndReturnAsync(rented, length, cancellationToken);
     }
 
