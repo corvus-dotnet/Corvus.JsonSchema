@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -43,6 +44,12 @@ namespace Corvus.Text.Json.AsyncApi;
 public class InstrumentedMessageTransport : IMessageTransport
 {
     private readonly IMessageTransport inner;
+
+    // Per-channel destination and span-name strings, computed once per channel rather than per
+    // operation. The key is a copy of the caller's bytes (callers pass rented or reused
+    // memory); past the cap - a very dynamic channel set - names fall back to per-call
+    // computation rather than growing without bound.
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, ChannelNames> channelNames = new(ReadOnlyMemoryByteComparer.Instance);
     private readonly string messagingSystem;
 
     /// <summary>
@@ -302,11 +309,14 @@ public class InstrumentedMessageTransport : IMessageTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        ChannelNames names = this.GetChannelNames(channelUtf8);
+        string destination = names.Destination;
 
-        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-            $"send {destination}",
-            ActivityKind.Producer);
+        // Without a listener StartActivity returns null and every string this span needs is
+        // wasted work, so the whole start is gated.
+        using Activity? activity = AsyncApiTelemetry.ActivitySource.HasListeners()
+            ? AsyncApiTelemetry.ActivitySource.StartActivity(names.SendSpanName, ActivityKind.Producer)
+            : null;
 
         SetCommonTags(activity, "send", destination);
 
@@ -346,11 +356,14 @@ public class InstrumentedMessageTransport : IMessageTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        ChannelNames names = this.GetChannelNames(channelUtf8);
+        string destination = names.Destination;
 
-        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-            $"send {destination}",
-            ActivityKind.Producer);
+        // Without a listener StartActivity returns null and every string this span needs is
+        // wasted work, so the whole start is gated.
+        using Activity? activity = AsyncApiTelemetry.ActivitySource.HasListeners()
+            ? AsyncApiTelemetry.ActivitySource.StartActivity(names.SendSpanName, ActivityKind.Producer)
+            : null;
 
         SetCommonTags(activity, "send", destination);
 
@@ -393,15 +406,18 @@ public class InstrumentedMessageTransport : IMessageTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        string destination = Encoding.UTF8.GetString(requestChannelUtf8.Span);
-        string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
+        ChannelNames names = this.GetChannelNames(requestChannelUtf8);
+        string destination = names.Destination;
 
-        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-            $"request {destination}",
-            ActivityKind.Producer);
+        using Activity? activity = AsyncApiTelemetry.ActivitySource.HasListeners()
+            ? AsyncApiTelemetry.ActivitySource.StartActivity(names.RequestSpanName, ActivityKind.Producer)
+            : null;
 
         SetCommonTags(activity, "request", destination);
-        activity?.SetTag("messaging.message.conversation_id", correlationId);
+
+        // Conditional access short-circuits the argument too, so the correlation id becomes a
+        // string only when a span exists to carry it.
+        activity?.SetTag("messaging.message.conversation_id", Encoding.UTF8.GetString(correlationIdUtf8.Span));
 
         headers = TraceContextPropagator.Inject(in headers, activity);
 
@@ -446,15 +462,18 @@ public class InstrumentedMessageTransport : IMessageTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        string destination = Encoding.UTF8.GetString(requestChannelUtf8.Span);
-        string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
+        ChannelNames names = this.GetChannelNames(requestChannelUtf8);
+        string destination = names.Destination;
 
-        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-            $"request {destination}",
-            ActivityKind.Producer);
+        using Activity? activity = AsyncApiTelemetry.ActivitySource.HasListeners()
+            ? AsyncApiTelemetry.ActivitySource.StartActivity(names.RequestSpanName, ActivityKind.Producer)
+            : null;
 
         SetCommonTags(activity, "request", destination);
-        activity?.SetTag("messaging.message.conversation_id", correlationId);
+
+        // Conditional access short-circuits the argument too, so the correlation id becomes a
+        // string only when a span exists to carry it.
+        activity?.SetTag("messaging.message.conversation_id", Encoding.UTF8.GetString(correlationIdUtf8.Span));
 
         headers = TraceContextPropagator.Inject(in headers, activity);
 
@@ -533,20 +552,47 @@ public class InstrumentedMessageTransport : IMessageTransport
 
     // The activity creation/tagging and the consumed-counter contents live in these two helpers
     // so the three instrumented handler shapes below cannot drift in the telemetry they emit.
-    private Activity? StartProcessActivity(in JsonElement headers, string destination)
+    private Activity? StartProcessActivity(in JsonElement headers, string processSpanName, string destination)
     {
+        // Without a listener StartActivity returns null; the parent-context extraction (which
+        // materializes the producer's traceparent/tracestate strings) exists only to feed it,
+        // so the whole start is gated. The span name is computed once per subscription.
+        if (!AsyncApiTelemetry.ActivitySource.HasListeners())
+        {
+            return null;
+        }
+
         ActivityContext parentContext = default;
         bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
 
         Activity? activity = hasParent
             ? AsyncApiTelemetry.ActivitySource.StartActivity(
-                $"process {destination}", ActivityKind.Consumer, parentContext)
+                processSpanName, ActivityKind.Consumer, parentContext)
             : AsyncApiTelemetry.ActivitySource.StartActivity(
-                $"process {destination}", ActivityKind.Consumer);
+                processSpanName, ActivityKind.Consumer);
 
         SetCommonTags(activity, "process", destination);
         return activity;
     }
+
+    private ChannelNames GetChannelNames(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelNames.TryGetValue(channelUtf8, out ChannelNames? names))
+        {
+            return names;
+        }
+
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        ChannelNames created = new(destination, "send " + destination, "request " + destination);
+        if (this.channelNames.Count < 1024)
+        {
+            this.channelNames.TryAdd(channelUtf8.ToArray(), created);
+        }
+
+        return created;
+    }
+
+    private sealed record ChannelNames(string Destination, string SendSpanName, string RequestSpanName);
 
     private void RecordProcessed(string destination)
     {
@@ -565,9 +611,10 @@ public class InstrumentedMessageTransport : IMessageTransport
         string destination)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        string processSpanName = "process " + destination;
         return async (payload, headers, ct) =>
         {
-            using Activity? activity = StartProcessActivity(in headers, destination);
+            using Activity? activity = StartProcessActivity(in headers, processSpanName, destination);
             long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
@@ -591,10 +638,11 @@ public class InstrumentedMessageTransport : IMessageTransport
         string destination)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        string processSpanName = "process " + destination;
         return async (payload, context, ct) =>
         {
             JsonElement headers = context.Headers;
-            using Activity? activity = StartProcessActivity(in headers, destination);
+            using Activity? activity = StartProcessActivity(in headers, processSpanName, destination);
             long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
@@ -619,9 +667,10 @@ public class InstrumentedMessageTransport : IMessageTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
+        string processSpanName = "process " + destination;
         return async (request, headers, ct) =>
         {
-            using Activity? activity = StartProcessActivity(in headers, destination);
+            using Activity? activity = StartProcessActivity(in headers, processSpanName, destination);
             long startTimestamp = Stopwatch.GetTimestamp();
             try
             {

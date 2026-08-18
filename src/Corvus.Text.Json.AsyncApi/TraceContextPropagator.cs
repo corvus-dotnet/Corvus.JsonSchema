@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Corvus.Text.Json.AsyncApi;
 
@@ -74,7 +76,16 @@ internal static class TraceContextPropagator
                 root.SetProperty(TracestatePropertyName, tracestate);
             }
 
-            return JsonElement.ParseValue(root.ToString());
+            // The element must outlive this call (the inner transport reads it through the
+            // publish), so it parses from UTF-8 written here; previously this round-tripped
+            // through a UTF-16 string of the whole headers object and reparsed it.
+            ArrayBufferWriter<byte> buffer = new(256);
+            using (Utf8JsonWriter writer = new(buffer))
+            {
+                root.WriteTo(writer);
+            }
+
+            return JsonElement.ParseValue(buffer.WrittenSpan);
         }
     }
 
