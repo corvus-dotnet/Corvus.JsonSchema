@@ -2949,9 +2949,14 @@ public sealed class AsyncApi30CodeGenerator
 
             // A validation refusal is policy input, not control flow: the failure is built
             // without a throw (no unwind, no stack capture per hostile message) and feeds the
-            // same policy switch the handler's exceptions reach through the catch below.
+            // same policy switch the handler's exceptions reach through the catch below. The
+            // guard catch preserves the old routing for anything the validation PATH itself
+            // throws (typed-header From, detail formatting): such faults reach this consumer's
+            // policy with full context, never the transport's.
             w.WriteLine("Exception? failure = null;");
             w.WriteLine("if (this.validationMode != ValidationMode.None)");
+            w.OpenBrace();
+            w.WriteLine("try");
             w.OpenBrace();
             w.WriteLine("failure = TryValidatePayload(payload, this.validationMode);");
             if (msg.HeadersTypeName is not null)
@@ -2959,6 +2964,11 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine($"failure ??= TryValidateHeaders({msg.HeadersTypeName}.From(headers), this.validationMode);");
             }
 
+            w.CloseBrace();
+            w.WriteLine("catch (Exception ex)");
+            w.OpenBrace();
+            w.WriteLine("failure = ex;");
+            w.CloseBrace();
             w.CloseBrace();
             w.WriteLine();
             w.WriteLine("if (failure is null)");

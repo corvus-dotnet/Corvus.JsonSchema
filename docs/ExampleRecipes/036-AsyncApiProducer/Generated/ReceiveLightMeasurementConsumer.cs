@@ -185,7 +185,14 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         Exception? failure = null;
         if (this.validationMode != ValidationMode.None)
         {
-            failure = TryValidatePayload(payload, this.validationMode);
+            try
+            {
+                failure = TryValidatePayload(payload, this.validationMode);
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
         }
 
         if (failure is null)
