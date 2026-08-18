@@ -36,6 +36,18 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
     private volatile bool disposed;
 
+    // The shared serialize-once pattern every other transport uses: one buffer and one writer
+    // per thread, contents copied into a rental (or an owned parse) before the next use.
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_serializeBuffer;
+
+    [ThreadStatic]
+    private static Utf8JsonWriter? t_writer;
+
+    // Dead-letter destinations are the bounded set of configured dead-letter channels; creating
+    // an AMQP sender link per dead-lettered message made a poison flood open a link per message.
+    private readonly ConcurrentDictionary<string, ServiceBusSender> deadLetterSenders = new(StringComparer.Ordinal);
+
     private AzureServiceBusMessageTransport(
         AzureServiceBusTransportOptions options,
         ServiceBusClient client,
@@ -124,11 +136,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         try
         {
-            // Serialize to rented buffer
-            int estimatedSize = EstimateSerializedSize(payload);
-            rentedArray = ArrayPool<byte>.Shared.Rent(estimatedSize);
-
-            int bytesWritten = SerializeToBuffer(payload, rentedArray);
+            // Serialize once into the thread-static buffer, then move to a rental for the send.
+            (byte[] serialized, int bytesWritten) = SerializeToRented(in payload);
+            rentedArray = serialized;
 
             ServiceBusMessage message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
 
@@ -191,24 +201,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             byte[]? rentedArray = null;
             try
             {
-                ArrayBufferWriter<byte> buffer = new();
-                Utf8JsonWriter writer = new(buffer);
-                request.WriteTo(writer);
-                writer.Flush();
-
-                int length = buffer.WrittenCount;
-                rentedArray = length <= 256  // StackallocByteThreshold
-                    ? null
-                    : ArrayPool<byte>.Shared.Rent(length);
-
-                ReadOnlyMemory<byte> payload = rentedArray is null
-                    ? buffer.WrittenMemory
-                    : new ReadOnlyMemory<byte>(rentedArray, 0, length);
-
-                if (rentedArray is not null)
-                {
-                    buffer.WrittenSpan.CopyTo(rentedArray);
-                }
+                (byte[] serialized, int length) = SerializeToRented(in request);
+                rentedArray = serialized;
+                ReadOnlyMemory<byte> payload = new(rentedArray, 0, length);
 
                 // Build Service Bus message with SessionId, ReplyTo, and CorrelationId
                 ServiceBusMessage message = new(payload)
@@ -425,10 +420,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
             // Handle
             using (payloadDoc)
-            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
+            using (JsonWorkspace? headerWorkspace = args.Message.ApplicationProperties.Count > 0 ? JsonWorkspace.CreateUnrented() : null)
             {
                 TPayload payload = payloadDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
+                JsonElement headersElement = headerWorkspace is not null
+                    ? BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace)
+                    : default;
 
                 try
                 {
@@ -652,10 +649,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
             // Handle the request and publish the reply
             using (requestDoc)
-            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
+            using (JsonWorkspace? headerWorkspace = args.Message.ApplicationProperties.Count > 0 ? JsonWorkspace.CreateUnrented() : null)
             {
                 TRequest request = requestDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
+                JsonElement headersElement = headerWorkspace is not null
+                    ? BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace)
+                    : default;
 
                 try
                 {
@@ -965,6 +964,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             }
         }
 
+        foreach (string channel in this.deadLetterSenders.Keys)
+        {
+            if (this.deadLetterSenders.TryRemove(channel, out ServiceBusSender? dlSender))
+            {
+                await dlSender.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);
     }
@@ -984,16 +991,18 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
 
         try
         {
-            int estimatedSize = payload.ValueKind != JsonValueKind.Undefined
-                ? Math.Max(1024, payload.ToString()!.Length * 4)
-                : 256;
+            ServiceBusMessage message;
+            if (payload.ValueKind != JsonValueKind.Undefined)
+            {
+                (byte[] serialized, int bytesWritten) = SerializeToRented(in payload);
+                rentedArray = serialized;
+                message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
+            }
+            else
+            {
+                message = new();
+            }
 
-            rentedArray = ArrayPool<byte>.Shared.Rent(estimatedSize);
-            int bytesWritten = payload.ValueKind != JsonValueKind.Undefined
-                ? SerializeToBuffer(payload, rentedArray)
-                : 0;
-
-            ServiceBusMessage message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
             message.ApplicationProperties["Corvus-Original-Channel"] = originalChannel;
             message.ApplicationProperties["Corvus-Error"] = exception.Message;
             message.ApplicationProperties["Corvus-Error-Type"] = exception.GetType().FullName ?? exception.GetType().Name;
@@ -1006,7 +1015,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 }
             }
 
-            await using ServiceBusSender dlSender = this.client.CreateSender(deadLetterChannel);
+            ServiceBusSender dlSender = await this.GetOrAddDeadLetterSenderAsync(deadLetterChannel).ConfigureAwait(false);
             await dlSender.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -1031,24 +1040,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         try
         {
             // Serialize the reply, mirroring RequestAsync's request serialization.
-            ArrayBufferWriter<byte> buffer = new();
-            Utf8JsonWriter writer = new(buffer);
-            reply.WriteTo(writer);
-            writer.Flush();
-
-            int length = buffer.WrittenCount;
-            rentedArray = length <= 256  // StackallocByteThreshold
-                ? null
-                : ArrayPool<byte>.Shared.Rent(length);
-
-            ReadOnlyMemory<byte> payload = rentedArray is null
-                ? buffer.WrittenMemory
-                : new ReadOnlyMemory<byte>(rentedArray, 0, length);
-
-            if (rentedArray is not null)
-            {
-                buffer.WrittenSpan.CopyTo(rentedArray);
-            }
+            (byte[] serialized, int length) = SerializeToRented(in reply);
+            rentedArray = serialized;
+            ReadOnlyMemory<byte> payload = new(rentedArray, 0, length);
 
             // Echo the request's session and correlation identifiers so the requester's session
             // receiver (which accepts the session whose ID equals the correlation ID) gets the reply.
@@ -1076,24 +1070,38 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         }
     }
 
-    private static int EstimateSerializedSize<TPayload>(TPayload payload)
-        where TPayload : struct, IJsonElement<TPayload>
+    private static (byte[] Rented, int Length) SerializeToRented<T>(in T value)
+        where T : struct, IJsonElement<T>
     {
-        // Conservative estimate: 4x the ToString length
-        string stringForm = payload.ToString() ?? string.Empty;
-        return Math.Max(1024, stringForm.Length * 4);
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
+        value.WriteTo(writer);
+        writer.Flush();
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        return (rented, length);
     }
 
-    private static int SerializeToBuffer<TPayload>(TPayload payload, byte[] buffer)
-        where TPayload : struct, IJsonElement<TPayload>
+    // Returns the cached sender for a dead-letter destination, creating it on first use. A racing
+    // first use disposes its losing sender rather than leaking the link.
+    private async ValueTask<ServiceBusSender> GetOrAddDeadLetterSenderAsync(string deadLetterChannel)
     {
-        ArrayBufferWriter<byte> writer = new(buffer.Length);
-        using Utf8JsonWriter jsonWriter = new(writer);
-        payload.WriteTo(jsonWriter);
-        jsonWriter.Flush();
+        if (this.deadLetterSenders.TryGetValue(deadLetterChannel, out ServiceBusSender? existing))
+        {
+            return existing;
+        }
 
-        writer.WrittenSpan.CopyTo(buffer);
-        return writer.WrittenCount;
+        ServiceBusSender created = this.client.CreateSender(deadLetterChannel);
+        ServiceBusSender winner = this.deadLetterSenders.GetOrAdd(deadLetterChannel, created);
+        if (!ReferenceEquals(winner, created))
+        {
+            await created.DisposeAsync().ConfigureAwait(false);
+        }
+
+        return winner;
     }
 
     private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties, JsonWorkspace workspace)
@@ -1103,8 +1111,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
             return default;
         }
 
-        ArrayBufferWriter<byte> buffer = new();
-        using Utf8JsonWriter writer = new(buffer);
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
 
         writer.WriteStartObject();
         foreach (KeyValuePair<string, object> kvp in applicationProperties)
@@ -1115,9 +1125,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
         writer.WriteEndObject();
         writer.Flush();
 
-        // The returned element is used after this method returns (by the caller's handler, or by RequestAsync's
-        // caller), so its document is owned by the caller's workspace rather than disposed here.
-        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        // The element outlives this call (the handler or the requester's caller reads it), and
+        // the thread-static buffer is reused by the next serialization on this thread, so the
+        // bytes move to a rented array whose ownership transfers to the parsed document; the
+        // pool gets it back when the owning workspace disposes the document.
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, length), rented);
         workspace.TakeOwnership(doc);
         return doc.RootElement;
     }
