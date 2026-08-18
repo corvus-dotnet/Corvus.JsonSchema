@@ -49,6 +49,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private readonly NatsConnection connection;
     private readonly INatsJSContext? jsContext;
     private readonly string? derivedStreamName;
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, string> channelStrings = new(ReadOnlyMemoryByteComparer.Instance);
+    private readonly ConcurrentDictionary<string, string> derivedStreamNames = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, bool> verifiedStreams = new(StringComparer.Ordinal);
     private readonly byte[] deadLetterSuffixUtf8;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
@@ -148,7 +151,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        string channel = this.GetChannelString(channelUtf8);
 
         if (this.options.UseJetStream && this.jsContext is not null)
         {
@@ -157,8 +160,9 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             TPayload payloadCopy = payload;
             JsonElement headersCopy = headers;
 
-            // Use cached stream name or derive on-demand (first publish determines it)
-            string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
+            // Use the configured stream name, or the per-channel derived name (cached: the
+            // Split + ToUpperInvariant ran per published message).
+            string streamName = this.derivedStreamName ?? this.derivedStreamNames.GetOrAdd(channel, static ch => DeriveStreamName(ch));
             return this.PublishToJetStreamAsync(channel, streamName, payloadCopy, headersCopy, cancellationToken);
         }
         else
@@ -203,8 +207,15 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        // Ensure stream exists
-        await this.EnsureStreamExistsAsync(streamName, channel, cancellationToken).ConfigureAwait(false);
+        // The stream is verified (and created if missing) once per stream name, not with a
+        // broker round trip per published message. A stream deleted externally surfaces as a
+        // JetStream publish failure below, which invalidates the entry so the next publish
+        // re-verifies and recreates.
+        if (!this.verifiedStreams.ContainsKey(streamName))
+        {
+            await this.EnsureStreamExistsAsync(streamName, channel, cancellationToken).ConfigureAwait(false);
+            this.verifiedStreams.TryAdd(streamName, true);
+        }
 
         // Publish to stream
         NatsHeaders? natsHeaders = null;
@@ -216,12 +227,40 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
             };
         }
 
-        await this.jsContext!.PublishAsync(
-            subject: channel,
-            data: payload,
-            headers: natsHeaders,
-            serializer: JsonElementSerializer<TPayload>.Instance,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.jsContext!.PublishAsync(
+                subject: channel,
+                data: payload,
+                headers: natsHeaders,
+                serializer: JsonElementSerializer<TPayload>.Instance,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsJSException)
+        {
+            this.verifiedStreams.TryRemove(streamName, out _);
+            throw;
+        }
+    }
+
+    // Publish and request run per message, so their channel strings come from a byte-keyed
+    // cache rather than a decode per call. The key copies the caller's bytes (callers pass
+    // rented or reused memory); past the cap, a very dynamic channel set falls back to
+    // per-call decoding rather than growing the cache without bound.
+    private string GetChannelString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelStrings.TryGetValue(channelUtf8, out string? cached))
+        {
+            return cached;
+        }
+
+        string created = Encoding.UTF8.GetString(channelUtf8.Span);
+        if (this.channelStrings.Count < 1024)
+        {
+            this.channelStrings.TryAdd(channelUtf8.ToArray(), created);
+        }
+
+        return created;
     }
 
     private static string DeriveStreamName(string subject)
@@ -266,7 +305,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         _ = replyChannelUtf8;
-        string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
+        string requestChannel = this.GetChannelString(requestChannelUtf8);
         NatsHeaders natsHeaders = new()
         {
             [CorrelationIdKey] = Encoding.UTF8.GetString(correlationIdUtf8.Span),

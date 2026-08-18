@@ -58,6 +58,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private readonly ConcurrentDictionary<string, SubscriptionState> replyConsumers = new(StringComparer.Ordinal);
 
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<ConsumeResult<Null, byte[]>>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, string> channelStrings = new(ReadOnlyMemoryByteComparer.Instance);
     private volatile bool disposed;
 
     /// <summary>
@@ -113,7 +114,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        string channel = this.GetChannelString(channelUtf8);
         byte[] payloadBytes = SerializeToOwnedBytes(in payload);
 
         Message<Null, byte[]> message = new() { Value = payloadBytes };
@@ -141,8 +142,8 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
-        string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
+        string requestChannel = this.GetChannelString(requestChannelUtf8);
+        string replyChannel = this.GetChannelString(replyChannelUtf8);
 
         byte[] requestBytes = SerializeToOwnedBytes(in request);
         byte[]? headerBytes = headers.ValueKind != JsonValueKind.Undefined
@@ -1375,6 +1376,26 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         {
             // Normal shutdown
         }
+    }
+
+    // Publish and request run per message, so their channel strings come from a byte-keyed
+    // cache rather than a decode per call. The key copies the caller's bytes (callers pass
+    // rented or reused memory); past the cap, a very dynamic channel set falls back to
+    // per-call decoding rather than growing the cache without bound.
+    private string GetChannelString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelStrings.TryGetValue(channelUtf8, out string? cached))
+        {
+            return cached;
+        }
+
+        string created = Encoding.UTF8.GetString(channelUtf8.Span);
+        if (this.channelStrings.Count < 1024)
+        {
+            this.channelStrings.TryAdd(channelUtf8.ToArray(), created);
+        }
+
+        return created;
     }
 
     /// <summary>

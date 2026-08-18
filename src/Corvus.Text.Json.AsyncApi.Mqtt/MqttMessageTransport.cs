@@ -49,6 +49,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, Task>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<MqttApplicationMessage>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, string> channelStrings = new(ReadOnlyMemoryByteComparer.Instance);
     private volatile bool disposed;
 
     private MqttMessageTransport(MqttTransportOptions options, IMqttClient client)
@@ -108,7 +109,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        string channel = this.GetChannelString(channelUtf8);
 
         // Serialize headers first (reuses the shared buffer, produces a string result)
         string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
@@ -1022,6 +1023,26 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         }
 
         return null;
+    }
+
+    // Publish and request run per message, so their channel strings come from a byte-keyed
+    // cache rather than a decode per call. The key copies the caller's bytes (callers pass
+    // rented or reused memory); past the cap, a very dynamic channel set falls back to
+    // per-call decoding rather than growing the cache without bound.
+    private string GetChannelString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelStrings.TryGetValue(channelUtf8, out string? cached))
+        {
+            return cached;
+        }
+
+        string created = Encoding.UTF8.GetString(channelUtf8.Span);
+        if (this.channelStrings.Count < 1024)
+        {
+            this.channelStrings.TryAdd(channelUtf8.ToArray(), created);
+        }
+
+        return created;
     }
 
     private static (byte[] Rented, int Length) SerializeToRented<T>(in T value)
