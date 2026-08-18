@@ -43,6 +43,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     private const string ReplyToKeyString = "corvus-reply-to";
 
     private readonly KafkaTransportOptions options;
+    private readonly bool commitPerMessage;
     private readonly IProducer<Null, byte[]> producer;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
@@ -68,6 +69,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     public KafkaMessageTransport(KafkaTransportOptions options)
     {
         this.options = options;
+        this.commitPerMessage = options.CommitStrategy == KafkaCommitStrategy.PerMessage;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
 
@@ -466,18 +468,33 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         this.options.Heartbeat?.Stop(channel, "kafka", marker);
     }
 
-    // For commits on error-handling paths: the policy has already run for this message, so a
-    // commit failure is recorded rather than routed back through it. The offset stays
-    // uncommitted and the message redelivers under at-least-once semantics.
-    private static void TryCommit(IConsumer<Null, byte[]> consumer, ConsumeResult<Null, byte[]> result, string channel)
+    // For acknowledgements on error-handling paths: the policy has already run for this
+    // message, so a failure is recorded rather than routed back through it. The offset stays
+    // unacknowledged and the message redelivers under at-least-once semantics.
+    private void TryAcknowledge(IConsumer<Null, byte[]> consumer, ConsumeResult<Null, byte[]> result, string channel)
     {
         try
         {
-            consumer.Commit(result);
+            this.AcknowledgeDelivery(consumer, result);
         }
         catch (Exception ex)
         {
             AsyncApiTelemetry.RecordAcknowledgeFailure(channel, "kafka", ex);
+        }
+    }
+
+    // Windowed stores the offset locally (an in-memory mark the client's auto-commit thread
+    // flushes on its interval and on Close); PerMessage commits synchronously to the broker.
+    // Both acknowledge only after the handler succeeded, so at-least-once holds either way.
+    private void AcknowledgeDelivery(IConsumer<Null, byte[]> consumer, ConsumeResult<Null, byte[]> result)
+    {
+        if (this.commitPerMessage)
+        {
+            consumer.Commit(result);
+        }
+        else
+        {
+            consumer.StoreOffset(result);
         }
     }
 
@@ -832,7 +849,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                         }
                     }
 
-                    TryCommit(consumer, result, channel);
+                    this.TryAcknowledge(consumer, result, channel);
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -874,7 +891,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             }
                         }
 
-                        TryCommit(consumer, result, channel);
+                        this.TryAcknowledge(consumer, result, channel);
                         if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -925,7 +942,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                                 }
                             }
 
-                            TryCommit(consumer, result, channel);
+                            this.TryAcknowledge(consumer, result, channel);
                             if (action == MessageErrorAction.Abort)
                             {
                                 AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Handler);
@@ -944,7 +961,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
                 try
                 {
-                    consumer.Commit(result);
+                    this.AcknowledgeDelivery(consumer, result);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -1035,7 +1052,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                         }
                     }
 
-                    TryCommit(consumer, result, channel);
+                    this.TryAcknowledge(consumer, result, channel);
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -1077,7 +1094,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             }
                         }
 
-                        TryCommit(consumer, result, channel);
+                        this.TryAcknowledge(consumer, result, channel);
                         if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
@@ -1160,7 +1177,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                                 }
                             }
 
-                            TryCommit(consumer, result, channel);
+                            this.TryAcknowledge(consumer, result, channel);
                             if (action == MessageErrorAction.Abort)
                             {
                                 AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Handler);
@@ -1179,7 +1196,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
 
                 try
                 {
-                    consumer.Commit(result);
+                    this.AcknowledgeDelivery(consumer, result);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -1223,7 +1240,18 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         consumerConfig.BootstrapServers = this.options.BootstrapServers;
         consumerConfig.GroupId = this.options.GroupId;
         consumerConfig.AutoOffsetReset = this.options.AutoOffsetReset;
-        consumerConfig.EnableAutoCommit = false;
+        if (this.commitPerMessage)
+        {
+            consumerConfig.EnableAutoCommit = false;
+        }
+        else
+        {
+            // Auto-commit flushes only offsets this transport has explicitly stored after a
+            // successful handle; auto-store must stay off or offsets would be marked at
+            // consume time, before the handler ran, breaking at-least-once.
+            consumerConfig.EnableAutoCommit = true;
+            consumerConfig.EnableAutoOffsetStore = false;
+        }
 
         IConsumer<Null, byte[]> consumer = new ConsumerBuilder<Null, byte[]>(consumerConfig).Build();
         try
@@ -1369,7 +1397,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     }
                 }
 
-                TryCommit(consumer, result, "(reply-loop)");
+                this.TryAcknowledge(consumer, result, "(reply-loop)");
             }
         }
         catch (OperationCanceledException)
