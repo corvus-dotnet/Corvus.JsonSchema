@@ -125,6 +125,8 @@
 </tr>
 </tbody>
 </table>
+<h3 id="remarks">Remarks</h3>
+<p>The constructor always produces a plain <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a> wrapper that surfaces none of the wrapped transport's optional capabilities. Prefer <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html"><code>Create</code></a>, whose wrapper implements exactly the capability interfaces the wrapped transport implements; take the result as the capability interface you need and cast for any additional one it carries.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

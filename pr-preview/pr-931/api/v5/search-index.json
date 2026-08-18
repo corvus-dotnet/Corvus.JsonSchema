@@ -8190,11 +8190,88 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.html",
+    "Title": "DeliveryFailure",
+    "Description": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.",
+    "Keywords": "DeliveryFailure class Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.\nChannel: The channel the message was delivered on.\nException: The handler's failure."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.ctor.html",
+    "Title": "DeliveryFailure Constructor",
+    "Description": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.",
+    "Keywords": "DeliveryFailure constructor new Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.channel.html",
+    "Title": "DeliveryFailure.Channel",
+    "Description": "The channel the message was delivered on.",
+    "Keywords": "DeliveryFailure Channel property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The channel the message was delivered on."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.exception.html",
+    "Title": "DeliveryFailure.Exception",
+    "Description": "The handler's failure.",
+    "Keywords": "DeliveryFailure Exception property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The handler's failure."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.tostring.html",
+    "Title": "DeliveryFailure.ToString",
+    "Description": "",
+    "Keywords": "DeliveryFailure ToString method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.gethashcode.html",
+    "Title": "DeliveryFailure.GetHashCode",
+    "Description": "",
+    "Keywords": "DeliveryFailure GetHashCode method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.equals.html",
+    "Title": "DeliveryFailure.Equals",
+    "Description": "",
+    "Keywords": "DeliveryFailure Equals method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.-clone$.html",
+    "Title": "DeliveryFailure.<Clone>$",
+    "Description": "",
+    "Keywords": "DeliveryFailure <Clone>$ method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.deconstruct.html",
+    "Title": "DeliveryFailure.Deconstruct",
+    "Description": "",
+    "Keywords": "DeliveryFailure Deconstruct method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.op-inequality.html",
+    "Title": "DeliveryFailure Inequality Operator",
+    "Description": "",
+    "Keywords": "DeliveryFailure Inequality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.op-equality.html",
+    "Title": "DeliveryFailure Equality Operator",
+    "Description": "",
+    "Keywords": "DeliveryFailure Equality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html",
     "Title": "InMemoryMessageTransport",
     "Description": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.",
     "Keywords": "InMemoryMessageTransport class Corvus.Text.Json.AsyncApi.Testing",
-    "Body": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.\nThis transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via `WriteTo(Utf8JsonWriter)` on publish, and parses incoming bytes via `ParsedJsonDocument<T>.Parse()` on subscribe delivery — mirroring what a real transport would do.\nPublishedMessages: Gets the list of messages published via this transport.\nDeadLetteredMessages: Gets the list of dead-lettered messages.\nDeliverAsync: Delivers a raw JSON payload to the subscriber on the specified channel.\nCompleteRequest: Completes a pending request/reply by correlationId.\nDeliverRawAsync: Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.\nReset: Clears all recorded published messages and dead-lettered messages."
+    "Body": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.\nThis transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via `WriteTo(Utf8JsonWriter)` on publish, and parses incoming bytes via `ParsedJsonDocument<T>.Parse()` on subscribe delivery — mirroring what a real transport would do.\nPublishedMessages: Gets the list of messages published via this transport.\nDeadLetteredMessages: Gets the list of dead-lettered messages.\nDeliveryFailures: Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead.\nDeliverAsync: Delivers a raw JSON payload to the subscriber on the specified channel.\nCompleteRequest: Completes a pending request/reply by correlationId.\nDeliverRawAsync: Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.\nReset: Clears all recorded published messages and dead-lettered messages."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.ctor.html",
@@ -8230,6 +8307,13 @@
     "Description": "Gets the list of dead-lettered messages.",
     "Keywords": "InMemoryMessageTransport DeadLetteredMessages property Corvus.Text.Json.AsyncApi.Testing",
     "Body": "Gets the list of dead-lettered messages."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html",
+    "Title": "InMemoryMessageTransport.DeliveryFailures",
+    "Description": "Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead.",
+    "Keywords": "InMemoryMessageTransport DeliveryFailures property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.publishasync.html",

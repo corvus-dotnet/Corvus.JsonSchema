@@ -126,7 +126,7 @@
 <tr>
 <td><code>owner</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
-<td>The identity of the subscription this loop belongs to.</td>
+<td>The identity of the subscription this loop belongs to, compared by reference: pass the same object instance to <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html"><code>Tick</code></a>, and <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stop.html"><code>Stop</code></a> for one subscription (a dedicated marker object, as the transports use). A boxed value type is a fresh box per call and every call is ignored as a stale owner; an instance shared across subscriptions defeats the ownership check.</td>
 </tr>
 </tbody>
 </table>

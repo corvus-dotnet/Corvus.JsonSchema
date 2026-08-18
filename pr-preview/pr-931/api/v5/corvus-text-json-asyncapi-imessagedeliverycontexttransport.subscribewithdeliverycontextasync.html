@@ -153,7 +153,7 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask"><code>ValueTask</code></a></p>
 <h3 id="remarks">Remarks</h3>
-<p>The <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html"><code>MessageDeliveryContext</code></a> passed to <code>handler</code> is valid only for the duration of that invocation; transports may recycle the buffers it references once the handler returns. The <code>channelUtf8</code> memory must remain valid and unmodified for the lifetime of the subscription: broker transports retain it and hand it to every delivery as <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.channelutf8.html"><code>ChannelUtf8</code></a>. Do not subscribe with a pooled or reused buffer.</p>
+<p>The <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html"><code>MessageDeliveryContext</code></a> passed to <code>handler</code> is valid only for the duration of that invocation; transports may recycle the buffers it references once the handler returns. The <code>channelUtf8</code> memory must remain valid and unmodified for the lifetime of the subscription: broker transports retain it and hand it to every delivery as <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.channelutf8.html"><code>ChannelUtf8</code></a>. Do not subscribe with a pooled or reused buffer. The in-memory testing transport hands each delivery an equal-content copy rather than the retained buffer, so compare the context's channel by content, never by memory identity.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

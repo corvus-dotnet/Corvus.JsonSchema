@@ -491,7 +491,7 @@ using Streetlights.Client.Models;  // payload model types
   → Channel Address: construct from template + parameters (UTF-8)
   → Authentication: call IMessageAuthenticationProvider
   → IMessageTransport.PublishAsync: serialize and send
-  → Cleanup: return workspace + channel rental to pool
+  → Cleanup: dispose the workspace, return the channel rental to the pool
 </code></pre>
 <h3 id="consumer-flow">Consumer Flow</h3>
 <pre><code>Message arrives on transport
@@ -1465,7 +1465,7 @@ foreach (var item in reply.Results.EnumerateArray())
 </code></pre>
 <p>The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same <code>CorrelationId</code>/<code>ReplyTo</code> the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.</p>
 <p><strong>Reply ownership.</strong> <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated <code>SendAndReceive*</code> requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)</p>
-<p><strong>Implementation status.</strong> Every transport implements <code>SubscribeReplyAsync</code>: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a <code>RequestAsync</code> call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, <code>RequestAsync</code> parks the request for the test helper <code>CompleteRequest</code>, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve <code>RequestAsync</code> live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.</p>
+<p><strong>Implementation status.</strong> Every transport implements <code>SubscribeReplyAsync</code>: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a <code>RequestAsync</code> call delivers the request to a registered responder, whose reply completes the requester's pending call. With no responder registered, the request is delivered to any data subscription on the channel (plain or delivery-context, exactly as a publish would be) and parked for the test helper <code>CompleteRequest</code>. A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve <code>RequestAsync</code> live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.</p>
 <h2 id="bindings">Bindings</h2>
 <p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via <code>MessageContext</code>:</p>
 <table>
@@ -1890,7 +1890,7 @@ corvusjson asyncapi-generate streetlights.json --rootNamespace Streetlights --ou
 </tr>
 </tbody>
 </table>
-<p>Corvus without validation is <strong>1.9× faster</strong> than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the pooled <code>JsonWorkspace</code> envelope — returned to pools after the call, producing zero GC pressure under steady-state load.</p>
+<p>Corvus without validation is <strong>1.9× faster</strong> than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the short-lived <code>JsonWorkspace</code> the producer builds the message in, disposed when the publish completes.</p>
 <h3 id="requestreply-1">Request/Reply</h3>
 <table>
 <thead>
@@ -1922,7 +1922,7 @@ corvusjson asyncapi-generate streetlights.json --rootNamespace Streetlights --ou
 </tr>
 </tbody>
 </table>
-<p>Corvus without validation is <strong>28% faster</strong> and allocates <strong>65% less</strong> than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from <code>ArrayPool&lt;byte&gt;</code>, and the reply is parsed into pooled memory. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.</p>
+<p>Corvus without validation is <strong>28% faster</strong> and allocates <strong>65% less</strong> than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from <code>ArrayPool&lt;byte&gt;</code>, and the reply is parsed into documents owned by the caller-supplied workspace. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.</p>
 <h3 id="validation-cost-summary">Validation Cost Summary</h3>
 <table>
 <thead>
@@ -1952,7 +1952,7 @@ corvusjson asyncapi-generate streetlights.json --rootNamespace Streetlights --ou
 </table>
 <p>All validation modes produce <strong>zero additional allocation</strong> — the schema evaluator operates entirely on the already-parsed document. This means you can enable validation in production without increasing GC pressure.</p>
 <blockquote>
-<p><em>BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput.</em></p>
+<p><em>BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput. Measured against the V5.3.0 pipeline; the V5.4.0 lifecycle and request/reply hardening changed the measured paths (notably the requester now threads the caller-supplied workspace), so treat exact figures as indicative of that baseline.</em></p>
 </blockquote>
 <h2 id="example-recipes">Example Recipes</h2>
 <ul>

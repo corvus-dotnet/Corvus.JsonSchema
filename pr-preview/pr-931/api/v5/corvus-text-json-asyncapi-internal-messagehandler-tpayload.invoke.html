@@ -131,7 +131,7 @@
 <tr>
 <td><code>nativeMessage</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
-<td>The transport's native message representation, or <code>null</code> when the callback does not consume delivery context.</td>
+<td>The transport's native message representation, when one exists; ignored (and safely <code>null</code>) when the callback does not consume delivery context.</td>
 </tr>
 <tr>
 <td><code>cancellationToken</code></td>
