@@ -165,6 +165,38 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task HeadersWithNonAsciiValuesRoundtripExactly()
+    {
+        // The header value travels as compact JSON text in a string-typed header slot, so
+        // non-ASCII content must survive via the writer's ASCII escaping. This asserts the
+        // exact value, not just the shape.
+        ReadOnlyMemory<byte> channel = "test.headers-nonascii"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedValue = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedValue = headers.GetProperty("x-label"u8).GetString();
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-label":"na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e"}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message was not received within timeout.");
+        Assert.AreEqual("na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e", receivedValue);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task MultipleMessagesDeliveredInOrder()
     {
         // Arrange

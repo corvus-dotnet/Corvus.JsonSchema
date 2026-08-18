@@ -994,7 +994,7 @@ await producer.PublishUserSignedUpAsync(
         timestamp: DateTimeOffset.UtcNow.ToString("O")));
 ```
 
-The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.
+The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports whose header slots are string-typed (MQTT, NATS), the compact JSON text itself is the value: the writer's default encoder escapes non-ASCII characters, so the value is ASCII-safe for those protocols without a base64 expansion.
 
 ### Consuming Messages with Headers
 
@@ -1100,8 +1100,8 @@ Different transports handle header serialization differently:
 | Kafka | Native message headers (`Message.Headers`) | Key-value byte pairs |
 | AMQP | Application properties | Native key-value map |
 | Azure Service Bus | Application properties (`ServiceBusMessage.ApplicationProperties`) | User metadata map; values are encoded as strings and reconstructed as typed JSON headers for generated handlers |
-| NATS | Base64-encoded JSON in message headers | Protocol has limited header support |
-| MQTT | User properties (MQTT 5) or base64 in topic | MQTT 3.1 has no header concept |
+| NATS | Compact JSON text in message headers | Values are ASCII-escaped JSON, legal per the NATS header rules |
+| MQTT | User properties (MQTT 5) carrying compact JSON text | MQTT 5 user-property values are UTF-8 strings |
 | WebSocket | JSON envelope field | Framed alongside payload |
 
 The transport layer handles encoding/decoding transparently — your handler always receives the typed struct regardless of the wire format.

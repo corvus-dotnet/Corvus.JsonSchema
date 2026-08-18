@@ -112,13 +112,13 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         string channel = this.GetChannelString(channelUtf8);
 
         // Serialize headers first (reuses the shared buffer, produces a string result)
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         // Serialize payload into the shared buffer, then rent for MQTT
         (byte[] rented, int length) = SerializeToRented(in payload);
-        return PublishAndReturnAsync(channel, rented, length, headersBase64, cancellationToken);
+        return PublishAndReturnAsync(channel, rented, length, headersJson, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -137,12 +137,12 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
         string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
         string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         (byte[] rented, int length) = SerializeToRented(in request);
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, workspace, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersJson, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -235,8 +235,8 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
         string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
         string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         byte[] rented;
@@ -251,7 +251,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             length = 0;
         }
 
-        return DeadLetterCoreAsync(deadLetterChannel, originalChannel, rented, length, headersBase64, exception, cancellationToken);
+        return DeadLetterCoreAsync(deadLetterChannel, originalChannel, rented, length, headersJson, exception, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -296,12 +296,12 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         string channel,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         CancellationToken cancellationToken)
     {
         try
         {
-            MqttApplicationMessage message = BuildMessage(channel, rented, length, headersBase64, default);
+            MqttApplicationMessage message = BuildMessage(channel, rented, length, headersJson, default);
             await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -319,7 +319,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         byte[] rented,
         int length,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        string? headersBase64,
+        string? headersJson,
         JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
@@ -350,7 +350,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 
             // Publish the request, advertising the reply topic via the native MQTT 5.0 ResponseTopic
             // so a Corvus responder (SubscribeReplyAsync) knows where to send the correlated reply.
-            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersBase64, correlationIdUtf8, replyChannel);
+            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersJson, correlationIdUtf8, replyChannel);
             await this.client.PublishAsync(requestMsg, cancellationToken).ConfigureAwait(false);
 
             // Wait for correlated reply
@@ -529,7 +529,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         string originalChannel,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         Exception exception,
         CancellationToken cancellationToken)
     {
@@ -550,9 +550,9 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                 ],
             };
 
-            if (headersBase64 is not null)
+            if (headersJson is not null)
             {
-                message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersBase64));
+                message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersJson));
             }
 
             await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
@@ -595,7 +595,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         string topic,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         ReadOnlyMemory<byte> correlationIdUtf8,
         string? responseTopic = null)
     {
@@ -609,10 +609,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             ResponseTopic = responseTopic,
         };
 
-        if (headersBase64 is not null)
+        if (headersJson is not null)
         {
             message.UserProperties ??= [];
-            message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersBase64));
+            message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersJson));
         }
 
         if (!correlationIdUtf8.IsEmpty)
@@ -793,11 +793,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                                 length = 0;
                             }
 
-                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-                                ? SerializeToBase64String(in headers)
+                            string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToHeaderString(in headers)
                                 : null;
 
-                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersJson, ex, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
                         }
                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -976,11 +976,11 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                                 length = 0;
                             }
 
-                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-                                ? SerializeToBase64String(in headers)
+                            string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToHeaderString(in headers)
                                 : null;
 
-                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersJson, ex, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
                         }
                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -1013,15 +1013,19 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         {
             if (prop.Name == this.options.HeadersPropertyKey)
             {
-                int maxBytes = ((prop.Value.Length * 3) + 3) / 4;
-                byte[] rented = ArrayPool<byte>.Shared.Rent(maxBytes);
-                if (Convert.TryFromBase64String(prop.Value, rented, out int bytesWritten))
+                byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(prop.Value.Length));
+                int bytesWritten = Encoding.UTF8.GetBytes(prop.Value, rented);
+                try
                 {
                     // Transfer ownership — document returns the array on Dispose()
                     return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
                 }
-
-                ArrayPool<byte>.Shared.Return(rented);
+                catch (System.Text.Json.JsonException)
+                {
+                    // A foreign or corrupted value is treated as absent headers, exactly as an
+                    // undecodable value always has been.
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
             }
         }
 
@@ -1063,7 +1067,10 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         return (rented, length);
     }
 
-    private static string SerializeToBase64String<T>(in T value)
+    // Headers travel as the compact JSON text itself. The default Utf8JsonWriter encoder
+    // escapes every non-ASCII character, so the value is ASCII by construction, which keeps
+    // it legal as a header value and survives the client's default ASCII header encoding.
+    private static string SerializeToHeaderString<T>(in T value)
         where T : struct, IJsonElement<T>
     {
         ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
@@ -1072,6 +1079,6 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         writer.Reset(buffer);
         value.WriteTo(writer);
         writer.Flush();
-        return Convert.ToBase64String(buffer.WrittenSpan);
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 }

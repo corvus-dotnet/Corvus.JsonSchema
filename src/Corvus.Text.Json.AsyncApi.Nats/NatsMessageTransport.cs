@@ -187,7 +187,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             natsHeaders = new NatsHeaders
             {
-                [HeadersKey] = SerializeToBase64String(in headers),
+                [HeadersKey] = SerializeToHeaderString(in headers),
             };
         }
 
@@ -225,7 +225,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         {
             natsHeaders = new NatsHeaders
             {
-                [HeadersKey] = SerializeToBase64String(in headers),
+                [HeadersKey] = SerializeToHeaderString(in headers),
             };
         }
 
@@ -315,7 +315,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         if (headers.ValueKind != JsonValueKind.Undefined)
         {
-            natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
+            natsHeaders[HeadersKey] = SerializeToHeaderString(in headers);
         }
 
         return RequestCoreAsync<TRequest, TReply>(requestChannel, request, natsHeaders, workspace, cancellationToken);
@@ -555,7 +555,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         if (headers.ValueKind != JsonValueKind.Undefined)
         {
-            natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
+            natsHeaders[HeadersKey] = SerializeToHeaderString(in headers);
         }
 
         // Serializer handles ValueKind.Undefined as no-op (empty payload)
@@ -1444,23 +1444,30 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         if (headers.TryGetValue(HeadersKey, out StringValues values) &&
             values.Count > 0 &&
-            values[0] is string base64)
+            values[0] is string headerJson)
         {
-            int maxBytes = ((base64.Length * 3) + 3) / 4;
-            byte[] rented = ArrayPool<byte>.Shared.Rent(maxBytes);
-            if (Convert.TryFromBase64String(base64, rented, out int bytesWritten))
+            byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(headerJson.Length));
+            int bytesWritten = Encoding.UTF8.GetBytes(headerJson, rented);
+            try
             {
                 // Transfer ownership — document returns the array on Dispose()
                 return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
             }
-
-            ArrayPool<byte>.Shared.Return(rented);
+            catch (System.Text.Json.JsonException)
+            {
+                // A foreign or corrupted value is treated as absent headers, exactly as an
+                // undecodable value always has been.
+                ArrayPool<byte>.Shared.Return(rented);
+            }
         }
 
         return null;
     }
 
-    private static string SerializeToBase64String<T>(in T value)
+    // Headers travel as the compact JSON text itself. The default Utf8JsonWriter encoder
+    // escapes every non-ASCII character, so the value is ASCII by construction, which keeps
+    // it legal as a header value and survives the client's default ASCII header encoding.
+    private static string SerializeToHeaderString<T>(in T value)
         where T : struct, IJsonElement<T>
     {
         ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
@@ -1469,7 +1476,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         writer.Reset(buffer);
         value.WriteTo(writer);
         writer.Flush();
-        return Convert.ToBase64String(buffer.WrittenSpan);
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
     private ValueTask DeadLetterRawAsync(
