@@ -182,35 +182,46 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
 
     private async ValueTask HandleMessageAsync(ActiveSubscription subscription, Streetlights.Client.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
     {
-        try
+        Exception? failure = null;
+        if (this.validationMode != ValidationMode.None)
         {
-            if (this.validationMode != ValidationMode.None)
-            {
-                ValidatePayload(payload, this.validationMode);
-            }
-
-            await this.handler.HandleLightMeasuredAsync(payload, cancellationToken).ConfigureAwait(false);
+            failure = TryValidatePayload(payload, this.validationMode);
         }
-        catch (Exception ex)
-        {
-            MessageErrorContext errorContext = new(subscription.ChannelUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
-            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
 
-            switch (action)
+        if (failure is null)
+        {
+            try
             {
-                case MessageErrorAction.Skip:
-                    AsyncApiTelemetry.RecordSkip(subscription.ChannelString, "generated", MessageErrorKind.Handler);
-                    return;
-                case MessageErrorAction.Abort:
-                    AsyncApiTelemetry.RecordAbort(subscription.ChannelString, "generated", MessageErrorKind.Handler);
-                    await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
-                    return;
-                case MessageErrorAction.DeadLetter:
-                    await this.transport.DeadLetterAsync(subscription.DeadLetterUtf8, subscription.ChannelUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
-                    return;
-                default:
-                    return;
+                await this.handler.HandleLightMeasuredAsync(payload, cancellationToken).ConfigureAwait(false);
             }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        }
+
+        if (failure is null)
+        {
+            return;
+        }
+
+        MessageErrorContext errorContext = new(subscription.ChannelUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
+        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(failure, errorContext, cancellationToken).ConfigureAwait(false);
+
+        switch (action)
+        {
+            case MessageErrorAction.Skip:
+                AsyncApiTelemetry.RecordSkip(subscription.ChannelString, "generated", MessageErrorKind.Handler);
+                return;
+            case MessageErrorAction.Abort:
+                AsyncApiTelemetry.RecordAbort(subscription.ChannelString, "generated", MessageErrorKind.Handler);
+                await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            case MessageErrorAction.DeadLetter:
+                await this.transport.DeadLetterAsync(subscription.DeadLetterUtf8, subscription.ChannelUtf8, JsonElement.From(payload), headers, failure, cancellationToken).ConfigureAwait(false);
+                return;
+            default:
+                return;
         }
     }
 
@@ -258,5 +269,49 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                 ThrowHelper.ThrowMessageHeadersValidationFailed("headers", SchemaValidationDetail.FormatResults(collector));
             }
         }
+    }
+
+    private static Exception? TryValidatePayload<TPayload>(TPayload payload, ValidationMode mode)
+        where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+    {
+        if (mode == ValidationMode.Basic)
+        {
+            if (!payload.EvaluateSchema())
+            {
+                return ThrowHelper.CreateMessagePayloadValidationFailed("payload");
+            }
+        }
+        else if (mode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!payload.EvaluateSchema(collector))
+            {
+                return ThrowHelper.CreateMessagePayloadValidationFailed("payload", SchemaValidationDetail.FormatResults(collector));
+            }
+        }
+
+        return null;
+    }
+
+    private static Exception? TryValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)
+        where THeaders : struct, Corvus.Text.Json.Internal.IJsonElement<THeaders>
+    {
+        if (mode == ValidationMode.Basic)
+        {
+            if (!headers.EvaluateSchema())
+            {
+                return ThrowHelper.CreateMessageHeadersValidationFailed("headers");
+            }
+        }
+        else if (mode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!headers.EvaluateSchema(collector))
+            {
+                return ThrowHelper.CreateMessageHeadersValidationFailed("headers", SchemaValidationDetail.FormatResults(collector));
+            }
+        }
+
+        return null;
     }
 }

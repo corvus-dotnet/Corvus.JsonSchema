@@ -2947,21 +2947,24 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
             }
 
-            w.WriteLine("try");
-            w.OpenBrace();
-
-            // Validation
+            // A validation refusal is policy input, not control flow: the failure is built
+            // without a throw (no unwind, no stack capture per hostile message) and feeds the
+            // same policy switch the handler's exceptions reach through the catch below.
+            w.WriteLine("Exception? failure = null;");
             w.WriteLine("if (this.validationMode != ValidationMode.None)");
             w.OpenBrace();
-            w.WriteLine("ValidatePayload(payload, this.validationMode);");
+            w.WriteLine("failure = TryValidatePayload(payload, this.validationMode);");
             if (msg.HeadersTypeName is not null)
             {
-                w.WriteLine($"{msg.HeadersTypeName} typedHeaders = {msg.HeadersTypeName}.From(headers);");
-                w.WriteLine("ValidateHeaders(typedHeaders, this.validationMode);");
+                w.WriteLine($"failure ??= TryValidateHeaders({msg.HeadersTypeName}.From(headers), this.validationMode);");
             }
 
             w.CloseBrace();
             w.WriteLine();
+            w.WriteLine("if (failure is null)");
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
 
             if (withDeliveryContext && msg.HeadersTypeName is not null)
             {
@@ -2985,8 +2988,17 @@ public sealed class AsyncApi30CodeGenerator
             w.CloseBrace(); // try
             w.WriteLine("catch (Exception ex)");
             w.OpenBrace();
+            w.WriteLine("failure = ex;");
+            w.CloseBrace(); // catch
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("if (failure is null)");
+            w.OpenBrace();
+            w.WriteLine("return;");
+            w.CloseBrace();
+            w.WriteLine();
             w.WriteLine($"MessageErrorContext errorContext = new({channelUtf8Expr}, MessageErrorKind.Handler, JsonElement.From(payload), headers);");
-            w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(failure, errorContext, cancellationToken).ConfigureAwait(false);");
             w.WriteLine();
             w.WriteLine("switch (action)");
             w.OpenBrace();
@@ -3011,7 +3023,7 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync({deadLetterChannelUtf8Expr}, {channelUtf8Expr}, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"await this.transport.DeadLetterAsync({deadLetterChannelUtf8Expr}, {channelUtf8Expr}, JsonElement.From(payload), headers, failure, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("default:");
@@ -3019,7 +3031,6 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("return;");
             w.PopIndent();
             w.CloseBrace(); // switch
-            w.CloseBrace(); // catch
             w.CloseBrace(); // method
         }
         else
@@ -3098,7 +3109,7 @@ public sealed class AsyncApi30CodeGenerator
         w.CloseBrace();
 
         // Validation helpers
-        EmitValidationHelpers(w);
+        EmitValidationHelpers(w, includeNonThrowing: true);
 
         w.CloseBrace();
 
@@ -3356,7 +3367,7 @@ public sealed class AsyncApi30CodeGenerator
         return new GeneratedFile($"{className}.cs", w.ToString());
     }
 
-    private static void EmitValidationHelpers(IndentedWriter w)
+    private static void EmitValidationHelpers(IndentedWriter w, bool includeNonThrowing = false)
     {
         w.WriteLine();
         w.WriteLine("private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)");
@@ -3398,6 +3409,57 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(collector));");
         w.CloseBrace();
         w.CloseBrace();
+        w.CloseBrace();
+
+        if (!includeNonThrowing)
+        {
+            return;
+        }
+
+        w.WriteLine();
+        w.WriteLine("private static Exception? TryValidatePayload<TPayload>(TPayload payload, ValidationMode mode)");
+        w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!payload.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessagePayloadValidationFailed(\"payload\");");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+        w.WriteLine("if (!payload.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessagePayloadValidationFailed(\"payload\", SchemaValidationDetail.FormatResults(collector));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return null;");
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("private static Exception? TryValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)");
+        w.WriteLine("    where THeaders : struct, Corvus.Text.Json.Internal.IJsonElement<THeaders>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!headers.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessageHeadersValidationFailed(\"headers\");");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+        w.WriteLine("if (!headers.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(collector));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return null;");
         w.CloseBrace();
     }
 
