@@ -28,12 +28,15 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)
         {
             this.ChannelUtf8 = channelUtf8;
+            this.ChannelString = Encoding.UTF8.GetString(channelUtf8.Span);
             this.DeadLetterUtf8 = deadLetterUtf8;
         }
 
         public int State;
 
         public ReadOnlyMemory<byte> ChannelUtf8 { get; }
+
+        public string ChannelString { get; }
 
         public byte[] DeadLetterUtf8 { get; }
     }
@@ -196,10 +199,10 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
             switch (action)
             {
                 case MessageErrorAction.Skip:
-                    AsyncApiTelemetry.RecordSkip(Encoding.UTF8.GetString(subscription.ChannelUtf8.Span), "generated", MessageErrorKind.Handler);
+                    AsyncApiTelemetry.RecordSkip(subscription.ChannelString, "generated", MessageErrorKind.Handler);
                     return;
                 case MessageErrorAction.Abort:
-                    AsyncApiTelemetry.RecordAbort(Encoding.UTF8.GetString(subscription.ChannelUtf8.Span), "generated", MessageErrorKind.Handler);
+                    AsyncApiTelemetry.RecordAbort(subscription.ChannelString, "generated", MessageErrorKind.Handler);
                     await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 case MessageErrorAction.DeadLetter:

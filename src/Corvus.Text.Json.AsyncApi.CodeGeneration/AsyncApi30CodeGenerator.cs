@@ -2517,6 +2517,7 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)");
             w.OpenBrace();
             w.WriteLine("this.ChannelUtf8 = channelUtf8;");
+            w.WriteLine("this.ChannelString = Encoding.UTF8.GetString(channelUtf8.Span);");
             w.WriteLine("this.DeadLetterUtf8 = deadLetterUtf8;");
             w.CloseBrace();
         }
@@ -2539,6 +2540,8 @@ public sealed class AsyncApi30CodeGenerator
 
         if (hasRuntimeAddress)
         {
+            w.WriteLine();
+            w.WriteLine("public string ChannelString { get; }");
             w.WriteLine();
             w.WriteLine("public byte[] DeadLetterUtf8 { get; }");
         }
@@ -2932,7 +2935,7 @@ public sealed class AsyncApi30CodeGenerator
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
-            string channelStringExpr = hasRuntimeAddress ? $"Encoding.UTF8.GetString({channelUtf8Expr}.Span)" : "ChannelAddress";
+            string channelStringExpr = hasRuntimeAddress ? "subscription.ChannelString" : "ChannelAddress";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
@@ -3025,7 +3028,7 @@ public sealed class AsyncApi30CodeGenerator
             string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
             string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
             string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
-            string channelStringExpr = hasRuntimeAddress ? $"Encoding.UTF8.GetString({channelUtf8Expr}.Span)" : "ChannelAddress";
+            string channelStringExpr = hasRuntimeAddress ? "subscription.ChannelString" : "ChannelAddress";
 
             w.WriteLine(withDeliveryContext
                 ? $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"

@@ -1,6 +1,6 @@
 {
   "excludeChannels": [],
-  "generatedAt": "2026-08-18T09:17:45.2785951\u002B00:00",
+  "generatedAt": "2026-08-18T11:09:38.4686220\u002B00:00",
   "generatedFiles": [
     "PublishLightMeasurementProducer.cs",
     "RequestDimProducer.cs",
@@ -52,7 +52,7 @@
     "Models/LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B9e437aa1cddc03278fde9a4920e4fda9521df91a",
+  "generatorVersion": "1.0.0\u002B51e10df897a3000e6847136ed9cbc37dc3b39e2a",
   "includeChannels": [],
   "mode": "both",
   "rootNamespace": "AsyncApiBenchmark.Generated",
