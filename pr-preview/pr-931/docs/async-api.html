@@ -672,7 +672,7 @@ ReceiveLightMeasurementConsumer consumer = new(
 }
 </code></pre>
 <h3 id="dead-letter-channels">Dead-Letter Channels</h3>
-<p>Dead-lettered messages are published to a derived channel address (e.g., <code>dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured</code>). The generated consumer calls <code>IMessageTransport.DeadLetterAsync</code> when the error policy returns <code>MessageErrorAction.DeadLetter</code>, so validation failures and handler exceptions are handled consistently across transports.</p>
+<p>Dead-lettered messages are published to the subscribed channel's address behind a <code>dead-letter.</code> prefix (e.g., <code>dead-letter.smartylighting.streetlights.1.0.action.lamp-42.lighting.measured</code>). Whether the channel address is static, composed from parameters, or supplied by the caller at start, the dead-letter address is derived from the channel the consumer actually subscribed. The generated consumer calls <code>IMessageTransport.DeadLetterAsync</code> when the error policy returns <code>MessageErrorAction.DeadLetter</code>, so validation failures and handler exceptions are handled consistently across transports.</p>
 <p>The dead-letter message includes:</p>
 <ul>
 <li>The original payload bytes</li>
@@ -1152,7 +1152,7 @@ await using InMemoryMessageTransport transport = new();
 IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
     new KeyValuePair&lt;SecuritySchemeType, IMessageAuthenticationProvider&gt;[]
     {
-        new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider(&quot;user&quot;, &quot;pass&quot;)),
+        new(SecuritySchemeType.ScramSha256, new UserPasswordAuthenticationProvider(&quot;user&quot;, &quot;pass&quot;)),
         new(SecuritySchemeType.Http, new BearerTokenAuthenticationProvider(&quot;token-value&quot;)),
         new(SecuritySchemeType.HttpApiKey, new ApiKeyAuthenticationProvider(&quot;api-key-123&quot;)),
     });
@@ -1400,9 +1400,12 @@ private static void ValidateHeaders&lt;THeaders&gt;(THeaders headers, Validation
 <p>Azure Service Bus deserves one extra note because it has both broker system properties and user application properties. Corvus writes AsyncAPI message headers to <code>ApplicationProperties</code>; it does not use them for broker control fields such as <code>CorrelationId</code>, <code>ReplyTo</code>, or <code>SessionId</code>. Request/reply support uses those native Service Bus fields separately, while your AsyncAPI header schema remains in the application-property map and is passed to generated handlers as the same typed header struct used by other transports.</p>
 <h2 id="requestreply">Request/Reply</h2>
 <p>AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:</p>
-<pre><code class="language-csharp">// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply
+<pre><code class="language-csharp">// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply.
+// The workspace you pass owns the reply: it stays valid until the workspace is disposed.
+using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
 QueryResponse reply = await queryProducer.SendAndReceiveQueryAsync(
     payload: QueryPayload.Build(filter: &quot;status=active&quot;u8),
+    workspace: workspace,
     cancellationToken: ct);
 
 // reply is already deserialized and validated
@@ -1411,7 +1414,7 @@ foreach (var item in reply.Results.EnumerateArray())
     Console.WriteLine($&quot;Found: {item.Name}&quot;);
 }
 </code></pre>
-<p>The generated code handles correlation ID generation (GUID formatted directly to a <code>byte[36]</code> — no string allocation), request/reply channel pairing, and timeout management.</p>
+<p>The generated code handles correlation ID generation (GUID formatted directly to a <code>byte[36]</code> — no string allocation) and request/reply channel pairing; cancellation flows through the supplied token.</p>
 <p>AsyncAPI 3.0 uses the standard operation <code>reply</code> object. AsyncAPI 2.6 has <code>correlationId</code> but no standard <code>reply</code> object, so Corvus supports an explicit <code>x-corvus-reply</code> extension on a 2.6 operation. The extension mirrors the 3.0 shape closely enough for the generated request/reply method to use the same runtime path:</p>
 <pre><code class="language-json">{
   &quot;subscribe&quot;: {
@@ -1461,7 +1464,7 @@ foreach (var item in reply.Results.EnumerateArray())
     where TReply : struct, IJsonElement&lt;TReply&gt;;
 </code></pre>
 <p>The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same <code>CorrelationId</code>/<code>ReplyTo</code> the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.</p>
-<p><strong>Reply ownership.</strong> At the transport level, <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable. (The generated <code>SendAndReceive*</code> requester currently manages an internal workspace rather than accepting the caller's; its reply-lifetime handling is being reworked and callers using the generated requester should treat the reply as valid only for immediate reads.)</p>
+<p><strong>Reply ownership.</strong> <code>RequestAsync</code> takes a <code>JsonWorkspace</code> and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated <code>SendAndReceive*</code> requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors <code>IApiResponse</code> on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)</p>
 <p><strong>Implementation status.</strong> Every transport implements <code>SubscribeReplyAsync</code>: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a <code>RequestAsync</code> call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, <code>RequestAsync</code> parks the request for the test helper <code>CompleteRequest</code>, as before). A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve <code>RequestAsync</code> live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.</p>
 <h2 id="bindings">Bindings</h2>
 <p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via <code>MessageContext</code>:</p>
