@@ -41,6 +41,8 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
     private PooledByteBufferWriter? _extraPooledByteBufferWriter;
 
+    private IDisposable? _extraOwner;
+
     /// <inheritdoc />
     JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
 
@@ -69,21 +71,26 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         MetadataDb parsedData,
         byte[]? extraRentedArrayPoolBytes = null,
         PooledByteBufferWriter? extraPooledByteBufferWriter = null,
-        bool isDisposable = true)
+        bool isDisposable = true,
+        IDisposable? extraOwner = null)
     {
         Debug.Assert(!utf8Json.IsEmpty);
 
-        // Both rented values better be null if we're not disposable.
+        // All owned values better be null if we're not disposable.
         Debug.Assert(isDisposable ||
-            (extraRentedArrayPoolBytes == null && extraPooledByteBufferWriter == null));
+            (extraRentedArrayPoolBytes == null && extraPooledByteBufferWriter == null && extraOwner == null));
 
-        // Both rented values can't be specified.
-        Debug.Assert(extraRentedArrayPoolBytes == null || extraPooledByteBufferWriter == null);
+        // At most one owner kind can be specified.
+        Debug.Assert(
+            (extraRentedArrayPoolBytes != null ? 1 : 0) +
+            (extraPooledByteBufferWriter != null ? 1 : 0) +
+            (extraOwner != null ? 1 : 0) <= 1);
 
         _utf8Json = utf8Json;
         _parsedData = parsedData;
         _extraRentedArrayPoolBytes = extraRentedArrayPoolBytes;
         _extraPooledByteBufferWriter = extraPooledByteBufferWriter;
+        _extraOwner = extraOwner;
         _isDisposable = isDisposable;
         _isImmutable = true;
     }
@@ -131,6 +138,13 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         {
             PooledByteBufferWriter? extraBufferWriter = Interlocked.Exchange<PooledByteBufferWriter?>(ref _extraPooledByteBufferWriter, null);
             extraBufferWriter?.Dispose();
+        }
+        else if (_extraOwner != null)
+        {
+            // Unlike the rented-array case the memory is not cleared here; the owner's own
+            // Dispose is responsible for whatever clearing its pool requires.
+            IDisposable? extraOwner = Interlocked.Exchange<IDisposable?>(ref _extraOwner, null);
+            extraOwner?.Dispose();
         }
     }
 

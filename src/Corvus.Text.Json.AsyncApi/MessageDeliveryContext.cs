@@ -45,7 +45,9 @@ public readonly struct MessageDeliveryContext
     /// <para>
     /// The concrete type is transport-specific: Kafka delivers
     /// <c>Confluent.Kafka.ConsumeResult&lt;Null, byte[]&gt;</c>, NATS a boxed
-    /// <c>NatsJSMsg&lt;byte[]&gt;</c> (JetStream) or <c>NatsMsg&lt;byte[]&gt;</c> (core), AMQP
+    /// <c>NatsJSMsg&lt;NatsMemoryOwner&lt;byte&gt;&gt;</c> (JetStream) or
+    /// <c>NatsMsg&lt;NatsMemoryOwner&lt;byte&gt;&gt;</c> (core) whose pooled payload the
+    /// transport owns (read it if needed, never dispose it), AMQP
     /// <c>RabbitMQ.Client.Events.BasicDeliverEventArgs</c>, MQTT
     /// <c>MQTTnet.MqttApplicationMessage</c>, and Azure Service Bus
     /// <c>Azure.Messaging.ServiceBus.ServiceBusReceivedMessage</c>. The WebSocket and in-memory

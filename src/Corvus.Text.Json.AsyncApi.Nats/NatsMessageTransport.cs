@@ -508,7 +508,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
     // The unacknowledged message redelivers after AckWait, so an acknowledge failure is
     // recorded and the loop keeps consuming rather than faulting on a broker hiccup.
-    private static async ValueTask AckSafeAsync(NatsJSMsg<byte[]> msg, string channel, CancellationToken cancellationToken)
+    private static async ValueTask AckSafeAsync(NatsJSMsg<NatsMemoryOwner<byte>> msg, string channel, CancellationToken cancellationToken)
     {
         try
         {
@@ -520,7 +520,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
     }
 
-    private static async ValueTask NakSafeAsync(NatsJSMsg<byte[]> msg, string channel, CancellationToken cancellationToken)
+    private static async ValueTask NakSafeAsync(NatsJSMsg<NatsMemoryOwner<byte>> msg, string channel, CancellationToken cancellationToken)
     {
         try
         {
@@ -604,15 +604,15 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // The reply subscription's own timeout bounds the wait without a linked CTS, its
         // registration, and a timer per request; the SDK's no-reply outcome maps back to the
         // OperationCanceledException this method has always thrown on timeout.
-        NatsMsg<byte[]> reply;
+        NatsMsg<NatsMemoryOwner<byte>> reply;
         try
         {
-            reply = await this.connection.RequestAsync<TRequest, byte[]>(
+            reply = await this.connection.RequestAsync<TRequest, NatsMemoryOwner<byte>>(
                 subject,
                 request,
                 headers,
                 JsonElementSerializer<TRequest>.Instance,
-                NatsRawSerializer<byte[]>.Default,
+                NatsRawSerializer<NatsMemoryOwner<byte>>.Default,
                 default,
                 this.requestReplyOpts,
                 cancellationToken).ConfigureAwait(false);
@@ -623,61 +623,68 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         }
 
         TReply replyPayload;
-        if (reply.Data is not null)
+        NatsMemoryOwner<byte> replyData = reply.Data;
+        if (replyData.Length > 0)
         {
             try
             {
                 // Cold path — the caller's workspace owns the returned reply document (disposed with it), since
-                // the returned value is used after this method returns.
-                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Data);
+                // the returned value is used after this method returns. The document owns the SDK's pooled
+                // buffer, so no payload-sized array is allocated for the reply.
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyData.Memory, replyData);
                 workspace.TakeOwnership(replyDoc);
                 replyPayload = replyDoc.RootElement;
             }
             catch (Exception parseEx)
             {
-                // Parse error - apply error policy
-                string messagingSystem = this.options.UseJetStream ? "nats-jetstream" : "nats";
-                MessageErrorAction action = MessageErrorAction.Abort;
-
-                if (this.options.ErrorPolicy is not null)
+                // Parse failed, so ownership stayed here; the scope keeps the pooled buffer alive
+                // through the dead-letter publish and returns it on every (throwing) exit.
+                using (replyData)
                 {
-                    ReadOnlyMemory<byte> subjectUtf8 = Encoding.UTF8.GetBytes(subject);
-                    action = await this.options.ErrorPolicy.HandleErrorAsync(
-                        parseEx,
-                        new MessageErrorContext(
-                            subjectUtf8,
-                            MessageErrorKind.Deserialization,
-                            default,
-                            default),
-                        cancellationToken).ConfigureAwait(false);
-                }
+                    // Parse error - apply error policy
+                    string messagingSystem = this.options.UseJetStream ? "nats-jetstream" : "nats";
+                    MessageErrorAction action = MessageErrorAction.Abort;
 
-                switch (action)
-                {
-                    case MessageErrorAction.Abort:
-                        AsyncApiTelemetry.RecordAbort(subject, messagingSystem, MessageErrorKind.Deserialization);
-                        throw;
+                    if (this.options.ErrorPolicy is not null)
+                    {
+                        ReadOnlyMemory<byte> subjectUtf8 = Encoding.UTF8.GetBytes(subject);
+                        action = await this.options.ErrorPolicy.HandleErrorAsync(
+                            parseEx,
+                            new MessageErrorContext(
+                                subjectUtf8,
+                                MessageErrorKind.Deserialization,
+                                default,
+                                default),
+                            cancellationToken).ConfigureAwait(false);
+                    }
 
-                    case MessageErrorAction.DeadLetter:
-                        string dlSubject = subject + this.options.DeadLetterSuffix;
-                        try
-                        {
-                            await DeadLetterRawAsync(dlSubject, subject, reply.Data, parseEx, cancellationToken).ConfigureAwait(false);
-                            AsyncApiTelemetry.RecordDeadLetter(dlSubject, subject, messagingSystem);
-                        }
-                        catch (Exception dlEx)
-                        {
-                            AsyncApiTelemetry.RecordDeadLetterFailure(dlSubject, subject, messagingSystem, dlEx);
-                        }
+                    switch (action)
+                    {
+                        case MessageErrorAction.Abort:
+                            AsyncApiTelemetry.RecordAbort(subject, messagingSystem, MessageErrorKind.Deserialization);
+                            throw;
 
-                        // Request failed even though we DLQ'd the bad reply
-                        throw;
+                        case MessageErrorAction.DeadLetter:
+                            string dlSubject = subject + this.options.DeadLetterSuffix;
+                            try
+                            {
+                                await DeadLetterRawAsync(dlSubject, subject, replyData.Memory, parseEx, cancellationToken).ConfigureAwait(false);
+                                AsyncApiTelemetry.RecordDeadLetter(dlSubject, subject, messagingSystem);
+                            }
+                            catch (Exception dlEx)
+                            {
+                                AsyncApiTelemetry.RecordDeadLetterFailure(dlSubject, subject, messagingSystem, dlEx);
+                            }
 
-                    case MessageErrorAction.Skip:
-                    default:
-                        // Skip means fail for request-reply (can't skip a reply)
-                        AsyncApiTelemetry.RecordSkip(subject, messagingSystem, MessageErrorKind.Deserialization);
-                        throw;
+                            // Request failed even though we DLQ'd the bad reply
+                            throw;
+
+                        case MessageErrorAction.Skip:
+                        default:
+                            // Skip means fail for request-reply (can't skip a reply)
+                            AsyncApiTelemetry.RecordSkip(subject, messagingSystem, MessageErrorKind.Deserialization);
+                            throw;
+                    }
                 }
             }
         }
@@ -740,11 +747,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 ExecutingSubscription.Value = marker;
                 try
                 {
-                    await foreach (NatsJSMsg<byte[]> msg in consumer.ConsumeAsync<byte[]>(cancellationToken: cts.Token).ConfigureAwait(false))
+                    await foreach (NatsJSMsg<NatsMemoryOwner<byte>> msg in consumer.ConsumeAsync<NatsMemoryOwner<byte>>(cancellationToken: cts.Token).ConfigureAwait(false))
                     {
                         this.options.Heartbeat?.Tick(channel, "nats-jetstream", marker);
 
-                        if (msg.Data is null)
+                        NatsMemoryOwner<byte> data = msg.Data;
+                        if (data.Length == 0)
                         {
                             await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                             continue;
@@ -754,40 +762,46 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                         ParsedJsonDocument<TPayload> payloadDoc;
                         try
                         {
-                            payloadDoc = ParsedJsonDocument<TPayload>.Parse(msg.Data);
+                            payloadDoc = ParsedJsonDocument<TPayload>.Parse(data.Memory, data);
                         }
                         catch (Exception ex) when (ex is not OperationCanceledException)
                         {
-                            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                            if (action == MessageErrorAction.Abort)
+                            // Parse failed, so ownership stayed with this loop; the scope keeps the
+                            // pooled buffer alive through the dead-letter publish and returns it on
+                            // every exit.
+                            using (data)
                             {
-                                AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
-                                break;
-                            }
-
-                            if (action == MessageErrorAction.DeadLetter)
-                            {
-                                try
+                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                if (action == MessageErrorAction.Abort)
                                 {
-                                    await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
-                                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
+                                    AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
+                                    await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
+                                    break;
+                                }
+
+                                if (action == MessageErrorAction.DeadLetter)
+                                {
+                                    try
+                                    {
+                                        await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
+                                        await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
+                                    }
+                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                    {
+                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
+                                        await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
+                                    }
+                                }
+                                else
+                                {
+                                    AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
                                     await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                 }
-                                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                {
-                                    AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
-                                    await NakSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
-                                }
-                            }
-                            else
-                            {
-                                AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
-                                await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
-                            }
 
-                            continue;
+                                continue;
+                            }
                         }
 
                         // Handle (through middleware if configured)
@@ -815,7 +829,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 {
                                     try
                                     {
-                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                        await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                         AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
                                         await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
@@ -879,7 +893,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                 {
                                     try
                                     {
-                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                        await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                         AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
                                         await AckSafeAsync(msg, channel, cts.Token).ConfigureAwait(false);
                                     }
@@ -981,12 +995,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // inside Task.Run) guarantees the SUB command is sent before this method
         // returns, eliminating the race where a published message arrives at the
         // server before the subscription is active.
-        INatsSub<byte[]> sub;
+        INatsSub<NatsMemoryOwner<byte>> sub;
         try
         {
             // The token here cancels only the establishing SUB command (the returned
             // INatsSub owns the subscription's lifetime), so the caller's token governs it.
-            sub = await this.connection.SubscribeCoreAsync<byte[]>(
+            sub = await this.connection.SubscribeCoreAsync<NatsMemoryOwner<byte>>(
                 subject: channel,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
@@ -1008,11 +1022,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     await using (sub)
                     {
-                        await foreach (NatsMsg<byte[]> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                        await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
                         {
                             this.options.Heartbeat?.Tick(channel, "nats", marker);
 
-                            if (msg.Data is null)
+                            NatsMemoryOwner<byte> data = msg.Data;
+                            if (data.Length == 0)
                             {
                                 continue;
                             }
@@ -1021,36 +1036,42 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                             ParsedJsonDocument<TPayload> payloadDoc;
                             try
                             {
-                                payloadDoc = ParsedJsonDocument<TPayload>.Parse(msg.Data);
+                                payloadDoc = ParsedJsonDocument<TPayload>.Parse(data.Memory, data);
                             }
                             catch (Exception ex) when (ex is not OperationCanceledException)
                             {
-                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                if (action == MessageErrorAction.Abort)
+                                // Parse failed, so ownership stayed with this loop; the scope keeps
+                                // the pooled buffer alive through the dead-letter publish and returns
+                                // it on every exit.
+                                using (data)
                                 {
-                                    AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                    break;
-                                }
-
-                                if (action == MessageErrorAction.DeadLetter)
-                                {
-                                    try
+                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                    if (action == MessageErrorAction.Abort)
                                     {
-                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
-                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                        break;
                                     }
-                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                    {
-                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                    }
-                                }
-                                else
-                                {
-                                    AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                }
 
-                                continue;
+                                    if (action == MessageErrorAction.DeadLetter)
+                                    {
+                                        try
+                                        {
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        }
+                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                        {
+                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                    }
+
+                                    continue;
+                                }
                             }
 
                             // Handle (through middleware if configured)
@@ -1077,7 +1098,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         try
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
                                         }
                                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -1134,7 +1155,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         try
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
                                         }
                                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -1208,12 +1229,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
         // Register the subscription with the server before starting the background
         // consumption loop so the SUB command is sent before this method returns,
         // matching SubscribeToCoreNatsAsync.
-        INatsSub<byte[]> sub;
+        INatsSub<NatsMemoryOwner<byte>> sub;
         try
         {
             // The token here cancels only the establishing SUB command (the returned
             // INatsSub owns the subscription's lifetime), so the caller's token governs it.
-            sub = await this.connection.SubscribeCoreAsync<byte[]>(
+            sub = await this.connection.SubscribeCoreAsync<NatsMemoryOwner<byte>>(
                 subject: channel,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
@@ -1235,11 +1256,12 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                 {
                     await using (sub)
                     {
-                        await foreach (NatsMsg<byte[]> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                        await foreach (NatsMsg<NatsMemoryOwner<byte>> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
                         {
                             this.options.Heartbeat?.Tick(channel, "nats", marker);
 
-                            if (msg.Data is null)
+                            NatsMemoryOwner<byte> data = msg.Data;
+                            if (data.Length == 0)
                             {
                                 continue;
                             }
@@ -1248,36 +1270,42 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                             ParsedJsonDocument<TRequest> requestDoc;
                             try
                             {
-                                requestDoc = ParsedJsonDocument<TRequest>.Parse(msg.Data);
+                                requestDoc = ParsedJsonDocument<TRequest>.Parse(data.Memory, data);
                             }
                             catch (Exception ex) when (ex is not OperationCanceledException)
                             {
-                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
-                                if (action == MessageErrorAction.Abort)
+                                // Parse failed, so ownership stayed with this loop; the scope keeps
+                                // the pooled buffer alive through the dead-letter publish and returns
+                                // it on every exit.
+                                using (data)
                                 {
-                                    AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
-                                    break;
-                                }
-
-                                if (action == MessageErrorAction.DeadLetter)
-                                {
-                                    try
+                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                    if (action == MessageErrorAction.Abort)
                                     {
-                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
-                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                        break;
                                     }
-                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
-                                    {
-                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
-                                    }
-                                }
-                                else
-                                {
-                                    AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
-                                }
 
-                                continue;
+                                    if (action == MessageErrorAction.DeadLetter)
+                                    {
+                                        try
+                                        {
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        }
+                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                        {
+                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                    }
+
+                                    continue;
+                                }
                             }
 
                             // Handle the request and publish the reply
@@ -1304,7 +1332,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         try
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
                                         }
                                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -1383,7 +1411,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     {
                                         try
                                         {
-                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            await this.DeadLetterRawAsync(dlChannel, channel, data.Memory, ex, cts.Token).ConfigureAwait(false);
                                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
                                         }
                                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -1482,7 +1510,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private ValueTask DeadLetterRawAsync(
         string deadLetterChannel,
         string originalChannel,
-        byte[] rawPayload,
+        ReadOnlyMemory<byte> rawPayload,
         Exception exception,
         CancellationToken cancellationToken)
     {
