@@ -113,6 +113,46 @@ public static class AsyncApiTelemetry
             "Dead-letter operations that failed (message dropped)");
 
     /// <summary>
+    /// Gets the counter for subscription teardowns that reported a failure.
+    /// </summary>
+    /// <remarks>
+    /// Teardown deliberately continues past a failure so that stopping one subscription can
+    /// never abort a dispose that is walking every subscription. The failure is recorded here
+    /// instead of being thrown, so a broker that refuses a cancel or close stays visible.
+    /// </remarks>
+    public static Counter<long> SubscriptionTeardownFailures { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.subscription_teardown_failures",
+            "{subscription}",
+            "Subscription teardowns that reported a failure");
+
+    /// <summary>
+    /// Gets the counter for subscription processing loops that terminated on an unexpected fault.
+    /// </summary>
+    /// <remarks>
+    /// A faulted loop releases its channel so the application can resubscribe; this counter is
+    /// how the fault itself stays visible, since no caller is awaiting the loop's task.
+    /// </remarks>
+    public static Counter<long> SubscriptionFaults { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.subscription_faults",
+            "{subscription}",
+            "Subscription processing loops that terminated on an unexpected fault");
+
+    /// <summary>
+    /// Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed.
+    /// </summary>
+    /// <remarks>
+    /// The message stays unacknowledged and redelivers under at-least-once semantics, so the
+    /// failure is recorded and the loop keeps running rather than faulting.
+    /// </remarks>
+    public static Counter<long> AcknowledgeFailures { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.acknowledge_failures",
+            "{message}",
+            "Broker acknowledgement operations (commit, ack, nak) that failed");
+
+    /// <summary>
     /// Gets the counter for messages that failed schema validation.
     /// </summary>
     public static Counter<long> ValidationFailures { get; } =
@@ -238,6 +278,70 @@ public static class AsyncApiTelemetry
     }
 
     /// <summary>
+    /// Records that tearing a subscription down reported a failure that was deliberately
+    /// not propagated, so that stopping one subscription cannot abort the disposal of others.
+    /// </summary>
+    /// <param name="channel">The channel whose subscription was being torn down.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The failure that teardown continued past.</param>
+    public static void RecordSubscriptionTeardownFailure(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        SubscriptionTeardownFailures.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that a subscription's processing loop terminated on an unexpected fault.
+    /// </summary>
+    /// <param name="channel">The channel the loop was consuming from.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The fault that ended the loop.</param>
+    public static void RecordSubscriptionFault(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        SubscriptionFaults.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that a broker acknowledgement operation (commit, ack, nak) failed.
+    /// </summary>
+    /// <param name="channel">The channel whose message was being acknowledged.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The failure the loop continued past.</param>
+    public static void RecordAcknowledgeFailure(
+        string channel,
+        string messagingSystem,
+        Exception exception)
+    {
+        AcknowledgeFailures.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
     /// Records that a subscriber aborted (stopped consuming) due to the error policy.
     /// </summary>
     /// <param name="channel">The channel the subscriber was consuming from.</param>
@@ -251,7 +355,7 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+                { "corvus.asyncapi.error_kind", ErrorKindName(errorKind) },
             });
     }
 
@@ -269,7 +373,7 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+                { "corvus.asyncapi.error_kind", ErrorKindName(errorKind) },
             });
     }
 
@@ -287,9 +391,25 @@ public static class AsyncApiTelemetry
             {
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
-                { "corvus.asyncapi.retry_attempt", attemptNumber },
+                { "corvus.asyncapi.retry_attempt", BoxAttempt(attemptNumber) },
             });
     }
+
+    // Skip/abort/retry fire once per policy-decided bad message, which a hostile producer
+    // controls, so their tag values must not allocate per event: the enum names are constants
+    // and the first eight retry attempts use pre-boxed values.
+    private static readonly object[] BoxedAttempts = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    private static string ErrorKindName(MessageErrorKind errorKind) => errorKind switch
+    {
+        MessageErrorKind.Deserialization => nameof(MessageErrorKind.Deserialization),
+        MessageErrorKind.Handler => nameof(MessageErrorKind.Handler),
+        MessageErrorKind.Transport => nameof(MessageErrorKind.Transport),
+        _ => errorKind.ToString(),
+    };
+
+    private static object BoxAttempt(int attemptNumber)
+        => (uint)(attemptNumber - 1) < (uint)BoxedAttempts.Length ? BoxedAttempts[attemptNumber - 1] : attemptNumber;
 
     /// <summary>
     /// Records a correlation ID mismatch during request-reply.

@@ -55,7 +55,7 @@ public class ReferencedComponentsTests
 
         Assert.AreEqual(1, servers.Length, "The referenced server should be listed");
         Assert.AreEqual(1, servers[0].SecuritySchemes.Count, "The server security scheme should be listed");
-        Assert.AreEqual("sasl", servers[0].SecuritySchemes[0].Type, "The chained scheme reference should resolve to the concrete scheme type");
+        Assert.AreEqual("scramSha256", servers[0].SecuritySchemes[0].Type, "The chained scheme reference should resolve to the concrete scheme type, including the exact SASL variant");
     }
 
     [TestMethod]

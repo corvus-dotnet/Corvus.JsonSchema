@@ -22,6 +22,19 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     private readonly IMessageAuthenticationProvider? authProvider;
     private const string ChannelAddress = "smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] ChannelAddressUtf8 = "smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
+    private ActiveSubscription? subscription;
+
+    private sealed class ActiveSubscription
+    {
+        public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8)
+        {
+            this.ChannelUtf8 = channelUtf8;
+        }
+
+        public int State;
+
+        public ReadOnlyMemory<byte> ChannelUtf8 { get; }
+    }
     private const string DeadLetterChannel = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured";
     private static readonly byte[] DeadLetterChannelUtf8 = "dead-letter.smartylighting.streetlights.1.0.event.lighting.measured"u8.ToArray();
 
@@ -46,56 +59,135 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// Starts consuming messages from the channel.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask StartAsync(CancellationToken cancellationToken = default)
+    public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        return this.transport.SubscribeAsync<AsyncApiBenchmark.Generated.Models.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken);
+        ActiveSubscription token = new(ChannelAddressUtf8);
+        if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)
+        {
+            ThrowHelper.ThrowConsumerAlreadyStarted();
+        }
+
+        try
+        {
+            await this.transport.SubscribeAsync<AsyncApiBenchmark.Generated.Models.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            System.Threading.Interlocked.CompareExchange(ref this.subscription, null, token);
+            throw;
+        }
+
+        if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)
+        {
+            await this.transport.UnsubscribeAsync(ChannelAddressUtf8, CancellationToken.None).ConfigureAwait(false);
+            ThrowHelper.ThrowConsumerStoppedDuringStart();
+        }
+
+        if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))
+        {
+            ThrowHelper.ThrowConsumerStoppedDuringStart();
+        }
     }
 
     /// <summary>
     /// Stops consuming messages from the channel.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    public async ValueTask StopAsync(CancellationToken cancellationToken = default)
     {
-        return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);
+        if (!await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false))
+        {
+            ThrowHelper.ThrowConsumerNotStarted();
+        }
+    }
+
+    /// <summary>
+    /// Stops the subscription if this consumer owns one, quietly doing nothing otherwise.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if this call performed the stop.</returns>
+    private async ValueTask<bool> TryStopCoreAsync(CancellationToken cancellationToken)
+    {
+        ActiveSubscription? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);
+        if (current is null)
+        {
+            return false;
+        }
+
+        if (System.Threading.Interlocked.CompareExchange(ref current.State, 2, 0) == 0)
+        {
+            return true;
+        }
+
+        try
+        {
+            await this.transport.UnsubscribeAsync(current.ChannelUtf8, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            System.Threading.Interlocked.CompareExchange(ref this.subscription, current, null);
+            throw;
+        }
+
+        return true;
     }
 
     private async ValueTask HandleMessageAsync(AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
     {
-        try
+        Exception? failure = null;
+        if (this.validationMode != ValidationMode.None)
         {
-            if (this.validationMode != ValidationMode.None)
+            try
             {
-                ValidatePayload(payload, this.validationMode);
+                failure = TryValidatePayload(payload, this.validationMode);
             }
-
-            await this.handler.HandleLightMeasuredAsync(payload, cancellationToken).ConfigureAwait(false);
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
         }
-        catch (Exception ex)
-        {
-            MessageErrorContext errorContext = new(ChannelAddressUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
-            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);
 
-            switch (action)
+        if (failure is null)
+        {
+            try
             {
-                case MessageErrorAction.Skip:
-                    return;
-                case MessageErrorAction.Abort:
-                    await this.StopAsync(cancellationToken).ConfigureAwait(false);
-                    return;
-                case MessageErrorAction.DeadLetter:
-                    await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, ChannelAddressUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
-                    return;
-                default:
-                    return;
+                await this.handler.HandleLightMeasuredAsync(payload, cancellationToken).ConfigureAwait(false);
             }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        }
+
+        if (failure is null)
+        {
+            return;
+        }
+
+        MessageErrorContext errorContext = new(ChannelAddressUtf8, MessageErrorKind.Handler, JsonElement.From(payload), headers);
+        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(failure, errorContext, cancellationToken).ConfigureAwait(false);
+
+        switch (action)
+        {
+            case MessageErrorAction.Skip:
+                AsyncApiTelemetry.RecordSkip(ChannelAddress, "generated", MessageErrorKind.Handler);
+                return;
+            case MessageErrorAction.Abort:
+                AsyncApiTelemetry.RecordAbort(ChannelAddress, "generated", MessageErrorKind.Handler);
+                await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            case MessageErrorAction.DeadLetter:
+                await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, ChannelAddressUtf8, JsonElement.From(payload), headers, failure, cancellationToken).ConfigureAwait(false);
+                return;
+            default:
+                return;
         }
     }
 
     /// <inheritdoc/>
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return StopAsync();
+        await this.TryStopCoreAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)
@@ -136,5 +228,49 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                 ThrowHelper.ThrowMessageHeadersValidationFailed("headers", SchemaValidationDetail.FormatResults(collector));
             }
         }
+    }
+
+    private static Exception? TryValidatePayload<TPayload>(TPayload payload, ValidationMode mode)
+        where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+    {
+        if (mode == ValidationMode.Basic)
+        {
+            if (!payload.EvaluateSchema())
+            {
+                return ThrowHelper.CreateMessagePayloadValidationFailed("payload");
+            }
+        }
+        else if (mode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!payload.EvaluateSchema(collector))
+            {
+                return ThrowHelper.CreateMessagePayloadValidationFailed("payload", SchemaValidationDetail.FormatResults(collector));
+            }
+        }
+
+        return null;
+    }
+
+    private static Exception? TryValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)
+        where THeaders : struct, Corvus.Text.Json.Internal.IJsonElement<THeaders>
+    {
+        if (mode == ValidationMode.Basic)
+        {
+            if (!headers.EvaluateSchema())
+            {
+                return ThrowHelper.CreateMessageHeadersValidationFailed("headers");
+            }
+        }
+        else if (mode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!headers.EvaluateSchema(collector))
+            {
+                return ThrowHelper.CreateMessageHeadersValidationFailed("headers", SchemaValidationDetail.FormatResults(collector));
+            }
+        }
+
+        return null;
     }
 }

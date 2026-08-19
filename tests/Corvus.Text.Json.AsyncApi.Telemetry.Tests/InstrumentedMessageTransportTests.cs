@@ -100,6 +100,185 @@ public class InstrumentedMessageTransportTests
     }
 
     [TestMethod]
+    public async Task DeadLetterAsync_OnException_RecordsFailureCounterAndErrorStatus()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+        List<(string Name, long Value, KeyValuePair<string, object?>[] Tags)> measurements = [];
+        using MeterListener meterListener = CreateMeterListener(measurements);
+
+        FailingTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "failing");
+
+        JsonElement payload = JsonElement.ParseValue("""{"v": 1}"""u8.ToArray());
+        JsonElement noHeaders = default;
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+            await transport.DeadLetterAsync(
+                "dead-letter.test/channel"u8.ToArray(),
+                TestChannel,
+                in payload,
+                in noHeaders,
+                new InvalidOperationException("original failure"),
+                default));
+
+        // A failed dead-letter means a message was dropped: the alert counter must fire and
+        // the span must carry the error, not close green.
+        var failures = measurements.Where(m => m.Name == "corvus.asyncapi.dead_letter_failures").ToList();
+        Assert.AreEqual(1, failures.Count);
+        Assert.AreEqual(1, activities.Count);
+        Assert.AreEqual(ActivityStatusCode.Error, activities[0].Status);
+    }
+
+    [TestMethod]
+    public async Task PublishAsync_LoopbackHandlerThrow_DoesNotFailTheSend()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "in-memory");
+
+        await transport.SubscribeAsync<JsonElement>(
+            TestChannel,
+            (_, _, _) => throw new InvalidOperationException("handler failure"),
+            default);
+
+        JsonElement payload = JsonElement.ParseValue("""{"v": 1}"""u8.ToArray());
+        JsonElement noHeaders = default;
+
+        // A broker decouples the publisher from its subscribers: the send succeeds and the
+        // handler failure belongs to the consumer side's telemetry.
+        await transport.PublishAsync(TestChannel, in payload, in noHeaders, default);
+
+        Activity send = activities.Single(a => a.OperationName.StartsWith("send"));
+        Assert.AreNotEqual(ActivityStatusCode.Error, send.Status);
+
+        // The failure is the consumer side's story, surfaced for assertions on the transport.
+        Assert.AreEqual(1, inner.DeliveryFailures.Count);
+        Assert.IsInstanceOfType<InvalidOperationException>(inner.DeliveryFailures[0].Exception);
+    }
+
+    [TestMethod]
+    public async Task Create_DeliveryContextOnlyTransport_WrapsWithoutHealthCapability()
+    {
+        DeliveryContextOnlyTransport inner = new();
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "context-only");
+
+        Assert.IsNotInstanceOfType<IHealthCheckableTransport>(transport, "The wrapper must not invent a capability the inner transport lacks");
+
+        int received = 0;
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            TestChannel,
+            (payload, context, ct) =>
+            {
+                received++;
+                return ValueTask.CompletedTask;
+            },
+            default);
+
+        JsonElement payload = JsonElement.ParseValue("""{"v": 1}"""u8.ToArray());
+        await inner.DeliverAsync(TestChannel, payload);
+
+        Assert.AreEqual(1, received);
+    }
+
+    private sealed class DeliveryContextOnlyTransport : IMessageTransport, IMessageDeliveryContextTransport
+    {
+        private Func<JsonElement, MessageDeliveryContext, CancellationToken, ValueTask>? contextHandler;
+
+        public async ValueTask DeliverAsync(ReadOnlyMemory<byte> channelUtf8, JsonElement payload)
+        {
+            if (this.contextHandler is not null)
+            {
+                await this.contextHandler(
+                    payload,
+                    new MessageDeliveryContext { ChannelUtf8 = channelUtf8 },
+                    default).ConfigureAwait(false);
+            }
+        }
+
+        public ValueTask PublishAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            in TPayload payload,
+            in JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => ValueTask.CompletedTask;
+
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> requestChannelUtf8,
+            ReadOnlyMemory<byte> replyChannelUtf8,
+            TRequest request,
+            ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+            => throw new NotSupportedException();
+
+        public ValueTask SubscribeAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+            => ValueTask.CompletedTask;
+
+        public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, IJsonElement<TPayload>
+        {
+            this.contextHandler = (payload, context, ct) =>
+                handler(JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload), context, ct);
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_IncrementsSentCounterOnSuccess()
+    {
+        List<(string Name, long Value, KeyValuePair<string, object?>[] Tags)> measurements = [];
+        using MeterListener meterListener = CreateMeterListener(measurements);
+
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "in-memory");
+        await inner.SubscribeReplyAsync<JsonElement, JsonElement>(
+            TestChannel,
+            (req, _, _) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement payload = JsonElement.ParseValue("""{"q": 1}"""u8.ToArray());
+        _ = await transport.RequestAsync<JsonElement, JsonElement>(
+            TestChannel,
+            "test/replies"u8.ToArray(),
+            payload,
+            "corr-tel-1"u8.ToArray(),
+            workspace,
+            headers: default,
+            cancellationToken: default);
+
+        var sent = measurements.Where(m => m.Name == "messaging.client.sent.messages").ToList();
+        Assert.AreEqual(1, sent.Count);
+        AssertTag(sent[0].Tags, "messaging.operation.name", "request");
+    }
+
+    [TestMethod]
     public async Task SubscribeAsync_WrapsHandlerWithProcessActivity()
     {
         List<Activity> activities = [];
@@ -147,6 +326,115 @@ public class InstrumentedMessageTransportTests
         var consumed = measurements.Where(m => m.Name == "messaging.client.consumed.messages").ToList();
         Assert.AreEqual(1, consumed.Count);
         AssertTag(consumed[0].Tags, "messaging.system", "amqp");
+    }
+
+    [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ForwardsContextAndInstrumentation()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+
+        await using InMemoryMessageTransport inner = new();
+
+        // The capability-typed overload returns IMessageDeliveryContextTransport directly, so
+        // this compiles without a cast — which is what a generated consumer's constructor needs.
+        IMessageDeliveryContextTransport contextTransport = InstrumentedMessageTransport.Create(inner, "context-test");
+        bool handlerCalled = false;
+
+        await contextTransport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            TestChannel,
+            (payload, deliveryContext, ct) =>
+            {
+                handlerCalled = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span) == "test/channel";
+                return ValueTask.CompletedTask;
+            },
+            default);
+
+        await inner.DeliverAsync<JsonElement>("test/channel", TestPayloadJson);
+
+        Assert.IsTrue(handlerCalled);
+        Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public async Task SubscribeReplyAsync_ForwardsThroughWrapperAndInstruments()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using InMemoryMessageTransport inner = new();
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+
+        await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            (request, headers, ct) =>
+            {
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return ValueTask.FromResult(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await inner.RequestAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            "rpc/double/replies"u8.ToArray(),
+            request,
+            "corr-rr"u8.ToArray(),
+            workspace);
+
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void Create_PlainTransport_DoesNotClaimCapabilities()
+    {
+        DisposableTrackingTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "plain");
+
+        Assert.IsFalse(
+            transport is IMessageDeliveryContextTransport,
+            "A wrapper around a transport without delivery context must not claim the capability.");
+        Assert.IsFalse(
+            transport is IHealthCheckableTransport,
+            "A wrapper around a transport without health checks must not claim the capability.");
+    }
+
+    [TestMethod]
+    public async Task Create_ContextAndHealthCapableTransport_PreservesBothCapabilities()
+    {
+        // The in-memory transport implements both optional capabilities, so the wrapper must too.
+        await using InMemoryMessageTransport inner = new();
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+
+        Assert.IsTrue(transport is IMessageDeliveryContextTransport);
+        Assert.IsTrue(transport is IHealthCheckableTransport);
+    }
+
+    [TestMethod]
+    public async Task Create_HealthCheckableTransport_ForwardsHealthCheck()
+    {
+        HealthProbeTransport inner = new();
+        InstrumentedMessageTransport transport = InstrumentedMessageTransport.Create(inner, "probed");
+
+        Assert.IsTrue(transport is IHealthCheckableTransport, "Create must preserve the wrapped transport's health-check capability.");
+        IHealthCheckableTransport health = (IHealthCheckableTransport)transport;
+
+        Assert.IsTrue(health.IsConnected);
+        Assert.AreEqual("probe", health.MessagingSystem);
+        Assert.IsTrue(await health.PingAsync());
+        Assert.AreEqual(1, inner.PingCount, "PingAsync must forward to the wrapped transport.");
+    }
+
+    [TestMethod]
+    public async Task Constructor_AlwaysProducesPlainWrapper()
+    {
+        await using InMemoryMessageTransport inner = new();
+        InstrumentedMessageTransport transport = new(inner, "inmemory");
+
+        Assert.IsFalse(
+            transport is IMessageDeliveryContextTransport,
+            "The constructor documents plain-wrapper semantics; capability preservation goes through Create.");
     }
 
     [TestMethod]
@@ -336,13 +624,81 @@ public class InstrumentedMessageTransportTests
             Exception exception,
             CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            throw new InvalidOperationException("Simulated failure");
         }
 
         public ValueTask DisposeAsync()
         {
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class HealthProbeTransport : IMessageTransport, IHealthCheckableTransport
+    {
+        public int PingCount { get; private set; }
+
+        public bool IsConnected => true;
+
+        public string MessagingSystem => "probe";
+
+        public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+        {
+            this.PingCount++;
+            return ValueTask.FromResult(true);
+        }
+
+        public ValueTask PublishAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            in TPayload payload,
+            in JsonElement headers,
+            CancellationToken cancellationToken)
+            where TPayload : struct, IJsonElement<TPayload>
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> requestChannelUtf8,
+            ReadOnlyMemory<byte> replyChannelUtf8,
+            TRequest request,
+            ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+        {
+            return ValueTask.FromResult<(TReply, JsonElement)>(default);
+        }
+
+        public ValueTask SubscribeAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken)
+            where TPayload : struct, IJsonElement<TPayload>
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask UnsubscribeAsync(
+            ReadOnlyMemory<byte> channelUtf8,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class DisposableTrackingTransport : IMessageTransport

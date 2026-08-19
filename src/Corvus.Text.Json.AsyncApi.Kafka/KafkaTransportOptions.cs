@@ -27,6 +27,14 @@ public sealed class KafkaTransportOptions : ITransportOptions
     public AutoOffsetReset AutoOffsetReset { get; set; } = AutoOffsetReset.Earliest;
 
     /// <summary>
+    /// Gets or sets how handled messages are acknowledged. The default,
+    /// <see cref="KafkaCommitStrategy.Windowed"/>, stores offsets locally and lets the
+    /// client's auto-commit flush them; <see cref="KafkaCommitStrategy.PerMessage"/> pays a
+    /// synchronous broker round trip per message for the narrowest crash-redelivery window.
+    /// </summary>
+    public KafkaCommitStrategy CommitStrategy { get; set; } = KafkaCommitStrategy.Windowed;
+
+    /// <summary>
     /// Gets or sets the dead-letter topic suffix. When a message fails processing,
     /// it is published to <c>{originalTopic}{DeadLetterSuffix}</c>.
     /// </summary>

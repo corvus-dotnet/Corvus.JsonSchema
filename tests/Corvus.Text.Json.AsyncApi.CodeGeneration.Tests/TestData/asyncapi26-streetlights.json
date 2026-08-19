@@ -4,6 +4,17 @@
     "title": "Streetlights API",
     "version": "1.0.0"
   },
+  "servers": {
+    "production": {
+      "url": "test.mykafkacluster.org:18092",
+      "protocol": "kafka-secure",
+      "security": [
+        {
+          "saslScram": []
+        }
+      ]
+    }
+  },
   "channels": {
     "smartylighting/streetlights/1/0/action/{streetlightId}/lighting/measured": {
       "parameters": {
@@ -80,6 +91,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "saslScram": {
+        "type": "scramSha256",
+        "description": "SASL/SCRAM authentication."
       }
     }
   }

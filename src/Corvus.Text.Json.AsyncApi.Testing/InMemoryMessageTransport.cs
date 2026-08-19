@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Testing;
 /// on subscribe delivery — mirroring what a real transport would do.
 /// </para>
 /// </remarks>
-public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -29,9 +29,13 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
     private readonly object syncRoot = new();
     private readonly List<PublishedMessage> publishedMessages = [];
+    private readonly List<DeliveryFailure> deliveryFailures = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
+
+    // One slot per channel, holding whichever kind of subscription owns it (legacy data,
+    // delivery-context data, or responder). Separate registries per kind are what let a channel
+    // hold two subscriptions whose relative precedence then differed from the real transports.
     private readonly Dictionary<string, Delegate> subscriptions = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Delegate> replySubscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, TaskCompletionSource<(byte[] Payload, byte[] Headers)>> pendingRequests = new(StringComparer.Ordinal);
 
     /// <inheritdoc/>
@@ -49,6 +53,13 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     /// Gets the list of dead-lettered messages.
     /// </summary>
     public IReadOnlyList<DeadLetteredMessage> DeadLetteredMessages => this.deadLetteredMessages;
+
+    /// <summary>
+    /// Gets the handler failures from loopback deliveries (a publish delivered to a subscription
+    /// on the same transport whose handler threw). As on a real broker, these never surface to
+    /// the publish call; assert on this list instead.
+    /// </summary>
+    public IReadOnlyList<DeliveryFailure> DeliveryFailures => this.deliveryFailures;
 
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(
@@ -78,14 +89,40 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         if (handler is not null)
         {
-            return DeliverToSubscriberAsync<TPayload>(handler, payloadBytes, headerBytes, cancellationToken);
+            return this.DeliverLoopbackAsync<TPayload>(handler, channelUtf8, channel, payloadBytes, headerBytes, cancellationToken);
         }
 
         return ValueTask.CompletedTask;
     }
 
+    // A broker decouples the publisher from its subscribers: a handler failure never surfaces
+    // to the publish call. The loopback delivery matches that, recording the failure in
+    // DeliveryFailures for test assertions instead of throwing it at the publisher.
+    private async ValueTask DeliverLoopbackAsync<TPayload>(
+        Delegate handler,
+        ReadOnlyMemory<byte> channelUtf8,
+        string channel,
+        byte[] payloadBytes,
+        byte[] headerBytes,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        try
+        {
+            await this.DeliverToSubscriberAsync<TPayload>(handler, channelUtf8, payloadBytes, headerBytes, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            lock (this.syncRoot)
+            {
+                this.deliveryFailures.Add(new DeliveryFailure(channel, ex));
+            }
+        }
+    }
+
     private async ValueTask DeliverToSubscriberAsync<TPayload>(
         Delegate handler,
+        ReadOnlyMemory<byte> channelUtf8,
         byte[] payloadBytes,
         byte[] headerBytes,
         CancellationToken cancellationToken)
@@ -104,12 +141,63 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                parsedPayload, parsedHeaders, cancellationToken).ConfigureAwait(false);
+            await InvokeSubscriberAsync(handler, parsedPayload, channelUtf8, parsedHeaders, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             headersDoc?.Dispose();
+        }
+    }
+
+    // The single context-vs-legacy dispatch: every delivery path routes through here so the
+    // shape of the MessageDeliveryContext a subscriber sees cannot vary by delivery path.
+    private static ValueTask InvokeSubscriberAsync<TPayload>(
+        Delegate handler,
+        TPayload payload,
+        ReadOnlyMemory<byte> channelUtf8,
+        JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        if (handler is Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> contextHandler)
+        {
+            return contextHandler(
+                payload,
+                new MessageDeliveryContext
+                {
+                    ChannelUtf8 = channelUtf8,
+                    Headers = headers,
+                },
+                cancellationToken);
+        }
+
+        if (IsResponder(handler))
+        {
+            throw new InvalidOperationException(
+                "The channel's subscription is a responder; deliver to it with RequestAsync rather than a plain publish.");
+        }
+
+        return ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+            payload, headers, cancellationToken);
+    }
+
+    // A responder returns the reply payload, so its delegate's return type is the generic
+    // ValueTask<TReply>; a data handler returns the non-generic ValueTask. Both are four-arity
+    // Funcs, so the return type is what separates them.
+    private static bool IsResponder(Delegate handler)
+        => handler.GetType().GetMethod("Invoke")!.ReturnType.IsGenericType;
+
+    private void ClaimChannel(string channel, Delegate handler)
+    {
+        // A channel carries exactly one subscription of any kind, matching every real
+        // transport: a second subscribe is refused rather than replacing what is there.
+        lock (this.syncRoot)
+        {
+            if (!this.subscriptions.TryAdd(channel, handler))
+            {
+                throw new InvalidOperationException(
+                    $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+            }
         }
     }
 
@@ -138,11 +226,18 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         }
 
         // If a responder is registered on the request channel, deliver the request to it in-process and
-        // route its reply back; otherwise park the request for the test helper CompleteRequest.
+        // route its reply back; otherwise park the request for the test helper CompleteRequest. A plain
+        // data subscription on the channel sees the request first, as on a real broker, where a request
+        // is an ordinary message on its channel.
         Delegate? responder;
+        Delegate? dataSubscriber;
         lock (this.syncRoot)
         {
-            this.replySubscriptions.TryGetValue(requestChannel, out responder);
+            // A responder occupies the same single slot as a data subscription.
+            this.subscriptions.TryGetValue(requestChannel, out Delegate? candidate);
+            bool isResponder = candidate is not null && IsResponder(candidate);
+            responder = isResponder ? candidate : null;
+            dataSubscriber = isResponder ? null : candidate;
         }
 
         if (responder is not null)
@@ -157,7 +252,55 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
             this.pendingRequests[correlationId] = tcs;
         }
 
-        return CompleteRequestAsync<TReply>(tcs, workspace, cancellationToken);
+        if (dataSubscriber is not null)
+        {
+            return this.DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(dataSubscriber, requestChannelUtf8, correlationId, requestBytes, headerBytes, tcs, workspace, cancellationToken);
+        }
+
+        return this.CompleteRequestAsync<TReply>(correlationId, tcs, workspace, cancellationToken);
+    }
+
+    // Delivers the request to the channel's data subscription through the same dispatch a publish
+    // uses (so delivery-context subscriptions see the request exactly as any other message) before
+    // waiting for the reply the test completes.
+    private async ValueTask<(TReply Payload, JsonElement Headers)> DeliverRequestThenAwaitReplyAsync<TRequest, TReply>(
+        Delegate subscriber,
+        ReadOnlyMemory<byte> requestChannelUtf8,
+        string correlationId,
+        byte[] requestBytes,
+        byte[] headerBytes,
+        TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
+        JsonWorkspace workspace,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        try
+        {
+            await this.DeliverToSubscriberAsync<TRequest>(subscriber, requestChannelUtf8, requestBytes, headerBytes, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The request faulted before its wait began; unpark it so a later CompleteRequest
+            // for this id fails loudly instead of completing an abandoned wait.
+            this.AbandonPendingRequest(correlationId, tcs);
+            throw;
+        }
+
+        return await this.CompleteRequestAsync<TReply>(correlationId, tcs, workspace, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Removes a parked request whose waiter has given up, if it is still the parked one.
+    private void AbandonPendingRequest(string correlationId, TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs)
+    {
+        lock (this.syncRoot)
+        {
+            if (this.pendingRequests.TryGetValue(correlationId, out TaskCompletionSource<(byte[] Payload, byte[] Headers)>? current)
+                && ReferenceEquals(current, tcs))
+            {
+                this.pendingRequests.Remove(correlationId);
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -171,10 +314,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         ArgumentNullException.ThrowIfNull(handler);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        lock (this.syncRoot)
-        {
-            this.replySubscriptions[channel] = handler;
-        }
+        this.ClaimChannel(channel, handler);
 
         return ValueTask.CompletedTask;
     }
@@ -225,10 +365,20 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        lock (this.syncRoot)
-        {
-            this.subscriptions[channel] = handler;
-        }
+        this.ClaimChannel(channel, handler);
+
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        this.ClaimChannel(channel, handler);
 
         return ValueTask.CompletedTask;
     }
@@ -241,7 +391,6 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
-            this.replySubscriptions.Remove(channel);
         }
 
         return ValueTask.CompletedTask;
@@ -322,8 +471,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                payload, headers, cancellationToken).ConfigureAwait(false);
+            await InvokeSubscriberAsync(handler, payload, Encoding.UTF8.GetBytes(channel), headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -420,8 +568,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
 
         try
         {
-            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
-                payload, headers, cancellationToken).ConfigureAwait(false);
+            await InvokeSubscriberAsync(handler, payload, Encoding.UTF8.GetBytes(channel), headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -441,16 +588,30 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         {
             this.publishedMessages.Clear();
             this.deadLetteredMessages.Clear();
+            this.deliveryFailures.Clear();
         }
     }
 
-    private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
+    private async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(
+        string correlationId,
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs,
         JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
-        (byte[] replyBytes, byte[] headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        byte[] replyBytes;
+        byte[] headerBytes;
+        try
+        {
+            (replyBytes, headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The waiter gave up (cancellation, typically); unpark the request so a later
+            // CompleteRequest for this id fails loudly instead of completing an abandoned wait.
+            this.AbandonPendingRequest(correlationId, tcs);
+            throw;
+        }
 
         // The returned reply and headers reference their documents' memory, so the caller's workspace owns
         // those documents (disposed when the workspace is) rather than leaving them to the GC.

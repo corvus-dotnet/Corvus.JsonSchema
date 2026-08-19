@@ -105,11 +105,13 @@ await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
 ReceiveLightMeasurementConsumer consumer = new(transport, handler);
 
-await consumer.StartAsync();
+// The channel address declares a {streetlightId} parameter, so the consumer takes it on
+// StartAsync and subscribes to the address those parameters compose.
+await consumer.StartAsync(streetlightId: "1");
 
 // Simulate an incoming message (in production, the broker delivers these)
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.1.lighting.measured",
     """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
 
 await consumer.StopAsync();
@@ -189,7 +191,7 @@ Your Code → Producer.PublishAsync(payload, channelParams...)
   → Channel Address: construct from template + parameters (UTF-8)
   → Authentication: call IMessageAuthenticationProvider
   → IMessageTransport.PublishAsync: serialize and send
-  → Cleanup: return workspace + channel rental to pool
+  → Cleanup: dispose the workspace, return the channel rental to the pool
 ```
 
 ### Consumer Flow
@@ -202,6 +204,36 @@ Message arrives on transport
   → Your Handler: receives strongly-typed, validated payload
   → On error: IMessageErrorPolicy decides Skip/DeadLetter/Abort
 ```
+
+## Message Delivery Context
+
+Consumers can opt into transport delivery metadata. For every receive operation that is not a request/reply responder, the generator emits a second handler/consumer pair alongside the legacy one, named by appending `WithDeliveryContext` to the operation name: `I{Operation}WithDeliveryContextHandler` and `{Operation}WithDeliveryContextConsumer`. The handler receives a `MessageDeliveryContext` carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists (for example RabbitMQ's `BasicDeliverEventArgs`):
+
+```csharp
+public sealed class LightMeasuredHandler : IReceiveLightMeasurementWithDeliveryContextHandler
+{
+    public ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload,
+        MessageDeliveryContext context,
+        CancellationToken cancellationToken = default)
+    {
+        // context.ChannelUtf8, context.Headers, context.NativeMessage
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+A message that declares a typed headers schema keeps its typed headers parameter: the handler signature becomes `(payload, headers, context, cancellationToken)`.
+
+The rules that come with the capability:
+
+- **The context is valid only for the duration of the handler invocation.** Transports recycle the buffers it references once the handler returns (RabbitMQ, for example, reuses the network-frame buffer backing `BasicDeliverEventArgs.Body`). Copy anything you need to keep before returning.
+- **The delivery-context consumer requires an `IMessageDeliveryContextTransport`.** All seven transports implement it. When wrapping with instrumentation, use `InstrumentedMessageTransport.Create` so the wrapper preserves the capability.
+- **A channel has one subscription.** Every transport allows exactly one subscription per channel, of any kind: legacy data, delivery-context data, or responder. Subscribing a channel that already has one throws `InvalidOperationException`; unsubscribe first, which frees the slot for a subscription of any kind. Nothing is displaced silently, and an existing subscription is never touched by the subscribe path: a subscribe that loses a race for the slot tears down only the consumer it was building, though on some brokers that consumer may receive a message or two before the refusal lands. A handler may call `UnsubscribeAsync` for its own channel (the Abort error-policy path does): the subscription is released immediately, and the transport detects that the call came from inside the subscription's own handler and completes the broker-side teardown as the handler returns, rather than deadlocking by waiting for a handler that is waiting for it.
+- **The two generated consumers for one operation are mutually exclusive.** `{Operation}Consumer` and `{Operation}WithDeliveryContextConsumer` subscribe the same channel address, so start one or the other, not both. Starting the second throws rather than quietly taking the channel over.
+- **Generated consumer lifecycle is strict.** A second `StartAsync` on a started consumer throws; `StopAsync` on a consumer that is not started throws; `DisposeAsync` stops only a started consumer and completes quietly otherwise. A `StopAsync` (or the Abort error-policy path) that lands while the subscription is still being established is honored: the stop reports success, and the start releases the subscription it created and throws an `InvalidOperationException` saying the consumer was stopped during start. In that window a restart can be refused with "already has a subscription" because the superseded start has not yet released its claim at the transport — wait for the original start's exception to surface, then restart.
+- **Direct transport API users own the channel buffer.** `SubscribeWithDeliveryContextAsync` retains the `channelUtf8` memory for the subscription's lifetime and hands it to every delivery, so do not subscribe with a pooled or reused buffer. (Generated consumers manage this for you.)
+- **Bindings travel.** An operation declaring channel or operation bindings subscribes through a `MessageContext` overload, mirroring the legacy consumer; the default implementation drops the context, and a transport that honors bindings can override it.
 
 ## Validation
 
@@ -321,7 +353,7 @@ internal sealed class RetryThenDeadLetterPolicy : IMessageErrorPolicy
 
 ### Dead-Letter Channels
 
-Dead-lettered messages are published to a derived channel address (e.g., `dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured`). The generated consumer calls `IMessageTransport.DeadLetterAsync` when the error policy returns `MessageErrorAction.DeadLetter`, so validation failures and handler exceptions are handled consistently across transports.
+Dead-lettered messages are published to the subscribed channel's address behind a `dead-letter.` prefix (e.g., `dead-letter.smartylighting.streetlights.1.0.action.lamp-42.lighting.measured`). Whether the channel address is static, composed from parameters, or supplied by the caller at start, the dead-letter address is derived from the channel the consumer actually subscribed. The generated consumer calls `IMessageTransport.DeadLetterAsync` when the error policy returns `MessageErrorAction.DeadLetter`, so validation failures and handler exceptions are handled consistently across transports.
 
 The dead-letter message includes:
 - The original payload bytes
@@ -517,9 +549,10 @@ await producer.PublishTurnOnOffAsync(
 // Assert published messages
 Assert.AreEqual(1, transport.PublishedMessages.Count);
 
-// Deliver messages to consumers for testing
+// Deliver messages to consumers for testing — target the address the consumer's
+// parameters composed, not the literal template
 await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    "smartylighting.streetlights.1.0.action.lamp-001.lighting.measured",
     """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
 ```
 
@@ -701,7 +734,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(
     tokenFactory: ct => new ValueTask<string>("refreshed-token-value"));
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: "1");
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -735,7 +768,7 @@ IMessageAuthenticationProvider namedAuth = new ApiKeyAuthenticationProvider(
     location: "header");
 
 ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: namedAuth);
-await consumer.StartAsync();
+await consumer.StartAsync(streetlightId: "1");
 await consumer.StopAsync();
 
 internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
@@ -811,7 +844,7 @@ await using InMemoryMessageTransport transport = new();
 IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
     new KeyValuePair<SecuritySchemeType, IMessageAuthenticationProvider>[]
     {
-        new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider("user", "pass")),
+        new(SecuritySchemeType.ScramSha256, new UserPasswordAuthenticationProvider("user", "pass")),
         new(SecuritySchemeType.Http, new BearerTokenAuthenticationProvider("token-value")),
         new(SecuritySchemeType.HttpApiKey, new ApiKeyAuthenticationProvider("api-key-123")),
     });
@@ -961,7 +994,7 @@ await producer.PublishUserSignedUpAsync(
         timestamp: DateTimeOffset.UtcNow.ToString("O")));
 ```
 
-The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.
+The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports whose header slots are string-typed (MQTT, NATS), the compact JSON text itself is the value: the writer's default encoder escapes non-ASCII characters, so the value is ASCII-safe for those protocols without a base64 expansion.
 
 ### Consuming Messages with Headers
 
@@ -1067,8 +1100,8 @@ Different transports handle header serialization differently:
 | Kafka | Native message headers (`Message.Headers`) | Key-value byte pairs |
 | AMQP | Application properties | Native key-value map |
 | Azure Service Bus | Application properties (`ServiceBusMessage.ApplicationProperties`) | User metadata map; values are encoded as strings and reconstructed as typed JSON headers for generated handlers |
-| NATS | Base64-encoded JSON in message headers | Protocol has limited header support |
-| MQTT | User properties (MQTT 5) or base64 in topic | MQTT 3.1 has no header concept |
+| NATS | Compact JSON text in message headers | Values are ASCII-escaped JSON, legal per the NATS header rules |
+| MQTT | User properties (MQTT 5) carrying compact JSON text | MQTT 5 user-property values are UTF-8 strings |
 | WebSocket | JSON envelope field | Framed alongside payload |
 
 The transport layer handles encoding/decoding transparently — your handler always receives the typed struct regardless of the wire format.
@@ -1080,9 +1113,12 @@ Azure Service Bus deserves one extra note because it has both broker system prop
 AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:
 
 ```csharp
-// Generated request/reply method
-(QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: QueryPayload.Build(filter: "status=active"u8),
+// Generated request/reply method — SendAndReceive{Message}Async, returning the typed reply.
+// The workspace you pass owns the reply: it stays valid until the workspace is disposed.
+using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+QueryResponse reply = await queryProducer.SendAndReceiveQueryAsync(
+    payload: QueryPayload.Build(filter: "status=active"u8),
+    workspace: workspace,
     cancellationToken: ct);
 
 // reply is already deserialized and validated
@@ -1092,7 +1128,7 @@ foreach (var item in reply.Results.EnumerateArray())
 }
 ```
 
-The generated code handles correlation ID generation (GUID formatted directly to a `byte[36]` — no string allocation), request/reply channel pairing, and timeout management.
+The generated code handles correlation ID generation (GUID formatted directly to a `byte[36]` — no string allocation) and request/reply channel pairing; cancellation flows through the supplied token.
 
 AsyncAPI 3.0 uses the standard operation `reply` object. AsyncAPI 2.6 has `correlationId` but no standard `reply` object, so Corvus supports an explicit `x-corvus-reply` extension on a 2.6 operation. The extension mirrors the 3.0 shape closely enough for the generated request/reply method to use the same runtime path:
 
@@ -1156,9 +1192,9 @@ ValueTask SubscribeReplyAsync<TRequest, TReply>(
 
 The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
 
-**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. Dispose the workspace once the reply is no longer needed. A generated requester threads the run's workspace, so the reply joins the run and is released with it, rather than being abandoned to the garbage collector. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable.
+**Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated `SendAndReceive*` requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)
 
-**Implementation status.** `SubscribeReplyAsync` is a default interface member that throws `NotSupportedException`, so a transport opts in by overriding it. The in-memory testing transport implements a full in-process round-trip: a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). The broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) inherit the default until responder support is implemented for each.
+**Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call. With no responder registered, the request is delivered to any data subscription on the channel (plain or delivery-context, exactly as a publish would be) and parked for the test helper `CompleteRequest`. A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
 
 
 ## Bindings
@@ -1206,7 +1242,7 @@ Current transports primarily use their strongly-typed transport options for deli
 
 ### OpenTelemetry Distributed Tracing
 
-Wrap any transport with `InstrumentedMessageTransport` to gain automatic OpenTelemetry instrumentation:
+Wrap any transport with `InstrumentedMessageTransport.Create` to gain automatic OpenTelemetry instrumentation:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
@@ -1215,7 +1251,22 @@ using Corvus.Text.Json.AsyncApi.Nats;
 NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
     new NatsTransportOptions { Url = "nats://localhost:4222" });
 
-InstrumentedMessageTransport transport = new(raw, "nats");
+IMessageTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
+```
+
+`Create` returns a wrapper that preserves the wrapped transport's optional capabilities. It implements `IMessageDeliveryContextTransport` and `IHealthCheckableTransport` exactly when the wrapped transport does, so a capability probe such as `transport is IHealthCheckableTransport` answers for the wrapped transport and health checks keep working. The `new InstrumentedMessageTransport(raw, "nats")` constructor form always produces a plain `IMessageTransport` wrapper that surfaces neither capability; prefer `Create`.
+
+When the transport is delivery-context capable and you want to hand the wrapper straight to a generated `*WithDeliveryContextConsumer`, take the result as `IMessageDeliveryContextTransport`. The overload selected for a capability-typed argument returns that type, so no cast is needed:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Nats;
+
+NatsMessageTransport raw = await NatsMessageTransport.CreateAsync(
+    new NatsTransportOptions { Url = "nats://localhost:4222" });
+
+IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(raw, "nats");
+ReceiveLightMeasurementWithDeliveryContextConsumer consumer = new(transport, handler);
 ```
 
 This provides:
@@ -1238,8 +1289,9 @@ NatsTransportOptions options = new()
     Heartbeat = heartbeat,
 };
 
-// After starting consumers, check liveness:
-bool alive = heartbeat.IsAlive("smartylighting.streetlights.1.0.action.*.lighting.measured");
+// After starting consumers, check liveness — IsAlive is an exact channel-key lookup
+// (no wildcard matching), so pass the composed address the consumer subscribed:
+bool alive = heartbeat.IsAlive("smartylighting.streetlights.1.0.action.1.lighting.measured");
 
 // Get all subscription statuses:
 foreach (var status in heartbeat.GetSubscriptionStatuses())
@@ -1248,7 +1300,7 @@ foreach (var status in heartbeat.GetSubscriptionStatuses())
 }
 ```
 
-If a loop has not ticked for longer than the staleness threshold (default: 30 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.
+If a loop has not ticked for longer than the staleness threshold (default: 60 seconds), it is considered dead. This catches loops that exit silently due to unhandled exceptions or unexpected cancellation.
 
 ### Health Checks
 
@@ -1406,7 +1458,7 @@ Don't mock `IMessageTransport` — use `InMemoryMessageTransport`. It provides m
 
 ### Wrap Transports with Instrumentation
 
-Always use `InstrumentedMessageTransport` in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter.
+Always wrap the transport with `InstrumentedMessageTransport.Create` in production. The zero-cost-when-idle design means no overhead until you attach an OpenTelemetry exporter, and `Create` preserves the wrapped transport's delivery-context and health-check capabilities.
 
 ### Combine Polly with Error Policies
 
@@ -1459,7 +1511,7 @@ Corvus without validation is **3.3× faster** than Wolverine. Even with basic sc
 | Corvus producer (basic validation) | 610 ns | 200 B | + compiled schema check |
 | Corvus producer (detailed validation) | 834 ns | 200 B | + full diagnostics collector |
 
-Corvus without validation is **1.9× faster** than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the pooled `JsonWorkspace` envelope — returned to pools after the call, producing zero GC pressure under steady-state load.
+Corvus without validation is **1.9× faster** than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the short-lived `JsonWorkspace` the producer builds the message in, disposed when the publish completes.
 
 ### Request/Reply
 
@@ -1469,7 +1521,7 @@ Corvus without validation is **1.9× faster** than Wolverine. With basic validat
 | Corvus req/reply (no validation) | 377 ns | 336 B | Generated producer: workspace + correlate + reply parse |
 | Corvus req/reply (basic validation) | 651 ns | 336 B | + schema validation both directions |
 
-Corvus without validation is **28% faster** and allocates **65% less** than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from `ArrayPool<byte>`, and the reply is parsed into pooled memory. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.
+Corvus without validation is **28% faster** and allocates **65% less** than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from `ArrayPool<byte>`, and the reply is parsed into documents owned by the caller-supplied workspace. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.
 
 ### Validation Cost Summary
 
@@ -1481,7 +1533,7 @@ Corvus without validation is **28% faster** and allocates **65% less** than the 
 
 All validation modes produce **zero additional allocation** — the schema evaluator operates entirely on the already-parsed document. This means you can enable validation in production without increasing GC pressure.
 
-> *BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput.*
+> *BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput. Measured against the V5.3.0 pipeline; the V5.4.0 lifecycle and request/reply hardening changed the measured paths (notably the requester now threads the caller-supplied workspace), so treat exact figures as indicative of that baseline.*
 
 ## Example Recipes
 

@@ -33,6 +33,8 @@ public class GeneratedEndToEndTests
     private const string LightMeasurementChannel =
         "smartylighting.streetlights.1.0.action.1.lighting.measured";
 
+    private const string DimChannel = "smartylighting.streetlights.1.0.action.dim";
+
     [TestMethod]
     public async Task Producer_PublishTurnOnOff_SerializesPayloadToChannel()
     {
@@ -226,6 +228,305 @@ public class GeneratedEndToEndTests
                 """{"lumens":100,"sentAt":"2024-01-01T00:00:00Z"}"""u8.ToArray()).AsTask());
     }
 
+    [TestMethod]
+    public async Task Consumer_RefusedStart_DisposeDoesNotUnsubscribeWinner()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler winnerHandler = new();
+        await using ReceiveLightMeasurementConsumer winner = new(transport, winnerHandler, ValidationMode.None);
+        await winner.StartAsync("1");
+
+        // The second consumer is refused the channel; disposing it must not tear down the
+        // winner's live subscription.
+        MockLightMeasurementHandler loserHandler = new();
+        ReceiveLightMeasurementConsumer loser = new(transport, loserHandler, ValidationMode.None);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => loser.StartAsync("1").AsTask());
+        await loser.DisposeAsync();
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, winnerHandler.ReceivedPayloads.Count);
+    }
+
+    [TestMethod]
+    public async Task Consumer_DisposeWithoutStart_CompletesQuietly()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler handler = new();
+
+        await using (ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None))
+        {
+            // Never started: leaving the await-using must not throw.
+        }
+    }
+
+    [TestMethod]
+    public async Task Consumer_SecondStart_ThrowsConsumerAlreadyStarted()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler handler = new();
+        await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+        await consumer.StartAsync("1");
+
+        // A second start would silently orphan the first subscription if the consumer just
+        // overwrote its record; it must refuse instead.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("2").AsTask());
+
+        // The original subscription is untouched.
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, handler.ReceivedPayloads.Count);
+    }
+
+    [TestMethod]
+    public async Task Consumer_RefusedRestart_PreservesDeadLetterAddress()
+    {
+        await using InMemoryMessageTransport transport = new();
+        ThrowingLightMeasurementHandler handler = new();
+        DefaultMessageErrorPolicy deadLetterPolicy = new(
+            MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter);
+        await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None, deadLetterPolicy);
+        await consumer.StartAsync("1");
+
+        // The refused restart must fail before touching the running subscription's retained
+        // dead-letter address, or every later dead-letter silently misroutes.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("2").AsTask());
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        InMemoryMessageTransport.DeadLetteredMessage deadLettered = transport.DeadLetteredMessages.Single();
+        StringAssert.Contains(deadLettered.DeadLetterChannel, ".action.1.lighting.measured");
+
+        await consumer.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task Consumer_StopThenDispose_DoesNotUnsubscribeNextOwner()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockLightMeasurementHandler firstHandler = new();
+        ReceiveLightMeasurementConsumer first = new(transport, firstHandler, ValidationMode.None);
+        await first.StartAsync("1");
+        await first.StopAsync();
+
+        MockLightMeasurementHandler secondHandler = new();
+        await using ReceiveLightMeasurementConsumer second = new(transport, secondHandler, ValidationMode.None);
+        await second.StartAsync("1");
+
+        // The stopped consumer owns nothing; disposing it must not unsubscribe the channel's
+        // new owner.
+        await first.DisposeAsync();
+
+        await transport.DeliverAsync<LightMeasuredPayload>(
+            LightMeasurementChannel,
+            """{"lumens":150,"sentAt":"2024-03-01T10:30:00Z"}"""u8.ToArray());
+
+        Assert.AreEqual(1, secondHandler.ReceivedPayloads.Count);
+    }
+
+    [TestMethod]
+    public async Task Consumer_StopDuringStart_ReleasesTheSubscriptionTheStartLands()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.SubscribeGate = gate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // The first start claims the gate and parks inside the transport subscribe.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+
+        // The stop takes the first start's claim; its unsubscribe finds nothing to remove.
+        await consumer.StopAsync();
+
+        // A legitimate restart on another channel claims and lands.
+        transport.SubscribeGate = null;
+        await consumer.StartAsync("2");
+
+        // The first start's subscribe now lands. It must recognize that ITS claim is gone —
+        // not be fooled by the successor's — release the channel-1 subscription it just
+        // created, and report the stop, rather than returning success for an orphan.
+        gate.SetResult();
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+        StringAssert.Contains(ex.Message, "stopped");
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel), "The superseded start must release the subscription it landed.");
+
+        // The restart's subscription is untouched and still stoppable.
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed("smartylighting.streetlights.1.0.action.2.lighting.measured"));
+    }
+
+    [TestMethod]
+    public async Task Consumer_StopAfterSubscribeLands_ExactlyOnePartyUnsubscribes()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource postGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.PostSubscribeGate = postGate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // The first start's subscription LANDS at the transport, then the start parks before
+        // its completion logic runs.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+
+        // The stop takes the claim mid-start: per the handshake it declines the transport
+        // removal (the superseded start owns that cleanup), so the channel is still held.
+        await consumer.StopAsync();
+
+        // A restart while the superseded start is still unwinding is therefore honestly
+        // refused — the alternative (the stop unsubscribing eagerly, the restart landing,
+        // and the superseded start then destroying the restart's live subscription) is the
+        // silent-message-loss defect this pins. The gate is disarmed first so the refusal
+        // (or, on defective code, the wrongly-successful restart) completes promptly.
+        transport.PostSubscribeGate = null;
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => consumer.StartAsync("1").AsTask());
+
+        // The superseded start resumes, releases the subscription it landed, and reports the stop.
+        postGate.SetResult();
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+        StringAssert.Contains(ex.Message, "stopped");
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+
+        // Now the restart succeeds, is genuinely live, and stops cleanly.
+        transport.PostSubscribeGate = null;
+        await consumer.StartAsync("1");
+        Assert.IsTrue(transport.IsSubscribed(LightMeasurementChannel));
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+    }
+
+    [TestMethod]
+    public async Task Consumer_FailedStartAfterRestart_DoesNotReleaseTheNewClaim()
+    {
+        PausableTransport transport = new();
+        TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        transport.SubscribeGate = gate;
+        MockLightMeasurementHandler handler = new();
+        ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.None);
+
+        // First start parks inside the transport subscribe; a stop takes its claim.
+        Task firstStart = consumer.StartAsync("1").AsTask();
+        await consumer.StopAsync();
+
+        // A restart on the SAME channel claims and lands.
+        transport.SubscribeGate = null;
+        await consumer.StartAsync("1");
+
+        // The first start's subscribe resumes and is refused (the restart holds the channel).
+        // Its failure path must not release the restart's claim.
+        gate.SetResult();
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => firstStart);
+
+        // The consumer still owns its subscription: stop succeeds and removes it.
+        await consumer.StopAsync();
+        Assert.IsFalse(transport.IsSubscribed(LightMeasurementChannel));
+    }
+
+    private sealed class PausableTransport : IMessageTransport
+    {
+        private readonly object syncRoot = new();
+        private readonly Dictionary<string, Delegate> subscriptions = [];
+
+        // Read once at the top of each subscribe, so a parked subscribe keeps its own gate
+        // while the test re-arms or clears the property for later calls.
+        public TaskCompletionSource? SubscribeGate { get; set; }
+
+        // Awaited AFTER the subscription has landed, so a test can hold a start between the
+        // transport recording the subscription and the start's own completion logic running.
+        public TaskCompletionSource? PostSubscribeGate { get; set; }
+
+        public bool IsSubscribed(string channel)
+        {
+            lock (this.syncRoot)
+            {
+                return this.subscriptions.ContainsKey(channel);
+            }
+        }
+
+        public ValueTask PublishAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            in TPayload payload,
+            in JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+            => ValueTask.CompletedTask;
+
+        public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> requestChannelUtf8,
+            ReadOnlyMemory<byte> replyChannelUtf8,
+            TRequest request,
+            ReadOnlyMemory<byte> correlationIdUtf8,
+            JsonWorkspace workspace,
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, Corvus.Text.Json.Internal.IJsonElement<TRequest>
+            where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>
+            => throw new NotSupportedException();
+
+        public async ValueTask SubscribeAsync<TPayload>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+            CancellationToken cancellationToken = default)
+            where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>
+        {
+            string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+            if (this.SubscribeGate is { } gate)
+            {
+                await gate.Task.ConfigureAwait(false);
+            }
+
+            lock (this.syncRoot)
+            {
+                if (!this.subscriptions.TryAdd(channel, handler))
+                {
+                    throw new InvalidOperationException(
+                        $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+                }
+            }
+
+            if (this.PostSubscribeGate is { } postGate)
+            {
+                await postGate.Task.ConfigureAwait(false);
+            }
+        }
+
+        public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
+        {
+            string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+            lock (this.syncRoot)
+            {
+                this.subscriptions.Remove(channel);
+            }
+
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class ThrowingLightMeasurementHandler : IReceiveLightMeasurementHandler
+    {
+        public ValueTask HandleLightMeasuredAsync(
+            LightMeasuredPayload payload,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Handler failure to drive the dead-letter path.");
+    }
+
     private sealed class MockLightMeasurementHandler : IReceiveLightMeasurementHandler
     {
         public List<LightMeasuredPayload> ReceivedPayloads { get; } = [];
@@ -318,6 +619,120 @@ public class GeneratedEndToEndTests
         public ValueTask HandleLightMeasuredAsync(LightMeasuredPayload payload, CancellationToken cancellationToken = default)
         {
             this.onHandle();
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    [TestMethod]
+    public async Task Requester_ReplyRemainsReadableAfterTheCall()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        DimLightResponsePayload reply = await pending;
+
+        Assert.AreEqual(1, transport.PublishedMessages.Count);
+        Assert.AreEqual(DimChannel, transport.PublishedMessages[0].Channel);
+
+        // The reply must stay readable after the call returns; its documents are owned by the
+        // workspace the caller supplied, not one the requester has already disposed.
+        Assert.IsTrue(reply.Status.ValueEquals("ok"u8));
+        Assert.AreEqual(40L, (long)reply.CurrentLevel);
+    }
+
+    [TestMethod]
+    public async Task Requester_AuthenticatesBeforeSending()
+    {
+        await using InMemoryMessageTransport transport = new();
+        RecordingAuthProvider authProvider = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic, authProvider);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        _ = await pending;
+
+        Assert.AreEqual(1, authProvider.Authentications.Count);
+        Assert.AreEqual("saslScram", authProvider.Authentications[0].SchemeName);
+    }
+
+    [TestMethod]
+    public async Task Requester_DisposingTheCallerWorkspace_InvalidatesTheReply()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        ValueTask<DimLightResponsePayload> pending = producer.SendAndReceiveDimLightAsync(payload, workspace);
+        transport.CompleteSinglePendingRequest("""{"status":"ok","currentLevel":40}"""u8.ToArray());
+        DimLightResponsePayload reply = await pending;
+
+        // The caller's workspace owns the reply documents: disposing it ends the reply's lifetime.
+        workspace.Dispose();
+        Assert.ThrowsExactly<ObjectDisposedException>(() => reply.Status.ValueEquals("ok"u8));
+    }
+
+    [TestMethod]
+    public async Task Requester_InvalidPayload_ThrowsWithoutSending()
+    {
+        await using InMemoryMessageTransport transport = new();
+        DimLightProducer producer = new(transport, ValidationMode.Basic);
+        DimLightPayload payload = DimLightPayload.ParseValue("""{"percentage":200,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            async () => await producer.SendAndReceiveDimLightAsync(payload, workspace));
+
+        Assert.AreEqual(0, transport.PublishedMessages.Count);
+    }
+
+    private sealed class RecordingAuthProvider : IMessageAuthenticationProvider
+    {
+        public List<MessageAuthenticationContext> Authentications { get; } = [];
+
+        public ValueTask AuthenticateAsync(MessageAuthenticationContext context, CancellationToken cancellationToken = default)
+        {
+            this.Authentications.Add(context);
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    [TestMethod]
+    public async Task DynamicConsumer_DeadLetters_ToTheSubscribedChannelsDeadLetterAddress()
+    {
+        await using InMemoryMessageTransport transport = new();
+        MockAlertHandler handler = new();
+        DefaultMessageErrorPolicy deadLetterPolicy = new(MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
+        await using ReceiveAlertConsumer consumer = new(transport, handler, ValidationMode.Basic, deadLetterPolicy);
+
+        await consumer.StartAsync("ops.alerts.eu");
+
+        await transport.DeliverAsync<AlertPayload>(
+            "ops.alerts.eu",
+            """{"severity":-1,"text":"boom"}"""u8.ToArray());
+
+        // A dynamic-address consumer only knows its channel at start time, so its dead-letter
+        // address must be composed from the channel it actually subscribed, not a
+        // generation-time constant.
+        Assert.AreEqual(0, handler.Received.Count);
+        Assert.AreEqual(1, transport.DeadLetteredMessages.Count);
+        Assert.AreEqual("dead-letter.ops.alerts.eu", transport.DeadLetteredMessages[0].DeadLetterChannel);
+        Assert.AreEqual("ops.alerts.eu", transport.DeadLetteredMessages[0].OriginalChannel);
+    }
+
+    private sealed class MockAlertHandler : IReceiveAlertHandler
+    {
+        public List<AlertPayload> Received { get; } = [];
+
+        public ValueTask HandleAlertAsync(AlertPayload payload, CancellationToken cancellationToken = default)
+        {
+            this.Received.Add(payload);
             return ValueTask.CompletedTask;
         }
     }

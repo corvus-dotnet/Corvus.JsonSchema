@@ -1,0 +1,73 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Calculator API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "rpc/calculate": {
+      "subscribe": {
+        "operationId": "calculate",
+        "message": {
+          "$ref": "#/components/messages/CalculateRequest"
+        },
+        "x-corvus-reply": {
+          "channel": {
+            "$ref": "#/channels/rpc~1calculate~1replies"
+          },
+          "address": {
+            "location": "$message.header.replyTo"
+          },
+          "message": {
+            "$ref": "#/components/messages/CalculateResponse"
+          }
+        }
+      }
+    },
+    "rpc/calculate/replies": {
+      "publish": {
+        "operationId": "receiveCalculationReply",
+        "message": {
+          "$ref": "#/components/messages/CalculateResponse"
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "CalculateRequest": {
+        "name": "CalculateRequest",
+        "payload": {
+          "$ref": "#/components/schemas/CalculateRequest"
+        }
+      },
+      "CalculateResponse": {
+        "name": "CalculateResponse",
+        "payload": {
+          "$ref": "#/components/schemas/CalculateResponse"
+        }
+      }
+    },
+    "schemas": {
+      "CalculateRequest": {
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "number"
+          },
+          "right": {
+            "type": "number"
+          }
+        }
+      },
+      "CalculateResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

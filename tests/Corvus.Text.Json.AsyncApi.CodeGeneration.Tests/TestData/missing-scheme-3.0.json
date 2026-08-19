@@ -1,0 +1,56 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Missing Scheme API",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "broker.example.com:9092",
+      "protocol": "kafka",
+      "security": [
+        {
+          "$ref": "#/components/securitySchemes/missingScheme"
+        }
+      ]
+    }
+  },
+  "channels": {
+    "events": {
+      "address": "events",
+      "messages": {
+        "Event": {
+          "name": "Event",
+          "payload": {
+            "$ref": "#/components/schemas/eventPayload"
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishEvent": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/events"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/events/messages/Event"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "eventPayload": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -41,6 +41,34 @@ public class AzureServiceBusTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "test-queue"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
+
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"sensor\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("test-queue", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         // Arrange
@@ -221,5 +249,94 @@ public class AzureServiceBusTransportTests
 
         await transport.DisposeAsync();
         await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "test-queue"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. Teardown must not drain the processor
+        // callback that is executing this handler, or the await below never completes.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(45));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than draining its own callback.");
+
+        // The slot must be free again afterwards.
+        await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        AbortOnHandlerErrorPolicy policy = new();
+        AzureServiceBusMessageTransport transport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-deadletter-source",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "test-deadletter-source"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc1.RootElement);
+
+        // Times out (failing the test) if the policy is never consulted for the poison message.
+        await policy.FirstInvocation.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        await Task.Delay(1000);
+
+        // An Abort verdict must actually stop the processor: further messages are not handled.
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(1500);
+
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "The handler must not run after an Abort verdict.");
+
+        // And the abort released the claim: the channel is free to resubscribe.
+        await transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await transport.DisposeAsync();
+    }
+
+    private sealed class AbortOnHandlerErrorPolicy : IMessageErrorPolicy
+    {
+        public TaskCompletionSource FirstInvocation { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.FirstInvocation.TrySetResult();
+            return ValueTask.FromResult(MessageErrorAction.Abort);
+        }
     }
 }

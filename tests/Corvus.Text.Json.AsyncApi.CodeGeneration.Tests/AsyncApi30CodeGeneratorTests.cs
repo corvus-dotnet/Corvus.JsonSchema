@@ -223,6 +223,150 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ConsumerEmitsLegacyAndDeliveryContextVariants()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(streetlightsRoot);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("WithDeliveryContextConsumer"));
+
+        StringAssert.Contains(contextHandler.Content, "MessageDeliveryContext context");
+        StringAssert.Contains(contextConsumer.Content, "IMessageDeliveryContextTransport transport");
+        StringAssert.Contains(contextConsumer.Content, "SubscribeWithDeliveryContextAsync");
+
+        GeneratedFile legacyHandler = files.Single(f => f.FileName.EndsWith("Handler.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        GeneratedFile legacyConsumer = files.Single(f => f.FileName.EndsWith("Consumer.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        Assert.IsFalse(legacyHandler.Content.Contains("MessageDeliveryContext", StringComparison.Ordinal));
+        Assert.IsFalse(legacyConsumer.Content.Contains("SubscribeWithDeliveryContextAsync", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerWithOperationBindings_ContextVariantPassesBindingContext()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "nats-operation-bindings.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("NatsBindings", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("SubscribeOrdersWithDeliveryContextConsumer"));
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "MessageContext context = new()",
+            "The delivery-context consumer must build the spec-declared bindings.");
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "OperationBindingsJson = OperationBindingsBytes",
+            "The declared operation bindings must travel in the MessageContext.");
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "this.HandleMessageAsync, context, cancellationToken",
+            "The delivery-context subscribe call must pass the binding context.");
+    }
+
+    [TestMethod]
+    public void Generate_OperationNamedWithDeliveryContext_SkipsCollidingVariantWithDiagnostic()
+    {
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes("""
+            {
+                "asyncapi": "3.0.0",
+                "info": { "title": "Collide", "version": "1.0.0" },
+                "channels": {
+                    "events": { "address": "events", "messages": { "evt": { "payload": { "type": "object" } } } }
+                },
+                "operations": {
+                    "receiveMeasurement": { "action": "receive", "channel": { "$ref": "#/channels/events" }, "messages": [ { "$ref": "#/channels/events/messages/evt" } ] },
+                    "receiveMeasurementWithDeliveryContext": { "action": "receive", "channel": { "$ref": "#/channels/events" }, "messages": [ { "$ref": "#/channels/events/messages/evt" } ] }
+                }
+            }
+            """);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi30CodeGenerator("Collide", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        Assert.AreEqual(
+            files.Count,
+            files.Select(f => f.FileName).Distinct(StringComparer.Ordinal).Count(),
+            "Generated file names must be unique; a colliding delivery-context variant must not clobber another operation's files.");
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("WithDeliveryContext")),
+            "Skipping the colliding delivery-context variant must produce a diagnostic.");
+    }
+
+    [TestMethod]
+    public void Generate_ResponderOperation_DoesNotEmitDeliveryContextVariants()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var generator = new AsyncApi30CodeGenerator("Worker", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        Assert.IsFalse(
+            files.Any(f => f.FileName.Contains("WithDeliveryContext")),
+            "A responder operation never surfaces a MessageDeliveryContext, so no WithDeliveryContext variants should be emitted for it.");
+    }
+
+    [TestMethod]
+    public void Generate_HeadersTypedMessage_DeliveryContextHandlerKeepsTypedHeaders()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/UserSignedUpPayload"] = "Traits.UserSignedUpPayload",
+            ["#/components/schemas/CommonHeaders"] = "Traits.CommonHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Traits", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(traitsRoot);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        StringAssert.Contains(
+            contextHandler.Content,
+            "Traits.CommonHeaders headers, MessageDeliveryContext context",
+            "The delivery-context handler variant must keep the typed headers parameter alongside the context.");
+
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("WithDeliveryContextConsumer"));
+        StringAssert.Contains(
+            contextConsumer.Content,
+            "h, deliveryContext, cancellationToken",
+            "The delivery-context consumer must pass the materialized typed headers to the handler.");
+    }
+
+    [TestMethod]
+    public void Generate_MultiMessage_DeliveryContextHandlerDocumentsContextParameter()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "multi-message.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/temperaturePayload"] = "IoT.TemperaturePayload",
+            ["#/components/schemas/humidityPayload"] = "IoT.HumidityPayload",
+            ["#/components/schemas/calibratePayload"] = "IoT.CalibratePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("IoT", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        int messageDoc = contextHandler.Content.IndexOf("<param name=\"message\">", StringComparison.Ordinal);
+        int contextDoc = contextHandler.Content.IndexOf("<param name=\"context\">", StringComparison.Ordinal);
+        int tokenDoc = contextHandler.Content.IndexOf("<param name=\"cancellationToken\">", StringComparison.Ordinal);
+        Assert.IsTrue(messageDoc >= 0, "The message parameter must be documented.");
+        Assert.IsTrue(contextDoc > messageDoc, "The context parameter must be documented after message.");
+        Assert.IsTrue(tokenDoc > contextDoc, "The cancellationToken doc must follow context, matching signature order.");
+    }
+
+    [TestMethod]
     public void Generate_TraitsProvideHeadersToMessage()
     {
         // The traits-example.json has a message trait that supplies headers
@@ -611,8 +755,11 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(consumer.Content, "channel.AsSpan()");
         // All overloads delegate to a shared private Core
         StringAssert.Contains(consumer.Content, "StartAsyncCore(");
-        // Should store the channel for stop
-        StringAssert.Contains(consumer.Content, "subscribedChannel");
+        // The dead-letter address is composed from the channel the start actually subscribes,
+        // carried by the claim token; there is no generation-time dead-letter constant.
+        StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8");
+        StringAssert.Contains(consumer.Content, "ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+        Assert.IsFalse(consumer.Content.Contains("private static readonly byte[] DeadLetterChannelUtf8"), "A dynamic consumer must not dead-letter to a generation-time constant");
     }
 
     [TestMethod]
@@ -1869,6 +2016,180 @@ public class AsyncApi30CodeGeneratorTests
             "SendAndReceive should be non-async (returns ValueTask without async keyword)");
         Assert.IsFalse(producerFile.Content.Contains("public async ValueTask<Calculator.CalculateResponse> SendAndReceive"),
             "SendAndReceive should NOT be async (ref struct Source params are illegal in async methods)");
+
+        // The caller supplies the workspace that owns the reply; the requester's internal workspace
+        // owns only the outgoing request and is disposed by the Core.
+        Assert.IsTrue(producerFile.Content.Contains("JsonWorkspace workspace,"),
+            "SendAndReceive should take the caller's reply workspace");
+        Assert.IsTrue(producerFile.Content.Contains("RequestAsyncCore<TPayload, TReply>(JsonWorkspace payloadWorkspace, JsonWorkspace replyWorkspace"),
+            "RequestAsyncCore should separate the request-owning and reply-owning workspaces");
+        Assert.IsTrue(producerFile.Content.Contains("payloadWorkspace.Dispose();"),
+            "The Core should dispose only the request-owning workspace");
+
+        // This spec derives the reply address from a runtime expression, so the encoded reply
+        // address is rented; the rental must travel into the Core and be returned there.
+        Assert.IsTrue(producerFile.Content.Contains("replyRental = ArrayPool<byte>.Shared.Rent("),
+            "A runtime-expression reply address should be encoded into a rented buffer");
+        Assert.IsTrue(producerFile.Content.Contains("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }"),
+            "The reply-address rental should be returned to the pool");
+    }
+
+    [TestMethod]
+    public void Generate_TemplateWithUndeclaredParameter_TreatsItAsLiteralAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "template-undeclared-param.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/orderPlacedPayload"] = "Orders.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Orders", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // {region} is not a declared parameter: it stays literal text in the composed address,
+        // the generated code must not reference a parameter that does not exist, and the
+        // demotion is reported rather than silent.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("region")),
+            "The undeclared placeholder should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Orders.UndeclaredParam.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_Consumer_RecordsSkipAndAbortDecisions()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeOrdersConsumer") && !f.FileName.Contains("WithDeliveryContext"));
+        Assert.IsNotNull(consumer);
+
+        // The generated consumer applies the error policy above the transport, so its Skip and
+        // Abort decisions must reach the telemetry counters exactly as transport-level policy
+        // decisions do; dead-letters are already counted through the transport call.
+        StringAssert.Contains(consumer.Content, "AsyncApiTelemetry.RecordSkip(");
+        StringAssert.Contains(consumer.Content, "AsyncApiTelemetry.RecordAbort(");
+    }
+
+    [TestMethod]
+    public void Generate_ServerSecurity_UnknownScheme_ReportsDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "missing-scheme-3.0.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/eventPayload"] = "Events.EventPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Events", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The server requirement references a scheme that components.securitySchemes does not
+        // define; the degradation must be recorded rather than silently mapping the scheme to
+        // UserPassword, exactly as the 2.6 path reports it.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("missingScheme")),
+            "A security requirement naming an undefined scheme should be reported as a diagnostic");
+    }
+
+    [TestMethod]
+    public void Generate_ReplyAddressExpressionUnusable_FallsBackToReplyChannelAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "reply-address-literal-expression.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcReplies/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // "$message.header.replyTo" (no '#') is not a supported runtime expression: the emission
+        // must fall back to the reply channel's declared address, report the demotion, and the
+        // fallback field it references must actually exist.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("$message.header.replyTo")),
+            "The unusable reply address expression should be reported as a diagnostic");
+
+        GeneratedFile producer = files.First(f => f.FileName.Contains("Producer"));
+        StringAssert.Contains(producer.Content, "ReplyChannelAddressUtf8");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Rpc.LiteralReplyAddress.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_ReplyHeaderExpressionWithoutHeaders_FallsBackAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "reply-address-header-no-headers.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcReplies/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // The expression reads the message headers but the request message declares no headers
+        // schema, so there is nothing to read it from: the emission must fall back to the reply
+        // channel's declared address and report the demotion, not emit code that reads headers
+        // that do not exist.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("headers")),
+            "The headerless header expression should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Rpc.HeaderlessReplyAddress.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_TemplateWithUnclosedBrace_TreatsRemainderAsLiteralAndCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "template-unclosed-brace.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/auditEntryPayload"] = "Audit.AuditEntryPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Audit", schemaTypeMap);
+
+        // An unclosed brace must not crash generation; the remainder is literal text and the
+        // problem is reported as a diagnostic.
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("unclosed")),
+            "The unclosed brace should be reported as a diagnostic");
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Audit.UnclosedBrace.Generated", stubs);
     }
 
     [TestMethod]
@@ -2057,6 +2378,10 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(producer.Content, "SaslAuthContext");
         StringAssert.Contains(producer.Content, "MessageAuthenticationContext");
 
+        // The scheme declares scramSha256; the auth context must carry that exact variant, not a
+        // collapsed catch-all SASL value.
+        StringAssert.Contains(producer.Content, "SecuritySchemeType.ScramSha256");
+
         // Verify compilation succeeds
         string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
         DynamicCompiler.AssertCompiles(files, "Users.Security.Generated", stubs);
@@ -2197,15 +2522,17 @@ public class AsyncApi30CodeGeneratorTests
         GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeEventsConsumer"));
         Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
 
-        // Dynamic address: StartAsync takes a channel parameter and stores it
+        // Dynamic address: StartAsync takes a channel parameter
         StringAssert.Contains(consumer.Content, "string channel");
-        StringAssert.Contains(consumer.Content, "this.subscribedChannel = channel;");
         // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads (auth path)
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
         StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
         StringAssert.Contains(consumer.Content, "channel.AsSpan()");
-        // The Core is the async (auth) variant that performs authentication
-        StringAssert.Contains(consumer.Content, "private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8");
+        // The Core claims the lifecycle gate and delegates to the claimed start, which
+        // performs authentication before subscribing
+        StringAssert.Contains(consumer.Content, "private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8");
+        StringAssert.Contains(consumer.Content, "private async ValueTask StartClaimedAsync(ActiveSubscription token");
+        StringAssert.Contains(consumer.Content, "AuthenticateAsync");
     }
 
     [TestMethod]
@@ -2273,11 +2600,17 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(consumer.Content, "\"orders.\"u8.CopyTo(channelUtf8.AsSpan(written));");
         StringAssert.Contains(consumer.Content, "written += Encoding.UTF8.GetBytes(orderId, channelUtf8.AsSpan(written));");
         StringAssert.Contains(consumer.Content, "\".created\"u8.CopyTo(channelUtf8.AsSpan(written));");
-        StringAssert.Contains(consumer.Content, "this.subscribedChannelUtf8 = channelUtf8;");
+        // The addresses travel in the claim token and reach the handler through the
+        // subscribe-time closure - there are no retained address fields.
+        StringAssert.Contains(consumer.Content, "this.HandleMessageAsync(token, payload, headers, innerCancellationToken)");
 
         // The dead-letter address is built from the bytes just composed, not from a second pass or a concat.
         StringAssert.Contains(consumer.Content, "DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
-        StringAssert.Contains(consumer.Content, "this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;");
+
+        // The retained addresses travel in the claim token and are written to the consumer's
+        // fields only behind the claim, inside StartClaimedAsync.
+        StringAssert.Contains(consumer.Content, "ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+        StringAssert.Contains(consumer.Content, "ActiveSubscription subscription, ");
 
         // What the old shape did, and must not come back.
         Assert.IsFalse(consumer.Content.Contains("ChannelAddressTemplate", StringComparison.Ordinal), "the template should be split at generation time, not carried as a string");

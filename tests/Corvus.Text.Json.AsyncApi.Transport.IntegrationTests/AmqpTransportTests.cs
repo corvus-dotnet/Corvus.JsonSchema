@@ -46,6 +46,35 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "amqp.test.context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
+
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("{\"data\":42}"u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("{\"source\":\"test\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("amqp.test.context", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         ReadOnlyMemory<byte> channel = "amqp.test.roundtrip"u8.ToArray();
@@ -633,11 +662,11 @@ public class AmqpTransportTests
             ExchangeType = "topic",
             ExchangeDurable = false,
             ConsumerTagPrefix = "corvus-mw",
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "amqp.test.mw"u8.ToArray();
@@ -677,7 +706,7 @@ public class AmqpTransportTests
             ExchangeDurable = false,
             ConsumerTagPrefix = "corvus-mw-exhaust",
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -693,7 +722,7 @@ public class AmqpTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "amqp.test.mw.exhaust"u8.ToArray();
@@ -744,6 +773,46 @@ public class AmqpTransportTests
                 correlationId,
                 workspace,
                 cancellationToken: cts.Token));
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestTimeoutWithSilentResponderThrowsOperationCanceledException()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // A responder is subscribed but never replies, so the failure comes from the
+        // transport's RequestTimeout machinery rather than the caller's token. This pins
+        // the OperationCanceledException surface across changes to that machinery.
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.reqsilent",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-reqsilent",
+            RequestTimeout = TimeSpan.FromSeconds(2),
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "amqp.test.req-silent"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "amqp.test.reply-silent"u8.ToArray();
+        byte[] correlationId = "timeout-corr-a02"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            async (payload, headers, ct) => await Task.CompletedTask);
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace));
 
         await transport.DisposeAsync();
     }
@@ -1229,6 +1298,37 @@ public class AmqpTransportTests
 
         await transport.UnsubscribeAsync(channel);
         await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "amqp.test.unsubscribe-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. Teardown must not join the dispatcher
+        // worker that is executing this handler, or the await below never completes.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than self-joining the consumer dispatcher.");
+
+        // The slot must be free again afterwards (the deferred close races nothing here:
+        // the registry entry was removed synchronously inside UnsubscribeAsync).
+        await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await s_transport.UnsubscribeAsync(channel);
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy

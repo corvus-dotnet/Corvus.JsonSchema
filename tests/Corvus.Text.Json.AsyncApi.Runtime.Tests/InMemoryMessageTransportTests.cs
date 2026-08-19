@@ -69,6 +69,33 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesChannelAndHeaders()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        ReadOnlyMemory<byte> channel = "test/context"u8.ToArray();
+        JsonValueKind? receivedHeadersKind = null;
+        string? receivedChannel = null;
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                return ValueTask.CompletedTask;
+            });
+
+        await transport.DeliverAsync<JsonElement>(
+            "test/context",
+            Encoding.UTF8.GetBytes("{\"hello\":\"world\"}"),
+            Encoding.UTF8.GetBytes("{\"source\":\"test\"}"));
+
+        Assert.AreEqual("test/context", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+    }
+
+    [TestMethod]
     public async Task UnsubscribeAsync_StopsReceivingMessages()
     {
         await using Testing.InMemoryMessageTransport transport = new();
@@ -116,6 +143,146 @@ public class InMemoryMessageTransportTests
 
         (JsonElement replyPayload, JsonElement _) = await requestTask;
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_DataSubscriberOnTheChannel_SeesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // On a real broker a request is an ordinary message on its channel, so a plain data
+        // subscription there sees it; the reply still comes from CompleteRequest.
+        List<int> seen = [];
+        await transport.SubscribeAsync<JsonElement>(
+            "rpc/data"u8.ToArray(),
+            (payload, _, _) =>
+            {
+                seen.Add(payload.GetProperty("n"u8).GetInt32());
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":7}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/data"u8.ToArray(),
+                "rpc/data/replies"u8.ToArray(),
+                request,
+                "corr-data"u8.ToArray(), workspace).AsTask();
+
+        transport.CompleteRequest("corr-data", Encoding.UTF8.GetBytes("""{"ok":true}"""));
+        (JsonElement reply, JsonElement _) = await requestTask;
+
+        Assert.AreEqual(1, seen.Count, "The data subscriber should have received the request");
+        Assert.AreEqual(7, seen[0]);
+        Assert.IsTrue(reply.GetProperty("ok"u8).GetBoolean());
+    }
+
+    [TestMethod]
+    public async Task PublishAsync_LoopbackHandlerThrow_IsRecordedNotThrown()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        await transport.SubscribeAsync<JsonElement>(
+            "loopback/fail"u8.ToArray(),
+            (_, _, _) => throw new InvalidDataException("handler failure"));
+
+        JsonElement payload = JsonElement.ParseValue("""{"x":1}"""u8);
+
+        // A broker decouples the publisher from its subscribers: the publish succeeds and the
+        // handler failure is recorded for assertions rather than thrown at the publisher.
+        await transport.PublishAsync("loopback/fail"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, transport.PublishedMessages.Count);
+        Assert.AreEqual(1, transport.DeliveryFailures.Count);
+        Assert.AreEqual("loopback/fail", transport.DeliveryFailures[0].Channel);
+        Assert.IsInstanceOfType<InvalidDataException>(transport.DeliveryFailures[0].Exception);
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_DeliveryContextSubscriberOnTheChannel_SeesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // A delivery-context subscription must see the request exactly as it sees a publish;
+        // the request is an ordinary message on its channel.
+        List<int> seen = [];
+        List<string> channels = [];
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "rpc/ctx"u8.ToArray(),
+            (payload, context, _) =>
+            {
+                seen.Add(payload.GetProperty("n"u8).GetInt32());
+                channels.Add(Encoding.UTF8.GetString(context.ChannelUtf8.Span));
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":9}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/ctx"u8.ToArray(),
+                "rpc/ctx/replies"u8.ToArray(),
+                request,
+                "corr-ctx"u8.ToArray(),
+                workspace).AsTask();
+
+        transport.CompleteRequest("corr-ctx", """{"ok":true}"""u8.ToArray());
+        _ = await requestTask;
+
+        Assert.AreEqual(1, seen.Count, "The delivery-context subscriber should have received the request");
+        Assert.AreEqual(9, seen[0]);
+        Assert.AreEqual("rpc/ctx", channels[0]);
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_AbandonedWait_RemovesThePendingEntry()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
+        using CancellationTokenSource cts = new();
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/abandoned"u8.ToArray(),
+                "rpc/abandoned/replies"u8.ToArray(),
+                request,
+                "corr-abandoned"u8.ToArray(),
+                workspace,
+                cancellationToken: cts.Token).AsTask();
+
+        await cts.CancelAsync();
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => requestTask);
+
+        // The abandoned wait no longer parks: completing it must fail loudly, not feed a
+        // reply to a requester that already gave up.
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => transport.CompleteRequest("corr-abandoned", "{}"u8.ToArray()));
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_SubscriberThrows_FaultsTheRequestAndUnparksIt()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        await transport.SubscribeAsync<JsonElement>(
+            "rpc/thrower"u8.ToArray(),
+            (_, _, _) => throw new InvalidDataException("Subscriber failure."));
+
+        JsonElement request = JsonElement.ParseValue("""{"n":2}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/thrower"u8.ToArray(),
+                "rpc/thrower/replies"u8.ToArray(),
+                request,
+                "corr-thrower"u8.ToArray(),
+                workspace).AsTask();
+
+        await Assert.ThrowsExactlyAsync<InvalidDataException>(() => requestTask);
+
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => transport.CompleteRequest("corr-thrower", "{}"u8.ToArray()));
     }
 
     [TestMethod]
@@ -343,5 +510,157 @@ public class InMemoryMessageTransportTests
         InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(
             () => { transport.DeliverAsync<JsonElement>("no/subscription", payloadJson).AsTask().GetAwaiter().GetResult(); });
         StringAssert.Contains(ex.Message, "no/subscription");
+    }
+
+    [TestMethod]
+    public async Task ContextSubscribeOnSubscribedChannelThrows()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int legacyCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            "test/displace"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                legacyCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+                "test/displace"u8.ToArray(),
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":1}"""u8);
+        await transport.PublishAsync("test/displace"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, legacyCount, "The original subscription must survive a refused subscribe.");
+    }
+
+    [TestMethod]
+    public async Task LegacySubscribeOnContextSubscribedChannelThrows()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/displace-back"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeAsync<JsonElement>(
+                "test/displace-back"u8.ToArray(),
+                (payload, headers, ct) => ValueTask.CompletedTask));
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":2}"""u8);
+        await transport.PublishAsync("test/displace-back"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, contextCount, "The original subscription must survive a refused subscribe.");
+    }
+
+    [TestMethod]
+    public async Task DataSubscribeOnResponderChannelThrows()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            "rpc/occupied"u8.ToArray(),
+            (request, headers, ct) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        // A responder occupies the same single slot as a data subscription, matching every
+        // real transport; the test transport must not let the two coexist.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+                "rpc/occupied"u8.ToArray(),
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+    }
+
+    [TestMethod]
+    public async Task ResubscribeAfterUnsubscribeSucceeds()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            "test/cycle"u8.ToArray(),
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await transport.UnsubscribeAsync("test/cycle"u8.ToArray());
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/cycle"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        JsonElement payload = JsonElement.ParseValue("""{"v":3}"""u8);
+        await transport.PublishAsync("test/cycle"u8.ToArray(), in payload);
+
+        Assert.AreEqual(1, contextCount, "The slot is free after unsubscribe, so a different kind can take it.");
+    }
+
+    [TestMethod]
+    public async Task DeliverRaw_ValidJson_ContextSubscription_InvokesHandler()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+        string? channelSeen = null;
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/raw-context"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                channelSeen = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                return ValueTask.CompletedTask;
+            });
+
+        DefaultMessageErrorPolicy policy = new(
+            MessageErrorAction.Skip,
+            MessageErrorAction.Skip,
+            MessageErrorAction.Abort);
+
+        MessageErrorAction? action = await transport.DeliverRawAsync<JsonElement>(
+            "test/raw-context",
+            """{"ok":true}"""u8.ToArray(),
+            policy);
+
+        Assert.IsNull(action);
+        Assert.AreEqual(1, contextCount);
+        Assert.AreEqual("test/raw-context", channelSeen);
+    }
+
+    [TestMethod]
+    public async Task DeliverRaw_MalformedJson_ContextSubscription_InvokesPolicy()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+        int contextCount = 0;
+
+        await transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            "test/raw-context-error"u8.ToArray(),
+            (payload, deliveryContext, ct) =>
+            {
+                contextCount++;
+                return ValueTask.CompletedTask;
+            });
+
+        DefaultMessageErrorPolicy policy = new(
+            MessageErrorAction.Skip,
+            MessageErrorAction.Skip,
+            MessageErrorAction.Abort);
+
+        MessageErrorAction? action = await transport.DeliverRawAsync<JsonElement>(
+            "test/raw-context-error",
+            "{{{invalid"u8.ToArray(),
+            policy);
+
+        Assert.AreEqual(MessageErrorAction.Skip, action);
+        Assert.AreEqual(0, contextCount);
     }
 }

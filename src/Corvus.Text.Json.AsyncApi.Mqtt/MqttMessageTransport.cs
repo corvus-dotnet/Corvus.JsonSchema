@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Text;
+using Corvus.Text.Json.AsyncApi.Internal;
 using Corvus.Text.Json.Internal;
 using MQTTnet;
 using MQTTnet.Client;
@@ -34,7 +35,7 @@ namespace Corvus.Text.Json.AsyncApi.Mqtt;
 /// the publish completes.
 /// </para>
 /// </remarks>
-public sealed class MqttMessageTransport : IMessageTransport
+public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -42,13 +43,19 @@ public sealed class MqttMessageTransport : IMessageTransport
     [ThreadStatic]
     private static Utf8JsonWriter? t_writer;
 
+    // Separate writer for header values: it carries the relaxed encoder, while payloads
+    // keep the default encoder's output shape. Both share the one scratch buffer.
+    [ThreadStatic]
+    private static Utf8JsonWriter? t_headerWriter;
+
     private readonly MqttTransportOptions options;
     private readonly IMqttClient client;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
-    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<MqttApplicationMessage, CancellationToken, Task>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, TaskCompletionSource<MqttApplicationMessage>> pendingReplies = new(ReadOnlyMemoryByteComparer.Instance);
-    private bool disposed;
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, string> channelStrings = new(ReadOnlyMemoryByteComparer.Instance);
+    private volatile bool disposed;
 
     private MqttMessageTransport(MqttTransportOptions options, IMqttClient client)
     {
@@ -107,16 +114,16 @@ public sealed class MqttMessageTransport : IMessageTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        string channel = this.GetChannelString(channelUtf8);
 
         // Serialize headers first (reuses the shared buffer, produces a string result)
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         // Serialize payload into the shared buffer, then rent for MQTT
         (byte[] rented, int length) = SerializeToRented(in payload);
-        return PublishAndReturnAsync(channel, rented, length, headersBase64, cancellationToken);
+        return PublishAndReturnAsync(channel, rented, length, headersJson, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -135,12 +142,12 @@ public sealed class MqttMessageTransport : IMessageTransport
 
         string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
         string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         (byte[] rented, int length) = SerializeToRented(in request);
-        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersBase64, workspace, cancellationToken);
+        return RequestCoreAsync<TReply>(requestChannel, replyChannel, rented, length, correlationIdUtf8, headersJson, workspace, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -152,7 +159,19 @@ public sealed class MqttMessageTransport : IMessageTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -172,15 +191,40 @@ public sealed class MqttMessageTransport : IMessageTransport
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        this.handlers.TryRemove(channel, out _);
 
-        this.options.Heartbeat?.Stop(channel, "mqtt");
+        // Local effect first, and an early out when there is nothing to remove: a double
+        // unsubscribe (or one against a disposed transport) must be a quiet no-op rather
+        // than a broker call that throws on a disposed client — matching every other transport.
+        if (!this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, Task>? removed))
+        {
+            return;
+        }
+
+        this.options.Heartbeat?.Stop(channel, "mqtt", removed);
 
         MqttClientUnsubscribeOptions unsubOptions = new MqttFactory().CreateUnsubscribeOptionsBuilder()
             .WithTopicFilter(channel)
             .Build();
 
-        await this.client.UnsubscribeAsync(unsubOptions, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.client.UnsubscribeAsync(unsubOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The broker still holds the topic filter, so restore the local entry (and its
+            // heartbeat) to keep the stop retryable — the generated consumer restores its
+            // gate token on a throwing stop and retries, and without this restore the retry
+            // would hit the early-out above, report success, and leave the broker delivering
+            // to a topic with no handler. If a new subscription claimed the channel in the
+            // window, it owns the topic now and the old entry is deliberately dropped.
+            if (this.handlers.TryAdd(channel, removed))
+            {
+                this.options.Heartbeat?.Start(channel, "mqtt", removed);
+            }
+
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -196,8 +240,8 @@ public sealed class MqttMessageTransport : IMessageTransport
 
         string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
         string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
-        string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBase64String(in headers)
+        string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToHeaderString(in headers)
             : null;
 
         byte[] rented;
@@ -212,7 +256,7 @@ public sealed class MqttMessageTransport : IMessageTransport
             length = 0;
         }
 
-        return DeadLetterCoreAsync(deadLetterChannel, originalChannel, rented, length, headersBase64, exception, cancellationToken);
+        return DeadLetterCoreAsync(deadLetterChannel, originalChannel, rented, length, headersJson, exception, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -224,8 +268,26 @@ public sealed class MqttMessageTransport : IMessageTransport
         }
 
         this.disposed = true;
-        this.handlers.Clear();
-        this.pendingReplies.Clear();
+
+        // Stop each live subscription's heartbeat as its entry is removed, so a disposed
+        // transport leaves no channel reporting Running, matching the other transports.
+        foreach (string channel in this.handlers.Keys)
+        {
+            if (this.handlers.TryRemove(channel, out Func<MqttApplicationMessage, CancellationToken, Task>? removed))
+            {
+                this.options.Heartbeat?.Stop(channel, "mqtt", removed);
+            }
+        }
+
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently discarded; clearing alone would strand the awaiters.
+        foreach (ReadOnlyMemory<byte> correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<MqttApplicationMessage>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(MqttMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
 
         if (this.client.IsConnected)
         {
@@ -239,12 +301,12 @@ public sealed class MqttMessageTransport : IMessageTransport
         string channel,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         CancellationToken cancellationToken)
     {
         try
         {
-            MqttApplicationMessage message = BuildMessage(channel, rented, length, headersBase64, default);
+            MqttApplicationMessage message = BuildMessage(channel, rented, length, headersJson, default);
             await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -262,13 +324,22 @@ public sealed class MqttMessageTransport : IMessageTransport
         byte[] rented,
         int length,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        string? headersBase64,
+        string? headersJson,
         JsonWorkspace workspace,
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
         TaskCompletionSource<MqttApplicationMessage> replyTcs = new();
         this.pendingReplies[correlationIdUtf8] = replyTcs;
+
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationIdUtf8, out _);
+            ArrayPool<byte>.Shared.Return(rented);
+            throw new ObjectDisposedException(nameof(MqttMessageTransport), "The transport was disposed before the reply arrived.");
+        }
 
         try
         {
@@ -284,7 +355,7 @@ public sealed class MqttMessageTransport : IMessageTransport
 
             // Publish the request, advertising the reply topic via the native MQTT 5.0 ResponseTopic
             // so a Corvus responder (SubscribeReplyAsync) knows where to send the correlated reply.
-            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersBase64, correlationIdUtf8, replyChannel);
+            MqttApplicationMessage requestMsg = BuildMessage(requestChannel, rented, length, headersJson, correlationIdUtf8, replyChannel);
             await this.client.PublishAsync(requestMsg, cancellationToken).ConfigureAwait(false);
 
             // Wait for correlated reply
@@ -377,20 +448,70 @@ public sealed class MqttMessageTransport : IMessageTransport
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        Func<MqttApplicationMessage, CancellationToken, Task> dispatch =
+            (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.ClaimChannel(channel, dispatch);
+        await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
+    }
 
-        this.options.Heartbeat?.Start(channel, "mqtt");
+    private void ClaimChannel(string channel, Func<MqttApplicationMessage, CancellationToken, Task> dispatch)
+    {
+        // A channel carries exactly one subscription, claimed atomically with TryAdd. A second
+        // subscribe is refused rather than replacing the first, so a caller cannot silently
+        // take over a channel another consumer is serving.
+        if (!this.handlers.TryAdd(channel, dispatch))
+        {
+            throw new InvalidOperationException(
+                $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
 
+        this.options.Heartbeat?.Start(channel, "mqtt", dispatch);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim and the start has already stopped a heartbeat that did not exist yet, so
+        // without this undo a disposed transport would report the channel Running forever.
+        if (this.disposed)
+        {
+            // The stop is unconditional: when the walk already removed the entry, the keyed
+            // remove fails but the just-resurrected heartbeat still needs stopping, and the
+            // owner guard makes a stray stop harmless.
+            this.handlers.TryRemove(KeyValuePair.Create(channel, dispatch));
+            this.options.Heartbeat?.Stop(channel, "mqtt", dispatch);
+            throw new ObjectDisposedException(nameof(MqttMessageTransport));
+        }
+    }
+
+    private async ValueTask SendSubscribeAsync(
+        string channel,
+        Func<MqttApplicationMessage, CancellationToken, Task> claimed,
+        CancellationToken cancellationToken)
+    {
         MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
             .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
             .Build();
 
-        await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The broker never registered the topic filter, so release the slot and the
+            // heartbeat — but only OUR claim: an unsubscribe-then-resubscribe may have
+            // replaced this slot while the send was in flight, and a key-only remove would
+            // evict the new subscriber and stop its heartbeat.
+            if (this.handlers.TryRemove(KeyValuePair.Create(channel, claimed)))
+            {
+                this.options.Heartbeat?.Stop(channel, "mqtt", claimed);
+            }
+
+            throw;
+        }
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -402,15 +523,10 @@ public sealed class MqttMessageTransport : IMessageTransport
         where TReply : struct, IJsonElement<TReply>
     {
         string dlChannel = channel + this.options.DeadLetterSuffix;
-        this.handlers[channel] = (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
-
-        this.options.Heartbeat?.Start(channel, "mqtt");
-
-        MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
-            .Build();
-
-        await this.client.SubscribeAsync(subOptions, cancellationToken).ConfigureAwait(false);
+        Func<MqttApplicationMessage, CancellationToken, Task> dispatch =
+            (message, ct) => this.DispatchToResponderAsync(channel, channelUtf8, dlChannel, handler, message, ct);
+        this.ClaimChannel(channel, dispatch);
+        await this.SendSubscribeAsync(channel, dispatch, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask DeadLetterCoreAsync(
@@ -418,7 +534,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         string originalChannel,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         Exception exception,
         CancellationToken cancellationToken)
     {
@@ -439,9 +555,9 @@ public sealed class MqttMessageTransport : IMessageTransport
                 ],
             };
 
-            if (headersBase64 is not null)
+            if (headersJson is not null)
             {
-                message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersBase64));
+                message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersJson));
             }
 
             await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
@@ -484,7 +600,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         string topic,
         byte[] rented,
         int length,
-        string? headersBase64,
+        string? headersJson,
         ReadOnlyMemory<byte> correlationIdUtf8,
         string? responseTopic = null)
     {
@@ -498,10 +614,10 @@ public sealed class MqttMessageTransport : IMessageTransport
             ResponseTopic = responseTopic,
         };
 
-        if (headersBase64 is not null)
+        if (headersJson is not null)
         {
             message.UserProperties ??= [];
-            message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersBase64));
+            message.UserProperties.Add(new MqttUserProperty(this.options.HeadersPropertyKey, headersJson));
         }
 
         if (!correlationIdUtf8.IsEmpty)
@@ -512,8 +628,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                 ? segment.Array
                 : correlationIdUtf8.ToArray();
             message.CorrelationData = corrBytes;
-            message.UserProperties ??= [];
-            message.UserProperties.Add(new MqttUserProperty(this.options.CorrelationIdPropertyKey, Encoding.UTF8.GetString(correlationIdUtf8.Span)));
+            if (this.options.CorrelationIdPropertyKey is string correlationKey)
+            {
+                message.UserProperties ??= [];
+                message.UserProperties.Add(new MqttUserProperty(correlationKey, Encoding.UTF8.GetString(correlationIdUtf8.Span)));
+            }
         }
 
         return message;
@@ -525,32 +644,44 @@ public sealed class MqttMessageTransport : IMessageTransport
 
         byte[]? corrData = args.ApplicationMessage.CorrelationData;
 
-        if (corrData is { Length: > 0 } &&
+        // A message that advertises a response topic while arriving on a topic this client
+        // data-subscribes is a request in flight (the loopback shape, which brokers deliver back
+        // to the sender), not a reply; matching it against pendingReplies would let that
+        // subscription consume its own request as its reply. On any other topic the correlation
+        // match stands, because an MQTT 5 responder may legitimately set a response topic on its
+        // reply to solicit a follow-up. The handler lookup is lock-free, so an unsubscribe that
+        // completes between a self-loopback request's publish and its delivery can make this read
+        // miss and the request correlate as its own reply; that window needs the loopback shape
+        // plus a concurrent unsubscribe of the same topic, and is accepted in trade for correct
+        // MQTT 5 responder interop, which is deterministic rather than a race.
+        if ((string.IsNullOrEmpty(args.ApplicationMessage.ResponseTopic) || !this.handlers.ContainsKey(topic)) &&
+            corrData is { Length: > 0 } &&
             this.pendingReplies.TryRemove(new ReadOnlyMemory<byte>(corrData), out TaskCompletionSource<MqttApplicationMessage>? tcs))
         {
             tcs.SetResult(args.ApplicationMessage);
             return Task.CompletedTask;
         }
 
-        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, ValueTask>? handler))
+        if (this.handlers.TryGetValue(topic, out Func<MqttApplicationMessage, CancellationToken, Task>? handler))
         {
-            return handler(args.ApplicationMessage, CancellationToken.None).AsTask();
+            // Ticked here, where the registry lookup proves the dispatch delegate is the
+            // channel's current owner, rather than inside the dispatch methods that lack it.
+            this.options.Heartbeat?.Tick(topic, "mqtt", handler);
+            return handler(args.ApplicationMessage, CancellationToken.None);
         }
 
         return Task.CompletedTask;
     }
 
-    private async ValueTask DispatchToHandlerAsync<TPayload>(
+    private async Task DispatchToHandlerAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         MqttApplicationMessage message,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        this.options.Heartbeat?.Tick(channel, "mqtt");
-
         ParsedJsonDocument<TPayload> payloadDoc;
         try
         {
@@ -636,11 +767,14 @@ public sealed class MqttMessageTransport : IMessageTransport
                 {
                     if (this.middleware is not null)
                     {
-                        await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                        await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.message, ct),
+                            (handler, payload, channelUtf8, headers, message),
+                            cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                        await handler.Invoke(payload, channelUtf8, headers, message, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -667,11 +801,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                                 length = 0;
                             }
 
-                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-                                ? SerializeToBase64String(in headers)
+                            string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToHeaderString(in headers)
                                 : null;
 
-                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersJson, ex, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
                         }
                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -693,7 +827,7 @@ public sealed class MqttMessageTransport : IMessageTransport
         }
     }
 
-    private async ValueTask DispatchToResponderAsync<TRequest, TReply>(
+    private async Task DispatchToResponderAsync<TRequest, TReply>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
@@ -703,8 +837,6 @@ public sealed class MqttMessageTransport : IMessageTransport
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        this.options.Heartbeat?.Tick(channel, "mqtt");
-
         ParsedJsonDocument<TRequest> requestDoc;
         try
         {
@@ -791,9 +923,10 @@ public sealed class MqttMessageTransport : IMessageTransport
                     TReply reply;
                     if (this.middleware is not null)
                     {
-                        TReply captured = default;
-                        await this.middleware(async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                        reply = captured;
+                        reply = await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler(s.request, s.headers, ct),
+                            (handler, request, headers),
+                            cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
@@ -852,11 +985,11 @@ public sealed class MqttMessageTransport : IMessageTransport
                                 length = 0;
                             }
 
-                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-                                ? SerializeToBase64String(in headers)
+                            string? headersJson = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToHeaderString(in headers)
                                 : null;
 
-                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersJson, ex, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
                         }
                         catch (Exception dlEx) when (dlEx is not OperationCanceledException)
@@ -889,19 +1022,31 @@ public sealed class MqttMessageTransport : IMessageTransport
         {
             if (prop.Name == this.options.HeadersPropertyKey)
             {
-                int maxBytes = ((prop.Value.Length * 3) + 3) / 4;
-                byte[] rented = ArrayPool<byte>.Shared.Rent(maxBytes);
-                if (Convert.TryFromBase64String(prop.Value, rented, out int bytesWritten))
-                {
-                    // Transfer ownership — document returns the array on Dispose()
-                    return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
-                }
-
-                ArrayPool<byte>.Shared.Return(rented);
+                return DecodeHeaderValue(prop.Value);
             }
         }
 
         return null;
+    }
+
+    // Publish and request run per message, so their channel strings come from a byte-keyed
+    // cache rather than a decode per call. The key copies the caller's bytes (callers pass
+    // rented or reused memory); past the cap, a very dynamic channel set falls back to
+    // per-call decoding rather than growing the cache without bound.
+    private string GetChannelString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelStrings.TryGetValue(channelUtf8, out string? cached))
+        {
+            return cached;
+        }
+
+        string created = Encoding.UTF8.GetString(channelUtf8.Span);
+        if (this.channelStrings.Count < 1024)
+        {
+            this.channelStrings.TryAdd(channelUtf8.ToArray(), created);
+        }
+
+        return created;
     }
 
     private static (byte[] Rented, int Length) SerializeToRented<T>(in T value)
@@ -919,15 +1064,56 @@ public sealed class MqttMessageTransport : IMessageTransport
         return (rented, length);
     }
 
-    private static string SerializeToBase64String<T>(in T value)
+    // The value is the compact JSON text itself; a 5.3.0 producer sent base64-wrapped JSON
+    // instead, so an unparseable value gets one base64 decode attempt before being treated
+    // as absent, which keeps a mixed-version rolling upgrade from dropping headers on this
+    // side. The catches are the library's own JsonException (it does not derive from
+    // System.Text.Json's), and every non-transfer path returns the rental.
+    private static ParsedJsonDocument<JsonElement>? DecodeHeaderValue(string headerValue)
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(headerValue.Length));
+        int bytesWritten = Encoding.UTF8.GetBytes(headerValue, rented);
+        try
+        {
+            // Transfer ownership — document returns the array on Dispose()
+            return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, bytesWritten), rented);
+        }
+        catch (JsonException)
+        {
+            // Not the current format. Base64 output never grows when decoded, so the same
+            // rental holds the legacy attempt.
+            if (Convert.TryFromBase64String(headerValue, rented, out int decoded))
+            {
+                try
+                {
+                    return ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, decoded), rented);
+                }
+                catch (JsonException)
+                {
+                }
+            }
+
+            // A foreign or corrupted value is treated as absent headers.
+            ArrayPool<byte>.Shared.Return(rented);
+        }
+
+        return null;
+    }
+
+    // MQTT 5 user-property values are UTF-8 strings, so the header text keeps non-ASCII
+    // characters raw: escaped output costs up to six ASCII bytes per character and could
+    // push a large headers object over the property's 65,535-byte cap that the old base64
+    // form fit under, while raw UTF-8 is always smaller than that base64 form. The relaxed
+    // encoder still escapes quotes and control characters.
+    private static string SerializeToHeaderString<T>(in T value)
         where T : struct, IJsonElement<T>
     {
         ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
         buffer.Clear();
-        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        Utf8JsonWriter writer = t_headerWriter ??= new(buffer, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
         writer.Reset(buffer);
         value.WriteTo(writer);
         writer.Flush();
-        return Convert.ToBase64String(buffer.WrittenSpan);
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 }
