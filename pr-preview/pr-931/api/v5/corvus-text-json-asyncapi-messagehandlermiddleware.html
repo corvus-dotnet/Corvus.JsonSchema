@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
     <meta name="description" content="API documentation for MessageHandlerMiddleware in Corvus.Text.Json.AsyncApi" />
-    <meta name="keywords" content="API, delegate, MessageHandlerMiddleware, Corvus.Text.Json.AsyncApi" />
+    <meta name="keywords" content="API, class, MessageHandlerMiddleware, Corvus.Text.Json.AsyncApi" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:description" content="API documentation for MessageHandlerMiddleware" />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-931/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="MessageHandlerMiddleware &#x2014; Corvus.Text.Json.AsyncApi" />
     <meta property="article:tag" content="API" />
-    <meta property="article:tag" content="delegate" />
+    <meta property="article:tag" content="class" />
     <meta property="article:tag" content="MessageHandlerMiddleware" />
     <meta property="article:tag" content="Corvus.Text.Json.AsyncApi" />
     <meta property="og:description" content="API documentation for MessageHandlerMiddleware" />
@@ -99,28 +99,13 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<p>A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.</p>
-<pre><code class="language-csharp">public delegate MessageHandlerMiddleware : MulticastDelegate, ICloneable, ISerializable
+<p>Wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.</p>
+<pre><code class="language-csharp">public abstract class MessageHandlerMiddleware
 </code></pre>
 <h2 id="remarks">Remarks</h2>
-<p>The transport calls through this delegate for every message handler invocation. Implementations may retry the operation, add backoff delays, apply circuit-breaker logic, or add observability instrumentation. If the middleware exhausts all retries and the operation still fails, it should let the exception propagate. The transport will then invoke the <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html"><code>IMessageErrorPolicy</code></a> to determine the terminal action (skip, dead-letter, or abort). The <code>Corvus.Text.Json.AsyncApi.Polly</code> package provides a ready-made implementation backed by <code>Polly.ResiliencePipeline</code>.</p>
-<h2 id="implements">Implements</h2>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.icloneable"><code>ICloneable</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.runtime.serialization.iserializable"><code>ISerializable</code></a></p>
-<h2 id="constructors">Constructors</h2>
-<table>
-<thead>
-<tr>
-<th>Constructor</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.ctor.html#messagehandlermiddleware-object-intptr">MessageHandlerMiddleware(object, IntPtr)</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<p>The transport calls through this class for every message handler invocation, passing the operation as a static delegate plus an explicit state value (the pattern <code>Polly.ResiliencePipeline.ExecuteAsync&lt;TState&gt;</code> uses), so a middleware-wrapped dispatch allocates no per-message closure. Implementations invoke <code>operation(state, cancellationToken)</code> once per attempt, passing the state through unchanged, and must not retain the operation or the state beyond the call. If the middleware exhausts all retries and the operation still fails, it should let the exception propagate. The transport then invokes the <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html"><code>IMessageErrorPolicy</code></a> to determine the terminal action (skip, dead-letter, or abort). The <code>Corvus.Text.Json.AsyncApi.Polly</code> package provides a ready-made implementation backed by <code>Polly.ResiliencePipeline</code>.</p>
+<h2 id="inheritance">Inheritance</h2>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>MessageHandlerMiddleware</strong></p>
 <h2 id="methods">Methods</h2>
 <table>
 <thead>
@@ -131,16 +116,8 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.begininvoke.html#begininvoke-func-cancellationtoken-valuetask-cancellationtoken-asynccallback-object">BeginInvoke(Func&lt;CancellationToken, ValueTask&gt;, CancellationToken, AsyncCallback, object)</a></td>
-<td></td>
-</tr>
-<tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.endinvoke.html#endinvoke-iasyncresult">EndInvoke(IAsyncResult)</a></td>
-<td></td>
-</tr>
-<tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.invoke.html#invoke-func-cancellationtoken-valuetask-cancellationtoken">Invoke(Func&lt;CancellationToken, ValueTask&gt;, CancellationToken)</a></td>
-<td></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.invokeasync.html">InvokeAsync</a></td>
+<td>Executes a handler operation through the middleware.</td>
 </tr>
 </tbody>
 </table>

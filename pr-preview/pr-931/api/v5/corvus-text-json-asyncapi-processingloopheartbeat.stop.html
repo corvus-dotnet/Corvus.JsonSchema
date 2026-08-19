@@ -131,7 +131,7 @@
 </tbody>
 </table>
 <h3 id="remarks">Remarks</h3>
-<p>Only lands if the entry still belongs to <code>owner</code>: a losing claim racer or a loop unwinding after a resubscribe must not mark the new owner's live subscription as stopped. The compare-exchange retry keeps a concurrent tick from swallowing the stop, while a concurrent <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a> by a new owner atomically wins.</p>
+<p>Only lands if the entry still belongs to <code>owner</code>: a losing claim racer or a loop unwinding after a resubscribe must not mark the new owner's live subscription as stopped. The stop transitions the owning state exactly once via an interlocked exchange, so a concurrent tick cannot swallow it, and a concurrent <a href="/Corvus.JsonSchema/pr-preview/pr-931/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a> by a new owner replaces the entry, leaving this stop to land harmlessly on the superseded state.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

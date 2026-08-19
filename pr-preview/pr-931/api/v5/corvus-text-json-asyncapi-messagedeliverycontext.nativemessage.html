@@ -106,7 +106,7 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></p>
 <h3 id="remarks">Remarks</h3>
-<p>Valid only for the duration of the handler invocation; the transport may recycle the buffers it references once the handler returns. Do not store it. The concrete type is transport-specific: Kafka delivers <code>Confluent.Kafka.ConsumeResult&lt;Null, byte[]&gt;</code>, NATS a boxed <code>NatsJSMsg&lt;byte[]&gt;</code> (JetStream) or <code>NatsMsg&lt;byte[]&gt;</code> (core), AMQP <code>RabbitMQ.Client.Events.BasicDeliverEventArgs</code>, MQTT <code>MQTTnet.MqttApplicationMessage</code>, and Azure Service Bus <code>Azure.Messaging.ServiceBus.ServiceBusReceivedMessage</code>. The WebSocket and in-memory testing transports have no native representation and always deliver <code>null</code> here.</p>
+<p>Valid only for the duration of the handler invocation; the transport may recycle the buffers it references once the handler returns. Do not store it. The concrete type is transport-specific: Kafka delivers <code>Confluent.Kafka.ConsumeResult&lt;Null, byte[]&gt;</code>, NATS a boxed <code>NatsJSMsg&lt;NatsMemoryOwner&lt;byte&gt;&gt;</code> (JetStream) or <code>NatsMsg&lt;NatsMemoryOwner&lt;byte&gt;&gt;</code> (core) whose pooled payload the transport owns (read it if needed, never dispose it), AMQP <code>RabbitMQ.Client.Events.BasicDeliverEventArgs</code>, MQTT <code>MQTTnet.MqttApplicationMessage</code>, and Azure Service Bus <code>Azure.Messaging.ServiceBus.ServiceBusReceivedMessage</code>. The WebSocket and in-memory testing transports have no native representation and always deliver <code>null</code> here.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
