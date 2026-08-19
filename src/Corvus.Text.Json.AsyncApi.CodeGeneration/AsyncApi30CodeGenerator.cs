@@ -24,6 +24,7 @@ public sealed class AsyncApi30CodeGenerator
 {
     private readonly string rootNamespace;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
+    private readonly List<AsyncApiGenerationDiagnostic> diagnostics = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AsyncApi30CodeGenerator"/> class.
@@ -43,6 +44,12 @@ public sealed class AsyncApi30CodeGenerator
     }
 
     /// <summary>
+    /// Gets the problems the most recent <see cref="Generate"/> call encountered and worked
+    /// around, such as references that did not resolve. Empty when generation was clean.
+    /// </summary>
+    public IReadOnlyList<AsyncApiGenerationDiagnostic> Diagnostics => this.diagnostics;
+
+    /// <summary>
     /// Walks the AsyncAPI 3.0 specification and collects all schema
     /// JSON Pointer strings reachable from the selected operations.
     /// </summary>
@@ -52,11 +59,15 @@ public sealed class AsyncApi30CodeGenerator
     /// Optional external reference resolver. When provided, external <c>$ref</c> pointers
     /// are resolved to absolute paths via <see cref="IAsyncApiReferenceResolver.ResolveToAbsolute(string)"/>.
     /// </param>
+    /// <param name="diagnostics">
+    /// Optional collection receiving a diagnostic for every entry that was skipped or degraded.
+    /// </param>
     /// <returns>An array of schema pointer strings.</returns>
     public static string[] CollectSchemaPointers(
         AsyncApiDocument doc,
         OperationFilter? filter = null,
-        IAsyncApiReferenceResolver? referenceResolver = null)
+        IAsyncApiReferenceResolver? referenceResolver = null,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         List<string> pointers = [];
 
@@ -70,10 +81,16 @@ public sealed class AsyncApi30CodeGenerator
         {
             string channelName = channelProp.Name;
 
-            AsyncApiDocument.Channel channel = channelProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(channelProp.Value, doc, referenceResolver, out JsonElement resolvedChannel))
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/channels/{channelName}",
+                    "The channel entry is a $ref that does not resolve; its message schemas were skipped."));
+                continue;
+            }
+
+            AsyncApiDocument.Channel channel = resolvedChannel;
 
             if (channel.IsUndefined())
             {
@@ -131,10 +148,18 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
+    /// </param>
+    /// <param name="diagnostics">
+    /// Optional collection receiving a diagnostic for every entry that was skipped or degraded.
+    /// </param>
     /// <returns>An array of <see cref="AsyncApiOperationSummary"/> records.</returns>
     public static AsyncApiOperationSummary[] ListOperations(
         AsyncApiDocument doc,
-        OperationFilter? filter = null)
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         List<AsyncApiOperationSummary> result = [];
 
@@ -145,10 +170,16 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(operationProp.Value, doc, referenceResolver, out JsonElement resolvedOperation))
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/operations/{operationProp.Name}",
+                    "The operation entry is a $ref that does not resolve; the operation was skipped."));
+                continue;
+            }
+
+            AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
             if (operation.IsUndefined())
             {
@@ -166,7 +197,7 @@ public sealed class AsyncApi30CodeGenerator
                 : OperationAction.Receive;
 
             // Resolve channel reference to get address
-            string channelAddress = ResolveChannelAddress(operation, doc);
+            string channelAddress = ResolveChannelAddress(operation, doc, referenceResolver, diagnostics);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -233,8 +264,14 @@ public sealed class AsyncApi30CodeGenerator
     /// Lists all servers defined in the AsyncAPI 3.0 specification.
     /// </summary>
     /// <param name="doc">The parsed AsyncAPI document.</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
+    /// </param>
+    /// <param name="diagnostics">
+    /// Optional collection receiving a diagnostic for every entry that was skipped or degraded.
+    /// </param>
     /// <returns>An array of <see cref="ServerInfo"/> records.</returns>
-    public static ServerInfo[] ListServers(AsyncApiDocument doc)
+    public static ServerInfo[] ListServers(AsyncApiDocument doc, IAsyncApiReferenceResolver? referenceResolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         List<ServerInfo> result = [];
 
@@ -246,10 +283,17 @@ public sealed class AsyncApi30CodeGenerator
         foreach (var serverProp in doc.ServersValue.EnumerateObject())
         {
             string name = serverProp.Name;
-            AsyncApiDocument.Type300Server server = serverProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Server: static (in AsyncApiDocument.Type300Server s) => s,
-                defaultMatch: static (in AsyncApiDocument.Servers.AdditionalPropertiesEntity _) => default);
+
+            if (!TryResolveEntry(serverProp.Value, doc, referenceResolver, out JsonElement resolvedServer))
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/servers/{name}",
+                    "The server entry is a $ref that does not resolve; the server was skipped."));
+                continue;
+            }
+
+            AsyncApiDocument.Type300Server server = resolvedServer;
 
             if (server.IsUndefined())
             {
@@ -266,10 +310,17 @@ public sealed class AsyncApi30CodeGenerator
                 foreach (var varProp in server.Variables.EnumerateObject())
                 {
                     string varName = varProp.Name;
-                    AsyncApiDocument.ServerVariable variable = varProp.Value.Match(
-                        matchReference: static (in AsyncApiDocument.Reference _) => default,
-                        matchServerVariable: static (in AsyncApiDocument.ServerVariable v) => v,
-                        defaultMatch: static (in AsyncApiDocument.ServerVariables.AdditionalPropertiesEntity _) => default);
+
+                    if (!TryResolveEntry(varProp.Value, doc, referenceResolver, out JsonElement resolvedVariable))
+                    {
+                        diagnostics?.Add(new(
+                            AsyncApiGenerationDiagnosticSeverity.Warning,
+                            $"#/servers/{name}/variables/{varName}",
+                            "The server variable is a $ref that does not resolve; the variable was skipped."));
+                        continue;
+                    }
+
+                    AsyncApiDocument.ServerVariable variable = resolvedVariable;
 
                     if (variable.IsUndefined())
                     {
@@ -314,7 +365,7 @@ public sealed class AsyncApi30CodeGenerator
 
                     if (schemeName is not null)
                     {
-                        string schemeType = ResolveSecuritySchemeType(doc, schemeName);
+                        string schemeType = ResolveSecuritySchemeType(doc, schemeName, referenceResolver, diagnostics);
                         securitySchemes.Add(new SecuritySchemeInfo(schemeName, schemeType));
                     }
                 }
@@ -334,12 +385,16 @@ public sealed class AsyncApi30CodeGenerator
     /// <param name="resolver">
     /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
     /// </param>
+    /// <param name="diagnostics">
+    /// Optional collection receiving a diagnostic for every entry that was skipped or degraded.
+    /// </param>
     /// <returns>A <see cref="ChannelBindingInfo"/> containing the resolved bindings.</returns>
     public static ChannelBindingInfo GetBindings(
         AsyncApiDocument doc,
         string channelName,
         string? messageName = null,
-        IAsyncApiReferenceResolver? resolver = null)
+        IAsyncApiReferenceResolver? resolver = null,
+        ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         AsyncApiDocument.ChannelBindingsObject channelBindings = default;
         AsyncApiDocument.OperationBindingsObject operationBindings = default;
@@ -349,10 +404,18 @@ public sealed class AsyncApi30CodeGenerator
         if (doc.ChannelsValue.IsNotUndefined() &&
             doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
         {
-            AsyncApiDocument.Channel channel = channelEntity.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            AsyncApiDocument.Channel channel = default;
+            if (TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel))
+            {
+                channel = resolvedChannel;
+            }
+            else
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/channels/{channelName}",
+                    "The channel entry is a $ref that does not resolve; its bindings were skipped."));
+            }
 
             if (channel.IsNotUndefined() && channel.Bindings.IsNotUndefined())
             {
@@ -379,10 +442,16 @@ public sealed class AsyncApi30CodeGenerator
             string channelRef = $"#/channels/{channelName}";
             foreach (var opProp in doc.OperationsValue.EnumerateObject())
             {
-                AsyncApiDocument.Type300Operation operation = opProp.Value.Match(
-                    matchReference: static (in AsyncApiDocument.Reference _) => default,
-                    matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                    defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+                if (!TryResolveEntry(opProp.Value, doc, resolver, out JsonElement resolvedOperation))
+                {
+                    diagnostics?.Add(new(
+                        AsyncApiGenerationDiagnosticSeverity.Warning,
+                        $"#/operations/{opProp.Name}",
+                        "The operation entry is a $ref that does not resolve; its bindings were skipped."));
+                    continue;
+                }
+
+                AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
                 if (operation.IsUndefined())
                 {
@@ -421,26 +490,32 @@ public sealed class AsyncApi30CodeGenerator
             doc.ChannelsValue.IsNotUndefined() &&
             doc.ChannelsValue.TryGetProperty(channelName, out var chEntityForMsg))
         {
-            AsyncApiDocument.Channel channelForMsg = chEntityForMsg.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+            AsyncApiDocument.Channel channelForMsg = default;
+            if (TryResolveEntry(chEntityForMsg, doc, resolver, out JsonElement resolvedChannelForMsg))
+            {
+                channelForMsg = resolvedChannelForMsg;
+            }
 
             if (channelForMsg.IsNotUndefined() && channelForMsg.Messages.IsNotUndefined())
             {
                 if (channelForMsg.Messages.TryGetProperty(messageName, out var msgEntity))
                 {
-                    AsyncApiDocument.MessageObject msg = msgEntity.Match(
-                        matchReference: static (in AsyncApiDocument.Reference _) => default,
-                        matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
-                        defaultMatch: static (in AsyncApiDocument.ChannelMessages.AdditionalPropertiesEntity _) => default);
+                    AsyncApiDocument.MessageObject msg = default;
+                    if (TryResolveEntry(msgEntity, doc, resolver, out JsonElement resolvedMsg))
+                    {
+                        msg = resolvedMsg;
+                    }
+                    else
+                    {
+                        diagnostics?.Add(new(
+                            AsyncApiGenerationDiagnosticSeverity.Warning,
+                            $"#/channels/{channelName}/messages/{messageName}",
+                            "The message entry is a $ref that does not resolve; its bindings were skipped."));
+                    }
 
                     if (msg.IsNotUndefined() && msg.Bindings.IsNotUndefined())
                     {
-                        messageBindings = msg.Bindings.Match(
-                            matchReference: static (in AsyncApiDocument.Reference _) => default,
-                            matchMessageBindingsObject: static (in AsyncApiDocument.MessageBindingsObject b) => b,
-                            defaultMatch: static (in AsyncApiDocument.MessageObject.BindingsEntity _) => default);
+                        messageBindings = AsyncApiDocument.MessageBindingsObject.From(ResolveRef(msg.Bindings, doc, resolver));
                     }
                 }
             }
@@ -471,6 +546,8 @@ public sealed class AsyncApi30CodeGenerator
         OperationFilter? filter = null,
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
+        this.diagnostics.Clear();
+
         List<GeneratedFile> files = [];
 
         if (doc.OperationsValue.IsUndefined())
@@ -478,9 +555,9 @@ public sealed class AsyncApi30CodeGenerator
             return files;
         }
 
-        (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = CollectOperations(doc, filter, referenceResolver);
+        (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = this.CollectOperations(doc, filter, referenceResolver);
 
-        files.AddRange(this.GenerateOperations(sendOps, receiveOps, ListServers(doc)));
+        files.AddRange(this.GenerateOperations(sendOps, receiveOps, ListServers(doc, referenceResolver, this.diagnostics)));
 
         return files;
     }
@@ -505,10 +582,16 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
-                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(operationProp.Value, doc, referenceResolver, out JsonElement resolvedOperation))
+            {
+                this.diagnostics.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/operations/{operationProp.Name}",
+                    "The operation entry is a $ref that does not resolve; the operation was skipped."));
+                continue;
+            }
+
+            AsyncApiDocument.Type300Operation operation = resolvedOperation;
 
             if (operation.IsUndefined())
             {
@@ -524,7 +607,7 @@ public sealed class AsyncApi30CodeGenerator
                 ? OperationAction.Send
                 : OperationAction.Receive;
 
-            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(operation, doc);
+            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(operation, doc, referenceResolver, this.diagnostics);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -533,13 +616,13 @@ public sealed class AsyncApi30CodeGenerator
 
             string operationName = operationProp.Name;
             List<MessageInfo> messages = CollectOperationMessages(operation, doc, referenceResolver);
-            List<ChannelParameter> parameters = CollectChannelParameters(operation, doc, referenceResolver);
+            List<ChannelParameter> parameters = CollectChannelParameters(operation, doc, referenceResolver, this.diagnostics);
             ReplyInfo? reply = CollectReplyInfo(operation, doc, referenceResolver);
 
             // Extract channel name and allowed servers
             string? channelName = ExtractChannelName(operation, doc);
             IReadOnlyList<string>? allowedServers = channelName is not null
-                ? GetChannelAllowedServers(doc, channelName)
+                ? GetChannelAllowedServers(doc, channelName, referenceResolver, this.diagnostics)
                 : null;
 
             // Collect security schemes from the servers this operation is allowed to use
@@ -676,11 +759,40 @@ public sealed class AsyncApi30CodeGenerator
             files.Add(EmitProducer(op));
         }
 
+        // An operation legitimately named *WithDeliveryContext collides with another operation's
+        // delivery-context variant names; a collision skips the variant with a diagnostic instead
+        // of silently clobbering generated files.
+        HashSet<string> receiveOpPascalNames = new(StringComparer.Ordinal);
+        foreach (OperationInfo op in receiveOps)
+        {
+            receiveOpPascalNames.Add(ToPascalCase(op.Name));
+        }
+
         // Emit consumer handler interfaces and consumer classes for receive operations
         foreach (OperationInfo op in receiveOps)
         {
-            files.Add(EmitConsumerHandler(op));
-            files.Add(EmitConsumer(op));
+            files.Add(EmitConsumerHandler(op, withDeliveryContext: false));
+            files.Add(EmitConsumer(op, withDeliveryContext: false));
+
+            // A responder's context never reaches its handler (SubscribeReplyAsync has no
+            // delivery-context form), so the variants would be inert duplicates demanding a
+            // wider transport interface for no benefit.
+            if (!IsResponderOperation(op))
+            {
+                string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
+                if (receiveOpPascalNames.Contains(variantBaseName))
+                {
+                    this.diagnostics.Add(new(
+                        AsyncApiGenerationDiagnosticSeverity.Warning,
+                        $"#/operations/{op.Name}",
+                        $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
+                }
+                else
+                {
+                    files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
+                    files.Add(EmitConsumer(op, withDeliveryContext: true));
+                }
+            }
 
             // Multi-message operations need a discriminated received message type
             if (op.Messages.Count > 1)
@@ -762,7 +874,10 @@ public sealed class AsyncApi30CodeGenerator
         {
             foreach (var msgProp in channel.Messages.EnumerateObject())
             {
-                // Match discriminates references (collected separately) from inline messages
+                // Match deliberately leaves references alone here: a channel message that is a
+                // $ref into components.messages gets its schema pointers from the separate
+                // components.Messages pass in CollectSchemaPointers, so resolving it here
+                // would collect the same payload twice.
                 AsyncApiDocument.MessageObject msg = msgProp.Value.Match(
                     matchReference: static (in AsyncApiDocument.Reference _) => default,
                     matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
@@ -811,12 +926,12 @@ public sealed class AsyncApi30CodeGenerator
         return GetChannelAddressInfo(channel, channelName).Address;
     }
 
-    private static string ResolveChannelAddress(JsonElement operation, AsyncApiDocument doc)
+    private static string ResolveChannelAddress(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
-        return ResolveChannelAddressInfo(operation, doc).Address;
+        return ResolveChannelAddressInfo(operation, doc, resolver, diagnostics).Address;
     }
 
-    private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc)
+    private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         // Check operation traits for channel property fallback
         if (!TryGetPropertyWithTraits(operation, "channel"u8, doc, null, out JsonElement channelRef))
@@ -839,10 +954,18 @@ public sealed class AsyncApi30CodeGenerator
             if (channels.IsNotUndefined() &&
                 channels.TryGetProperty(channelName, out AsyncApiDocument.Channels.AdditionalPropertiesEntity channelEntity))
             {
-                AsyncApiDocument.Channel channel = channelEntity.Match(
-                    matchReference: static (in AsyncApiDocument.Reference _) => default,
-                    matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-                    defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+                AsyncApiDocument.Channel channel = default;
+                if (TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel))
+                {
+                    channel = resolvedChannel;
+                }
+                else
+                {
+                    diagnostics?.Add(new(
+                        AsyncApiGenerationDiagnosticSeverity.Warning,
+                        $"#/channels/{channelName}",
+                        "The channel entry is a $ref that does not resolve; the channel key was used as the address."));
+                }
 
                 if (channel.IsNotUndefined())
                 {
@@ -874,7 +997,7 @@ public sealed class AsyncApi30CodeGenerator
         return null;
     }
 
-    private static IReadOnlyList<string>? GetChannelAllowedServers(AsyncApiDocument doc, string channelName)
+    private static IReadOnlyList<string>? GetChannelAllowedServers(AsyncApiDocument doc, string channelName, IAsyncApiReferenceResolver? resolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         if (doc.ChannelsValue.IsUndefined())
         {
@@ -886,10 +1009,18 @@ public sealed class AsyncApi30CodeGenerator
             return null;
         }
 
-        AsyncApiDocument.Channel channel = channelEntity.Match(
-            matchReference: static (in AsyncApiDocument.Reference _) => default,
-            matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
-            defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+        AsyncApiDocument.Channel channel = default;
+        if (TryResolveEntry(channelEntity, doc, resolver, out JsonElement resolvedChannel))
+        {
+            channel = resolvedChannel;
+        }
+        else
+        {
+            diagnostics?.Add(new(
+                AsyncApiGenerationDiagnosticSeverity.Warning,
+                $"#/channels/{channelName}",
+                "The channel entry is a $ref that does not resolve; its server restriction was skipped."));
+        }
 
         if (channel.IsUndefined() || channel.Servers.IsUndefined())
         {
@@ -1007,7 +1138,7 @@ public sealed class AsyncApi30CodeGenerator
         return messages;
     }
 
-    private static List<ChannelParameter> CollectChannelParameters(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
+    private static List<ChannelParameter> CollectChannelParameters(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         List<ChannelParameter> parameters = [];
 
@@ -1016,6 +1147,9 @@ public sealed class AsyncApi30CodeGenerator
         {
             return parameters;
         }
+
+        AsyncApiDocument.Reference channelAsRef = channelRef;
+        string channelLocation = channelAsRef.Ref.IsNotUndefined() ? channelAsRef.Ref.GetString()! : "#/channels/(inline)";
 
         JsonElement channelElement = ResolveRef(channelRef, doc, resolver);
         if (channelElement.ValueKind != JsonValueKind.Object)
@@ -1032,10 +1166,15 @@ public sealed class AsyncApi30CodeGenerator
         foreach (var paramProp in channel.ParametersValue.EnumerateObject())
         {
             string paramName = paramProp.Name;
-            AsyncApiDocument.Parameter param = paramProp.Value.Match(
-                matchReference: static (in AsyncApiDocument.Reference _) => default,
-                matchParameter: static (in AsyncApiDocument.Parameter p) => p,
-                defaultMatch: static (in AsyncApiDocument.Parameters.AdditionalPropertiesEntity _) => default);
+            if (!TryResolveEntry(paramProp.Value, doc, resolver, out JsonElement resolvedParameter))
+            {
+                diagnostics?.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"{channelLocation}/parameters/{paramName}",
+                    "The parameter is a $ref that does not resolve; the argument keeps its name but loses description, enum, and default."));
+            }
+
+            AsyncApiDocument.Parameter param = resolvedParameter;
 
             if (param.IsUndefined())
             {
@@ -1317,6 +1456,21 @@ public sealed class AsyncApi30CodeGenerator
         return ResolveRef(element, doc, resolver, out _);
     }
 
+    // Resolves a map entry that may be a Reference Object (in AsyncAPI 3.0 nearly every
+    // object is referenceable). Returns false when the element is a reference that cannot
+    // be resolved (dangling, or external with no resolver), so the caller can skip it the
+    // same way it skips a malformed entry.
+    private static bool TryResolveEntry(
+        JsonElement element,
+        AsyncApiDocument doc,
+        IAsyncApiReferenceResolver? resolver,
+        out JsonElement resolved)
+    {
+        resolved = ResolveRef(element, doc, resolver);
+        AsyncApiDocument.Reference asRef = resolved;
+        return !asRef.Ref.IsNotUndefined();
+    }
+
     // Extracts a message's AsyncAPI Correlation ID as (name, location). The message's `correlationId` is
     // either inline ({ location, ... }, which has no referable name) or a $ref to a named definition under
     // components.correlationIds — the latter's key is the name an Arazzo receive step's `correlationId`
@@ -1496,10 +1650,13 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"private const string ChannelAddressTemplate = \"{EscapeString(op.ChannelAddress)}\";");
         }
 
-        // Hoist the reply channel address to a static field when it's a constant literal
+        // Hoist the reply channel address to a static field whenever some message's emission
+        // will reference it: always when there is no address expression, and as the fallback for
+        // any message whose expression is unusable (the demotion the accessor helper reports).
         if (op.Reply is { } replyForField
             && !string.IsNullOrEmpty(replyForField.ChannelAddress)
-            && replyForField.AddressLocationExpression is null)
+            && (replyForField.AddressLocationExpression is null
+                || op.Messages.Any(m => this.ComputeReplyAddressAccessor(op, replyForField, m) is null)))
         {
             w.WriteLine($"private static readonly byte[] ReplyChannelAddressUtf8 = \"{EscapeString(replyForField.ChannelAddress)}\"u8.ToArray();");
         }
@@ -1574,7 +1731,20 @@ public sealed class AsyncApi30CodeGenerator
             // Core body and the channel is already supplied as channelUtf8/channelRental.
             void EmitPublishBody()
             {
+                // Anything created or rented before the PublishAsyncCore call is released in the
+                // emitted catch if a pre-Core step (payload building, validation, channel encoding)
+                // throws; from the Core call onwards the Core owns release, because an async method
+                // surfaces its failures through the returned task rather than synchronously.
+                bool rentsChannelInline = op.Parameters.Count > 0 || (op.IsDynamicAddress && !dynamicNoParams);
+
                 w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+                if (rentsChannelInline)
+                {
+                    w.WriteLine("byte[]? channelRental = null;");
+                }
+
+                w.WriteLine("try");
+                w.OpenBrace();
                 w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
 
                 if (msg.HeadersTypeName is not null)
@@ -1606,7 +1776,7 @@ public sealed class AsyncApi30CodeGenerator
                 {
                     // Dynamic: convert user-provided string to UTF-8 bytes (one allocation)
                     w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                    w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
                     w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
                     w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
                 }
@@ -1649,6 +1819,21 @@ public sealed class AsyncApi30CodeGenerator
                     : "null";
 
                 w.WriteLine($"return PublishAsyncCore(workspace, {channelArg}, {rentalArg}, payloadValue, {headersArg}, context, cancellationToken);");
+                w.CloseBrace();
+                w.WriteLine("catch");
+                w.OpenBrace();
+                if (dynamicNoParams)
+                {
+                    w.WriteLine("ArrayPool<byte>.Shared.Return(channelRental);");
+                }
+                else if (rentsChannelInline)
+                {
+                    w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
+                }
+
+                w.WriteLine("workspace.Dispose();");
+                w.WriteLine("throw;");
+                w.CloseBrace();
             }
 
             if (dynamicNoParams)
@@ -1803,17 +1988,56 @@ public sealed class AsyncApi30CodeGenerator
                 // all delegate to a shared private Core taking the channel as already-built UTF-8.
                 bool dynamicNoParams = op.IsDynamicAddress && op.Parameters.Count == 0;
 
-                // Local function emitting the shared body (workspace + payload + validation + reply
-                // address derivation + the RequestAsyncCore call). For the dynamic triple this is the
-                // Core body and the channel is already supplied as channelUtf8/channelRental.
+                // Local function emitting the shared body (payload workspace + payload + validation +
+                // reply address derivation + the RequestAsyncCore call). For the dynamic triple this is
+                // the Core body and the channel is already supplied as channelUtf8/channelRental. The
+                // caller-supplied workspace owns the reply documents; the internal payload workspace
+                // owns only the outgoing request and is disposed by the Core once the exchange
+                // completes. Anything created or rented before the Core call is released in the
+                // emitted catch if a pre-Core step throws; from the Core call onwards the Core owns
+                // release, because an async method surfaces its failures through the returned task
+                // rather than synchronously.
                 void EmitRequestBody()
                 {
-                    w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-                    w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
+                    bool rentsChannelInline = op.Parameters.Count > 0 || (op.IsDynamicAddress && !dynamicNoParams);
+
+                    // Resolve the reply-address strategy up front so the rental locals can be
+                    // declared ahead of the try block whose catch releases them. An unusable
+                    // expression demotes to the declared fallback address with a diagnostic.
+                    string? replyAccessor = this.ComputeReplyAddressAccessor(op, reply, msg);
+
+                    string replyAddr;
+                    if (replyAccessor is not null)
+                    {
+                        replyAddr = "replyChannelUtf8";
+                    }
+                    else if (!string.IsNullOrEmpty(reply.ChannelAddress))
+                    {
+                        replyAddr = "ReplyChannelAddressUtf8";
+                    }
+                    else
+                    {
+                        replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
+                    }
+
+                    w.WriteLine($"JsonWorkspace payloadWorkspace = JsonWorkspace.CreateUnrented();");
+                    if (rentsChannelInline)
+                    {
+                        w.WriteLine("byte[]? channelRental = null;");
+                    }
+
+                    if (replyAccessor is not null)
+                    {
+                        w.WriteLine("byte[]? replyRental = null;");
+                    }
+
+                    w.WriteLine("try");
+                    w.OpenBrace();
+                    w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(payloadWorkspace, payload, 30).RootElement;");
 
                     if (msg.HeadersTypeName is not null)
                     {
-                        w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
+                        w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(payloadWorkspace, headers, 10).RootElement;");
                     }
 
                     // Validation
@@ -1837,48 +2061,18 @@ public sealed class AsyncApi30CodeGenerator
                     else if (op.IsDynamicAddress && !dynamicNoParams)
                     {
                         w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                        w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
                         w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
                         w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
                     }
 
                     // Reply channel address (may be dynamic via runtime expression)
-                    string replyAddr;
-                    if (reply.AddressLocationExpression is { } addrExpr)
+                    if (replyAccessor is not null)
                     {
-                        // Dynamic reply address from runtime expression (e.g., $message.header#/replyTo)
-                        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
-                        string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
-                        if (accessor is not null)
-                        {
-                            w.WriteLine($"string replyAddressStr = {accessor};");
-                            w.WriteLine("byte[] replyRental = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(replyAddressStr));");
-                            w.WriteLine("int replyLen = Encoding.UTF8.GetBytes(replyAddressStr, replyRental);");
-                            w.WriteLine("ReadOnlyMemory<byte> replyChannelUtf8 = replyRental.AsMemory(0, replyLen);");
-                            replyAddr = "replyChannelUtf8";
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(reply.ChannelAddress))
-                            {
-                                replyAddr = "ReplyChannelAddressUtf8";
-                            }
-                            else
-                            {
-                                replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(reply.ChannelAddress))
-                        {
-                            replyAddr = "ReplyChannelAddressUtf8";
-                        }
-                        else
-                        {
-                            replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
-                        }
+                        w.WriteLine($"string replyAddressStr = {replyAccessor};");
+                        w.WriteLine("replyRental = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(replyAddressStr));");
+                        w.WriteLine("int replyLen = Encoding.UTF8.GetBytes(replyAddressStr, replyRental);");
+                        w.WriteLine("ReadOnlyMemory<byte> replyChannelUtf8 = replyRental.AsMemory(0, replyLen);");
                     }
 
                     string headersArg = msg.HeadersTypeName is not null
@@ -1891,8 +2085,29 @@ public sealed class AsyncApi30CodeGenerator
                     string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
                         ? "channelRental"
                         : "null";
+                    string replyRentalArg = replyAccessor is not null ? "replyRental" : "null";
 
-                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(workspace, {channelArg}, {rentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
+                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(payloadWorkspace, workspace, {channelArg}, {rentalArg}, {replyRentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
+                    w.CloseBrace();
+                    w.WriteLine("catch");
+                    w.OpenBrace();
+                    if (dynamicNoParams)
+                    {
+                        w.WriteLine("ArrayPool<byte>.Shared.Return(channelRental);");
+                    }
+                    else if (rentsChannelInline)
+                    {
+                        w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
+                    }
+
+                    if (replyAccessor is not null)
+                    {
+                        w.WriteLine("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }");
+                    }
+
+                    w.WriteLine("payloadWorkspace.Dispose();");
+                    w.WriteLine("throw;");
+                    w.CloseBrace();
                 }
 
                 w.WriteLine();
@@ -1907,6 +2122,11 @@ public sealed class AsyncApi30CodeGenerator
                         leadingArgs += ", headers";
                     }
 
+                    // The reply workspace travels with the message-content group through all three
+                    // overloads into the Core.
+                    leadingParams += ", JsonWorkspace workspace";
+                    leadingArgs += ", workspace";
+
                     void EmitLeadingDocs()
                     {
                         w.WriteLine($"/// <summary>");
@@ -1917,6 +2137,8 @@ public sealed class AsyncApi30CodeGenerator
                         {
                             w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                         }
+
+                        w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
                     }
 
                     // string overload — delegates to the ReadOnlySpan<char> overload.
@@ -1968,6 +2190,8 @@ public sealed class AsyncApi30CodeGenerator
                         w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                     }
 
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
+
                     w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
                     w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
                     w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
@@ -1989,6 +2213,8 @@ public sealed class AsyncApi30CodeGenerator
                         w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                     }
 
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>");
+
                     if (op.IsDynamicAddress)
                     {
                         w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
@@ -2008,6 +2234,10 @@ public sealed class AsyncApi30CodeGenerator
                     {
                         reqParams.Add($"{msg.HeadersTypeName}.Source headers");
                     }
+
+                    // The reply workspace sits with the message-content group, ahead of any
+                    // defaulted channel parameters.
+                    reqParams.Add("JsonWorkspace workspace");
 
                     if (op.IsDynamicAddress)
                     {
@@ -2070,7 +2300,7 @@ public sealed class AsyncApi30CodeGenerator
         if (op.Reply is not null)
         {
             w.WriteLine();
-            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, ReadOnlyMemory<byte> replyChannelUtf8, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace payloadWorkspace, JsonWorkspace replyWorkspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, byte[]? replyRental, ReadOnlyMemory<byte> replyChannelUtf8, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
             w.WriteLine("    where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>");
             w.OpenBrace();
@@ -2078,14 +2308,30 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, \"D\");");
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), workspace, headers, cancellationToken).ConfigureAwait(false);");
+
+            // The request path authenticates exactly as the publish path does.
+            if (op.SecuritySchemes.Count > 0)
+            {
+                w.WriteLine("if (this.authProvider is not null)");
+                w.OpenBrace();
+                foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+                {
+                    w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+                }
+
+                w.CloseBrace();
+                w.WriteLine();
+            }
+
+            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), replyWorkspace, headers, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return replyPayload;");
             w.CloseBrace();
             w.WriteLine("finally");
             w.OpenBrace();
             w.WriteLine("ArrayPool<byte>.Shared.Return(correlationIdUtf8);");
             w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
-            w.WriteLine("workspace.Dispose();");
+            w.WriteLine("if (replyRental is not null) { ArrayPool<byte>.Shared.Return(replyRental); }");
+            w.WriteLine("payloadWorkspace.Dispose();");
             w.CloseBrace();
             w.CloseBrace();
         }
@@ -2108,9 +2354,10 @@ public sealed class AsyncApi30CodeGenerator
     private static string ReplyHandlerReturnType(in OperationInfo op)
         => IsResponderOperation(op) ? $"ValueTask<{ReplyPayloadTypeNameOf(op)}>" : "ValueTask";
 
-    private GeneratedFile EmitConsumerHandler(OperationInfo op)
+    private GeneratedFile EmitConsumerHandler(OperationInfo op, bool withDeliveryContext)
     {
-        string interfaceName = $"I{ToPascalCase(op.Name)}Handler";
+        string contextSuffix = withDeliveryContext ? "WithDeliveryContext" : string.Empty;
+        string interfaceName = $"I{ToPascalCase(op.Name)}{contextSuffix}Handler";
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
@@ -2141,7 +2388,20 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The deserialized message payload.</param>");
 
-            if (msg.HeadersTypeName is not null)
+            if (withDeliveryContext)
+            {
+                if (msg.HeadersTypeName is not null)
+                {
+                    w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
+                }
+
+                w.WriteLine($"/// <param name=\"context\">The transport delivery context. Valid only for the duration of this invocation; copy anything you need to keep before returning.</param>");
+                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+                w.WriteLine(msg.HeadersTypeName is not null
+                    ? $"{returnType} {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, MessageDeliveryContext context, CancellationToken cancellationToken = default);"
+                    : $"{returnType} {methodName}({payloadType} payload, MessageDeliveryContext context, CancellationToken cancellationToken = default);");
+            }
+            else if (msg.HeadersTypeName is not null)
             {
                 w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
@@ -2163,8 +2423,20 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// exhaustively handle each message type.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"message\">The received message.</param>");
+            if (withDeliveryContext)
+            {
+                w.WriteLine($"/// <param name=\"context\">The transport delivery context. Valid only for the duration of this invocation; copy anything you need to keep before returning.</param>");
+            }
+
             w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"ValueTask HandleAsync({messageTypeName} message, CancellationToken cancellationToken = default);");
+            if (withDeliveryContext)
+            {
+                w.WriteLine($"ValueTask HandleAsync({messageTypeName} message, MessageDeliveryContext context, CancellationToken cancellationToken = default);");
+            }
+            else
+            {
+                w.WriteLine($"ValueTask HandleAsync({messageTypeName} message, CancellationToken cancellationToken = default);");
+            }
         }
 
         w.CloseBrace();
@@ -2172,10 +2444,11 @@ public sealed class AsyncApi30CodeGenerator
         return new GeneratedFile($"{interfaceName}.cs", w.ToString());
     }
 
-    private GeneratedFile EmitConsumer(OperationInfo op)
+    private GeneratedFile EmitConsumer(OperationInfo op, bool withDeliveryContext)
     {
-        string className = $"{ToPascalCase(op.Name)}Consumer";
-        string handlerInterface = $"I{ToPascalCase(op.Name)}Handler";
+        string contextSuffix = withDeliveryContext ? "WithDeliveryContext" : string.Empty;
+        string className = $"{ToPascalCase(op.Name)}{contextSuffix}Consumer";
+        string handlerInterface = $"I{ToPascalCase(op.Name)}{contextSuffix}Handler";
         bool hasParameterizedAddress = op.Parameters.Count > 0;
         bool hasRuntimeAddress = op.IsDynamicAddress || hasParameterizedAddress;
         IndentedWriter w = new();
@@ -2206,24 +2479,18 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"public sealed class {className} : IAsyncDisposable");
         w.OpenBrace();
 
-        w.WriteLine("private readonly IMessageTransport transport;");
+        w.WriteLine(withDeliveryContext
+            ? "private readonly IMessageDeliveryContextTransport transport;"
+            : "private readonly IMessageTransport transport;");
         w.WriteLine($"private readonly {handlerInterface} handler;");
         w.WriteLine("private readonly ValidationMode validationMode;");
         w.WriteLine("private readonly IMessageErrorPolicy errorPolicy;");
         w.WriteLine("private readonly IMessageAuthenticationProvider? authProvider;");
 
-        if (op.IsDynamicAddress)
+        if (hasRuntimeAddress)
         {
-            w.WriteLine("private string? subscribedChannel;");
-            w.WriteLine("private ReadOnlyMemory<byte> subscribedChannelUtf8;");
-        }
-        else if (hasParameterizedAddress)
-        {
-            // The composed address is retained as UTF-8 only. Both runtime-address forms end at the same Core,
-            // so the field is the one the Core assigns; nothing needs the address back as a string, and
-            // materialising one would be the allocation the composition exists to avoid.
-            w.WriteLine("private ReadOnlyMemory<byte> subscribedChannelUtf8;");
-            w.WriteLine("private byte[]? subscribedDeadLetterChannelUtf8;");
+            // The channel is only known when a start supplies or composes it, so the dead-letter
+            // address is built at start time behind this fixed prefix and carried by the claim token.
             w.WriteLine($"private static readonly byte[] DeadLetterPrefixUtf8 = \"dead-letter.\"u8.ToArray();");
         }
         else
@@ -2232,7 +2499,56 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"private static readonly byte[] ChannelAddressUtf8 = \"{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
         }
 
-        if (!hasParameterizedAddress)
+        // The single atomic lifecycle gate: non-null while this consumer owns a live
+        // subscription. Each StartAsync claims it with a fresh token via compare-exchange and
+        // every release compare-exchanges against that same token, so a stale start or stop
+        // can never release (or unsubscribe) a claim a successor now owns — a bare flag would
+        // be ABA-vulnerable across stop-then-restart interleavings. The token carries the
+        // claimed channel, so a stopper unsubscribes exactly the channel of the claim it
+        // took, and its State field is the stop/start handshake: exactly one party
+        // unsubscribes a subscription that is stopped while it is still starting.
+        w.WriteLine("private ActiveSubscription? subscription;");
+        w.WriteLine();
+        w.WriteLine("private sealed class ActiveSubscription");
+        w.OpenBrace();
+
+        if (hasRuntimeAddress)
+        {
+            w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8, byte[] deadLetterUtf8)");
+            w.OpenBrace();
+            w.WriteLine("this.ChannelUtf8 = channelUtf8;");
+            w.WriteLine("this.ChannelString = Encoding.UTF8.GetString(channelUtf8.Span);");
+            w.WriteLine("this.DeadLetterUtf8 = deadLetterUtf8;");
+            w.CloseBrace();
+        }
+        else
+        {
+            w.WriteLine("public ActiveSubscription(ReadOnlyMemory<byte> channelUtf8)");
+            w.OpenBrace();
+            w.WriteLine("this.ChannelUtf8 = channelUtf8;");
+            w.CloseBrace();
+        }
+
+        w.WriteLine();
+
+        // 0 = starting, 1 = established (a later stop performs the unsubscribe), 2 = stopped
+        // while starting (the start performs it). The 0→1 and 0→2 compare-exchanges are the
+        // handshake's single decision point.
+        w.WriteLine("public int State;");
+        w.WriteLine();
+        w.WriteLine("public ReadOnlyMemory<byte> ChannelUtf8 { get; }");
+
+        if (hasRuntimeAddress)
+        {
+            w.WriteLine();
+            w.WriteLine("public string ChannelString { get; }");
+            w.WriteLine();
+            w.WriteLine("public byte[] DeadLetterUtf8 { get; }");
+        }
+
+        w.CloseBrace();
+
+        if (!hasRuntimeAddress)
         {
             w.WriteLine($"private const string DeadLetterChannel = \"dead-letter.{EscapeString(op.ChannelAddress)}\";");
             w.WriteLine($"private static readonly byte[] DeadLetterChannelUtf8 = \"dead-letter.{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
@@ -2286,7 +2602,7 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// <param name=\"validationMode\">The level of validation to apply to incoming messages.</param>");
         w.WriteLine($"/// <param name=\"errorPolicy\">The error policy. When <c>null</c>, uses <see cref=\"DefaultMessageErrorPolicy\"/>.</param>");
         w.WriteLine($"/// <param name=\"authProvider\">The optional authentication provider.</param>");
-        w.WriteLine($"public {className}(IMessageTransport transport, {handlerInterface} handler, ValidationMode validationMode = ValidationMode.Basic, IMessageErrorPolicy? errorPolicy = null, IMessageAuthenticationProvider? authProvider = null)");
+        w.WriteLine($"public {className}({(withDeliveryContext ? "IMessageDeliveryContextTransport" : "IMessageTransport")} transport, {handlerInterface} handler, ValidationMode validationMode = ValidationMode.Basic, IMessageErrorPolicy? errorPolicy = null, IMessageAuthenticationProvider? authProvider = null)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport;");
         w.WriteLine("this.handler = handler;");
@@ -2339,20 +2655,24 @@ public sealed class AsyncApi30CodeGenerator
         startParamList.Add("CancellationToken cancellationToken = default");
         string startParams = string.Join(", ", startParamList);
 
-        // A channel or operation binding travels to the transport as a MessageContext, so a consumer is
-        // subscribed with the protocol-specific metadata its specification declared. Built once here rather
-        // than at each subscribe site: the body below serves both the async and the synchronous StartAsync.
+        // A channel or operation binding travels to the subscribe overloads as a MessageContext,
+        // so a consumer is subscribed with the protocol-specific metadata its specification declared
+        // (the delivery-context subscribe has a binding overload with the same drop-by-default
+        // semantics as the legacy one). Built once here rather than at each subscribe site: the
+        // body below serves both the async and the synchronous StartAsync.
         bool hasBindingContext = op.ChannelBindingsJson is not null || op.OperationBindingsJson is not null;
+        bool needsMessageContext = hasBindingContext;
 
-        // Local function emitting the subscribe body. For the dynamic case the channel bytes have
-        // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
+        // Local function emitting the subscribe body. For the runtime-address case the channel
+        // bytes are the Core's parameter: the field is recorded (and rolled back on failure) by
+        // the Core itself, so the subscribe must not read state that may be rolled back.
         void EmitStartBody(bool async)
         {
-            string subscribeAddr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            string subscribeAddr = hasRuntimeAddress ? "channelUtf8" : "ChannelAddressUtf8";
             string keyword = async ? "await " : "return ";
             string suffix = async ? ".ConfigureAwait(false)" : string.Empty;
             string contextArg = hasBindingContext ? ", context" : string.Empty;
-            if (hasBindingContext)
+            if (needsMessageContext)
             {
                 w.WriteLine("MessageContext context = new()");
                 w.OpenBrace();
@@ -2370,28 +2690,42 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine();
             }
 
+            // Runtime-address data handlers receive the claim token through a subscribe-time
+            // closure, so every invocation reads ITS OWN subscription's channel and dead-letter
+            // address from an atomic reference — no shared mutable fields, so no torn reads, no
+            // repair races, and draining handlers keep correct values after a stop. Responders
+            // never read the address, and static consumers use compile-time constants.
+            string handlerArg = !IsResponderOperation(op) && hasRuntimeAddress
+                ? (withDeliveryContext
+                    ? "(payload, deliveryContext, innerCancellationToken) => this.HandleMessageAsync(token, payload, deliveryContext, innerCancellationToken)"
+                    : "(payload, headers, innerCancellationToken) => this.HandleMessageAsync(token, payload, headers, innerCancellationToken)")
+                : "this.HandleMessageAsync";
+
             if (IsResponderOperation(op))
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
             else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                w.WriteLine(withDeliveryContext
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<{payloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
             else
             {
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync{contextArg}, cancellationToken){suffix};");
+                w.WriteLine(withDeliveryContext
+                    ? $"{keyword}this.transport.SubscribeWithDeliveryContextAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
         }
 
         if (dynamicNoParams)
         {
-            // string overload — delegates to the ReadOnlySpan<char> overload (and retains the channel string).
+            // string overload — delegates to the ReadOnlySpan<char> overload.
             w.WriteLine($"public ValueTask StartAsync(string channel, CancellationToken cancellationToken = default)");
             w.OpenBrace();
-            w.WriteLine("this.subscribedChannel = channel;");
             w.WriteLine("return this.StartAsync(channel.AsSpan(), cancellationToken);");
             w.CloseBrace();
 
@@ -2424,38 +2758,78 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("return this.StartAsyncCore(channelUtf8, cancellationToken);");
             w.CloseBrace();
 
-            EmitStartAsyncCore(w, op, EmitStartBody);
+            EmitStartAsyncCore(w, op, EmitStartBody, emitClaimingCore: true);
         }
         else if (hasParameterizedAddress)
         {
             EmitParameterizedConsumerStart(w, op, startParams);
 
             // Both runtime-address forms end here: the public surface differs (a whole channel, or the
-            // parameters a template is composed from) and what happens next does not.
-            EmitStartAsyncCore(w, op, EmitStartBody);
-        }
-        else if (op.SecuritySchemes.Count > 0)
-        {
-            w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
-            w.OpenBrace();
-
-            w.WriteLine("if (this.authProvider is not null)");
-            w.OpenBrace();
-            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
-            {
-                w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
-            }
-
-            w.CloseBrace();
-            w.WriteLine();
-            EmitStartBody(async: true);
-            w.CloseBrace();
+            // parameters a template is composed from) and what happens next does not. The parameterized
+            // wrapper claims the gate itself (its retained dead-letter field must be written behind the
+            // claim), so it calls StartClaimedAsync directly and no claiming Core is emitted.
+            EmitStartAsyncCore(w, op, EmitStartBody, emitClaimingCore: false);
         }
         else
         {
-            w.WriteLine($"public ValueTask StartAsync(CancellationToken cancellationToken = default)");
+            // The gate is claimed before subscribing, because messages can be dispatched before
+            // the transport finishes recording the claim and the generated Abort arm must see a
+            // started consumer even for those earliest deliveries. A refused or failed subscribe
+            // rolls the gate back; a stop that raced the start is finished after the subscribe.
+            w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
             w.OpenBrace();
-            EmitStartBody(async: false);
+            w.WriteLine("ActiveSubscription token = new(ChannelAddressUtf8);");
+            w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("try");
+            w.OpenBrace();
+
+            if (op.SecuritySchemes.Count > 0)
+            {
+                w.WriteLine("if (this.authProvider is not null)");
+                w.OpenBrace();
+                foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+                {
+                    w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+                }
+
+                w.CloseBrace();
+                w.WriteLine();
+            }
+
+            EmitStartBody(async: true);
+            w.CloseBrace();
+            w.WriteLine("catch");
+            w.OpenBrace();
+
+            // Release compare-exchanges against OUR token: if a stop already took it (and a
+            // successor may hold the gate now), this start must not release the new claim.
+            w.WriteLine("System.Threading.Interlocked.CompareExchange(ref this.subscription, null, token);");
+            w.WriteLine("throw;");
+            w.CloseBrace();
+            w.WriteLine();
+
+            // The handshake's decision point: winning 0→1 establishes the token, and any
+            // later stop performs the unsubscribe using it; losing means a stop intervened
+            // mid-start and deliberately declined to touch the transport, so this start
+            // releases the subscription it just landed. Exactly one party unsubscribes, so a
+            // stop that raced ahead can never tear down a successor's resubscription.
+            w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)");
+            w.OpenBrace();
+            w.WriteLine("await this.transport.UnsubscribeAsync(ChannelAddressUtf8, CancellationToken.None).ConfigureAwait(false);");
+            w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+            w.CloseBrace();
+            w.WriteLine();
+
+            // Established, but the gate may still have moved on (the intervening stop saw the
+            // established state and owns the unsubscribe): report the stop, touch nothing.
+            w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+            w.CloseBrace();
             w.CloseBrace();
         }
 
@@ -2465,23 +2839,56 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// Stops consuming messages from the channel.");
         w.WriteLine($"/// </summary>");
         w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-        w.WriteLine($"public ValueTask StopAsync(CancellationToken cancellationToken = default)");
+        w.WriteLine($"public async ValueTask StopAsync(CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.WriteLine("if (!await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false))");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Stops the subscription if this consumer owns one, quietly doing nothing otherwise.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+        w.WriteLine("/// <returns><see langword=\"true\"/> if this call performed the stop.</returns>");
+        w.WriteLine("private async ValueTask<bool> TryStopCoreAsync(CancellationToken cancellationToken)");
         w.OpenBrace();
 
-        if (hasRuntimeAddress)
-        {
-            w.WriteLine("if (this.subscribedChannelUtf8.IsEmpty)");
-            w.OpenBrace();
-            w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
-            w.CloseBrace();
-            w.WriteLine();
-            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannelUtf8, cancellationToken);");
-        }
-        else
-        {
-            w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);");
-        }
+        // The exchange makes stopping idempotent and race-free: exactly one caller takes the
+        // token, whether it is StopAsync, DisposeAsync, or the generated Abort arm — so a
+        // lost race is a quiet no-op. The unsubscribe targets the channel bound to the token
+        // this call took, never a field a concurrent restart may have rewritten; and if it
+        // throws, the token is restored (only while the gate is still free) so the stop
+        // stays retryable.
+        w.WriteLine("ActiveSubscription? current = System.Threading.Interlocked.Exchange(ref this.subscription, null);");
+        w.WriteLine("if (current is null)");
+        w.OpenBrace();
+        w.WriteLine("return false;");
+        w.CloseBrace();
+        w.WriteLine();
 
+        // The handshake's decision point: if the owning start has not established yet, this
+        // stop must not touch the transport — the start's own 0→1 compare-exchange will lose
+        // and it releases whatever it lands. Unsubscribing here as well is what allowed a
+        // stop to tear down a successor's resubscription.
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref current.State, 2, 0) == 0)");
+        w.OpenBrace();
+        w.WriteLine("return true;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("try");
+        w.OpenBrace();
+        w.WriteLine("await this.transport.UnsubscribeAsync(current.ChannelUtf8, cancellationToken).ConfigureAwait(false);");
+        w.CloseBrace();
+        w.WriteLine("catch");
+        w.OpenBrace();
+        w.WriteLine("System.Threading.Interlocked.CompareExchange(ref this.subscription, current, null);");
+        w.WriteLine("throw;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return true;");
         w.CloseBrace();
 
         // HandleMessageAsync — with error policy
@@ -2525,29 +2932,60 @@ public sealed class AsyncApi30CodeGenerator
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
 
-            w.WriteLine($"private async ValueTask HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
+            string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
+            string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string channelStringExpr = hasRuntimeAddress ? "subscription.ChannelString" : "ChannelAddress";
+
+            w.WriteLine(withDeliveryContext
+                ? $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
+                : $"private async ValueTask HandleMessageAsync({tokenParam}{payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
 
-            string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
+            if (withDeliveryContext)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
 
-            w.WriteLine("try");
-            w.OpenBrace();
-
-            // Validation
+            // A validation refusal is policy input, not control flow: the failure is built
+            // without a throw (no unwind, no stack capture per hostile message) and feeds the
+            // same policy switch the handler's exceptions reach through the catch below. The
+            // guard catch preserves the old routing for anything the validation PATH itself
+            // throws (typed-header From, detail formatting): such faults reach this consumer's
+            // policy with full context, never the transport's.
+            w.WriteLine("Exception? failure = null;");
             w.WriteLine("if (this.validationMode != ValidationMode.None)");
             w.OpenBrace();
-            w.WriteLine("ValidatePayload(payload, this.validationMode);");
+            w.WriteLine("try");
+            w.OpenBrace();
+            w.WriteLine("failure = TryValidatePayload(payload, this.validationMode);");
             if (msg.HeadersTypeName is not null)
             {
-                w.WriteLine($"{msg.HeadersTypeName} typedHeaders = {msg.HeadersTypeName}.From(headers);");
-                w.WriteLine("ValidateHeaders(typedHeaders, this.validationMode);");
+                w.WriteLine($"failure ??= TryValidateHeaders({msg.HeadersTypeName}.From(headers), this.validationMode);");
             }
 
             w.CloseBrace();
+            w.WriteLine("catch (Exception ex)");
+            w.OpenBrace();
+            w.WriteLine("failure = ex;");
+            w.CloseBrace();
+            w.CloseBrace();
             w.WriteLine();
+            w.WriteLine("if (failure is null)");
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
 
-            if (msg.HeadersTypeName is not null)
+            if (withDeliveryContext && msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} h = {msg.HeadersTypeName}.From(headers);");
+                w.WriteLine($"await this.handler.{handlerMethod}(payload, h, deliveryContext, cancellationToken).ConfigureAwait(false);");
+            }
+            else if (withDeliveryContext)
+            {
+                w.WriteLine($"await this.handler.{handlerMethod}(payload, deliveryContext, cancellationToken).ConfigureAwait(false);");
+            }
+            else if (msg.HeadersTypeName is not null)
             {
                 w.WriteLine($"{msg.HeadersTypeName} h = {msg.HeadersTypeName}.From(headers);");
                 w.WriteLine($"await this.handler.{handlerMethod}(payload, h, cancellationToken).ConfigureAwait(false);");
@@ -2560,23 +2998,42 @@ public sealed class AsyncApi30CodeGenerator
             w.CloseBrace(); // try
             w.WriteLine("catch (Exception ex)");
             w.OpenBrace();
+            w.WriteLine("failure = ex;");
+            w.CloseBrace(); // catch
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("if (failure is null)");
+            w.OpenBrace();
+            w.WriteLine("return;");
+            w.CloseBrace();
+            w.WriteLine();
             w.WriteLine($"MessageErrorContext errorContext = new({channelUtf8Expr}, MessageErrorKind.Handler, JsonElement.From(payload), headers);");
-            w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(failure, errorContext, cancellationToken).ConfigureAwait(false);");
             w.WriteLine();
             w.WriteLine("switch (action)");
             w.OpenBrace();
             w.WriteLine("case MessageErrorAction.Skip:");
             w.PushIndent();
+
+            // The policy runs here, above the transport, so the transport cannot record the
+            // decision; the generated consumer reports it under its own messaging.system so
+            // skip and abort remain visible on the same counters transport-level decisions use.
+            w.WriteLine($"AsyncApiTelemetry.RecordSkip({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
-            w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"AsyncApiTelemetry.RecordAbort({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
+
+            // The gate makes this atomic: an abort racing an external stop (or a second
+            // aborting message) loses the exchange and no-ops, never throwing out of the
+            // handler and never unsubscribing twice.
+            w.WriteLine("await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync({deadLetterChannelUtf8Expr}, {channelUtf8Expr}, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"await this.transport.DeadLetterAsync({deadLetterChannelUtf8Expr}, {channelUtf8Expr}, JsonElement.From(payload), headers, failure, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("default:");
@@ -2584,20 +3041,30 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("return;");
             w.PopIndent();
             w.CloseBrace(); // switch
-            w.CloseBrace(); // catch
             w.CloseBrace(); // method
         }
         else
         {
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
-            string channelUtf8Expr = hasRuntimeAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            string deadLetterChannelUtf8Expr = hasParameterizedAddress ? "this.subscribedDeadLetterChannelUtf8!" : "DeadLetterChannelUtf8";
+            string tokenParam = hasRuntimeAddress ? "ActiveSubscription subscription, " : string.Empty;
+            string channelUtf8Expr = hasRuntimeAddress ? "subscription.ChannelUtf8" : "ChannelAddressUtf8";
+            string deadLetterChannelUtf8Expr = hasRuntimeAddress ? "subscription.DeadLetterUtf8" : "DeadLetterChannelUtf8";
+            string channelStringExpr = hasRuntimeAddress ? "subscription.ChannelString" : "ChannelAddress";
 
-            w.WriteLine("private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.WriteLine(withDeliveryContext
+                ? $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
+                : $"private async ValueTask HandleMessageAsync({tokenParam}Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
+            if (withDeliveryContext)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
+
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine($"await this.handler.HandleAsync(new {messageTypeName}(payload), cancellationToken).ConfigureAwait(false);");
+            w.WriteLine(withDeliveryContext
+                ? $"await this.handler.HandleAsync(new {messageTypeName}(payload), deliveryContext, cancellationToken).ConfigureAwait(false);"
+                : $"await this.handler.HandleAsync(new {messageTypeName}(payload), cancellationToken).ConfigureAwait(false);");
             w.CloseBrace(); // try
             w.WriteLine("catch (Exception ex)");
             w.OpenBrace();
@@ -2608,11 +3075,21 @@ public sealed class AsyncApi30CodeGenerator
             w.OpenBrace();
             w.WriteLine("case MessageErrorAction.Skip:");
             w.PushIndent();
+
+            // The policy runs here, above the transport, so the transport cannot record the
+            // decision; the generated consumer reports it under its own messaging.system so
+            // skip and abort remain visible on the same counters transport-level decisions use.
+            w.WriteLine($"AsyncApiTelemetry.RecordSkip({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.Abort:");
             w.PushIndent();
-            w.WriteLine("await this.StopAsync(cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"AsyncApiTelemetry.RecordAbort({channelStringExpr}, \"generated\", MessageErrorKind.Handler);");
+
+            // The gate makes this atomic: an abort racing an external stop (or a second
+            // aborting message) loses the exchange and no-ops, never throwing out of the
+            // handler and never unsubscribing twice.
+            w.WriteLine("await this.TryStopCoreAsync(cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
@@ -2632,13 +3109,17 @@ public sealed class AsyncApi30CodeGenerator
         // IAsyncDisposable
         w.WriteLine();
         w.WriteLine($"/// <inheritdoc/>");
-        w.WriteLine($"public ValueTask DisposeAsync()");
+        w.WriteLine($"public async ValueTask DisposeAsync()");
         w.OpenBrace();
-        w.WriteLine("return StopAsync();");
+
+        // Dispose is stop-if-started: an await-using around a consumer that never started, was
+        // refused its channel, or was already stopped completes quietly — and the gate means it
+        // can never unsubscribe a channel this instance does not own.
+        w.WriteLine("await this.TryStopCoreAsync(CancellationToken.None).ConfigureAwait(false);");
         w.CloseBrace();
 
         // Validation helpers
-        EmitValidationHelpers(w);
+        EmitValidationHelpers(w, includeNonThrowing: true);
 
         w.CloseBrace();
 
@@ -2896,7 +3377,7 @@ public sealed class AsyncApi30CodeGenerator
         return new GeneratedFile($"{className}.cs", w.ToString());
     }
 
-    private static void EmitValidationHelpers(IndentedWriter w)
+    private static void EmitValidationHelpers(IndentedWriter w, bool includeNonThrowing = false)
     {
         w.WriteLine();
         w.WriteLine("private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)");
@@ -2938,6 +3419,57 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(collector));");
         w.CloseBrace();
         w.CloseBrace();
+        w.CloseBrace();
+
+        if (!includeNonThrowing)
+        {
+            return;
+        }
+
+        w.WriteLine();
+        w.WriteLine("private static Exception? TryValidatePayload<TPayload>(TPayload payload, ValidationMode mode)");
+        w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!payload.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessagePayloadValidationFailed(\"payload\");");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+        w.WriteLine("if (!payload.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessagePayloadValidationFailed(\"payload\", SchemaValidationDetail.FormatResults(collector));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return null;");
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("private static Exception? TryValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)");
+        w.WriteLine("    where THeaders : struct, Corvus.Text.Json.Internal.IJsonElement<THeaders>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!headers.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessageHeadersValidationFailed(\"headers\");");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+        w.WriteLine("if (!headers.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("return ThrowHelper.CreateMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(collector));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return null;");
         w.CloseBrace();
     }
 
@@ -3075,9 +3607,14 @@ public sealed class AsyncApi30CodeGenerator
             "symmetricEncryption" => "SymmetricEncryption",
             "asymmetricEncryption" => "AsymmetricEncryption",
             "http" => "Http",
+            "httpApiKey" => "HttpApiKey",
             "oauth2" => "OAuth2",
             "openIdConnect" => "OpenIdConnect",
-            "sasl" => "Plain", // Default SASL variant
+            "plain" => "Plain",
+            "scramSha256" => "ScramSha256",
+            "scramSha512" => "ScramSha512",
+            "gssapi" => "Gssapi",
+            "sasl" => "Plain", // A SASL scheme whose variant could not be determined
             _ => "UserPassword",
         };
     }
@@ -3108,13 +3645,23 @@ public sealed class AsyncApi30CodeGenerator
         return result;
     }
 
-    private static string ResolveSecuritySchemeType(AsyncApiDocument doc, string schemeName)
+    private static string ResolveSecuritySchemeType(AsyncApiDocument doc, string schemeName, IAsyncApiReferenceResolver? resolver = null, ICollection<AsyncApiGenerationDiagnostic>? diagnostics = null)
     {
         if (doc.ComponentsValue.IsNotUndefined() && doc.ComponentsValue.SecuritySchemes.IsNotUndefined())
         {
             if (doc.ComponentsValue.SecuritySchemes.TryGetProperty(schemeName, out var element) && element.IsNotUndefined())
             {
-                var schemeEntity = AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity.From(element);
+                JsonElement resolvedScheme = ResolveRef(element, doc, resolver);
+                AsyncApiDocument.Reference schemeAsRef = resolvedScheme;
+                if (schemeAsRef.Ref.IsNotUndefined())
+                {
+                    diagnostics?.Add(new(
+                        AsyncApiGenerationDiagnosticSeverity.Warning,
+                        $"#/components/securitySchemes/{schemeName}",
+                        "The security scheme is a $ref that does not resolve; its type was reported as 'unknown'."));
+                }
+
+                var schemeEntity = AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity.From(resolvedScheme);
                 return schemeEntity.Match<string>(
                     matchReference: static (in AsyncApiDocument.Reference _) => "unknown",
                     matchSecurityScheme: static (in AsyncApiDocument.SecurityScheme scheme) =>
@@ -3125,18 +3672,62 @@ public sealed class AsyncApi30CodeGenerator
                             matchX509: static (in AsyncApiDocument.X509 _) => "X509",
                             matchSymmetricEncryption: static (in AsyncApiDocument.SymmetricEncryption _) => "symmetricEncryption",
                             matchAsymmetricEncryption: static (in AsyncApiDocument.AsymmetricEncryption _) => "asymmetricEncryption",
-                            matchHttpSecurityScheme: static (in AsyncApiDocument.HttpSecurityScheme _) => "http",
+                            matchHttpSecurityScheme: static (in AsyncApiDocument.HttpSecurityScheme http) =>
+                            {
+                                // httpApiKey is its own scheme type with its own enum member; only the
+                                // bearer and non-bearer shapes are plain "http".
+                                return http.Match<string>(
+                                    matchNonBearerHttpSecurityScheme: static (in AsyncApiDocument.NonBearerHttpSecurityScheme _) => "http",
+                                    matchBearerHttpSecurityScheme: static (in AsyncApiDocument.BearerHttpSecurityScheme _) => "http",
+                                    matchApiKeyHttpSecurityScheme: static (in AsyncApiDocument.ApiKeyHttpSecurityScheme _) => "httpApiKey",
+                                    defaultMatch: static (in AsyncApiDocument.HttpSecurityScheme _) => "http");
+                            },
                             matchOauth2Flows: static (in AsyncApiDocument.Oauth2Flows _) => "oauth2",
                             matchOpenIdConnect: static (in AsyncApiDocument.OpenIdConnect _) => "openIdConnect",
-                            matchSaslSecurityScheme: static (in AsyncApiDocument.SaslSecurityScheme _) => "sasl",
+                            matchSaslSecurityScheme: static (in AsyncApiDocument.SaslSecurityScheme sasl) =>
+                            {
+                                // The SASL family carries its variant in the type property; report the
+                                // variant exactly rather than collapsing the family to one mechanism.
+                                return sasl.Match<string>(
+                                    matchSaslPlainSecurityScheme: static (in AsyncApiDocument.SaslPlainSecurityScheme _) => "plain",
+                                    matchSaslScramSecurityScheme: static (in AsyncApiDocument.SaslScramSecurityScheme scram) =>
+                                        scram.Type.ValueEquals("scramSha512"u8) ? "scramSha512" : "scramSha256",
+                                    matchSaslGssapiSecurityScheme: static (in AsyncApiDocument.SaslGssapiSecurityScheme _) => "gssapi",
+                                    defaultMatch: static (in AsyncApiDocument.SaslSecurityScheme _) => "sasl");
+                            },
                             defaultMatch: static (in AsyncApiDocument.SecurityScheme _) => "unknown");
                     },
                     defaultMatch: static (in AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity _) => "unknown");
             }
         }
 
+        AddDiagnosticIfMissing(
+            diagnostics,
+            $"#/components/securitySchemes/{schemeName}",
+            $"The security requirement names '{schemeName}', which components.securitySchemes does not define; its type was reported as 'unknown'.");
         return "unknown";
     }
+
+    /// <summary>Adds a degradation diagnostic to a caller-supplied collection unless an identical one is already present.</summary>
+    /// <param name="diagnostics">The collection, when the caller wants diagnostics.</param>
+    /// <param name="location">The specification location.</param>
+    /// <param name="message">The problem description.</param>
+    internal static void AddDiagnosticIfMissing(ICollection<AsyncApiGenerationDiagnostic>? diagnostics, string location, string message)
+    {
+        if (diagnostics is null)
+        {
+            return;
+        }
+
+        AsyncApiGenerationDiagnostic diagnostic = new(AsyncApiGenerationDiagnosticSeverity.Warning, location, message);
+        if (!diagnostics.Contains(diagnostic))
+        {
+            diagnostics.Add(diagnostic);
+        }
+    }
+
+    /// <summary>Clears the diagnostics list, for the 2.6 wrapper that drives emission directly.</summary>
+    internal void ClearDiagnostics() => this.diagnostics.Clear();
 
     /// <summary>
     /// Emits code to construct a parameterized channel address directly as UTF-8 bytes
@@ -3144,30 +3735,9 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     private void EmitParameterizedChannelConstruction(IndentedWriter w, OperationInfo op)
     {
-        // Split the template into literal segments and parameter placeholders
-        // e.g., "orders/{orderId}/{region}/status" → ["orders/", "{orderId}", "/", "{region}", "/status"]
-        string template = op.ChannelAddress;
-        List<(bool IsParam, string Value)> segments = [];
-        int pos = 0;
-        while (pos < template.Length)
-        {
-            int braceStart = template.IndexOf('{', pos);
-            if (braceStart < 0)
-            {
-                segments.Add((false, template[pos..]));
-                break;
-            }
-
-            if (braceStart > pos)
-            {
-                segments.Add((false, template[pos..braceStart]));
-            }
-
-            int braceEnd = template.IndexOf('}', braceStart);
-            string paramName = template[(braceStart + 1)..braceEnd];
-            segments.Add((true, paramName));
-            pos = braceEnd + 1;
-        }
+        // Split the template into literal segments and parameter slots,
+        // e.g., "orders/{orderId}/{region}/status" → "orders/", {orderId}, "/", {region}, "/status"
+        List<(bool IsParam, string Value)> segments = this.SplitChannelTemplate(op);
 
         // Calculate total byte count (literal lengths are known at compile time)
         int literalByteCount = segments.Where(s => !s.IsParam).Sum(s => System.Text.Encoding.UTF8.GetByteCount(s.Value));
@@ -3181,8 +3751,9 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine(";");
 
-        // Rent buffer and copy segments
-        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+        // Rent buffer and copy segments. The caller pre-declares byte[]? channelRental ahead of
+        // its try block, so its catch can release the rental when a later pre-Core step throws.
+        w.WriteLine("channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
         w.WriteLine("int channelPos = 0;");
 
         foreach ((bool isParam, string value) in segments)
@@ -3210,22 +3781,59 @@ public sealed class AsyncApi30CodeGenerator
     /// <param name="w">The writer.</param>
     /// <param name="op">The operation.</param>
     /// <param name="emitStartBody">Emits the subscribe call itself.</param>
-    private void EmitStartAsyncCore(IndentedWriter w, OperationInfo op, Action<bool> emitStartBody)
+    private void EmitStartAsyncCore(IndentedWriter w, OperationInfo op, Action<bool> emitStartBody, bool emitClaimingCore)
     {
+        bool hasParameterizedAddress = op.Parameters.Count > 0;
+        if (emitClaimingCore)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Starts consuming messages from the supplied (already UTF-8 encoded) channel.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"channelUtf8\">The channel address to subscribe to as UTF-8 bytes.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine("/// <returns>A task that completes when the subscription is established.</returns>");
+            w.WriteLine("private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
+            w.OpenBrace();
+
+            // The dead-letter address is the subscribed bytes behind a fixed prefix, composed
+            // here so the token carries the address of the channel this start actually claims.
+            w.WriteLine("byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelUtf8.Length];");
+            w.WriteLine("DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
+            w.WriteLine("channelUtf8.Span.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");
+            w.WriteLine();
+
+            // A started consumer already has a live subscription this instance must be able to
+            // stop; the token-claimed gate refuses a second start instead of orphaning it.
+            w.WriteLine("ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+            w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("return this.StartClaimedAsync(token, cancellationToken);");
+            w.CloseBrace();
+        }
+
         w.WriteLine();
         w.WriteLine("/// <summary>");
-        w.WriteLine("/// Starts consuming messages from the supplied (already UTF-8 encoded) channel.");
+        w.WriteLine("/// Subscribes for the claim the caller has already placed on the lifecycle gate.");
         w.WriteLine("/// </summary>");
-        w.WriteLine("/// <param name=\"channelUtf8\">The channel address to subscribe to as UTF-8 bytes.</param>");
+        w.WriteLine("/// <param name=\"token\">The claim token holding the channel to subscribe to.</param>");
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
         w.WriteLine("/// <returns>A task that completes when the subscription is established.</returns>");
+        w.WriteLine("private async ValueTask StartClaimedAsync(ActiveSubscription token, CancellationToken cancellationToken)");
+        w.OpenBrace();
+        w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = token.ChannelUtf8;");
+        w.WriteLine();
+
+        // No retained address fields: the handler receives the claim token through the
+        // subscribe-time closure, so it always reads its own subscription's addresses.
+        w.WriteLine("try");
+        w.OpenBrace();
 
         if (op.SecuritySchemes.Count > 0)
         {
-            w.WriteLine("private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-            w.OpenBrace();
-            w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-            w.WriteLine();
             w.WriteLine("if (this.authProvider is not null)");
             w.OpenBrace();
             foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
@@ -3235,17 +3843,40 @@ public sealed class AsyncApi30CodeGenerator
 
             w.CloseBrace();
             w.WriteLine();
-            emitStartBody(true);
-            w.CloseBrace();
         }
-        else
-        {
-            w.WriteLine("private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-            w.OpenBrace();
-            w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-            emitStartBody(false);
-            w.CloseBrace();
-        }
+
+        emitStartBody(true);
+        w.CloseBrace();
+        w.WriteLine("catch");
+        w.OpenBrace();
+
+        // Release compare-exchanges against OUR token: if a stop already took it (and a
+        // successor may hold the gate now), this start must not release the new claim.
+        w.WriteLine("System.Threading.Interlocked.CompareExchange(ref this.subscription, null, token);");
+        w.WriteLine("throw;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // The handshake's decision point: winning 0→1 establishes the token, and any later
+        // stop performs the unsubscribe using it; losing means a stop intervened mid-start
+        // and deliberately declined to touch the transport, so this start releases the
+        // subscription it just landed. Exactly one party unsubscribes, so a stop that raced
+        // ahead can never tear down a successor's resubscription, and the cleanup must not
+        // be abandoned to a caller's token firing.
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref token.State, 1, 0) != 0)");
+        w.OpenBrace();
+        w.WriteLine("await this.transport.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);");
+        w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // Established, but the gate may still have moved on (the intervening stop saw the
+        // established state and owns the unsubscribe): report the stop, touch nothing.
+        w.WriteLine("if (!ReferenceEquals(System.Threading.Volatile.Read(ref this.subscription), token))");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerStoppedDuringStart();");
+        w.CloseBrace();
+        w.CloseBrace();
     }
 
     /// <summary>
@@ -3293,75 +3924,173 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
 
         // Size the address from the literal segments plus the transcoded parameters, then fill it once.
-        List<string> segments = SplitChannelTemplate(op.ChannelAddress, op.Parameters);
-        string literalBytes = string.Join(" + ", segments.Where(seg => !seg.StartsWith('{')).Select(seg => Utf8ByteCount(seg).ToString(System.Globalization.CultureInfo.InvariantCulture)).DefaultIfEmpty("0"));
-        string paramBytes = string.Concat(names.Select(n => $" + Encoding.UTF8.GetByteCount({n})"));
+        // Everything up to the gate claim below works in locals, so a start that loses the claim has
+        // written nothing a running subscription reads.
+        List<(bool IsParam, string Value)> segments = this.SplitChannelTemplate(op);
+        string literalBytes = string.Join(" + ", segments.Where(seg => !seg.IsParam).Select(seg => Utf8ByteCount(seg.Value).ToString(System.Globalization.CultureInfo.InvariantCulture)).DefaultIfEmpty("0"));
+
+        // Sized from the slots the template actually contains: a declared parameter that never
+        // appears in the template must not inflate the address with bytes nothing writes.
+        string paramBytes = string.Concat(segments.Where(s => s.IsParam).Select(s => $" + Encoding.UTF8.GetByteCount({ToCamelCase(s.Value)})"));
         w.WriteLine($"int channelLength = {literalBytes}{paramBytes};");
         w.WriteLine("byte[] channelUtf8 = new byte[channelLength];");
         w.WriteLine("int written = 0;");
-        foreach (string segment in segments)
+        foreach ((bool isParam, string value) in segments)
         {
-            if (segment.StartsWith('{'))
+            if (isParam)
             {
-                w.WriteLine($"written += Encoding.UTF8.GetBytes({ToCamelCase(segment[1..^1])}, channelUtf8.AsSpan(written));");
+                w.WriteLine($"written += Encoding.UTF8.GetBytes({ToCamelCase(value)}, channelUtf8.AsSpan(written));");
             }
             else
             {
-                w.WriteLine($"\"{EscapeString(segment)}\"u8.CopyTo(channelUtf8.AsSpan(written));");
-                w.WriteLine($"written += {Utf8ByteCount(segment)};");
+                w.WriteLine($"\"{EscapeString(value)}\"u8.CopyTo(channelUtf8.AsSpan(written));");
+                w.WriteLine($"written += {Utf8ByteCount(value)};");
             }
         }
 
         w.WriteLine();
-        w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
 
         // The dead-letter address is the same bytes behind a fixed prefix, so it is built from them rather
         // than from a second pass over the template.
         w.WriteLine("byte[] deadLetterUtf8 = new byte[DeadLetterPrefixUtf8.Length + channelLength];");
         w.WriteLine("DeadLetterPrefixUtf8.CopyTo(deadLetterUtf8.AsSpan());");
         w.WriteLine("channelUtf8.CopyTo(deadLetterUtf8.AsSpan(DeadLetterPrefixUtf8.Length));");
-        w.WriteLine("this.subscribedDeadLetterChannelUtf8 = deadLetterUtf8;");
         w.WriteLine();
-        w.WriteLine($"return this.StartAsyncCore(channelUtf8, cancellationToken);");
+
+        // The token carries both retained addresses, so every consumer-level field write
+        // happens inside StartClaimedAsync behind the claim (with repair), and a start that
+        // is refused — sequentially or concurrently — can never corrupt the running
+        // subscription's routing.
+        w.WriteLine("ActiveSubscription token = new(channelUtf8, deadLetterUtf8);");
+        w.WriteLine("if (System.Threading.Interlocked.CompareExchange(ref this.subscription, token, null) is not null)");
+        w.OpenBrace();
+        w.WriteLine("ThrowHelper.ThrowConsumerAlreadyStarted();");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine($"return this.StartClaimedAsync(token, cancellationToken);");
         w.CloseBrace();
     }
 
-    /// <summary>Splits a channel-address template into literal segments and <c>{parameter}</c> slots, in order.</summary>
-    /// <param name="template">The channel address template.</param>
-    /// <param name="parameters">The declared channel parameters.</param>
-    /// <returns>The segments; a slot retains its braces so the caller can tell the two apart.</returns>
-    private static List<string> SplitChannelTemplate(string template, IReadOnlyList<ChannelParameter> parameters)
+    /// <summary>Splits a channel-address template into literal segments and parameter slots, in order.</summary>
+    /// <param name="op">The operation whose channel address template is split.</param>
+    /// <returns>The segments; a slot carries the bare parameter name.</returns>
+    /// <remarks>
+    /// An unclosed brace, or a brace pair naming something the specification does not declare, is
+    /// literal text rather than a slot: emitting it as a slot would make the generated code
+    /// reference a parameter its method does not have. Each demotion is reported as a diagnostic.
+    /// </remarks>
+    private List<(bool IsParam, string Value)> SplitChannelTemplate(in OperationInfo op)
     {
-        List<string> segments = [];
+        string template = op.ChannelAddress;
+        List<(bool IsParam, string Value)> segments = [];
         int position = 0;
         while (position < template.Length)
         {
             int open = template.IndexOf('{', position);
             if (open < 0)
             {
-                segments.Add(template[position..]);
+                segments.Add((false, template[position..]));
                 break;
             }
 
             int close = template.IndexOf('}', open);
             if (close < 0)
             {
-                segments.Add(template[position..]);
+                this.AddTemplateDiagnostic(op, $"The channel address template '{template}' has an unclosed '{{'; the remainder was treated as literal text.");
+                segments.Add((false, template[position..]));
                 break;
             }
 
             string name = template[(open + 1)..close];
             if (open > position)
             {
-                segments.Add(template[position..open]);
+                segments.Add((false, template[position..open]));
             }
 
-            // A brace pair naming something the specification did not declare is literal text, not a slot.
-            segments.Add(parameters.Any(p => p.Name == name) ? template[open..(close + 1)] : template[open..(close + 1)].Replace("{", "{").Replace("}", "}"));
+            if (op.Parameters.Any(p => p.Name == name))
+            {
+                segments.Add((true, name));
+            }
+            else
+            {
+                this.AddTemplateDiagnostic(op, $"The channel address template '{template}' names '{{{name}}}', which is not a declared parameter; it was treated as literal text.");
+                segments.Add((false, template[open..(close + 1)]));
+            }
+
             position = close + 1;
         }
 
         return segments;
+    }
+
+    /// <summary>Reports a degradation once per location and message, however many emissions hit the same one.</summary>
+    /// <param name="location">The specification location.</param>
+    /// <param name="message">The problem description.</param>
+    private void AddDiagnosticOnce(string location, string message)
+    {
+        AsyncApiGenerationDiagnostic diagnostic = new(
+            AsyncApiGenerationDiagnosticSeverity.Warning,
+            location,
+            message);
+
+        if (!this.diagnostics.Contains(diagnostic))
+        {
+            this.diagnostics.Add(diagnostic);
+        }
+    }
+
+    /// <summary>Reports a template problem once per location and message, however many emissions split the same template.</summary>
+    /// <param name="op">The operation whose channel the problem is on.</param>
+    /// <param name="message">The problem description.</param>
+    private void AddTemplateDiagnostic(in OperationInfo op, string message)
+    {
+        this.AddDiagnosticOnce($"#/channels/{op.ChannelName}", message);
+    }
+
+    /// <summary>
+    /// Resolves the reply-address runtime expression for one message of a request/reply
+    /// operation, or null when the emission cannot use it.
+    /// </summary>
+    /// <param name="op">The operation.</param>
+    /// <param name="reply">The operation's reply.</param>
+    /// <param name="msg">The request message the expression evaluates against.</param>
+    /// <returns>The accessor expression, or null when the declared fallback address must be used.</returns>
+    /// <remarks>
+    /// An expression that is not a recognized runtime expression, or one that reads the message
+    /// headers when the message declares no headers schema, is demoted to the declared fallback
+    /// address with a diagnostic: emitting it as written would produce code that reads values
+    /// that do not exist and cannot compile.
+    /// </remarks>
+    private string? ComputeReplyAddressAccessor(in OperationInfo op, in ReplyInfo reply, MessageInfo msg)
+    {
+        if (reply.AddressLocationExpression is not { } addrExpr)
+        {
+            return null;
+        }
+
+        string fallbackDescription = !string.IsNullOrEmpty(reply.ChannelAddress)
+            ? "the reply channel's declared address was used instead"
+            : "the request channel's address was used instead";
+
+        AsyncApiRuntimeExpression parsed = AsyncApiRuntimeExpression.Parse(addrExpr);
+        if (parsed.Kind == AsyncApiRuntimeExpressionKind.MessageHeader && msg.HeadersTypeName is null)
+        {
+            this.AddDiagnosticOnce(
+                $"#/operations/{op.Name}/reply/address",
+                $"The reply address expression '{addrExpr}' reads the message headers, but message '{msg.Name}' declares no headers schema; {fallbackDescription}.");
+            return null;
+        }
+
+        string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
+        string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
+        if (accessor is null)
+        {
+            this.AddDiagnosticOnce(
+                $"#/operations/{op.Name}/reply/address",
+                $"The reply address expression '{addrExpr}' is not a supported runtime expression; {fallbackDescription}.");
+        }
+
+        return accessor;
     }
 
     /// <summary>The UTF-8 byte count of a literal template segment, computed at generation time.</summary>

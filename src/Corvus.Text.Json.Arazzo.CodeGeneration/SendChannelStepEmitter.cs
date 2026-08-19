@@ -253,7 +253,7 @@ internal static class SendChannelStepEmitter
                     throw ThrowHelper.GetMessageNoRequestReplyMethodException(stepId, descriptor.ChannelAddress, message.MessageName);
                 }
 
-                statements.Append("    ").Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.').Append(requestReplyMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+                statements.Append("    ").Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.').Append(requestReplyMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(", ").Append(workspaceVariable).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
             });
         }
         else
@@ -267,7 +267,7 @@ internal static class SendChannelStepEmitter
             // plain publish does (C# will not chain JsonElement → model → Source).
             string requestPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, selected.PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
             statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-                .Append(requestMethod).Append('(').Append(requestPayload).Append(HeadersArgFor(selected)).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+                .Append(requestMethod).Append('(').Append(requestPayload).Append(HeadersArgFor(selected)).Append(", ").Append(workspaceVariable).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
         }
 
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");

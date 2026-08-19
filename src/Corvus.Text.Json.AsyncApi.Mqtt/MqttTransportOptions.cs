@@ -62,9 +62,13 @@ public sealed class MqttTransportOptions : ITransportOptions
     public string DeadLetterSuffix { get; set; } = "/dead-letter";
 
     /// <summary>
-    /// Gets or sets the correlation ID user property key for request/reply patterns.
+    /// Gets or sets the user property key under which requests duplicate the correlation ID,
+    /// or <see langword="null"/> (the default) to send it only as MQTT 5
+    /// <c>CorrelationData</c>, the native slot this transport reads. Set a key only for
+    /// foreign consumers that cannot read <c>CorrelationData</c>; the duplicate costs a
+    /// string and a user property per request.
     /// </summary>
-    public string CorrelationIdPropertyKey { get; set; } = "corvus-correlation-id";
+    public string? CorrelationIdPropertyKey { get; set; }
 
     /// <summary>
     /// Gets or sets the headers user property key.

@@ -41,6 +41,34 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "test.context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        object? nativeMessage = null;
+
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("test.context", receivedChannel);
+        Assert.IsNotNull(nativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         // Arrange
@@ -134,6 +162,113 @@ public class NatsTransportTests
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
         await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task HeadersWithNonAsciiValuesRoundtripExactly()
+    {
+        // The header value travels as compact JSON text in a string-typed header slot, so
+        // non-ASCII content must survive via the writer's ASCII escaping. This asserts the
+        // exact value, not just the shape.
+        ReadOnlyMemory<byte> channel = "test.headers-nonascii"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedValue = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedValue = headers.GetProperty("x-label"u8).GetString();
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-label":"na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e"}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message was not received within timeout.");
+        Assert.AreEqual("na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e", receivedValue);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ForeignUnparseableHeaderValueDeliversWithAbsentHeaders()
+    {
+        // A foreign publisher can put anything in the Corvus-Headers slot. An unparseable
+        // value must degrade to absent headers, not dead-letter the message or leak the
+        // decode rental.
+        ReadOnlyMemory<byte> channel = "test.headers-foreign"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedHeadersKind = JsonValueKind.Null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedHeadersKind = headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        NATS.Client.Core.NatsConnection foreignConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await foreignConn.ConnectAsync();
+        NatsHeaders foreignHeaders = new()
+        {
+            ["Corvus-Headers"] = "this is not json",
+        };
+        await foreignConn.PublishAsync("test.headers-foreign", """{"data":1}"""u8.ToArray(), headers: foreignHeaders);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with an unparseable foreign header value was not delivered.");
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+
+        await s_transport.UnsubscribeAsync(channel);
+        await foreignConn.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task LegacyBase64HeaderValueStillDecodes()
+    {
+        // A 5.3.0 producer base64-wrapped the headers JSON. During a rolling upgrade this
+        // consumer must still read that form.
+        ReadOnlyMemory<byte> channel = "test.headers-legacy"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedTraceId = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedTraceId = headers.ValueKind == JsonValueKind.Object
+                    ? headers.GetProperty("x-trace-id"u8).GetString()
+                    : null;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        NATS.Client.Core.NatsConnection legacyConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await legacyConn.ConnectAsync();
+        NatsHeaders legacyHeaders = new()
+        {
+            ["Corvus-Headers"] = Convert.ToBase64String("""{"x-trace-id":"abc"}"""u8),
+        };
+        await legacyConn.PublishAsync("test.headers-legacy", """{"data":1}"""u8.ToArray(), headers: legacyHeaders);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with a legacy base64 header value was not delivered.");
+        Assert.AreEqual("abc", receivedTraceId);
+
+        await s_transport.UnsubscribeAsync(channel);
+        await legacyConn.DisposeAsync();
     }
 
     [TestMethod]
@@ -539,6 +674,36 @@ public class NatsTransportTests
         Assert.AreEqual(0, receiveCount);
     }
 
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "test.unsubscribe-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. Teardown must not join the consume task
+        // that is executing this handler, or the await below never completes.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(20));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than self-joining the consume task.");
+
+        // The slot must be free again afterwards.
+        await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask);
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
     /// <summary>
     /// Error policy that tracks which error kinds were reported.
     /// </summary>
@@ -812,11 +977,11 @@ public class NatsTransportTests
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
         {
             Url = NatsFixture.ConnectionString,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "test.middleware"u8.ToArray();
@@ -855,7 +1020,7 @@ public class NatsTransportTests
         {
             Url = NatsFixture.ConnectionString,
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -872,7 +1037,7 @@ public class NatsTransportTests
 
                 // Final attempt — let exception propagate
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "test.middleware-exhaust"u8.ToArray();
@@ -934,6 +1099,43 @@ public class NatsTransportTests
             // as expected when no handler is available.
         }
 
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestTimeoutWithSilentResponderThrowsOperationCanceledException()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        // A responder is subscribed but never replies, so no-responders cannot fire and the
+        // failure must come from the transport's RequestTimeout machinery. This pins the
+        // OperationCanceledException surface across changes to that machinery.
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            RequestTimeout = TimeSpan.FromSeconds(2),
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "test.request-silent"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.reply-silent"u8.ToArray();
+        byte[] correlationId = "timeout-corr-002"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            async (payload, headers, ct) => await Task.CompletedTask);
+
+        await Task.Delay(100);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace));
+
+        await transport.UnsubscribeAsync(requestChannel);
         await transport.DisposeAsync();
     }
 
@@ -1401,5 +1603,33 @@ public class NatsTransportTests
 
         await transport.DisposeAsync();
         await transport.DisposeAsync(); // Should be safe — no exception
+    }
+
+    [TestMethod]
+    public async Task SecondSubscribeOnOccupiedChannelIsRefused()
+    {
+        ReadOnlyMemory<byte> channel = "test.occupied.slot"u8.ToArray();
+        using SemaphoreSlim received = new(0, 1);
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        // The channel's single slot is claimed by the data subscription; a second subscription
+        // of any kind is refused rather than displacing it.
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeAsync<JsonElement>(channel, (payload, headers, ct) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await s_transport.SubscribeReplyAsync<JsonElement, JsonElement>(channel, (request, headers, ct) => ValueTask.FromResult(request)));
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"ok":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)), "The original subscription must survive refused subscribes.");
+
+        await s_transport.UnsubscribeAsync(channel);
     }
 }

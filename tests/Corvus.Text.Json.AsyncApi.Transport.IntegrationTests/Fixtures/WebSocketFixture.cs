@@ -24,8 +24,18 @@ namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 internal static class WebSocketFixture
 {
     private static WebApplication? s_app;
-    private static readonly ConcurrentDictionary<string, ConcurrentBag<WS>> Subscriptions = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<WS, byte>> Subscriptions = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, int> SubscribeEnvelopes = new(StringComparer.Ordinal);
     private static readonly ConcurrentBag<WS> Connections = [];
+
+    /// <summary>
+    /// Gets the number of subscribe control envelopes the relay has received for a channel,
+    /// across all connections. Lets tests assert that resubscription does not re-register.
+    /// </summary>
+    /// <param name="channel">The channel address.</param>
+    /// <returns>The count of subscribe envelopes received.</returns>
+    public static int SubscribeEnvelopeCount(string channel)
+        => SubscribeEnvelopes.TryGetValue(channel, out int count) ? count : 0;
 
     /// <summary>
     /// Gets the server URI (e.g., "ws://localhost:PORT/ws").
@@ -144,22 +154,27 @@ internal static class WebSocketFixture
             string? type = typeProp.GetString();
             if (type == "subscribe")
             {
-                ConcurrentBag<WS> bag = Subscriptions.GetOrAdd(channel, _ => []);
-                bag.Add(sender);
+                SubscribeEnvelopes.AddOrUpdate(channel, 1, static (_, count) => count + 1);
+                ConcurrentDictionary<WS, byte> subs = Subscriptions.GetOrAdd(channel, _ => new());
+                subs.TryAdd(sender, 0);
                 return;
             }
 
             if (type == "unsubscribe")
             {
-                // Can't remove from ConcurrentBag easily; in practice this is fine for tests
+                if (Subscriptions.TryGetValue(channel, out ConcurrentDictionary<WS, byte>? subs))
+                {
+                    subs.TryRemove(sender, out _);
+                }
+
                 return;
             }
         }
 
         // It's a data envelope — relay to all subscribers of this channel
-        if (Subscriptions.TryGetValue(channel, out ConcurrentBag<WS>? subscribers))
+        if (Subscriptions.TryGetValue(channel, out ConcurrentDictionary<WS, byte>? subscribers))
         {
-            foreach (WS sub in subscribers)
+            foreach (WS sub in subscribers.Keys)
             {
                 if (sub != sender && sub.State == WebSocketState.Open)
                 {

@@ -184,7 +184,7 @@ catch (Exception ex)
         tokenFactory: ct => new ValueTask<string>("refreshed-token-value"));
 
     ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-    await consumer.StartAsync();
+    await consumer.StartAsync(streetlightId: "lamp-006");
     Console.WriteLine("Bearer token (dynamic): consumer subscribed");
     await consumer.StopAsync();
 }
@@ -211,7 +211,7 @@ catch (Exception ex)
         location: "header");
 
     ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
-    await consumer.StartAsync();
+    await consumer.StartAsync(streetlightId: "lamp-007");
     Console.WriteLine("API key (named): consumer subscribed");
     await consumer.StopAsync();
 }
@@ -262,7 +262,7 @@ catch (Exception ex)
     IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
         new KeyValuePair<SecuritySchemeType, IMessageAuthenticationProvider>[]
         {
-            new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider("user", "pass")),
+            new(SecuritySchemeType.ScramSha256, new UserPasswordAuthenticationProvider("user", "pass")),
             new(SecuritySchemeType.Http, new BearerTokenAuthenticationProvider("token-value")),
             new(SecuritySchemeType.HttpApiKey, new ApiKeyAuthenticationProvider("api-key-123")),
         });

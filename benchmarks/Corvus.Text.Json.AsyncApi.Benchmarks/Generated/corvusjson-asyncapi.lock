@@ -1,11 +1,13 @@
 {
   "excludeChannels": [],
-  "generatedAt": "2026-07-31T05:39:14.2984396\u002B00:00",
+  "generatedAt": "2026-08-18T17:46:47.4177294\u002B00:00",
   "generatedFiles": [
     "PublishLightMeasurementProducer.cs",
     "RequestDimProducer.cs",
     "IReceiveLightMeasurementHandler.cs",
     "ReceiveLightMeasurementConsumer.cs",
+    "IReceiveLightMeasurementWithDeliveryContextHandler.cs",
+    "ReceiveLightMeasurementWithDeliveryContextConsumer.cs",
     "PublishLightMeasurementLightMeasuredMessage.cs",
     "RequestDimDimCommandMessage.cs",
     "ReceiveLightMeasurementLightMeasuredMessage.cs",
@@ -50,7 +52,7 @@
     "Models/LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B6d050fc75f9a72e6c1ed685ac1d85035bc155af6",
+  "generatorVersion": "1.0.0\u002Ba58eb326f479e3c0b4939480be9299a319ddaf94",
   "includeChannels": [],
   "mode": "both",
   "rootNamespace": "AsyncApiBenchmark.Generated",

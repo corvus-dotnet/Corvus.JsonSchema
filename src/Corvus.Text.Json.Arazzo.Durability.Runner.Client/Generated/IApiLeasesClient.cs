@@ -133,6 +133,8 @@ public interface IApiLeasesClient : IAsyncDisposable
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<RenewLeaseResponse> RenewLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -145,6 +147,8 @@ public interface IApiLeasesClient : IAsyncDisposable
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<RenewLeaseResponse> RenewLeaseAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -160,5 +164,7 @@ public interface IApiLeasesClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ReleaseLeaseResponse> ReleaseLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

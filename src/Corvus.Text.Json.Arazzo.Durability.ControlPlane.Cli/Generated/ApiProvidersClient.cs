@@ -37,6 +37,8 @@ public sealed class ApiProvidersClient : IApiProvidersClient
     /// The deployment's connected-provider registry (ADR 0052): each provider's name, display name, and the host patterns it covers, plus whether the CALLING principal holds a live connection (each principal's connections are private). The registry is deployment configuration; an empty list means this deployment brokers no providers.
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<ListProvidersResponse> ListProvidersAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -55,6 +57,8 @@ public sealed class ApiProvidersClient : IApiProvidersClient
     /// </remarks>
     /// <param name="provider">The provider parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<BeginProviderAuthResponse> BeginProviderAuthAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source provider, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -76,6 +80,8 @@ public sealed class ApiProvidersClient : IApiProvidersClient
     /// <param name="code">The code parameter.</param>
     /// <param name="state">The state parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<CompleteProviderAuthResponse> CompleteProviderAuthAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source provider, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source code, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source state, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -97,6 +103,8 @@ public sealed class ApiProvidersClient : IApiProvidersClient
     /// </remarks>
     /// <param name="provider">The provider parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<DeleteProviderSessionResponse> DeleteProviderSessionAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source provider, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

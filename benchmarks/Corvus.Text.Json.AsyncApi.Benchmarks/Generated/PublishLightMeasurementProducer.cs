@@ -42,18 +42,26 @@ public sealed class PublishLightMeasurementProducer
     public ValueTask PublishLightMeasuredAsync(AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.Source payload, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payloadValue = AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
-
-        if (this.validationMode != ValidationMode.None)
+        try
         {
-            ValidatePayload(payloadValue, this.validationMode);
+            AsyncApiBenchmark.Generated.Models.LightMeasuredPayload payloadValue = AsyncApiBenchmark.Generated.Models.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
+
+            if (this.validationMode != ValidationMode.None)
+            {
+                ValidatePayload(payloadValue, this.validationMode);
+            }
+
+            MessageContext context = new()
+            {
+                ContentType = "application/json",
+            };
+            return PublishAsyncCore(workspace, ChannelAddressUtf8, null, payloadValue, default, context, cancellationToken);
         }
-
-        MessageContext context = new()
+        catch
         {
-            ContentType = "application/json",
-        };
-        return PublishAsyncCore(workspace, ChannelAddressUtf8, null, payloadValue, default, context, cancellationToken);
+            workspace.Dispose();
+            throw;
+        }
     }
 
     private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, TPayload payload, Corvus.Text.Json.JsonElement headers, MessageContext context, CancellationToken cancellationToken)

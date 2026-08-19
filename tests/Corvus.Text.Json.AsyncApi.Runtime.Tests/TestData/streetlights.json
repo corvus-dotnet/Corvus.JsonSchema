@@ -48,6 +48,30 @@
           "description": "The ID of the streetlight."
         }
       }
+    },
+    "lightDim": {
+      "address": "smartylighting.streetlights.1.0.action.dim",
+      "messages": {
+        "dimLight": {
+          "$ref": "#/components/messages/dimLight"
+        }
+      }
+    },
+    "lightDimReply": {
+      "address": "smartylighting.streetlights.1.0.action.dim.reply",
+      "messages": {
+        "dimLightResponse": {
+          "$ref": "#/components/messages/dimLightResponse"
+        }
+      }
+    },
+    "alerts": {
+      "address": null,
+      "messages": {
+        "alert": {
+          "$ref": "#/components/messages/alert"
+        }
+      }
     }
   },
   "operations": {
@@ -73,6 +97,40 @@
           "$ref": "#/channels/lightTurnOn/messages/turnOn"
         }
       ]
+    },
+    "dimLight": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/lightDim"
+      },
+      "summary": "Command a particular streetlight to dim to a given level and await confirmation.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightDim/messages/dimLight"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/lightDimReply"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/lightDimReply/messages/dimLightResponse"
+          }
+        ]
+      }
+    },
+    "receiveAlert": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/alerts"
+      },
+      "summary": "Receive operational alerts on a caller-chosen channel.",
+      "messages": [
+        {
+          "$ref": "#/channels/alerts/messages/alert"
+        }
+      ]
     }
   },
   "components": {
@@ -92,6 +150,33 @@
         "summary": "Command a particular streetlight to turn the lights on or off.",
         "payload": {
           "$ref": "#/components/schemas/turnOnOffPayload"
+        }
+      },
+      "dimLight": {
+        "name": "dimLight",
+        "title": "Dim light",
+        "summary": "Command a particular streetlight to dim to a given level.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/dimLightPayload"
+        }
+      },
+      "dimLightResponse": {
+        "name": "dimLightResponse",
+        "title": "Dim light response",
+        "summary": "Confirmation of a dim command.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/dimLightResponsePayload"
+        }
+      },
+      "alert": {
+        "name": "alert",
+        "title": "Alert",
+        "summary": "An operational alert.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/alertPayload"
         }
       }
     },
@@ -123,6 +208,52 @@
             "type": "string",
             "format": "date-time",
             "description": "Date and time when the message was sent."
+          }
+        }
+      },
+      "dimLightPayload": {
+        "type": "object",
+        "properties": {
+          "percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage to which the light should be dimmed."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the message was sent."
+          }
+        }
+      },
+      "dimLightResponsePayload": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "rejected"],
+            "description": "Whether the dim command was applied."
+          },
+          "currentLevel": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "The light's level after the command."
+          }
+        }
+      },
+      "alertPayload": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The alert severity; zero or higher."
+          },
+          "text": {
+            "type": "string",
+            "description": "The alert text."
           }
         }
       }

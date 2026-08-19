@@ -27,7 +27,7 @@ namespace Corvus.Text.Json.AsyncApi.WebSocket;
 /// envelope's <c>channel</c> field and dispatching to the appropriate handler.
 /// </para>
 /// </remarks>
-public sealed class WebSocketMessageTransport : IMessageTransport
+public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -39,13 +39,12 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private readonly ClientWebSocket webSocket;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
-    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>> replyHandlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Subscription> subscriptions = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
     private CancellationTokenSource? receiveCts;
     private Task? receiveTask;
-    private bool disposed;
+    private volatile bool disposed;
 
     private WebSocketMessageTransport(WebSocketTransportOptions options, ClientWebSocket webSocket)
     {
@@ -82,13 +81,31 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        // Build and rent envelope bytes so they survive the async send
-        (byte[] rented, int length) = BuildPublishEnvelopeRented(channel, in payload, in headers, correlationId: null);
+        // Build and rent envelope bytes so they survive the async send. The caller's UTF-8
+        // channel goes straight into the envelope; no string is created on this path.
+        (byte[] rented, int length) = BuildPublishEnvelopeRented(channelUtf8.Span, in payload, in headers);
 
         return SendAndReturnAsync(rented, length, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        return this.SubscribeCoreAsync(
+            channel,
+            new Subscription
+            {
+                DataHandler = (payload, headers, ct) => this.DispatchToContextHandlerAsync(channel, channelUtf8, handler, payload, headers, ct),
+            },
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -122,13 +139,13 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
-        this.handlers[channel] = (payload, headers, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
-
-        this.options.Heartbeat?.Start(channel, "websocket");
-
-        // Send a subscribe envelope to the server
-        (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
-        return SendAndReturnAsync(rented, length, cancellationToken);
+        return this.SubscribeCoreAsync(
+            channel,
+            new Subscription
+            {
+                DataHandler = (payload, headers, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, ct),
+            },
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -141,28 +158,83 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
-        this.replyHandlers[channel] = (payload, headers, replyChannel, correlationId, ct) =>
-            this.DispatchToReplyHandlerAsync(channel, channelUtf8, handler, payload, headers, replyChannel, correlationId, ct);
-
-        this.options.Heartbeat?.Start(channel, "websocket");
-
-        // Send a subscribe envelope to the server so requests are routed to this connection
-        (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
-        return SendAndReturnAsync(rented, length, cancellationToken);
+        return this.SubscribeCoreAsync(
+            channel,
+            new Subscription
+            {
+                ReplyHandler = (payload, headers, replyChannel, correlationId, ct) =>
+                    this.DispatchToReplyHandlerAsync(channel, channelUtf8, handler, payload, headers, replyChannel, correlationId, ct),
+            },
+            cancellationToken);
     }
 
     /// <inheritdoc/>
     public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        this.handlers.TryRemove(channel, out _);
-        this.replyHandlers.TryRemove(channel, out _);
 
-        this.options.Heartbeat?.Stop(channel, "websocket");
+        // Local effect first, before any await: an unsubscribe always stops delivery to the
+        // caller's handler, whatever the token state or the fate of the control envelope.
+        if (!this.subscriptions.TryRemove(channel, out Subscription? removed))
+        {
+            return ValueTask.CompletedTask;
+        }
 
-        // Send an unsubscribe envelope to the server
+        this.options.Heartbeat?.Stop(channel, "websocket", removed);
+
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "unsubscribe"u8);
-        return SendAndReturnAsync(rented, length, cancellationToken);
+        return this.SendAndReturnAsync(rented, length, cancellationToken);
+    }
+
+    private ValueTask SubscribeCoreAsync(string channel, Subscription subscription, CancellationToken cancellationToken)
+    {
+        // A channel carries exactly one subscription. Claiming the slot with TryAdd is atomic,
+        // so no lock is needed, and a second subscribe is refused rather than displacing the
+        // first: displacing would mean tearing the previous subscription down on the subscribe
+        // path, which a handler calling back in (the generated Abort path does) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, subscription))
+        {
+            throw new InvalidOperationException(
+                $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+        }
+
+        this.options.Heartbeat?.Start(channel, "websocket", subscription);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim and the start has already stopped a heartbeat that did not exist yet, so
+        // without this undo a disposed transport would report the channel Running forever.
+        // The stop is unconditional — when the walk already removed the entry, the keyed
+        // remove fails but the just-resurrected heartbeat still needs stopping.
+        if (this.disposed)
+        {
+            this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription));
+            this.options.Heartbeat?.Stop(channel, "websocket", subscription);
+            throw new ObjectDisposedException(nameof(WebSocketMessageTransport));
+        }
+
+        return this.SendSubscribeAsync(channel, subscription, cancellationToken);
+    }
+
+    private async ValueTask SendSubscribeAsync(string channel, Subscription claimed, CancellationToken cancellationToken)
+    {
+        try
+        {
+            (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
+            await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // The relay never registered the channel, so release the slot and the heartbeat —
+            // but only OUR claim: an unsubscribe-then-resubscribe may have replaced this slot
+            // while the send was queued, and a key-only remove would evict the new subscriber
+            // and stop its heartbeat.
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, claimed)))
+            {
+                this.options.Heartbeat?.Stop(channel, "websocket", claimed);
+            }
+
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -193,9 +265,29 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         }
 
         this.disposed = true;
-        this.handlers.Clear();
-        this.replyHandlers.Clear();
-        this.pendingReplies.Clear();
+
+        // Removal is atomic and takes no lock, so disposal is never blocked behind a
+        // subscribe or unsubscribe that is stuck on an unbounded socket send; cancelling
+        // the receive loop and closing the socket below is what unblocks such a send. Each
+        // live subscription's heartbeat is stopped as its entry goes, so a disposed
+        // transport leaves no channel reporting Running, matching the other transports.
+        foreach (string channel in this.subscriptions.Keys)
+        {
+            if (this.subscriptions.TryRemove(channel, out Subscription? removed))
+            {
+                this.options.Heartbeat?.Stop(channel, "websocket", removed);
+            }
+        }
+
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently discarded; clearing alone would strand the awaiters.
+        foreach (string correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<byte[]>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(WebSocketMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
 
         if (this.receiveCts is not null)
         {
@@ -237,18 +329,24 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     {
         byte[] buffer = new byte[this.options.ReceiveBufferSize];
 
+        // Reused across messages: this loop is the envelope's sole consumer and every dispatch
+        // completes (handlers awaited inline) before the next receive overwrites the buffer.
+        // The one path that retains the bytes past the dispatch - a correlated reply parked in
+        // pendingReplies - copies before parking.
+        ArrayBufferWriter<byte> messageBuffer = new(this.options.ReceiveBufferSize);
+
         try
         {
             while (!cancellationToken.IsCancellationRequested &&
                    this.webSocket.State == WebSocketState.Open)
             {
-                using MemoryStream ms = new();
-                WebSocketReceiveResult result;
+                messageBuffer.Clear();
+                ValueWebSocketReceiveResult result;
 
                 do
                 {
                     result = await this.webSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer),
+                        buffer.AsMemory(),
                         cancellationToken).ConfigureAwait(false);
 
                     if (result.MessageType == WebSocketMessageType.Close)
@@ -256,12 +354,11 @@ public sealed class WebSocketMessageTransport : IMessageTransport
                         return;
                     }
 
-                    ms.Write(buffer, 0, result.Count);
+                    messageBuffer.Write(buffer.AsSpan(0, result.Count));
                 }
                 while (!result.EndOfMessage);
 
-                byte[] messageBytes = ms.ToArray();
-                await DispatchEnvelopeAsync(messageBytes, cancellationToken).ConfigureAwait(false);
+                await DispatchEnvelopeAsync(messageBuffer.WrittenMemory, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -274,9 +371,8 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         }
     }
 
-    private async Task DispatchEnvelopeAsync(byte[] envelopeBytes, CancellationToken cancellationToken)
+    private async Task DispatchEnvelopeAsync(ReadOnlyMemory<byte> envelopeBytes, CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> channelUtf8 = ReadOnlyMemory<byte>.Empty;
         string channel = string.Empty;
 
         try
@@ -291,17 +387,30 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             }
 
             channel = channelProp.GetString() ?? throw new InvalidOperationException("Received WebSocket envelope channel was null.");
-            channelUtf8 = Encoding.UTF8.GetBytes(channel);
 
             JsonString corrIdProp = envelope.CorrelationId;
             string? envelopeCorrelationId = null;
             if (corrIdProp.ValueKind != JsonValueKind.Undefined)
             {
                 envelopeCorrelationId = corrIdProp.GetString();
+
+                // An envelope that names a reply channel while arriving on a channel this client
+                // subscribes is a request in flight (the loopback shape), not a reply; matching it
+                // against pendingReplies would let that subscription consume its own request as
+                // its reply. On any other channel the correlation match stands, so a peer that
+                // sets a reply channel on its reply (soliciting a follow-up) still completes the
+                // pending request. The subscription lookup is lock-free, so an unsubscribe that
+                // completes between a self-loopback request's send and its delivery can make this
+                // read miss and the request correlate as its own reply; that window needs the
+                // loopback shape plus a concurrent unsubscribe of the same channel, and is
+                // accepted in trade for deterministic peer interop.
                 if (envelopeCorrelationId is not null &&
+                    (!envelope.TryGetProperty("replyChannel"u8, out JsonElement _) || !this.subscriptions.ContainsKey(channel)) &&
                     this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
                 {
-                    tcs.SetResult(envelopeBytes);
+                    // Copied before parking: the requester reads these bytes after this dispatch
+                    // returns, when the receive loop's buffer has moved on.
+                    tcs.SetResult(envelopeBytes.ToArray());
                     return;
                 }
             }
@@ -310,25 +419,24 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             JsonElement headers = envelope.Headers;
 
             if (payload.ValueKind != JsonValueKind.Undefined &&
-                this.replyHandlers.TryGetValue(channel, out Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>? replyHandler))
+                this.subscriptions.TryGetValue(channel, out Subscription? subscription))
             {
-                string? replyChannel = null;
-                if (envelope.TryGetProperty("replyChannel"u8, out JsonElement replyChannelEl) &&
-                    replyChannelEl.ValueKind == JsonValueKind.String)
+                this.options.Heartbeat?.Tick(channel, "websocket", subscription);
+                if (subscription.ReplyHandler is not null)
                 {
-                    replyChannel = replyChannelEl.GetString();
+                    string? replyChannel = null;
+                    if (envelope.TryGetProperty("replyChannel"u8, out JsonElement replyChannelEl) &&
+                        replyChannelEl.ValueKind == JsonValueKind.String)
+                    {
+                        replyChannel = replyChannelEl.GetString();
+                    }
+
+                    await subscription.ReplyHandler(payload, headers, replyChannel, envelopeCorrelationId, cancellationToken).ConfigureAwait(false);
                 }
-
-                this.options.Heartbeat?.Tick(channel, "websocket");
-                await replyHandler(payload, headers, replyChannel, envelopeCorrelationId, cancellationToken).ConfigureAwait(false);
-                return;
-            }
-
-            if (payload.ValueKind != JsonValueKind.Undefined &&
-                this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? handler))
-            {
-                this.options.Heartbeat?.Tick(channel, "websocket");
-                await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                else
+                {
+                    await subscription.DataHandler!(payload, headers, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -337,7 +445,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         }
         catch (Exception ex)
         {
-            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+            MessageErrorContext ctx = new(Encoding.UTF8.GetBytes(channel), MessageErrorKind.Deserialization);
             MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
             if (action == MessageErrorAction.DeadLetter)
             {
@@ -366,7 +474,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         }
     }
 
-    private async ValueTask DispatchToHandlerAsync<TPayload>(
+    private ValueTask DispatchToHandlerAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
@@ -375,16 +483,66 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        TPayload typedPayload = JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload);
+        return this.DispatchDataAsync(
+            channel,
+            channelUtf8,
+            payload,
+            headers,
+            (Handler: handler, Payload: typedPayload, Headers: headers),
+            static (state, ct) => state.Handler(state.Payload, state.Headers, ct),
+            cancellationToken);
+    }
+
+    private ValueTask DispatchToContextHandlerAsync<TPayload>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        JsonElement payload,
+        JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        TPayload typedPayload = JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload);
+        MessageDeliveryContext context = new()
+        {
+            ChannelUtf8 = channelUtf8,
+            Headers = headers,
+            NativeMessage = null,
+        };
+        return this.DispatchDataAsync(
+            channel,
+            channelUtf8,
+            payload,
+            headers,
+            (Handler: handler, Payload: typedPayload, Context: context),
+            static (state, ct) => state.Handler(state.Payload, state.Context, ct),
+            cancellationToken);
+    }
+
+    // The single data-dispatch core: middleware invocation, the cancellation filter, and the
+    // error-policy dead-letter/abort/skip block live here once, so the legacy and
+    // delivery-context paths cannot drift.
+    private async ValueTask DispatchDataAsync<TState>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        JsonElement payload,
+        JsonElement headers,
+        TState state,
+        Func<TState, CancellationToken, ValueTask> invoke,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            TPayload typedPayload = JsonElementHelpers.Reinterpret<JsonElement, TPayload>(in payload);
             if (this.middleware is not null)
             {
-                await this.middleware((ct) => handler(typedPayload, headers, ct), cancellationToken).ConfigureAwait(false);
+                // The middleware contract carries the state through generically, so this
+                // path allocates no closure either.
+                await this.middleware.InvokeAsync(invoke, state, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await handler(typedPayload, headers, cancellationToken).ConfigureAwait(false);
+                await invoke(state, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -440,11 +598,10 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             TReply reply;
             if (this.middleware is not null)
             {
-                TReply captured = default;
-                await this.middleware(
-                    async (ct) => captured = await handler(typedRequest, headers, ct).ConfigureAwait(false),
+                reply = await this.middleware.InvokeAsync(
+                    static (s, ct) => s.handler(s.typedRequest, s.headers, ct),
+                    (handler, typedRequest, headers),
                     cancellationToken).ConfigureAwait(false);
-                reply = captured;
             }
             else
             {
@@ -501,11 +658,11 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private ValueTask DeadLetterRawAsync(
         string deadLetterChannel,
         string originalChannel,
-        byte[] rawPayload,
+        ReadOnlyMemory<byte> rawPayload,
         Exception exception,
         CancellationToken cancellationToken)
     {
-        (byte[] rented, int length) = BuildDeadLetterRawEnvelopeRented(deadLetterChannel, originalChannel, rawPayload, exception);
+        (byte[] rented, int length) = BuildDeadLetterRawEnvelopeRented(deadLetterChannel, originalChannel, rawPayload.Span, exception);
         return SendAndReturnAsync(rented, length, cancellationToken);
     }
 
@@ -533,6 +690,15 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         _ = replyChannel;
         TaskCompletionSource<byte[]> replyTcs = new();
         this.pendingReplies[correlationId] = replyTcs;
+
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationId, out _);
+            ArrayPool<byte>.Shared.Return(envelopeRented);
+            throw new ObjectDisposedException(nameof(WebSocketMessageTransport), "The transport was disposed before the reply arrived.");
+        }
 
         try
         {
@@ -631,6 +797,41 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         {
             this.sendSemaphore.Release();
         }
+    }
+
+    // The plain-publish shape of the builder below: it takes the caller's UTF-8 channel so
+    // the hot publish path never creates a channel string. The correlated shapes keep the
+    // string form their reply plumbing already carries.
+    private static (byte[] Rented, int Length) BuildPublishEnvelopeRented<TPayload>(
+        ReadOnlySpan<byte> channelUtf8,
+        in TPayload payload,
+        in JsonElement headers)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
+
+        writer.WriteStartObject();
+        writer.WriteString("channel"u8, channelUtf8);
+        writer.WriteString("type"u8, "publish"u8);
+        writer.WritePropertyName("payload"u8);
+        payload.WriteTo(writer);
+
+        if (headers.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("headers"u8);
+            headers.WriteTo(writer);
+        }
+
+        writer.WriteEndObject();
+        writer.Flush();
+
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        return (rented, length);
     }
 
     private static (byte[] Rented, int Length) BuildPublishEnvelopeRented<TPayload>(
@@ -761,5 +962,16 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         byte[] rented = ArrayPool<byte>.Shared.Rent(length);
         buffer.WrittenSpan.CopyTo(rented);
         return (rented, length);
+    }
+
+    /// <summary>
+    /// One channel's subscription. A channel has exactly one: data subscriptions (legacy and
+    /// delivery-context) store <see cref="DataHandler"/>; responders store <see cref="ReplyHandler"/>.
+    /// </summary>
+    private sealed class Subscription
+    {
+        public Func<JsonElement, JsonElement, CancellationToken, ValueTask>? DataHandler { get; init; }
+
+        public Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>? ReplyHandler { get; init; }
     }
 }

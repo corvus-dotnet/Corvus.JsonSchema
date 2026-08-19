@@ -85,6 +85,76 @@ public class AsyncApi26CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ServerSecurity_ProducerAuthenticates()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(streetlightsRoot);
+
+        GeneratedFile producer = files.Single(f => f.FileName == "TurnOnProducer.cs");
+
+        // The 2.6 document declares security on its server; it must reach the delegated emission
+        // as the auth context constant, the authentication call, and the exact SASL variant.
+        StringAssert.Contains(producer.Content, "SaslScramAuthContext");
+        StringAssert.Contains(producer.Content, "AuthenticateAsync");
+        StringAssert.Contains(producer.Content, "SecuritySchemeType.ScramSha256");
+    }
+
+    [TestMethod]
+    public void Generate_ServerSecurity_UnknownScheme_ReportsDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "asyncapi26-missing-scheme.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/eventPayload"] = "Events.EventPayload",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Events", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The server requirement names a scheme that components.securitySchemes does not define;
+        // the degradation must be recorded rather than silently emitting a wrong scheme type -
+        // and recorded once, not once per operation that collects the server's security.
+        Assert.AreEqual(
+            1,
+            generator.Diagnostics.Count(d => d.Message.Contains("missingScheme")),
+            "A security requirement naming an undefined scheme should be reported exactly once");
+    }
+
+    [TestMethod]
+    public void Generate_ReplyAddressLiteralExpression_SurfacesEmissionDiagnostic()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "asyncapi26-reply-literal-expression.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/CalculateRequest"] = "Calculator.CalculateRequest",
+            ["#/components/schemas/CalculateResponse"] = "Calculator.CalculateResponse",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Calculator", schemaTypeMap);
+        _ = generator.Generate(root);
+
+        // The x-corvus-reply address expression "$message.header.replyTo" (no '#') is demoted
+        // during emission; that demotion is recorded by the inner 3.0 emitter and must surface
+        // through the 2.6 generator's own Diagnostics, or --strict passes on a document the
+        // byte-identical 3.0 form fails.
+        Assert.IsTrue(
+            generator.Diagnostics.Any(d => d.Message.Contains("$message.header.replyTo")),
+            "An emission-phase demotion should surface through the 2.6 generator's Diagnostics");
+    }
+
+    [TestMethod]
     public void Generate_RequestReplyExtension_ProducerContainsSendAndReceiveMethod()
     {
         var schemaTypeMap = CreateRequestReplySchemaTypeMap();
@@ -152,6 +222,28 @@ public class AsyncApi26CodeGeneratorTests
         AsyncApiChannelDescriptor receive = channels.Single(c => c.Action == OperationAction.Receive);
         Assert.IsNull(receive.ProducerClassName);
         Assert.AreEqual("Streetlights.LightMeasuredPayload", receive.Messages.Single().PayloadTypeName);
+    }
+
+    [TestMethod]
+    public void Generate_ParameterizedConsumer_WithReferencedParameter_CarriesParameterMetadata()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "parameterized-consumer-ref-2.6.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+
+        var generator = new AsyncApi26CodeGenerator("ParameterizedRef26", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(doc.RootElement);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("OnOrderCreatedConsumer"));
+        Assert.IsNotNull(consumer, "The publish operation should generate a consumer class");
+
+        StringAssert.Contains(
+            consumer.Content,
+            "The order identifier.",
+            "The referenced parameter's description should reach the generated doc comment");
+        StringAssert.Contains(
+            consumer.Content,
+            "orderId = \"standard\"",
+            "The referenced parameter's schema default should become the argument default");
     }
 
     private static Dictionary<string, string> CreateRequestReplySchemaTypeMap()

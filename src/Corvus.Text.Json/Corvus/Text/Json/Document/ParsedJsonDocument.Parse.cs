@@ -125,6 +125,42 @@ public sealed partial class ParsedJsonDocument<T>
     }
 
     /// <summary>
+    /// Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument,
+    /// taking ownership of the disposable owner of the memory (for example a pooled
+    /// <see cref="System.Buffers.IMemoryOwner{T}"/> handed out by a transport SDK).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <paramref name="utf8Json"/> memory must remain valid until <paramref name="owner"/>
+    /// is disposed. The document disposes the owner when the document is disposed, and the
+    /// caller must not use the owner or the memory after calling this method.
+    /// </para>
+    /// <para>
+    /// If parsing throws, ownership stays with the caller (matching the rented-array
+    /// overload), so the caller disposes the owner on that path.
+    /// </para>
+    /// </remarks>
+    /// <param name="utf8Json">JSON text to parse. Must be backed by memory <paramref name="owner"/> keeps alive.</param>
+    /// <param name="owner">
+    /// The disposable owner of the memory backing <paramref name="utf8Json"/>.
+    /// Ownership is transferred to the returned document.
+    /// </param>
+    /// <param name="options">Options to control the reader behavior during parsing.</param>
+    /// <returns>
+    /// A ParsedJsonDocument{T} representation of the JSON value.
+    /// </returns>
+    /// <exception cref="JsonException">
+    /// <paramref name="utf8Json"/> does not represent a valid single JSON value.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="options"/> contains unsupported options.
+    /// </exception>
+    public static ParsedJsonDocument<T> Parse(ReadOnlyMemory<byte> utf8Json, IDisposable owner, JsonDocumentOptions options = default)
+    {
+        return Parse(utf8Json, options.GetReaderOptions(), extraOwner: owner);
+    }
+
+    /// <summary>
     /// Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.
     /// </summary>
     /// <remarks>
@@ -771,7 +807,8 @@ public sealed partial class ParsedJsonDocument<T>
         ReadOnlyMemory<byte> utf8Json,
         JsonReaderOptions readerOptions,
         byte[]? extraRentedArrayPoolBytes = null,
-        PooledByteBufferWriter? extraPooledByteBufferWriter = null)
+        PooledByteBufferWriter? extraPooledByteBufferWriter = null,
+        IDisposable? extraOwner = null)
     {
         ReadOnlySpan<byte> utf8JsonSpan = utf8Json.Span;
         var database = MetadataDb.CreateRented(utf8Json.Length, convertToAlloc: false);
@@ -791,7 +828,7 @@ public sealed partial class ParsedJsonDocument<T>
             stack.Dispose();
         }
 
-        return new ParsedJsonDocument<T>(utf8Json, database, extraRentedArrayPoolBytes, extraPooledByteBufferWriter);
+        return new ParsedJsonDocument<T>(utf8Json, database, extraRentedArrayPoolBytes, extraPooledByteBufferWriter, extraOwner: extraOwner);
     }
 
     private static ParsedJsonDocument<T> ParseUnrented(

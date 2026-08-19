@@ -1,0 +1,114 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Referenced components coverage",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": { "$ref": "#/components/servers/Production" }
+  },
+  "channels": {
+    "orders": { "$ref": "#/components/channels/Orders" }
+  },
+  "operations": {
+    "subscribeOrders": { "$ref": "#/components/operations/SubscribeOrders" }
+  },
+  "components": {
+    "servers": {
+      "Production": {
+        "host": "broker.example.com",
+        "protocol": "kafka",
+        "variables": {
+          "region": { "$ref": "#/components/serverVariables/Region" }
+        },
+        "security": [
+          { "$ref": "#/components/securitySchemes/Sasl" }
+        ]
+      }
+    },
+    "serverVariables": {
+      "Region": {
+        "default": "eu-west-1",
+        "enum": ["eu-west-1", "us-east-1"],
+        "description": "Deployment region."
+      }
+    },
+    "securitySchemes": {
+      "Sasl": { "$ref": "#/components/securitySchemes/ScramSha256" },
+      "ScramSha256": {
+        "type": "scramSha256",
+        "description": "SASL SCRAM authentication."
+      }
+    },
+    "channels": {
+      "Orders": {
+        "address": "orders.{orderId}.created",
+        "servers": [
+          { "$ref": "#/servers/production" }
+        ],
+        "parameters": {
+          "orderId": { "$ref": "#/components/parameters/OrderId" }
+        },
+        "messages": {
+          "OrderCreated": { "$ref": "#/components/messages/OrderCreated" },
+          "OrderShipped": {
+            "payload": {
+              "type": "object",
+              "properties": {
+                "shippedAt": { "type": "string" }
+              }
+            }
+          }
+        },
+        "bindings": { "$ref": "#/components/channelBindings/OrdersChannel" }
+      }
+    },
+    "messages": {
+      "OrderCreated": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" }
+          }
+        },
+        "bindings": { "$ref": "#/components/messageBindings/OrderCreatedMessage" }
+      }
+    },
+    "parameters": {
+      "OrderId": {
+        "description": "The order identifier."
+      }
+    },
+    "channelBindings": {
+      "OrdersChannel": {
+        "kafka": { "bindingVersion": "0.5.0" }
+      }
+    },
+    "operationBindings": {
+      "SubscribeOrdersOperation": {
+        "kafka": {
+          "groupId": { "type": "string", "enum": ["orders-group"] },
+          "bindingVersion": "0.5.0"
+        }
+      }
+    },
+    "messageBindings": {
+      "OrderCreatedMessage": {
+        "kafka": {
+          "key": { "type": "string" },
+          "bindingVersion": "0.5.0"
+        }
+      }
+    },
+    "operations": {
+      "SubscribeOrders": {
+        "action": "receive",
+        "channel": { "$ref": "#/channels/orders" },
+        "messages": [
+          { "$ref": "#/channels/orders/messages/OrderCreated" }
+        ],
+        "bindings": { "$ref": "#/components/operationBindings/SubscribeOrdersOperation" }
+      }
+    }
+  }
+}

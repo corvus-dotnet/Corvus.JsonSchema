@@ -141,6 +141,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimRunResponse> ClaimRunAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -151,6 +153,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimRunResponse> ClaimRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.ClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -165,6 +169,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimDueTimersResponse> ClaimDueTimersAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.TimerClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -175,6 +181,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimDueTimersResponse> ClaimDueTimersAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.TimerClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -189,6 +197,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimAwaitingMessageResponse> ClaimAwaitingMessageAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.MessageClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -199,6 +209,8 @@ public interface IApiClaimsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ClaimAwaitingMessageResponse> ClaimAwaitingMessageAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.MessageClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct

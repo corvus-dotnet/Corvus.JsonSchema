@@ -92,14 +92,16 @@ public class RequestReplyBenchmarks
     [Benchmark(Description = "Corvus: Generated producer request/reply (no validation)")]
     public async ValueTask<DimResponsePayload> Corvus_RequestReply_NoValidation()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         return await this.producerNoValidation.SendAndReceiveDimCommandAsync(
-            this.corvusPayload, this.corvusHeaders);
+            this.corvusPayload, this.corvusHeaders, workspace);
     }
 
     [Benchmark(Description = "Corvus: Generated producer request/reply (basic validation)")]
     public async ValueTask<DimResponsePayload> Corvus_RequestReply_WithValidation()
     {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         return await this.producerBasicValidation.SendAndReceiveDimCommandAsync(
-            this.corvusPayload, this.corvusHeaders);
+            this.corvusPayload, this.corvusHeaders, workspace);
     }
 }

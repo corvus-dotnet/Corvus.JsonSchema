@@ -31,12 +31,13 @@ public class PollyResilienceMiddlewareTests
         MessageHandlerMiddleware middleware = PollyResilienceMiddleware.Create(pipeline);
 
         bool operationExecuted = false;
-        await middleware(
-            ct =>
+        await middleware.InvokeAsync(
+            (int _, CancellationToken ct) =>
             {
                 operationExecuted = true;
                 return ValueTask.CompletedTask;
             },
+            0,
             CancellationToken.None);
 
         Assert.IsTrue(operationExecuted);
@@ -58,8 +59,8 @@ public class PollyResilienceMiddlewareTests
 
         MessageHandlerMiddleware middleware = PollyResilienceMiddleware.Create(pipeline);
 
-        await middleware(
-            ct =>
+        await middleware.InvokeAsync(
+            (int _, CancellationToken ct) =>
             {
                 attempts++;
                 if (attempts < 3)
@@ -69,6 +70,7 @@ public class PollyResilienceMiddlewareTests
 
                 return ValueTask.CompletedTask;
             },
+            0,
             CancellationToken.None);
 
         Assert.AreEqual(3, attempts);
@@ -91,12 +93,13 @@ public class PollyResilienceMiddlewareTests
         MessageHandlerMiddleware middleware = PollyResilienceMiddleware.Create(pipeline);
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
-            await middleware(
-                ct =>
+            await middleware.InvokeAsync(
+                (int _, CancellationToken ct) =>
                 {
                     attempts++;
                     throw new InvalidOperationException("Always fails");
                 },
+                0,
                 CancellationToken.None));
 
         // Initial attempt + 2 retries = 3 total attempts
@@ -112,12 +115,13 @@ public class PollyResilienceMiddlewareTests
         using CancellationTokenSource cts = new();
         CancellationToken capturedToken = default;
 
-        await middleware(
-            ct =>
+        await middleware.InvokeAsync(
+            (int _, CancellationToken ct) =>
             {
                 capturedToken = ct;
                 return ValueTask.CompletedTask;
             },
+            0,
             cts.Token);
 
         Assert.AreEqual(cts.Token, capturedToken);
@@ -133,12 +137,13 @@ public class PollyResilienceMiddlewareTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await middleware(
-                ct =>
+            await middleware.InvokeAsync(
+                (int _, CancellationToken ct) =>
                 {
                     ct.ThrowIfCancellationRequested();
                     return ValueTask.CompletedTask;
                 },
+                0,
                 cts.Token));
     }
 
@@ -159,8 +164,8 @@ public class PollyResilienceMiddlewareTests
         MessageHandlerMiddleware middleware = PollyResilienceMiddleware.Create(pipeline);
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        await middleware(
-            ct =>
+        await middleware.InvokeAsync(
+            (int _, CancellationToken ct) =>
             {
                 attempts++;
                 if (attempts < 3)
@@ -170,6 +175,7 @@ public class PollyResilienceMiddlewareTests
 
                 return ValueTask.CompletedTask;
             },
+            0,
             CancellationToken.None);
         stopwatch.Stop();
 
@@ -197,12 +203,13 @@ public class PollyResilienceMiddlewareTests
 
         // ArgumentException is NOT handled by the retry policy
         await Assert.ThrowsExactlyAsync<ArgumentException>(async () =>
-            await middleware(
-                ct =>
+            await middleware.InvokeAsync(
+                (int _, CancellationToken ct) =>
                 {
                     attempts++;
                     throw new ArgumentException("Not retryable");
                 },
+                0,
                 CancellationToken.None));
 
         // Only 1 attempt — no retry for unhandled exceptions
@@ -236,12 +243,13 @@ public class PollyResilienceMiddlewareTests
 
         try
         {
-            await middleware(
-                ct =>
+            await middleware.InvokeAsync(
+                (int _, CancellationToken ct) =>
                 {
                     handlerCalls++;
                     throw new InvalidOperationException("Permanent failure");
                 },
+                0,
                 CancellationToken.None);
         }
         catch (InvalidOperationException ex)

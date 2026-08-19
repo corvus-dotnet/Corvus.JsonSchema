@@ -39,6 +39,8 @@ public sealed class ApiCheckpointsClient : IApiCheckpointsClient
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<LoadCheckpointResponse> LoadCheckpointAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -62,6 +64,8 @@ public sealed class ApiCheckpointsClient : IApiCheckpointsClient
     /// <param name="xArazzoCheckpointSeq">The X-Arazzo-Checkpoint-Seq parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     public ValueTask<SaveCheckpointResponse> SaveCheckpointAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence.Source xArazzoCheckpointSeq, Stream body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

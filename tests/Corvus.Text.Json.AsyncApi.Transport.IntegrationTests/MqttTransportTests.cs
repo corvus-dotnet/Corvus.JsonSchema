@@ -7,6 +7,7 @@ using Corvus.Text.Json.AsyncApi.Mqtt;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Formatter;
 using MQTTnet.Packets;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
@@ -42,6 +43,34 @@ public class MqttTransportTests
         }
 
         await MqttFixture.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "mqtt/test/context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        object? nativeMessage = null;
+
+        await s_transport.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("mqtt/test/context", receivedChannel);
+        Assert.IsNotNull(nativeMessage);
+        await s_transport.UnsubscribeAsync(channel);
     }
 
     [TestMethod]
@@ -97,6 +126,162 @@ public class MqttTransportTests
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task HeadersWithNonAsciiValuesRoundtripExactly()
+    {
+        // The header value travels as compact JSON text in a string-typed header slot, so
+        // non-ASCII content must survive via the writer's ASCII escaping. This asserts the
+        // exact value, not just the shape.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-nonascii"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedValue = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedValue = headers.GetProperty("x-label"u8).GetString();
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-label":"na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e"}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message was not received within timeout.");
+        Assert.AreEqual("na\u00efve \ud83d\ude80 \u65e5\u672c\u8a9e", receivedValue);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ForeignUnparseableHeaderValueDeliversWithAbsentHeaders()
+    {
+        // A foreign publisher can put anything in the corvus-headers user property. An
+        // unparseable value must degrade to absent headers, not fail the delivery or leak
+        // the decode rental.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-foreign"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedHeadersKind = JsonValueKind.Null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedHeadersKind = headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-hdr-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/headers-foreign")
+            .WithPayload("""{"data":1}"""u8.ToArray())
+            .WithUserProperty("corvus-headers", "this is not json")
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with an unparseable foreign header value was not delivered.");
+        Assert.AreEqual(JsonValueKind.Undefined, receivedHeadersKind);
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LegacyBase64HeaderValueStillDecodes()
+    {
+        // A 5.3.0 producer base64-wrapped the headers JSON in the user property. During a
+        // rolling upgrade this consumer must still read that form.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-legacy"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedTraceId = null;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedTraceId = headers.ValueKind == JsonValueKind.Object
+                    ? headers.GetProperty("x-trace-id"u8).GetString()
+                    : null;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-legacy-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/headers-legacy")
+            .WithPayload("""{"data":1}"""u8.ToArray())
+            .WithUserProperty("corvus-headers", Convert.ToBase64String("""{"x-trace-id":"abc"}"""u8))
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with a legacy base64 header value was not delivered.");
+        Assert.AreEqual("abc", receivedTraceId);
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LargeNonAsciiHeadersFitTheUserPropertyCap()
+    {
+        // 14,000 CJK characters are 42KB of raw UTF-8 (fits the 65,535-byte user-property
+        // cap) but 84KB when ASCII-escaped (does not). The header serializer must keep
+        // non-ASCII raw so this publish succeeds.
+        ReadOnlyMemory<byte> channel = "mqtt/test/headers-large"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        int receivedLength = -1;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedLength = headers.GetProperty("big"u8).GetString()?.Length ?? -1;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        string bigValue = new string('\u65e5', 14000);
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("{\"big\":\"" + bigValue + "\"}");
+        await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "Message with large non-ASCII headers was not received.");
+        Assert.AreEqual(14000, receivedLength);
 
         await s_transport.UnsubscribeAsync(channel);
     }
@@ -596,11 +781,11 @@ public class MqttTransportTests
             Host = MqttFixture.Host,
             Port = MqttFixture.Port,
             ClientId = "corvus-mw-" + Guid.NewGuid().ToString("N")[..8],
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "mqtt/test/middleware"u8.ToArray();
@@ -638,7 +823,7 @@ public class MqttTransportTests
             Port = MqttFixture.Port,
             ClientId = "corvus-mw-exhaust-" + Guid.NewGuid().ToString("N")[..8],
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -654,7 +839,7 @@ public class MqttTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "mqtt/test/mw-exhaust"u8.ToArray();
@@ -906,6 +1091,132 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestWithLoopbackSubscriptionDeliversRequestToTheDataHandler()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-loopback-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/loopback-req"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/loopback-reply"u8.ToArray();
+
+        // The same client is data-subscribed to the request topic, so the broker delivers the
+        // request straight back to it. The request must reach the data handler, not be matched
+        // against the requester's own pending reply.
+        TaskCompletionSource<string> received = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        await transport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            (payload, headers, ct) =>
+            {
+                received.TrySetResult(payload.GetProperty("q"u8).GetString() ?? string.Empty);
+                return ValueTask.CompletedTask;
+            });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(5));
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask = transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            "loopback-corr-m01"u8.ToArray(),
+            workspace,
+            cancellationToken: requestCts.Token).AsTask();
+
+        string question = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.AreEqual("hello", question);
+
+        // With nothing responding, the request itself times out rather than completing with its
+        // own request payload as the reply.
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await requestTask);
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DisposeFailsAPendingRequestInsteadOfStrandingIt()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dispose-req-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"never"}"""u8.ToArray());
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask = transport.RequestAsync<JsonElement, JsonElement>(
+            "mqtt/test/dispose-req"u8.ToArray(),
+            "mqtt/test/dispose-reply"u8.ToArray(),
+            requestDoc.RootElement,
+            "dispose-corr-m01"u8.ToArray(),
+            workspace).AsTask();
+
+        // Let the request publish and park awaiting its reply, then dispose the transport.
+        await Task.Delay(1000);
+        await transport.DisposeAsync();
+
+        // The parked wait is failed rather than stranded.
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () => await requestTask.WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    [TestMethod]
+    public async Task ReplyCarryingAResponseTopicStillCompletesTheRequest()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-mqtt5-req-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        // A raw MQTT 5 responder that sets a response topic on its reply (soliciting a
+        // follow-up), which the specification permits; the correlation match must still
+        // complete the request rather than treating the reply as a request in flight.
+        MqttFactory factory = new();
+        using IMqttClient responder = factory.CreateMqttClient();
+        await responder.ConnectAsync(new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithProtocolVersion(MqttProtocolVersion.V500)
+            .WithClientId("raw-mqtt5-responder-" + Guid.NewGuid().ToString("N")[..8])
+            .Build());
+
+        responder.ApplicationMessageReceivedAsync += async args =>
+        {
+            MqttApplicationMessage reply = new MqttApplicationMessageBuilder()
+                .WithTopic(args.ApplicationMessage.ResponseTopic)
+                .WithPayload("""{"a":"pong"}"""u8.ToArray())
+                .WithCorrelationData(args.ApplicationMessage.CorrelationData)
+                .WithResponseTopic("mqtt/test/mqtt5-follow-up")
+                .Build();
+            await responder.PublishAsync(reply);
+        };
+        await responder.SubscribeAsync("mqtt/test/mqtt5-req");
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"ping"}"""u8.ToArray());
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(15));
+        (JsonElement replyPayload, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            "mqtt/test/mqtt5-req"u8.ToArray(),
+            "mqtt/test/mqtt5-reply"u8.ToArray(),
+            requestDoc.RootElement,
+            "mqtt5-corr-01"u8.ToArray(),
+            workspace,
+            cancellationToken: requestCts.Token);
+
+        Assert.AreEqual("pong", replyPayload.GetProperty("a"u8).GetString());
+
+        await responder.DisconnectAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task OperationsAfterDisposeThrowObjectDisposedException()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -1120,5 +1431,32 @@ public class MqttTransportTests
 
             return ValueTask.FromResult(action);
         }
+    }
+
+    [TestMethod]
+    public async Task UnsubscribeFromInsideHandlerCompletes()
+    {
+        ReadOnlyMemory<byte> channel = "mqtt/test/unsub-in-handler"u8.ToArray();
+        using SemaphoreSlim handlerDone = new(0, 1);
+
+        // The pattern the docs bless, and what the generated consumer's Abort arm executes:
+        // the handler itself stops the subscription. MQTTnet awaits this handler inside its
+        // packet pipeline, so the unsubscribe must not wait on a broker acknowledgement that
+        // the blocked pipeline would never process.
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            async (payload, headers, ct) =>
+            {
+                await s_transport.UnsubscribeAsync(channel, ct);
+                handlerDone.Release();
+            });
+
+        await Task.Delay(1000);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"stop":true}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        bool completed = await handlerDone.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(completed, "A handler-initiated unsubscribe must complete rather than deadlocking the MQTT packet pipeline.");
     }
 }

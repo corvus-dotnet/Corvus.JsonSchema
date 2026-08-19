@@ -198,7 +198,7 @@
                 "parameters": {
                   "itemId": "$response.body#/id"
                 },
-                "description": "Retrieve the created item by its id."
+                "description": "Retrieve the created item by its id.\r\nUse this link after create & before any update."
               },
               "SearchByName": {
                 "operationId": "searchItems",

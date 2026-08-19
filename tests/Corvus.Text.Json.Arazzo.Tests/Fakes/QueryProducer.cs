@@ -20,20 +20,21 @@ public sealed class QueryProducer(IMessageTransport transport)
 
     /// <summary>Sends a <c>query</c> request and returns the reply payload.</summary>
     /// <param name="payload">The request payload.</param>
+    /// <param name="workspace">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload.</returns>
-    public ValueTask<JsonElement> SendAndReceiveQueryAsync(JsonElement.Source payload, CancellationToken cancellationToken = default)
+    public ValueTask<JsonElement> SendAndReceiveQueryAsync(JsonElement.Source payload, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         _ = this.transport;
 
         // Materialise the request payload the way the real producer does (proving the step bound it).
-        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        _ = JsonElement.CreateBuilder(workspace, payload).RootElement;
-        workspace.Dispose();
+        JsonWorkspace payloadWorkspace = JsonWorkspace.CreateUnrented();
+        _ = JsonElement.CreateBuilder(payloadWorkspace, payload).RootElement;
+        payloadWorkspace.Dispose();
 
-        // Return a fixed reply. The parsed document is left to the GC, matching RequestAsync's
-        // testing-transport semantics (the reply must outlive this call).
-        JsonElement reply = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"answer":42,"status":"ok"}""")).RootElement;
-        return new ValueTask<JsonElement>(reply);
+        // Return a fixed reply, owned by the caller's workspace exactly as the real producer's reply is.
+        var replyDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"answer":42,"status":"ok"}"""));
+        workspace.TakeOwnership(replyDocument);
+        return new ValueTask<JsonElement>(replyDocument.RootElement);
     }
 }

@@ -39,20 +39,22 @@ public sealed class HeaderNotifyProducer(IMessageTransport transport)
     /// <summary>Sends a <c>notify</c> request with headers and returns a reply that echoes those headers.</summary>
     /// <param name="payload">The request payload.</param>
     /// <param name="headers">The message headers.</param>
+    /// <param name="workspace">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload, of the form <c>{ "sentHeaders": &lt;headers&gt; }</c>.</returns>
-    public ValueTask<JsonElement> SendAndReceiveNotifyAsync(JsonElement.Source payload, JsonElement.Source headers, CancellationToken cancellationToken = default)
+    public ValueTask<JsonElement> SendAndReceiveNotifyAsync(JsonElement.Source payload, JsonElement.Source headers, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         _ = this.transport;
 
-        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        JsonElement headersElement = JsonElement.CreateBuilder(workspace, headers).RootElement;
+        JsonWorkspace payloadWorkspace = JsonWorkspace.CreateUnrented();
+        JsonElement headersElement = JsonElement.CreateBuilder(payloadWorkspace, headers).RootElement;
         string headersJson = headersElement.GetRawText();
-        workspace.Dispose();
+        payloadWorkspace.Dispose();
 
-        // Return a reply echoing the headers. The parsed document is left to the GC, matching the other
-        // producer fakes' semantics (the reply must outlive this call).
-        JsonElement reply = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes($$"""{"sentHeaders":{{headersJson}}}""")).RootElement;
-        return new ValueTask<JsonElement>(reply);
+        // Return a reply echoing the headers, owned by the caller's workspace exactly as the real
+        // producer's reply is.
+        var replyDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes($$"""{"sentHeaders":{{headersJson}}}"""));
+        workspace.TakeOwnership(replyDocument);
+        return new ValueTask<JsonElement>(replyDocument.RootElement);
     }
 }

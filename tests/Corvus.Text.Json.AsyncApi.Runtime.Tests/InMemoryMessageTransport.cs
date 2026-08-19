@@ -109,7 +109,13 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
         lock (this.syncRoot)
         {
-            this.subscriptions[channel] = handler;
+            // A channel carries exactly one subscription, and a second subscribe is refused
+            // rather than displacing the first — the same rule every broker transport applies.
+            if (!this.subscriptions.TryAdd(channel, handler))
+            {
+                throw new InvalidOperationException(
+                    $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+            }
         }
 
         return ValueTask.CompletedTask;
@@ -217,6 +223,29 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
         }
 
         tcs.SetResult((replyPayloadJson, replyHeadersJson ?? []));
+    }
+
+    /// <summary>
+    /// Completes the single pending request/reply, failing if the number pending is not exactly one.
+    /// </summary>
+    /// <param name="replyPayloadJson">The reply payload JSON bytes.</param>
+    /// <param name="replyHeadersJson">The reply headers JSON bytes.</param>
+    public void CompleteSinglePendingRequest(byte[] replyPayloadJson, byte[] replyHeadersJson = default!)
+    {
+        string correlationId;
+
+        lock (this.syncRoot)
+        {
+            if (this.pendingRequests.Count != 1)
+            {
+                throw new InvalidOperationException(
+                    $"Expected exactly one pending request but found {this.pendingRequests.Count}.");
+            }
+
+            correlationId = this.pendingRequests.Keys.First();
+        }
+
+        this.CompleteRequest(correlationId, replyPayloadJson, replyHeadersJson);
     }
 
     private static async ValueTask<(TReply Payload, JsonElement Headers)> CompleteRequestAsync<TReply>(

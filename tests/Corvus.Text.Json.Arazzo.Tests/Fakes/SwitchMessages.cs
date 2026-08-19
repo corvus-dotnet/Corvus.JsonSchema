@@ -119,20 +119,23 @@ public sealed class SwitchReplyProducer(IMessageTransport transport)
 
     /// <summary>Sends a <c>turnOn</c> request and returns a reply that names it.</summary>
     /// <param name="payload">The request payload.</param>
+    /// <param name="workspace">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload.</returns>
-    public ValueTask<JsonElement> SendAndReceiveTurnOnAsync(TurnOn payload, CancellationToken cancellationToken = default) => this.ReplyAsync("on");
+    public ValueTask<JsonElement> SendAndReceiveTurnOnAsync(TurnOn payload, JsonWorkspace workspace, CancellationToken cancellationToken = default) => this.ReplyAsync(workspace, "on");
 
     /// <summary>Sends a <c>turnOff</c> request and returns a reply that names it.</summary>
     /// <param name="payload">The request payload.</param>
+    /// <param name="workspace">The workspace that owns the reply documents; the returned reply stays valid until this workspace is disposed.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload.</returns>
-    public ValueTask<JsonElement> SendAndReceiveTurnOffAsync(TurnOff payload, CancellationToken cancellationToken = default) => this.ReplyAsync("off");
+    public ValueTask<JsonElement> SendAndReceiveTurnOffAsync(TurnOff payload, JsonWorkspace workspace, CancellationToken cancellationToken = default) => this.ReplyAsync(workspace, "off");
 
-    private ValueTask<JsonElement> ReplyAsync(string kind)
+    private ValueTask<JsonElement> ReplyAsync(JsonWorkspace workspace, string kind)
     {
         _ = this.transport;
-        JsonElement reply = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes($$"""{"kind":"{{kind}}"}""")).RootElement;
-        return new ValueTask<JsonElement>(reply);
+        var replyDocument = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes($$"""{"kind":"{{kind}}"}"""));
+        workspace.TakeOwnership(replyDocument);
+        return new ValueTask<JsonElement>(replyDocument.RootElement);
     }
 }

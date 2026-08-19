@@ -80,6 +80,53 @@ public static class ThrowHelper
     }
 
     /// <summary>
+    /// Creates, without throwing, the exception <see cref="ThrowMessagePayloadValidationFailed(string)"/>
+    /// would throw. Generated consumers feed this to the error policy directly, so a hostile
+    /// message costs no unwind and no stack capture.
+    /// </summary>
+    /// <param name="parameterName">The name of the parameter that failed validation.</param>
+    /// <returns>The exception to pass to the error policy.</returns>
+    public static Exception CreateMessagePayloadValidationFailed(string parameterName)
+    {
+        return new ArgumentException(SR.MessagePayloadValidationFailed, parameterName);
+    }
+
+    /// <summary>
+    /// Creates, without throwing, the exception <see cref="ThrowMessagePayloadValidationFailed(string, string)"/>
+    /// would throw.
+    /// </summary>
+    /// <param name="parameterName">The name of the parameter that failed validation.</param>
+    /// <param name="detail">A JSON-formatted string containing validation diagnostics.</param>
+    /// <returns>The exception to pass to the error policy.</returns>
+    public static Exception CreateMessagePayloadValidationFailed(string parameterName, string detail)
+    {
+        return new ArgumentException(SR.Format(SR.MessagePayloadValidationFailedWithDetail, detail), parameterName);
+    }
+
+    /// <summary>
+    /// Creates, without throwing, the exception <see cref="ThrowMessageHeadersValidationFailed(string)"/>
+    /// would throw.
+    /// </summary>
+    /// <param name="parameterName">The name of the parameter that failed validation.</param>
+    /// <returns>The exception to pass to the error policy.</returns>
+    public static Exception CreateMessageHeadersValidationFailed(string parameterName)
+    {
+        return new ArgumentException(SR.MessageHeadersValidationFailed, parameterName);
+    }
+
+    /// <summary>
+    /// Creates, without throwing, the exception <see cref="ThrowMessageHeadersValidationFailed(string, string)"/>
+    /// would throw.
+    /// </summary>
+    /// <param name="parameterName">The name of the parameter that failed validation.</param>
+    /// <param name="detail">A JSON-formatted string containing validation diagnostics.</param>
+    /// <returns>The exception to pass to the error policy.</returns>
+    public static Exception CreateMessageHeadersValidationFailed(string parameterName, string detail)
+    {
+        return new ArgumentException(SR.Format(SR.MessageHeadersValidationFailedWithDetail, detail), parameterName);
+    }
+
+    /// <summary>
     /// Throws a <see cref="NotSupportedException"/> indicating that the
     /// message has an unsupported content type.
     /// </summary>
@@ -116,6 +163,28 @@ public static class ThrowHelper
     public static void ThrowConsumerNotStarted()
     {
         throw new InvalidOperationException(SR.ConsumerNotStarted);
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the
+    /// consumer has already been started.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowConsumerAlreadyStarted()
+    {
+        throw new InvalidOperationException(SR.ConsumerAlreadyStarted);
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the consumer was
+    /// stopped while its subscription was still being established, and has been released.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowConsumerStoppedDuringStart()
+    {
+        throw new InvalidOperationException(SR.ConsumerStoppedDuringStart);
     }
 
     /// <summary>

@@ -46,6 +46,35 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        string? receivedChannel = null;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                receivedChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                receivedHeadersKind = deliveryContext.Headers.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("{\"event\":\"context\"}"u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("{\"source\":\"test\"}"u8.ToArray());
+        await s_publisher.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
+
+        Assert.IsTrue(await received.WaitAsync(TimeSpan.FromSeconds(30)));
+        Assert.AreEqual("ws/test/context", receivedChannel);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
         ReadOnlyMemory<byte> channel = "ws/test/roundtrip"u8.ToArray();
@@ -587,11 +616,11 @@ public class WebSocketTransportTests
         WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
         {
             ServerUri = WebSocketFixture.ServerUri,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 Interlocked.Increment(ref middlewareCallCount);
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "ws/test/middleware"u8.ToArray();
@@ -627,7 +656,7 @@ public class WebSocketTransportTests
         {
             ServerUri = WebSocketFixture.ServerUri,
             ErrorPolicy = policy,
-            HandlerMiddleware = async (operation, ct) =>
+            HandlerMiddleware = new TestDelegatingMiddleware(async (operation, ct) =>
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -643,7 +672,7 @@ public class WebSocketTransportTests
                 }
 
                 await operation(ct).ConfigureAwait(false);
-            },
+            }),
         });
 
         ReadOnlyMemory<byte> channel = "ws/test/mw-exhaust"u8.ToArray();
@@ -1083,6 +1112,315 @@ public class WebSocketTransportTests
         await subscriber.DisposeAsync();
         await publisher.DisposeAsync();
         rawWs.Dispose();
+    }
+
+    [TestMethod]
+    public async Task UnsubscribeStopsDeliveryForContextSubscription()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-unsubscribe"u8.ToArray();
+        int receiveCount = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref receiveCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"before"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount);
+
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount, "Context-subscription messages should not be delivered after unsubscribe.");
+    }
+
+    [TestMethod]
+    public async Task LegacySubscribeAfterContextUnsubscribeReceivesMessages()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-then-legacy"u8.ToArray();
+        int contextCount = 0;
+        int legacyCount = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref legacyCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"to-legacy"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(0, contextCount, "The unsubscribed context handler should not receive messages.");
+        Assert.AreEqual(1, legacyCount, "The new legacy subscription should receive messages.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ContextSubscribeOnSubscribedChannelThrows()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/legacy-then-context"u8.ToArray();
+        int legacyCount = 0;
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref legacyCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+                channel,
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+
+        // A refused subscribe must leave the existing subscription untouched.
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"still-legacy"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, legacyCount, "The original subscription must survive a refused subscribe.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task LegacySubscribeOnContextSubscribedChannelThrows()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/context-then-legacy-displaces"u8.ToArray();
+        int contextCount = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref contextCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await s_subscriber.SubscribeAsync<JsonElement>(
+                channel,
+                (payload, headers, ct) => ValueTask.CompletedTask));
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"still-context"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, contextCount, "The original subscription must survive a refused subscribe.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ResubscribeAfterUnsubscribeSucceeds()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/resubscribe-cycle"u8.ToArray();
+        int count = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(200);
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        // The slot is free again, so the channel can take a different subscription kind.
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref count);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after-cycle"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, count, "Subscribing after an unsubscribe must work and deliver exactly once.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task ContextHandlerDeadLetterActionSendsToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/context-deadletter"u8.ToArray();
+        ReadOnlyMemory<byte> dlqChannel = "ws/test/context-deadletter/dlq"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        JsonValueKind dlqKind = JsonValueKind.Undefined;
+
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            dlqChannel,
+            (payload, headers, ct) =>
+            {
+                dlqKind = payload.ValueKind;
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) => throw new InvalidOperationException("Intentional failure"));
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"item":"DL-CTX-001"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message from a context handler was not received on the DLQ channel.");
+        Assert.AreNotEqual(JsonValueKind.Undefined, dlqKind);
+
+        await subscriber.DisposeAsync();
+        await dlqSubscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ContextHandlerAbortActionStopsSubscription()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/context-abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once for a context handler.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Context handler should not be called after abort.");
+
+        await subscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ContextSubscribeOnResponderChannelThrows()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/responder-then-context"u8.ToArray();
+
+        await s_subscriber.SubscribeReplyAsync<JsonElement, JsonElement>(
+            channel,
+            (request, headers, ct) => ValueTask.FromResult(JsonElement.ParseValue("""{"ok":true}"""u8)));
+
+        await Task.Delay(200);
+
+        // A responder occupies the channel's single subscription slot, so a data subscription
+        // is refused rather than silently starved by dispatch order.
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+                channel,
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
+    public async Task SameKindResubscribeThrowsAndDoesNotReRegisterAtRelay()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/same-kind-resubscribe"u8.ToArray();
+        int count = 0;
+
+        await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+            channel,
+            (payload, deliveryContext, ct) =>
+            {
+                Interlocked.Increment(ref count);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await s_subscriber.SubscribeWithDeliveryContextAsync<JsonElement>(
+                channel,
+                (payload, deliveryContext, ct) => ValueTask.CompletedTask));
+
+        await Task.Delay(200);
+
+        Assert.AreEqual(
+            1,
+            WebSocketFixture.SubscribeEnvelopeCount("ws/test/same-kind-resubscribe"),
+            "A refused subscribe must not send a second subscribe envelope.");
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"once"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, count, "The original handler should receive the message exactly once.");
+
+        await s_subscriber.UnsubscribeAsync(channel);
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy

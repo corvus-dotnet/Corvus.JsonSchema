@@ -5,6 +5,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- The generated-code documentation tests resolve compile references from the
+         dependency context, which needs the compilation context preserved. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
     <!-- On net481 this project cannot run tests (the CLI tool is net10.0 only).
          Setting IsTestProject=false prevents dotnet test from trying to invoke it. -->
     <IsTestProject Condition="'$(TargetFramework)' == 'net481'">false</IsTestProject>
@@ -15,6 +18,13 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <ProjectReference Include="..\..\src\Corvus.Json.Cli\Corvus.Json.Cli.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
+    <!-- Referenced so the generated-code documentation tests can compile CLI output
+         against the same assemblies a consuming project would use. ExtendedTypes is the
+         V4 engine's runtime, for the V4-engine variant of those tests. -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <None Update="TestFixtures\**\*">

@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using Azure.Messaging.ServiceBus;
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Internal;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.AsyncApi.AzureServiceBus;
@@ -14,7 +15,7 @@ namespace Corvus.Text.Json.AsyncApi.AzureServiceBus;
 /// <summary>
 /// Azure Service Bus message transport.
 /// </summary>
-public sealed class AzureServiceBusMessageTransport : IMessageTransport
+public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTransport
 {
     private readonly AzureServiceBusTransportOptions options;
     private readonly ServiceBusClient client;
@@ -26,8 +27,26 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     // Each subscription keeps its own processor so Unsubscribe/Dispose can actually stop it. A single shared
     // processor field could not: a transport may hold several subscriptions, and it was never assigned (created
     // per-subscribe), so subscriptions leaked - their processors kept consuming and stole other work's messages.
-    private readonly ConcurrentDictionary<string, (TaskCompletionSource Completion, ServiceBusProcessor Processor)> subscriptions = new(StringComparer.Ordinal);
-    private bool disposed;
+    private readonly ConcurrentDictionary<string, (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker)> subscriptions = new(StringComparer.Ordinal);
+
+    // Flows from each ProcessMessageAsync callback into the handlers it invokes, so teardown
+    // can recognize a handler stopping its own subscription and defer the processor stop that
+    // would otherwise drain the very callback executing the caller.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
+
+    private volatile bool disposed;
+
+    // The shared serialize-once pattern every other transport uses: one buffer and one writer
+    // per thread, contents copied into a rental (or an owned parse) before the next use.
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_serializeBuffer;
+
+    [ThreadStatic]
+    private static Utf8JsonWriter? t_writer;
+
+    // Dead-letter destinations are the bounded set of configured dead-letter channels; creating
+    // an AMQP sender link per dead-lettered message made a poison flood open a link per message.
+    private readonly ConcurrentDictionary<string, ServiceBusSender> deadLetterSenders = new(StringComparer.Ordinal);
 
     private AzureServiceBusMessageTransport(
         AzureServiceBusTransportOptions options,
@@ -117,11 +136,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         try
         {
-            // Serialize to rented buffer
-            int estimatedSize = EstimateSerializedSize(payload);
-            rentedArray = ArrayPool<byte>.Shared.Rent(estimatedSize);
-
-            int bytesWritten = SerializeToBuffer(payload, rentedArray);
+            // Serialize once into the thread-static buffer, then move to a rental for the send.
+            (byte[] serialized, int bytesWritten) = SerializeToRented(in payload);
+            rentedArray = serialized;
 
             ServiceBusMessage message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
 
@@ -184,24 +201,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             byte[]? rentedArray = null;
             try
             {
-                ArrayBufferWriter<byte> buffer = new();
-                Utf8JsonWriter writer = new(buffer);
-                request.WriteTo(writer);
-                writer.Flush();
-
-                int length = buffer.WrittenCount;
-                rentedArray = length <= 256  // StackallocByteThreshold
-                    ? null
-                    : ArrayPool<byte>.Shared.Rent(length);
-
-                ReadOnlyMemory<byte> payload = rentedArray is null
-                    ? buffer.WrittenMemory
-                    : new ReadOnlyMemory<byte>(rentedArray, 0, length);
-
-                if (rentedArray is not null)
-                {
-                    buffer.WrittenSpan.CopyTo(rentedArray);
-                }
+                (byte[] serialized, int length) = SerializeToRented(in request);
+                rentedArray = serialized;
+                ReadOnlyMemory<byte> payload = new(rentedArray, 0, length);
 
                 // Build Service Bus message with SessionId, ReplyTo, and CorrelationId
                 ServiceBusMessage message = new(payload)
@@ -316,15 +318,31 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
-    public async ValueTask SubscribeAsync<TPayload>(
+    public ValueTask SubscribeAsync<TPayload>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+        => this.SubscribeCoreAsync(channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
+
+    private async ValueTask SubscribeCoreAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -332,18 +350,23 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "azureservicebus");
-
         ServiceBusProcessor processor = this.options.UseTopic
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
 
-        TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = (tcs, processor);
+        // Handlers and the error policy run on this source, so unsubscribe and dispose
+        // can cancel in-flight work instead of waiting out slow handlers.
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
+        object marker = new();
+        bool abortRequested = false;
         processor.ProcessMessageAsync += async args =>
         {
-            this.options.Heartbeat?.Tick(channel, "azureservicebus");
+            ExecutingSubscription.Value = marker;
+            this.options.Heartbeat?.Tick(channel, "azureservicebus", marker);
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
 
@@ -356,13 +379,22 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
 
                 if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Deserialization);
-                    tcs.TrySetResult();
                     await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
+
+                    // The abort releases the whole subscription (registry entry, heartbeat,
+                    // processor), so the channel is free to resubscribe rather than left consuming
+                    // forever; teardown detects the self case and defers the processor stop.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     return;
                 }
 
@@ -388,41 +420,52 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             // Handle
             using (payloadDoc)
-            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
+            using (JsonWorkspace? headerWorkspace = args.Message.ApplicationProperties.Count > 0 ? JsonWorkspace.CreateUnrented() : null)
             {
                 TPayload payload = payloadDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
+                JsonElement headersElement = headerWorkspace is not null
+                    ? BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace)
+                    : default;
 
                 try
                 {
                     if (this.middleware is not null)
                     {
-                        await this.middleware(
-                            (ct) => handler(payload, headersElement, ct),
-                            cancellationToken).ConfigureAwait(false);
+                        await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headersElement, s.message, ct),
+                            (handler, payload, channelUtf8, headersElement, message: args.Message),
+                            cts.Token).ConfigureAwait(false);
                     }
                     else
                     {
-                        await handler(payload, headersElement, cancellationToken).ConfigureAwait(false);
+                        await handler.Invoke(payload, channelUtf8, headersElement, args.Message, cts.Token).ConfigureAwait(false);
                     }
 
                     await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                 {
-                    tcs.TrySetResult();
                     await args.AbandonMessageAsync(args.Message).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
                     MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
-                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
 
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Handler);
-                        tcs.TrySetResult();
                         await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
+
+                        // The abort releases the whole subscription (registry entry, heartbeat,
+                        // processor), so the channel is free to resubscribe rather than left consuming
+                        // forever; teardown detects the self case and defers the processor stop.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         return;
                     }
 
@@ -453,7 +496,53 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             return Task.CompletedTask;
         };
 
-        await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: no registry entry exists for anything else to tear
+            // down, so this subscribe releases the processor it created.
+            await DisposeProcessorOnSetupFailureAsync(channel, processor).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
+
+        // Claimed only once the processor is wired and running, so a concurrent subscribe can
+        // never observe — or tear down — a processor this call has not finished starting.
+        (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription = (processor, cts, marker);
+        await this.ClaimSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "azureservicebus", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever - and this subscribe would return success for a torn-down processor.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+            {
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            ThrowAbortedDuringSubscribe(channel);
+        }
     }
 
     /// <summary>
@@ -483,6 +572,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
 
         // Build dead-letter channel UTF-8 bytes
         Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
@@ -490,18 +580,23 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
         string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
-        this.options.Heartbeat?.Start(channel, "azureservicebus");
-
         ServiceBusProcessor processor = this.options.UseTopic
             ? this.client.CreateProcessor(this.options.TopicName!, this.options.SubscriptionName!)
             : this.client.CreateProcessor(this.options.QueueName!);
 
-        TaskCompletionSource tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.subscriptions[channel] = (tcs, processor);
+        // Handlers and the error policy run on this source, so unsubscribe and dispose
+        // can cancel in-flight work instead of waiting out slow handlers.
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
 
+        object marker = new();
+        bool abortRequested = false;
         processor.ProcessMessageAsync += async args =>
         {
-            this.options.Heartbeat?.Tick(channel, "azureservicebus");
+            ExecutingSubscription.Value = marker;
+            this.options.Heartbeat?.Tick(channel, "azureservicebus", marker);
 
             ReadOnlyMemory<byte> bodyBytes = args.Message.Body;
 
@@ -514,13 +609,22 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
-                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
 
                 if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Deserialization);
-                    tcs.TrySetResult();
                     await args.DeadLetterMessageAsync(args.Message, "Deserialization failed", ex.Message).ConfigureAwait(false);
+
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
+
+                    // The abort releases the whole subscription (registry entry, heartbeat,
+                    // processor), so the channel is free to resubscribe rather than left consuming
+                    // forever; teardown detects the self case and defers the processor stop.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     return;
                 }
 
@@ -546,25 +650,26 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             // Handle the request and publish the reply
             using (requestDoc)
-            using (JsonWorkspace headerWorkspace = JsonWorkspace.CreateUnrented())
+            using (JsonWorkspace? headerWorkspace = args.Message.ApplicationProperties.Count > 0 ? JsonWorkspace.CreateUnrented() : null)
             {
                 TRequest request = requestDoc.RootElement;
-                JsonElement headersElement = BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace);
+                JsonElement headersElement = headerWorkspace is not null
+                    ? BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace)
+                    : default;
 
                 try
                 {
                     TReply reply;
                     if (this.middleware is not null)
                     {
-                        TReply captured = default;
-                        await this.middleware(
-                            async (ct) => captured = await handler(request, headersElement, ct).ConfigureAwait(false),
-                            cancellationToken).ConfigureAwait(false);
-                        reply = captured;
+                        reply = await this.middleware.InvokeAsync(
+                            static (s, ct) => s.handler(s.request, s.headersElement, ct),
+                            (handler, request, headersElement),
+                            cts.Token).ConfigureAwait(false);
                     }
                     else
                     {
-                        reply = await handler(request, headersElement, cancellationToken).ConfigureAwait(false);
+                        reply = await handler(request, headersElement, cts.Token).ConfigureAwait(false);
                     }
 
                     // Echo the request's reply-to address, session ID and correlation ID so the requester's
@@ -572,26 +677,39 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                     string? replyTo = args.Message.ReplyTo;
                     if (!string.IsNullOrEmpty(replyTo))
                     {
-                        await this.SendReplyAsync(replyTo, reply, args.Message.SessionId, args.Message.CorrelationId, cancellationToken).ConfigureAwait(false);
+                        // Sent with CancellationToken.None, not this subscription's token: a one-shot
+                        // responder (ReceiveOneAndReplyAsync) signals its completion the instant the
+                        // handler returns, so the caller can unsubscribe - which cancels the token -
+                        // while this reply is still in flight. Cancelling here aborts the reply and the
+                        // requester waits out its timeout for a reply that was computed but never sent.
+                        await this.SendReplyAsync(replyTo, reply, args.Message.SessionId, args.Message.CorrelationId, CancellationToken.None).ConfigureAwait(false);
                     }
 
                     await args.CompleteMessageAsync(args.Message).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                 {
-                    tcs.TrySetResult();
                     await args.AbandonMessageAsync(args.Message).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
                     MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
-                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
 
                     if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "azureservicebus", MessageErrorKind.Handler);
-                        tcs.TrySetResult();
                         await args.DeadLetterMessageAsync(args.Message, "Handler failed", ex.Message).ConfigureAwait(false);
+
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
+
+                        // The abort releases the whole subscription (registry entry, heartbeat,
+                        // processor), so the channel is free to resubscribe rather than left consuming
+                        // forever; teardown detects the self case and defers the processor stop.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         return;
                     }
 
@@ -622,7 +740,53 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             return Task.CompletedTask;
         };
 
-        await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: no registry entry exists for anything else to tear
+            // down, so this subscribe releases the processor it created.
+            await DisposeProcessorOnSetupFailureAsync(channel, processor).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
+
+        // Claimed only once the processor is wired and running, so a concurrent subscribe can
+        // never observe — or tear down — a processor this call has not finished starting.
+        (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription = (processor, cts, marker);
+        await this.ClaimSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "azureservicebus", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever - and this subscribe would return success for a torn-down processor.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+            {
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", marker);
+            ThrowAbortedDuringSubscribe(channel);
+        }
     }
 
     /// <inheritdoc/>
@@ -630,12 +794,132 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
 
-        if (this.subscriptions.TryRemove(channel, out (TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription))
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
+        if (this.subscriptions.TryRemove(channel, out (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription))
         {
-            subscription.Completion.TrySetResult();
-            await subscription.Processor.StopProcessingAsync(cancellationToken).ConfigureAwait(false);
-            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
-            this.options.Heartbeat?.Stop(channel, "azureservicebus");
+            // Teardown drains in-flight handlers first, so their final ticks precede the stop
+            // and the started/stopped/tick event ordering stays truthful.
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+        }
+    }
+
+    private static async ValueTask TearDownSubscriptionAsync(
+        string channel,
+        (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription)
+    {
+        // Cancel in-flight handlers first so the drain below is prompt; the source may
+        // already be disposed if a racing teardown finished.
+        try
+        {
+            await subscription.Cts.CancelAsync().ConfigureAwait(false);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        // StopProcessingAsync drains in-flight handlers, so a handler stopping its own
+        // subscription would wait for itself. The self case defers the stop to the thread
+        // pool: it completes as soon as the handler returns, and every fault inside
+        // StopProcessorAsync is recorded, so the unawaited task can never surface an
+        // unobserved exception.
+        if (ReferenceEquals(ExecutingSubscription.Value, subscription.Marker))
+        {
+            _ = Task.Run(() => StopProcessorAsync(channel, subscription.Processor, subscription.Cts));
+            return;
+        }
+
+        await StopProcessorAsync(channel, subscription.Processor, subscription.Cts).ConfigureAwait(false);
+    }
+
+    private static async Task StopProcessorAsync(string channel, ServiceBusProcessor processor, CancellationTokenSource cts)
+    {
+        // Deliberately no caller token: on the handler-initiated path the caller's token is
+        // the one the handler was given, so passing it would abandon the drain half-done.
+        try
+        {
+            await processor.StopProcessingAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Recorded rather than rethrown: teardown must not abort a dispose walking others.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
+
+        try
+        {
+            await processor.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
+
+        cts.Dispose();
+    }
+
+    // A subscribe that fails before its claim owns only the processor it created; it is
+    // released quietly (recording, never throwing) so the original failure propagates.
+    private static async ValueTask DisposeProcessorOnSetupFailureAsync(string channel, ServiceBusProcessor processor)
+    {
+        try
+        {
+            await processor.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "azureservicebus", ex);
+        }
+    }
+
+    private static void ThrowAbortedDuringSubscribe(string channel)
+        => throw new InvalidOperationException(
+            $"The error policy aborted the subscription for channel '{channel}' while it was being established.");
+
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
+        {
+            ThrowAlreadySubscribed(channel);
+        }
+    }
+
+    private async ValueTask ClaimSubscriptionAsync(
+        string channel,
+        (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription)
+    {
+        // TryAdd is the authoritative claim on the channel's single subscription slot, so no
+        // lock is needed. A second subscribe is refused rather than displacing the first:
+        // displacing would drain the previous processor on the subscribe path, which a handler
+        // calling back in (the generated Abort path) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, subscription))
+        {
+            await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+
+            // The heartbeat has not been started for this subscription, but its processor may
+            // already have ticked an entry into existence; the owner-guarded stop clears that
+            // without touching whatever the winning subscription has recorded.
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+            ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // processor past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, subscription)))
+            {
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+            }
+
+            this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+            throw new ObjectDisposedException(nameof(AzureServiceBusMessageTransport));
         }
     }
 
@@ -665,14 +949,28 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         this.disposed = true;
 
-        foreach ((TaskCompletionSource Completion, ServiceBusProcessor Processor) subscription in this.subscriptions.Values)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its claim (and cleans itself up) or is torn down by this loop. The
+        // shared teardown records rather than throws, so one stuck processor cannot abort it.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            subscription.Completion.TrySetResult();
-            await subscription.Processor.StopProcessingAsync().ConfigureAwait(false);
-            await subscription.Processor.DisposeAsync().ConfigureAwait(false);
+            if (this.subscriptions.TryRemove(channel, out (ServiceBusProcessor Processor, CancellationTokenSource Cts, object Marker) subscription))
+            {
+                // Teardown drains in-flight handlers first, so a first-ever tick from a
+                // subscription this walk stole from a racing subscribe cannot create a fresh
+                // Running entry after the stop has already been applied.
+                await TearDownSubscriptionAsync(channel, subscription).ConfigureAwait(false);
+                this.options.Heartbeat?.Stop(channel, "azureservicebus", subscription.Marker);
+            }
         }
 
-        this.subscriptions.Clear();
+        foreach (string channel in this.deadLetterSenders.Keys)
+        {
+            if (this.deadLetterSenders.TryRemove(channel, out ServiceBusSender? dlSender))
+            {
+                await dlSender.DisposeAsync().ConfigureAwait(false);
+            }
+        }
 
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);
@@ -693,16 +991,18 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         try
         {
-            int estimatedSize = payload.ValueKind != JsonValueKind.Undefined
-                ? Math.Max(1024, payload.ToString()!.Length * 4)
-                : 256;
+            ServiceBusMessage message;
+            if (payload.ValueKind != JsonValueKind.Undefined)
+            {
+                (byte[] serialized, int bytesWritten) = SerializeToRented(in payload);
+                rentedArray = serialized;
+                message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
+            }
+            else
+            {
+                message = new();
+            }
 
-            rentedArray = ArrayPool<byte>.Shared.Rent(estimatedSize);
-            int bytesWritten = payload.ValueKind != JsonValueKind.Undefined
-                ? SerializeToBuffer(payload, rentedArray)
-                : 0;
-
-            ServiceBusMessage message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
             message.ApplicationProperties["Corvus-Original-Channel"] = originalChannel;
             message.ApplicationProperties["Corvus-Error"] = exception.Message;
             message.ApplicationProperties["Corvus-Error-Type"] = exception.GetType().FullName ?? exception.GetType().Name;
@@ -715,7 +1015,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                 }
             }
 
-            await using ServiceBusSender dlSender = this.client.CreateSender(deadLetterChannel);
+            ServiceBusSender dlSender = await this.GetOrAddDeadLetterSenderAsync(deadLetterChannel).ConfigureAwait(false);
             await dlSender.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -740,24 +1040,9 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         try
         {
             // Serialize the reply, mirroring RequestAsync's request serialization.
-            ArrayBufferWriter<byte> buffer = new();
-            Utf8JsonWriter writer = new(buffer);
-            reply.WriteTo(writer);
-            writer.Flush();
-
-            int length = buffer.WrittenCount;
-            rentedArray = length <= 256  // StackallocByteThreshold
-                ? null
-                : ArrayPool<byte>.Shared.Rent(length);
-
-            ReadOnlyMemory<byte> payload = rentedArray is null
-                ? buffer.WrittenMemory
-                : new ReadOnlyMemory<byte>(rentedArray, 0, length);
-
-            if (rentedArray is not null)
-            {
-                buffer.WrittenSpan.CopyTo(rentedArray);
-            }
+            (byte[] serialized, int length) = SerializeToRented(in reply);
+            rentedArray = serialized;
+            ReadOnlyMemory<byte> payload = new(rentedArray, 0, length);
 
             // Echo the request's session and correlation identifiers so the requester's session
             // receiver (which accepts the session whose ID equals the correlation ID) gets the reply.
@@ -785,24 +1070,47 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         }
     }
 
-    private static int EstimateSerializedSize<TPayload>(TPayload payload)
-        where TPayload : struct, IJsonElement<TPayload>
+    private static (byte[] Rented, int Length) SerializeToRented<T>(in T value)
+        where T : struct, IJsonElement<T>
     {
-        // Conservative estimate: 4x the ToString length
-        string stringForm = payload.ToString() ?? string.Empty;
-        return Math.Max(1024, stringForm.Length * 4);
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
+        value.WriteTo(writer);
+        writer.Flush();
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        return (rented, length);
     }
 
-    private static int SerializeToBuffer<TPayload>(TPayload payload, byte[] buffer)
-        where TPayload : struct, IJsonElement<TPayload>
+    // Returns the cached sender for a dead-letter destination, creating it on first use. A racing
+    // first use disposes its losing sender rather than leaking the link.
+    private async ValueTask<ServiceBusSender> GetOrAddDeadLetterSenderAsync(string deadLetterChannel)
     {
-        ArrayBufferWriter<byte> writer = new(buffer.Length);
-        using Utf8JsonWriter jsonWriter = new(writer);
-        payload.WriteTo(jsonWriter);
-        jsonWriter.Flush();
+        if (this.deadLetterSenders.TryGetValue(deadLetterChannel, out ServiceBusSender? existing))
+        {
+            return existing;
+        }
 
-        writer.WrittenSpan.CopyTo(buffer);
-        return writer.WrittenCount;
+        ServiceBusSender created = this.client.CreateSender(deadLetterChannel);
+        ServiceBusSender winner = this.deadLetterSenders.GetOrAdd(deadLetterChannel, created);
+        if (!ReferenceEquals(winner, created))
+        {
+            await created.DisposeAsync().ConfigureAwait(false);
+        }
+
+        // A dispose that walked the cache before this insert landed would leave the new
+        // sender orphaned on a disposed client; the same post-insert re-check the other
+        // caches use hands it back and surfaces the disposal instead.
+        if (this.disposed && this.deadLetterSenders.TryRemove(KeyValuePair.Create(deadLetterChannel, winner)))
+        {
+            await winner.DisposeAsync().ConfigureAwait(false);
+            ObjectDisposedException.ThrowIf(true, this);
+        }
+
+        return winner;
     }
 
     private static JsonElement BuildHeadersElement(IReadOnlyDictionary<string, object> applicationProperties, JsonWorkspace workspace)
@@ -812,8 +1120,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             return default;
         }
 
-        ArrayBufferWriter<byte> buffer = new();
-        using Utf8JsonWriter writer = new(buffer);
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
+        Utf8JsonWriter writer = t_writer ??= new(buffer);
+        writer.Reset(buffer);
 
         writer.WriteStartObject();
         foreach (KeyValuePair<string, object> kvp in applicationProperties)
@@ -824,9 +1134,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         writer.WriteEndObject();
         writer.Flush();
 
-        // The returned element is used after this method returns (by the caller's handler, or by RequestAsync's
-        // caller), so its document is owned by the caller's workspace rather than disposed here.
-        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        // The element outlives this call (the handler or the requester's caller reads it), and
+        // the thread-static buffer is reused by the next serialization on this thread, so the
+        // bytes move to a rented array whose ownership transfers to the parsed document; the
+        // pool gets it back when the owning workspace disposes the document.
+        int length = buffer.WrittenCount;
+        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+        buffer.WrittenSpan.CopyTo(rented);
+        ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(rented.AsMemory(0, length), rented);
         workspace.TakeOwnership(doc);
         return doc.RootElement;
     }

@@ -125,6 +125,8 @@ public interface IApiIdentityClient : IAsyncDisposable
     /// Returns the caller's own deployment-stamped identity as {dimension,value} grants (design §16.5.4) — the identity an administrator entry or grant must name to match the caller (so a UI can offer 'add me' and warn before a transfer would lock the caller out). Empty when the deployment is unscoped.
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetWhoamiResponse> GetWhoamiAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -134,6 +136,8 @@ public interface IApiIdentityClient : IAsyncDisposable
     /// Returns the grantee kinds (person/team/role/workflow) the deployment can resolve to a sys: identity, and whether an external directory is configured (design §16.5.4) — so the grantee picker offers exactly the resolvable grain instead of guessing.
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetIdentityCapabilitiesResponse> GetIdentityCapabilitiesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -148,5 +152,7 @@ public interface IApiIdentityClient : IAsyncDisposable
     /// <param name="limit">The limit parameter.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<SearchGranteesResponse> SearchGranteesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetIdentityGranteesSource.Source source = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

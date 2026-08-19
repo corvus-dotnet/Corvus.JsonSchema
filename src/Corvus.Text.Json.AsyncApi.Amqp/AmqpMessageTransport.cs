@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Text;
+using Corvus.Text.Json.AsyncApi.Internal;
 using Corvus.Text.Json.Internal;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -26,7 +27,7 @@ namespace Corvus.Text.Json.AsyncApi.Amqp;
 /// <c>{consumerTagPrefix}.{channel}</c>.
 /// </para>
 /// </remarks>
-public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTransport
+public sealed class AmqpMessageTransport : IMessageDeliveryContextTransport, IHealthCheckableTransport
 {
     private static readonly byte[] HeadersKey = "corvus-headers"u8.ToArray();
     private const string HeadersKeyString = "corvus-headers";
@@ -45,11 +46,33 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<BasicDeliverEventArgs>> pendingReplies = new(StringComparer.Ordinal);
-    private bool disposed;
+
+    // Flows from each received-message wrapper into the handlers it invokes, so teardown can
+    // recognize a handler stopping its own subscription and defer the channel close that would
+    // otherwise join the dispatcher worker executing the caller.
+    private static readonly AsyncLocal<object?> ExecutingSubscription = new();
+
+    // Internal reply-channel consumers for RequestAsync live apart from the application-visible
+    // registry: they are transport-scoped machinery, so they must neither block an application
+    // subscribe on the reply channel nor die with the first requester's token.
+    private readonly ConcurrentDictionary<string, SubscriptionState> replyConsumers = new(StringComparer.Ordinal);
+
+    // The parked value is an owned copy of the reply, never the delivery args: the client
+    // documents args.Body as valid only during the receive handler, so everything the
+    // requester needs is materialized inside the handler before SetResult.
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>> pendingReplies = new(StringComparer.Ordinal);
+
+    // CachedString carries the pre-encoded UTF-8 the client would otherwise re-encode on every
+    // publish; the exchange is fixed at construction and routing keys are cached per channel
+    // (copy-keyed and capped, since callers pass rented memory and dynamic channel sets must
+    // not grow the cache without bound).
+    private readonly ConcurrentDictionary<ReadOnlyMemory<byte>, CachedString> channelCachedStrings = new(ReadOnlyMemoryByteComparer.Instance);
+    private readonly CachedString exchangeCachedString;
+    private volatile bool disposed;
 
     private AmqpMessageTransport(AmqpTransportOptions options, IConnection connection, IChannel publishChannel)
     {
+        this.exchangeCachedString = new CachedString(options.ExchangeName);
         this.options = options;
         this.connection = connection;
         this.publishChannel = publishChannel;
@@ -135,7 +158,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        CachedString routingKey = this.GetChannelCachedString(channelUtf8);
         (byte[] payloadRented, int payloadLen) = SerializeToRented(in payload);
 
         // Headers go into a Dictionary<string, object?> as byte[] — needs owned array.
@@ -144,7 +167,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             ? SerializeToOwnedBytes(in headers)
             : null;
 
-        return PublishCoreAsync(channel, payloadRented, payloadLen, headerBytes, correlationId: null, cancellationToken);
+        return this.PublishCoreAsync(routingKey, payloadRented, payloadLen, headerBytes, correlationId: null, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -181,7 +204,19 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithoutDeliveryContext(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeWithDeliveryContextAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, MessageDeliveryContext, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeCoreAsync(channel, channelUtf8, MessageHandler<TPayload>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -201,14 +236,125 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
+        // Remove first so delivery stops regardless of what teardown does, and tear down
+        // outside any lock so a handler-initiated unsubscribe cannot wedge the transport.
         if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
-            this.options.Heartbeat?.Stop(channel, "amqp");
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-            await state.Channel.BasicCancelAsync(state.ConsumerTag, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await state.Channel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            // Teardown drains in-flight handlers first, so their final ticks precede the stop
+            // and the started/stopped/tick event ordering stays truthful.
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
+        }
+    }
+
+    private static async ValueTask TearDownSubscriptionAsync(string channel, SubscriptionState state)
+    {
+        await state.CancellationSource.CancelAsync().ConfigureAwait(false);
+
+        // A handler runs on the client library's consumer-dispatcher worker, and closing the
+        // channel waits for that worker to finish — so a handler stopping its own subscription
+        // would self-join. The self case defers the broker stop to the thread pool: it
+        // completes as soon as the handler returns and frees the worker, and every fault
+        // inside CloseChannelAsync is recorded, so the unawaited task can never surface an
+        // unobserved exception.
+        if (ReferenceEquals(ExecutingSubscription.Value, state.Marker))
+        {
+            _ = Task.Run(() => CloseChannelAsync(channel, state));
+            return;
+        }
+
+        await CloseChannelAsync(channel, state).ConfigureAwait(false);
+    }
+
+    private static async Task CloseChannelAsync(string channel, SubscriptionState state)
+    {
+        // Deliberately no caller token anywhere in here: on the handler-initiated path the
+        // handler's token is the subscription's own, cancelled before this runs, so passing
+        // it would abandon the broker-side cancel and leak the channel.
+        try
+        {
+            await state.Channel.BasicCancelAsync(state.ConsumerTag).ConfigureAwait(false);
+            await state.Channel.CloseAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // Recorded rather than rethrown: a broker that has already closed the channel must
+            // not prevent the local handles being released, nor abort a dispose walking others.
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+
+        try
+        {
             await state.Channel.DisposeAsync().ConfigureAwait(false);
-            state.CancellationSource.Dispose();
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+
+        state.CancellationSource.Dispose();
+    }
+
+    private static void ThrowAbortedDuringSubscribe(string channel)
+        => throw new InvalidOperationException(
+            $"The error policy aborted the subscription for channel '{channel}' while it was being established.");
+
+    private static void ThrowAlreadySubscribed(string channel)
+        => throw new InvalidOperationException(
+            $"Channel '{channel}' already has a subscription. Unsubscribe before subscribing again.");
+
+    private void ThrowIfSubscribed(string channel)
+    {
+        if (this.subscriptions.ContainsKey(channel))
+        {
+            ThrowAlreadySubscribed(channel);
+        }
+    }
+
+    // A subscribe that fails before its claim owns only what it created itself; the channel
+    // is released quietly (recording, never throwing) so the original failure propagates.
+    private static async ValueTask DisposeChannelOnSetupFailureAsync(string channel, IChannel consumerChannel)
+    {
+        try
+        {
+            await consumerChannel.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AsyncApiTelemetry.RecordSubscriptionTeardownFailure(channel, "amqp", ex);
+        }
+    }
+
+    private async ValueTask ClaimSubscriptionAsync(string channel, SubscriptionState state)
+    {
+        // TryAdd is the authoritative claim on the channel's single subscription slot, so no
+        // lock is needed. A second subscribe is refused rather than displacing the first:
+        // displacing would tear the previous consumer down on the subscribe path, which a
+        // handler calling back in (the generated Abort path) would deadlock.
+        if (!this.subscriptions.TryAdd(channel, state))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+
+            // The heartbeat has not been started for this subscription, but its consumer may
+            // already have ticked an entry into existence; the owner-guarded stop clears that
+            // without touching whatever the winning subscription has recorded.
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
+            ThrowAlreadySubscribed(channel);
+        }
+
+        // Dispose may have snapshotted the registry before this claim landed; whichever of us
+        // removes the entry tears it down, so a subscribe racing disposal never leaks a live
+        // consumer past DisposeAsync.
+        if (this.disposed)
+        {
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
         }
     }
 
@@ -254,16 +400,40 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
 
         this.disposed = true;
 
-        // Cancel all subscriptions
-        foreach ((string _, SubscriptionState state) in this.subscriptions)
+        // Remove each subscription before tearing it down, so a subscribe racing disposal
+        // either loses its claim (and cleans itself up) or is torn down by this loop. The
+        // shared teardown records rather than throws, so one broken channel cannot abort it.
+        foreach (string channel in this.subscriptions.Keys)
         {
-            await state.CancellationSource.CancelAsync().ConfigureAwait(false);
-            await state.Channel.CloseAsync().ConfigureAwait(false);
-            await state.Channel.DisposeAsync().ConfigureAwait(false);
-            state.CancellationSource.Dispose();
+            if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
+            {
+                // Teardown drains in-flight handlers first, so a first-ever tick from a
+                // subscription this walk stole from a racing subscribe cannot create a fresh
+                // Running entry after the stop has already been applied.
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+                this.options.Heartbeat?.Stop(channel, "amqp", state.Marker);
+            }
         }
 
-        this.subscriptions.Clear();
+        // The internal reply-channel consumers live apart from the application registry but
+        // share the transport's lifetime, so disposal walks them the same way.
+        foreach (string channel in this.replyConsumers.Keys)
+        {
+            if (this.replyConsumers.TryRemove(channel, out SubscriptionState? state))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+        }
+
+        // A requester parked on a reply can only be released by this transport, so each pending
+        // wait is failed rather than silently stranded past disposal.
+        foreach (string correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>? pendingReply))
+            {
+                pendingReply.TrySetException(new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived."));
+            }
+        }
 
         await this.publishChannel.CloseAsync().ConfigureAwait(false);
         await this.publishChannel.DisposeAsync().ConfigureAwait(false);
@@ -272,7 +442,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     }
 
     private async ValueTask PublishCoreAsync(
-        string channel,
+        CachedString routingKey,
         byte[] payloadRented,
         int payloadLength,
         byte[]? headerBytes,
@@ -300,11 +470,8 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 props.Headers[CorrelationIdKeyString] = Encoding.UTF8.GetBytes(correlationId);
             }
 
-            string exchange = this.options.ExchangeName;
-            string routingKey = channel;
-
             await this.publishChannel.BasicPublishAsync(
-                exchange: exchange,
+                exchange: this.exchangeCachedString,
                 routingKey: routingKey,
                 mandatory: false,
                 basicProperties: props,
@@ -315,6 +482,27 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         {
             ArrayPool<byte>.Shared.Return(payloadRented);
         }
+    }
+
+    // The routing key's pre-encoded form is cached per channel: the client re-encodes a plain
+    // string routing key on every publish, and the caller's bytes are already exactly that
+    // encoding. The key copies the caller's memory (callers pass rentals); past the cap a very
+    // dynamic channel set falls back to per-call construction.
+    private CachedString GetChannelCachedString(ReadOnlyMemory<byte> channelUtf8)
+    {
+        if (this.channelCachedStrings.TryGetValue(channelUtf8, out CachedString? cached))
+        {
+            return cached;
+        }
+
+        byte[] copy = channelUtf8.ToArray();
+        CachedString created = new(Encoding.UTF8.GetString(copy), copy);
+        if (this.channelCachedStrings.Count < 1024)
+        {
+            this.channelCachedStrings.TryAdd(copy, created);
+        }
+
+        return created;
     }
 
     private async ValueTask<(TReply Payload, JsonElement Headers)> RequestCoreAsync<TReply>(
@@ -329,13 +517,22 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         CancellationToken cancellationToken)
         where TReply : struct, IJsonElement<TReply>
     {
-        TaskCompletionSource<BasicDeliverEventArgs> replyTcs = new();
+        TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)> replyTcs = new();
         this.pendingReplies[correlationId] = replyTcs;
+
+        // Dispose may have walked pendingReplies before this entry landed; whichever side
+        // removes it fails the wait, so a request racing disposal never parks forever.
+        if (this.disposed)
+        {
+            this.pendingReplies.TryRemove(correlationId, out _);
+            ArrayPool<byte>.Shared.Return(requestRented);
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport), "The transport was disposed before the reply arrived.");
+        }
 
         try
         {
             // Ensure reply subscription is active
-            if (!this.subscriptions.ContainsKey(replyChannel))
+            if (!this.replyConsumers.ContainsKey(replyChannel))
             {
                 await this.SubscribeForRepliesAsync(replyChannel, cancellationToken).ConfigureAwait(false);
             }
@@ -365,18 +562,29 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
 
             // Wait for the correlated reply, bounded by the request timeout so a lost reply surfaces as a fast
             // cancellation rather than waiting forever (the caller's token still cancels earlier if it fires first).
-            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(this.options.RequestTimeout);
-            BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
+            // WaitAsync carries both bounds without a linked CTS, its registration, and a timer per request; the
+            // timeout maps back to the OperationCanceledException this method has always thrown.
+            byte[] replyBody;
+            byte[]? replyHeaderBytes;
+            try
+            {
+                (replyBody, replyHeaderBytes) = await replyTcs.Task.WaitAsync(this.options.RequestTimeout, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new OperationCanceledException("The request timed out waiting for a reply.");
+            }
 
             // Parse reply with error handling
             try
             {
-                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyBody);
                 workspace.TakeOwnership(replyDoc);
                 TReply replyPayload = replyDoc.RootElement;
 
-                ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                ParsedJsonDocument<JsonElement>? headersDoc = replyHeaderBytes is not null
+                    ? ParsedJsonDocument<JsonElement>.Parse(replyHeaderBytes)
+                    : null;
                 if (headersDoc is not null)
                 {
                     workspace.TakeOwnership(headersDoc);
@@ -413,7 +621,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                         string dlChannel = replyChannel + this.options.DeadLetterRoutingKeySuffix;
                         try
                         {
-                            await DeadLetterRawAsync(dlChannel, correlationIdUtf8, reply.Body.ToArray(), parseEx, cancellationToken).ConfigureAwait(false);
+                            await DeadLetterRawAsync(dlChannel, correlationIdUtf8, replyBody, parseEx, cancellationToken).ConfigureAwait(false);
                             AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "amqp");
                         }
                         catch (Exception dlEx)
@@ -442,44 +650,71 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     private async ValueTask SubscribeCoreAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        MessageHandler<TPayload> handler,
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
-        IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        ThrowIfSubscribed(channel);
 
-        await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
+        string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
+        IChannel consumerChannel;
+        try
+        {
+            consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the subscription's cancellation source.
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.{channel}";
-
-        await consumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: this.options.QueueDurable,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await consumerChannel.QueueBindAsync(
+            await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            await consumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: channel,
+                durable: this.options.QueueDurable,
+                exclusive: false,
+                autoDelete: false,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await consumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: channel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
         string? actualTag = null;
+        object marker = new();
+        bool abortRequested = false;
         consumer.ReceivedAsync += async (_, args) =>
         {
+            ExecutingSubscription.Value = marker;
             if (cts.Token.IsCancellationRequested)
             {
                 return;
             }
 
-            this.options.Heartbeat?.Tick(channel, "amqp");
+            this.options.Heartbeat?.Tick(channel, "amqp", marker);
 
             ParsedJsonDocument<TPayload> payloadDoc;
             try
@@ -507,12 +742,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 else if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                    if (actualTag is not null)
-                    {
-                        await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                    }
 
-                    await cts.CancelAsync().ConfigureAwait(false);
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
+
+                    // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                    // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                    // the self case and defers the broker close until this handler returns.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -554,12 +793,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     else if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                        if (actualTag is not null)
-                        {
-                            await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                        }
 
-                        await cts.CancelAsync().ConfigureAwait(false);
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
+
+                        // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                        // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                        // the self case and defers the broker close until this handler returns.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     }
                     else
                     {
@@ -578,11 +821,14 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     {
                         if (this.middleware is not null)
                         {
-                            await this.middleware((ct) => handler(payload, headers, ct), cts.Token).ConfigureAwait(false);
+                            await this.middleware.InvokeAsync(
+                                static (s, ct) => s.handler.Invoke(s.payload, s.channelUtf8, s.headers, s.args, ct),
+                                (handler, payload, channelUtf8, headers, args),
+                                cts.Token).ConfigureAwait(false);
                         }
                         else
                         {
-                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                            await handler.Invoke(payload, channelUtf8, headers, args, cts.Token).ConfigureAwait(false);
                         }
 
                         await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
@@ -616,12 +862,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                         else if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
-                            if (actualTag is not null)
-                            {
-                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                            }
 
-                            await cts.CancelAsync().ConfigureAwait(false);
+                            // Flagged before the release attempt so the subscribe path can honor an abort
+                            // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                            Volatile.Write(ref abortRequested, true);
+                            Interlocked.MemoryBarrier();
+
+                            // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                            // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                            // the self case and defers the broker close until this handler returns.
+                            await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         }
                         else
                         {
@@ -634,64 +884,155 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.{channel}";
-        actualTag = await consumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        try
+        {
+            actualTag = await consumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
-        this.options.Heartbeat?.Start(channel, "amqp");
+        SubscriptionState state = new(consumerChannel, cts, actualTag, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
-        SubscriptionState state = new(consumerChannel, cts, actualTag);
-        this.subscriptions[channel] = state;
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "amqp", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever — and this subscribe would return success for a torn-down consumer.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            ThrowAbortedDuringSubscribe(channel);
+        }
     }
 
     private async ValueTask SubscribeForRepliesAsync(string replyChannel, CancellationToken cancellationToken)
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        IChannel replyConsumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        // Deliberately NOT linked to any requester's token: the consumer serves every request
+        // that ever uses this reply channel, so its lifetime is the transport's. Linking it to
+        // the first requester meant that token's cancellation made every later reply ack throw.
+        CancellationTokenSource cts = new();
+        IChannel replyConsumerChannel;
+        try
+        {
+            replyConsumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.reply.{replyChannel}";
-
-        await replyConsumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: false,
-            exclusive: true,
-            autoDelete: true,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await replyConsumerChannel.QueueBindAsync(
+            await replyConsumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: replyChannel,
+                durable: false,
+                exclusive: true,
+                autoDelete: true,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await replyConsumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: replyChannel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(replyChannel, replyConsumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(replyConsumerChannel);
         consumer.ReceivedAsync += async (_, args) =>
         {
             string? corrId = args.BasicProperties?.CorrelationId;
-            if (corrId is not null && this.pendingReplies.TryRemove(corrId, out TaskCompletionSource<BasicDeliverEventArgs>? tcs))
+            if (corrId is not null && this.pendingReplies.TryRemove(corrId, out TaskCompletionSource<(byte[] Body, byte[]? HeadersBytes)>? tcs))
             {
-                tcs.SetResult(args);
+                // Copied here, before SetResult and before the ack below releases the delivery:
+                // the client documents args.Body as valid only during this handler, so the
+                // requester must never see the frame buffer itself. The headers value is already
+                // a materialized byte[] in the header table, not a frame view.
+                byte[] body = args.Body.ToArray();
+                byte[]? headersBytes =
+                    args.BasicProperties?.Headers?.TryGetValue(HeadersKeyString, out object? headerValue) == true && headerValue is byte[] materialized
+                        ? materialized
+                        : null;
+                tcs.SetResult((body, headersBytes));
             }
 
             await replyConsumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.reply.{replyChannel}";
-        string actualTag = await replyConsumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        string actualTag;
+        try
+        {
+            actualTag = await replyConsumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(replyChannel, replyConsumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
-        SubscriptionState state = new(replyConsumerChannel, cts, actualTag);
-        this.subscriptions[replyChannel] = state;
+        // The reply listener runs no user code, so no handler can self-unsubscribe from it;
+        // its marker exists only to satisfy the state shape and is never set. Concurrent
+        // requests race to establish this consumer, and losing that race is not a caller
+        // error: the loser discards its consumer and uses the winner's.
+        SubscriptionState state = new(replyConsumerChannel, cts, actualTag, new object());
+        if (!this.replyConsumers.TryAdd(replyChannel, state))
+        {
+            _ = CloseChannelAsync(replyChannel, state);
+            return;
+        }
+
+        // Internal path, so no throw: a request racing disposal fails on the disposed
+        // connection anyway, but the reply consumer must still not outlive the transport.
+        if (this.disposed && this.replyConsumers.TryRemove(KeyValuePair.Create(replyChannel, state)))
+        {
+            _ = CloseChannelAsync(replyChannel, state);
+        }
     }
 
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
@@ -702,40 +1043,67 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
-        IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        ThrowIfSubscribed(channel);
 
-        await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+        // Deliberately not linked to the subscribe call's token: the subscription's lifetime is
+        // owned by unsubscribe and dispose, so cancelling the token that established it must not
+        // tear down the running subscription.
+        CancellationTokenSource cts = new();
+        string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
+        IChannel consumerChannel;
+        try
+        {
+            consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Failed before the claim: nothing is registered anywhere, so the only thing to
+            // release is the subscription's cancellation source.
+            cts.Dispose();
+            throw;
+        }
 
         string queueName = $"{this.options.ConsumerTagPrefix}.{channel}";
-
-        await consumerChannel.QueueDeclareAsync(
-            queue: queueName,
-            durable: this.options.QueueDurable,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        try
         {
-            await consumerChannel.QueueBindAsync(
+            await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            await consumerChannel.QueueDeclareAsync(
                 queue: queueName,
-                exchange: this.options.ExchangeName,
-                routingKey: channel,
+                durable: this.options.QueueDurable,
+                exclusive: false,
+                autoDelete: false,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(this.options.ExchangeName))
+            {
+                await consumerChannel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: this.options.ExchangeName,
+                    routingKey: channel,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
         }
 
         AsyncEventingBasicConsumer consumer = new(consumerChannel);
         string? actualTag = null;
+        object marker = new();
+        bool abortRequested = false;
         consumer.ReceivedAsync += async (_, args) =>
         {
+            ExecutingSubscription.Value = marker;
             if (cts.Token.IsCancellationRequested)
             {
                 return;
             }
 
-            this.options.Heartbeat?.Tick(channel, "amqp");
+            this.options.Heartbeat?.Tick(channel, "amqp", marker);
 
             ParsedJsonDocument<TRequest> requestDoc;
             try
@@ -763,12 +1131,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 else if (action == MessageErrorAction.Abort)
                 {
                     AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                    if (actualTag is not null)
-                    {
-                        await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                    }
 
-                    await cts.CancelAsync().ConfigureAwait(false);
+                    // Flagged before the release attempt so the subscribe path can honor an abort
+                    // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                    Volatile.Write(ref abortRequested, true);
+                    Interlocked.MemoryBarrier();
+
+                    // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                    // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                    // the self case and defers the broker close until this handler returns.
+                    await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -810,12 +1182,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     else if (action == MessageErrorAction.Abort)
                     {
                         AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
-                        if (actualTag is not null)
-                        {
-                            await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                        }
 
-                        await cts.CancelAsync().ConfigureAwait(false);
+                        // Flagged before the release attempt so the subscribe path can honor an abort
+                        // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                        Volatile.Write(ref abortRequested, true);
+                        Interlocked.MemoryBarrier();
+
+                        // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                        // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                        // the self case and defers the broker close until this handler returns.
+                        await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                     }
                     else
                     {
@@ -835,12 +1211,10 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                         TReply reply;
                         if (this.middleware is not null)
                         {
-                            // Capture the typed reply produced inside the middleware pipeline.
-                            TReply captured = default;
-                            await this.middleware(
-                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                            reply = await this.middleware.InvokeAsync(
+                                static (s, ct) => s.handler(s.request, s.headers, ct),
+                                (handler, request, headers),
                                 cts.Token).ConfigureAwait(false);
-                            reply = captured;
                         }
                         else
                         {
@@ -919,12 +1293,16 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                         else if (action == MessageErrorAction.Abort)
                         {
                             AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
-                            if (actualTag is not null)
-                            {
-                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                            }
 
-                            await cts.CancelAsync().ConfigureAwait(false);
+                            // Flagged before the release attempt so the subscribe path can honor an abort
+                            // whose unsubscribe found no claim to remove (message dispatched pre-claim).
+                            Volatile.Write(ref abortRequested, true);
+                            Interlocked.MemoryBarrier();
+
+                            // The abort releases the whole subscription (registry entry, heartbeat, channel), so
+                            // the channel is free to resubscribe rather than left a zombie claim; teardown detects
+                            // the self case and defers the broker close until this handler returns.
+                            await this.UnsubscribeAsync(channelUtf8, CancellationToken.None).ConfigureAwait(false);
                         }
                         else
                         {
@@ -937,17 +1315,54 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         };
 
         string consumerTag = $"{this.options.ConsumerTagPrefix}.{channel}";
-        actualTag = await consumerChannel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumerTag: consumerTag,
-            consumer: consumer,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        try
+        {
+            actualTag = await consumerChannel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumerTag: consumerTag,
+                consumer: consumer,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await DisposeChannelOnSetupFailureAsync(channel, consumerChannel).ConfigureAwait(false);
+            cts.Dispose();
+            throw;
+        }
 
-        this.options.Heartbeat?.Start(channel, "amqp");
+        SubscriptionState state = new(consumerChannel, cts, actualTag, marker);
+        await this.ClaimSubscriptionAsync(channel, state).ConfigureAwait(false);
 
-        SubscriptionState state = new(consumerChannel, cts, actualTag);
-        this.subscriptions[channel] = state;
+        // Started only once the claim is final: a subscribe that fails at or before the claim
+        // must leave no phantom Running entry behind.
+        this.options.Heartbeat?.Start(channel, "amqp", marker);
+
+        // Re-checked after the heartbeat start: a dispose walk that ran entirely between the
+        // claim re-check and the start has already stopped a heartbeat that did not exist
+        // yet, so without this undo a disposed transport would report the channel Running
+        // forever — and this subscribe would return success for a torn-down consumer.
+        if (this.disposed)
+        {
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            if (this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+            {
+                await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            }
+
+            throw new ObjectDisposedException(nameof(AmqpMessageTransport));
+        }
+
+        // An abort verdict on a message dispatched before the claim landed found nothing to
+        // unsubscribe; honor it now rather than leaving the subscription consuming with only
+        // a telemetry trace. If the flag lands after this read, the claim is in place and the
+        // abort arm's own unsubscribe succeeds instead.
+        if (Volatile.Read(ref abortRequested) && this.subscriptions.TryRemove(KeyValuePair.Create(channel, state)))
+        {
+            await TearDownSubscriptionAsync(channel, state).ConfigureAwait(false);
+            this.options.Heartbeat?.Stop(channel, "amqp", marker);
+            ThrowAbortedDuringSubscribe(channel);
+        }
     }
 
     private async ValueTask DeadLetterCoreAsync(
@@ -1068,5 +1483,6 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     private sealed record SubscriptionState(
         IChannel Channel,
         CancellationTokenSource CancellationSource,
-        string ConsumerTag);
+        string ConsumerTag,
+        object Marker);
 }

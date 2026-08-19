@@ -142,6 +142,8 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="limit">The limit parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<ListHostedVersionsResponse> ListHostedVersionsAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetHostedVersionsPageToken.Source pageToken = default, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetHostedVersionsLimit.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -154,6 +156,8 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="documentName">The documentName parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetVersionDocumentResponse> GetVersionDocumentAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema3.Source documentName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
@@ -165,5 +169,7 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetHostedVersionResponse> GetHostedVersionAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }
