@@ -1,24 +1,18 @@
-# Corvus.Text.Json — Copilot Instructions
+# Corvus.Text.Json — Agent Instructions
 
 ## Project Overview
 
-This is **Corvus.Text.Json**, a high-performance JSON library for .NET that extends `System.Text.Json` with pooled-memory parsing, JSON Schema validation (draft 2019-09 and 2020-12), mutable document building, extended numeric types (`BigNumber`, `BigInteger`), and NodaTime integration. It includes a Roslyn incremental source generator and a CLI code generator (`corvusjson`) that produce strongly-typed C# from JSON Schema files.
+**Corvus.Text.Json** is a high-performance JSON library for .NET extending `System.Text.Json` with pooled-memory parsing, JSON Schema validation (2019-09/2020-12), mutable document building, extended numerics (`BigNumber`, `BigInteger`), and NodaTime integration. A Roslyn incremental source generator and a CLI code generator (`corvusjson`) produce strongly-typed C# from JSON Schema. Repo structure mirrors dotnet/runtime conventions: shared source in `Common/`, polyfills from `System.Private.CoreLib/`, explicit `<Compile>` item groups (no globs) in select projects.
 
-The repo structure mirrors the dotnet/runtime repository conventions: shared source files in `Common/`, polyfills from `System.Private.CoreLib/`, and explicit `<Compile>` item groups (no glob includes).
+The low-level reader/writer/document types derive from dotnet/runtime's `System.Text.Json`; review upstream monthly and port bug/correctness fixes. Process and component mapping: `docs/UpstreamReview.md`.
 
-### Upstream dotnet/runtime Tracking
+## Skills
 
-The low-level JSON reader, writer, document, and helper types are derived from `dotnet/runtime`'s `System.Text.Json`. Changes in upstream must be reviewed periodically and ported when they fix bugs or improve correctness.
-
-See `docs/UpstreamReview.md` for the component mapping, review process, and the latest review results. Reviews should be performed monthly, covering commits to `src/libraries/System.Text.Json` since the last review date. Serializer, source generator, `JsonNode`, and `JsonConverter` changes are always irrelevant — only reader, writer, document, helper, and polyfill changes need evaluation.
-
-## Skills Inventory
-
-22 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+25 skills in `.github/skills/` carry the deep, task-specific context. Load the relevant one before working in its area; this file holds only what every session needs.
 
 | Skill | Area |
 |-------|------|
-| `corvus-build-and-test` | Building, testing, TFM targeting, solution files |
+| `corvus-build-and-test` | Building, testing, TFM targeting, coverage methodology, test transcode helpers |
 | `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
 | `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
 | `corvus-standalone-evaluator` | Validation-only evaluator generation and annotation collection |
@@ -26,180 +20,86 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
 | `corvus-low-alloc-data-structures` | Ref-struct collections, SIMD, hash sets |
-| `corvus-bytes-to-bytes` | Killing record<->document string seams; the genuine-leaf proof; the pre-commit allocation self-audit |
-| `corvus-builder-context-threading` | Building generated models from UTF-8 spans with no closure (the `Build<TContext>` form) |
+| `corvus-bytes-to-bytes` | Killing record↔document string seams; the genuine-leaf proof; the allocation self-audit |
+| `corvus-builder-context-threading` | Building generated models from UTF-8 spans with no closure (`Build<TContext>`) |
+| `corvus-ctj-handler-implementation` | OpenAPI server handlers with generated types; workspace-owned lifetimes |
+| `corvus-typed-model-construction` | Allocation-free construction of generated models (Create/Build/CreateBuilder) |
 | `corvus-numeric-types` | BigNumber, numeric parsing, format selection |
 | `corvus-ecma-regex` | ECMAScript → .NET regex translation |
 | `corvus-query-languages` | JSONata, JMESPath, JsonLogic, JSONPath |
 | `corvus-yaml` | YAML ↔ JSON conversion |
 | `corvus-analyzers` | Roslyn analyzers (CTJ001-CTJ010) |
-| `corvus-benchmarks` | BenchmarkDotNet execution, B/C baseline convention |
-| `corvus-docs-website` | Documentation site build pipeline and playgrounds |
+| `corvus-benchmarks` | BenchmarkDotNet execution, B/C baseline convention, all benchmark projects |
+| `corvus-docs-website` | Documentation site build pipeline and the playgrounds |
 | `corvus-bowtie-testing` | Bowtie conformance testing against JSON Schema Test Suite |
 | `corvus-test-suite-regeneration` | Regenerating test classes from the submodule |
 | `corvus-v4-migration` | V4 → V5 migration patterns and analyzers |
+| `corvus-xplat-dynamic-compilation` | Roslyn metadata references for cross-OS CI (build Ubuntu, test Windows net481) |
 | `ref-struct-delegates` | Custom delegates for ref-struct parameters |
 | `reviewing-skills` | Post-work review and maintenance of skills and instructions |
 
 ## Build & Test
 
 ```bash
-# Build the full solution
 dotnet build Corvus.Text.Json.slnx
 
-# Run the standard test suite — exclude the 'failing', 'outerloop', and 'integration' categories
 dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 
-# Run a single test class
+# Single class or method: add a FullyQualifiedName~ clause (substring match; ClassName= is unreliable here)
 dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
-
-# Run a single test method
-dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
-Always exclude `failing`, `outerloop`, and `integration` categories when running tests. Never run all tests without these filters. The `integration` category marks tests that require Docker (Testcontainers) for real broker containers (Kafka, NATS, MQTT, AMQP) — they run only in CI on ubuntu runners with Docker available.
+- **Always** exclude `failing`, `outerloop`, and `integration` categories. `integration` needs Docker/Testcontainers (real brokers) and runs only where containers are available.
+- Tests use **MSTest** (MSTest.Sdk, pinned in `global.json`) on **Microsoft Testing Platform**: `[TestMethod]`/`[DataRow]`/`[DynamicData]`/`[TestCategory]`; `Assert.ThrowsExactly<T>` (exact) vs `Assert.Throws<T>` (T-or-derived); static fields + `[ClassInitialize]`/`[ClassCleanup]` for fixtures. MTP rejects `--nologo` and `-v q`; use `--solution`/`--project` for targeting.
+- `Corvus.Text.Json.slnx` is the main solution; `Corvus.Text.Json.Benchmarks.slnx` holds benchmarks. Test projects target `net10.0` and `net481`; omitting `-f` runs both. Multi-TFM quirks (net481 empty assemblies, Roslyn-hosted exclusions): see `corvus-build-and-test`.
+- `TreatWarningsAsErrors=true` everywhere — any warning fails the build.
 
-Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
+### Pre-commit gates (every commit, in order)
 
-### Test framework
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx` reports `0 Warning(s)`.
+2. **Run affected tests end-to-end**: identify every test project exercising the changed code and run it. A build success is not evidence the change works. A pattern fixed across multiple sites means testing ALL of them.
+3. **Code sample catalog**: if anything under `.github/`, `docs/`, or a skill/instruction file changed — first compile-verify any C# blocks in each changed file (the catalog only tracks line numbers; it cannot catch fabricated APIs), then:
 
-All tests use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** (MTP). The `global.json` pins the MSTest.Sdk version and configures MTP as the test runner.
+   ```powershell
+   .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>   # per changed file
+   .\docs\update-code-sample-catalog.ps1 -Check                        # must exit 0
+   ```
 
-**Key MSTest conventions:**
-- `[TestMethod]` (not `[Fact]`), `[DataRow]` (not `[InlineData]`), `[DynamicData]` (not `[MemberData]`)
-- `[TestCategory("...")]` (not `[Trait("Category", "...")]`)
-- `Assert.AreEqual` / `Assert.IsTrue` / `Assert.IsFalse` / `Assert.IsNull` / `Assert.IsNotNull`
-- `Assert.ThrowsExactly<T>()` for exact type match (equivalent to xUnit's `Assert.Throws<T>`)
-- `Assert.Throws<T>()` for T-or-derived match (equivalent to xUnit's `Assert.ThrowsAny<T>`)
-- Class fixtures use `static` fields with `[ClassInitialize]` / `[ClassCleanup]` methods
-- Test classes must have `[TestClass]` attribute
-
-**MTP-specific notes:**
-- The `--nologo` and `-v q` flags are **not supported** by MTP. Omit them from `dotnet test` commands.
-- Test filter uses `TestCategory` (not `category`). Both MSTest and MTP use this property name.
-- Use `--solution` or `--project` flags for explicit target selection.
-
-**Solution files:**
-
-| Solution | Purpose |
-|----------|---------|
-| `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all TFMs, all projects) |
-| `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
-
-All test projects target both `net10.0` and `net481`. `CodeGenerator.Tests` produces an empty assembly on net481 (the CLI tool it tests is .NET 10 only); `<IsTestProject>false</IsTestProject>` on net481 plus `--ignore-exit-code 8` in CI prevents the empty assembly from failing the test run. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
-
-`TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
-
-### Pre-commit checks
-
-Before every commit, verify these mandatory gates in order:
-
-1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx` must report `0 Warning(s)`.
-2. **Run affected tests end-to-end**: identify every test project that exercises the changed code and run it. Do not assume a build success means the change works. When a bug pattern is fixed across multiple sites (e.g., six dynamic compilation fixtures), test ALL of them — not just one.
-3. **Code sample catalog**: if any file tracked by the catalog was modified (anything under `.github/`, `docs/`, or skill/instruction files), update and verify the catalog:
-
-```powershell
-.\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>   # for each changed file
-.\docs\update-code-sample-catalog.ps1 -Check                         # must exit 0
-```
-
-The catalog tracks line numbers of code blocks in documentation, instructions, and skill files. Editing these files shifts line numbers, making the catalog stale. CI runs `-Check` and fails if it is stale. This applies even when the edits are incidental to non-documentation work (e.g., adding a coverage rule to copilot-instructions.md while doing test work).
-
-See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
-
-4. **Allocation & honest-decision self-audit.** The commit is where multi-turn work converges, so this gate lives here, not as a per-edit hope. Scan your own diff and **report** (under a `Decisions & deferrals` heading in your message, never buried in a code comment or a design-doc tier) every: (a) managed `string` / `List<string>` / `Dictionary` introduced on a path where bytes are available; (b) non-`static` builder lambda (a closure) where a `static` + `TContext` form exists; (c) reflection-based dispatch; (d) work deferred, skipped, or abandoned; (e) fix that *moved* a cost (a transcode/allocation) elsewhere rather than removing it — give the before/after `file:line`. The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"** require the two-ended proof in the `corvus-bytes-to-bytes` skill before they may justify a string — they are red flags for work being avoided, not justifications. Prove every warm-path allocation claim with a BenchmarkDotNet `[MemoryDiagnoser]` baseline-vs-new benchmark. "Admin-rare" is not a licence to allocate.
+   This applies however the files changed (you, the user, accumulation across turns); CI fails on a stale catalog. Full workflow, triage rules, and script flags: `docs/CodeSampleCatalog.md`.
+4. **Allocation & decision self-audit**: scan your diff and report, under a `Decisions & deferrals` heading in your message, every (a) managed `string`/`List<string>`/`Dictionary` on a path where bytes are available, (b) non-`static` builder lambda where a `static` + `TContext` form exists, (c) reflection-based dispatch, (d) work deferred or abandoned, (e) fix that moved a cost rather than removing it (before/after `file:line`). "Genuine leaf" / "marginal" / "admin-rare" / "low-frequency" / "pragmatic" are red flags requiring the two-ended proof in `corvus-bytes-to-bytes` — never justifications. Prove warm-path allocation claims with a `[MemoryDiagnoser]` baseline-vs-new benchmark.
 
 ### Diagnostic discipline
 
-These rules apply whenever investigating or fixing a problem. Do not skip them.
+- **Measure before and after** — never claim an improvement without both numbers from the same command.
+- **Replicate the failing environment** — cross-OS/TFM CI failures reproduce locally first (see `corvus-xplat-dynamic-compilation`); a fix passing under different conditions proves nothing.
+- **No speculative fixes** — if you cannot reproduce it, say so; do not push and hope CI validates (CI runs are 30+ minutes and limited).
+- **Diagnose before acting** — read the logs and identify the specific error or slow step before proposing anything.
 
-- **Measure before and after**: never claim a fix improves performance, coverage, or correctness without measuring the baseline first. Run the same test/command before the change and after, and report both numbers.
-- **Replicate the actual failure environment**: if a bug manifests on CI (cross-OS, specific TFM, specific runner), replicate those conditions locally before committing a fix. For cross-OS CI issues, use the WSL build → Windows test pattern documented in the `corvus-xplat-dynamic-compilation` skill. A fix that passes under different conditions proves nothing.
-- **Do not commit speculative fixes**: if you cannot reproduce the problem locally, say so. Do not push a change and hope CI validates it — CI runs are expensive (30+ minutes) and limited.
-- **Diagnose before acting**: when a CI job is slow or failing, read the logs and identify the specific slow step or error before proposing a fix. Do not guess at the root cause and implement a solution without evidence.
+### GitHub issues
 
-### GitHub issue workflow
-
-When working from a GitHub issue, always read the full issue context before planning or changing code. This means the issue body, labels/tags/categories, linked sub-issues, and the complete comments thread, especially any implementation plan or revised implementation plan. Do not implement from the issue body alone; comments often contain corrections, safety invariants, and required patterns that supersede the summary.
+Read the full issue before planning: body, labels, linked sub-issues, and the complete comment thread — comments often carry corrections and invariants that supersede the summary.
 
 ## Architecture
 
-### Core abstractions
+- **`IJsonDocument`** — pooled-memory documents; always `Dispose()` to return memory to `ArrayPool<byte>`.
+- **`ParsedJsonDocument<T>`** — read-only parsed document. **`JsonDocumentBuilder<T>`** — mutable; version-tracked so stale element references throw.
+- **`IJsonElement<T> where T : struct, IJsonElement<T>`** — CRTP interface every custom JSON type implements; shared traversal and schema API.
+- **Partial-class organisation** — `JsonElement` splits by concern (`JsonElement.Parse.cs`, `.JsonSchema.cs`, `.Mutable.cs`, `JsonElementHelpers.*.cs`); add new concerns as new `JsonElement.<Concern>.cs` partials, never grow the core struct file.
+- **Two codegen mechanisms**: the Roslyn `IIncrementalGenerator` (`src/Corvus.Text.Json.SourceGenerator/`, output inspectable in `obj/` via `EmitCompilerGeneratedFiles`) and the CLI (`corvusjson jsonschema`, `src/Corvus.Json.Cli.Core/`; the legacy `generatejsonschematypes` shim defaults to the V4 engine). **Never invent attribute or CLI option names** — verify against `IncrementalSourceGenerator.cs` and `GenerateCommand.cs` before writing docs or examples.
+- **netstandard2.0** — polyfills are linked from `System.Private.CoreLib/src/` via conditional item groups; do not add package polyfills for what those cover.
 
-- **`IJsonDocument`** — base interface for pooled-memory JSON documents; always `Dispose()` to return memory to `ArrayPool<byte>`.
-- **`ParsedJsonDocument<T>`** — read-only, immutable parsed document.
-- **`JsonDocumentBuilder<T>`** — mutable variant; tracks a `ulong _version` so stale element references throw `InvalidOperationException`.
-- **`IJsonElement<T> where T : struct, IJsonElement<T>`** — CRTP-style generic interface that lets consumers define custom element types while sharing the same traversal and schema API. Every custom JSON type implements this.
+## Buffer pattern
 
-### Partial-class organisation
-
-The main `JsonElement` type is split across many files by concern, e.g.:
-- `JsonElement.cs` — core struct
-- `JsonElement.Parse.cs` — parsing
-- `JsonElement.JsonSchema.cs` — schema validation
-- `JsonElement.Mutable.cs` — mutable operations
-- `JsonElementHelpers.*.cs` — DateTime, Uri, numeric, NodaTime helpers (10+ files)
-
-Follow this pattern when adding functionality: keep the core struct untouched and add a new partial file named `JsonElement.<Concern>.cs`.
-
-### Code generation
-
-Two code-gen mechanisms are used together:
-1. **Roslyn `IIncrementalGenerator`** (`src/Corvus.Text.Json.SourceGenerator/`) — triggered at build time via `JsonSchemaTypeGeneratorAttribute`. `EmitCompilerGeneratedFiles=true` writes output to `obj/` for inspection.
-2. **CLI tool** (`src/Corvus.Json.Cli.Core/`) — `corvusjson jsonschema` (package: `Corvus.Json.Cli`) generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project). The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
-
-**IMPORTANT:** When writing documentation, examples, or instructions that reference Source Generator attributes or CLI tool options, always verify the exact parameter names and types by checking the source code:
-- **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator. Constructor: `(string location, bool rebaseToRootPath = false)`; settable property: `EmitEvaluator` (bool). Applies to `partial struct` only (`AttributeTargets.Struct`).
-- **CLI tool options:** `src/Corvus.Json.Cli.Core/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc. The CLI command is `corvusjson jsonschema` (package: `Corvus.Json.Cli`); the legacy `Corvus.Json.CodeGenerator` package (command: `generatejsonschematypes`) still works but defaults to the V4 engine.
-
-Do **not** invent or hallucinate option names. If unsure, read the source files above before writing.
-
-### netstandard2.0 compatibility
-
-The main library targets `net9.0;net10.0;netstandard2.0;netstandard2.1`. On `netstandard2.0`, polyfill source files are linked directly from `System.Private.CoreLib/src/` (nullable attributes, `CallerArgumentExpressionAttribute`, `Index`/`Range`, etc.). Conditional `<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'>` blocks in the `.csproj` control this. Do not add package polyfills for things already covered by these linked files.
-
-## Converting UTF-8 bytes to strings in tests
-
-When a method under test writes its output to a `Span<byte>` (i.e. a UTF-8 Utf8 format method), use `JsonReaderHelper.TranscodeHelper` to turn the result into a `string` for assertion. This is the standard cross-platform approach used throughout the test suite — it abstracts over the `#if NET` / `netstandard2.0` boundary so tests don't need `#if` blocks of their own.
-
-```csharp
-Span<byte> destination = stackalloc byte[100];
-
-bool success = JsonElementHelpers.TryFormatCurrency(
-    isNegative, integral, fractional, exponent,
-    destination, out int bytesWritten, precision, formatInfo);
-
-Assert.IsTrue(success);
-string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-Assert.AreEqual(expected, result);
-```
-
-**Available overloads** (all in `Corvus.Text.Json.Reader.JsonReaderHelper`, internal):
-
-| Signature | Use when |
-|---|---|
-| `string TranscodeHelper(ReadOnlySpan<byte>)` | You need a `string` from a UTF-8 buffer — most common in tests |
-| `int TranscodeHelper(ReadOnlySpan<byte>, Span<char>)` | You already have a `char` destination buffer |
-| `bool TryTranscode(ReadOnlySpan<byte>, Span<char>, out int)` | Non-throwing variant; returns `false` if the destination is too small |
-| `int TranscodeHelper(ReadOnlySpan<char>, Span<byte>)` | Reverse direction: `char` → UTF-8 bytes |
-
-On `net9.0`+ these delegate to `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` and related span APIs. On `netstandard2.0` / `net481` they fall back to `unsafe fixed`-pointer overloads. Invalid UTF-8 always throws `InvalidOperationException` (wrapping `DecoderFallbackException`) rather than letting the raw codec exception escape.
-
-## stackalloc / ArrayPool rent pattern
-
-Throughout the codebase, temporary byte or char buffers follow a single consistent pattern: stack-allocate for small sizes, rent from `ArrayPool` for larger ones. Always use `try/finally` to guarantee the rented array is returned. See the `corvus-buffer-and-pooling` skill for full rules, tier hierarchy, and thread-static cache patterns.
+Temporary buffers stack-allocate small, rent large, always return in `finally`. Thresholds in `JsonConstants`: `StackallocByteThreshold` = 256 (bytes), `StackallocCharThreshold` = 128 (chars). Full rules, tiers, and thread-static caches: `corvus-buffer-and-pooling`.
 
 ```csharp
 byte[]? rentedArray = null;
-
 Span<byte> buffer = length <= JsonConstants.StackallocByteThreshold
     ? stackalloc byte[JsonConstants.StackallocByteThreshold]
     : (rentedArray = ArrayPool<byte>.Shared.Rent(length));
-
 try
 {
-    // use buffer.Slice(0, length) — the rented array may be larger than requested
-    DoWork(buffer.Slice(0, length));
+    DoWork(buffer.Slice(0, length)); // rented arrays may be larger than requested
 }
 finally
 {
@@ -210,419 +110,59 @@ finally
 }
 ```
 
-**Thresholds** (defined in `JsonConstants`, shared via `src/Common/`):
-
-| Constant | Value | Use for |
-|---|---|---|
-| `JsonConstants.StackallocByteThreshold` | 256 | `byte` / UTF-8 buffers |
-| `JsonConstants.StackallocCharThreshold` | 128 | `char` buffers (256 / 2) |
-
-
 ## Key Conventions
 
-- **Tone** — avoid aggressive language (e.g. "crush", "destroy", "kill", "dominate") when describing benchmark results or performance comparisons. Use neutral terms like "faster", "ahead of", "leads", "wins".
-- **`EnableDefaultCompileItems=false` in select projects** — the following projects disable auto-discovery and require explicit `<Compile Include="..." />` entries for every `.cs` file: `Corvus.Text.Json`, `Corvus.Text.Json.Tests`, `Corvus.Text.Json.CodeGeneration`, `Corvus.Text.Json.SourceGenerator`, `Corvus.Text.Json.Compatibility`, and the four source-generator analyzer projects (`*.Jsonata.SourceGenerator`, `*.JMESPath.SourceGenerator`, `*.JsonLogic.SourceGenerator`, `*.JsonPath.SourceGenerator`). All other projects (JsonPath, JMESPath, Jsonata, JsonLogic, Patch, Yaml, Validator, and most test projects) auto-discover files — no `<Compile>` entry needed.
-- **`LangVersion=preview`** — preview C# language features are intentionally used. Prefer raw string literals (`"""`) for JSON and multi-line strings to avoid escape sequences. Use UTF-8 string literals (`"..."u8`) where a `ReadOnlySpan<byte>` is needed.
-- **`AllowUnsafeBlocks=true`** — unsafe pointer arithmetic is used in numeric and UTF-8 hot paths; this is expected.
-- **Nullable annotations** — enabled in all library projects (`Nullable=enable`), disabled in test projects. Public APIs must have complete XML doc comments; `CS1591` is treated as an error in test projects.
-- **Shared source via `Common/`** — files in `Common/src/` and `Common/tests/` are shared across projects via `<Compile Include="$(CommonPath)..." Link="..." />`. Do not duplicate these; link them instead.
-- **`SR` alias** — `using SR = Resources.Strings;` (or the project-specific variant) is a global using. Use `SR.ExceptionMessageName` for all user-facing strings; define new strings in the `.resx` file.
-- **Disabled warnings** — `JSON001`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
-- **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
-- **No trailing newline in `.cs` files** — StyleCop SA1518 is enforced as an error (`TreatWarningsAsErrors=true`). Source files must end immediately after the final `;` or `}` with **no** trailing newline character. When creating new `.cs` files, ensure the content does not end with `\n`.
-- **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. Run `.\update-json-schema-test-suite.ps1` to update the submodule and regenerate V5 test classes. See `docs/RunningTests.md` for manual regeneration details.
-- **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
-- **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
-- **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage **for ALL TFMs** (do NOT pass `-f net10.0` — omit `-f` entirely so both net10.0 and net481 run and merge automatically), (2) parse the Cobertura XML to find exact uncovered line ranges, (3) read the actual source code at those lines to understand the uncovered logic, (4) devise expressions/inputs that exercise those specific code paths, (5) verify with the reference implementation where applicable, (6) **after writing tests, re-collect coverage for just those tests and verify the specific target lines moved from 0 to >0 hits** — "tests pass" does NOT mean "target code paths exercised." If target lines are still uncovered, the tests are exercising different code paths and must be revised, (7) **iterate until every target line is covered, or you have verified evidence that a path is unreachable** — do not stop after one attempt. For lines you cannot cover, verify the claim by tracing all callers and checking generated code before reporting to the user; provide the evidence (e.g., "grep for `Source<TContext>` across all `.cs` files finds no call sites that construct one"). The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered. Remove any tests that do not contribute novel coverage.
-- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. **⚠️ CRITICAL: NEVER pass `-f net10.0` when collecting baseline or full coverage** — this misses all `#if !NET` / netstandard2.0 code paths. Omit `-f` entirely so both TFMs run and merge automatically: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test --solution Corvus.Text.Json.slnx --filter \"TestCategory!=failing&TestCategory!=outerloop\" --no-build"`. The output is a single Cobertura XML with merged multi-TFM coverage. Only use `-f net10.0` for single-test-class verification during iterative coverage improvement. See the `corvus-build-and-test` skill for XML parsing patterns and the coverage verification loop.
-- **Coverage exclusions** — the `dotnet-coverage.settings.xml` `<Sources><Exclude>` section filters out non-actionable source files that inflate coverage denominators: (1) `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files), (2) all Roslyn source-generator output under `obj/` (matched by `.*\\obj\\.*\.g\.cs$`), (3) auto-generated resource files (`SR.cs` and `*.Designer.cs`), (4) `Corvus/Globalization/` — .NET runtime-derived IDN/Unicode polyfills (CharUnicodeInfoData lookup tables, IdnMapping); the data tables are auto-generated byte arrays indexed by Unicode code point ranges where individual elements are not meaningfully testable, and (5) `Internal/Unicode/` — .NET runtime-derived grapheme/text segmentation polyfills compiled only on netstandard2.0/net481. When parsing Cobertura XML to calculate coverage percentages, apply the same exclusions: skip classes whose `filename` matches any of these patterns. Failure to exclude these will significantly undercount coverage for packages with generated code or resource files.
-- **Doc samples: prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
-- **Doc samples: use implicit `JsonElement.Source` conversions** — write `PatchBuilder.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
-- **Doc samples: only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
-- **Tests: use Corvus types, not `System.Text.Json`** — test code under test and assertions must use `Corvus.Text.Json` types (`JsonElement`, `JsonValueKind`, etc.), never `System.Text.Json` equivalents. `System.Text.Json` is acceptable only for test data infrastructure (e.g., reading JSON fixture files with `System.Text.Json.JsonDocument`).
-- **Tests: prefer exact assertions** — always use `Assert.AreEqual` with the complete expected value rather than `StringAssert.Contains`, `Assert.IsTrue(x.StartsWith(...))`, or similar weak assertions. Weak assertions mask bugs where the output format changes but still contains the checked substring. Acceptable exceptions: (1) error/exception message substring checks (e.g., `StringAssert.Contains(ex.Message, "T0410")`), (2) buffer-growth tests that write 15+ iterations in a loop producing very large outputs where the assertion just verifies data wasn't corrupted, (3) cases where the exact output depends on non-deterministic internal state. When writing new tests, capture the exact output first (via a diagnostic `Assert.Fail(actual)` or a file-based app script), then use that as the expected value in a raw string literal (`"""`). For JSON assertions, raw string literals are ideal because `\u002B`, `\n`, `\t` are literal characters matching JSON content.
+- **Tone** — neutral benchmark language ("faster", "leads"); never "crush"/"destroy"/"kill"/"dominate".
+- **`EnableDefaultCompileItems=false`** in: `Corvus.Text.Json`, `.Tests`, `.CodeGeneration`, `.SourceGenerator`, `.Compatibility`, and the four query-language source-generator projects — every `.cs` file needs an explicit `<Compile>` entry there. All other projects auto-discover.
+- **`LangVersion=preview`** — prefer raw string literals (`"""`) for JSON; `"..."u8` where `ReadOnlySpan<byte>` is needed. **`AllowUnsafeBlocks=true`** in numeric/UTF-8 hot paths is expected.
+- **Nullable** enabled in libraries, disabled in tests; public APIs need complete XML docs.
+- **Shared source via `Common/`** — link with `<Compile Include="$(CommonPath)..." Link="..." />`, never duplicate.
+- **`SR` alias** — all user-facing strings via `SR.Name` from the `.resx`; `using SR = Resources.Strings;` is a global using.
+- **Suppressed project-wide**: `JSON001`, `CS8500`, `IDE0065`, `IDE0290` — no extra pragmas for these.
+- **No trailing newline in `.cs` files** — SA1518 is an error; files end immediately after the final `}` with no `\n`.
+- **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a submodule; update + regenerate via `.\update-json-schema-test-suite.ps1` (see `corvus-test-suite-regeneration`).
+- **`BigNumber`** (in `Corvus.Numerics`) over `decimal` when precision may exceed 28 significant digits.
+- **Test-first bug fixes** — write the reproducing test first; it fails before the fix and passes after, or production code does not change.
+- **Coverage work** — target only uncovered lines identified in Cobertura XML, collect for ALL TFMs (never `-f net10.0` for baselines), verify target lines actually moved to >0 hits, use `dotnet-coverage` (never Coverlet). Full methodology and exclusion rules: `corvus-build-and-test`.
+- **Doc samples** — prefer `ParsedJsonDocument<T>.Parse(...)` + `using` over `ParseValue`; use implicit `JsonElement.Source` conversions for scalars; import only `Corvus.Text.Json` (fully-qualify any `System.Text.Json` type).
+- **Tests use Corvus types** — never `System.Text.Json` equivalents for code under test or assertions (STJ acceptable only as fixture-reading infrastructure).
+- **Exact assertions** — `Assert.AreEqual` with the complete expected value (raw string literal), not `Contains`/`StartsWith`. Exceptions: error-message substrings, huge buffer-growth outputs, non-deterministic content. Capture actual output first, then pin it.
 
-## Documentation Code Sample Verification
+### Known doc-sample compilation traps
 
-**CRITICAL:** All C# code samples in documentation must compile against the current codebase.
+- `ParsedJsonDocument<T>.Parse("""..."""u8)` — `Parse` takes `ReadOnlyMemory<byte>`, not the span `u8` produces; drop the suffix.
+- `ArrayBuilder.AddProperty()` does not exist — arrays use `AddItem()`; `AddProperty(name, value)` is `ObjectBuilder` only.
+- `using System.Text.Json;` alongside `using Corvus.Text.Json;` makes `JsonElement`/`Utf8JsonWriter`/`JsonWriterOptions` ambiguous.
 
-The file `docs/code-sample-catalog.yaml` is the authoritative inventory of every fenced code block across all documentation, skills, and instruction files. It records file paths, block line ranges, languages, categories, and verification status. See `docs/CodeSampleCatalog.md` for the full user guide.
-
-### Step 0 — build existing example projects first
-
-Before verifying any markdown code blocks, build the existing compilable projects. This confirms the real code compiles and gives you a reference for cross-checking README samples.
-
-```powershell
-dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
-```
-
-If any ExampleRecipes project fails to build, fix it before moving on — the README code blocks are derived from these projects.
-
-### Pre-commit gate
-
-**Before any commit that touches files tracked by the catalog** (anything under `.github/`, `docs/`, or skill/instruction files), do both of these steps in order:
-
-**Step 1 — Verify C# blocks in every changed file.** For each file you modified, check whether it contains C# code blocks. If it does, verify they compile against the current source (cross-reference against companion `.cs` files, or use a C# script file). This is the step that catches fabricated APIs, stale signatures, and missing parameters. Catalog tooling cannot enforce this — only you can.
-
-**Step 2 — Update and check the catalog.** For each changed file, run `-UpdateFile`, then run `-Check` to confirm the catalog is in sync:
-
-```powershell
-.\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
-# ... repeat for each changed file ...
-.\docs\update-code-sample-catalog.ps1 -Check
-```
-
-If `-Check` reports issues for files you did not explicitly change (e.g., line-number shifts from an edit earlier in the session), go back to Step 1 for those files too.
-
-Do **not** skip Step 1 and jump straight to Step 2. A passing `-Check` only means line numbers are in sync — it says nothing about whether the code is correct. The verification is the point; the catalog is the record.
-
-This applies regardless of how the files were changed — whether you edited them yourself, the user edited them, or changes accumulated across multiple conversation turns. The commit is the gate.
-
-### Everyday workflow — modified files only
-
-The pre-commit gate above is the mandatory minimum. For larger documentation edits, these additional steps apply:
-
-1. **Build** any affected ExampleRecipes projects first (if the file is under `docs/ExampleRecipes/`).
-2. Set `verified: true` in the catalog for each block you confirmed compiles.
-
-Note: editing a file can shift line numbers for code blocks in **other parts of the same file** that you did not change. `-UpdateFile` handles this; manually editing the catalog YAML does not. Always use `-UpdateFile`, never hand-edit the catalog.
-
-### When you detect user file changes
-
-If you observe that the user has modified a documentation file (e.g., through file-change notifications or when resuming work), proactively run `-UpdateFile` to refresh the catalog entries for that file.
-
-### Triage rules for code blocks
-
-| Block type | Action |
-|---|---|
-| Complete C# (has `using` + statements/types) | Must compile — category `compilable` |
-| Method body / statement snippets | Wrap in a minimal harness and compile — category `compilable` |
-| Fragments (single expressions, partial lines) | Skip — category `fragment` |
-| V4 "before" examples (migration docs) | Skip — category `v4-before` |
-| All blocks under `docs/V4/` | Skip — category `v4-before` (entire file is V4) |
-| `docs/MigrationAnalyzers.md` blocks | Skip — category `fragment` (paired before/after examples) |
-| Intentionally bad patterns (analyzer docs) | Skip — category `bad-pattern` |
-| Non-C# (JSON, YAML, bash, XML) | Skip — no category field in catalog |
-
-### Automated triage
-
-The script `docs/triage-code-samples.ps1` performs **heuristic** categorization by analyzing block content (V4 namespace markers, fragment detection, ExampleRecipes cross-referencing). It does **not** verify compilation — blocks it marks `verified: true` are only cross-referenced against companion `.cs` files, not compiled. Always compile-verify separately.
-
-```powershell
-.\docs\triage-code-samples.ps1 -DryRun                  # Preview changes
-.\docs\triage-code-samples.ps1                           # Apply heuristic categories
-.\docs\triage-code-samples.ps1 -Section example-recipes  # Single section
-.\docs\triage-code-samples.ps1 -File docs\JsonPath.md    # Single file
-```
-
-For first-time verification: (1) run the full catalog update, (2) run the triage script, (3) compile-verify the remaining `compilable` blocks, (4) run `-Check`.
-
-**Prioritization for first-time passes:** With hundreds of compilable blocks, verify in this order: (1) files with known recent changes, (2) quick-start and getting-started sections, (3) standalone docs (`docs/*.md`) — these are the highest-risk for compilation bugs, (4) skills files. ExampleRecipes blocks that cross-reference successfully against companion `.cs` files can be trusted — focus on blocks not in `.cs` files.
-
-### ExampleRecipes verification
-
-README code samples that match companion `.cs` files are verified by the triage script's cross-referencing. However, many READMEs also contain **supplementary educational blocks** (patterns, alternatives, explanations) that are not in any `.cs` file. These still need file-based app verification. The `.cs` file is always the source of truth — update the README to match, not the other way around.
-
-### File-based app verification tips
-
-When combining multiple doc blocks into one verification file:
-- Gather **all `using` directives** at the top — `using` after top-level statements causes CS1529.
-- Wrap each block in its own scope `{ ... }` to isolate variable names.
-- Only one verification file should be open at a time (each is a separate compilation unit).
-
-### Known compilation traps
-
-When verifying samples, watch for these patterns that look correct but fail to compile:
-
-- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix.
-- **`ArrayBuilder.AddProperty()`** — does not exist. Array elements use `AddItem()`. `AddProperty(name, value)` is only on `ObjectBuilder`.
-- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` which exist in both namespaces.
-
-### Catalog maintenance script
-
-```powershell
-.\docs\update-code-sample-catalog.ps1                           # Full update (preserve on-disk annotations)
-.\docs\update-code-sample-catalog.ps1 -UpdateFile docs\X.md    # Re-scan one file
-.\docs\update-code-sample-catalog.ps1 -Check                    # Verify catalog matches files
-.\docs\update-code-sample-catalog.ps1 -Generate                 # Fresh catalog (RESETS all annotations)
-.\docs\update-code-sample-catalog.ps1 -Stats                    # Print summary statistics
-```
-
-The default full update preserves `category` and `verified` annotations from the catalog file on disk. The `-Generate` flag resets all annotations to defaults. See `docs/CodeSampleCatalog.md` for the full guide including file-based app verification patterns.
-
-## JsonWorkspace and Mutable Documents
-
-`JsonWorkspace` is a scoped container for pooled memory used during mutable JSON operations. See the `corvus-mutable-documents` skill for the full API including multi-builder patterns, empty builders, cloning, and JSON Patch.
-
-**Canonical parse-build-mutate-serialize pattern:**
+## JsonWorkspace (mutable documents)
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse(json);
-
-using JsonDocumentBuilder<JsonElement.Mutable> builder =
-    sourceDoc.RootElement.CreateBuilder(workspace);
-
+using JsonDocumentBuilder<JsonElement.Mutable> builder = sourceDoc.RootElement.CreateBuilder(workspace);
 JsonElement.Mutable root = builder.RootElement;
-// ... manipulate root ...
+// ... mutate ...
 string result = root.ToString();
 ```
 
-**Lifetime:** always use a `using` block. Prefer `JsonWorkspace.Create()` (rents from thread-local cache). Use `CreateUnrented()` only when you need explicit lifetime control outside a `using` block.
+Always `using`; prefer `JsonWorkspace.Create()` (thread-local rented) over `CreateUnrented()` unless lifetime must escape the block. Full API incl. multi-builder, cloning, JSON Patch, and test helper types: `corvus-mutable-documents`.
 
-### Test helper types
+## Task-area pointers
 
-- **`DummyDocument`** — minimal `IJsonDocument` mock that returns a fixed `JsonTokenType`. Used when tests need an `IJsonDocument` reference but don't require real document operations.
-- **`DummyResultsCollector`** — mock `IJsonSchemaResultsCollector` that counts context-nesting and schema-location calls; used in schema validation unit tests.
-
-
-## Documentation Website
-
-The documentation site lives in `docs/website/`. See `docs/website/DEVELOPMENT.md` for the full guide.
-
-### Key architecture
-
-- **Source** → `docs/website/site/` contains content markdown, taxonomy YAML, theme (Razor views, SCSS, JS), and tools.
-- **Build** → `docs/website/build.ps1` runs a 12-step pipeline (steps 0-11) that compiles everything into `docs/website/.output/`.
-- **Serving** → The local dev server (`build.ps1 -ServeOnly` or `preview.ps1`) serves static files from `.output/`, **not** from the source theme directory. Editing source files (views, SCSS, JS) has no effect until the relevant build step is re-run.
-- **IMPORTANT: Stop the server before rebuilding.** The build script deletes and recreates `.output/`. On Windows, the Node file server holds file locks that prevent deletion, causing the build to hang indefinitely. Always stop the serving process (`Stop-Process -Id <PID>`) before running `build.ps1`.
-- **CI** → In CI, the website builds in a separate **post-compile** job (`build-website.ps1`) that runs in parallel with tests and packaging, using pre-built assemblies from the compile cache. This avoids adding ~13 minutes to the compile step's critical path.
-
-### Generated vs hand-authored files
-
-Many files under `site/` are **auto-generated** by `build.ps1` and are `.gitignored`:
-- `site/theme/corvus/views/api/v5/index.cshtml` and `v4/index.cshtml` — generated by `XmlDocToMarkdown`
-- `site/theme/corvus/views/Shared/_ApiSidebarV5.cshtml` and `V4` — generated
-- `site/content/Api-v5/`, `site/content/Api-v4/` — generated namespace markdown (except `namespaces/` and `examples/` subdirs)
-- `site/taxonomy/api-v5/`, `site/taxonomy/api-v4/` — generated taxonomy YAML
-- `site/content/Docs/`, `site/content/Examples/` — generated from doc-descriptors and ExampleRecipes
-- `site/taxonomy/docs/`, `site/taxonomy/examples/` — generated taxonomy YAML
-
-**Hand-authored source files** live in `site/source/` and are copied into the target tree by build step 0:
-- `source/content/Docs/Overview.md`, `source/content/Examples/Overview.md`
-- `source/taxonomy/{docs,examples,api,api-v5,api-v4}/index.yml`
-
-Other hand-authored files (committed directly, not generated): `site/content/GettingStarted/`, `site/content/Home/`, `site/content/Api-v5/namespaces/`, `site/content/Api-v5/examples/`, and the theme's SCSS/JS/layout views.
-
-### Incremental rebuilds
-
-After changing source files, you must rebuild the affected pipeline steps **and** the `.output/` copy. Common patterns:
-
-| Changed | Re-run |
-|---|---|
-| SCSS styles | `npx sass theme\corvus\assets\css\scss\main.scss .output\main.css --style=compressed --no-source-map` |
-| JavaScript | `Copy-Item theme\corvus\assets\js\*.js .output\` |
-| API page templates / XmlDocToMarkdown tool | Rebuild tool + regenerate HTML (see DEVELOPMENT.md) |
-| Content markdown (non-API) | Steps 3–6 of `build.ps1` |
-| Library source code | `dotnet build` the library, then regenerate API docs |
-
-### XmlDocToMarkdown tool
-
-The generator at `docs/website/tools/XmlDocToMarkdown/` processes XML docs + assemblies into markdown, taxonomy, Razor views, and per-type HTML pages. It supports multi-assembly input (V4 has 8 libraries), versioned output with engine switcher, and per-version search indices. Key entry points: `ApiViewGenerator.cs` (Razor view generation), `HtmlPageGenerator.cs` (per-type HTML), `MarkdownGenerator.cs` (namespace markdown).
-
-## Playgrounds
-
-Six Blazor WASM playgrounds provide interactive browser-based tools for trying out the libraries. They live under `docs/` and share the same architecture: a Blazor WASM app with Monaco editor integration bundled via esbuild.
-
-| Playground | Directory | Port |
-|-----------|-----------|------|
-| JSON Schema | `docs/playground/` | 5281 |
-| JSONata | `docs/playground-jsonata/` | 5280 |
-| JMESPath | `docs/playground-jmespath/` | — |
-| JsonLogic | `docs/playground-jsonlogic/` | — |
-| JSONPath | `docs/playground-jsonpath/` | — |
-| YAML | `docs/playground-yaml/` | — |
-
-### Running a playground
-
-```powershell
-# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
-cd docs/playground-jsonata
-npm ci
-npm run bundle
-
-# 2. Start the Blazor WASM dev server on a fixed port
-$env:ASPNETCORE_URLS = "http://127.0.0.1:5280"
-dotnet run --project docs/playground-jsonata/src/Corvus.Text.Json.Jsonata.Playground/Corvus.Text.Json.Jsonata.Playground.csproj
-```
-
-Use `ASPNETCORE_URLS` to pin the port — the `--urls` flag does not work with the WASM app host.
-
-**IMPORTANT:** Stop the server before rebuilding. The WASM host holds file locks that prevent rebuild from completing.
-
-**Error messages in WASM:** `SR.Format` does not work correctly in Blazor WASM because `System.Resources.UseSystemResourceKeys` returns `true`, causing it to fall back to `string.Join` instead of `string.Format`. Five of the six playgrounds (all except JSON Schema) have an `EvaluationService.FixBrokenSRFormat()` method that compensates by detecting unsubstituted `{0}` placeholders and re-applying `string.Format`. All exception messages displayed to the user in those playgrounds must go through this method.
-
-## Benchmarks
-
-The `benchmarks/` directory contains BenchmarkDotNet projects that compare validation performance against a frozen baseline. Each benchmark model project (e.g., `Corvus.Text.Json.AnsibleMetaBenchmarkModels`) has two subdirectories:
-
-- **B/ (Baseline)** — frozen, CLI-generated code. **Never regenerate B/.** It represents the fixed comparison point.
-- **C/ (Current)** — regenerated from the current code generator after changes. Always regenerate C/ when codegen changes.
-
-### Namespace and root type conventions
-
-| Directory | Namespace | Root type |
-|---|---|---|
-| B/ | `Corvus.<Name>Benchmark.Baseline` | `Schema` |
-| C/ | `Corvus.<Name>Benchmark.Current` | `<Name>Schema` |
-
-Where `<Name>` is the benchmark name (e.g., `AnsibleMeta`, `GeoJson`, `CmakePresets`).
-
-### Regenerating C/ benchmarks
-
-After making code generator changes, regenerate **all** C/ directories with the batch script:
-
-```bash
-pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1
-```
-
-It builds the generator, then for every `*BenchmarkModels` project reads the root namespace
-(`Corvus.<Name>Benchmark.Current`) from the existing `C/` output, applies the `<Name>Schema` root-type
-convention (overridable via the script's `$Overrides` table) against the project's single `*-schema.json`,
-cleans `C/`, regenerates with `--engine V5`, and flags any project whose regeneration is **not** additive-only
-for review. It never touches B/. See `docs/BenchmarkGuide.md` for the full description.
-
-> A non-additive (review-flagged) diff is not automatically wrong: a generator change that alters nested
-> type-name truncation (e.g. the path-truncation collision fix in `GenerationDriverV5.cs`) legitimately
-> renames deeply-nested files for the larger schemas (GeoJson, Ui5, CmakePresets, …), which git pairs as
-> delete+add. Confirm the benchmark solution still builds and treat such a sweep as its own commit, distinct
-> from any feature change riding alongside it.
-
-To regenerate a single project by hand (the script automates exactly this per project):
-
-```bash
-# Clean the C/ directory first (old files cause compilation errors)
-Remove-Item -Recurse -Force benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C\*
-
-# Regenerate with CLI tool
-dotnet run --project src\Corvus.Json.CodeGenerator -f net10.0 -c Release -- <schema-path> --rootNamespace Corvus.<Name>Benchmark.Current --outputRootTypeName <Name>Schema --outputPath benchmarks\Corvus.Text.Json.<Name>BenchmarkModels\C --engine V5
-```
-
-All 37+ benchmark models follow the same pattern — no special cases.
-
-### Running benchmarks
-
-```bash
-cd benchmarks\Corvus.Text.Json.Benchmarks
-dotnet run -c Release -f net10.0 -- --filter='*<SchemaName>*' --buildTimeout 1200
-```
-
-The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators. Always ask the user to confirm their PC is idle before running benchmarks (they are CPU-intensive and results are unreliable under load).
-
-## Running BenchmarkDotNet (BDN) projects
-
-Multiple benchmark projects live under `benchmarks/`. They all use BDN with out-of-process toolchains. The same rules apply to every one of them.
-
-### General procedure
-
-```powershell
-# 1. Build the projects under test in Release (must succeed before benchmarks)
-dotnet build <relevant-src-projects> -c Release -v q --no-restore
-
-# 2. Run the relevant tests to verify correctness before benchmarking
-dotnet test --project <relevant-test-project> -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop" --no-restore
-
-# 3. Clean stale BDN artifacts (CRITICAL — stale Job-* dirs cause file locks)
-$benchDir = "benchmarks\<BenchmarkProject>"
-Remove-Item "$benchDir\bin\Release\net10.0\Job-*" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item "$benchDir\BenchmarkDotNet.Artifacts\results\*" -Force -ErrorAction SilentlyContinue
-
-# 4. Run benchmarks
-cd $benchDir
-dotnet run -c Release -f net10.0 -- --filter '*'
-```
-
-### Critical rules
-
-1. **Always clean `Job-*` directories** before running. BDN's out-of-process toolchain creates `Job-*` subdirectories under `bin\Release\net10.0\`. Stale ones cause file locks; BDN's build exits with code 1 and **silently drops benchmarks** from results. You won't see an error — you'll just get fewer results.
-2. **Never pipe BDN output through `Select-Object -First N`** or any truncating command. This kills the BDN host process mid-run, producing incomplete/corrupt results.
-3. **Always pass `-- --filter '*'`** to run all benchmarks non-interactively. The `*` **must be single-quoted** in PowerShell to prevent glob expansion. Without quoting, PowerShell expands `*` to filenames, BDN receives no valid filter, and presents an interactive menu that blocks the shell.
-4. **Detect completion by polling for result files, not by waiting on shell output.** BDN output buffers in PowerShell and `read_powershell` may return no new output even after the run finishes. Instead, poll for result files to detect completion:
-   ```powershell
-   Get-ChildItem "$benchDir\BenchmarkDotNet.Artifacts\results\*-report-default.md"
-   ```
-   Once the expected number of result files appear, the run is complete. Read results directly from those files.
-5. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN typically runs for 15-30 minutes depending on the number of benchmarks. After initial_wait expires, the command continues in background. Poll for result files periodically rather than blocking on `read_powershell`.
-
-### Result locations
-
-- Results are at `benchmarks/<BenchmarkProject>/BenchmarkDotNet.Artifacts/results/` (**not** the repo root).
-- Markdown reports: `*-report-default.md` files, one per benchmark class.
-- JSON reports: `*-report-full.json` files, one per benchmark class.
-
-### Troubleshooting
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Fewer benchmarks than expected | Stale `Job-*` dirs caused build failure | Clean `Job-*` dirs and re-run |
-| BDN build exits code 1 | File lock from prior run | Clean `Job-*` dirs |
-| No source-generated methods in results | Source generator didn't run | Build in Release config, check `obj\Release\net10.0\generated\` for `.g.cs` files |
-| Results in wrong directory | Looking at repo root | Check `benchmarks\...\BenchmarkDotNet.Artifacts\results\` |
-
-### JSONata benchmarks
-
-The `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/` project compares the JSONata **code generator (CG)** against the **runtime compiler (RT)** and a **Jsonata.Net.Native** baseline across 20 expression categories. There are 62 benchmarks total (20 CG + 20 RT + 22 Native). If results show fewer than 62, something went wrong — see troubleshooting above.
-
-Build timeout is pre-configured in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
-
-**Method naming convention:**
-- `Corvus_<Category>` → RT (runtime compiler)
-- `Corvus_CodeGen_<Category>` → CG (code generator)
-- `Native_<Category>` → Jsonata.Net.Native baseline
-- **CG/RT ratio** = `CodeGen.Mean / Corvus.Mean`. CG WIN ≤ 0.95, RT WIN ≥ 1.05, PARITY otherwise.
-
-After running benchmarks, generate the full comparison table with:
-
-```bash
-node benchmarks/bench_table.js
-```
-
-This reads `*-report-default.md` files and outputs a markdown table with Native/RT/CG columns for Mean, Ratio, and Allocated. Flags benchmarks where CG or RT exceeds parity (ratio > 1.0).
-
-### JSON Schema validation benchmarks
-
-The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation performance against a frozen baseline. The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators.
+- **Documentation website** (build pipeline, generated-vs-authored files, incremental rebuilds, XmlDocToMarkdown) and **playgrounds** (running, ports, the WASM `SR.Format` gotcha): `corvus-docs-website` skill and `docs/website/DEVELOPMENT.md`. Stop any serving process before rebuilding — file locks hang the build.
+- **Benchmarks**: B/ is the frozen baseline — **never regenerate B/**; regenerate all C/ after codegen changes (`pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1`). BDN procedure, Job-* cleanup, result locations, JSONata specifics, and the full project table: `corvus-benchmarks` skill and `docs/BenchmarkGuide.md`. Confirm the machine is idle before running.
+- **Code sample catalog**: full triage rules, first-pass prioritization, ExampleRecipes cross-referencing, and script flags: `docs/CodeSampleCatalog.md`. The pre-commit gate above is the mandatory minimum.
 
 ## Namespaces
 
 | Namespace | Purpose |
 |---|---|
-| `Corvus.Text.Json` | Public API — core types, parsing, schema validation |
+| `Corvus.Text.Json` | Public API — core types, parsing, schema validation, JCS canonicalization |
 | `Corvus.Text.Json.Internal` | Internal helpers, enumerators, metadata |
-| `Corvus.Text.Json.Patch` | RFC 6902 JSON Patch and JSON Merge Patch |
-| `Corvus.Text.Json.Canonicalization` | RFC 8785 JSON Canonicalization Scheme (JCS) |
-| `Corvus.Text.Json.Jsonata` | JSONata expression evaluator |
-| `Corvus.Text.Json.JMESPath` | JMESPath query evaluator |
-| `Corvus.Text.Json.JsonLogic` | JsonLogic rule engine |
-| `Corvus.Text.Json.JsonPath` | JSONPath (RFC 9535) query evaluator |
-| `Corvus.Text.Json.Yaml` | YAML 1.2 ↔ JSON conversion (full integration) |
-| `Corvus.Text.Json.Validator` | Runtime dynamic schema validation via Roslyn compilation |
-| `Corvus.Text.Json.Compatibility` | Interoperability bridge between V5 types, V4 `Corvus.Json.ExtendedTypes`, and `System.Text.Json` |
-| `Corvus.Numerics` | `BigNumber`, `BigInteger` support |
-| `Corvus.NodaTimeExtensions` | NodaTime (`LocalDate`, `OffsetDateTime`, `Period`) helpers |
-
-## Additional Packages
-
-- **`Corvus.Text.Json.Patch`** — RFC 6902 JSON Patch, JSON Merge Patch, and JSON Diff. See `docs/JsonPatch.md`.
-- **`Corvus.Text.Json.Canonicalization`** — RFC 8785 JCS lives in the core `Corvus.Text.Json` package (not a separate package). See `docs/JsonCanonicalization.md`.
-- **`Corvus.Text.Json.Validator`** — Runtime dynamic schema validation: loads schemas at runtime, compiles validators via Roslyn, caches results. Supports Draft 4–2020-12 and OpenAPI 3.0. See `docs/Validator.md`.
-- **`Corvus.Text.Json.Compatibility`** — Interoperability layer that references both V5 (`Corvus.Text.Json`) and V4 (`Corvus.Json.ExtendedTypes`) plus `System.Text.Json`, providing bridge helpers for migration scenarios. Uses `EnableDefaultCompileItems=false`.
-
-## All Benchmark Projects
-
-In addition to the JSON Schema validation benchmarks and JSONata benchmarks documented above, the following benchmark projects exist under `benchmarks/`:
-
-| Project | What it benchmarks |
-|---------|-------------------|
-| `Corvus.Text.Json.Benchmarks` | JSON Schema validation (B/ vs C/ frozen baseline) |
-| `Corvus.Text.Json.Jsonata.Benchmarks` | JSONata CG vs RT vs Jsonata.Net.Native |
-| `Corvus.Text.Json.JMESPath.Benchmarks` | JMESPath performance |
-| `Corvus.Text.Json.JsonLogic.Benchmarks` | JsonLogic performance |
-| `Corvus.Text.Json.JsonPath.Benchmarks` | JSONPath performance vs JsonEverything |
-| `Corvus.Text.Json.Yaml.Benchmarks` | YAML conversion performance |
-| `Corvus.Numerics.Benchmarks` | BigNumber arithmetic performance |
-| `Corvus.Json.Validator.Benchmarks` | Dynamic validator performance |
-| `Corvus.Text.Json.CodeGeneration.Benchmarks` | Code generation pipeline performance |
-| `Corvus.Text.Json.Benchmarks.Validation` | Standalone evaluator validation benchmarks |
-
-All follow the same BDN rules documented in the "Running BenchmarkDotNet" section above.
+| `Corvus.Text.Json.Patch` | RFC 6902 JSON Patch, Merge Patch, Diff (`docs/JsonPatch.md`) |
+| `Corvus.Text.Json.Jsonata` / `.JMESPath` / `.JsonLogic` / `.JsonPath` | Query/rule evaluators |
+| `Corvus.Text.Json.Yaml` | YAML 1.2 ↔ JSON conversion |
+| `Corvus.Text.Json.Validator` | Runtime dynamic schema validation via Roslyn (`docs/Validator.md`) |
+| `Corvus.Text.Json.Compatibility` | V5 ↔ V4 ↔ `System.Text.Json` bridge for migration |
+| `Corvus.Numerics` | `BigNumber`, `BigInteger` |
+| `Corvus.NodaTimeExtensions` | NodaTime helpers |

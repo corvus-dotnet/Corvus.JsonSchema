@@ -304,3 +304,40 @@ If generated types are missing, ensure you're building in the correct configurat
 - For code generation, see the `corvus-codegen` skill
 - For test suite regeneration, see the `corvus-test-suite-regeneration` skill
 - For full conventions, see `.github/copilot-instructions.md`
+
+## Multi-TFM test-project quirks (moved from copilot-instructions.md)
+
+All test projects target both `net10.0` and `net481`. `CodeGenerator.Tests` produces an empty assembly on net481 (the CLI tool it tests is .NET 10 only); `<IsTestProject>false</IsTestProject>` on net481 plus `--ignore-exit-code 8` in CI prevents the empty assembly from failing the test run. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
+
+## Converting UTF-8 bytes to strings in tests (moved from copilot-instructions.md)
+
+When a method under test writes its output to a `Span<byte>` (i.e. a UTF-8 Utf8 format method), use `JsonReaderHelper.TranscodeHelper` to turn the result into a `string` for assertion. This is the standard cross-platform approach used throughout the test suite — it abstracts over the `#if NET` / `netstandard2.0` boundary so tests don't need `#if` blocks of their own.
+
+```csharp
+Span<byte> destination = stackalloc byte[100];
+
+bool success = JsonElementHelpers.TryFormatCurrency(
+    isNegative, integral, fractional, exponent,
+    destination, out int bytesWritten, precision, formatInfo);
+
+Assert.IsTrue(success);
+string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
+Assert.AreEqual(expected, result);
+```
+
+**Available overloads** (all in `Corvus.Text.Json.Reader.JsonReaderHelper`, internal):
+
+| Signature | Use when |
+|---|---|
+| `string TranscodeHelper(ReadOnlySpan<byte>)` | You need a `string` from a UTF-8 buffer — most common in tests |
+| `int TranscodeHelper(ReadOnlySpan<byte>, Span<char>)` | You already have a `char` destination buffer |
+| `bool TryTranscode(ReadOnlySpan<byte>, Span<char>, out int)` | Non-throwing variant; returns `false` if the destination is too small |
+| `int TranscodeHelper(ReadOnlySpan<char>, Span<byte>)` | Reverse direction: `char` → UTF-8 bytes |
+
+On `net9.0`+ these delegate to `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` and related span APIs. On `netstandard2.0` / `net481` they fall back to `unsafe fixed`-pointer overloads. Invalid UTF-8 always throws `InvalidOperationException` (wrapping `DecoderFallbackException`) rather than letting the raw codec exception escape.
+
+## Coverage improvement methodology (moved from copilot-instructions.md)
+
+- **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage **for ALL TFMs** (do NOT pass `-f net10.0` — omit `-f` entirely so both net10.0 and net481 run and merge automatically), (2) parse the Cobertura XML to find exact uncovered line ranges, (3) read the actual source code at those lines to understand the uncovered logic, (4) devise expressions/inputs that exercise those specific code paths, (5) verify with the reference implementation where applicable, (6) **after writing tests, re-collect coverage for just those tests and verify the specific target lines moved from 0 to >0 hits** — "tests pass" does NOT mean "target code paths exercised." If target lines are still uncovered, the tests are exercising different code paths and must be revised, (7) **iterate until every target line is covered, or you have verified evidence that a path is unreachable** — do not stop after one attempt. For lines you cannot cover, verify the claim by tracing all callers and checking generated code before reporting to the user; provide the evidence (e.g., "grep for `Source<TContext>` across all `.cs` files finds no call sites that construct one"). The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered. Remove any tests that do not contribute novel coverage.
+- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. **⚠️ CRITICAL: NEVER pass `-f net10.0` when collecting baseline or full coverage** — this misses all `#if !NET` / netstandard2.0 code paths. Omit `-f` entirely so both TFMs run and merge automatically: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test --solution Corvus.Text.Json.slnx --filter \"TestCategory!=failing&TestCategory!=outerloop\" --no-build"`. The output is a single Cobertura XML with merged multi-TFM coverage. Only use `-f net10.0` for single-test-class verification during iterative coverage improvement. See the `corvus-build-and-test` skill for XML parsing patterns and the coverage verification loop.
+- **Coverage exclusions** — the `dotnet-coverage.settings.xml` `<Sources><Exclude>` section filters out non-actionable source files that inflate coverage denominators: (1) `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files), (2) all Roslyn source-generator output under `obj/` (matched by `.*\\obj\\.*\.g\.cs$`), (3) auto-generated resource files (`SR.cs` and `*.Designer.cs`), (4) `Corvus/Globalization/` — .NET runtime-derived IDN/Unicode polyfills (CharUnicodeInfoData lookup tables, IdnMapping); the data tables are auto-generated byte arrays indexed by Unicode code point ranges where individual elements are not meaningfully testable, and (5) `Internal/Unicode/` — .NET runtime-derived grapheme/text segmentation polyfills compiled only on netstandard2.0/net481. When parsing Cobertura XML to calculate coverage percentages, apply the same exclusions: skip classes whose `filename` matches any of these patterns. Failure to exclude these will significantly undercount coverage for packages with generated code or resource files.
