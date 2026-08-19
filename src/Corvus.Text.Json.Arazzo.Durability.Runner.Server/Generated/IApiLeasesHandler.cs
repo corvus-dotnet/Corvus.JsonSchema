@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 public interface IApiLeasesHandler
 {
     /// <summary>
-    /// Handles POST /runs/{runId}/lease/renewal — Renew a held lease
+    /// Handles POST /environments/{environment}/runs/{runId}/lease/renewal — Renew a held lease
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>
@@ -30,7 +30,7 @@ public interface IApiLeasesHandler
     ValueTask<RenewLeaseResult> HandleRenewLeaseAsync(RenewLeaseParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles DELETE /runs/{runId}/lease — Release a held lease
+    /// Handles DELETE /environments/{environment}/runs/{runId}/lease — Release a held lease
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>

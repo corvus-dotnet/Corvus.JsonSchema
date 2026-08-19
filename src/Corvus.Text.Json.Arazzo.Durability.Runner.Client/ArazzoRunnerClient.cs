@@ -32,7 +32,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly IApiLeasesClient leases;
     private readonly IApiCheckpointsClient checkpoints;
     private readonly IApiCatalogClient catalog;
-    private readonly ConcurrentDictionary<string, string> heldLeases = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, HeldLease> heldLeases = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, RunnerQuotaHold> quotaHolds = new(StringComparer.Ordinal);
     private readonly RunnerQuotaHoldOptions holdOptions;
     private readonly TimeProvider timeProvider;
@@ -286,11 +286,15 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         foreach (ClaimedRun claimed in claims.EnumerateArray())
         {
             var runId = new WorkflowRunId((string)claimed.RunId);
-            this.heldLeases[runId.Value] = (string)claimed.Lease.Token;
+
+            // The environment is half of the run's address (ADR 0065 §9): every later operation for this run names it
+            // in the route, so it is retained with the token. One materialisation serves both the claim and the entry.
+            string environment = (string)claimed.Environment;
+            this.heldLeases[runId.Value] = new HeldLease(environment, (string)claimed.Lease.Token);
             result.Add(new RunnerClaim(
                 runId,
                 (string)claimed.WorkflowId,
-                (string)claimed.Environment,
+                environment,
                 ((NodaTime.OffsetDateTime)claimed.Lease.ExpiresAt).ToDateTimeOffset(),
                 (long)claimed.Lease.Epoch));
         }
@@ -314,12 +318,14 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         ClaimedRun claimed = response.OkBody;
         var runId = new WorkflowRunId((string)claimed.RunId);
 
-        // The token is retained rather than returned: every later operation for this run presents it from here.
-        this.heldLeases[runId.Value] = (string)claimed.Lease.Token;
+        // The token is retained rather than returned: every later operation for this run presents it from here. The
+        // environment rides with it because it is half of the run's address (ADR 0065 §9) and names the route.
+        string environment = (string)claimed.Environment;
+        this.heldLeases[runId.Value] = new HeldLease(environment, (string)claimed.Lease.Token);
         return new RunnerClaim(
             runId,
             (string)claimed.WorkflowId,
-            (string)claimed.Environment,
+            environment,
             ((NodaTime.OffsetDateTime)claimed.Lease.ExpiresAt).ToDateTimeOffset(),
             (long)claimed.Lease.Epoch);
     }
@@ -334,10 +340,10 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <exception cref="RunnerLeaseLostException">The lease is no longer current, so the run may already be held by another runner.</exception>
     public async ValueTask<DateTimeOffset> RenewAsync(WorkflowRunId runId, TimeSpan? extension = null, CancellationToken cancellationToken = default)
     {
-        string token = this.RequireLease(runId);
+        HeldLease held = this.RequireLease(runId);
 
         RunnerQuotaHold hold = this.HoldFor(runId);
-        RenewLeaseResponse response = await this.SendRenewalAsync(runId, token, extension, cancellationToken).ConfigureAwait(false);
+        RenewLeaseResponse response = await this.SendRenewalAsync(runId, held, extension, cancellationToken).ConfigureAwait(false);
 
         // The renewal shares the advance's hold allowance rather than having its own. A renewal refused while a save is
         // also being refused is one overload, not two, and giving each operation a private budget is how a bounded hold
@@ -357,10 +363,10 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
             }
 
             await response.DisposeAsync().ConfigureAwait(false);
-            response = await this.SendRenewalAsync(runId, token, extension, cancellationToken).ConfigureAwait(false);
+            response = await this.SendRenewalAsync(runId, held, extension, cancellationToken).ConfigureAwait(false);
         }
 
-        await using RenewLeaseResponse held = response;
+        await using RenewLeaseResponse owned = response;
         if (response.StatusCode == 409)
         {
             this.heldLeases.TryRemove(runId.Value, out _);
@@ -388,12 +394,12 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     public async ValueTask ReleaseAsync(WorkflowRunId runId, CancellationToken cancellationToken = default)
     {
         this.quotaHolds.TryRemove(runId.Value, out _);
-        if (!this.heldLeases.TryRemove(runId.Value, out string? token))
+        if (!this.heldLeases.TryRemove(runId.Value, out HeldLease held))
         {
             return;
         }
 
-        await using ReleaseLeaseResponse response = await this.leases.ReleaseLeaseAsync(runId.Value, token, cancellationToken).ConfigureAwait(false);
+        await using ReleaseLeaseResponse response = await this.leases.ReleaseLeaseAsync(held.Environment, runId.Value, held.Token, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode != 204)
         {
             throw Refused($"release the lease for run '{runId.Value}'", response.StatusCode);
@@ -416,13 +422,13 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     // Not async, deliberately, and rebuilt per attempt: LeaseRenewal.Source holds its context by reference, so it
     // cannot live across an await. Building it and starting the send happen here, synchronously; the retry loop awaits
     // only the response. The claim path is shaped the same way and for the same reason.
-    private ValueTask<RenewLeaseResponse> SendRenewalAsync(WorkflowRunId runId, string token, TimeSpan? extension, CancellationToken cancellationToken)
+    private ValueTask<RenewLeaseResponse> SendRenewalAsync(WorkflowRunId runId, HeldLease held, TimeSpan? extension, CancellationToken cancellationToken)
     {
         LeaseRenewal.Source body = extension is { } requested
             ? LeaseRenewal.Build(leaseSeconds: (long)requested.TotalSeconds)
             : default;
 
-        return this.leases.RenewLeaseAsync(runId.Value, token, body, cancellationToken);
+        return this.leases.RenewLeaseAsync(held.Environment, runId.Value, held.Token, body, cancellationToken);
     }
 
     internal static RunnerApiException Refused(string what, int status)
@@ -430,9 +436,9 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
     internal IApiCheckpointsClient CheckpointsClient => this.checkpoints;
 
-    internal string RequireLease(WorkflowRunId runId)
-        => this.heldLeases.TryGetValue(runId.Value, out string? token)
-            ? token
+    internal HeldLease RequireLease(WorkflowRunId runId)
+        => this.heldLeases.TryGetValue(runId.Value, out HeldLease held)
+            ? held
             : throw new RunnerLeaseLostException(runId);
 
     internal void Forget(WorkflowRunId runId)
@@ -445,4 +451,12 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     // is held for exactly the advance: taken at the claim, given up when the advance ends.
     internal RunnerQuotaHold HoldFor(WorkflowRunId runId)
         => this.quotaHolds.GetOrAdd(runId.Value, static (_, s) => new RunnerQuotaHold(s.Options, s.Clock), (Options: this.holdOptions, Clock: this.timeProvider));
+
+    /// <summary>
+    /// What claiming a run retains for it: the lease token, and the environment half of the run's address (ADR 0065
+    /// §9), which every later route for the run names.
+    /// </summary>
+    /// <param name="Environment">The run's home environment, echoed by the claim.</param>
+    /// <param name="Token">The lease token, presented on every operation over the run.</param>
+    internal readonly record struct HeldLease(string Environment, string Token);
 }

@@ -64,7 +64,7 @@ public struct LoadCheckpointResponse : IApiResponse<LoadCheckpointResponse>
     /// Gets the value of the <c>X-Arazzo-Checkpoint-Seq</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq xArazzoCheckpointSeqHeaderValue;
+    private Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq xArazzoCheckpointSeqHeaderValue;
     private bool xArazzoCheckpointSeqHeaderParsed;
 
     /// <summary>
@@ -72,7 +72,7 @@ public struct LoadCheckpointResponse : IApiResponse<LoadCheckpointResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq XArazzoCheckpointSeqHeader
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq XArazzoCheckpointSeqHeader
     {
         get
         {
@@ -87,7 +87,7 @@ public struct LoadCheckpointResponse : IApiResponse<LoadCheckpointResponse>
                 && this.responseHeaders.TryGetValue("X-Arazzo-Checkpoint-Seq", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xArazzoCheckpointSeqHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(rawValue, this.workspace);
+                this.xArazzoCheckpointSeqHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(rawValue, this.workspace);
             }
 
             return this.xArazzoCheckpointSeqHeaderValue;

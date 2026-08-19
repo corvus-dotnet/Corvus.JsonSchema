@@ -17,9 +17,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 /// <summary>
 /// Request type for the ReleaseLease operation.
 /// </summary>
-/// <remarks><para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para></remarks>
+/// <remarks><para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para><para>The environment claimed in the route is validated against the grammar only, never against the principal's bindings: a revoked runner handing its runs back is exactly what revocation wants, so release refuses no one on reach.</para></remarks>
 public readonly struct ReleaseLeaseRequest : IApiRequest<ReleaseLeaseRequest>
 {
+
+    /// <summary>
+    /// Gets the environment parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the runId parameter.
@@ -34,16 +39,18 @@ public readonly struct ReleaseLeaseRequest : IApiRequest<ReleaseLeaseRequest>
     /// <summary>
     /// Initializes a new instance of the <see cref="ReleaseLeaseRequest"/> struct.
     /// </summary>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
-    public ReleaseLeaseRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
+    public ReleaseLeaseRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
     {
+        this.Environment = environment;
         this.RunId = runId;
         this.XArazzoLease = xArazzoLease;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runs/{runId}/lease"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{environment}/runs/{runId}/lease"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Delete;
@@ -63,6 +70,13 @@ public readonly struct ReleaseLeaseRequest : IApiRequest<ReleaseLeaseRequest>
     /// <inheritdoc/>
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
+        writer.Write("/environments/"u8);
+        using UnescapedUtf8JsonString utf8Environment = ((JsonElement)this.Environment).GetUtf8String();
+        Span<byte> escEnvironment = stackalloc byte[utf8Environment.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Environment.Span, escEnvironment, out int ewEnvironment))
+        {
+            writer.Write(escEnvironment[..ewEnvironment]);
+        }
         writer.Write("/runs/"u8);
         using UnescapedUtf8JsonString utf8RunId = ((JsonElement)this.RunId).GetUtf8String();
         Span<byte> escRunId = stackalloc byte[utf8RunId.Span.Length * 3];
@@ -107,6 +121,12 @@ public readonly struct ReleaseLeaseRequest : IApiRequest<ReleaseLeaseRequest>
         }
         else if (mode == ValidationMode.Detailed)
         {
+            using JsonSchemaResultsCollector collectorEnvironment = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Environment.EvaluateSchema(collectorEnvironment))
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
+            }
+
             using JsonSchemaResultsCollector collectorRunId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
             if (!this.RunId.EvaluateSchema(collectorRunId))
             {
@@ -122,6 +142,11 @@ public readonly struct ReleaseLeaseRequest : IApiRequest<ReleaseLeaseRequest>
         }
         else
         {
+            if (!this.Environment.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment");
+            }
+
             if (!this.RunId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("runId");

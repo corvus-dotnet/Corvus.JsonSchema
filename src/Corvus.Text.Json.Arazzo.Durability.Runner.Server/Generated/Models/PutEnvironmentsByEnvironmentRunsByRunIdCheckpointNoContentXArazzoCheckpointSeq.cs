@@ -17,19 +17,19 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
+public readonly partial struct PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq
 #if NET8_0_OR_GREATER
-    : IJsonElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>,
+    : IJsonElement<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>,
+    : IJsonElement<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>,
       IFormattable
 #endif
 {
@@ -39,11 +39,11 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> struct.
+    /// Initializes a new instance of the <see cref="PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq"/> struct.
     /// </summary>
     /// <param name="parent">The document that contains the element.</param>
     /// <param name="idx">The index of the element within the document.</param>
-    internal GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq(IJsonDocument parent, int idx)
+    internal PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -53,7 +53,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq DefaultInstance { get; }
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq DefaultInstance { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(out long value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
@@ -65,19 +65,19 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator long(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+    public static implicit operator long(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator double(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+    public static implicit operator double(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator Corvus.Numerics.BigNumber(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
+    public static explicit operator Corvus.Numerics.BigNumber(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator System.Numerics.BigInteger(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
+    public static explicit operator System.Numerics.BigInteger(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator decimal(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
+    public static explicit operator decimal(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -87,7 +87,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq left, in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq right)
+    public static bool operator ==(in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq left, in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq right)
     {
         return left.Equals(right);
     }
@@ -100,7 +100,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq left, in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq right)
+    public static bool operator !=(in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq left, in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq right)
     {
         return !left.Equals(right);
     }
@@ -113,7 +113,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq left, in JsonElement right)
+    public static bool operator ==(in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -126,7 +126,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq left, in JsonElement right)
+    public static bool operator !=(in PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -137,7 +137,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <param name="instance">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq instance)
+    public static implicit operator JsonElement(PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq instance)
     {
         return JsonElement.From(instance);
     }
@@ -148,9 +148,9 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <param name="instance">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq(JsonElement instance)
+    public static implicit operator PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq(JsonElement instance)
     {
-        return GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.From(instance);
+        return PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.From(instance);
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq From<T>(in T instance)
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -185,10 +185,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -211,10 +211,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(json, options);
+        return JsonElementHelpers.ParseValue<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -237,10 +237,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq ParseValue(string json, JsonDocumentOptions options = default)
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(json, options);
+        return JsonElementHelpers.ParseValue<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -280,10 +280,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq ParseValue(ref Utf8JsonReader reader)
+    public static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(ref reader);
+        return JsonElementHelpers.ParseValue<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -325,16 +325,16 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq? result)
     {
-        return JsonElementHelpers.TryParseValue<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -454,11 +454,11 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq IJsonElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq IJsonElement<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -473,11 +473,11 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -486,10 +486,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq Clone()
+    public PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
+        return _parent.CloneElement<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(_idx);
     }
 
     /// <summary>
@@ -497,7 +497,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> that lives for the lifetime of its
+    /// An immutable <see cref="PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -511,12 +511,12 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq Freeze()
+    public PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
+            return mutable.FreezeElement<PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>(_idx);
         }
 
         return this;

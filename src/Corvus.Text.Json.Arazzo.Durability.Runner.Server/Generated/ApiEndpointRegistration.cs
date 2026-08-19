@@ -297,12 +297,17 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ClaimAwaitingMessageEndpoint);
 
-        IEndpointConventionBuilder __RenewLeaseEndpoint = app.MapPost("/runs/{runId}/lease/renewal", async (HttpContext context) =>
+        IEndpointConventionBuilder __RenewLeaseEndpoint = app.MapPost("/environments/{environment}/runs/{runId}/lease/renewal", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseRenewal>? bodyDoc = null;
             try
             {
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
@@ -313,6 +318,14 @@ public static class ApiEndpointRegistration
                 {
                     string XArazzoLeaseRaw = XArazzoLeaseHeaderVal[0]!;
                     XArazzoLeaseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseToken>(XArazzoLeaseRaw, workspace);
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -328,6 +341,14 @@ public static class ApiEndpointRegistration
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
                     await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Arazzo-Lease' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -376,6 +397,7 @@ public static class ApiEndpointRegistration
 
                 RenewLeaseParams parameters = new()
                 {
+                    Environment = EnvironmentValue,
                     RunId = RunIdValue,
                     XArazzoLease = XArazzoLeaseValue,
                     Body = bodyDoc is null ? default : bodyDoc.RootElement,
@@ -426,17 +448,22 @@ public static class ApiEndpointRegistration
                 operationId: "renewLease",
                 methodName: "RenewLease",
                 httpMethod: "POST",
-                routeTemplate: "/runs/{runId}/lease/renewal",
+                routeTemplate: "/environments/{environment}/runs/{runId}/lease/renewal",
                 tags: new[] { "leases" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RenewLeaseEndpoint);
 
-        IEndpointConventionBuilder __ReleaseLeaseEndpoint = app.MapDelete("/runs/{runId}/lease", async (HttpContext context) =>
+        IEndpointConventionBuilder __ReleaseLeaseEndpoint = app.MapDelete("/environments/{environment}/runs/{runId}/lease", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
@@ -447,6 +474,14 @@ public static class ApiEndpointRegistration
                 {
                     string XArazzoLeaseRaw = XArazzoLeaseHeaderVal[0]!;
                     XArazzoLeaseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseToken>(XArazzoLeaseRaw, workspace);
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -462,6 +497,14 @@ public static class ApiEndpointRegistration
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
                     await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Arazzo-Lease' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -484,6 +527,7 @@ public static class ApiEndpointRegistration
 
                 ReleaseLeaseParams parameters = new()
                 {
+                    Environment = EnvironmentValue,
                     RunId = RunIdValue,
                     XArazzoLease = XArazzoLeaseValue,
                 }
@@ -528,17 +572,22 @@ public static class ApiEndpointRegistration
                 operationId: "releaseLease",
                 methodName: "ReleaseLease",
                 httpMethod: "DELETE",
-                routeTemplate: "/runs/{runId}/lease",
+                routeTemplate: "/environments/{environment}/runs/{runId}/lease",
                 tags: new[] { "leases" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ReleaseLeaseEndpoint);
 
-        IEndpointConventionBuilder __LoadCheckpointEndpoint = app.MapGet("/runs/{runId}/checkpoint", async (HttpContext context) =>
+        IEndpointConventionBuilder __LoadCheckpointEndpoint = app.MapGet("/environments/{environment}/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
@@ -549,6 +598,14 @@ public static class ApiEndpointRegistration
                 {
                     string XArazzoLeaseRaw = XArazzoLeaseHeaderVal[0]!;
                     XArazzoLeaseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseToken>(XArazzoLeaseRaw, workspace);
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -564,6 +621,14 @@ public static class ApiEndpointRegistration
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
                     await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Arazzo-Lease' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -586,6 +651,7 @@ public static class ApiEndpointRegistration
 
                 LoadCheckpointParams parameters = new()
                 {
+                    Environment = EnvironmentValue,
                     RunId = RunIdValue,
                     XArazzoLease = XArazzoLeaseValue,
                 }
@@ -639,17 +705,22 @@ public static class ApiEndpointRegistration
                 operationId: "loadCheckpoint",
                 methodName: "LoadCheckpoint",
                 httpMethod: "GET",
-                routeTemplate: "/runs/{runId}/checkpoint",
+                routeTemplate: "/environments/{environment}/runs/{runId}/checkpoint",
                 tags: new[] { "checkpoints" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __LoadCheckpointEndpoint);
 
-        IEndpointConventionBuilder __SaveCheckpointEndpoint = app.MapPut("/runs/{runId}/checkpoint", async (HttpContext context) =>
+        IEndpointConventionBuilder __SaveCheckpointEndpoint = app.MapPut("/environments/{environment}/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RunId RunIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
                 {
@@ -666,6 +737,14 @@ public static class ApiEndpointRegistration
                 {
                     string XArazzoCheckpointSeqRaw = XArazzoCheckpointSeqHeaderVal[0]!;
                     XArazzoCheckpointSeqValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.CheckpointSequence>(XArazzoCheckpointSeqRaw, workspace);
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
 
                 if (RunIdValue.IsUndefined())
@@ -689,6 +768,14 @@ public static class ApiEndpointRegistration
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
                     await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Arazzo-Checkpoint-Seq' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -720,6 +807,7 @@ public static class ApiEndpointRegistration
 
                 SaveCheckpointParams parameters = new()
                 {
+                    Environment = EnvironmentValue,
                     RunId = RunIdValue,
                     XArazzoLease = XArazzoLeaseValue,
                     XArazzoCheckpointSeq = XArazzoCheckpointSeqValue,
@@ -770,7 +858,7 @@ public static class ApiEndpointRegistration
                 operationId: "saveCheckpoint",
                 methodName: "SaveCheckpoint",
                 httpMethod: "PUT",
-                routeTemplate: "/runs/{runId}/checkpoint",
+                routeTemplate: "/environments/{environment}/runs/{runId}/checkpoint",
                 tags: new[] { "checkpoints" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),

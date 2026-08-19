@@ -220,13 +220,14 @@ public sealed class RunnerRunCoordinator
     /// Extends a lease the principal already holds.
     /// </summary>
     /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="environment">The run's environment as the route claims it, validated against the bindings.</param>
     /// <param name="id">The run the lease is held on.</param>
     /// <param name="leaseToken">The presented <c>X-Arazzo-Lease</c> value.</param>
     /// <param name="requestedExtension">The extension the runner asked for, bounded by the deployment.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The extended grant, or <see langword="null"/> when the presented lease is no longer current — expired,
     /// released, or revoked, and the run may already be held by another runner.</returns>
-    public async ValueTask<RunnerLeaseGrant?> TryRenewAsync(string principal, WorkflowRunId id, string? leaseToken, TimeSpan? requestedExtension, CancellationToken cancellationToken)
+    public async ValueTask<RunnerLeaseGrant?> TryRenewAsync(string principal, string environment, WorkflowRunId id, string? leaseToken, TimeSpan? requestedExtension, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
@@ -238,8 +239,10 @@ public sealed class RunnerRunCoordinator
         // Renewal re-checks the bindings, because an unchecked renewal is what would let a revoked runner keep a run
         // indefinitely: each extension pushes the expiry out, so the lease never lapses on its own and the ADR 0027
         // revocation fence has nothing left to bound it. Re-resolving here is what makes revocation take effect within
-        // the resolver's cache window (ADR 0065 decision 2 caps that at thirty seconds) rather than never.
-        if (!await this.StillBoundAsync(principal, cancellationToken).ConfigureAwait(false))
+        // the resolver's cache window (ADR 0065 decision 2 caps that at thirty seconds) rather than never. The check is
+        // per-environment: revocation can withdraw one environment while others remain, and a lease on a run in the
+        // withdrawn one must stop renewing even though the principal is still bound elsewhere.
+        if (!await this.BoundToAsync(principal, environment, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
@@ -297,6 +300,7 @@ public sealed class RunnerRunCoordinator
     /// Checks that a presented lease still authorises operations on a run, without extending it.
     /// </summary>
     /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="environment">The run's environment as the route claims it, validated against the bindings.</param>
     /// <param name="id">The run named in the request.</param>
     /// <param name="leaseToken">The presented <c>X-Arazzo-Lease</c> value.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -307,7 +311,7 @@ public sealed class RunnerRunCoordinator
     /// cannot be used to learn which of the three it was. Verifying does not renew: an operation performed under a lease
     /// must not keep it alive, or a crashed holder's run would never be reclaimed.
     /// </remarks>
-    public async ValueTask<bool> HoldsLeaseAsync(string principal, WorkflowRunId id, string? leaseToken, CancellationToken cancellationToken)
+    public async ValueTask<bool> HoldsLeaseAsync(string principal, string environment, WorkflowRunId id, string? leaseToken, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
@@ -319,8 +323,10 @@ public sealed class RunnerRunCoordinator
         // Both checkpoint operations gate on this, so it is where a revoked runner is stopped from continuing to read
         // tenant plaintext and overwrite run state under a lease it acquired while still authorized. A binding that has
         // gone away answers exactly as a lost lease does, which keeps the non-disclosure rule below intact: outside the
-        // bindings, held by a peer, and absent remain indistinguishable.
-        if (!await this.StillBoundAsync(principal, cancellationToken).ConfigureAwait(false))
+        // bindings, held by a peer, and absent remain indistinguishable. The claimed environment is checked against the
+        // bindings themselves, not merely their existence: holding a valid lease on a run in one environment must not
+        // ride on a binding to a different one.
+        if (!await this.BoundToAsync(principal, environment, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }
@@ -335,12 +341,24 @@ public sealed class RunnerRunCoordinator
         return current is { } lease && lease.Epoch == epoch;
     }
 
-    // Whether the principal is still bound to anything at all. An operation on a run it already holds does not need to
-    // know WHICH environments it is bound to — the lease is already run-specific — only that its authorization has not
-    // been withdrawn. Release deliberately does not consult this: refusing a release would strand the lease on a runner
-    // trying to hand the work back, which is the one thing a revoked runner can still usefully do.
-    private async ValueTask<bool> StillBoundAsync(string principal, CancellationToken cancellationToken)
-        => (await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false)).Count > 0;
+    // Whether the principal is bound to the environment the route claims for the run. The lease being run-specific is
+    // not enough: bindings are per-environment, and revocation can withdraw one environment while others remain, so an
+    // operation must name the run's environment and find it among the bindings resolved now (ADR 0065 §9). Release
+    // deliberately does not consult this: refusing a release would strand the lease on a runner trying to hand the
+    // work back, which is the one thing a revoked runner can still usefully do.
+    private async ValueTask<bool> BoundToAsync(string principal, string environment, CancellationToken cancellationToken)
+    {
+        RunnerBindings bound = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        for (int i = 0; i < bound.Environments.Count; i++)
+        {
+            if (string.Equals(bound.Environments[i], environment, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // Confirms, under the lease, that the run is one this runner should have been offered, and projects what the claim
     // reports. The index query already constrains the candidate set, but it ran before the lease: the run may have been

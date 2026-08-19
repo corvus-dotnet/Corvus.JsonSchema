@@ -159,14 +159,14 @@ public sealed class RunnerApiRunIdGrammarTests
 
         public Task<HttpResponseMessage> LoadCheckpointAsync(string principal, string runId, string lease)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/environments/{Production}/runs/{runId}/checkpoint");
             request.Headers.Add(LeaseHeader, lease);
             return this.SendAsync(request, principal);
         }
 
         public Task<HttpResponseMessage> SaveCheckpointAsync(string principal, string runId, string lease, byte[] body, long sequence)
         {
-            var request = new HttpRequestMessage(HttpMethod.Put, $"/runs/{runId}/checkpoint")
+            var request = new HttpRequestMessage(HttpMethod.Put, $"/environments/{Production}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },
             };
@@ -177,7 +177,7 @@ public sealed class RunnerApiRunIdGrammarTests
 
         public Task<HttpResponseMessage> RenewLeaseAsync(string principal, string runId, string lease, int leaseSeconds)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/lease/renewal")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Production}/runs/{runId}/lease/renewal")
             {
                 Content = JsonContent.Create(new { leaseSeconds }),
             };
@@ -187,7 +187,7 @@ public sealed class RunnerApiRunIdGrammarTests
 
         public Task<HttpResponseMessage> ReleaseLeaseAsync(string principal, string runId, string lease)
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, $"/runs/{runId}/lease");
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"/environments/{Production}/runs/{runId}/lease");
             request.Headers.Add(LeaseHeader, lease);
             return this.SendAsync(request, principal);
         }

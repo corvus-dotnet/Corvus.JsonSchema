@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 public interface IApiCheckpointsHandler
 {
     /// <summary>
-    /// Handles GET /runs/{runId}/checkpoint — Load a run's checkpoint
+    /// Handles GET /environments/{environment}/runs/{runId}/checkpoint — Load a run's checkpoint
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>
@@ -30,7 +30,7 @@ public interface IApiCheckpointsHandler
     ValueTask<LoadCheckpointResult> HandleLoadCheckpointAsync(LoadCheckpointParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles PUT /runs/{runId}/checkpoint — Save a run's checkpoint
+    /// Handles PUT /environments/{environment}/runs/{runId}/checkpoint — Save a run's checkpoint
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>

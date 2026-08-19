@@ -17,9 +17,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 /// <summary>
 /// Request type for the LoadCheckpoint operation.
 /// </summary>
-/// <remarks><para>Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.</para><para>The lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was.</para><para>A `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.</para></remarks>
+/// <remarks><para>Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.</para><para>The lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was. The environment claimed in the route is the first thing checked: one outside the principal's bindings answers that same `409` before any store read.</para><para>A `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.</para></remarks>
 public readonly struct LoadCheckpointRequest : IApiRequest<LoadCheckpointRequest>
 {
+
+    /// <summary>
+    /// Gets the environment parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the runId parameter.
@@ -34,16 +39,18 @@ public readonly struct LoadCheckpointRequest : IApiRequest<LoadCheckpointRequest
     /// <summary>
     /// Initializes a new instance of the <see cref="LoadCheckpointRequest"/> struct.
     /// </summary>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
-    public LoadCheckpointRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
+    public LoadCheckpointRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
     {
+        this.Environment = environment;
         this.RunId = runId;
         this.XArazzoLease = xArazzoLease;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runs/{runId}/checkpoint"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{environment}/runs/{runId}/checkpoint"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Get;
@@ -63,6 +70,13 @@ public readonly struct LoadCheckpointRequest : IApiRequest<LoadCheckpointRequest
     /// <inheritdoc/>
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
+        writer.Write("/environments/"u8);
+        using UnescapedUtf8JsonString utf8Environment = ((JsonElement)this.Environment).GetUtf8String();
+        Span<byte> escEnvironment = stackalloc byte[utf8Environment.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Environment.Span, escEnvironment, out int ewEnvironment))
+        {
+            writer.Write(escEnvironment[..ewEnvironment]);
+        }
         writer.Write("/runs/"u8);
         using UnescapedUtf8JsonString utf8RunId = ((JsonElement)this.RunId).GetUtf8String();
         Span<byte> escRunId = stackalloc byte[utf8RunId.Span.Length * 3];
@@ -107,6 +121,12 @@ public readonly struct LoadCheckpointRequest : IApiRequest<LoadCheckpointRequest
         }
         else if (mode == ValidationMode.Detailed)
         {
+            using JsonSchemaResultsCollector collectorEnvironment = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Environment.EvaluateSchema(collectorEnvironment))
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
+            }
+
             using JsonSchemaResultsCollector collectorRunId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
             if (!this.RunId.EvaluateSchema(collectorRunId))
             {
@@ -122,6 +142,11 @@ public readonly struct LoadCheckpointRequest : IApiRequest<LoadCheckpointRequest
         }
         else
         {
+            if (!this.Environment.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment");
+            }
+
             if (!this.RunId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("runId");

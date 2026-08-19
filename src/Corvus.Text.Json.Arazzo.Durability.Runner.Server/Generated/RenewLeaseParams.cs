@@ -15,11 +15,16 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
 /// <summary>
-/// Parameters for the RenewLease operation (POST /runs/{runId}/lease/renewal).
+/// Parameters for the RenewLease operation (POST /environments/{environment}/runs/{runId}/lease/renewal).
 /// </summary>
-/// <remarks><para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para></remarks>
+/// <remarks><para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one; the environment claimed in the route is validated against those bindings before the lease is consulted.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para></remarks>
 public readonly struct RenewLeaseParams
 {
+
+    /// <summary>
+    /// Gets the 'environment' path parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'runId' path parameter.

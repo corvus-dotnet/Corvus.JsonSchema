@@ -34,22 +34,24 @@ public sealed class ApiLeasesClient : IApiLeasesClient
     /// Renew a held lease
     /// </summary>
     /// <remarks>
-    /// <para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para>
+    /// <para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one; the environment claimed in the route is validated against those bindings before the lease is consulted.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para>
     /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
-    public ValueTask<RenewLeaseResponse> RenewLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<RenewLeaseResponse> RenewLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.CreateBuilder(workspace, body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.CreateBuilder(workspace, environment, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken XArazzoLeaseValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.CreateBuilder(workspace, xArazzoLease, 30).RootElement;
-        RenewLeaseRequest request = new(RunIdValue, XArazzoLeaseValue);
+        RenewLeaseRequest request = new(EnvironmentValue, RunIdValue, XArazzoLeaseValue);
 
         request.Validate(validationMode);
 
@@ -81,15 +83,16 @@ public sealed class ApiLeasesClient : IApiLeasesClient
     /// Renew a held lease
     /// </summary>
     /// <remarks>
-    /// <para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para>
+    /// <para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one; the environment claimed in the route is validated against those bindings before the lease is consulted.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para>
     /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
-    public ValueTask<RenewLeaseResponse> RenewLeaseAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<RenewLeaseResponse> RenewLeaseAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.Source<TContext> body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif
@@ -97,9 +100,10 @@ public sealed class ApiLeasesClient : IApiLeasesClient
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         bool hasBodyValue = !body.IsUndefined;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal bodyValue = hasBodyValue ? Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseRenewal.CreateBuilder(workspace, in body, 30).RootElement : default;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.CreateBuilder(workspace, environment, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken XArazzoLeaseValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.CreateBuilder(workspace, xArazzoLease, 30).RootElement;
-        RenewLeaseRequest request = new(RunIdValue, XArazzoLeaseValue);
+        RenewLeaseRequest request = new(EnvironmentValue, RunIdValue, XArazzoLeaseValue);
 
         request.Validate(validationMode);
 
@@ -131,19 +135,21 @@ public sealed class ApiLeasesClient : IApiLeasesClient
     /// Release a held lease
     /// </summary>
     /// <remarks>
-    /// <para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para>
+    /// <para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para><para>The environment claimed in the route is validated against the grammar only, never against the principal's bindings: a revoked runner handing its runs back is exactly what revocation wants, so release refuses no one on reach.</para>
     /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
-    public ValueTask<ReleaseLeaseResponse> ReleaseLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ReleaseLeaseResponse> ReleaseLeaseAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.CreateBuilder(workspace, environment, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken XArazzoLeaseValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.CreateBuilder(workspace, xArazzoLease, 30).RootElement;
-        ReleaseLeaseRequest request = new(RunIdValue, XArazzoLeaseValue);
+        ReleaseLeaseRequest request = new(EnvironmentValue, RunIdValue, XArazzoLeaseValue);
 
         request.Validate(validationMode);
 

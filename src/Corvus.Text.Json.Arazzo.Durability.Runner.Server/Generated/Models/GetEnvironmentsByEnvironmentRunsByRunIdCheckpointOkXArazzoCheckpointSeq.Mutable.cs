@@ -17,12 +17,12 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
+public readonly partial struct GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -143,7 +143,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         /// <param name="instance">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq instance)
+        public static explicit operator Mutable(GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -158,9 +158,9 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="instance">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq(Mutable instance)
+        public static implicit operator GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -185,7 +185,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -314,7 +314,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -329,11 +329,11 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -342,10 +342,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq Clone()
+        public readonly GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
+            return _parent.CloneElement<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
         }
 
         /// <summary>
@@ -353,7 +353,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> that lives for the lifetime of its
+        /// An immutable <see cref="GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -364,10 +364,10 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq Freeze()
+        public readonly GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
+            return _parent.FreezeElement<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq>(_idx);
         }
     }
 
@@ -406,7 +406,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
 
         private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
-        public static implicit operator Source(GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(long value) => new (value);
@@ -546,7 +546,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq, Mutable>(this);
+        return workspace.CreateBuilder<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq, Mutable>(this);
     }
 
     /// <summary>
@@ -555,7 +555,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
     /// <param name="value">The value with which to initialize the document.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq> Create(
+    public static ParsedJsonDocument<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq> Create(
         scoped in Source value, int initialCapacity = 1)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -565,7 +565,7 @@ public readonly partial struct GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq
             value.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq>();
+            return documentBuilder.ToParsedJsonDocument<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq>();
         }
         finally
         {

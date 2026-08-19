@@ -17,9 +17,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 /// <summary>
 /// Request type for the RenewLease operation.
 /// </summary>
-/// <remarks><para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para></remarks>
+/// <remarks><para>Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one; the environment claimed in the route is validated against those bindings before the lease is consulted.</para><para>The epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.</para></remarks>
 public readonly struct RenewLeaseRequest : IApiRequest<RenewLeaseRequest>
 {
+
+    /// <summary>
+    /// Gets the environment parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the runId parameter.
@@ -34,16 +39,18 @@ public readonly struct RenewLeaseRequest : IApiRequest<RenewLeaseRequest>
     /// <summary>
     /// Initializes a new instance of the <see cref="RenewLeaseRequest"/> struct.
     /// </summary>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
-    public RenewLeaseRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
+    public RenewLeaseRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease)
     {
+        this.Environment = environment;
         this.RunId = runId;
         this.XArazzoLease = xArazzoLease;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runs/{runId}/lease/renewal"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{environment}/runs/{runId}/lease/renewal"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Post;
@@ -63,6 +70,13 @@ public readonly struct RenewLeaseRequest : IApiRequest<RenewLeaseRequest>
     /// <inheritdoc/>
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
+        writer.Write("/environments/"u8);
+        using UnescapedUtf8JsonString utf8Environment = ((JsonElement)this.Environment).GetUtf8String();
+        Span<byte> escEnvironment = stackalloc byte[utf8Environment.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Environment.Span, escEnvironment, out int ewEnvironment))
+        {
+            writer.Write(escEnvironment[..ewEnvironment]);
+        }
         writer.Write("/runs/"u8);
         using UnescapedUtf8JsonString utf8RunId = ((JsonElement)this.RunId).GetUtf8String();
         Span<byte> escRunId = stackalloc byte[utf8RunId.Span.Length * 3];
@@ -107,6 +121,12 @@ public readonly struct RenewLeaseRequest : IApiRequest<RenewLeaseRequest>
         }
         else if (mode == ValidationMode.Detailed)
         {
+            using JsonSchemaResultsCollector collectorEnvironment = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Environment.EvaluateSchema(collectorEnvironment))
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
+            }
+
             using JsonSchemaResultsCollector collectorRunId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
             if (!this.RunId.EvaluateSchema(collectorRunId))
             {
@@ -122,6 +142,11 @@ public readonly struct RenewLeaseRequest : IApiRequest<RenewLeaseRequest>
         }
         else
         {
+            if (!this.Environment.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment");
+            }
+
             if (!this.RunId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("runId");

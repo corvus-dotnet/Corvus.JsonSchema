@@ -50,6 +50,7 @@ public sealed class ArazzoRunnerLeasesHandler : IApiLeasesHandler
 
         RunnerLeaseGrant? renewed = await this.coordinator.TryRenewAsync(
             principal,
+            (string)parameters.Environment,
             new WorkflowRunId((string)parameters.RunId),
             (string)parameters.XArazzoLease,
             requested,

@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// </summary>
 public readonly struct SaveCheckpointResult
 {
-    private SaveCheckpointResult(int statusCode, JsonElement body, string? contentType, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq xArazzoCheckpointSeq = default, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.Schema retryAfter = default)
+    private SaveCheckpointResult(int statusCode, JsonElement body, string? contentType, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq xArazzoCheckpointSeq = default, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.Schema retryAfter = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -40,7 +40,7 @@ public readonly struct SaveCheckpointResult
     /// <summary>
     /// Gets the value of the <c>X-Arazzo-Checkpoint-Seq</c> response header.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq XArazzoCheckpointSeq { get; }
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq XArazzoCheckpointSeq { get; }
 
     /// <summary>
     /// Gets the value of the <c>Retry-After</c> response header.
@@ -53,7 +53,7 @@ public readonly struct SaveCheckpointResult
     /// <param name="workspace">The workspace for building header values.</param>
     /// <param name="xArazzoCheckpointSeq">The value for the <c>X-Arazzo-Checkpoint-Seq</c> response header.</param>
     /// <returns>A <see cref="SaveCheckpointResult"/> with status 204.</returns>
-    public static SaveCheckpointResult NoContent(JsonWorkspace workspace, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(204, default, null, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement);
+    public static SaveCheckpointResult NoContent(JsonWorkspace workspace, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(204, default, null, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement);
 
     /// <summary>
     /// Creates a 400 BadRequest result.

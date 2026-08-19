@@ -17,30 +17,30 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq
-    : IJsonElement<PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq>
+public readonly partial struct GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq
+    : IJsonElement<GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq>
 {
     public static partial class JsonSchema
     {
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1runs~1{runId}~1checkpoint/put/responses/204/headers/X-Arazzo-Checkpoint-Seq/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1environments~1{environment}~1runs~1{runId}~1checkpoint/get/responses/200/headers/X-Arazzo-Checkpoint-Seq/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/paths/~1runs~1{runId}~1checkpoint/put/responses/204/headers/X-Arazzo-Checkpoint-Seq/schema";
+        public const string SchemaLocation = "/paths/~1environments~1{environment}~1runs~1{runId}~1checkpoint/get/responses/200/headers/X-Arazzo-Checkpoint-Seq/schema";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1runs~1{runId}~1checkpoint/put/responses/204/headers/X-Arazzo-Checkpoint-Seq/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1environments~1{environment}~1runs~1{runId}~1checkpoint/get/responses/200/headers/X-Arazzo-Checkpoint-Seq/schema"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -75,7 +75,7 @@ public readonly partial struct PutRunsByRunIdCheckpointNoContentXArazzoCheckpoin
             }
             else
             {
-                JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, "1"u8, ""u8, 0, "1", "minimum"u8, ref context);
+                JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, ""u8, ""u8, 0, "0", "minimum"u8, ref context);
 
                 JsonSchemaEvaluation.MatchInt64(isNegative, integral, fractional, exponent, "format"u8, ref context);
             }

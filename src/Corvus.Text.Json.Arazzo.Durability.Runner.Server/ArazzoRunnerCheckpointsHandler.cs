@@ -73,8 +73,9 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
 
         // Reading a run's state is a tenant-data read, so it takes the same interlock as writing it. The check is also
         // the non-disclosure rule: a run outside the bindings, one held by a peer, and one that does not exist all fail
-        // here identically.
-        if (!await this.coordinator.HoldsLeaseAsync(principal, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
+        // here identically. The route's claimed environment is validated against the bindings inside the same check, so
+        // an environment the principal is not bound to joins that indistinguishable set.
+        if (!await this.coordinator.HoldsLeaseAsync(principal, (string)parameters.Environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
         {
             return LoadCheckpointResult.Conflict(RunnerProblems.LeaseLost(), workspace);
         }
@@ -110,7 +111,7 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
         }
 
         var id = new WorkflowRunId((string)parameters.RunId);
-        if (!await this.coordinator.HoldsLeaseAsync(principal, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
+        if (!await this.coordinator.HoldsLeaseAsync(principal, (string)parameters.Environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
         {
             return SaveCheckpointResult.Conflict(RunnerProblems.LeaseLostOnWrite(), workspace);
         }

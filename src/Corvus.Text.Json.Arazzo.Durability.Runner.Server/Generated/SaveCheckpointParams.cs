@@ -15,11 +15,16 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
 /// <summary>
-/// Parameters for the SaveCheckpoint operation (PUT /runs/{runId}/checkpoint).
+/// Parameters for the SaveCheckpoint operation (PUT /environments/{environment}/runs/{runId}/checkpoint).
 /// </summary>
-/// <remarks><para>Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.</para><para>The store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.</para><para>A retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.</para></remarks>
+/// <remarks><para>Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.</para><para>The store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.</para><para>The environment claimed in the route is validated against the principal's bindings before anything is read or written, refusing `409` exactly as a lost lease does.</para><para>A retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.</para></remarks>
 public readonly struct SaveCheckpointParams
 {
+
+    /// <summary>
+    /// Gets the 'environment' path parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'runId' path parameter.

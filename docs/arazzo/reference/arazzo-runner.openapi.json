@@ -102,15 +102,18 @@
         }
       }
     },
-    "/runs/{runId}/lease/renewal": {
+    "/environments/{environment}/runs/{runId}/lease/renewal": {
       "post": {
         "operationId": "renewLease",
         "tags": [
           "leases"
         ],
         "summary": "Renew a held lease",
-        "description": "Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one.\n\nThe epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.",
+        "description": "Extends the lease a runner already holds, so a long advance does not have its run reclaimed as an orphan underneath it. The presented lease token must be the current one; a renewal for a lease that has expired, been released, or been revoked answers `409` rather than silently minting a new one, because the run may already have been claimed by another runner. A run outside the principal's bindings answers the same `409`, so a renewal cannot be used to probe for one; the environment claimed in the route is validated against those bindings before the lease is consulted.\n\nThe epoch does not change on renewal. A new epoch is minted per grant, not per extension, so renewing does not invalidate checkpoints already written under the grant. The token does not change either, so the value already held stays valid for the extended lease.",
         "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentPath"
+          },
           {
             "$ref": "#/components/parameters/RunIdPath"
           },
@@ -154,15 +157,18 @@
         }
       }
     },
-    "/runs/{runId}/lease": {
+    "/environments/{environment}/runs/{runId}/lease": {
       "delete": {
         "operationId": "releaseLease",
         "tags": [
           "leases"
         ],
         "summary": "Release a held lease",
-        "description": "Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.\n\nThe answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.",
+        "description": "Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.\n\nThe answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.\n\nThe environment claimed in the route is validated against the grammar only, never against the principal's bindings: a revoked runner handing its runs back is exactly what revocation wants, so release refuses no one on reach.",
         "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentPath"
+          },
           {
             "$ref": "#/components/parameters/RunIdPath"
           },
@@ -183,15 +189,18 @@
         }
       }
     },
-    "/runs/{runId}/checkpoint": {
+    "/environments/{environment}/runs/{runId}/checkpoint": {
       "get": {
         "operationId": "loadCheckpoint",
         "tags": [
           "checkpoints"
         ],
         "summary": "Load a run's checkpoint",
-        "description": "Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.\n\nThe lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was.\n\nA `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.",
+        "description": "Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.\n\nThe lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was. The environment claimed in the route is the first thing checked: one outside the principal's bindings answers that same `409` before any store read.\n\nA `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.",
         "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentPath"
+          },
           {
             "$ref": "#/components/parameters/RunIdPath"
           },
@@ -244,8 +253,11 @@
           "checkpoints"
         ],
         "summary": "Save a run's checkpoint",
-        "description": "Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.\n\nThe store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.\n\nA retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.",
+        "description": "Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.\n\nThe store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.\n\nThe environment claimed in the route is validated against the principal's bindings before anything is read or written, refusing `409` exactly as a lost lease does.\n\nA retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.",
         "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentPath"
+          },
           {
             "$ref": "#/components/parameters/RunIdPath"
           },
@@ -558,6 +570,15 @@
       }
     },
     "parameters": {
+      "EnvironmentPath": {
+        "name": "environment",
+        "in": "path",
+        "required": true,
+        "description": "The run's home environment: half of the run's address, because runs are keyed by (environment, runId) at every ingress and in every backend (ADR 0065 §9).",
+        "schema": {
+          "$ref": "#/components/schemas/EnvironmentName"
+        }
+      },
       "RunIdPath": {
         "name": "runId",
         "in": "path",

@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// </summary>
 public readonly struct LoadCheckpointResult
 {
-    private LoadCheckpointResult(int statusCode, JsonElement body, string? contentType, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq xArazzoCheckpointSeq = default, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.Schema retryAfter = default, bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null)
+    private LoadCheckpointResult(int statusCode, JsonElement body, string? contentType, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq xArazzoCheckpointSeq = default, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.Schema retryAfter = default, bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -47,7 +47,7 @@ public readonly struct LoadCheckpointResult
     /// <summary>
     /// Gets the value of the <c>X-Arazzo-Checkpoint-Seq</c> response header.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq XArazzoCheckpointSeq { get; }
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq XArazzoCheckpointSeq { get; }
 
     /// <summary>
     /// Gets the value of the <c>Retry-After</c> response header.
@@ -62,7 +62,7 @@ public readonly struct LoadCheckpointResult
     /// <param name="workspace">The workspace for building header values.</param>
     /// <param name="xArazzoCheckpointSeq">The value for the <c>X-Arazzo-Checkpoint-Seq</c> response header.</param>
     /// <returns>A <see cref="LoadCheckpointResult"/> with status 200.</returns>
-    public static LoadCheckpointResult Ok(ReadOnlyMemory<byte> body, JsonWorkspace workspace, string? contentType = "application/octet-stream", Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(200, default, contentType, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));
+    public static LoadCheckpointResult Ok(ReadOnlyMemory<byte> body, JsonWorkspace workspace, string? contentType = "application/octet-stream", Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(200, default, contentType, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));
 
     /// <summary>Creates a 200 Ok result whose body is streamed directly to the response.</summary>
     /// <param name="writeBody">A callback that writes the response body to the supplied stream.</param>
@@ -70,7 +70,7 @@ public readonly struct LoadCheckpointResult
     /// <param name="workspace">The workspace for building header values.</param>
     /// <param name="xArazzoCheckpointSeq">The value for the <c>X-Arazzo-Checkpoint-Seq</c> response header.</param>
     /// <returns>A <see cref="LoadCheckpointResult"/> with status 200.</returns>
-    public static LoadCheckpointResult Ok(Func<Stream, CancellationToken, ValueTask> writeBody, JsonWorkspace workspace, string? contentType = "application/octet-stream", Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(200, default, contentType, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement, hasBinaryBody: true, binaryWriter: writeBody);
+    public static LoadCheckpointResult Ok(Func<Stream, CancellationToken, ValueTask> writeBody, JsonWorkspace workspace, string? contentType = "application/octet-stream", Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(200, default, contentType, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement, hasBinaryBody: true, binaryWriter: writeBody);
 
     /// <summary>
     /// Creates a 400 BadRequest result.

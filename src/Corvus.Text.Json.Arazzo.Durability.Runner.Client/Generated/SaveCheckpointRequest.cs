@@ -17,9 +17,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 /// <summary>
 /// Request type for the SaveCheckpoint operation.
 /// </summary>
-/// <remarks><para>Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.</para><para>The store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.</para><para>A retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.</para></remarks>
+/// <remarks><para>Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.</para><para>The store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.</para><para>The environment claimed in the route is validated against the principal's bindings before anything is read or written, refusing `409` exactly as a lost lease does.</para><para>A retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.</para></remarks>
 public readonly struct SaveCheckpointRequest : IApiRequest<SaveCheckpointRequest>
 {
+
+    /// <summary>
+    /// Gets the environment parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the runId parameter.
@@ -39,18 +44,20 @@ public readonly struct SaveCheckpointRequest : IApiRequest<SaveCheckpointRequest
     /// <summary>
     /// Initializes a new instance of the <see cref="SaveCheckpointRequest"/> struct.
     /// </summary>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
     /// <param name="xArazzoCheckpointSeq">The X-Arazzo-Checkpoint-Seq parameter.</param>
-    public SaveCheckpointRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence xArazzoCheckpointSeq)
+    public SaveCheckpointRequest(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence xArazzoCheckpointSeq)
     {
+        this.Environment = environment;
         this.RunId = runId;
         this.XArazzoLease = xArazzoLease;
         this.XArazzoCheckpointSeq = xArazzoCheckpointSeq;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runs/{runId}/checkpoint"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{environment}/runs/{runId}/checkpoint"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Put;
@@ -70,6 +77,13 @@ public readonly struct SaveCheckpointRequest : IApiRequest<SaveCheckpointRequest
     /// <inheritdoc/>
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
+        writer.Write("/environments/"u8);
+        using UnescapedUtf8JsonString utf8Environment = ((JsonElement)this.Environment).GetUtf8String();
+        Span<byte> escEnvironment = stackalloc byte[utf8Environment.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Environment.Span, escEnvironment, out int ewEnvironment))
+        {
+            writer.Write(escEnvironment[..ewEnvironment]);
+        }
         writer.Write("/runs/"u8);
         using UnescapedUtf8JsonString utf8RunId = ((JsonElement)this.RunId).GetUtf8String();
         Span<byte> escRunId = stackalloc byte[utf8RunId.Span.Length * 3];
@@ -119,6 +133,12 @@ public readonly struct SaveCheckpointRequest : IApiRequest<SaveCheckpointRequest
         }
         else if (mode == ValidationMode.Detailed)
         {
+            using JsonSchemaResultsCollector collectorEnvironment = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Environment.EvaluateSchema(collectorEnvironment))
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
+            }
+
             using JsonSchemaResultsCollector collectorRunId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
             if (!this.RunId.EvaluateSchema(collectorRunId))
             {
@@ -140,6 +160,11 @@ public readonly struct SaveCheckpointRequest : IApiRequest<SaveCheckpointRequest
         }
         else
         {
+            if (!this.Environment.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment");
+            }
+
             if (!this.RunId.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("runId");

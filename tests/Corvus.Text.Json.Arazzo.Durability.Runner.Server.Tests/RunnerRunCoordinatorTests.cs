@@ -177,7 +177,7 @@ public sealed class RunnerRunCoordinatorTests
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(30));
-        RunnerLeaseGrant? renewed = await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, claimed.Lease.Token, TimeSpan.FromMinutes(5), default);
+        RunnerLeaseGrant? renewed = await fixture.Coordinator.TryRenewAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, TimeSpan.FromMinutes(5), default);
 
         renewed.ShouldNotBeNull();
         renewed.Value.Token.ShouldBe(claimed.Lease.Token);
@@ -197,7 +197,7 @@ public sealed class RunnerRunCoordinatorTests
 
         fixture.Clock.Advance(TimeSpan.FromMinutes(2));
 
-        (await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.TryRenewAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -207,8 +207,8 @@ public sealed class RunnerRunCoordinatorTests
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
         // The owner is the authenticated principal, so a leaked token is not a lease.
-        (await fixture.Coordinator.TryRenewAsync(Peer, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
-        (await fixture.Coordinator.HoldsLeaseAsync(Peer, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
+        (await fixture.Coordinator.TryRenewAsync(Peer, Production, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.HoldsLeaseAsync(Peer, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -222,8 +222,8 @@ public sealed class RunnerRunCoordinatorTests
 
         string inflated = WithEpoch(claimed.Lease.Token, claimed.Lease.Epoch + 1);
 
-        (await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, inflated, null, default)).ShouldBeNull();
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, inflated, default)).ShouldBeFalse();
+        (await fixture.Coordinator.TryRenewAsync(Runner, Production, claimed.RunId, inflated, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, inflated, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -245,11 +245,11 @@ public sealed class RunnerRunCoordinatorTests
         current.Lease.Epoch.ShouldBeGreaterThan(first.Lease.Epoch);
         string rolledBack = WithEpoch(current.Lease.Token, first.Lease.Epoch);
 
-        (await fixture.Coordinator.TryRenewAsync(Runner, current.RunId, rolledBack, null, default)).ShouldBeNull();
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, current.RunId, rolledBack, default)).ShouldBeFalse();
+        (await fixture.Coordinator.TryRenewAsync(Runner, Production, current.RunId, rolledBack, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, current.RunId, rolledBack, default)).ShouldBeFalse();
 
         // And the grant itself still works, so what was refused is the epoch and not the run's whole lease.
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, current.RunId, current.Lease.Token, default)).ShouldBeTrue();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, current.RunId, current.Lease.Token, default)).ShouldBeTrue();
     }
 
     [TestMethod]
@@ -281,7 +281,7 @@ public sealed class RunnerRunCoordinatorTests
 
         bindings.Revoke();
 
-        (await fixture.Coordinator.TryRenewAsync(Runner, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
+        (await fixture.Coordinator.TryRenewAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, null, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -293,11 +293,11 @@ public sealed class RunnerRunCoordinatorTests
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production, bindings);
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
 
         bindings.Revoke();
 
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -325,7 +325,7 @@ public sealed class RunnerRunCoordinatorTests
 
         // The store matches a release on the run and the token alone, so without the ownership check this would have
         // handed one runner's in-flight run to another.
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
     }
 
     [TestMethod]
@@ -336,7 +336,7 @@ public sealed class RunnerRunCoordinatorTests
 
         await fixture.Coordinator.ReleaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default);
 
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
         (await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
@@ -349,10 +349,10 @@ public sealed class RunnerRunCoordinatorTests
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(30));
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeTrue();
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(31));
-        (await fixture.Coordinator.HoldsLeaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
+        (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -363,8 +363,8 @@ public sealed class RunnerRunCoordinatorTests
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
-        bool peersRun = await fixture.Coordinator.HoldsLeaseAsync(Peer, claimed.RunId, claimed.Lease.Token, default);
-        bool noSuchRun = await fixture.Coordinator.HoldsLeaseAsync(Peer, new WorkflowRunId("never"), claimed.Lease.Token, default);
+        bool peersRun = await fixture.Coordinator.HoldsLeaseAsync(Peer, Production, claimed.RunId, claimed.Lease.Token, default);
+        bool noSuchRun = await fixture.Coordinator.HoldsLeaseAsync(Peer, Production, new WorkflowRunId("never"), claimed.Lease.Token, default);
 
         peersRun.ShouldBe(noSuchRun);
         peersRun.ShouldBeFalse();
@@ -378,8 +378,8 @@ public sealed class RunnerRunCoordinatorTests
 
         foreach (string? malformed in new[] { null, string.Empty, "no-separator", ".leading", "trailing.", "007.token", "-1.token" })
         {
-            (await fixture.Coordinator.HoldsLeaseAsync(Runner, new WorkflowRunId("run-1"), malformed, default)).ShouldBeFalse();
-            (await fixture.Coordinator.TryRenewAsync(Runner, new WorkflowRunId("run-1"), malformed, null, default)).ShouldBeNull();
+            (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, new WorkflowRunId("run-1"), malformed, default)).ShouldBeFalse();
+            (await fixture.Coordinator.TryRenewAsync(Runner, Production, new WorkflowRunId("run-1"), malformed, null, default)).ShouldBeNull();
         }
     }
 

@@ -15,11 +15,16 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
 /// <summary>
-/// Parameters for the ReleaseLease operation (DELETE /runs/{runId}/lease).
+/// Parameters for the ReleaseLease operation (DELETE /environments/{environment}/runs/{runId}/lease).
 /// </summary>
-/// <remarks><para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para></remarks>
+/// <remarks><para>Hands the run back so another runner may claim it without waiting for the lease to expire. The presented lease is checked before anything is released, because a release matched on the run and the token alone would let one principal release another's lease.</para><para>The answer is `204` whether the lease was current, had already lapsed, or was never this principal's. The postcondition the operation promises is that this principal does not hold the run, and that is true in all three cases; distinguishing them would tell a caller about a lease it does not hold.</para><para>The environment claimed in the route is validated against the grammar only, never against the principal's bindings: a revoked runner handing its runs back is exactly what revocation wants, so release refuses no one on reach.</para></remarks>
 public readonly struct ReleaseLeaseParams
 {
+
+    /// <summary>
+    /// Gets the 'environment' path parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'runId' path parameter.

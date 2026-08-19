@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-08-19T07:58:15.8754674\u002B00:00",
+  "generatedAt": "2026-08-19T09:23:08.4696439\u002B00:00",
   "generatedFiles": [
     "ClaimRunRequest.cs",
     "ClaimRunResponse.cs",
@@ -159,23 +159,23 @@
     "Models/TimerClaimRequest.LimitEntity.cs",
     "Models/TimerClaimRequest.LimitEntity.Mutable.cs",
     "Models/TimerClaimRequest.LimitEntity.JsonSchema.cs",
+    "Models/GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.cs",
+    "Models/GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Mutable.cs",
+    "Models/GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.JsonSchema.cs",
+    "Models/PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.cs",
+    "Models/PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.Mutable.cs",
+    "Models/PutEnvironmentsByEnvironmentRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.JsonSchema.cs",
     "Models/GetHostedVersionsPageToken.cs",
     "Models/GetHostedVersionsPageToken.Mutable.cs",
     "Models/GetHostedVersionsPageToken.JsonSchema.cs",
     "Models/GetHostedVersionsLimit.cs",
     "Models/GetHostedVersionsLimit.Mutable.cs",
     "Models/GetHostedVersionsLimit.JsonSchema.cs",
-    "Models/GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.cs",
-    "Models/GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Mutable.cs",
-    "Models/GetRunsByRunIdCheckpointOkXArazzoCheckpointSeq.JsonSchema.cs",
-    "Models/PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.cs",
-    "Models/PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.Mutable.cs",
-    "Models/PutRunsByRunIdCheckpointNoContentXArazzoCheckpointSeq.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
   "generatorVersion": "1.0.0\u002B1e16c9a5c4fb3c11f8b39614101bd4918ca4d507",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.Runner.Client",
-  "specFileHash": "1f036c84e533590161ad5fcd97f361fc8e235788c3b361962f526ebe646b074c",
+  "specFileHash": "330b2645f24d871e905a21dba4a1d7491aaee6af61c855d55dec4557296d167b",
   "specVersion": "3.2"
 }

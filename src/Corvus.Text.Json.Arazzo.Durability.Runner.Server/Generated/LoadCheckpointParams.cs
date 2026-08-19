@@ -15,11 +15,16 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 
 /// <summary>
-/// Parameters for the LoadCheckpoint operation (GET /runs/{runId}/checkpoint).
+/// Parameters for the LoadCheckpoint operation (GET /environments/{environment}/runs/{runId}/checkpoint).
 /// </summary>
-/// <remarks><para>Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.</para><para>The lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was.</para><para>A `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.</para></remarks>
+/// <remarks><para>Returns the run's checkpoint document as opaque octets, with the sequence the store has persisted so the runner knows what its next save must propose. Gated on a held lease: reading a run's state is a tenant-data read, so it requires the same interlock as writing it.</para><para>The lease check is also the non-disclosure rule here. A run outside the principal's bindings, one held by another runner, and one that does not exist all fail it identically and answer `409`, so this surface cannot be used to learn which of the three it was. The environment claimed in the route is the first thing checked: one outside the principal's bindings answers that same `409` before any store read.</para><para>A `404` therefore means something narrower and more serious: the lease is current, and the row is nonetheless absent. A runner holding a non-terminal anchor entry for the run treats that as a fault rather than as a fresh run.</para></remarks>
 public readonly struct LoadCheckpointParams
 {
+
+    /// <summary>
+    /// Gets the 'environment' path parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName Environment { get; init; }
 
     /// <summary>
     /// Gets the 'runId' path parameter.
