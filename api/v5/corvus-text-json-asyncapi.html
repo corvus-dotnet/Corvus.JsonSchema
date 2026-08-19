@@ -154,6 +154,11 @@
 <td>Provides authentication credentials for message transport connections.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html">IMessageDeliveryContextTransport</a></td>
+<td>interface</td>
+<td>Optional message-transport capability that exposes delivery metadata.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html">IMessageErrorPolicy</a></td>
 <td>interface</td>
 <td>Defines the error-handling policy for message consumers.</td>
@@ -184,6 +189,11 @@
 <td>Carries protocol-specific metadata from a generated producer/consumer to the transport.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html">MessageDeliveryContext</a></td>
+<td>struct</td>
+<td>Carries transport metadata for a delivered message.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messageerroraction.html">MessageErrorAction</a></td>
 <td>enum</td>
 <td>Specifies the action to take when an error occurs during message processing after the resilience middleware has exhausted all retry attempts.</td>
@@ -200,8 +210,8 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html">MessageHandlerMiddleware</a></td>
-<td>delegate</td>
-<td>A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.</td>
+<td>class</td>
+<td>Wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.html">MessageMatcher&lt;TPayload, TContext, TResult&gt;</a></td>

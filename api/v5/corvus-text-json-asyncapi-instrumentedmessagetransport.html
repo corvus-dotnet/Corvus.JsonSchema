@@ -99,10 +99,10 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <p>A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a> implementation.</p>
-<pre><code class="language-csharp">public sealed class InstrumentedMessageTransport : IMessageTransport, IAsyncDisposable
+<pre><code class="language-csharp">public class InstrumentedMessageTransport : IMessageTransport, IAsyncDisposable
 </code></pre>
 <h2 id="remarks">Remarks</h2>
-<p>Wrap any transport with this decorator to gain automatic: - Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations. - Metrics counters and histograms for message throughput, processing duration, and errors. - W3C trace context propagation via message headers (traceparent/tracestate). All instrumentation is zero-cost when no listener is attached. Example usage: <code>csharp IMessageTransport raw = await NatsMessageTransport.CreateAsync(options); IMessageTransport transport = new InstrumentedMessageTransport(raw, &quot;nats&quot;); </code></p>
+<p>Wrap any transport with this decorator to gain automatic: - Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations. - Metrics counters and histograms for message throughput, processing duration, and errors. - W3C trace context propagation via message headers (traceparent/tracestate). All instrumentation is zero-cost when no listener is attached. Create instances with <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html"><code>Create</code></a>, which returns a wrapper that implements <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a> and/or <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html"><code>IHealthCheckableTransport</code></a> exactly when the wrapped transport does, so capability probes against the wrapper answer for the wrapped transport. The constructor always produces a plain <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a> wrapper that surfaces neither capability. Example usage: <code>csharp IMessageTransport raw = await NatsMessageTransport.CreateAsync(options); IMessageTransport transport = InstrumentedMessageTransport.Create(raw, &quot;nats&quot;); </code></p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>InstrumentedMessageTransport</strong></p>
 <h2 id="implements">Implements</h2>
@@ -132,6 +132,10 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html">Create</a> <code>static</code></td>
+<td>Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.deadletterasync.html#deadletterasync-readonlymemory-byte-readonlymemory-byte-jsonelement-jsonelement-exception-cancellationtoken">DeadLetterAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, JsonElement, JsonElement, Exception, CancellationToken)</a></td>
 <td></td>
 </tr>
@@ -149,6 +153,10 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.subscribeasync.html">SubscribeAsync</a></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.subscribereplyasync.html">SubscribeReplyAsync</a></td>
 <td></td>
 </tr>
 <tr>

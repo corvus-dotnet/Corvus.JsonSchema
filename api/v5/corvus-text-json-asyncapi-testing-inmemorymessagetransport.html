@@ -99,14 +99,14 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi.Testing<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <p>An in-memory implementation of <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a> for testing.</p>
-<pre><code class="language-csharp">public sealed class InMemoryMessageTransport : IMessageTransport, IAsyncDisposable, IHealthCheckableTransport
+<pre><code class="language-csharp">public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport, IMessageTransport, IAsyncDisposable, IHealthCheckableTransport
 </code></pre>
 <h2 id="remarks">Remarks</h2>
 <p>This transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via <code>WriteTo(Utf8JsonWriter)</code> on publish, and parses incoming bytes via <code>ParsedJsonDocument&lt;T&gt;.Parse()</code> on subscribe delivery — mirroring what a real transport would do.</p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>InMemoryMessageTransport</strong></p>
 <h2 id="implements">Implements</h2>
-<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iasyncdisposable"><code>IAsyncDisposable</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html"><code>IHealthCheckableTransport</code></a></p>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html"><code>IMessageDeliveryContextTransport</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagetransport.html"><code>IMessageTransport</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iasyncdisposable"><code>IAsyncDisposable</code></a>, <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html"><code>IHealthCheckableTransport</code></a></p>
 <h2 id="constructors">Constructors</h2>
 <table>
 <thead>
@@ -136,6 +136,11 @@
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deadletteredmessages.html">DeadLetteredMessages</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>IReadOnlyList&lt;DeadLetteredMessage&gt;</code></a></td>
 <td>Gets the list of dead-lettered messages.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html">DeliveryFailures</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>IReadOnlyList&lt;DeliveryFailure&gt;</code></a></td>
+<td>Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; a...</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.isconnected.html">IsConnected</a></td>
@@ -205,6 +210,10 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.subscribereplyasync.html#subscribereplyasync-readonlymemory-byte-func-trequest-jsonelement-cancellationtoken-valuetask-treply-cancellationtoken">SubscribeReplyAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TRequest, JsonElement, CancellationToken, ValueTask&lt;TReply&gt;&gt;, CancellationToken)</a></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.subscribewithdeliverycontextasync.html#subscribewithdeliverycontextasync-readonlymemory-byte-func-tpayload-messagedeliverycontext-cancellationtoken-valuetask-cancellationtoken">SubscribeWithDeliveryContextAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TPayload, MessageDeliveryContext, CancellationToken, ValueTask&gt;, CancellationToken)</a></td>
 <td></td>
 </tr>
 <tr>

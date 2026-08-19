@@ -3812,7 +3812,7 @@
     "Title": "ParsedJsonDocument<T>",
     "Description": "Represents the structure of a JSON value in a lightweight, read-only form.",
     "Keywords": "ParsedJsonDocument<T> class Corvus.Text.Json T",
-    "Body": "Represents the structure of a JSON value in a lightweight, read-only form.\nThis class utilizes resources from pooled memory to minimize the garbage collector (GC) impact in high-usage scenarios. Failure to properly Dispose this object will result in the memory not being returned to the pool, which will cause an increase in GC impact across various parts of the framework.\nRootElement: The [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) representing the value of the document.\nNull: Gets the null instance.\nTrue: Gets the True instance.\nFalse: Gets the False instance.\nWriteTo: Write the document into the provided writer as a JSON value.\nStringConstant: Creates a constant string instance that does not require disposal.\nNumberConstant: Creates a constant number instance that does not require disposal.\nParse: Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.\nParse: Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) byte array that backs the memory.\nParse: Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.\nParse: Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.\nParseAsync: Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.\nParse: Parses text representing a single JSON value into a ParsedJsonDocument.\nParse: Parses text representing a single JSON value into a ParsedJsonDocument.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "Represents the structure of a JSON value in a lightweight, read-only form.\nThis class utilizes resources from pooled memory to minimize the garbage collector (GC) impact in high-usage scenarios. Failure to properly Dispose this object will result in the memory not being returned to the pool, which will cause an increase in GC impact across various parts of the framework.\nRootElement: The [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) representing the value of the document.\nNull: Gets the null instance.\nTrue: Gets the True instance.\nFalse: Gets the False instance.\nWriteTo: Write the document into the provided writer as a JSON value.\nStringConstant: Creates a constant string instance that does not require disposal.\nNumberConstant: Creates a constant number instance that does not require disposal.\nParse: Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.\nParse: Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) byte array that backs the memory.\nParse: Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of the disposable owner of the memory (for example a pooled [`IMemoryOwner`](https://learn.microsoft.com/dotnet/api/system.buffers.imemoryowner-1) handed out by a transport SDK).\nParse: Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.\nParse: Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.\nParseAsync: Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.\nParse: Parses text representing a single JSON value into a ParsedJsonDocument.\nParse: Parses text representing a single JSON value into a ParsedJsonDocument.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.rootelement.html",
@@ -3875,7 +3875,7 @@
     "Title": "ParsedJsonDocument<T>.Parse",
     "Description": "Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.",
     "Keywords": "ParsedJsonDocument<T> Parse method Corvus.Text.Json",
-    "Body": "Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument. Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) byte array that backs the memory. Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument. Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion. Parses text representing a single JSON value into a ParsedJsonDocument. Parses text representing a single JSON value into a ParsedJsonDocument."
+    "Body": "Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument. Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) byte array that backs the memory. Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of the disposable owner of the memory (for example a pooled [`IMemoryOwner`](https://learn.microsoft.com/dotnet/api/system.buffers.imemoryowner-1) handed out by a transport SDK). Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument. Parse a [`Stream`](https://learn.microsoft.com/dotnet/api/system.io.stream) as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion. Parses text representing a single JSON value into a ParsedJsonDocument. Parses text representing a single JSON value into a ParsedJsonDocument."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.parseasync.html",
@@ -6157,7 +6157,7 @@
     "Title": "AsyncApiTelemetry",
     "Description": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.",
     "Keywords": "AsyncApiTelemetry class Corvus.Text.Json.AsyncApi",
-    "Body": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.\nRegister with the OpenTelemetry pipeline using: ```csharp services.AddOpenTelemetry() .WithTracing(b => b.AddSource(AsyncApiTelemetry.ActivitySourceName)) .WithMetrics(b => b.AddMeter(AsyncApiTelemetry.MeterName)); ``` All instruments are zero-cost when no listener is attached: [`StartActivity`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.startactivity) returns `null` without a listener, and [`Add`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1.add) is a no-op without a [`MeterListener`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener).\nActivitySource: Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.\nMeter: Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.\nMessagesSent: Gets the counter for messages sent to the broker.\nMessagesConsumed: Gets the counter for messages delivered to the application handler.\nOperationDuration: Gets the histogram measuring the duration of messaging client operations (publish, request).\nProcessDuration: Gets the histogram measuring consumer handler processing time.\nDeadLetters: Gets the counter for messages moved to a dead-letter channel.\nDeadLetterFailures: Gets the counter for dead-letter operations that themselves failed.\nValidationFailures: Gets the counter for messages that failed schema validation.\nRetryAttempts: Gets the counter for message processing retry attempts.\nSubscriberAborts: Gets the counter for subscriber abort events.\nMessagesSkipped: Gets the counter for messages that were skipped (not processed, not dead-lettered).\nCorrelationIdMismatches: Gets the counter for request-reply correlation ID mismatches.\nMessageBodySize: Gets the histogram measuring message payload size in bytes.\nHeartbeats: Gets the counter for heartbeat ping attempts (success and failure).\nTransportStateTransitions: Gets the counter for transport state transitions (connected↔disconnected).\nRecordDeadLetter: Records a successful dead-letter operation from within a transport's internal error handling.\nRecordDeadLetterFailure: Records a dead-letter operation that itself failed (message was dropped).\nRecordAbort: Records that a subscriber aborted (stopped consuming) due to the error policy.\nRecordSkip: Records that a message was skipped (not processed and not dead-lettered).\nRecordRetry: Records a retry attempt for message processing.\nRecordCorrelationIdMismatch: Records a correlation ID mismatch during request-reply."
+    "Body": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.\nRegister with the OpenTelemetry pipeline using: ```csharp services.AddOpenTelemetry() .WithTracing(b => b.AddSource(AsyncApiTelemetry.ActivitySourceName)) .WithMetrics(b => b.AddMeter(AsyncApiTelemetry.MeterName)); ``` All instruments are zero-cost when no listener is attached: [`StartActivity`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.startactivity) returns `null` without a listener, and [`Add`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1.add) is a no-op without a [`MeterListener`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener).\nActivitySource: Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.\nMeter: Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.\nMessagesSent: Gets the counter for messages sent to the broker.\nMessagesConsumed: Gets the counter for messages delivered to the application handler.\nOperationDuration: Gets the histogram measuring the duration of messaging client operations (publish, request).\nProcessDuration: Gets the histogram measuring consumer handler processing time.\nDeadLetters: Gets the counter for messages moved to a dead-letter channel.\nDeadLetterFailures: Gets the counter for dead-letter operations that themselves failed.\nSubscriptionTeardownFailures: Gets the counter for subscription teardowns that reported a failure.\nSubscriptionFaults: Gets the counter for subscription processing loops that terminated on an unexpected fault.\nAcknowledgeFailures: Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed.\nValidationFailures: Gets the counter for messages that failed schema validation.\nRetryAttempts: Gets the counter for message processing retry attempts.\nSubscriberAborts: Gets the counter for subscriber abort events.\nMessagesSkipped: Gets the counter for messages that were skipped (not processed, not dead-lettered).\nCorrelationIdMismatches: Gets the counter for request-reply correlation ID mismatches.\nMessageBodySize: Gets the histogram measuring message payload size in bytes.\nHeartbeats: Gets the counter for heartbeat ping attempts (success and failure).\nTransportStateTransitions: Gets the counter for transport state transitions (connected↔disconnected).\nRecordDeadLetter: Records a successful dead-letter operation from within a transport's internal error handling.\nRecordDeadLetterFailure: Records a dead-letter operation that itself failed (message was dropped).\nRecordSubscriptionTeardownFailure: Records that tearing a subscription down reported a failure that was deliberately not propagated, so that stopping one subscription cannot abort the disposal of others.\nRecordSubscriptionFault: Records that a subscription's processing loop terminated on an unexpected fault.\nRecordAcknowledgeFailure: Records that a broker acknowledgement operation (commit, ack, nak) failed.\nRecordAbort: Records that a subscriber aborted (stopped consuming) due to the error policy.\nRecordSkip: Records that a message was skipped (not processed and not dead-lettered).\nRecordRetry: Records a retry attempt for message processing.\nRecordCorrelationIdMismatch: Records a correlation ID mismatch during request-reply."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html",
@@ -6214,6 +6214,27 @@
     "Description": "Gets the counter for dead-letter operations that themselves failed.",
     "Keywords": "AsyncApiTelemetry DeadLetterFailures property Corvus.Text.Json.AsyncApi",
     "Body": "Gets the counter for dead-letter operations that themselves failed."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.subscriptionteardownfailures.html",
+    "Title": "AsyncApiTelemetry.SubscriptionTeardownFailures",
+    "Description": "Gets the counter for subscription teardowns that reported a failure.",
+    "Keywords": "AsyncApiTelemetry SubscriptionTeardownFailures property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for subscription teardowns that reported a failure."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.subscriptionfaults.html",
+    "Title": "AsyncApiTelemetry.SubscriptionFaults",
+    "Description": "Gets the counter for subscription processing loops that terminated on an unexpected fault.",
+    "Keywords": "AsyncApiTelemetry SubscriptionFaults property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for subscription processing loops that terminated on an unexpected fault."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.acknowledgefailures.html",
+    "Title": "AsyncApiTelemetry.AcknowledgeFailures",
+    "Description": "Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed.",
+    "Keywords": "AsyncApiTelemetry AcknowledgeFailures property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.validationfailures.html",
@@ -6284,6 +6305,27 @@
     "Description": "Records a dead-letter operation that itself failed (message was dropped).",
     "Keywords": "AsyncApiTelemetry RecordDeadLetterFailure method Corvus.Text.Json.AsyncApi",
     "Body": "Records a dead-letter operation that itself failed (message was dropped)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordsubscriptionteardownfailure.html",
+    "Title": "AsyncApiTelemetry.RecordSubscriptionTeardownFailure",
+    "Description": "Records that tearing a subscription down reported a failure that was deliberately not propagated, so that stopping one subscription cannot abort the disposal of others.",
+    "Keywords": "AsyncApiTelemetry RecordSubscriptionTeardownFailure method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that tearing a subscription down reported a failure that was deliberately not propagated, so that stopping one subscription cannot abort the disposal of others."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordsubscriptionfault.html",
+    "Title": "AsyncApiTelemetry.RecordSubscriptionFault",
+    "Description": "Records that a subscription's processing loop terminated on an unexpected fault.",
+    "Keywords": "AsyncApiTelemetry RecordSubscriptionFault method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that a subscription's processing loop terminated on an unexpected fault."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordacknowledgefailure.html",
+    "Title": "AsyncApiTelemetry.RecordAcknowledgeFailure",
+    "Description": "Records that a broker acknowledgement operation (commit, ack, nak) failed.",
+    "Keywords": "AsyncApiTelemetry RecordAcknowledgeFailure method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that a broker acknowledgement operation (commit, ack, nak) failed."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordabort.html",
@@ -6587,6 +6629,20 @@
     "Body": "Applies authentication credentials to the transport connection context."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html",
+    "Title": "IMessageDeliveryContextTransport",
+    "Description": "Optional message-transport capability that exposes delivery metadata.",
+    "Keywords": "IMessageDeliveryContextTransport interface Corvus.Text.Json.AsyncApi",
+    "Body": "Optional message-transport capability that exposes delivery metadata.\nThis is separate from [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) so existing transport implementations remain source-compatible and the legacy subscription API is not changed or adapted through an allocating closure.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.subscribewithdeliverycontextasync.html",
+    "Title": "IMessageDeliveryContextTransport.SubscribeWithDeliveryContextAsync",
+    "Description": "Subscribes while exposing transport delivery metadata.",
+    "Keywords": "IMessageDeliveryContextTransport SubscribeWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Subscribes while exposing transport delivery metadata. Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html",
     "Title": "IMessageErrorPolicy",
     "Description": "Defines the error-handling policy for message consumers.",
@@ -6682,7 +6738,7 @@
     "Title": "InstrumentedMessageTransport",
     "Description": "A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementation.",
     "Keywords": "InstrumentedMessageTransport class Corvus.Text.Json.AsyncApi",
-    "Body": "A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementation.\nWrap any transport with this decorator to gain automatic: - Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations. - Metrics counters and histograms for message throughput, processing duration, and errors. - W3C trace context propagation via message headers (traceparent/tracestate). All instrumentation is zero-cost when no listener is attached. Example usage: ```csharp IMessageTransport raw = await NatsMessageTransport.CreateAsync(options); IMessageTransport transport = new InstrumentedMessageTransport(raw, \"nats\"); ```"
+    "Body": "A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementation.\nWrap any transport with this decorator to gain automatic: - Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations. - Metrics counters and histograms for message throughput, processing duration, and errors. - W3C trace context propagation via message headers (traceparent/tracestate). All instrumentation is zero-cost when no listener is attached. Create instances with [`Create`](/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html), which returns a wrapper that implements [`IMessageDeliveryContextTransport`](/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html) and/or [`IHealthCheckableTransport`](/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html) exactly when the wrapped transport does, so capability probes against the wrapper answer for the wrapped transport. The constructor always produces a plain [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) wrapper that surfaces neither capability. Example usage: ```csharp IMessageTransport raw = await NatsMessageTransport.CreateAsync(options); IMessageTransport transport = InstrumentedMessageTransport.Create(raw, \"nats\"); ```\nCreate: Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements [`IMessageDeliveryContextTransport`](/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html) and/or [`IHealthCheckableTransport`](/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html) exactly when `inner` does, so a capability probe such as `transport is IMessageDeliveryContextTransport` answers for the wrapped transport instead of failing at subscribe time.\nCreate: Creates an instrumented wrapper for a transport that exposes delivery context, typed so the result can be handed straight to a generated `*WithDeliveryContextConsumer`."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.ctor.html",
@@ -6690,6 +6746,13 @@
     "Description": "Initializes a new instance of the [`InstrumentedMessageTransport`](/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.html) class.",
     "Keywords": "InstrumentedMessageTransport constructor new Corvus.Text.Json.AsyncApi",
     "Body": "Initializes a new instance of the [`InstrumentedMessageTransport`](/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.create.html",
+    "Title": "InstrumentedMessageTransport.Create",
+    "Description": "Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements [`IMessageDeliveryContextTransport`](/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html) and/or [`IHealthCheckableTransport`](/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html) exactly when `inner` does, so a capability probe such as `transport is IMessageDeliveryContextTransport` answers for the wrapped transport instead of failing at subscribe time.",
+    "Keywords": "InstrumentedMessageTransport Create method Corvus.Text.Json.AsyncApi",
+    "Body": "Creates an instrumented wrapper that preserves the wrapped transport's capabilities: the returned instance implements [`IMessageDeliveryContextTransport`](/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.html) and/or [`IHealthCheckableTransport`](/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html) exactly when `inner` does, so a capability probe such as `transport is IMessageDeliveryContextTransport` answers for the wrapped transport instead of failing at subscribe time. Creates an instrumented wrapper for a transport that exposes delivery context, typed so the result can be handed straight to a generated `*WithDeliveryContextConsumer`."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.publishasync.html",
@@ -6710,6 +6773,13 @@
     "Title": "InstrumentedMessageTransport.SubscribeAsync",
     "Description": "",
     "Keywords": "InstrumentedMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.subscribereplyasync.html",
+    "Title": "InstrumentedMessageTransport.SubscribeReplyAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport SubscribeReplyAsync method Corvus.Text.Json.AsyncApi",
     "Body": " "
   },
   {
@@ -6811,6 +6881,34 @@
     "Body": "Gets a value indicating whether any bindings are present at any level."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html",
+    "Title": "MessageDeliveryContext",
+    "Description": "Carries transport metadata for a delivered message.",
+    "Keywords": "MessageDeliveryContext struct Corvus.Text.Json.AsyncApi",
+    "Body": "Carries transport metadata for a delivered message.\nThe context and everything it exposes are valid only for the duration of the handler invocation it is passed to. Transports hand out memory that they recycle once the handler returns (for example, RabbitMQ reuses the network-frame buffer backing `BasicDeliverEventArgs.Body`), so a stored context silently reads reused buffers. Copy anything you need to keep before the handler returns.\nChannelUtf8: Gets the subscribed channel as UTF-8 bytes.\nHeaders: Gets the message headers.\nNativeMessage: Gets the transport-native message, when available."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.channelutf8.html",
+    "Title": "MessageDeliveryContext.ChannelUtf8",
+    "Description": "Gets the subscribed channel as UTF-8 bytes.",
+    "Keywords": "MessageDeliveryContext ChannelUtf8 property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the subscribed channel as UTF-8 bytes."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.headers.html",
+    "Title": "MessageDeliveryContext.Headers",
+    "Description": "Gets the message headers.",
+    "Keywords": "MessageDeliveryContext Headers property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the message headers."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.nativemessage.html",
+    "Title": "MessageDeliveryContext.NativeMessage",
+    "Description": "Gets the transport-native message, when available.",
+    "Keywords": "MessageDeliveryContext NativeMessage property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the transport-native message, when available."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messageerroraction.html",
     "Title": "MessageErrorAction",
     "Description": "Specifies the action to take when an error occurs during message processing after the resilience middleware has exhausted all retry attempts.",
@@ -6869,37 +6967,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html",
     "Title": "MessageHandlerMiddleware",
-    "Description": "A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.",
-    "Keywords": "MessageHandlerMiddleware delegate Corvus.Text.Json.AsyncApi",
-    "Body": "A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.\nThe transport calls through this delegate for every message handler invocation. Implementations may retry the operation, add backoff delays, apply circuit-breaker logic, or add observability instrumentation. If the middleware exhausts all retries and the operation still fails, it should let the exception propagate. The transport will then invoke the [`IMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html) to determine the terminal action (skip, dead-letter, or abort). The `Corvus.Text.Json.AsyncApi.Polly` package provides a ready-made implementation backed by `Polly.ResiliencePipeline`."
+    "Description": "Wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.",
+    "Keywords": "MessageHandlerMiddleware class Corvus.Text.Json.AsyncApi",
+    "Body": "Wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.\nThe transport calls through this class for every message handler invocation, passing the operation as a static delegate plus an explicit state value (the pattern `Polly.ResiliencePipeline.ExecuteAsync<TState>` uses), so a middleware-wrapped dispatch allocates no per-message closure. Implementations invoke `operation(state, cancellationToken)` once per attempt, passing the state through unchanged, and must not retain the operation or the state beyond the call. If the middleware exhausts all retries and the operation still fails, it should let the exception propagate. The transport then invokes the [`IMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html) to determine the terminal action (skip, dead-letter, or abort). The `Corvus.Text.Json.AsyncApi.Polly` package provides a ready-made implementation backed by `Polly.ResiliencePipeline`.\nInvokeAsync: Executes a handler operation through the middleware.\nInvokeAsync: Executes a result-producing handler operation through the middleware."
   },
   {
-    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.ctor.html",
-    "Title": "MessageHandlerMiddleware Constructor",
-    "Description": "",
-    "Keywords": "MessageHandlerMiddleware constructor new Corvus.Text.Json.AsyncApi",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.invoke.html",
-    "Title": "MessageHandlerMiddleware.Invoke",
-    "Description": "",
-    "Keywords": "MessageHandlerMiddleware Invoke method Corvus.Text.Json.AsyncApi",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.begininvoke.html",
-    "Title": "MessageHandlerMiddleware.BeginInvoke",
-    "Description": "",
-    "Keywords": "MessageHandlerMiddleware BeginInvoke method Corvus.Text.Json.AsyncApi",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.endinvoke.html",
-    "Title": "MessageHandlerMiddleware.EndInvoke",
-    "Description": "",
-    "Keywords": "MessageHandlerMiddleware EndInvoke method Corvus.Text.Json.AsyncApi",
-    "Body": ""
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.invokeasync.html",
+    "Title": "MessageHandlerMiddleware.InvokeAsync",
+    "Description": "Executes a handler operation through the middleware.",
+    "Keywords": "MessageHandlerMiddleware InvokeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Executes a handler operation through the middleware. Executes a result-producing handler operation through the middleware."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.html",
@@ -7018,7 +7095,7 @@
     "Title": "ProcessingLoopHeartbeat",
     "Description": "Tracks the liveness of transport processing loops by recording heartbeat ticks.",
     "Keywords": "ProcessingLoopHeartbeat class Corvus.Text.Json.AsyncApi",
-    "Body": "Tracks the liveness of transport processing loops by recording heartbeat ticks.\nEach transport's subscribe/consume loop calls [`Tick`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html) on every iteration to signal that the loop is alive and processing. The heartbeat monitor tracks these ticks and exposes: - [`IsAlive`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.isalive.html) — whether a specific subscription's loop has ticked within the staleness threshold. - [`GetSubscriptionStatuses`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.getsubscriptionstatuses.html) — all tracked subscriptions with their liveness state. - A `corvus.asyncapi.processing_loop_alive` counter emitted on each tick, useful for rate-based alerting (rate drops to zero = loop died). - A `corvus.asyncapi.processing_loop_started` / `corvus.asyncapi.processing_loop_stopped` counter pair for lifecycle tracking. Staleness detection: if a loop has not ticked for longer than [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html), it is considered dead. This catches loops that exit silently (unhandled exception, unexpected cancellation, GC of the Task). Usage in transports: ```csharp // At the top of each loop iteration: this.heartbeat.Tick(channel, \"nats\"); // On subscribe start: this.heartbeat.Start(channel, \"nats\"); // On normal unsubscribe: this.heartbeat.Stop(channel, \"nats\"); ```\nStalenessThreshold: Gets or sets the duration after which a loop is considered dead if no tick has been received.\nStart: Records that the processing loop for the specified channel has started.\nStop: Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe).\nTick: Records a heartbeat tick from the processing loop, indicating it is alive.\nIsAlive: Gets a value indicating whether the processing loop for the specified channel is considered alive (has ticked within [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html)).\nGetSubscriptionStatuses: Gets the status of all tracked subscriptions.\nRemove: Removes a subscription from tracking (e.g., after it has been stopped and cleaned up)."
+    "Body": "Tracks the liveness of transport processing loops by recording heartbeat ticks.\nEach transport's subscribe/consume loop calls [`Tick`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html) on every iteration to signal that the loop is alive and processing. The heartbeat monitor tracks these ticks and exposes: - [`IsAlive`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.isalive.html) — whether a specific subscription's loop has ticked within the staleness threshold. - [`GetSubscriptionStatuses`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.getsubscriptionstatuses.html) — all tracked subscriptions with their liveness state. - A `corvus.asyncapi.heartbeats` counter emitted on every start, stop and tick, distinguished by the `corvus.asyncapi.loop_event` tag — the tick rate dropping to zero for a channel means its loop died. Staleness detection: if a loop has not ticked for longer than [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html), it is considered dead. This catches loops that exit silently (unhandled exception, unexpected cancellation, GC of the Task). Every call carries an `owner` object identifying the subscription it belongs to. A channel can be resubscribed while the previous subscription is still unwinding (its loop draining, its broker teardown deferred), so a bare channel key is not enough: without the owner, the old subscription's [`Stop`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stop.html) would clobber the new subscription's live state, and its final ticks would fake-freshen it. [`Start`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html) records the owner; [`Stop`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stop.html) and [`Tick`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html) only act when the entry still belongs to that owner. Usage in transports: ```csharp // At the top of each loop iteration: this.heartbeat.Tick(channel, \"nats\", subscriptionMarker); // After the subscription claim succeeds: this.heartbeat.Start(channel, \"nats\", subscriptionMarker); // When the subscription ends (unsubscribe, loop exit): this.heartbeat.Stop(channel, \"nats\", subscriptionMarker); ```\nStalenessThreshold: Gets or sets the duration after which a loop is considered dead if no tick has been received.\nStart: Records that the processing loop for the specified channel has started.\nStop: Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe).\nTick: Records a heartbeat tick from the processing loop, indicating it is alive.\nIsAlive: Gets a value indicating whether the processing loop for the specified channel is considered alive (has ticked within [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html)).\nGetSubscriptionStatuses: Gets the status of all tracked subscriptions.\nRemove: Removes a subscription from tracking (e.g., after it has been stopped and cleaned up)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.ctor.html",
@@ -7221,7 +7298,7 @@
     "Title": "ThrowHelper",
     "Description": "Centralized exception-throwing helpers for the AsyncAPI support library and for use by generated producer/consumer code.",
     "Keywords": "ThrowHelper class Corvus.Text.Json.AsyncApi",
-    "Body": "Centralized exception-throwing helpers for the AsyncAPI support library and for use by generated producer/consumer code.\nMethods are marked [`DoesNotReturnAttribute`](https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.doesnotreturnattribute) so the JIT can optimize call-site code that follows a throw path. All exception messages come from the embedded `Resources/Strings.resx` resource file via `SR`.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation, with detailed diagnostic information.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation, with detailed diagnostic information.\nThrowUnsupportedContentType: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message has an unsupported content type.\nThrowUnsupportedSchemaFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message uses an unsupported schema format.\nThrowConsumerNotStarted: Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started.\nThrowUnsupportedBindingsFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the channel has bindings in an unrecognized format.\nThrowArgumentOutOfRange: Throws an [`ArgumentOutOfRangeException`](https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception) for the specified parameter."
+    "Body": "Centralized exception-throwing helpers for the AsyncAPI support library and for use by generated producer/consumer code.\nMethods are marked [`DoesNotReturnAttribute`](https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.doesnotreturnattribute) so the JIT can optimize call-site code that follows a throw path. All exception messages come from the embedded `Resources/Strings.resx` resource file via `SR`.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation, with detailed diagnostic information.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation, with detailed diagnostic information.\nCreateMessagePayloadValidationFailed: Creates, without throwing, the exception [`ThrowMessagePayloadValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html) would throw. Generated consumers feed this to the error policy directly, so a hostile message costs no unwind and no stack capture.\nCreateMessagePayloadValidationFailed: Creates, without throwing, the exception [`ThrowMessagePayloadValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html) would throw.\nCreateMessageHeadersValidationFailed: Creates, without throwing, the exception [`ThrowMessageHeadersValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html) would throw.\nCreateMessageHeadersValidationFailed: Creates, without throwing, the exception [`ThrowMessageHeadersValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html) would throw.\nThrowUnsupportedContentType: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message has an unsupported content type.\nThrowUnsupportedSchemaFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message uses an unsupported schema format.\nThrowConsumerNotStarted: Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started.\nThrowConsumerAlreadyStarted: Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has already been started.\nThrowConsumerStoppedDuringStart: Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer was stopped while its subscription was still being established, and has been released.\nThrowUnsupportedBindingsFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the channel has bindings in an unrecognized format.\nThrowArgumentOutOfRange: Throws an [`ArgumentOutOfRangeException`](https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception) for the specified parameter."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html",
@@ -7236,6 +7313,20 @@
     "Description": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation.",
     "Keywords": "ThrowHelper ThrowMessageHeadersValidationFailed method Corvus.Text.Json.AsyncApi",
     "Body": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation. Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation, with detailed diagnostic information."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.createmessagepayloadvalidationfailed.html",
+    "Title": "ThrowHelper.CreateMessagePayloadValidationFailed",
+    "Description": "Creates, without throwing, the exception [`ThrowMessagePayloadValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html) would throw. Generated consumers feed this to the error policy directly, so a hostile message costs no unwind and no stack capture.",
+    "Keywords": "ThrowHelper CreateMessagePayloadValidationFailed method Corvus.Text.Json.AsyncApi",
+    "Body": "Creates, without throwing, the exception [`ThrowMessagePayloadValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html) would throw. Generated consumers feed this to the error policy directly, so a hostile message costs no unwind and no stack capture. Creates, without throwing, the exception [`ThrowMessagePayloadValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html) would throw."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.createmessageheadersvalidationfailed.html",
+    "Title": "ThrowHelper.CreateMessageHeadersValidationFailed",
+    "Description": "Creates, without throwing, the exception [`ThrowMessageHeadersValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html) would throw.",
+    "Keywords": "ThrowHelper CreateMessageHeadersValidationFailed method Corvus.Text.Json.AsyncApi",
+    "Body": "Creates, without throwing, the exception [`ThrowMessageHeadersValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html) would throw. Creates, without throwing, the exception [`ThrowMessageHeadersValidationFailed`](/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html) would throw."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.throwunsupportedcontenttype.html",
@@ -7257,6 +7348,20 @@
     "Description": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started.",
     "Keywords": "ThrowHelper ThrowConsumerNotStarted method Corvus.Text.Json.AsyncApi",
     "Body": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.throwconsumeralreadystarted.html",
+    "Title": "ThrowHelper.ThrowConsumerAlreadyStarted",
+    "Description": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has already been started.",
+    "Keywords": "ThrowHelper ThrowConsumerAlreadyStarted method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has already been started."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.throwconsumerstoppedduringstart.html",
+    "Title": "ThrowHelper.ThrowConsumerStoppedDuringStart",
+    "Description": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer was stopped while its subscription was still being established, and has been released.",
+    "Keywords": "ThrowHelper ThrowConsumerStoppedDuringStart method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer was stopped while its subscription was still being established, and has been released."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-throwhelper.throwunsupportedbindingsformat.html",
@@ -7945,6 +8050,41 @@
     "Body": "   "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.html",
+    "Title": "MessageHandler<TPayload>",
+    "Description": "Stores one subscription's legacy or metadata-aware callback without an adapter delegate on the delivery path.",
+    "Keywords": "MessageHandler<TPayload> struct Corvus.Text.Json.AsyncApi.Internal TPayload",
+    "Body": "Stores one subscription's legacy or metadata-aware callback without an adapter delegate on the delivery path.\nThis is infrastructure for [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementations. Application code should not use it directly.\nUsesDeliveryContext: Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery).\nWithoutDeliveryContext: Creates a handler wrapping a legacy (payload and headers) callback.\nWithDeliveryContext: Creates a handler wrapping a delivery-context-aware callback.\nInvoke: Invokes the stored callback for one delivered message."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.usesdeliverycontext.html",
+    "Title": "MessageHandler<TPayload>.UsesDeliveryContext",
+    "Description": "Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery).",
+    "Keywords": "MessageHandler<TPayload> UsesDeliveryContext property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.withoutdeliverycontext.html",
+    "Title": "MessageHandler<TPayload>.WithoutDeliveryContext",
+    "Description": "Creates a handler wrapping a legacy (payload and headers) callback.",
+    "Keywords": "MessageHandler<TPayload> WithoutDeliveryContext method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a handler wrapping a legacy (payload and headers) callback."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.withdeliverycontext.html",
+    "Title": "MessageHandler<TPayload>.WithDeliveryContext",
+    "Description": "Creates a handler wrapping a delivery-context-aware callback.",
+    "Keywords": "MessageHandler<TPayload> WithDeliveryContext method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a handler wrapping a delivery-context-aware callback."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.invoke.html",
+    "Title": "MessageHandler<TPayload>.Invoke",
+    "Description": "Invokes the stored callback for one delivered message.",
+    "Keywords": "MessageHandler<TPayload> Invoke method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Invokes the stored callback for one delivered message."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.html",
     "Title": "DeadLetteredMessage",
     "Description": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
@@ -8043,11 +8183,88 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.html",
+    "Title": "DeliveryFailure",
+    "Description": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.",
+    "Keywords": "DeliveryFailure class Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.\nChannel: The channel the message was delivered on.\nException: The handler's failure."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.ctor.html",
+    "Title": "DeliveryFailure Constructor",
+    "Description": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead.",
+    "Keywords": "DeliveryFailure constructor new Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a handler failure from a loopback delivery on the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html) (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on [`DeliveryFailures`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html) instead."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.channel.html",
+    "Title": "DeliveryFailure.Channel",
+    "Description": "The channel the message was delivered on.",
+    "Keywords": "DeliveryFailure Channel property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The channel the message was delivered on."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.exception.html",
+    "Title": "DeliveryFailure.Exception",
+    "Description": "The handler's failure.",
+    "Keywords": "DeliveryFailure Exception property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The handler's failure."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.tostring.html",
+    "Title": "DeliveryFailure.ToString",
+    "Description": "",
+    "Keywords": "DeliveryFailure ToString method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.gethashcode.html",
+    "Title": "DeliveryFailure.GetHashCode",
+    "Description": "",
+    "Keywords": "DeliveryFailure GetHashCode method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.equals.html",
+    "Title": "DeliveryFailure.Equals",
+    "Description": "",
+    "Keywords": "DeliveryFailure Equals method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.-clone$.html",
+    "Title": "DeliveryFailure.<Clone>$",
+    "Description": "",
+    "Keywords": "DeliveryFailure <Clone>$ method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.deconstruct.html",
+    "Title": "DeliveryFailure.Deconstruct",
+    "Description": "",
+    "Keywords": "DeliveryFailure Deconstruct method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.op-inequality.html",
+    "Title": "DeliveryFailure Inequality Operator",
+    "Description": "",
+    "Keywords": "DeliveryFailure Inequality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deliveryfailure.op-equality.html",
+    "Title": "DeliveryFailure Equality Operator",
+    "Description": "",
+    "Keywords": "DeliveryFailure Equality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html",
     "Title": "InMemoryMessageTransport",
     "Description": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.",
     "Keywords": "InMemoryMessageTransport class Corvus.Text.Json.AsyncApi.Testing",
-    "Body": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.\nThis transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via `WriteTo(Utf8JsonWriter)` on publish, and parses incoming bytes via `ParsedJsonDocument<T>.Parse()` on subscribe delivery — mirroring what a real transport would do.\nPublishedMessages: Gets the list of messages published via this transport.\nDeadLetteredMessages: Gets the list of dead-lettered messages.\nDeliverAsync: Delivers a raw JSON payload to the subscriber on the specified channel.\nCompleteRequest: Completes a pending request/reply by correlationId.\nDeliverRawAsync: Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.\nReset: Clears all recorded published messages and dead-lettered messages."
+    "Body": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.\nThis transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via `WriteTo(Utf8JsonWriter)` on publish, and parses incoming bytes via `ParsedJsonDocument<T>.Parse()` on subscribe delivery — mirroring what a real transport would do.\nPublishedMessages: Gets the list of messages published via this transport.\nDeadLetteredMessages: Gets the list of dead-lettered messages.\nDeliveryFailures: Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead.\nDeliverAsync: Delivers a raw JSON payload to the subscriber on the specified channel.\nCompleteRequest: Completes a pending request/reply by correlationId.\nDeliverRawAsync: Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.\nReset: Clears all recorded published messages and dead-lettered messages."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.ctor.html",
@@ -8085,6 +8302,13 @@
     "Body": "Gets the list of dead-lettered messages."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliveryfailures.html",
+    "Title": "InMemoryMessageTransport.DeliveryFailures",
+    "Description": "Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead.",
+    "Keywords": "InMemoryMessageTransport DeliveryFailures property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Gets the handler failures from loopback deliveries (a publish delivered to a subscription on the same transport whose handler threw). As on a real broker, these never surface to the publish call; assert on this list instead."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.publishasync.html",
     "Title": "InMemoryMessageTransport.PublishAsync",
     "Description": "",
@@ -8110,6 +8334,13 @@
     "Title": "InMemoryMessageTransport.SubscribeAsync",
     "Description": "",
     "Keywords": "InMemoryMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.subscribewithdeliverycontextasync.html",
+    "Title": "InMemoryMessageTransport.SubscribeWithDeliveryContextAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport SubscribeWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi.Testing",
     "Body": ""
   },
   {

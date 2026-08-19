@@ -116,6 +116,10 @@
 <td>Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented <a href="https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1"><code>ArrayPool</code></a> by...</td>
 </tr>
 <tr>
+<td><a href="#parse-readonlymemory-byte-idisposable-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, IDisposable, JsonDocumentOptions)</a></td>
+<td>Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of the disposable owner of the memory (for example a pooled...</td>
+</tr>
+<tr>
 <td><a href="#parse-readonlysequence-byte-jsondocumentoptions">Parse(ReadOnlySequence&lt;byte&gt;, JsonDocumentOptions)</a></td>
 <td>Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</td>
 </tr>
@@ -134,7 +138,7 @@
 </tbody>
 </table>
 <h2 id="parse-readonlymemory-byte-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L90">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L90">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;byte&gt; utf8Json, JsonDocumentOptions options)
 </code></pre>
@@ -205,7 +209,7 @@
 </table>
 <hr />
 <h2 id="parse-readonlymemory-byte-byte-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, byte[], JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L124">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L124">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented <a href="https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1"><code>ArrayPool</code></a> byte array that backs the memory.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;byte&gt; utf8Json, byte[] rentedArrayPoolBytes, JsonDocumentOptions options)
 </code></pre>
@@ -280,10 +284,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parse-readonlysequence-byte-jsondocumentoptions">Parse(ReadOnlySequence&lt;byte&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L154">ParsedJsonDocument.Parse.cs</a></p>
-<p>Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</p>
-<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlySequence&lt;byte&gt; utf8Json, JsonDocumentOptions options)
+<h2 id="parse-readonlymemory-byte-idisposable-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, IDisposable, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L160">ParsedJsonDocument.Parse.cs</a></p>
+<p>Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of the disposable owner of the memory (for example a pooled <a href="https://learn.microsoft.com/dotnet/api/system.buffers.imemoryowner-1"><code>IMemoryOwner</code></a> handed out by a transport SDK).</p>
+<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;byte&gt; utf8Json, IDisposable owner, JsonDocumentOptions options)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -297,8 +301,13 @@
 <tbody>
 <tr>
 <td><code>utf8Json</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence&lt;byte&gt;</code></a></td>
-<td>JSON text to parse.</td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;byte&gt;</code></a></td>
+<td>JSON text to parse. Must be backed by memory <code>owner</code> keeps alive.</td>
+</tr>
+<tr>
+<td><code>owner</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></td>
+<td>The disposable owner of the memory backing <code>utf8Json</code>. Ownership is transferred to the returned document.</td>
 </tr>
 <tr>
 <td><code>options</code></td>
@@ -330,7 +339,7 @@
 </tbody>
 </table>
 <h3 id="remarks-2">Remarks</h3>
-<p T="">The <a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence</code></a> may be used for the entire lifetime of the ParsedJsonDocument object, and the caller must ensure that the data therein does not change during the object lifetime. Because the input is considered to be text, a UTF-8 Byte-Order-Mark (BOM) must not be present.</p>
+<p>The <code>utf8Json</code> memory must remain valid until <code>owner</code> is disposed. The document disposes the owner when the document is disposed, and the caller must not use the owner or the memory after calling this method. If parsing throws, ownership stays with the caller (matching the rented-array overload), so the caller disposes the owner on that path.</p>
 <h2 id="applies-to-2">Applies To</h2>
 <table>
 <thead>
@@ -351,10 +360,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parse-stream-jsondocumentoptions">Parse(Stream, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L195">ParsedJsonDocument.Parse.cs</a></p>
-<p>Parse a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.</p>
-<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(Stream utf8Json, JsonDocumentOptions options)
+<h2 id="parse-readonlysequence-byte-jsondocumentoptions">Parse(ReadOnlySequence&lt;byte&gt;, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L190">ParsedJsonDocument.Parse.cs</a></p>
+<p>Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</p>
+<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlySequence&lt;byte&gt; utf8Json, JsonDocumentOptions options)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -368,8 +377,8 @@
 <tbody>
 <tr>
 <td><code>utf8Json</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a></td>
-<td>JSON data to parse.</td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence&lt;byte&gt;</code></a></td>
+<td>JSON text to parse.</td>
 </tr>
 <tr>
 <td><code>options</code></td>
@@ -400,6 +409,8 @@
 </tr>
 </tbody>
 </table>
+<h3 id="remarks-3">Remarks</h3>
+<p T="">The <a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence</code></a> may be used for the entire lifetime of the ParsedJsonDocument object, and the caller must ensure that the data therein does not change during the object lifetime. Because the input is considered to be text, a UTF-8 Byte-Order-Mark (BOM) must not be present.</p>
 <h2 id="applies-to-3">Applies To</h2>
 <table>
 <thead>
@@ -420,10 +431,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parse-readonlymemory-char-jsondocumentoptions">Parse(ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L310">ParsedJsonDocument.Parse.cs</a></p>
-<p>Parses text representing a single JSON value into a ParsedJsonDocument.</p>
-<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;char&gt; json, JsonDocumentOptions options)
+<h2 id="parse-stream-jsondocumentoptions">Parse(Stream, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L231">ParsedJsonDocument.Parse.cs</a></p>
+<p>Parse a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.</p>
+<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(Stream utf8Json, JsonDocumentOptions options)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -436,9 +447,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>json</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;char&gt;</code></a></td>
-<td>JSON text to parse.</td>
+<td><code>utf8Json</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a></td>
+<td>JSON data to parse.</td>
 </tr>
 <tr>
 <td><code>options</code></td>
@@ -461,7 +472,7 @@
 <tbody>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a></td>
-<td><code>json</code> does not represent a valid single JSON value.</td>
+<td><code>utf8Json</code> does not represent a valid single JSON value.</td>
 </tr>
 <tr>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.argumentexception"><code>ArgumentException</code></a></td>
@@ -469,8 +480,6 @@
 </tr>
 </tbody>
 </table>
-<h3 id="remarks-3">Remarks</h3>
-<p T="">The <a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory</code></a> value may be used for the entire lifetime of the ParsedJsonDocument object, and the caller must ensure that the data therein does not change during the object lifetime.</p>
 <h2 id="applies-to-4">Applies To</h2>
 <table>
 <thead>
@@ -491,10 +500,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parse-string-jsondocumentoptions">Parse(string, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/61477e2368954393d220dbae2c9bc63e22c28aef/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L373">ParsedJsonDocument.Parse.cs</a></p>
+<h2 id="parse-readonlymemory-char-jsondocumentoptions">Parse(ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L346">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parses text representing a single JSON value into a ParsedJsonDocument.</p>
-<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(string json, JsonDocumentOptions options)
+<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;char&gt; json, JsonDocumentOptions options)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -508,7 +517,7 @@
 <tbody>
 <tr>
 <td><code>json</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;char&gt;</code></a></td>
 <td>JSON text to parse.</td>
 </tr>
 <tr>
@@ -540,7 +549,78 @@
 </tr>
 </tbody>
 </table>
+<h3 id="remarks-4">Remarks</h3>
+<p T="">The <a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory</code></a> value may be used for the entire lifetime of the ParsedJsonDocument object, and the caller must ensure that the data therein does not change during the object lifetime.</p>
 <h2 id="applies-to-5">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-string-jsondocumentoptions">Parse(string, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/5475878f0426af083c1ea055a692a1f2da1cfa5a/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L409">ParsedJsonDocument.Parse.cs</a></p>
+<p>Parses text representing a single JSON value into a ParsedJsonDocument.</p>
+<pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(string json, JsonDocumentOptions options)
+</code></pre>
+<h3 id="parameters-6">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>json</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>JSON text to parse.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentoptions.html"><code>JsonDocumentOptions</code></a></td>
+<td>Options to control the reader behavior during parsing. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-6">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument&lt;T&gt;</code></a></p>
+<p T="">A ParsedJsonDocument representation of the JSON value.</p>
+<h3 id="exceptions-6">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a></td>
+<td><code>json</code> does not represent a valid single JSON value.</td>
+</tr>
+<tr>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.argumentexception"><code>ArgumentException</code></a></td>
+<td><code>options</code> contains unsupported options.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-6">Applies To</h2>
 <table>
 <thead>
 <tr>

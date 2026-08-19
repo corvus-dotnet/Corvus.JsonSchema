@@ -116,6 +116,11 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.acknowledgefailures.html">AcknowledgeFailures</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
+<td>Gets the counter for broker acknowledgement operations (commit, ack, nak) that failed.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html">ActivitySource</a> <code>static</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource"><code>ActivitySource</code></a></td>
 <td>Gets the <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html"><code>ActivitySource</code></a> for distributed tracing of messaging operations.</td>
@@ -186,6 +191,16 @@
 <td>Gets the counter for subscriber abort events.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.subscriptionfaults.html">SubscriptionFaults</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
+<td>Gets the counter for subscription processing loops that terminated on an unexpected fault.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.subscriptionteardownfailures.html">SubscriptionTeardownFailures</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
+<td>Gets the counter for subscription teardowns that reported a failure.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.transportstatetransitions.html">TransportStateTransitions</a> <code>static</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
 <td>Gets the counter for transport state transitions (connected↔disconnected).</td>
@@ -211,6 +226,10 @@
 <td>Records that a subscriber aborted (stopped consuming) due to the error policy.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordacknowledgefailure.html#recordacknowledgefailure-string-string-exception">RecordAcknowledgeFailure(string, string, Exception)</a> <code>static</code></td>
+<td>Records that a broker acknowledgement operation (commit, ack, nak) failed.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordcorrelationidmismatch.html#recordcorrelationidmismatch-string-string-string-string">RecordCorrelationIdMismatch(string, string, string, string)</a> <code>static</code></td>
 <td>Records a correlation ID mismatch during request-reply.</td>
 </tr>
@@ -229,6 +248,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordskip.html#recordskip-string-string-messageerrorkind">RecordSkip(string, string, MessageErrorKind)</a> <code>static</code></td>
 <td>Records that a message was skipped (not processed and not dead-lettered).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordsubscriptionfault.html#recordsubscriptionfault-string-string-exception">RecordSubscriptionFault(string, string, Exception)</a> <code>static</code></td>
+<td>Records that a subscription's processing loop terminated on an unexpected fault.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordsubscriptionteardownfailure.html#recordsubscriptionteardownfailure-string-string-exception">RecordSubscriptionTeardownFailure(string, string, Exception)</a> <code>static</code></td>
+<td>Records that tearing a subscription down reported a failure that was deliberately not propagated, so that stopping one subscription cannot abort the disposal of others.</td>
 </tr>
 </tbody>
 </table>

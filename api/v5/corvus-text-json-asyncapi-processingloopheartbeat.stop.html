@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="stop-string-string">Stop(string, string)</h2>
+<h2 id="stop-string-string-object">Stop(string, string, object)</h2>
 <p>Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe).</p>
-<pre><code class="language-csharp">public void Stop(string channel, string messagingSystem)
+<pre><code class="language-csharp">public void Stop(string channel, string messagingSystem, object owner)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -122,8 +122,15 @@
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td>The transport type.</td>
 </tr>
+<tr>
+<td><code>owner</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td>The identity of the subscription being stopped, compared by reference with the instance passed to <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a>.</td>
+</tr>
 </tbody>
 </table>
+<h3 id="remarks">Remarks</h3>
+<p>Only lands if the entry still belongs to <code>owner</code>: a losing claim racer or a loop unwinding after a resubscribe must not mark the new owner's live subscription as stopped. The stop transitions the owning state exactly once via an interlocked exchange, so a concurrent tick cannot swallow it, and a concurrent <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a> by a new owner replaces the entry, leaving this stop to land harmlessly on the superseded state.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

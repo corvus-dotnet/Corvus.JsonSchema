@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tick-string-string">Tick(string, string)</h2>
+<h2 id="tick-string-string-object">Tick(string, string, object)</h2>
 <p>Records a heartbeat tick from the processing loop, indicating it is alive.</p>
-<pre><code class="language-csharp">public void Tick(string channel, string messagingSystem)
+<pre><code class="language-csharp">public void Tick(string channel, string messagingSystem, object owner)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -122,10 +122,15 @@
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td>The transport type.</td>
 </tr>
+<tr>
+<td><code>owner</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td>The identity of the subscription this tick belongs to, compared by reference with the instance passed to <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a>.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="remarks">Remarks</h3>
-<p>Call this at the top of each loop iteration. It is zero-cost when no <a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener"><code>MeterListener</code></a> is attached — the only overhead is updating the <a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.stopwatch"><code>Stopwatch</code></a> timestamp.</p>
+<p>Call this at the top of each loop iteration. It is allocation-free on the steady state — a dictionary read, a reference comparison, and a volatile timestamp store — and the counter add is a no-op when no <a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener"><code>MeterListener</code></a> is attached. Only refreshes an entry that still belongs to <code>owner</code>: a draining handler from a torn-down subscription must not fake-freshen its replacement's liveness (refreshing a state object that <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html"><code>Start</code></a> has already replaced is harmless — it is no longer the one liveness reads). Loops start ticking before their claim is recorded, so the first tick may create the entry; a losing racer's entry converges to the winner because Start overwrites and mismatched ticks are ignored.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
