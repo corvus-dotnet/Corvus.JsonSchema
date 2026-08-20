@@ -1,5 +1,19 @@
 # Version History
 
+## V5.4.1
+
+V5.4.1 completes the V5.4.0 delivery-context feature by extending it to request/reply responders, which V5.4.0 explicitly excluded. Like the original capability, this is a community contribution from Levy Barbosa, hardened in review before merging. There are no breaking changes: the new interface members carry default implementations, so existing `IMessageDeliveryContextTransport` implementations keep compiling and behave as before.
+
+### New features
+
+- **Responder delivery context** — `IMessageDeliveryContextTransport` gains `SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>`, the delivery-context counterpart of `SubscribeReplyAsync`: the responder's handler receives the request payload and a `MessageDeliveryContext` (subscribed channel, headers, transport-native message) and still returns the reply payload the transport publishes correlated to the request. It has the same two-overload shape as its sibling (plain, and `in MessageContext` for binding-aware transports) and the same opt-in posture (the default implementation throws `NotSupportedException`, matching `SubscribeReplyAsync`'s own default). All seven transports implement it, the generators now emit `*WithDeliveryContext` handler and consumer variants for responder operations too, and `InstrumentedMessageTransport`'s context-capable wrappers forward the new capability through both overloads, so instrumentation does not downgrade a transport's support for it. The internal delivery plumbing mirrors the V5.4.0 design: the new public SPI type `Corvus.Text.Json.AsyncApi.Internal.MessageReplyHandler{TRequest, TReply}` stores either callback shape without a per-delivery adapter delegate, and the native message is captured only when a context handler will consume it. This feature was designed and contributed by [Levy Barbosa (@Levyks)](https://github.com/Levyks), completing the delivery-context capability credited in the V5.4.0 notes. Thank you, Levy! Contributed in [#932](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/932); review findings tracked in [#933](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/933).
+
+### Other changes
+
+- **Responder emission tidied** — The generated responder+context `HandleMessageAsync` no longer declares a `headers` local when the message declares no headers schema; regenerated output for such operations loses that dead line. See [#933](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/933).
+- **Generated responder consumers are compiled and exercised in the build** — The runtime test suite's specification now includes a receive+reply operation, so both generated responder consumer variants compile on every build and round-trip end to end through the in-memory transport, closing the gap where responder emission was verified only by string assertions. `MessageReplyHandler` and the instrumented forwarding path gained direct tests to the same standard as their V5.4.0 siblings. See [#933](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/933).
+- **PR previews skip fork pull requests** — Fork PRs run without repository secrets, so the documentation site cannot build and the preview deploy failed on a missing artifact; the preview deploy and cleanup jobs now run for same-repo pull requests only.
+
 ## V5.4.0
 
 V5.4.0 adds an opt-in delivery-context surface to the AsyncAPI transports and generators, so a consumer can receive transport delivery metadata alongside its payload without an allocating adapter on the delivery path. This capability is a community contribution from Levy Barbosa, hardened in review before merging. That hardening tightened the subscription lifecycle across every transport and generated consumer, and some of those changes are breaking, which is why this is a minor rather than a patch release.

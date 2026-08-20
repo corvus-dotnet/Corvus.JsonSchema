@@ -694,6 +694,70 @@ public class InstrumentedMessageTransport : IMessageTransport
         };
     }
 
+    private Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> CreateInstrumentedReplyContextHandler<TRequest, TReply>(
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        string destination)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string processSpanName = "process " + destination;
+        return async (request, context, ct) =>
+        {
+            JsonElement headers = context.Headers;
+            using Activity? activity = StartProcessActivity(in headers, processSpanName, destination);
+            long startTimestamp = Stopwatch.GetTimestamp();
+            try
+            {
+                TReply reply = await handler(request, context, ct).ConfigureAwait(false);
+                RecordProcessed(destination);
+                return reply;
+            }
+            catch (Exception ex)
+            {
+                RecordError(activity, ex);
+                throw;
+            }
+            finally
+            {
+                RecordDuration(AsyncApiTelemetry.ProcessDuration, startTimestamp, "process", destination);
+            }
+        };
+    }
+
+    private ValueTask SubscribeReplyWithDeliveryContextCoreAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        // Only the context-capable nested wrappers call this, and Create constructs them only
+        // when the wrapped transport implements the capability, so the cast cannot fail.
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        return ((IMessageDeliveryContextTransport)this.inner).SubscribeReplyWithDeliveryContextAsync(
+            channelUtf8,
+            CreateInstrumentedReplyContextHandler(handler, destination),
+            cancellationToken);
+    }
+
+    private ValueTask SubscribeReplyWithDeliveryContextCoreAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        // The binding overload forwards to the wrapped transport's own overload so a transport
+        // that honors bindings still receives them through the instrumentation.
+        string destination = Encoding.UTF8.GetString(channelUtf8.Span);
+        return ((IMessageDeliveryContextTransport)this.inner).SubscribeReplyWithDeliveryContextAsync(
+            channelUtf8,
+            CreateInstrumentedReplyContextHandler(handler, destination),
+            in context,
+            cancellationToken);
+    }
+
     private void SetCommonTags(Activity? activity, string operationName, string destination)
     {
         if (activity is { IsAllDataRequested: true })
@@ -771,6 +835,25 @@ public class InstrumentedMessageTransport : IMessageTransport
             CancellationToken cancellationToken = default)
             where TPayload : struct, IJsonElement<TPayload>
             => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+            => this.SubscribeReplyWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+            in MessageContext context,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+            => this.SubscribeReplyWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
     }
 
     /// <summary>
@@ -827,6 +910,25 @@ public class InstrumentedMessageTransport : IMessageTransport
             CancellationToken cancellationToken = default)
             where TPayload : struct, IJsonElement<TPayload>
             => this.SubscribeWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+            => this.SubscribeReplyWithDeliveryContextCoreAsync(channelUtf8, handler, cancellationToken);
+
+        /// <inheritdoc/>
+        public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+            ReadOnlyMemory<byte> channelUtf8,
+            Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+            in MessageContext context,
+            CancellationToken cancellationToken = default)
+            where TRequest : struct, IJsonElement<TRequest>
+            where TReply : struct, IJsonElement<TReply>
+            => this.SubscribeReplyWithDeliveryContextCoreAsync(channelUtf8, handler, in context, cancellationToken);
 
         /// <inheritdoc/>
         public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)

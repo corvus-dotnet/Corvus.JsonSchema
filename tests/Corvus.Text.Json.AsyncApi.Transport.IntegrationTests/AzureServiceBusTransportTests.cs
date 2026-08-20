@@ -168,6 +168,76 @@ public class AzureServiceBusTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel and native message) alongside
+        // the request, in addition to still producing the reply the requester's RequestAsync waits
+        // for.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        AzureServiceBusMessageTransport responderTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-queue",
+        });
+
+        AzureServiceBusMessageTransport requesterTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-queue",
+        });
+
+        try
+        {
+            ReadOnlyMemory<byte> requestChannel = "test-queue"u8.ToArray();
+            ReadOnlyMemory<byte> replyChannel = "test-reply-queue"u8.ToArray();
+
+            string? deliveredChannel = null;
+            object? nativeMessage = null;
+
+            await responderTransport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+                requestChannel,
+                (request, deliveryContext, ct) =>
+                {
+                    deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                    nativeMessage = deliveryContext.NativeMessage;
+
+                    int value = request.GetProperty("value"u8).GetInt32();
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes($$"""{"result":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
+                    return ValueTask.FromResult(replyDoc.RootElement);
+                });
+
+            await Task.Delay(500);
+
+            byte[] correlationId = "asb-responder-context-roundtrip-001"u8.ToArray();
+            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+            (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace);
+
+            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+            Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+            Assert.AreEqual("test-queue", deliveredChannel);
+            Assert.IsNotNull(nativeMessage);
+
+            await responderTransport.UnsubscribeAsync(requestChannel);
+        }
+        finally
+        {
+            await responderTransport.DisposeAsync();
+            await requesterTransport.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // The reply the handler builds must outlive the handler (the transport serialises it after the handler

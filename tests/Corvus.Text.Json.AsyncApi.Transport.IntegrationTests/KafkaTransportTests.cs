@@ -924,6 +924,84 @@ public class KafkaTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel and native message) alongside
+        // the request, in addition to still producing the reply the requester's RequestAsync waits
+        // for.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string requestTopic = $"kafka-resp-ctx-req-{topicSuffix}";
+        string replyTopic = $"kafka-resp-ctx-rep-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        KafkaMessageTransport responderTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-context-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        string? deliveredChannel = null;
+        object? nativeMessage = null;
+
+        await responderTransport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, deliveryContext, ct) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+
+                int n = request.GetProperty("n"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{n * 2}}}""");
+
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        // Give the responder time to start (group coordination + partition assignment).
+        await Task.Delay(5000);
+
+        KafkaMessageTransport clientTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-context-client-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"n":21}"""u8.ToArray());
+        byte[] correlationId = Guid.NewGuid().ToString("D").Substring(0, 36).Select(c => (byte)c).ToArray();
+
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(30));
+        (JsonElement replyPayloadElement, JsonElement replyHeaders) = await clientTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace,
+            cancellationToken: requestCts.Token);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);
+        Assert.AreEqual(42, replyPayloadElement.GetProperty("doubled"u8).GetInt32());
+        Assert.AreEqual(requestTopic, deliveredChannel);
+        Assert.IsNotNull(nativeMessage);
+
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+        await clientTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up

@@ -242,7 +242,7 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         if (responder is not null)
         {
-            return RespondAsync<TRequest, TReply>(responder, requestBytes, headerBytes, workspace, cancellationToken);
+            return RespondAsync<TRequest, TReply>(responder, requestChannelUtf8, requestBytes, headerBytes, workspace, cancellationToken);
         }
 
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs = new();
@@ -319,10 +319,30 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
+        this.ClaimChannel(channel, handler);
+
+        return ValueTask.CompletedTask;
+    }
+
     // Parses a delivered request, invokes the responder handler, and returns its reply (the request and
-    // reply documents are GC-backed, matching CompleteRequestAsync's semantics).
+    // reply documents are GC-backed, matching CompleteRequestAsync's semantics). The stored delegate is
+    // either the legacy (request, headers) shape or the delivery-context shape — both are four-arity
+    // Funcs returning ValueTask<TReply>, so a runtime type check picks the right one, matching how
+    // DeliverToSubscriberAsync distinguishes the two plain-subscribe delegate shapes above.
     private static async ValueTask<(TReply Payload, JsonElement Headers)> RespondAsync<TRequest, TReply>(
         Delegate responder,
+        ReadOnlyMemory<byte> requestChannelUtf8,
         byte[] requestBytes,
         byte[] headerBytes,
         JsonWorkspace workspace,
@@ -341,8 +361,24 @@ public sealed class InMemoryMessageTransport : IMessageDeliveryContextTransport,
 
         try
         {
-            var handler = (Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>>)responder;
-            TReply reply = await handler(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
+            TReply reply;
+            if (responder is Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> contextHandler)
+            {
+                // The in-memory transport has no native broker message: the request is already
+                // fully materialized as the parsed document and header bytes this method holds,
+                // exactly as the plain delivery-context subscribe path leaves NativeMessage unset.
+                MessageDeliveryContext context = new()
+                {
+                    ChannelUtf8 = requestChannelUtf8,
+                    Headers = requestHeaders,
+                };
+                reply = await contextHandler(requestDoc.RootElement, context, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var handler = (Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>>)responder;
+                reply = await handler(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
+            }
 
             // Re-parse the reply into a document owned by the caller's workspace so it outlives this handler.
             byte[] replyBytes = SerializeToOwnedBytes(in reply);

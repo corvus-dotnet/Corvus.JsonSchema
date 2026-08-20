@@ -301,7 +301,7 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void Generate_ResponderOperation_DoesNotEmitDeliveryContextVariants()
+    public void Generate_ResponderOperation_EmitsDeliveryContextVariants()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
@@ -310,9 +310,29 @@ public class AsyncApi30CodeGeneratorTests
         var generator = new AsyncApi30CodeGenerator("Worker", new Dictionary<string, string>());
         IReadOnlyList<GeneratedFile> files = generator.Generate(root);
 
+        // IMessageDeliveryContextTransport exposes SubscribeReplyWithDeliveryContextAsync, so a
+        // responder now gets a delivery-context variant exactly as a plain consumer does.
+        GeneratedFile contextHandler = files.Single(f => f.FileName.Contains("WithDeliveryContextHandler"));
+        GeneratedFile contextConsumer = files.Single(f => f.FileName.Contains("WithDeliveryContextConsumer"));
+
+        StringAssert.Contains(contextHandler.Content, "MessageDeliveryContext context");
+        StringAssert.Contains(
+            contextHandler.Content,
+            "ValueTask<",
+            "A responder's delivery-context handler still returns the reply payload, not void.");
+        StringAssert.Contains(contextConsumer.Content, "IMessageDeliveryContextTransport transport");
+        StringAssert.Contains(contextConsumer.Content, "SubscribeReplyWithDeliveryContextAsync");
+
+        GeneratedFile legacyHandler = files.Single(f => f.FileName.EndsWith("Handler.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        GeneratedFile legacyConsumer = files.Single(f => f.FileName.EndsWith("Consumer.cs", StringComparison.Ordinal) && !f.FileName.Contains("WithDeliveryContext"));
+        Assert.IsFalse(legacyHandler.Content.Contains("MessageDeliveryContext", StringComparison.Ordinal));
+        StringAssert.Contains(
+            legacyConsumer.Content,
+            "SubscribeReplyAsync",
+            "The legacy responder consumer must still call the non-context reply subscribe overload.");
         Assert.IsFalse(
-            files.Any(f => f.FileName.Contains("WithDeliveryContext")),
-            "A responder operation never surfaces a MessageDeliveryContext, so no WithDeliveryContext variants should be emitted for it.");
+            legacyConsumer.Content.Contains("SubscribeReplyWithDeliveryContextAsync", StringComparison.Ordinal),
+            "The legacy responder consumer must not reference the delivery-context subscribe overload.");
     }
 
     [TestMethod]

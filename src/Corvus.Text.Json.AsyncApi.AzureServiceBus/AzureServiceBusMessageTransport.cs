@@ -562,10 +562,29 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
     /// <param name="handler">The handler invoked with each request payload and its headers, returning the reply payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-    public async ValueTask SubscribeReplyAsync<TRequest, TReply>(
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
         CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+        => this.SubscribeReplyCoreAsync<TRequest, TReply>(
+            channelUtf8, MessageReplyHandler<TRequest, TReply>.WithoutDeliveryContext(handler), cancellationToken);
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+        => this.SubscribeReplyCoreAsync<TRequest, TReply>(
+            channelUtf8, MessageReplyHandler<TRequest, TReply>.WithDeliveryContext(handler), cancellationToken);
+
+    private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageReplyHandler<TRequest, TReply> handler,
+        CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
@@ -656,6 +675,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                 JsonElement headersElement = headerWorkspace is not null
                     ? BuildHeadersElement(args.Message.ApplicationProperties, headerWorkspace)
                     : default;
+                object? nativeMessage = handler.UsesDeliveryContext ? args.Message : null;
 
                 try
                 {
@@ -663,13 +683,14 @@ public sealed class AzureServiceBusMessageTransport : IMessageDeliveryContextTra
                     if (this.middleware is not null)
                     {
                         reply = await this.middleware.InvokeAsync(
-                            static (s, ct) => s.handler(s.request, s.headersElement, ct),
-                            (handler, request, headersElement),
+                            static (s, ct) => s.handler.InvokeReply(s.request, s.channelUtf8, s.headersElement, s.nativeMessage, ct),
+                            (handler, request, channelUtf8, headersElement, nativeMessage),
                             cts.Token).ConfigureAwait(false);
                     }
                     else
                     {
-                        reply = await handler(request, headersElement, cts.Token).ConfigureAwait(false);
+                        reply = await handler.InvokeReply(request, channelUtf8, headersElement, nativeMessage, cts.Token)
+                            .ConfigureAwait(false);
                     }
 
                     // Echo the request's reply-to address, session ID and correlation ID so the requester's

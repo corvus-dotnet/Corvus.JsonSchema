@@ -774,24 +774,21 @@ public sealed class AsyncApi30CodeGenerator
             files.Add(EmitConsumerHandler(op, withDeliveryContext: false));
             files.Add(EmitConsumer(op, withDeliveryContext: false));
 
-            // A responder's context never reaches its handler (SubscribeReplyAsync has no
-            // delivery-context form), so the variants would be inert duplicates demanding a
-            // wider transport interface for no benefit.
-            if (!IsResponderOperation(op))
+            // Responders get delivery-context variants too: IMessageDeliveryContextTransport
+            // exposes SubscribeReplyWithDeliveryContextAsync, so a responder's handler can
+            // receive MessageDeliveryContext exactly as a plain consumer's can.
+            string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
+            if (receiveOpPascalNames.Contains(variantBaseName))
             {
-                string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
-                if (receiveOpPascalNames.Contains(variantBaseName))
-                {
-                    this.diagnostics.Add(new(
-                        AsyncApiGenerationDiagnosticSeverity.Warning,
-                        $"#/operations/{op.Name}",
-                        $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
-                }
-                else
-                {
-                    files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
-                    files.Add(EmitConsumer(op, withDeliveryContext: true));
-                }
+                this.diagnostics.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/operations/{op.Name}",
+                    $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
+            }
+            else
+            {
+                files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
+                files.Add(EmitConsumer(op, withDeliveryContext: true));
             }
 
             // Multi-message operations need a discriminated received message type
@@ -2704,7 +2701,10 @@ public sealed class AsyncApi30CodeGenerator
             if (IsResponderOperation(op))
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
+                string replyPayloadType = ReplyPayloadTypeNameOf(op);
+                w.WriteLine(withDeliveryContext
+                    ? $"{keyword}this.transport.SubscribeReplyWithDeliveryContextAsync<{payloadType}, {replyPayloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};"
+                    : $"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {replyPayloadType}>({subscribeAddr}, {handlerArg}{contextArg}, cancellationToken){suffix};");
             }
             else if (op.Messages.Count == 1)
             {
@@ -2903,8 +2903,18 @@ public sealed class AsyncApi30CodeGenerator
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
             string replyType = ReplyPayloadTypeNameOf(op);
 
-            w.WriteLine($"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.WriteLine(withDeliveryContext
+                ? $"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, MessageDeliveryContext deliveryContext, CancellationToken cancellationToken)"
+                : $"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
+
+            // Unlike the plain-consumer path below, the responder path only reads headers when the
+            // message declares a typed headers schema, so only then is the local worth emitting.
+            if (withDeliveryContext && msg.HeadersTypeName is not null)
+            {
+                w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
+            }
+
             w.WriteLine("if (this.validationMode != ValidationMode.None)");
             w.OpenBrace();
             w.WriteLine("ValidatePayload(payload, this.validationMode);");
@@ -2915,7 +2925,15 @@ public sealed class AsyncApi30CodeGenerator
 
             w.CloseBrace();
             w.WriteLine();
-            if (msg.HeadersTypeName is not null)
+            if (withDeliveryContext && msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, {msg.HeadersTypeName}.From(headers), deliveryContext, cancellationToken);");
+            }
+            else if (withDeliveryContext)
+            {
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, deliveryContext, cancellationToken);");
+            }
+            else if (msg.HeadersTypeName is not null)
             {
                 w.WriteLine($"return this.handler.{handlerMethod}(payload, {msg.HeadersTypeName}.From(headers), cancellationToken);");
             }

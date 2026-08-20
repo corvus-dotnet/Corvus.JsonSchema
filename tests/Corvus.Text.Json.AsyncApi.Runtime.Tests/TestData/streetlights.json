@@ -120,6 +120,28 @@
         ]
       }
     },
+    "processDimLight": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/lightDim"
+      },
+      "summary": "Process dim commands and confirm the resulting level.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightDim/messages/dimLight"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/lightDimReply"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/lightDimReply/messages/dimLightResponse"
+          }
+        ]
+      }
+    },
     "receiveAlert": {
       "action": "receive",
       "channel": {
